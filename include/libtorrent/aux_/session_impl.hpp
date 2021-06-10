@@ -659,8 +659,6 @@ namespace aux {
 
 #if TORRENT_ABI_VERSION == 1
 			void update_ssl_listen();
-			void update_local_download_rate();
-			void update_local_upload_rate();
 			void update_rate_limit_utp();
 			void update_ignore_rate_limits_on_local_network();
 #endif
@@ -672,26 +670,20 @@ namespace aux {
 			void update_connection_speed();
 			void update_alert_queue_size();
 			void update_disk_threads();
-			void update_report_web_seed_downloads();
 			void update_outgoing_interfaces();
 			void update_listen_interfaces();
 			void update_privileged_ports();
-			void update_auto_sequential();
-			void update_max_failcount();
 			void update_resolver_cache_timeout();
 
 			void update_ip_notifier();
 			void update_upnp();
 			void update_natpmp();
 			void update_dht();
-			void update_count_slow();
 			void update_dht_bootstrap_nodes();
 
             void update_leveldb_dir();
 
 			void update_socket_buffer_size();
-			void update_download_rate();
-			void update_upload_rate();
 			void update_connections_limit();
 			void update_alert_mask();
 			void update_validate_https();
@@ -707,8 +699,6 @@ namespace aux {
 			void init();
 
 			void submit_disk_jobs();
-
-			void on_lsd_peer(tcp::endpoint const& peer, sha1_hash const& ih) override;
 
 			void start_natpmp(std::shared_ptr<aux::listen_socket_t> const&  s);
 			void start_upnp(std::shared_ptr<aux::listen_socket_t> const& s);

@@ -2672,50 +2672,6 @@ bool is_downloading_state(int const st)
 
 #endif
 
-namespace {
-	void refresh_endpoint_list(aux::session_interface& ses
-		, bool const is_ssl, bool const complete_sent
-		, string_view url
-		, std::vector<aux::announce_endpoint>& aeps)
-	{
-		// update the endpoint list by adding entries for new listen sockets
-		// and removing entries for non-existent ones
-		std::size_t valid_endpoints = 0;
-		ses.for_each_listen_socket([&](aux::listen_socket_handle const& s) {
-			if (s.is_ssl() != is_ssl)
-				return;
-			for (auto& aep : aeps)
-			{
-				if (aep.socket != s) continue;
-				std::swap(aeps[valid_endpoints], aep);
-				valid_endpoints++;
-				return;
-			}
-
-			aeps.emplace_back(s, complete_sent);
-			std::swap(aeps[valid_endpoints], aeps.back());
-			valid_endpoints++;
-		});
-
-#if TORRENT_USE_RTC
-		if(auto pos = url.find(':'); pos != string_view::npos)
-		{
-			string_view const protocol = url.substr(0, pos);
-			if (protocol == "ws" || protocol == "wss")
-			{
-				// WebSocket trackers will ignore the endpoint anyway
-				valid_endpoints = std::min(valid_endpoints, std::size_t(1));
-			}
-		}
-#else
-		TORRENT_UNUSED(url);
-#endif
-
-		TORRENT_ASSERT(valid_endpoints <= aeps.size());
-		aeps.erase(aeps.begin() + int(valid_endpoints), aeps.end());
-	}
-}
-
 	namespace
 	{
 		struct announce_protocol_state
@@ -2886,9 +2842,6 @@ namespace {
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-
-		time_point32 const now = aux::time_now32();
-
 	}
 
 	void torrent::scrape_tracker(int idx, bool const user_triggered)
@@ -6640,11 +6593,6 @@ namespace {
 			}
 		}
 
-		// the torrent's info hash might change
-		// e.g. it could be a hybrid torrent which we only had one of the hashes for
-		// so remove the existing entry
-		info_hash_t const old_ih = m_torrent_file->info_hashes();
-
 		error_code ec;
 		bdecode_node const metadata = bdecode(metadata_buf, ec);
 		if (ec || !m_torrent_file->parse_info_section(metadata, ec
@@ -7055,31 +7003,6 @@ namespace {
 		update_list(aux::session_interface::torrent_want_scrape
 			, m_paused && m_auto_managed && !m_abort);
 	}
-
-	namespace {
-
-#ifndef TORRENT_DISABLE_LOGGING
-	char const* list_name(torrent_list_index_t const idx)
-	{
-#define TORRENT_LIST_NAME(n) case static_cast<int>(aux::session_interface:: n): return #n
-		switch (static_cast<int>(idx))
-		{
-			TORRENT_LIST_NAME(torrent_state_updates);
-			TORRENT_LIST_NAME(torrent_want_tick);
-			TORRENT_LIST_NAME(torrent_want_peers_download);
-			TORRENT_LIST_NAME(torrent_want_peers_finished);
-			TORRENT_LIST_NAME(torrent_want_scrape);
-			TORRENT_LIST_NAME(torrent_downloading_auto_managed);
-			TORRENT_LIST_NAME(torrent_seeding_auto_managed);
-			TORRENT_LIST_NAME(torrent_checking_auto_managed);
-			default: TORRENT_ASSERT_FAIL_VAL(idx);
-		}
-#undef TORRENT_LIST_NAME
-		return "";
-	}
-#endif // TORRENT_DISABLE_LOGGING
-
-	} // anonymous namespace
 
 	void torrent::update_list(torrent_list_index_t const list, bool in)
 	{
@@ -7952,6 +7875,7 @@ namespace {
 
 	int torrent::limit_impl(int const channel) const
 	{
+        return 1;
 	}
 
 	int torrent::upload_limit() const

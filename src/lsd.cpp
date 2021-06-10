@@ -300,8 +300,6 @@ void lsd::on_announce(error_code const& ec)
 					, int(port), ih_str.c_str());
 			}
 #endif
-			// we got an announce, pass it on through the callback
-			m_callback.on_lsd_peer(tcp::endpoint(from.address(), std::uint16_t(port)), ih);
 		}
 	}
 }

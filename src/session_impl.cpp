@@ -2656,6 +2656,25 @@ namespace {
 
 #endif
 
+#ifndef TORRENT_DISABLE_LOGGING
+    bool session_impl::should_log() const
+    {    
+        return m_alerts.should_post<log_alert>();
+    }    
+
+    TORRENT_FORMAT(2,3)
+    void session_impl::session_log(char const* fmt, ...) const noexcept try
+    {    
+        if (!m_alerts.should_post<log_alert>()) return;
+
+        va_list v;
+        va_start(v, fmt);
+        m_alerts.emplace_alert<log_alert>(fmt, v);
+        va_end(v);
+    }    
+    catch (std::exception const&) {}
+#endif
+
 	int session_impl::get_int_setting(int n) const
 	{
 		int const v = settings().get_int(n);

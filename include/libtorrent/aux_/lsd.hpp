@@ -23,7 +23,6 @@ namespace libtorrent::aux {
 
 struct TORRENT_EXTRA_EXPORT lsd_callback
 {
-	virtual void on_lsd_peer(tcp::endpoint const& peer, sha1_hash const& ih) = 0;
 #ifndef TORRENT_DISABLE_LOGGING
 	virtual bool should_log_lsd() const = 0;
 	virtual void log_lsd(char const* msg) const = 0;

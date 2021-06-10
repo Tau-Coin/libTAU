@@ -5288,6 +5288,7 @@ namespace {
 
 	int peer_connection::request_bandwidth(int const channel, int bytes)
 	{
+        return 1;
 	}
 
 	void peer_connection::setup_send()
