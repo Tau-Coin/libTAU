@@ -1,0 +1,40 @@
+use-project /torrent : ../.. ;
+
+rule libtorrent_linking ( properties * )
+{
+    local result ;
+
+    if <toolset>gcc in $(properties) && <link>shared in $(properties)
+    {
+        result += <fpic>on ;
+    }
+
+#    if <toolset>gcc in $(properties) || <toolset>darwin in $(properties)
+#    {
+#        result += <visibility>hidden ;
+#    }
+
+    return $(result) ;
+}
+
+lib torrentc
+	: # sources
+	src/library.cpp
+	src/settings.cpp
+
+	: # requirements
+	<conditional>@libtorrent_linking
+	<library>/torrent//torrent
+	<include>include
+	<cxxstd>17
+	<define>LIBTORRENT_C_BUILDING_LIBRARY
+
+	: # default build
+	<link>static
+
+	: # usage-requirements
+	<include>include
+;
+
+exe simple_client : simple_client.c : <library>torrentc ;
+
