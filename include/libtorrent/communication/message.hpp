@@ -75,6 +75,9 @@ namespace libtorrent {
             // @returns the SHA256 hash of the RLP serialisation of this message
             sha256_hash sha256() const;
 
+            // @returns a pretty-printed string representation of message structure
+            std::string to_string() const;
+
         private:
             // Construct message object from rlp serialisation
             void populate(aux::RLP const& _msg);

@@ -120,6 +120,10 @@ struct block_uploaded_alert;
 struct alerts_dropped_alert;
 struct socks5_alert;
 struct file_prio_alert;
+struct communication_new_device_id_alert;
+struct communication_new_message_alert;
+struct communication_confirmation_root_alert;
+struct communication_syncing_message_alert;
 TORRENT_VERSION_NAMESPACE_3_END
 
 // include/libtorrent/announce_entry.hpp

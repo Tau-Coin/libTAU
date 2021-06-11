@@ -22,6 +22,7 @@ see LICENSE file.
 #include <string>
 #include <cstdio> // for snprintf
 #include <cinttypes> // for PRId64 et.al.
+#include <utility>
 
 #include "libtorrent/config.hpp"
 #include "libtorrent/alert.hpp"
@@ -36,6 +37,8 @@ see LICENSE file.
 #include "libtorrent/session_stats.hpp"
 #include "libtorrent/socket_type.hpp"
 #include "libtorrent/aux_/ip_helpers.hpp" // for is_v4
+#include "libtorrent/aux_/common.h"
+#include "libtorrent/communication/message.hpp"
 
 #if TORRENT_ABI_VERSION == 1
 #include "libtorrent/write_resume_data.hpp"
@@ -2926,7 +2929,9 @@ namespace {
 		"picker_log", "session_error", "dht_live_nodes",
 		"session_stats_header", "dht_sample_infohashes",
 		"block_uploaded", "alerts_dropped", "socks5",
-		"file_prio"
+		"file_prio",
+		"communication_new_device_id", "communication_new_message_alert",
+		"communication_confirmation_root_alert", "communication_syncing_message_alert"
 		}};
 
 		TORRENT_ASSERT(alert_type >= 0);
@@ -2984,5 +2989,73 @@ namespace {
 		return torrent_alert::message() + " file priorities updated";
 #endif
 	}
+
+    communication_new_device_id_alert::communication_new_device_id_alert(aux::stack_allocator&
+            , aux::bytesConstRef t)
+            : device_id(t)
+    {}
+
+    std::string communication_new_device_id_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char msg[1050];
+        std::snprintf(msg, sizeof(msg), "device id %s"
+                , device_id.toString().c_str());
+        return msg;
+#endif
+    }
+
+    communication_new_message_alert::communication_new_message_alert(aux::stack_allocator&
+            , communication::message t)
+            : msg(std::move(t))
+    {}
+
+    std::string communication_new_message_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char buffer[1050];
+        std::snprintf(buffer, sizeof(buffer), "message %s"
+                , msg.to_string().c_str());
+        return buffer;
+#endif
+    }
+
+    communication_confirmation_root_alert::communication_confirmation_root_alert(aux::stack_allocator&
+            , aux::bytesConstRef t)
+            : confirmation_root(t)
+    {}
+
+    std::string communication_confirmation_root_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char msg[1050];
+        std::snprintf(msg, sizeof(msg), "confirmation root %s"
+                , confirmation_root.toString().c_str());
+        return msg;
+#endif
+    }
+
+    communication_syncing_message_alert::communication_syncing_message_alert(aux::stack_allocator&
+            , aux::bytesConstRef t)
+            : syncing_msg_hash(t)
+    {}
+
+    std::string communication_syncing_message_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char msg[1050];
+        std::snprintf(msg, sizeof(msg), "sync message hash %s"
+                , syncing_msg_hash.toString().c_str());
+        return msg;
+#endif
+    }
 
 } // namespace libtorrent

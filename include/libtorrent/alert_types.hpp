@@ -46,6 +46,8 @@ see LICENSE file.
 #include "libtorrent/socket_type.hpp"
 #include "libtorrent/client_data.hpp"
 #include "libtorrent/aux_/deprecated.hpp"
+#include "libtorrent/aux_/common.h"
+#include "libtorrent/communication/message.hpp"
 
 #include "libtorrent/aux_/disable_warnings_push.hpp"
 #include <boost/shared_array.hpp>
@@ -74,7 +76,7 @@ namespace libtorrent {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 98;
+	constexpr int num_alert_types = 102;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -2931,6 +2933,70 @@ TORRENT_VERSION_NAMESPACE_3
 		// the operation that failed
 		operation_t op;
 	};
+
+    // this alert is posted when new device id is found on net.
+    struct TORRENT_EXPORT communication_new_device_id_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_new_device_id_alert(aux::stack_allocator& alloc, aux::bytesConstRef t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_new_device_id_alert, 98, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // device id found
+        aux::bytesConstRef device_id;
+    };
+
+    // this alert is posted when new message is found from other peers.
+    struct TORRENT_EXPORT communication_new_message_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_new_message_alert(aux::stack_allocator& alloc, communication::message t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_new_message_alert, 99, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // message found from peers.
+        communication::message msg;
+    };
+
+    // this alert is posted when message hash is confirmed by peers.
+    struct TORRENT_EXPORT communication_confirmation_root_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, aux::bytesConstRef t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_confirmation_root_alert, 100, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // confirmation root
+        aux::bytesConstRef confirmation_root;
+    };
+
+    // this alert is posted when a message is syncing.
+    struct TORRENT_EXPORT communication_syncing_message_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, aux::bytesConstRef t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_syncing_message_alert, 101, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // syncing message hash
+        aux::bytesConstRef syncing_msg_hash;
+    };
 
 TORRENT_VERSION_NAMESPACE_3_END
 

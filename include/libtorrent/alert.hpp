@@ -151,6 +151,9 @@ namespace alert_category {
 	// high rate.
 	inline constexpr alert_category_t block_progress = 24_bit;
 
+	// alerts on events in communication
+    inline constexpr alert_category_t communication = 25_bit;
+
 	// The full bitmask, representing all available categories.
 	//
 	// since the enum is signed, make sure this isn't
