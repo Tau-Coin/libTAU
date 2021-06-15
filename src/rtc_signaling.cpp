@@ -323,7 +323,7 @@ rtc_signaling::connection& rtc_signaling::create_connection(rtc_offer_id const& 
 		));
 	});
 
-	int const connection_timeout = m_torrent->settings().get_int(settings_pack::webtorrent_connection_timeout);
+	int const connection_timeout = 10;
 	time_duration const timeout = seconds(std::max(connection_timeout, 1));
 	connection conn(m_io_context);
 	conn.peer_connection = std::move(pc);

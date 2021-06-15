@@ -3124,12 +3124,6 @@ bool is_downloading_state(int const st)
 
 	void torrent::update_auto_sequential()
 	{
-		if (!settings().get_bool(settings_pack::auto_sequential))
-		{
-			m_auto_sequential = false;
-			return;
-		}
-
 		if (num_peers() - m_num_connecting < 10)
 		{
 			// there are too few peers. Be conservative and don't assume it's
@@ -7378,9 +7372,7 @@ bool is_downloading_state(int const st)
 
 	bool torrent::is_inactive() const
 	{
-		if (!settings().get_bool(settings_pack::dont_count_slow_torrents))
-			return false;
-		return m_inactive;
+		return false;
 	}
 
 	std::string torrent::save_path() const
@@ -8857,29 +8849,6 @@ bool is_downloading_state(int const st)
 		// if the rate is 0, there's no update because of network transfers
 		if (m_stat.low_pass_upload_rate() > 0 || m_stat.low_pass_download_rate() > 0)
 			state_updated();
-
-		// this section determines whether the torrent is active or not. When it
-		// changes state, it may also trigger the auto-manage logic to reconsider
-		// which torrents should be queued and started. There is a low pass
-		// filter in order to avoid flapping (auto_manage_startup).
-		bool is_inactive = is_inactive_internal();
-
-		if (settings().get_bool(settings_pack::dont_count_slow_torrents))
-		{
-			if (is_inactive != m_inactive && !m_pending_active_change)
-			{
-				int const delay = settings().get_int(settings_pack::auto_manage_startup);
-				m_inactivity_timer.expires_after(seconds(delay));
-				m_inactivity_timer.async_wait([self](error_code const& ec) {
-					self->wrap(&torrent::on_inactivity_tick, ec); });
-				m_pending_active_change = true;
-			}
-			else if (is_inactive == m_inactive
-				&& m_pending_active_change)
-			{
-				m_inactivity_timer.cancel();
-			}
-		}
 
 		// want_tick depends on whether the low pass transfer rates are non-zero
 		// or not. They may just have turned zero in this last tick.

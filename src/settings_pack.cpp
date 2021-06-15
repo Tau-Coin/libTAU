@@ -132,7 +132,8 @@ namespace libtorrent {
         SET(i2p_hostname, "", nullptr), // tau-modify
 		SET(peer_fingerprint, "-LT2030-", nullptr),
 		SET(dht_bootstrap_nodes, "dht.libtorrent.org:25401", &session_impl::update_dht_bootstrap_nodes),
-        SET(leveldb_dir, "/home/cowtc/data/leveldb", &session_impl::update_leveldb_dir)
+        SET(leveldb_dir, "/home/cowtc/data/leveldb", &session_impl::update_leveldb_dir),
+		SET(webtorrent_stun_server, "stun.l.google.com:19302", nullptr)
 	}});
 
 	CONSTEXPR_SETTINGS
@@ -238,6 +239,7 @@ namespace libtorrent {
 		SET(urlseed_pipeline_size, 5, nullptr),
 		SET(urlseed_wait_retry, 30, nullptr),
 		SET(file_pool_size, 40, nullptr),
+		SET(max_failcount, 40, nullptr),
 		SET(min_reconnect_time, 60, nullptr),
 		SET(peer_connect_timeout, 15, nullptr),
 		SET(connection_speed, 30, &session_impl::update_connection_speed),
@@ -302,6 +304,12 @@ namespace libtorrent {
 		SET(tick_interval, 500, nullptr),
 		SET(share_mode_target, 3, nullptr),
 		SET(dht_upload_rate_limit, 8000, &session_impl::update_dht_upload_rate_limit),
+        SET(upload_rate_limit, 0, nullptr),
+        SET(download_rate_limit, 0, nullptr),
+        DEPRECATED_SET(local_upload_rate_limit, 0, nullptr),
+        DEPRECATED_SET(local_download_rate_limit, 0, nullptr),
+        SET(dht_upload_rate_limit, 0, nullptr),
+        SET(unchoke_slots_limit, 0, nullptr),
 		DEPRECATED_SET(half_open_limit, 0, nullptr),
 		SET(connections_limit, 200, &session_impl::update_connections_limit),
 		SET(connections_slack, 10, nullptr),
