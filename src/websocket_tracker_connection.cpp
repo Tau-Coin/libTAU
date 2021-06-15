@@ -361,7 +361,7 @@ void websocket_tracker_connection::on_read(error_code ec, std::size_t /* bytes_r
 		if(response.resp)
 		{
 			response.resp->interval = std::max(response.resp->interval
-				, seconds32{m_man.settings().get_int(settings_pack::min_websocket_announce_interval)});
+				, seconds32{10});
 
 			cb->tracker_response(tracker_req(), {}, {}, *response.resp);
 		}

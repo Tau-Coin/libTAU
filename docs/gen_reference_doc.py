@@ -16,7 +16,7 @@ if plain_output:
     plain_file = open('plain_text_out.txt', 'w+')
 in_code = None
 
-paths = ['include/libtorrent/*.hpp', 'include/libtorrent/kademlia/*.hpp', 'include/libtorrent/extensions/*.hpp']
+paths = ['include/libtorrent/*.hpp', 'include/libtorrent/kademlia/*.hpp', 'include/libtorrent/extensions/*.hpp', 'include/libtorrent/communication/*.hpp']
 
 if internal:
     paths.append('include/libtorrent/aux_/*.hpp')
@@ -66,7 +66,8 @@ symbols = \
         "ssl-torrents_": "manual-ref.html#ssl-torrents",
         "dynamic-loading-of-torrent-files_": "manual-ref.html#dynamic-loading-of-torrent-files",
         "session-statistics_": "manual-ref.html#session-statistics",
-        "peer-classes_": "manual-ref.html#peer-classes"
+        "peer-classes_": "manual-ref.html#peer-classes",
+        "communication_": "manual-ref.html#communication"
     }
 
 # parse out names of settings, and add them to the symbols list, to get cross
@@ -148,6 +149,11 @@ category_mapping = {
     'operations.hpp': 'Alerts',
     'disk_buffer_holder.hpp': 'Custom Storage',
     'alert_dispatcher.hpp': 'Alerts',
+    'online_signal.hpp': 'Signal',
+    'new_msg_signal.hpp': 'Signal',
+    'mutable_data_wrapper.hpp': 'Data',
+    'message.hpp': 'Message',
+    'message_container.hpp': 'Message',
 }
 
 category_fun_mapping = {
@@ -813,6 +819,10 @@ def consume_ifdef(lno, lines, warn_on_ifdefs=False):
 
 
 for filename in files:
+    print("===================================")
+    print(filename)
+    print("===================================")
+
     h = open(filename)
     lines = h.read().split('\n')
 
@@ -1307,7 +1317,11 @@ sections = \
         'Custom Storage': 2,
         'Plugins': 2,
 
-        'Alerts': 3
+        'Signal': 3,
+        'Data': 3,
+        'Message': 3,
+
+        'Alerts': 4
     }
 
 
@@ -1521,7 +1535,7 @@ reference documentation
 
     out.write('`single-page version`__\n\n__ single-page-ref.html\n\n')
 
-    for i in range(4):
+    for i in range(5):
 
         print_toc(out, categories, i)
 

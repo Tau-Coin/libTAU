@@ -104,6 +104,7 @@ for line in f:
         else:
             default_values = []
             for n in names:
+                print(n)
                 default_values.append(def_map[n])
             render_section(names, description, mode, default_values)
         description = ''

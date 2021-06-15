@@ -64,11 +64,6 @@ completes downloading, we can poll the session for alerts periodically and print
 them out, as well as listening for the torrent_finished_alert, which is posted
 when a torrent completes.
 
-.. include:: ../examples/bt-get.cpp
-	:code: c++
-	:tab-width: 2
-	:start-after: */
-
 alert masks
 -----------
 
@@ -226,11 +221,6 @@ Here's an updated version of the above example with the following updates:
 2. printing torrent status updates rather than the raw log
 3. saving and loading resume files
 
-.. include:: ../examples/bt-get2.cpp
-	:code: c++
-	:tab-width: 2
-	:start-after: */
-
 session state
 -------------
 
@@ -262,11 +252,6 @@ Another updated version of the above example with the following updates:
 
 1. load and save session_params to file ".session"
 2. allow shutting down on ``SIGINT``
-
-.. include:: ../examples/bt-get3.cpp
-	:code: c++
-	:tab-width: 2
-	:start-after: */
 
 torrent files
 -------------

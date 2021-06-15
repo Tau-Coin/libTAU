@@ -68,6 +68,11 @@ rule linking ( properties * )
 		result += <library>dbghelp ;
 	}
 
+    if <database>db in $(properties)
+    {
+        result += <library>leveldb ;
+    }
+
 	# gcrypt libraries, if enabled
 	if <crypto>gcrypt in $(properties)
 	{
@@ -394,6 +399,28 @@ rule tag ( name : type ? : property-set )
 	}
 }
 
+# the search path to pick up the leveldb libraries from. This is the <search>
+# property of those libraries
+rule leveldb-lib-path ( properties * )
+{
+    local LEVELDB_LIB = [ feature.get-values <leveldb-lib> : $(properties) ] ;
+
+    local result ;
+    result += <search>$(LEVELDB_LIB) ;
+    return $(result) ;
+}
+
+# the include path to pick up leveldb headers from. This is the
+# usage-requirement for the leveldb-related libraries
+rule leveldb-include-path ( properties * )
+{
+    local LEVELDB_INCLUDE = [ feature.get-values <leveldb-include> : $(properties) ] ;
+
+    local result ;
+    result += <include>$(LEVELDB_INCLUDE) ;
+    return $(result) ;
+}
+
 # the search path to pick up the openssl libraries from. This is the <search>
 # property of those libraries
 rule openssl-lib-path ( properties * )
@@ -524,6 +551,9 @@ path-constant blacklist-file : tools/sanitizer-blacklist.txt ;
 feature openssl-lib : : free path ;
 feature openssl-include : : free path ;
 
+feature leveldb-lib : : free path ;
+feature leveldb-include : : free path ;
+
 feature gnutls-lib : : free path ;
 feature gnutls-include : : free path ;
 
@@ -603,6 +633,9 @@ feature.compose <encryption>off : <define>TORRENT_DISABLE_ENCRYPTION ;
 
 feature mutable-torrents : on off : composite propagated link-incompatible ;
 feature.compose <mutable-torrents>off : <define>TORRENT_DISABLE_MUTABLE_TORRENTS ;
+
+feature database : built-in db : composite propagated ;
+feature.compose <database>db : <define>TORRENT_ENABLE_DB ;
 
 feature crypto : built-in openssl wolfssl gnutls libcrypto gcrypt : composite propagated ;
 feature.compose <crypto>openssl
@@ -689,6 +722,9 @@ lib crypto : : <name>crypto <use>z <conditional>@openssl-lib-path : :
 	<conditional>@openssl-include-path ;
 lib ssl : : <name>ssl <use>crypto <conditional>@openssl-lib-path : :
 	<conditional>@openssl-include-path ;
+
+lib leveldb : : <name>leveldb <conditional>@leveldb-lib-path : :
+    <conditional>@leveldb-include-path ;
 
 lib gnutls : : <name>gnutls <conditional>@gnutls-lib-path : :
 	<conditional>@gnutls-include-path ;

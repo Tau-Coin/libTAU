@@ -43,7 +43,9 @@ REFERENCE_TARGETS = \
 	reference-Filter \
 	reference-Settings \
 	reference-Bdecoding \
-	reference-ed25519
+	reference-ed25519 \
+	reference-Data \
+	reference-Message
 
 MANUAL_TARGETS = index \
 	udp_tracker_protocol \
@@ -53,11 +55,9 @@ MANUAL_TARGETS = index \
 	building \
 	troubleshooting \
 	contributing\
-	examples \
 	extension_protocol \
 	dht_extensions \
 	dht_sec \
-	python_binding \
 	projects \
 	utp \
 	hacking \
@@ -154,7 +154,7 @@ img/troubleshooting_thumb.png: img/troubleshooting.png
 todo.html:gen_todo.py ../src/*.cpp ../include/libtorrent/*.hpp
 	python3 gen_todo.py
 
-$(REFERENCE_TARGETS:=.rst) plain_text_out.txt settings-ref.rst:gen_reference_doc.py ../include/libtorrent/*.hpp ../include/libtorrent/kademlia/*.hpp manual.rst tuning.rst tutorial.rst features.rst settings.rst stats_counters.rst hunspell/settings.dic
+$(REFERENCE_TARGETS:=.rst) plain_text_out.txt settings-ref.rst:gen_reference_doc.py ../include/libtorrent/*.hpp ../include/libtorrent/kademlia/*.hpp ../include/libtorrent/communication/*.hpp manual.rst tuning.rst tutorial.rst features.rst settings.rst stats_counters.rst hunspell/settings.dic
 	python3 gen_reference_doc.py --plain-output
 
 spell-check:plain_text_out.txt $(MANUAL_TARGETS:=.html) manual.rst settings.rst tutorial.rst
