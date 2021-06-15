@@ -355,8 +355,9 @@ namespace aux {
 			// effect until the DHT is restarted.
 			dht_bootstrap_nodes,
 
-			//the directory for storing db
-            leveldb_dir,
+			// The directory for storing db.
+            // Now using leveldb.
+			leveldb_dir,
 
 			// This is the STUN server used by WebTorrent to enable ICE NAT
 			// traversal for WebRTC. It must have the format ``hostname:port``.
@@ -451,13 +452,6 @@ namespace aux {
 			// if true, prefer seeding torrents when determining which torrents to give
 			// active slots to. If false, give preference to downloading torrents
 			auto_manage_prefer_seeds,
-
-			// if ``dont_count_slow_torrents`` is true, torrents without any
-			// payload transfers are not subject to the ``active_seeds`` and
-			// ``active_downloads`` limits. This is intended to make it more
-			// likely to utilize all available bandwidth, and avoid having
-			// torrents that don't transfer anything block the active slots.
-			dont_count_slow_torrents,
 
 			// ``close_redundant_connections`` specifies whether libtorrent should
 			// close connections where both ends have no utility in keeping the
@@ -832,12 +826,6 @@ namespace aux {
 			// upnp-and-nat-pmp_.
 			enable_natpmp,
 
-			// Starts and stops Local Service Discovery. This service will
-			// broadcast the info-hashes of all the non-private torrents on the
-			// local network to look for peers on the same swarm within multicast
-			// reach.
-			enable_lsd,
-
 			// starts the dht node and makes the trackerless service available to
 			// torrents.
 			enable_dht,
@@ -856,12 +844,6 @@ namespace aux {
 			// transporting actual torrent payload (trackers and DHT traffic are
 			// not considered peer connections).
 			proxy_peer_connections,
-
-			// if this setting is true, torrents with a very high availability of
-			// pieces (and seeds) are downloaded sequentially. This is more
-			// efficient for the disk I/O. With many seeds, the download order is
-			// unlikely to matter anyway
-			auto_sequential,
 
 			// if true, tracker connections are made over the configured proxy, if
 			// any.
@@ -1974,15 +1956,6 @@ namespace aux {
 			// a higher limit to read_resume_data() and
 			// torrent_info::parse_info_section(), if those are used.
 			max_piece_count,
-
-			// this is the minimum allowed announce interval for a WebSocket
-			// tracker used by WebTorrent to signal WebRTC connections. This is
-			// specified in seconds and is used as a sanity check on what is
-			// returned from a tracker.
-			min_websocket_announce_interval,
-
-			// the WebRTC connection timeout used by WebTorrent (in seconds)
-			webtorrent_connection_timeout,
 
 			max_int_setting_internal
 		};
