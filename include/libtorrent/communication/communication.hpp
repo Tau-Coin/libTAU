@@ -20,12 +20,16 @@ namespace libtorrent {
         class communication final: std::enable_shared_from_this<communication> {
         public:
 
+            // start communication
             void start();
+            // stop
             void stop();
 
         private:
+            // immutable data callback
             void get_immutable_callback(sha1_hash target
                     , dht::item const& i);
+            // mutable data callback
             void get_mutable_callback(dht::item const& i, bool);
 
             void dht_get_immutable_item(sha1_hash const& target);
@@ -45,8 +49,11 @@ namespace libtorrent {
 
             void refresh_timeout(error_code const& e);
 
+            // alerts
             aux::alert_manager m_alerts;
+            // session interface
             aux::session_interface& m_ses;
+            // deadline timer
             aux::deadline_timer m_refresh_timer;
         };
     }
