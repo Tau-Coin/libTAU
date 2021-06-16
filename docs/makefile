@@ -99,7 +99,7 @@ STAGE_IMG = $(addprefix img/, \
 	cwnd \
 )
 
-ORIG_HEADERS = $(wildcard ../include/libtorrent/*.hpp)
+ORIG_HEADERS = $(wildcard ../include/libtorrent/*.hpp ../include/libtorrent/kademlia/*.hpp ../include/libtorrent/communication/*.hpp)
 HEADERS = $(ORIG_HEADERS:../%=%)
 
 html: $(TARGETS:=.html) $(FIGURES:=.png) todo.html favicon.ico $(HEADERS)
@@ -108,11 +108,9 @@ stage: $(addprefix $(WEB_PATH)/, $(TARGETS:=.html) $(FIGURES:=.png) todo.html fa
 
 rst: $(TARGETS:=.rst) todo.html
 
-pdf: $(TARGETS:=.pdf) $(FIGURES:=.png)
+pdf: $(TARGETS:=.pdf) $(FIGURES:=.png) 
 
-epub: $(TARGETS:=.epub) $(FIGURES:=.png)
-
-all: html pdf favicon.ico
+all: html stage rst pdf
 
 img/logo-color-text.png: img/logo-color-text.svg
 	convert -background transparent $< -resize 400 $@
@@ -132,7 +130,7 @@ favicon-32.png: img/logo-color.svg
 favicon-64.png: img/logo-color.svg
 	convert -background transparent $< -resize 64x64 $@
 
-single-page-ref.rst: gen_reference_doc.py ../include/libtorrent/*.hpp ../include/libtorrent/kademlia/*.hpp settings-ref.rst stats_counters.rst
+single-page-ref.rst: gen_reference_doc.py ../include/libtorrent/*.hpp ../include/libtorrent/kademlia/*.hpp ../include/libtorrent/communication/*.hpp settings-ref.rst stats_counters.rst
 	python3 gen_reference_doc.py --single-page
 
 settings.rst hunspell/settings.dic: ../include/libtorrent/settings_pack.hpp hunspell/libtorrent.dic
@@ -174,14 +172,11 @@ spell-check:plain_text_out.txt $(MANUAL_TARGETS:=.html) manual.rst settings.rst 
 	hunspell -i UTF-8 -d hunspell/en_US -p hunspell/libtorrent.dic -H -l $(MANUAL_TARGETS:=.html) >>hunspell-report.txt
 	@if [ -s hunspell-report.txt ]; then echo 'spellcheck failed, fix words or add to dictionary:'; cat hunspell-report.txt; false; fi;
 
-%.epub:%.rst
-	rst2epub --exit-status=2 $< $@
+%.html:%.rst template.txt
+	$(RST2HTML) --title=libtorrent --exit-status=2 --template=template.txt --stylesheet-path=style.css --link-stylesheet --no-toc-backlinks $< > $@ || { rm $@; exit 1; }
 
 %.pdf:%.rst
 	rst2pdf $< -o $@ --stylesheets stylesheet
-
-%.html:%.rst template.txt template2.txt
-	$(RST2HTML) --title=libtorrent --exit-status=2 --template=template.txt --stylesheet-path=style.css --link-stylesheet --no-toc-backlinks $< > $@ || { rm $@; exit 1; }
 
 %.png:%.dot
 	dot -Tpng $< >$@ || { rm $@; exit 1; }
@@ -195,7 +190,7 @@ include/libtorrent/%.hpp: ../include/libtorrent/%.hpp
 
 # stage rules
 
-$(WEB_PATH)/%.html:%.rst template.txt template2.txt
+$(WEB_PATH)/%.html:%.rst template2.txt
 	mkdir -p $(WEB_PATH) >/dev/null
 	$(RST2HTML) --title=libtorrent --exit-status=2 --template=template2.txt --stylesheet-path=style.css --link-stylesheet --no-toc-backlinks $< > $@ || { rm $@; exit 1; }
 
@@ -220,6 +215,14 @@ $(WEB_PATH)/%.ico: %.ico
 
 $(WEB_PATH)/include/libtorrent/%.hpp: ../include/libtorrent/%.hpp
 	mkdir -p $(WEB_PATH)/include/libtorrent
+	cp $< $@
+
+$(WEB_PATH)/include/libtorrent/kademlia/%.hpp: ../include/libtorrent/kademlia/%.hpp
+	mkdir -p $(WEB_PATH)/include/libtorrent/kademlia
+	cp $< $@
+
+$(WEB_PATH)/include/libtorrent/communication/%.hpp: ../include/libtorrent/communication/%.hpp
+	mkdir -p $(WEB_PATH)/include/libtorrent/communication
 	cp $< $@
 
 $(WEB_PATH)/img/%.png: img/%.png

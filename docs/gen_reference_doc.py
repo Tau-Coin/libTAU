@@ -819,9 +819,6 @@ def consume_ifdef(lno, lines, warn_on_ifdefs=False):
 
 
 for filename in files:
-    print("===================================")
-    print(filename)
-    print("===================================")
 
     h = open(filename)
     lines = h.read().split('\n')
