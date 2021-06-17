@@ -25,9 +25,7 @@ namespace libtorrent {
             message_container(aux::bytesConstRef _rlp);
 
             // @returns all messages in this container
-            std::vector<message> messages() const {
-                return m_messages;
-            }
+            std::vector<message> messages() const { return m_messages; }
 
             // Serialises this message container to an RLPStream
             void streamRLP(aux::RLPStream& _s) const;

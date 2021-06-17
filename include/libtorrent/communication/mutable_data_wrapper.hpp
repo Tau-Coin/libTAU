@@ -36,19 +36,13 @@ namespace libtorrent {
             mutable_data_wrapper(aux::bytesConstRef _rlp);
 
             // @returns timestamp
-            uint32_t timestamp() const {
-                return m_timestamp;
-            }
+            uint32_t timestamp() const { return m_timestamp; }
 
             // @returns type
-            mutable_data_type type() const {
-                return m_type;
-            }
+            mutable_data_type type() const { return m_type; }
 
             // @returns payload
-            aux::bytes payload() const {
-                return m_payload;
-            }
+            aux::bytes payload() const { return m_payload; }
 
             // Serialises this mutable data wrapper to an RLPStream
             void streamRLP(aux::RLPStream& _s) const;

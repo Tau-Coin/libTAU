@@ -28,19 +28,13 @@ namespace libtorrent {
             new_msg_signal(aux::bytesConstRef _rlp);
 
             // @returns device id
-            aux::bytes device_id() const {
-                return m_device_id;
-            }
+            aux::bytes device_id() const { return m_device_id; }
 
             // @returns hash prefix bytes
-            aux::bytes hash_prefix_bytes() const {
-                return m_hash_prefix_bytes;
-            }
+            aux::bytes hash_prefix_bytes() const { return m_hash_prefix_bytes; }
 
             // @returns timestamp
-            uint32_t timestamp() const {
-                return m_timestamp;
-            }
+            uint32_t timestamp() const { return m_timestamp; }
 
             // Serialises this new message signal to an RLPStream
             void streamRLP(aux::RLPStream& _s) const;

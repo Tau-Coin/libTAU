@@ -43,44 +43,28 @@ namespace libtorrent {
             message(aux::bytesConstRef _rlp);
 
             // @returns message version
-            message_version version() const {
-                return m_version;
-            }
+            message_version version() const { return m_version; }
 
             // @returns message timestamp
-            uint32_t timestamp() const {
-                return m_timestamp;
-            }
+            uint32_t timestamp() const { return m_timestamp; }
 
             // @returns message sender
-            const aux::bytes &sender() const {
-                return m_sender;
-            }
+            const aux::bytes &sender() const { return m_sender; }
 
             // @returns message receiver
-            const aux::bytes &receiver() const {
-                return m_receiver;
-            }
+            const aux::bytes &receiver() const { return m_receiver; }
 
             // @returns message logic msg hash
-            const aux::bytes &logic_msg_hash() const {
-                return m_logic_msg_hash;
-            }
+            const aux::bytes &logic_msg_hash() const { return m_logic_msg_hash; }
 
             // @returns message nonce
-            const aux::bigint &nonce() const {
-                return m_nonce;
-            }
+            const aux::bigint &nonce() const { return m_nonce; }
 
             // @returns message type
-            message_type type() const {
-                return m_type;
-            }
+            message_type type() const { return m_type; }
 
             // @returns encrypted content
-            const aux::bytes &encrypted_content() const {
-                return m_encrypted_content;
-            }
+            const aux::bytes &encrypted_content() const { return m_encrypted_content; }
 
             // Serialises this message to an RLPStream
             void streamRLP(aux::RLPStream& _s) const;
