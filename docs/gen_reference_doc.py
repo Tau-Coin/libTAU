@@ -16,7 +16,8 @@ if plain_output:
     plain_file = open('plain_text_out.txt', 'w+')
 in_code = None
 
-paths = ['include/libtorrent/*.hpp', 'include/libtorrent/kademlia/*.hpp', 'include/libtorrent/extensions/*.hpp', 'include/libtorrent/communication/*.hpp']
+#paths = ['include/libtorrent/*.hpp', 'include/libtorrent/kademlia/*.hpp', 'include/libtorrent/extensions/*.hpp', 'include/libtorrent/communication/*.hpp']
+paths = ['include/libtorrent/communication/online_signal.hpp']
 
 if internal:
     paths.append('include/libtorrent/aux_/*.hpp')
@@ -143,11 +144,11 @@ category_mapping = {
     'operations.hpp': 'Alerts',
     'disk_buffer_holder.hpp': 'Custom Storage',
     'alert_dispatcher.hpp': 'Alerts',
-    'online_signal.hpp': 'Signal',
-    'new_msg_signal.hpp': 'Signal',
-    'mutable_data_wrapper.hpp': 'Data',
-    'message.hpp': 'Message',
-    'message_container.hpp': 'Message',
+    'online_signal.hpp': 'Communication',
+    'new_msg_signal.hpp': 'Communication',
+    'mutable_data_wrapper.hpp': 'Communication',
+    'message.hpp': 'Communication',
+    'message_container.hpp': 'Communication',
 }
 
 category_fun_mapping = {
@@ -175,6 +176,9 @@ def categorize_symbol(name, filename):
 
     if filename.startswith('libtorrent/kademlia/'):
         return 'DHT'
+
+    if filename.startswith('libtorrent/communication/'):
+        return 'Communication'
 
     return 'Core'
 
@@ -811,7 +815,6 @@ def consume_ifdef(lno, lines, warn_on_ifdefs=False):
 
     return lno
 
-
 for filename in files:
 
     h = open(filename)
@@ -827,7 +830,6 @@ for filename in files:
 
     while lno < len(lines):
         line = lines[lno].strip()
-
         if orphaned_export:
             print('ERROR: TORRENT_EXPORT without function or class!\n%s:%d\n%s' % (filename, lno, line))
             sys.exit(1)
@@ -1015,7 +1017,6 @@ def new_category(cat):
     return {'classes': [], 'functions': [], 'enums': [],
             'filename': 'reference-%s.rst' % cat.replace(' ', '_'),
             'constants': {}}
-
 
 if dump:
 
@@ -1303,9 +1304,7 @@ sections = \
         'Custom Storage': 2,
         'Plugins': 2,
 
-        'Signal': 3,
-        'Data': 3,
-        'Message': 3,
+        'Communication': 3,
 
         'Alerts': 4
     }
