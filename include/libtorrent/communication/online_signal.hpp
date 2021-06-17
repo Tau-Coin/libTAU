@@ -22,6 +22,7 @@ namespace libtorrent {
 
 	    // The ``online_signal`` class represents 在线信号
         // 对类的说明
+        // T------_EXPORT 需要，否则该类不会导出，整个导出文件都有影响
         // online signal
         // one type of mutable wrapper,
         // is used to publish online info in XX channel
