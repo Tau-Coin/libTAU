@@ -85,6 +85,11 @@ see LICENSE file.
 
 #include <cstdarg> // for va_list
 
+#ifdef TORRENT_ENABLE_DB
+#include <leveldb/db.h>
+#endif
+
+
 // for logging the size of DHT structures
 #ifndef TORRENT_DISABLE_DHT
 #include <libtorrent/kademlia/find_data.hpp>
@@ -3039,14 +3044,11 @@ namespace {
     void session_impl::update_leveldb_dir()
     {    
 
-#ifndef TORRENT_DISABLE_LOGGING
-            session_log("=================================================");
-#endif
-
 #ifdef TORRENT_ENABLE_DB
 
 #ifndef TORRENT_DISABLE_LOGGING
-            session_log("start open leveldb !!!");
+        session_log("=================================================");
+        session_log("start open leveldb !!!");
 #endif
         std::string const& db_dir = m_settings.get_str(settings_pack::leveldb_dir);
         leveldb::Options options;
@@ -3061,7 +3063,7 @@ namespace {
 #endif
 
 #ifndef TORRENT_DISABLE_LOGGING
-            session_log("=================================================");
+        session_log("=================================================");
 #endif
 
     }   

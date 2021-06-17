@@ -1231,7 +1231,7 @@ namespace {
 		return {};
 #else
 		char ret[200];
-		std::snprintf(ret, sizeof(ret), "successfully listening on [%s] %s"
+		std::snprintf(ret, sizeof(ret), "libTAU successfully listening on [%s] %s"
 			, socket_type_name(socket_type), print_endpoint(address, port).c_str());
 		return ret;
 #endif
