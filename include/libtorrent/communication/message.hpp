@@ -1,6 +1,10 @@
-//
-// message struct
-//
+/*
+Copyright (c) 2021, TaiXiang Cui
+All rights reserved.
+
+You may use, distribute and modify this code under the terms of the BSD license,
+see LICENSE file.
+*/
 
 #ifndef LIBTAU_MESSAGE_HPP
 #define LIBTAU_MESSAGE_HPP
@@ -30,41 +34,37 @@ namespace libtorrent {
             UNSUPPORTED_TYPE
         };
 
-        class message {
+        // The ``message`` class shows message struct
+        class TORRENT_EXPORT message {
+
         public:
+
+            // @param _rlp rlp encode
             message(aux::bytesConstRef _rlp);
 
-            message_version version() const {
-                return m_version;
-            }
+            // @returns message version
+            message_version version() const { return m_version; }
 
-            uint32_t timestamp() const {
-                return m_timestamp;
-            }
+            // @returns message timestamp
+            uint32_t timestamp() const { return m_timestamp; }
 
-            const aux::bytes &sender() const {
-                return m_sender;
-            }
+            // @returns message sender
+            const aux::bytes &sender() const { return m_sender; }
 
-            const aux::bytes &receiver() const {
-                return m_receiver;
-            }
+            // @returns message receiver
+            const aux::bytes &receiver() const { return m_receiver; }
 
-            const aux::bytes &logic_msg_hash() const {
-                return m_logic_msg_hash;
-            }
+            // @returns message logic msg hash
+            const aux::bytes &logic_msg_hash() const { return m_logic_msg_hash; }
 
-            const aux::bigint &nonce() const {
-                return m_nonce;
-            }
+            // @returns message nonce
+            const aux::bigint &nonce() const { return m_nonce; }
 
-            message_type type() const {
-                return m_type;
-            }
+            // @returns message type
+            message_type type() const { return m_type; }
 
-            const aux::bytes &encrypted_content() const {
-                return m_encrypted_content;
-            }
+            // @returns encrypted content
+            const aux::bytes &encrypted_content() const { return m_encrypted_content; }
 
             // Serialises this message to an RLPStream
             void streamRLP(aux::RLPStream& _s) const;
@@ -84,18 +84,25 @@ namespace libtorrent {
 
             // message version
             message_version m_version;
+
             // message timestamp
             uint32_t m_timestamp;
+
             // message sender
             aux::bytes m_sender;
+
             // message receiver
             aux::bytes m_receiver;
+
             // logic message hash
             aux::bytes m_logic_msg_hash;
+
             // nonce is used to indicate the position of the message in a large segmented message
             aux::bigint m_nonce;
+
             // message type
             message_type m_type;
+
             // encrypted content
             aux::bytes m_encrypted_content;
         };

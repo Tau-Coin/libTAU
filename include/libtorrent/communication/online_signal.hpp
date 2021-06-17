@@ -16,6 +16,7 @@ see LICENSE file.
 
 #include <libtorrent/aux_/common.h>
 #include <libtorrent/aux_/rlp.h>
+#include "libtorrent/aux_/export.hpp"
 
 namespace libtorrent {
     namespace communication {
@@ -27,17 +28,20 @@ namespace libtorrent {
         // one type of mutable wrapper,
         // is used to publish online info in XX channel
         struct TORRENT_EXPORT online_signal {
-            
-            // 构造函数，可以显示注释
+
+            // @param _rlp rlp encode
             online_signal(aux::bytesConstRef _rlp);
 
-            // 移动设备ID, 写一行, 否则不导出, 可以加inline关键字
+            // @returns device id
             inline aux::bytes device_id() const { return m_device_id; }
 
+            // @returns hash prefix bytes
             inline aux::bytes hash_prefix_bytes() const { return m_hash_prefix_bytes; }
 
+            // @returns timestamp
             inline uint32_t timestamp() const { return m_timestamp; }
 
+            // @returns friend info bytes
             inline aux::bytes friend_info() const { return m_friend_info; }
 
             // Serialises this online signal to an RLPStream

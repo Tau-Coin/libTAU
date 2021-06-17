@@ -1,8 +1,10 @@
-//
-// message container
-// one type of mutable wrapper,
-// is used to put multiple messages together
-//
+/*
+Copyright (c) 2021, TaiXiang Cui
+All rights reserved.
+
+You may use, distribute and modify this code under the terms of the BSD license,
+see LICENSE file.
+*/
 
 #ifndef LIBTAU_MESSAGE_CONTAINER_HPP
 #define LIBTAU_MESSAGE_CONTAINER_HPP
@@ -13,13 +15,17 @@
 
 namespace libtorrent {
     namespace communication {
-        class message_container {
+
+        // The ``message_container`` class represents
+        // one type of mutable wrapper,
+        // is used to put multiple messages together
+        class TORRENT_EXPORT message_container {
+
         public:
             message_container(aux::bytesConstRef _rlp);
 
-            std::vector<message> messages() const {
-                return m_messages;
-            }
+            // @returns all messages in this container
+            std::vector<message> messages() const { return m_messages; }
 
             // Serialises this message container to an RLPStream
             void streamRLP(aux::RLPStream& _s) const;
