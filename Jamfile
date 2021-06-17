@@ -23,6 +23,7 @@ if $(BOOST_ROOT)
 
 	use-project /boost : $(BOOST_ROOT) ;
 	alias boost_system : /boost/system//boost_system ;
+	alias boost_filesystem : /boost/filesystem//boost_filesystem ;
 }
 else
 {
@@ -202,11 +203,13 @@ rule linking ( properties * )
 			# library, so that it properly exports its symbols
 			result += <define>BOOST_ALL_DYN_LINK ;
 			result += <library>boost_system/<link>static/<define>BOOST_ALL_DYN_LINK ;
+			result += <library>boost_filesystem/<link>static/<define>BOOST_ALL_DYN_LINK ;
 			result += <library>$(json)/<link>static/<define>BOOST_ALL_DYN_LINK ;
 		}
 		else
 		{
 			result += <library>boost_system/<link>static ;
+			result += <library>boost_filesystem/<link>static ;
 			result += <library>$(json)/<link>static ;
 		}
 
@@ -221,11 +224,13 @@ rule linking ( properties * )
 	else if <boost-link>shared in $(properties)
 	{
 		result += <library>boost_system/<link>shared ;
+		result += <library>boost_filesystem/<link>shared ;
 		result += <library>$(json)/<link>shared ;
 	}
 	else
 	{
 		result += <library>boost_system ;
+		result += <library>boost_filesystem ;
 		result += <library>$(json) ;
 	}
 

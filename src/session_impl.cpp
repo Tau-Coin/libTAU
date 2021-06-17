@@ -37,6 +37,7 @@ see LICENSE file.
 #endif
 
 #include "libtorrent/aux_/disable_warnings_push.hpp"
+#include <boost/filesystem.hpp>
 #include <boost/asio/ts/internet.hpp>
 #include <boost/asio/ts/executor.hpp>
 #include "libtorrent/aux_/disable_warnings_pop.hpp"
@@ -3050,15 +3051,29 @@ namespace {
         session_log("=================================================");
         session_log("start open leveldb !!!");
 #endif
-        std::string const& db_dir = m_settings.get_str(settings_pack::leveldb_dir);
-        leveldb::Options options;
-        options.create_if_missing = true;
-        leveldb::Status status = leveldb::DB::Open(options, db_dir, &m_db);
-        if (!status.ok()){
+        std::string home_dir = boost::filesystem::path(getenv("HOME")).string();
+        std::string const& db_dir = home_dir + m_settings.get_str(settings_pack::leveldb_dir);
+
+        // create the directory for storing data
+ 		if(!boost::filesystem::is_directory(db_dir)) {
 #ifndef TORRENT_DISABLE_LOGGING
-            session_log("open leveldb error !!!");
+			session_log("create directory for storing data: %s", db_dir.c_str());
 #endif
-        }
+			if(!boost::filesystem::create_directory(db_dir)){
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("ERROR: create db directory failed !");
+#endif
+			}
+		}
+
+		leveldb::Options options;
+		options.create_if_missing = true;
+		leveldb::Status status = leveldb::DB::Open(options, db_dir, &m_db);
+		if (!status.ok()){
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("open leveldb error !!!");
+#endif
+		}
     
 #endif
 
