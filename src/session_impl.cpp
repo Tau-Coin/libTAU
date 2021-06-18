@@ -3027,7 +3027,18 @@ namespace {
 #ifndef TORRENT_DISABLE_DHT
 		if (!m_settings.get_bool(settings_pack::enable_dht)) return;
 
-		std::string const& node_list = m_settings.get_str(settings_pack::dht_bootstrap_nodes);
+		//std::string const& node_list = m_settings.get_str(settings_pack::dht_bootstrap_nodes);
+		std::string const& nodes_from_settings = m_settings.get_str(settings_pack::dht_bootstrap_nodes);
+
+		std::string const nodes_key = "bootstrap_nodes";
+		std::string nodes_list;
+
+		leveldb::Status s = m_db->Get(leveldb::ReadOptions(), nodes_key, &nodes_list);
+		if (!s.ok()){
+			s = m_db->Put(leveldb::WriteOptions(), nodes_key, nodes_from_settings);
+			nodes_list = nodes_from_settings;
+		}
+
 		std::vector<std::pair<std::string, int>> nodes;
 		parse_comma_separated_string_port(node_list, nodes);
 
@@ -4018,6 +4029,22 @@ namespace {
 #endif
 	}
 
+#ifdef TORRENT_ENABLE_DB
+
+	bool get_data_from_db(const std::string&  key, std::string* value) {
+		leveldb::Status s = m_db->Get(leveldb::ReadOptions(), key, value);
+		if (s.ok()) return true;
+		else return false;
+	} 
+
+	bool put_data_into_db(const std::string& key, const std::string& value) {
+		leveldb::Status s = m_db->Put(leveldb::WriteOptions(), key, value);
+		if (s.ok()) return true;
+		else return false;
+	}
+
+#endif
+	
 	void session_impl::pop_alerts(std::vector<alert*>* alerts)
 	{
 		m_alerts.get_all(*alerts);

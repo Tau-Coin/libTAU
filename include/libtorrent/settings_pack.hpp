@@ -347,6 +347,10 @@ namespace aux {
 			// to generate a standard client peer ID fingerprint prefix.
 			peer_fingerprint,
 
+			// The directory for storing db.
+            // Now using leveldb.
+			leveldb_dir,
+
 			// This is a comma-separated list of IP port-pairs. They will be added
 			// to the DHT node (if it's enabled) as back-up nodes in case we don't
 			// know of any.
@@ -354,10 +358,6 @@ namespace aux {
 			// Changing these after the DHT has been started may not have any
 			// effect until the DHT is restarted.
 			dht_bootstrap_nodes,
-
-			// The directory for storing db.
-            // Now using leveldb.
-			leveldb_dir,
 
 			// This is the STUN server used by WebTorrent to enable ICE NAT
 			// traversal for WebRTC. It must have the format ``hostname:port``.
