@@ -2,7 +2,11 @@
 // Created by vincent on 2021/6/7.
 //
 
+#include <ctime>
+#include <cstdlib>
+
 #include "libtorrent/communication/communication.hpp"
+#include "libtorrent/kademlia/dht_tracker.hpp"
 
 using namespace std::placeholders;
 
@@ -11,13 +15,32 @@ namespace libtorrent {
 
         void communication::start()
         {
-            m_refresh_timer.expires_after(milliseconds(50));
+            init();
+
+            m_refresh_timer.expires_after(milliseconds(communication::default_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
         }
 
         void communication::stop()
         {
             m_refresh_timer.cancel();
+        }
+
+        void communication::init() {
+            // get friends from db
+            auto a = select_friend_randomly();
+        }
+
+        aux::bytes communication::select_friend_randomly() const {
+            if (!m_friends.empty())
+            {
+                srand((unsigned)time(NULL));
+                auto index = rand() % m_friends.size();
+
+                return m_friends[index];
+            }
+
+            return libtorrent::aux::bytes();
         }
 
         void communication::refresh_timeout(error_code const& e)
@@ -33,15 +56,15 @@ namespace libtorrent {
         void communication::get_immutable_callback(sha1_hash target
                 , dht::item const& i)
         {
-//            TORRENT_ASSERT(!i.is_mutable());
-//            m_alerts.emplace_alert<dht_immutable_item_alert>(target, i.value());
+            TORRENT_ASSERT(!i.is_mutable());
+            m_alerts.emplace_alert<dht_immutable_item_alert>(target, i.value());
         }
 
         void communication::dht_get_immutable_item(sha1_hash const& target)
         {
-//            if (!m_dht) return;
-//            m_dht->get_item(target, std::bind(&communication::get_immutable_callback
-//                    , this, target, _1));
+            if (!m_ses.dht()) return;
+            m_ses.dht()->get_item(target, std::bind(&communication::get_immutable_callback
+                    , this, target, _1));
         }
 
         // callback for dht_mutable_get
@@ -95,16 +118,16 @@ namespace libtorrent {
         void communication::dht_get_mutable_item(std::array<char, 32> key
                 , std::string salt)
         {
-//            if (!m_dht) return;
-//            m_dht->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
-//                    , this, _1, _2), std::move(salt));
+            if (!m_ses.dht()) return;
+            m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
+                    , this, _1, _2), std::move(salt));
         }
 
         void communication::dht_put_immutable_item(entry const& data, sha1_hash target)
         {
-//            if (!m_dht) return;
-//            m_dht->put_item(data, std::bind(&on_dht_put_immutable_item, std::ref(m_alerts)
-//                    , target, _1));
+            if (!m_ses.dht()) return;
+            m_ses.dht()->put_item(data, std::bind(&on_dht_put_immutable_item, std::ref(m_alerts)
+                    , target, _1));
         }
 
         void communication::dht_put_mutable_item(std::array<char, 32> key
@@ -112,10 +135,10 @@ namespace libtorrent {
                 , std::int64_t&, std::string const&)> cb
                 , std::string salt)
         {
-//            if (!m_dht) return;
-//            m_dht->put_item(dht::public_key(key.data())
-//                    , std::bind(&on_dht_put_mutable_item, std::ref(m_alerts), _1, _2)
-//                    , std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
+            if (!m_ses.dht()) return;
+            m_ses.dht()->put_item(dht::public_key(key.data())
+                    , std::bind(&on_dht_put_mutable_item, std::ref(m_alerts), _1, _2)
+                    , std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
         }
 
     }

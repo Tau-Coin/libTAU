@@ -1,10 +1,19 @@
 //
-// Created by vincent on 2021/6/7.
+// Copyright (c) 2021, TaiXiang Cui
+// All rights reserved.
+//
+// You may use, distribute and modify this code under the terms of the BSD license,
+// see LICENSE file.
 //
 
 #ifndef LIBTAU_COMMUNICATION_HPP
 #define LIBTAU_COMMUNICATION_HPP
 
+
+// OVERVIEW
+//
+// communication模块主要负责朋友或者区块链群组之间消息的沟通，
+// 同时作为time server，通过统计网络中位数时间，为其它模块提供时间基准
 
 #include <functional>
 //#include <memory>
@@ -15,20 +24,35 @@
 #include "libtorrent/kademlia/item.hpp"
 
 namespace libtorrent {
+
+    namespace dht {
+
+        struct dht_tracker;
+        class item;
+
+    }
+
     namespace communication {
 
-        class communication final: std::enable_shared_from_this<communication> {
+        class TORRENT_EXPORT communication final: std::enable_shared_from_this<communication> {
         public:
 
             // start communication
             void start();
+
             // stop
             void stop();
 
         private:
+            // initialize member variables
+            void init();
+
+            aux::bytes select_friend_randomly() const;
+
             // immutable data callback
             void get_immutable_callback(sha1_hash target
                     , dht::item const& i);
+
             // mutable data callback
             void get_mutable_callback(dht::item const& i, bool);
 
@@ -49,12 +73,19 @@ namespace libtorrent {
 
             void refresh_timeout(error_code const& e);
 
+            static constexpr int default_refresh_time = 50;
+
             // alerts
             aux::alert_manager m_alerts;
+
             // session interface
             aux::session_interface& m_ses;
+
             // deadline timer
             aux::deadline_timer m_refresh_timer;
+
+            // friend set
+            std::vector<aux::bytes> m_friends;
         };
     }
 }
