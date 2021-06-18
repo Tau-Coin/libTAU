@@ -679,9 +679,8 @@ namespace aux {
 			void update_upnp();
 			void update_natpmp();
 			void update_dht();
+			void update_leveldb_dir();
 			void update_dht_bootstrap_nodes();
-
-            void update_leveldb_dir();
 
 			void update_socket_buffer_size();
 			void update_connections_limit();
