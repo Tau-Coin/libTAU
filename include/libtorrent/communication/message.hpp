@@ -39,6 +39,7 @@ namespace libtorrent {
 
         public:
 
+            message() = default;
             // @param _rlp rlp encode
             message(aux::bytesConstRef _rlp);
 
