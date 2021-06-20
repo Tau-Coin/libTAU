@@ -9,10 +9,6 @@ see LICENSE file.
 #ifndef LIBTAU_ONLINE_SIGNAL_HPP
 #define LIBTAU_ONLINE_SIGNAL_HPP
 
-// OVERVIEW
-//
-// 对整个文件的说明，可能有多个类
-// 目前只有一个online_signal类
 
 #include <libtorrent/aux_/common.h>
 #include <libtorrent/aux_/rlp.h>

@@ -1,10 +1,10 @@
-//
-// Copyright (c) 2021, TaiXiang Cui
-// All rights reserved.
-//
-// You may use, distribute and modify this code under the terms of the BSD license,
-// see LICENSE file.
-//
+/*
+Copyright (c) 2021, TaiXiang Cui
+All rights reserved.
+
+You may use, distribute and modify this code under the terms of the BSD license,
+see LICENSE file.
+*/
 
 #ifndef LIBTAU_COMMUNICATION_HPP
 #define LIBTAU_COMMUNICATION_HPP
@@ -16,12 +16,14 @@
 // 同时作为time server，通过统计网络中位数时间，为其它模块提供时间基准
 
 #include <functional>
+#include <vector>
 //#include <memory>
 
 #include "libtorrent/aux_/deadline_timer.hpp"
 #include "libtorrent/aux_/alert_manager.hpp" // for alert_manager
 #include "libtorrent/aux_/session_interface.hpp"
 #include "libtorrent/kademlia/item.hpp"
+#include "libtorrent/communication/message_db_interface.hpp"
 
 namespace libtorrent {
 
@@ -83,6 +85,9 @@ namespace libtorrent {
 
             // deadline timer
             aux::deadline_timer m_refresh_timer;
+
+            // message db
+//            message_db_interface m_message_db;
 
             // friend set
             std::vector<aux::bytes> m_friends;

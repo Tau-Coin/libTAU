@@ -1,6 +1,10 @@
-//
-// Created by vincent on 2021/6/19.
-//
+/*
+Copyright (c) 2021, TaiXiang Cui
+All rights reserved.
+
+You may use, distribute and modify this code under the terms of the BSD license,
+see LICENSE file.
+*/
 
 #ifndef LIBTAU_MESSAGE_DB_IMPL_HPP
 #define LIBTAU_MESSAGE_DB_IMPL_HPP

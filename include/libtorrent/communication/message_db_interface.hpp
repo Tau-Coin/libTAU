@@ -1,10 +1,10 @@
-//
-// Copyright (c) 2021, TaiXiang Cui
-// All rights reserved.
-//
-// You may use, distribute and modify this code under the terms of the BSD license,
-// see LICENSE file.
-//
+/*
+Copyright (c) 2021, TaiXiang Cui
+All rights reserved.
+
+You may use, distribute and modify this code under the terms of the BSD license,
+see LICENSE file.
+*/
 
 #ifndef LIBTAU_MESSAGE_DB_INTERFACE_HPP
 #define LIBTAU_MESSAGE_DB_INTERFACE_HPP
@@ -43,7 +43,6 @@ namespace libtorrent {
             // delete message
             virtual void delete_message(aux::bytes hash) = 0;
 
-            // todo::comment
             // get encode of the latest message hash list
             virtual aux::bytes get_latest_message_hash_list_encode(aux::bytes public_key) = 0;
 
