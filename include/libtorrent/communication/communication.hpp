@@ -45,6 +45,15 @@ namespace libtorrent {
             // stop
             void stop();
 
+            // set main loop time interval
+            void set_loop_time_interval(int milliseconds);
+
+            // set chatting friends
+            void set_chatting_friend(aux::bytes chatting_friend);
+
+            // set active friends
+            void set_active_friends(std::vector<aux::bytes> &&active_friends);
+
         private:
             // initialize member variables
             void init();
@@ -86,11 +95,20 @@ namespace libtorrent {
             // deadline timer
             aux::deadline_timer m_refresh_timer;
 
+            // refresh time interval
+            int m_refresh_time = default_refresh_time;
+
             // message db
 //            message_db_interface m_message_db;
 
-            // friend set
+            // all friends
             std::vector<aux::bytes> m_friends;
+
+            // chatting friend
+            aux::bytes m_chatting_friend;
+
+            // active friends
+            std::vector<aux::bytes> m_active_friends;
         };
     }
 }

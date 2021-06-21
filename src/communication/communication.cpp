@@ -21,13 +21,25 @@ namespace libtorrent {
         {
             init();
 
-            m_refresh_timer.expires_after(milliseconds(communication::default_refresh_time));
+            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
         }
 
         void communication::stop()
         {
             m_refresh_timer.cancel();
+        }
+
+        void communication::set_loop_time_interval(int milliseconds) {
+            m_refresh_time = milliseconds;
+        }
+
+        void communication::set_chatting_friend(aux::bytes chatting_friend) {
+            m_chatting_friend = chatting_friend;
+        }
+
+        void communication::set_active_friends(std::vector<aux::bytes> &&active_friends) {
+            m_active_friends = std::move(active_friends);
         }
 
         void communication::init() {
@@ -51,7 +63,7 @@ namespace libtorrent {
         {
             // put/get
 
-            m_refresh_timer.expires_after(milliseconds(50));
+            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(
                     std::bind(&communication::refresh_timeout, self(), _1));
         }
