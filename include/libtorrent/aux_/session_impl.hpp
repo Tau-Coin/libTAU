@@ -873,7 +873,7 @@ namespace aux {
 #endif
 
 #ifdef TORRENT_ENABLE_DB
-            leveldb::DB* m_db;
+            leveldb::DB* m_kvdb;
 #endif
 
 			// this is initialized to the unchoke_interval

@@ -69,8 +69,7 @@ rule linking ( properties * )
 		result += <library>dbghelp ;
 	}
 
-	ECHO "=============: " $(properties) ;
-    if <database>db in $(properties)
+    if <database>kvdb in $(properties)
     {
         result += <library>leveldb ;
     }
@@ -640,8 +639,8 @@ feature.compose <encryption>off : <define>TORRENT_DISABLE_ENCRYPTION ;
 feature mutable-torrents : on off : composite propagated link-incompatible ;
 feature.compose <mutable-torrents>off : <define>TORRENT_DISABLE_MUTABLE_TORRENTS ;
 
-feature database : db : composite propagated ;
-feature.compose <database>db : <define>TORRENT_ENABLE_DB ;
+feature database : kvdb : composite propagated ;
+feature.compose <database>kvdb : <define>TORRENT_ENABLE_DB ;
 
 feature crypto : built-in openssl wolfssl gnutls libcrypto gcrypt : composite propagated ;
 feature.compose <crypto>openssl

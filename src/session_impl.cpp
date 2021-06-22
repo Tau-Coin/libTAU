@@ -3033,19 +3033,21 @@ namespace {
 		std::string const nodes_key = "bootstrap_nodes";
 		std::string nodes_list;
 
-		leveldb::Status s = m_db->Get(leveldb::ReadOptions(), nodes_key, &nodes_list);
+#ifdef TORRENT_ENABLE_DB
+		leveldb::Status s = m_kvdb->Get(leveldb::ReadOptions(), nodes_key, &nodes_list);
 		if (!s.ok()){
-			s = m_db->Put(leveldb::WriteOptions(), nodes_key, nodes_from_settings);
+			s = m_kvdb->Put(leveldb::WriteOptions(), nodes_key, nodes_from_settings);
 			nodes_list = nodes_from_settings;
 		}
+#endif
 
 		std::vector<std::pair<std::string, int>> nodes;
-		parse_comma_separated_string_port(node_list, nodes);
+		parse_comma_separated_string_port(nodes_list, nodes);
 
 #ifndef TORRENT_DISABLE_LOGGING
-		if (!node_list.empty() && nodes.empty())
+		if (!nodes_list.empty() && nodes.empty())
 		{
-			session_log("ERROR: failed to parse DHT bootstrap list: %s", node_list.c_str());
+			session_log("ERROR: failed to parse DHT bootstrap list: %s", nodes_list.c_str());
 		}
 #endif
 		for (auto const& n : nodes)
@@ -3079,7 +3081,7 @@ namespace {
 
 		leveldb::Options options;
 		options.create_if_missing = true;
-		leveldb::Status status = leveldb::DB::Open(options, db_dir, &m_db);
+		leveldb::Status status = leveldb::DB::Open(options, db_dir, &m_kvdb);
 		if (!status.ok()){
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("open leveldb error !!!");
@@ -4031,14 +4033,14 @@ namespace {
 
 #ifdef TORRENT_ENABLE_DB
 
-	bool get_data_from_db(const std::string&  key, std::string* value) {
-		leveldb::Status s = m_db->Get(leveldb::ReadOptions(), key, value);
+	bool session_impl::get_data_from_db(const std::string&  key, std::string* value) {
+		leveldb::Status s = m_kvdb->Get(leveldb::ReadOptions(), key, value);
 		if (s.ok()) return true;
 		else return false;
 	} 
 
-	bool put_data_into_db(const std::string& key, const std::string& value) {
-		leveldb::Status s = m_db->Put(leveldb::WriteOptions(), key, value);
+	bool session_impl::put_data_into_db(const std::string& key, const std::string& value) {
+		leveldb::Status s = m_kvdb->Put(leveldb::WriteOptions(), key, value);
 		if (s.ok()) return true;
 		else return false;
 	}
