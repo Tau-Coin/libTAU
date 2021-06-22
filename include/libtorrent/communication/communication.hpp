@@ -86,9 +86,6 @@ namespace libtorrent {
 
             static constexpr int default_refresh_time = 50;
 
-            // alerts
-            aux::alert_manager m_alerts;
-
             // session interface
             aux::session_interface& m_ses;
 

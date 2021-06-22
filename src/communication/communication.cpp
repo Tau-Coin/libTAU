@@ -8,6 +8,7 @@ see LICENSE file.
 
 #include <ctime>
 #include <cstdlib>
+#include <utility>
 
 #include "libtorrent/communication/communication.hpp"
 #include "libtorrent/kademlia/dht_tracker.hpp"
@@ -35,7 +36,7 @@ namespace libtorrent {
         }
 
         void communication::set_chatting_friend(aux::bytes chatting_friend) {
-            m_chatting_friend = chatting_friend;
+            m_chatting_friend = std::move(chatting_friend);
         }
 
         void communication::set_active_friends(std::vector<aux::bytes> &&active_friends) {
@@ -48,20 +49,59 @@ namespace libtorrent {
         }
 
         aux::bytes communication::select_friend_randomly() const {
+            aux::bytes peer;
+
             if (!m_friends.empty())
             {
-                srand((unsigned)time(NULL));
-                auto index = rand() % m_friends.size();
+                srand((unsigned)time(nullptr));
+                auto index = rand() % 10;
 
-                return m_friends[index];
+                // chatting friend(80%)
+                if (!m_chatting_friend.empty() && index < 8) {
+                    peer = m_chatting_friend;
+                } else {
+                    srand((unsigned)time(nullptr) + index);
+                    index = rand() % 10;
+
+                    // active friends(70%)
+                    if (!m_active_friends.empty() && index < 7) {
+                        srand((unsigned)time(nullptr) + index);
+                        index = rand() % m_active_friends.size();
+                        peer = m_active_friends[index];
+                    } else {
+                        std::vector<aux::bytes> other_friends = m_friends;
+                        for (aux::bytes peer: m_friends) {
+                            bool found = false;
+                            for (aux::bytes active_peer: m_active_friends) {
+                                if (active_peer == peer) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+
+                            if (!found) {
+                                other_friends.push_back(peer);
+                            }
+                        }
+
+                        if (!other_friends.empty()) {
+                            srand((unsigned)time(nullptr) + index);
+                            index = rand() % other_friends.size();
+                            peer = other_friends[index];
+                        }
+                    }
+                }
             }
 
-            return libtorrent::aux::bytes();
+            return peer;
         }
 
         void communication::refresh_timeout(error_code const& e)
         {
-            // put/get
+            aux::bytes peer = select_friend_randomly();
+            if (!peer.empty()) {
+                // put / get
+            }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(
@@ -73,7 +113,7 @@ namespace libtorrent {
                 , dht::item const& i)
         {
             TORRENT_ASSERT(!i.is_mutable());
-            m_alerts.emplace_alert<dht_immutable_item_alert>(target, i.value());
+            m_ses.alerts().emplace_alert<dht_immutable_item_alert>(target, i.value());
         }
 
         void communication::dht_get_immutable_item(sha1_hash const& target)
@@ -142,7 +182,7 @@ namespace libtorrent {
         void communication::dht_put_immutable_item(entry const& data, sha1_hash target)
         {
             if (!m_ses.dht()) return;
-            m_ses.dht()->put_item(data, std::bind(&on_dht_put_immutable_item, std::ref(m_alerts)
+            m_ses.dht()->put_item(data, std::bind(&on_dht_put_immutable_item, std::ref(m_ses.alerts())
                     , target, _1));
         }
 
@@ -153,7 +193,7 @@ namespace libtorrent {
         {
             if (!m_ses.dht()) return;
             m_ses.dht()->put_item(dht::public_key(key.data())
-                    , std::bind(&on_dht_put_mutable_item, std::ref(m_alerts), _1, _2)
+                    , std::bind(&on_dht_put_mutable_item, std::ref(m_ses.alerts()), _1, _2)
                     , std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
         }
 
