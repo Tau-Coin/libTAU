@@ -60,6 +60,9 @@ namespace libtorrent {
 
             aux::bytes select_friend_randomly() const;
 
+            // validate message, check if message is oversize( >1000 bytes)
+            bool validateMessage(message msg);
+
             // immutable data callback
             void get_immutable_callback(sha1_hash target
                     , dht::item const& i);

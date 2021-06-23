@@ -48,6 +48,14 @@ namespace libtorrent {
             auto a = select_friend_randomly();
         }
 
+        bool communication::validateMessage(message msg) {
+            if (msg.rlp().size() > 1000) {
+                return false;
+            }
+
+            return true;
+        }
+
         aux::bytes communication::select_friend_randomly() const {
             aux::bytes peer;
 
@@ -70,17 +78,17 @@ namespace libtorrent {
                         peer = m_active_friends[index];
                     } else {
                         std::vector<aux::bytes> other_friends = m_friends;
-                        for (aux::bytes peer: m_friends) {
+                        for (const auto& fri: m_friends) {
                             bool found = false;
-                            for (aux::bytes active_peer: m_active_friends) {
-                                if (active_peer == peer) {
+                            for (const auto& active_fri: m_active_friends) {
+                                if (active_fri == fri) {
                                     found = true;
                                     break;
                                 }
                             }
 
                             if (!found) {
-                                other_friends.push_back(peer);
+                                other_friends.push_back(fri);
                             }
                         }
 
@@ -133,6 +141,17 @@ namespace libtorrent {
 //                    , i.salt(), i.value(), authoritative);
         }
 
+        // key is a 32-byte binary string, the public key to look up.
+        // the salt is optional
+        // TODO: 3 use public_key here instead of std::array
+        void communication::dht_get_mutable_item(std::array<char, 32> key
+                , std::string salt)
+        {
+            if (!m_ses.dht()) return;
+            m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
+                    , this, _1, _2), std::move(salt));
+        }
+
         namespace {
 
             void on_dht_put_immutable_item(aux::alert_manager& alerts, sha1_hash target, int num)
@@ -167,17 +186,6 @@ namespace libtorrent {
                 i.assign(std::move(value), salt, seq, pk, sig);
             }
         } // anonymous namespace
-
-        // key is a 32-byte binary string, the public key to look up.
-        // the salt is optional
-        // TODO: 3 use public_key here instead of std::array
-        void communication::dht_get_mutable_item(std::array<char, 32> key
-                , std::string salt)
-        {
-            if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
-                    , this, _1, _2), std::move(salt));
-        }
 
         void communication::dht_put_immutable_item(entry const& data, sha1_hash target)
         {
