@@ -69,9 +69,14 @@ rule linking ( properties * )
 		result += <library>dbghelp ;
 	}
 
-    if <database>kvdb in $(properties)
+    if <kvdatabase>kvdb in $(properties)
     {
         result += <library>leveldb ;
+    }
+
+    if <sqldatabase>sqldb in $(properties)
+    {
+        result += <library>sqlite3 ;
     }
 
 	# gcrypt libraries, if enabled
@@ -426,6 +431,28 @@ rule leveldb-include-path ( properties * )
     return $(result) ;
 }
 
+# the search path to pick up the sqlite libraries from. This is the <search>
+# property of those libraries
+rule sqlite-lib-path ( properties * )
+{
+    local SQLITE_LIB = [ feature.get-values <sqlite-lib> : $(properties) ] ;
+
+    local result ;
+    result += <search>$(SQLITE_LIB) ;
+    return $(result) ;
+}
+
+# the include path to pick up sqlite headers from. This is the
+# usage-requirement for the sqlite-related libraries
+rule sqlite-include-path ( properties * )
+{
+    local SQLITE_INCLUDE = [ feature.get-values <sqlite-include> : $(properties) ] ;
+
+    local result ;
+    result += <include>$(SQLITE_INCLUDE) ;
+    return $(result) ;
+}
+
 # the search path to pick up the openssl libraries from. This is the <search>
 # property of those libraries
 rule openssl-lib-path ( properties * )
@@ -559,6 +586,9 @@ feature openssl-include : : free path ;
 feature leveldb-lib : : free path ;
 feature leveldb-include : : free path ;
 
+feature sqlite-lib : : free path ;
+feature sqlite-include : : free path ;
+
 feature gnutls-lib : : free path ;
 feature gnutls-include : : free path ;
 
@@ -639,8 +669,11 @@ feature.compose <encryption>off : <define>TORRENT_DISABLE_ENCRYPTION ;
 feature mutable-torrents : on off : composite propagated link-incompatible ;
 feature.compose <mutable-torrents>off : <define>TORRENT_DISABLE_MUTABLE_TORRENTS ;
 
-feature database : kvdb : composite propagated ;
-feature.compose <database>kvdb : <define>TORRENT_ENABLE_DB ;
+feature kvdatabase : kvdb : composite propagated ;
+feature.compose <kvdatabase>kvdb : <define>TORRENT_ENABLE_DB ;
+
+feature sqldatabase : sqldb : composite propagated ;
+feature.compose <sqldatabase>sqldb : <define>TORRENT_ENABLE_DB ;
 
 feature crypto : built-in openssl wolfssl gnutls libcrypto gcrypt : composite propagated ;
 feature.compose <crypto>openssl
@@ -730,6 +763,9 @@ lib ssl : : <name>ssl <use>crypto <conditional>@openssl-lib-path : :
 
 lib leveldb : : <name>leveldb <conditional>@leveldb-lib-path : :
     <conditional>@leveldb-include-path ;
+
+lib sqlite3 : : <name>sqlite3 <conditional>@sqlite-lib-path : :
+    <conditional>@sqlite-include-path ;
 
 lib gnutls : : <name>gnutls <conditional>@gnutls-lib-path : :
 	<conditional>@gnutls-include-path ;

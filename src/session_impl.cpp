@@ -88,6 +88,7 @@ see LICENSE file.
 
 #ifdef TORRENT_ENABLE_DB
 #include <leveldb/db.h>
+#include <sqlite3.h>
 #endif
 
 
@@ -886,6 +887,17 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 		stop_natpmp();
 #ifndef TORRENT_DISABLE_DHT
 		stop_dht();
+#endif
+
+#ifdef TORRENT_ENABLE_DB
+		if(m_kvdb) {
+			delete m_kvdb;
+		}
+
+		if (m_sqldb) {
+			sqlite3_close_v2(m_sqldb);
+			m_sqldb = nullptr;
+		}
 #endif
 
 #ifdef TORRENT_SSL_PEERS
@@ -3055,43 +3067,56 @@ namespace {
 #endif
 	}
 
-    void session_impl::update_leveldb_dir()
+    void session_impl::update_db_dir()
     {    
 
 #ifdef TORRENT_ENABLE_DB
 
-#ifndef TORRENT_DISABLE_LOGGING
-        session_log("=================================================");
-        session_log("start open leveldb !!!");
-#endif
         std::string home_dir = boost::filesystem::path(getenv("HOME")).string();
-        std::string const& db_dir = home_dir + m_settings.get_str(settings_pack::leveldb_dir);
+        std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
+        std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+        std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
-        // create the directory for storing data
- 		if(!boost::filesystem::is_directory(db_dir)) {
+        // create the directory for storing leveldb data
+ 		if(!boost::filesystem::is_directory(kvdb_dir)) {
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("create directory for storing data: %s", db_dir.c_str());
+			session_log("create directory for storing kvdb data: %s", kvdb_dir.c_str());
 #endif
-			if(!boost::filesystem::create_directory(db_dir)){
+			if(!boost::filesystem::create_directory(kvdb_dir)){
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("ERROR: create db directory failed !");
+			session_log("ERROR: create leveldb directory failed !");
+#endif
+			}
+		}
+
+        // create the directory for storing sqldb data
+ 		if(!boost::filesystem::is_directory(sqldb_dir)) {
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("create directory for storing sqldb data: %s", sqldb_dir.c_str());
+#endif
+			if(!boost::filesystem::create_directory(sqldb_dir)){
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("ERROR: create sqldb directory failed !");
 #endif
 			}
 		}
 
 		leveldb::Options options;
 		options.create_if_missing = true;
-		leveldb::Status status = leveldb::DB::Open(options, db_dir, &m_kvdb);
+		leveldb::Status status = leveldb::DB::Open(options, kvdb_dir, &m_kvdb);
 		if (!status.ok()){
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("open leveldb error !!!");
 #endif
 		}
-    
-#endif
 
+		int sqlrc = sqlite3_open_v2(sqldb_path.c_str(), &m_sqldb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		if (sqlrc != SQLITE_OK) {
 #ifndef TORRENT_DISABLE_LOGGING
-        session_log("=================================================");
+			session_log("open sqldb error !!!");
+#endif
+		}
+    
 #endif
 
     }   

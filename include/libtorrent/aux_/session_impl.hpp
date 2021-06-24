@@ -74,6 +74,7 @@ see LICENSE file.
 
 #ifdef TORRENT_ENABLE_DB
 #include <leveldb/db.h>
+#include <sqlite3.h>
 #endif
 
 #include <algorithm>
@@ -679,7 +680,7 @@ namespace aux {
 			void update_upnp();
 			void update_natpmp();
 			void update_dht();
-			void update_leveldb_dir();
+			void update_db_dir();
 			void update_dht_bootstrap_nodes();
 
 			void update_socket_buffer_size();
@@ -874,6 +875,7 @@ namespace aux {
 
 #ifdef TORRENT_ENABLE_DB
             leveldb::DB* m_kvdb;
+            sqlite3* m_sqldb;
 #endif
 
 			// this is initialized to the unchoke_interval
