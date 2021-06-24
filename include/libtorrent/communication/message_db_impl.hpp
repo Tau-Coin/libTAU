@@ -10,20 +10,27 @@ see LICENSE file.
 #define LIBTAU_MESSAGE_DB_IMPL_HPP
 
 
+#include <sqlite3.h>
+//#include <leveldb/db.h>
+
 #include "libtorrent/communication/message_db_interface.hpp"
 
 namespace libtorrent {
     namespace communication {
 
         struct message_db_impl final : message_db_interface {
+
+            // init db
+            bool init();
+
             // get all friends
             std::vector<aux::bytes> get_all_friends() override;
 
             // save a friend in db
-            void save_friend(aux::bytes public_key) override;
+            bool save_friend(aux::bytes public_key) override;
 
             // delete a friend
-            void delete_friend(aux::bytes public_key) override;
+            bool delete_friend(aux::bytes public_key) override;
 
             // get message by hash
             communication::message get_message(aux::bytes hash) override;
@@ -42,6 +49,13 @@ namespace libtorrent {
 
             // delete encode of the latest message hash list
             void delete_latest_message_hash_list_encode(aux::bytes public_key) override;
+
+        private:
+
+            // sqlite3 instance
+            sqlite3 *m_sqlite;
+            // level db instance
+//            leveldb::DB* m_leveldb;
         };
     }
 }

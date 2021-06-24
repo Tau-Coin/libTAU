@@ -25,14 +25,18 @@ namespace libtorrent {
         // 每当有更新的消息加入该列表，列表满载时会删除其最老的消息哈希，并根据该哈希删除相应的消息；
         // 并且，该哈希列表也用来生成对应的莱温斯坦数组，只需取哈希的第一个字节，并按对应顺序排列即可
         struct TORRENT_EXPORT message_db_interface {
+
+            // init db
+            virtual bool init() = 0;
+
             // get all friends
             virtual std::vector<aux::bytes> get_all_friends() = 0;
 
             // save a friend in db
-            virtual void save_friend(aux::bytes public_key) = 0;
+            virtual bool save_friend(aux::bytes public_key) = 0;
 
             // delete a friend
-            virtual void delete_friend(aux::bytes public_key) = 0;
+            virtual bool delete_friend(aux::bytes public_key) = 0;
 
             // get message by hash
             virtual communication::message get_message(aux::bytes hash) = 0;
