@@ -25,6 +25,7 @@ see LICENSE file.
 #include "libtorrent/performance_counters.hpp" // for counters
 #include "libtorrent/aux_/allocating_handler.hpp"
 #include "libtorrent/aux_/time.hpp"
+#include "libtorrent/aux_/ed25519.hpp"
 #include "libtorrent/aux_/torrent_list.hpp"
 #include "libtorrent/session_params.hpp" // for disk_io_constructor_type
 
@@ -74,6 +75,7 @@ see LICENSE file.
 
 #ifdef TORRENT_ENABLE_DB
 #include <leveldb/db.h>
+#include <sqlite3.h>
 #endif
 
 #include <algorithm>
@@ -679,7 +681,7 @@ namespace aux {
 			void update_upnp();
 			void update_natpmp();
 			void update_dht();
-			void update_leveldb_dir();
+			void update_db_dir();
 			void update_dht_bootstrap_nodes();
 
 			void update_socket_buffer_size();
@@ -874,7 +876,24 @@ namespace aux {
 
 #ifdef TORRENT_ENABLE_DB
             leveldb::DB* m_kvdb;
+            sqlite3* m_sqldb;
 #endif
+			struct account_info {
+
+				explicit account_info(char const* b) { 
+					std::copy(b, b + len, seed.begin()); 
+					aux::ed25519_create_keypair(pubkey.data(), prikey.data(), seed.data());
+				}
+
+				static constexpr int len = 32;
+
+				std::array<unsigned char, len> seed;
+				std::array<unsigned char, len> pubkey;
+				std::array<unsigned char, 2*len> prikey;
+
+			};
+
+			account_info account;
 
 			// this is initialized to the unchoke_interval
 			// session_setting and decreased every second.

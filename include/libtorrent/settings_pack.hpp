@@ -348,8 +348,8 @@ namespace aux {
 			peer_fingerprint,
 
 			// The directory for storing db.
-            // Now using leveldb.
-			leveldb_dir,
+            // Now using leveldb and sqlite3.
+			db_dir,
 
 			// This is a comma-separated list of IP port-pairs. They will be added
 			// to the DHT node (if it's enabled) as back-up nodes in case we don't
