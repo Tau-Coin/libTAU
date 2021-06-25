@@ -91,7 +91,7 @@ namespace libtorrent::dht {
 
 	void dht_tracker::update_node_id(aux::listen_socket_handle const& s)
 	{
-		// TODO:
+		// TODO: seed change in impl
 	}
 
 	void dht_tracker::new_socket(aux::listen_socket_handle const& s)
