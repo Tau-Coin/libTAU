@@ -82,6 +82,7 @@ FIGURES = $(addprefix img/, \
 STAGE_IMG = $(addprefix img/, \
 	logo-color-text \
 	logo-color \
+	logo-tau \
 	screenshot \
 	bitcoin \
 	ip_id_v4 \
