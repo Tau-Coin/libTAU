@@ -109,7 +109,7 @@ p.first {
 #footer a:hover { color: #000; }
 #gradient { background: linear-gradient(#aaa, #ddd); }
 #filler { background: linear-gradient(#ddd, #fff); }
-}
+} 
 /* @media (prefers-color-scheme: dark) {
 #footer {
 	color: #888;
@@ -132,8 +132,8 @@ p.first {
 }
 
 #filler {
-	min-height: 400px;
-	height: 100%;
+	/* min-height: 400px;
+	height: 100%; */
 }
 
 #footer {
@@ -256,7 +256,7 @@ div.main-toc { border-color: #888; }
 } */
 div.main-toc {
 	column-count: 4;
-	column-width: 13em;
+	column-width: 18em; /*reset*/
 	border-style: solid;
 	border-width: 1px;
 	padding: 5px;
@@ -314,7 +314,7 @@ div.main-toc {
 #table-of-contents ul {
 	margin: 0;
 	padding: 0 0 0 0.8em;
-	list-style: square;
+	/* list-style: square; */ /*reset*/
 	text-align: left;
 	line-height: 1.5em;
 }
