@@ -21,17 +21,10 @@ REFERENCE_TARGETS = \
 	upgrade_to_1.2-ref \
 	upgrade_to_2.0-ref \
 	reference \
-	reference-Core \
 	reference-DHT \
 	reference-Session \
-	reference-Trackers \
-	reference-PeerClass \
 	reference-Stats \
-	reference-Resume_Data \
-	reference-Plugins \
 	reference-Error_Codes \
-	reference-Storage \
-	reference-Custom_Storage \
 	reference-Utility \
 	reference-Bencoding \
 	reference-Alerts \
@@ -168,7 +161,7 @@ spell-check:plain_text_out.txt $(MANUAL_TARGETS:=.html) manual.rst settings.rst 
 	@if [ -s hunspell-report.txt ]; then echo 'spellcheck failed, fix words or add to dictionary:'; cat hunspell-report.txt; false; fi;
 
 %.html:%.rst template.txt
-	$(RST2HTML) --title=libtorrent --exit-status=2 --template=template.txt --stylesheet-path=style.css --link-stylesheet --no-toc-backlinks $< > $@ || { rm $@; exit 1; }
+	$(RST2HTML) --title=libTAU --exit-status=2 --template=template.txt --stylesheet-path=style.css --link-stylesheet --no-toc-backlinks $< > $@ || { rm $@; exit 1; }
 
 %.pdf:%.rst
 	rst2pdf $< -o $@ --stylesheets stylesheet
@@ -187,7 +180,7 @@ include/libtorrent/%.hpp: ../include/libtorrent/%.hpp
 
 $(WEB_PATH)/%.html:%.rst template2.txt
 	mkdir -p $(WEB_PATH) >/dev/null
-	$(RST2HTML) --title=libtorrent --exit-status=2 --template=template2.txt --stylesheet-path=style.css --link-stylesheet --no-toc-backlinks $< > $@ || { rm $@; exit 1; }
+	$(RST2HTML) --title=libTAU --exit-status=2 --template=template2.txt --stylesheet-path=style.css --link-stylesheet --no-toc-backlinks $< > $@ || { rm $@; exit 1; }
 
 $(WEB_PATH)/img/%.png: img/%.png
 	mkdir -p $(WEB_PATH)/img >/dev/null

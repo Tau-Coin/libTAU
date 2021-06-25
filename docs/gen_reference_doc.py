@@ -98,29 +98,11 @@ category_mapping = {
     'ed25519.hpp': 'ed25519',
     'session.hpp': 'Session',
     'session_handle.hpp': 'Session',
-    'announce_entry.hpp': 'Trackers',
-    'peer_class_type_filter.hpp': 'PeerClass',
-    'peer_class.hpp': 'PeerClass',
     'session_stats.hpp': 'Stats',
     'performance_counters.hpp': 'Stats',
-    'read_resume_data.hpp': 'Resume Data',
-    'write_resume_data.hpp': 'Resume Data',
     'session_status.hpp': 'Session',
     'session_params.hpp': 'Session',
     'error_code.hpp': 'Error Codes',
-    'storage_defs.hpp': 'Storage',
-    'file_storage.hpp': 'Storage',
-    'disk_interface.hpp': 'Custom Storage',
-    'disk_observer.hpp': 'Custom Storage',
-    'mmap_disk_io.hpp': 'Storage',
-    'disabled_disk_io.hpp': 'Storage',
-    'posix_disk_io.hpp': 'Storage',
-    'extensions.hpp': 'Plugins',
-    'ut_metadata.hpp': 'Plugins',
-    'ut_pex.hpp': 'Plugins',
-    'ut_trackers.hpp': 'Plugins',
-    'smart_ban.hpp': 'Plugins',
-    'peer_connection_handle.hpp': 'Plugins',
     'alert.hpp': 'Alerts',
     'alert_types.hpp': 'Alerts',
     'bencode.hpp': 'Bencoding',
@@ -141,7 +123,6 @@ category_mapping = {
     'settings_pack.hpp': 'Settings',
     'fingerprint.hpp': 'Settings',
     'operations.hpp': 'Alerts',
-    'disk_buffer_holder.hpp': 'Custom Storage',
     'alert_dispatcher.hpp': 'Alerts',
     'online_signal.hpp': 'Communication',
     'new_msg_signal.hpp': 'Communication',
@@ -153,8 +134,6 @@ category_mapping = {
 category_fun_mapping = {
     'min_memory_usage()': 'Settings',
     'high_performance_seed()': 'Settings',
-    'default_disk_io_constructor()': 'Storage',
-    'settings_interface': 'Custom Storage',
 }
 
 
@@ -1283,25 +1262,18 @@ def render_enums(out, enums, print_declared_reference, header_level):
 
 sections = \
     {
-        'Core': 0,
         'DHT': 0,
         'Session': 0,
-        'Trackers': 0,
         'Settings': 0,
         'Stats': 0,
-        'Resume Data': 0,
 
         'Bencoding': 1,
         'Bdecoding': 1,
         'Filter': 1,
         'Error Codes': 1,
 
-        'PeerClass': 2,
         'ed25519': 2,
         'Utility': 2,
-        'Storage': 2,
-        'Custom Storage': 2,
-        'Plugins': 2,
 
         'Communication': 3,
 

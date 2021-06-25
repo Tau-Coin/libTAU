@@ -4,7 +4,7 @@
 <meta name="description" content="A feature complete BitTorrent protocol implementation as a C++ library">
 <meta name=viewport content="width=device-width, initial-scale=1">
 <meta property="og:image" content="img/logo-color.png" />
-<meta property="og:site_name" content="libtorrent" />
+<meta property="og:site_name" content="libTAU" />
 <link rel="stylesheet" href="style.css?v=0001" type="text/css" />
 %(stylesheet)s
 %(body_prefix)s
