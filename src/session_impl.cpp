@@ -447,7 +447,7 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 
 	session_impl::session_impl(io_context& ioc, settings_pack const& pack
 		, disk_io_constructor_type disk_io_constructor
-		, session_flags_t const flags)
+		, session_flags_t const flags, const char* seed)
 		: m_settings(pack)
 		, m_io_context(ioc)
 #if TORRENT_USE_SSL
@@ -480,6 +480,7 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 #endif
 		, m_timer(m_io_context)
 		, m_paused(flags & session::paused)
+		, m_account(seed)
 	{
 	}
 

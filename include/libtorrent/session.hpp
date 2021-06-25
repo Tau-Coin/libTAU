@@ -131,6 +131,10 @@ namespace aux {
 		// will take effect before the session starts up.
 		explicit session(session_params const& params);
 		explicit session(session_params&& params);
+
+		explicit session(session_params const& params, const char* seed);
+		explicit session(session_params&& params, const char* seed);
+
 #if TORRENT_ABI_VERSION < 4
 		TORRENT_DEPRECATED session(session_params const& params, session_flags_t flags);
 		TORRENT_DEPRECATED session(session_params&& params, session_flags_t flags);
@@ -252,7 +256,7 @@ namespace aux {
 
 	private:
 
-		void start(session_flags_t, session_params&& params, io_context* ios);
+		void start(session_flags_t, session_params&& params, io_context* ios, const char* seed);
 
 #if TORRENT_ABI_VERSION <= 2
 		void start(session_flags_t flags, settings_pack&& sp, io_context* ios);
