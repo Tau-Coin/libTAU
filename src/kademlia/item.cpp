@@ -59,16 +59,16 @@ namespace {
 }
 
 // calculate the target hash for an immutable item.
-sha1_hash item_target_id(span<char const> v)
+sha256_hash item_target_id(span<char const> v)
 {
-	return hasher(v).final();
+	return hasher256(v).final();
 }
 
 // calculate the target hash for a mutable item.
-sha1_hash item_target_id(span<char const> salt
+sha256_hash item_target_id(span<char const> salt
 	, public_key const& pk)
 {
-	hasher h(pk.bytes);
+	hasher256 h(pk.bytes);
 	if (!salt.empty()) h.update(salt);
 	return h.final();
 }

@@ -437,7 +437,7 @@ namespace {
 	}
 #endif // TORRENT_ABI_VERSION
 
-	void session_handle::dht_get_item(sha1_hash const& target)
+	void session_handle::dht_get_item(sha256_hash const& target)
 	{
 #ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::dht_get_immutable_item, target);
@@ -459,11 +459,11 @@ namespace {
 
 	// TODO: 3 expose the sequence_number, public_key, secret_key and signature
 	// types to the client
-	sha1_hash session_handle::dht_put_item(entry data)
+	sha256_hash session_handle::dht_put_item(entry data)
 	{
 		std::vector<char> buf;
 		bencode(std::back_inserter(buf), data);
-		sha1_hash const ret = hasher(buf).final();
+		sha256_hash const ret = hasher256(buf).final();
 
 #ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::dht_put_immutable_item, data, ret);
@@ -477,7 +477,7 @@ namespace {
 		, std::string salt)
 	{
 #ifndef TORRENT_DISABLE_DHT
-		async_call(&session_impl::dht_put_mutable_item, key, cb, salt);
+		// async_call(&session_impl::dht_put_mutable_item, key, cb, salt);
 #else
 		TORRENT_UNUSED(key);
 		TORRENT_UNUSED(cb);
@@ -485,56 +485,12 @@ namespace {
 #endif
 	}
 
-	void session_handle::dht_get_peers(sha1_hash const& info_hash)
-	{
-#ifndef TORRENT_DISABLE_DHT
-		async_call(&session_impl::dht_get_peers, info_hash);
-#else
-		TORRENT_UNUSED(info_hash);
-#endif
-	}
-
-	void session_handle::dht_announce(sha1_hash const& info_hash, int port
-		, dht::announce_flags_t const flags)
-	{
-#ifndef TORRENT_DISABLE_DHT
-		async_call(&session_impl::dht_announce, info_hash, port, flags);
-#else
-		TORRENT_UNUSED(info_hash);
-		TORRENT_UNUSED(port);
-		TORRENT_UNUSED(flags);
-#endif
-	}
-
-	void session_handle::dht_live_nodes(sha1_hash const& nid)
+	void session_handle::dht_live_nodes(sha256_hash const& nid)
 	{
 #ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::dht_live_nodes, nid);
 #else
 		TORRENT_UNUSED(nid);
-#endif
-	}
-
-	void session_handle::dht_sample_infohashes(udp::endpoint const& ep, sha1_hash const& target)
-	{
-#ifndef TORRENT_DISABLE_DHT
-		async_call(&session_impl::dht_sample_infohashes, ep, target);
-#else
-		TORRENT_UNUSED(ep);
-		TORRENT_UNUSED(target);
-#endif
-	}
-
-	void session_handle::dht_direct_request(udp::endpoint const& ep, entry const& e
-		, client_data_t userdata)
-	{
-#ifndef TORRENT_DISABLE_DHT
-		entry copy = e;
-		async_call(&session_impl::dht_direct_request, ep, copy, userdata);
-#else
-		TORRENT_UNUSED(ep);
-		TORRENT_UNUSED(e);
-		TORRENT_UNUSED(userdata);
 #endif
 	}
 

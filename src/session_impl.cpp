@@ -3638,14 +3638,14 @@ namespace {
 	}
 
 	// callback for dht_immutable_get
-	void session_impl::get_immutable_callback(sha1_hash target
+	void session_impl::get_immutable_callback(sha256_hash target
 		, dht::item const& i)
 	{
 		TORRENT_ASSERT(!i.is_mutable());
 		m_alerts.emplace_alert<dht_immutable_item_alert>(target, i.value());
 	}
 
-	void session_impl::dht_get_immutable_item(sha1_hash const& target)
+	void session_impl::dht_get_immutable_item(sha256_hash const& target)
 	{
 		if (!m_dht) return;
 		m_dht->get_item(target, std::bind(&session_impl::get_immutable_callback
@@ -3675,7 +3675,7 @@ namespace {
 
 	namespace {
 
-		void on_dht_put_immutable_item(aux::alert_manager& alerts, sha1_hash target, int num)
+		void on_dht_put_immutable_item(aux::alert_manager& alerts, sha256_hash target, int num)
 		{
 			if (alerts.should_post<dht_put_alert>())
 				alerts.emplace_alert<dht_put_alert>(target, num);
@@ -3707,23 +3707,9 @@ namespace {
 			i.assign(std::move(value), salt, seq, pk, sig);
 		}
 
-		void on_dht_get_peers(aux::alert_manager& alerts, sha1_hash info_hash, std::vector<tcp::endpoint> const& peers)
-		{
-			if (alerts.should_post<dht_get_peers_reply_alert>())
-				alerts.emplace_alert<dht_get_peers_reply_alert>(info_hash, peers);
-		}
-
-		void on_direct_response(aux::alert_manager& alerts, client_data_t userdata, dht::msg const& msg)
-		{
-			if (msg.message.type() == bdecode_node::none_t)
-				alerts.emplace_alert<dht_direct_response_alert>(userdata, msg.addr);
-			else
-				alerts.emplace_alert<dht_direct_response_alert>(userdata, msg.addr, msg.message);
-		}
-
 	} // anonymous namespace
 
-	void session_impl::dht_put_immutable_item(entry const& data, sha1_hash target)
+	void session_impl::dht_put_immutable_item(entry const& data, sha256_hash target)
 	{
 		if (!m_dht) return;
 		m_dht->put_item(data, std::bind(&on_dht_put_immutable_item, std::ref(m_alerts)
@@ -3741,42 +3727,11 @@ namespace {
 			, std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
 	}
 
-	void session_impl::dht_get_peers(sha1_hash const& info_hash)
-	{
-		if (!m_dht) return;
-		m_dht->get_peers(info_hash, std::bind(&on_dht_get_peers, std::ref(m_alerts), info_hash, _1));
-	}
-
-	void session_impl::dht_announce(sha1_hash const& info_hash, int port, dht::announce_flags_t const flags)
-	{
-		if (!m_dht) return;
-		m_dht->announce(info_hash, port, flags, std::bind(&on_dht_get_peers, std::ref(m_alerts), info_hash, _1));
-	}
-
-	void session_impl::dht_live_nodes(sha1_hash const& nid)
+	void session_impl::dht_live_nodes(sha256_hash const& nid)
 	{
 		if (!m_dht) return;
 		auto nodes = m_dht->live_nodes(nid);
 		m_alerts.emplace_alert<dht_live_nodes_alert>(nid, nodes);
-	}
-
-	void session_impl::dht_sample_infohashes(udp::endpoint const& ep, sha1_hash const& target)
-	{
-		if (!m_dht) return;
-		m_dht->sample_infohashes(ep, target, [this, ep](sha1_hash const& nid
-			, time_duration const interval
-			, int const num, std::vector<sha1_hash> samples
-			, std::vector<std::pair<sha1_hash, udp::endpoint>> nodes)
-		{
-			m_alerts.emplace_alert<dht_sample_infohashes_alert>(nid
-				, ep, interval, num, std::move(samples), std::move(nodes));
-		});
-	}
-
-	void session_impl::dht_direct_request(udp::endpoint const& ep, entry& e, client_data_t userdata)
-	{
-		if (!m_dht) return;
-		m_dht->direct_request(ep, e, std::bind(&on_direct_response, std::ref(m_alerts), userdata, _1));
 	}
 
 #endif
@@ -4291,21 +4246,21 @@ namespace {
 		set_external_address(i, ip, source_dht, source);
 	}
 
-	void session_impl::get_peers(sha1_hash const& ih)
+	void session_impl::get_peers(sha256_hash const& ih)
 	{
 		if (!m_alerts.should_post<dht_get_peers_alert>()) return;
 		m_alerts.emplace_alert<dht_get_peers_alert>(ih);
 	}
 
-	void session_impl::announce(sha1_hash const& ih, address const& addr
+	void session_impl::announce(sha256_hash const& ih, address const& addr
 		, int port)
 	{
 		if (!m_alerts.should_post<dht_announce_alert>()) return;
 		m_alerts.emplace_alert<dht_announce_alert>(addr, port, ih);
 	}
 
-	void session_impl::outgoing_get_peers(sha1_hash const& target
-		, sha1_hash const& sent_target, udp::endpoint const& ep)
+	void session_impl::outgoing_get_peers(sha256_hash const& target
+		, sha256_hash const& sent_target, udp::endpoint const& ep)
 	{
 		if (!m_alerts.should_post<dht_outgoing_get_peers_alert>()) return;
 		m_alerts.emplace_alert<dht_outgoing_get_peers_alert>(target, sent_target, ep);

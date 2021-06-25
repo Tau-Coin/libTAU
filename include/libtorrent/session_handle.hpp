@@ -285,7 +285,7 @@ namespace libtorrent {
 
 		// query the DHT for an immutable item at the ``target`` hash.
 		// the result is posted as a dht_immutable_item_alert.
-		void dht_get_item(sha1_hash const& target);
+		void dht_get_item(sha256_hash const& target);
 
 		// query the DHT for a mutable item under the public key ``key``.
 		// this is an ed25519 key. ``salt`` is optional and may be left
@@ -299,7 +299,7 @@ namespace libtorrent {
 		// the returned hash is the key that is to be used to look the item
 		// up again. It's just the SHA-1 hash of the bencoded form of the
 		// structure.
-		sha1_hash dht_put_item(entry data);
+		sha256_hash dht_put_item(entry data);
 
 		// store a mutable item. The ``key`` is the public key the blob is
 		// to be stored under. The optional ``salt`` argument is a string that
@@ -345,45 +345,12 @@ namespace libtorrent {
 				, std::int64_t&, std::string const&)> cb
 			, std::string salt = std::string());
 
-		// ``dht_get_peers()`` will issue a DHT get_peer request to the DHT for the
-		// specified info-hash. The response (the peers) will be posted back in a
-		// dht_get_peers_reply_alert.
-		//
-		// ``dht_announce()`` will issue a DHT announce request to the DHT to the
-		// specified info-hash, advertising the specified port. If the port is
-		// left at its default, 0, the port will be implied by the DHT message's
-		// source port (which may improve connectivity through a NAT).
-		//
-		// Both these functions are exposed for advanced custom use of the DHT.
-		// All torrents eligible to be announce to the DHT will be automatically,
-		// by libtorrent.
-		//
-		// For possible flags, see announce_flags_t.
-		void dht_get_peers(sha1_hash const& info_hash);
-		void dht_announce(sha1_hash const& info_hash, int port = 0, dht::announce_flags_t flags = {});
-
 		// Retrieve all the live DHT (identified by ``nid``) nodes. All the
 		// nodes id and endpoint will be returned in the list of nodes in the
 		// alert ``dht_live_nodes_alert``.
 		// Since this alert is a response to an explicit call, it will always be
 		// posted, regardless of the alert mask.
-		void dht_live_nodes(sha1_hash const& nid);
-
-		// Query the DHT node specified by ``ep`` to retrieve a sample of the
-		// info-hashes that the node currently have in their storage.
-		// The ``target`` is included for iterative lookups so that indexing nodes
-		// can perform a key space traversal with a single RPC per node by adjusting
-		// the target value for each RPC. It has no effect on the returned sample value.
-		// The result is posted as a ``dht_sample_infohashes_alert``.
-		void dht_sample_infohashes(udp::endpoint const& ep, sha1_hash const& target);
-
-		// Send an arbitrary DHT request directly to the specified endpoint. This
-		// function is intended for use by plugins. When a response is received
-		// or the request times out, a dht_direct_response_alert will be posted
-		// with the response (if any) and the userdata pointer passed in here.
-		// Since this alert is a response to an explicit call, it will always be
-		// posted, regardless of the alert mask.
-		void dht_direct_request(udp::endpoint const& ep, entry const& e, client_data_t userdata = {});
+		void dht_live_nodes(sha256_hash const& nid);
 
 #if TORRENT_ABI_VERSION == 1
 		// deprecated in 0.15

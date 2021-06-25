@@ -55,7 +55,8 @@ namespace {
 		, node_id const& id, address const& addr)
 	{
 		// only when the node_id pass the verification, add it to routing table.
-		return !settings.get_bool(settings_pack::dht_enforce_node_id) || verify_id(id, addr);
+		// TODO: we still keep this API for future node_id verification.
+		return true;
 	}
 }
 
@@ -424,7 +425,7 @@ routing_table::table_t::iterator routing_table::find_bucket(node_id const& id)
 		++num_buckets;
 	}
 
-	int bucket_index = std::min(159 - distance_exp(m_id, id), num_buckets - 1);
+	int bucket_index = std::min(255 - distance_exp(m_id, id), num_buckets - 1);
 	TORRENT_ASSERT(bucket_index < int(m_buckets.size()));
 	TORRENT_ASSERT(bucket_index >= 0);
 
@@ -804,7 +805,7 @@ ip_ok:
 	// if all nodes in the bucket, including the new node id (e.id) fall in the
 	// same bucket, splitting isn't going to do anything.
 	bool const can_split = (std::next(i) == m_buckets.end()
-		&& m_buckets.size() < 159)
+		&& m_buckets.size() < 255)
 		&& (m_settings.get_bool(settings_pack::dht_prefer_verified_node_ids) == false
 			|| (e.verified && mostly_verified_nodes(b)))
 		&& e.confirmed()
@@ -886,13 +887,13 @@ void routing_table::split_bucket()
 	bucket_t& b = m_buckets[bucket_index].live_nodes;
 	bucket_t& rb = m_buckets[bucket_index].replacements;
 
-	// move any node whose (160 - distance_exp(m_id, id)) >= (i - m_buckets.begin())
+	// move any node whose (256 - distance_exp(m_id, id)) >= (i - m_buckets.begin())
 	// to the new bucket
 	int const new_bucket_size = bucket_limit(bucket_index + 1);
 	for (auto j = b.begin(); j != b.end();)
 	{
 		int const d = distance_exp(m_id, j->id);
-		if (d >= 159 - bucket_index)
+		if (d >= 255 - bucket_index)
 		{
 			++j;
 			continue;
@@ -919,7 +920,7 @@ void routing_table::split_bucket()
 	// into the main bucket
 	for (auto j = rb.begin(); j != rb.end();)
 	{
-		if (distance_exp(m_id, j->id) >= 159 - bucket_index)
+		if (distance_exp(m_id, j->id) >= 255 - bucket_index)
 		{
 			if (!j->pinged() || int(b.size()) >= bucket_size_limit)
 			{

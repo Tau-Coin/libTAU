@@ -2608,11 +2608,13 @@ bool is_downloading_state(int const st)
 		}
 
 		std::weak_ptr<torrent> self(shared_from_this());
+		/*
 		m_torrent_file->info_hashes().for_each([&](sha1_hash const& ih, protocol_version v)
 		{
 			m_ses.dht()->announce(ih, 0, flags
 				, std::bind(&torrent::on_dht_announce_response_disp, self, v, _1));
 		});
+		 */
 	}
 
 	void torrent::on_dht_announce_response_disp(std::weak_ptr<torrent> const t

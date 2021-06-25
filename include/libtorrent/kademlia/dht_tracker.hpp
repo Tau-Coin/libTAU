@@ -88,18 +88,7 @@ namespace libtorrent::dht {
 
 		dht_state state() const;
 
-		void get_peers(sha1_hash const& ih
-			, std::function<void(std::vector<tcp::endpoint> const&)> f);
-		void announce(sha1_hash const& ih, int listen_port, announce_flags_t flags
-			, std::function<void(std::vector<tcp::endpoint> const&)> f);
-
-		void sample_infohashes(udp::endpoint const& ep, sha1_hash const& target
-			, std::function<void(node_id
-				, time_duration
-				, int, std::vector<sha1_hash>
-				, std::vector<std::pair<sha1_hash, udp::endpoint>>)> f);
-
-		void get_item(sha1_hash const& target
+		void get_item(sha256_hash const& target
 			, std::function<void(item const&)> cb);
 
 		// key is a 32-byte binary string, the public key to look up.
@@ -120,10 +109,6 @@ namespace libtorrent::dht {
 		void put_item(public_key const& key
 			, std::function<void(item const&, int)> cb
 			, std::function<void(item&)> data_cb, std::string salt = std::string());
-
-		// send an arbitrary DHT request directly to a node
-		void direct_request(udp::endpoint const& ep, entry& e
-			, std::function<void(msg const&)> f);
 
 #if TORRENT_ABI_VERSION == 1
 #include "libtorrent/aux_/disable_deprecation_warnings_push.hpp"

@@ -422,29 +422,23 @@ namespace aux {
 			void stop_dht();
 			bool has_dht() const override;
 
-			void get_immutable_callback(sha1_hash target
+			void get_immutable_callback(sha256_hash target
 				, dht::item const& i);
 			void get_mutable_callback(dht::item const& i, bool);
 
-			void dht_get_immutable_item(sha1_hash const& target);
+			void dht_get_immutable_item(sha256_hash const& target);
 
 			void dht_get_mutable_item(std::array<char, 32> key
 				, std::string salt = std::string());
 
-			void dht_put_immutable_item(entry const& data, sha1_hash target);
+			void dht_put_immutable_item(entry const& data, sha256_hash target);
 
 			void dht_put_mutable_item(std::array<char, 32> key
 				, std::function<void(entry&, std::array<char,64>&
 					, std::int64_t&, std::string const&)> cb
 				, std::string salt = std::string());
 
-			void dht_get_peers(sha1_hash const& info_hash);
-			void dht_announce(sha1_hash const& info_hash, int port = 0, dht::announce_flags_t flags = {});
-
-			void dht_live_nodes(sha1_hash const& nid);
-			void dht_sample_infohashes(udp::endpoint const& ep, sha1_hash const& target);
-
-			void dht_direct_request(udp::endpoint const& ep, entry& e, client_data_t userdata);
+			void dht_live_nodes(sha256_hash const& nid);
 
 #if TORRENT_ABI_VERSION == 1
 			TORRENT_DEPRECATED
@@ -601,10 +595,10 @@ namespace aux {
 			// implements dht_observer
 			void set_external_address(aux::listen_socket_handle const& iface
 				, address const& ip, address const& source) override;
-			void get_peers(sha1_hash const& ih) override;
-			void announce(sha1_hash const& ih, address const& addr, int port) override;
-			void outgoing_get_peers(sha1_hash const& target
-				, sha1_hash const& sent_target, udp::endpoint const& ep) override;
+			void get_peers(sha256_hash const& ih) override;
+			void announce(sha256_hash const& ih, address const& addr, int port) override;
+			void outgoing_get_peers(sha256_hash const& target
+				, sha256_hash const& sent_target, udp::endpoint const& ep) override;
 
 #ifndef TORRENT_DISABLE_LOGGING
 			bool should_log(module_t m) const override;

@@ -1387,7 +1387,7 @@ namespace {
 
 	dht_announce_alert::dht_announce_alert(aux::stack_allocator&
 		, address const& i, int p
-		, sha1_hash const& ih)
+		, sha256_hash const& ih)
 		: ip(i)
 		, port(p)
 		, info_hash(ih)
@@ -1406,7 +1406,7 @@ namespace {
 	}
 
 	dht_get_peers_alert::dht_get_peers_alert(aux::stack_allocator&
-		, sha1_hash const& ih)
+		, sha256_hash const& ih)
 		: info_hash(ih)
 	{}
 
@@ -1928,7 +1928,7 @@ namespace {
 	}
 
 	dht_immutable_item_alert::dht_immutable_item_alert(aux::stack_allocator&
-		, sha1_hash const& t, entry i)
+		, sha256_hash const& t, entry i)
 		: target(t), item(std::move(i))
 	{}
 
@@ -1973,7 +1973,7 @@ namespace {
 #endif
 	}
 
-	dht_put_alert::dht_put_alert(aux::stack_allocator&, sha1_hash const& t, int n)
+	dht_put_alert::dht_put_alert(aux::stack_allocator&, sha256_hash const& t, int n)
 		: target(t)
 		, public_key()
 		, signature()
@@ -2036,7 +2036,7 @@ namespace {
 	}
 
 	dht_outgoing_get_peers_alert::dht_outgoing_get_peers_alert(aux::stack_allocator&
-		, sha1_hash const& ih, sha1_hash const& obfih
+		, sha256_hash const& ih, sha256_hash const& obfih
 		, udp::endpoint ep)
 		: info_hash(ih)
 		, obfuscated_info_hash(obfih)
@@ -2249,7 +2249,7 @@ namespace {
 	dht_stats_alert::dht_stats_alert(aux::stack_allocator&
 		, std::vector<dht_routing_bucket> table
 		, std::vector<dht_lookup> requests
-			, sha1_hash id, udp::endpoint ep)
+			, sha256_hash id, udp::endpoint ep)
 		: alert()
 		, active_requests(std::move(requests))
 		, routing_table(std::move(table))
@@ -2664,7 +2664,7 @@ namespace {
 	using nodes_slot = std::tuple<int, aux::allocation_slot, int, aux::allocation_slot>;
 
 	nodes_slot write_nodes(aux::stack_allocator& alloc
-		, std::vector<std::pair<sha1_hash, udp::endpoint>> const& nodes)
+		, std::vector<std::pair<sha256_hash, udp::endpoint>> const& nodes)
 	{
 		int v4_num_nodes = 0;
 		int v6_num_nodes = 0;
@@ -2677,8 +2677,8 @@ namespace {
 				v6_num_nodes++;
 		}
 
-		aux::allocation_slot const v4_nodes_idx = alloc.allocate(v4_num_nodes * (20 + 6));
-		aux::allocation_slot const v6_nodes_idx = alloc.allocate(v6_num_nodes * (20 + 18));
+		aux::allocation_slot const v4_nodes_idx = alloc.allocate(v4_num_nodes * (32 + 6));
+		aux::allocation_slot const v6_nodes_idx = alloc.allocate(v6_num_nodes * (32 + 18));
 
 		char* v4_ptr = alloc.ptr(v4_nodes_idx);
 		char* v6_ptr = alloc.ptr(v6_nodes_idx);
@@ -2700,28 +2700,28 @@ namespace {
 		return nodes_slot{v4_num_nodes, v4_nodes_idx, v6_num_nodes, v6_nodes_idx};
 	}
 
-	std::vector<std::pair<sha1_hash, udp::endpoint>> read_nodes(
+	std::vector<std::pair<sha256_hash, udp::endpoint>> read_nodes(
 		aux::stack_allocator const& alloc
 		, int const v4_num_nodes, aux::allocation_slot const v4_nodes_idx
 		, int const v6_num_nodes, aux::allocation_slot const v6_nodes_idx)
 	{
-		aux::vector<std::pair<sha1_hash, udp::endpoint>> nodes;
+		aux::vector<std::pair<sha256_hash, udp::endpoint>> nodes;
 		nodes.reserve(v4_num_nodes + v6_num_nodes);
 
 		char const* v4_ptr = alloc.ptr(v4_nodes_idx);
 		for (int i = 0; i < v4_num_nodes; i++)
 		{
-			sha1_hash ih;
-			std::memcpy(ih.data(), v4_ptr, 20);
-			v4_ptr += 20;
+			sha256_hash ih;
+			std::memcpy(ih.data(), v4_ptr, 32);
+			v4_ptr += 32;
 			nodes.emplace_back(ih, aux::read_v4_endpoint<udp::endpoint>(v4_ptr));
 		}
 		char const* v6_ptr = alloc.ptr(v6_nodes_idx);
 		for (int i = 0; i < v6_num_nodes; i++)
 		{
-			sha1_hash ih;
-			std::memcpy(ih.data(), v6_ptr, 20);
-			v6_ptr += 20;
+			sha256_hash ih;
+			std::memcpy(ih.data(), v6_ptr, 32);
+			v6_ptr += 32;
 			nodes.emplace_back(ih, aux::read_v6_endpoint<udp::endpoint>(v6_ptr));
 		}
 
@@ -2730,8 +2730,8 @@ namespace {
 	}
 
 	dht_live_nodes_alert::dht_live_nodes_alert(aux::stack_allocator& alloc
-		, sha1_hash const& nid
-		, std::vector<std::pair<sha1_hash, udp::endpoint>> const& nodes)
+		, sha256_hash const& nid
+		, std::vector<std::pair<sha256_hash, udp::endpoint>> const& nodes)
 		: node_id(nid)
 		, m_alloc(alloc)
 	{
@@ -2756,7 +2756,7 @@ namespace {
 		return m_v4_num_nodes + m_v6_num_nodes;
 	}
 
-	std::vector<std::pair<sha1_hash, udp::endpoint>> dht_live_nodes_alert::nodes() const
+	std::vector<std::pair<sha256_hash, udp::endpoint>> dht_live_nodes_alert::nodes() const
 	{
 		return read_nodes(m_alloc.get()
 			, m_v4_num_nodes, m_v4_nodes_idx
@@ -2789,12 +2789,12 @@ namespace {
 	}
 
 	dht_sample_infohashes_alert::dht_sample_infohashes_alert(aux::stack_allocator& alloc
-		, sha1_hash const& nid
+		, sha256_hash const& nid
 		, udp::endpoint const& endp
 		, time_duration _interval
 		, int _num
-		, std::vector<sha1_hash> const& samples
-		, std::vector<std::pair<sha1_hash, udp::endpoint>> const& nodes)
+		, std::vector<sha256_hash> const& samples
+		, std::vector<std::pair<sha256_hash, udp::endpoint>> const& nodes)
 		: node_id(nid)
 		, endpoint(endp)
 		, interval(_interval)
@@ -2802,10 +2802,10 @@ namespace {
 		, m_alloc(alloc)
 		, m_num_samples(aux::numeric_cast<int>(samples.size()))
 	{
-		m_samples_idx = alloc.allocate(m_num_samples * 20);
+		m_samples_idx = alloc.allocate(m_num_samples * 32);
 
 		char *ptr = alloc.ptr(m_samples_idx);
-		std::memcpy(ptr, samples.data(), samples.size() * 20);
+		std::memcpy(ptr, samples.data(), samples.size() * 32);
 
 		std::tie(m_v4_num_nodes, m_v4_nodes_idx, m_v6_num_nodes, m_v6_nodes_idx)
 			= write_nodes(alloc, nodes);
@@ -2829,13 +2829,13 @@ namespace {
 		return m_num_samples;
 	}
 
-	std::vector<sha1_hash> dht_sample_infohashes_alert::samples() const
+	std::vector<sha256_hash> dht_sample_infohashes_alert::samples() const
 	{
-		aux::vector<sha1_hash> samples;
+		aux::vector<sha256_hash> samples;
 		samples.resize(m_num_samples);
 
 		char const* ptr = m_alloc.get().ptr(m_samples_idx);
-		std::memcpy(samples.data(), ptr, samples.size() * 20);
+		std::memcpy(samples.data(), ptr, samples.size() * 32);
 
 		return std::move(samples);
 	}
@@ -2845,7 +2845,7 @@ namespace {
 		return m_v4_num_nodes + m_v6_num_nodes;
 	}
 
-	std::vector<std::pair<sha1_hash, udp::endpoint>> dht_sample_infohashes_alert::nodes() const
+	std::vector<std::pair<sha256_hash, udp::endpoint>> dht_sample_infohashes_alert::nodes() const
 	{
 		return read_nodes(m_alloc.get()
 			, m_v4_num_nodes, m_v4_nodes_idx

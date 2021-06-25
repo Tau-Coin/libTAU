@@ -22,10 +22,10 @@ namespace libtorrent {
 namespace dht {
 
 // calculate the target hash for an immutable item.
-TORRENT_EXTRA_EXPORT sha1_hash item_target_id(span<char const> v);
+TORRENT_EXTRA_EXPORT sha256_hash item_target_id(span<char const> v);
 
 // calculate the target hash for a mutable item.
-TORRENT_EXTRA_EXPORT sha1_hash item_target_id(span<char const> salt
+TORRENT_EXTRA_EXPORT sha256_hash item_target_id(span<char const> salt
 	, public_key const& pk);
 
 TORRENT_EXTRA_EXPORT bool verify_mutable_item(

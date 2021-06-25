@@ -91,10 +91,7 @@ namespace libtorrent::dht {
 
 	void dht_tracker::update_node_id(aux::listen_socket_handle const& s)
 	{
-		auto n = m_nodes.find(s);
-		if (n != m_nodes.end())
-			n->second.dht.update_node_id();
-		update_storage_node_ids();
+		// TODO:
 	}
 
 	void dht_tracker::new_socket(aux::listen_socket_handle const& s)
@@ -271,7 +268,7 @@ namespace libtorrent::dht {
 
 	void dht_tracker::update_storage_node_ids()
 	{
-		std::vector<sha1_hash> ids;
+		std::vector<sha256_hash> ids;
 		for (auto& n : m_nodes)
 			ids.push_back(n.second.dht.nid());
 		m_storage.update_node_ids(ids);
@@ -288,36 +285,6 @@ namespace libtorrent::dht {
 		}
 
 		return nullptr;
-	}
-
-	void dht_tracker::get_peers(sha1_hash const& ih
-		, std::function<void(std::vector<tcp::endpoint> const&)> f)
-	{
-		for (auto& n : m_nodes)
-			n.second.dht.get_peers(ih, f, {}, {});
-	}
-
-	void dht_tracker::announce(sha1_hash const& ih, int listen_port
-		, announce_flags_t const flags
-		, std::function<void(std::vector<tcp::endpoint> const&)> f)
-	{
-		for (auto& n : m_nodes)
-			n.second.dht.announce(ih, listen_port, flags, f);
-	}
-
-	void dht_tracker::sample_infohashes(udp::endpoint const& ep, sha1_hash const& target
-		, std::function<void(node_id
-			, time_duration
-			, int, std::vector<sha1_hash>
-			, std::vector<std::pair<sha1_hash, udp::endpoint>>)> f)
-	{
-		for (auto& n : m_nodes)
-		{
-			if (ep.protocol() != (n.first.get_external_address().is_v4() ? udp::v4() : udp::v6()))
-				continue;
-			n.second.dht.sample_infohashes(ep, target, f);
-			break;
-		}
 	}
 
 	namespace {
@@ -401,7 +368,7 @@ namespace libtorrent::dht {
 
 	} // anonymous namespace
 
-	void dht_tracker::get_item(sha1_hash const& target
+	void dht_tracker::get_item(sha256_hash const& target
 		, std::function<void(item const&)> cb)
 	{
 		auto ctx = std::make_shared<get_immutable_item_ctx>(int(m_nodes.size()));
@@ -425,7 +392,7 @@ namespace libtorrent::dht {
 	{
 		std::string flat_data;
 		bencode(std::back_inserter(flat_data), data);
-		sha1_hash const target = item_target_id(flat_data);
+		sha256_hash const target = item_target_id(flat_data);
 
 		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
@@ -441,18 +408,6 @@ namespace libtorrent::dht {
 		for (auto& n : m_nodes)
 			n.second.dht.put_item(key, salt, std::bind(&put_mutable_item_callback
 				, _1, _2, ctx, cb), data_cb);
-	}
-
-	void dht_tracker::direct_request(udp::endpoint const& ep, entry& e
-		, std::function<void(msg const&)> f)
-	{
-		for (auto& n : m_nodes)
-		{
-			if (ep.protocol() != (n.first.get_external_address().is_v4() ? udp::v4() : udp::v6()))
-				continue;
-			n.second.dht.direct_request(ep, e, f);
-			break;
-		}
 	}
 
 	void dht_tracker::incoming_error(error_code const& ec, udp::endpoint const& ep)

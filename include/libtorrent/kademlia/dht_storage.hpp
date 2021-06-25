@@ -57,66 +57,12 @@ namespace dht {
 	// the current implementation could degrade in performance.
 	struct TORRENT_EXPORT dht_storage_interface
 	{
-#if TORRENT_ABI_VERSION == 1
-		// This function returns the number of torrents tracked by
-		// the DHT at the moment. It's used to fill session_status.
-		// It's deprecated.
-		virtual size_t num_torrents() const = 0;
-
-		// This function returns the sum of all of peers per torrent
-		// tracker byt the DHT at the moment.
-		// It's deprecated.
-		virtual size_t num_peers() const = 0;
-#endif
-
 		// This member function notifies the list of all node's ids
 		// of each DHT running inside libtorrent. It's advisable
 		// that the concrete implementation keeps a copy of this list
 		// for an eventual prioritization when deleting an element
 		// to make room for a new one.
 		virtual void update_node_ids(std::vector<node_id> const& ids) = 0;
-
-		// This function retrieve the peers tracked by the DHT
-		// corresponding to the given info_hash. You can specify if
-		// you want only seeds and/or you are scraping the data.
-		//
-		// For future implementers:
-		// If the torrent tracked contains a name, such a name
-		// must be stored as a string in peers["n"]
-		//
-		// If the scrape parameter is true, you should fill these keys:
-		//
-		//    peers["BFpe"]
-		//       with the standard bit representation of a
-		//       256 bloom filter containing the downloaders
-		//    peers["BFsd"]
-		//       with the standard bit representation of a
-		//       256 bloom filter containing the seeders
-		//
-		// If the scrape parameter is false, you should fill the
-		// key peers["values"] with a list containing a subset of
-		// peers tracked by the given info_hash. Such a list should
-		// consider the value of settings_pack::dht_max_peers_reply.
-		// If noseed is true only peers marked as no seed should be included.
-		//
-		// returns true if the maximum number of peers are stored
-		// for this info_hash.
-		virtual bool get_peers(sha1_hash const& info_hash
-			, bool noseed, bool scrape, address const& requester
-			, entry& peers) const = 0;
-
-		// This function is named announce_peer for consistency with the
-		// upper layers, but has nothing to do with networking. Its only
-		// responsibility is store the peer in such a way that it's returned
-		// in the entry with the lookup_peers.
-		//
-		// The ``name`` parameter is the name of the torrent if provided in
-		// the announce_peer DHT message. The length of this value should
-		// have a maximum length in the final storage. The default
-		// implementation truncate the value for a maximum of 50 characters.
-		virtual void announce_peer(sha1_hash const& info_hash
-			, tcp::endpoint const& endp
-			, string_view name, bool seed) = 0;
 
 		// This function retrieves the immutable item given its target hash.
 		//
@@ -125,7 +71,7 @@ namespace dht {
 		//
 		// returns true if the item is found and the data is returned
 		// inside the (entry) out parameter item.
-		virtual bool get_immutable_item(sha1_hash const& target
+		virtual bool get_immutable_item(sha256_hash const& target
 			, entry& item) const = 0;
 
 		// Store the item's data. This layer is only for storage.
@@ -136,7 +82,7 @@ namespace dht {
 		// present. The implementation should consider the value of
 		// settings_pack::dht_max_dht_items.
 		//
-		virtual void put_immutable_item(sha1_hash const& target
+		virtual void put_immutable_item(sha256_hash const& target
 			, span<char const> buf
 			, address const& addr) = 0;
 
@@ -144,7 +90,7 @@ namespace dht {
 		//
 		// returns true if the item is found and the data is returned
 		// inside the out parameter seq.
-		virtual bool get_mutable_item_seq(sha1_hash const& target
+		virtual bool get_mutable_item_seq(sha256_hash const& target
 			, sequence_number& seq) const = 0;
 
 		// This function retrieves the mutable stored in the DHT.
@@ -159,7 +105,7 @@ namespace dht {
 		//
 		// returns true if the item is found and the data is returned
 		// inside the (entry) out parameter item.
-		virtual bool get_mutable_item(sha1_hash const& target
+		virtual bool get_mutable_item(sha256_hash const& target
 			, sequence_number seq, bool force_fill
 			, entry& item) const = 0;
 
@@ -171,27 +117,13 @@ namespace dht {
 		// present. The implementation should consider the value of
 		// settings_pack::dht_max_dht_items.
 		//
-		virtual void put_mutable_item(sha1_hash const& target
+		virtual void put_mutable_item(sha256_hash const& target
 			, span<char const> buf
 			, signature const& sig
 			, sequence_number seq
 			, public_key const& pk
 			, span<char const> salt
 			, address const& addr) = 0;
-
-		// This function retrieves a sample info-hashes
-		//
-		// For implementers:
-		// The info-hashes should be stored in ["samples"] (N x 20 bytes).
-		// the following keys should be filled
-		// item["interval"] - the subset refresh interval in seconds.
-		// item["num"] - number of info-hashes in storage.
-		//
-		// Internally, this function is allowed to lazily evaluate, cache
-		// and modify the actual sample to put in ``item``
-		//
-		// returns the number of info-hashes in the sample.
-		virtual int get_infohashes_sample(entry& item) = 0;
 
 		// This function is called periodically (non-constant frequency).
 		//

@@ -37,7 +37,7 @@ void get_item::got_data(bdecode_node const& v,
 		// If m_data isn't empty, we should have post alert.
 		if (!m_data.empty()) return;
 
-		sha1_hash incoming_target = item_target_id(v.data_section());
+		sha256_hash incoming_target = item_target_id(v.data_section());
 		if (incoming_target != target()) return;
 
 		m_data.assign(v);
@@ -55,7 +55,7 @@ void get_item::got_data(bdecode_node const& v,
 	// data can reach here, which means pk, sig and seq must be valid.
 
 	std::string const salt_copy(m_data.salt());
-	sha1_hash const incoming_target = item_target_id(salt_copy, pk);
+	sha256_hash const incoming_target = item_target_id(salt_copy, pk);
 	if (incoming_target != target()) return;
 
 	// this is mutable data. If it passes the signature

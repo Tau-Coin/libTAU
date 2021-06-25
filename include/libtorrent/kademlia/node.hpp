@@ -50,17 +50,6 @@ struct settings;
 
 TORRENT_EXTRA_EXPORT entry write_nodes_entry(std::vector<node_entry> const& nodes);
 
-class announce_observer : public observer
-{
-public:
-	announce_observer(std::shared_ptr<traversal_algorithm> algo
-		, udp::endpoint const& ep, node_id const& id)
-		: observer(std::move(algo), ep, id)
-	{}
-
-	void reply(msg const&) override { flags |= flag_done; }
-};
-
 struct socket_manager
 {
 	virtual bool has_quota() = 0;
@@ -97,8 +86,6 @@ public:
 	node(node&&) = delete;
 	node& operator=(node&&) = delete;
 
-	void update_node_id();
-
 	void tick();
 	void bootstrap(std::vector<udp::endpoint> const& nodes
 		, find_data::nodes_callback const& f);
@@ -128,34 +115,18 @@ public:
 	int data_size() const { return int(m_storage.num_torrents()); }
 #endif
 
-	void get_peers(sha1_hash const& info_hash
-		, std::function<void(std::vector<tcp::endpoint> const&)> dcallback
-		, std::function<void(std::vector<std::pair<node_entry, std::string>> const&)> ncallback
-		, announce_flags_t flags);
-	void announce(sha1_hash const& info_hash, int listen_port, announce_flags_t flags
-		, std::function<void(std::vector<tcp::endpoint> const&)> f);
-
-	void direct_request(udp::endpoint const& ep, entry& e
-		, std::function<void(msg const&)> f);
-
-	void get_item(sha1_hash const& target, std::function<void(item const&)> f);
+	void get_item(sha256_hash const& target, std::function<void(item const&)> f);
 	void get_item(public_key const& pk, std::string const& salt, std::function<void(item const&, bool)> f);
 
-	void put_item(sha1_hash const& target, entry const& data, std::function<void(int)> f);
+	void put_item(sha256_hash const& target, entry const& data, std::function<void(int)> f);
 	void put_item(public_key const& pk, std::string const& salt
 		, std::function<void(item const&, int)> f
 		, std::function<void(item&)> data_cb);
 
-	void sample_infohashes(udp::endpoint const& ep, sha1_hash const& target
-		, std::function<void(sha1_hash
-			, time_duration
-			, int, std::vector<sha1_hash>
-			, std::vector<std::pair<sha1_hash, udp::endpoint>>)> f);
-
-	bool verify_token(string_view token, sha1_hash const& info_hash
+	bool verify_token(string_view token, sha256_hash const& info_hash
 		, udp::endpoint const& addr) const;
 
-	std::string generate_token(udp::endpoint const& addr, sha1_hash const& info_hash);
+	std::string generate_token(udp::endpoint const& addr, sha256_hash const& info_hash);
 
 	// the returned time is the delay until connection_timeout()
 	// should be called again the next time
@@ -216,7 +187,7 @@ private:
 
 	void send_single_refresh(udp::endpoint const& ep, int bucket
 		, node_id const& id = node_id());
-	bool lookup_peers(sha1_hash const& info_hash, entry& reply
+	bool lookup_peers(sha256_hash const& info_hash, entry& reply
 		, bool noseed, bool scrape, address const& requester) const;
 
 	aux::session_settings const& m_settings;
@@ -229,7 +200,7 @@ private:
 
 	void incoming_request(msg const&, entry&);
 
-	void write_nodes_entries(sha1_hash const& info_hash
+	void write_nodes_entries(sha256_hash const& info_hash
 		, bdecode_node const& want, entry& r);
 
 	node_id m_id;

@@ -1751,7 +1751,7 @@ TORRENT_VERSION_NAMESPACE_3
 	{
 		// internal
 		TORRENT_UNEXPORT dht_announce_alert(aux::stack_allocator& alloc, address const& i, int p
-			, sha1_hash const& ih);
+			, sha256_hash const& ih);
 
 		TORRENT_DEFINE_ALERT(dht_announce_alert, 55)
 
@@ -1760,7 +1760,7 @@ TORRENT_VERSION_NAMESPACE_3
 
 		aux::noexcept_movable<address> ip;
 		int port;
-		sha1_hash info_hash;
+		sha256_hash info_hash;
 	};
 
 	// This alert is generated when a DHT node sends a ``get_peers`` message to
@@ -1768,14 +1768,14 @@ TORRENT_VERSION_NAMESPACE_3
 	struct TORRENT_EXPORT dht_get_peers_alert final : alert
 	{
 		// internal
-		TORRENT_UNEXPORT dht_get_peers_alert(aux::stack_allocator& alloc, sha1_hash const& ih);
+		TORRENT_UNEXPORT dht_get_peers_alert(aux::stack_allocator& alloc, sha256_hash const& ih);
 
 		TORRENT_DEFINE_ALERT(dht_get_peers_alert, 56)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
 
-		sha1_hash info_hash;
+		sha256_hash info_hash;
 	};
 
 #if TORRENT_ABI_VERSION <= 2
@@ -2176,7 +2176,7 @@ TORRENT_VERSION_NAMESPACE_3
 	struct TORRENT_EXPORT dht_immutable_item_alert final : alert
 	{
 		// internal
-		TORRENT_UNEXPORT dht_immutable_item_alert(aux::stack_allocator& alloc, sha1_hash const& t
+		TORRENT_UNEXPORT dht_immutable_item_alert(aux::stack_allocator& alloc, sha256_hash const& t
 			, entry i);
 
 		TORRENT_DEFINE_ALERT_PRIO(dht_immutable_item_alert, 74, alert_priority::critical)
@@ -2186,8 +2186,8 @@ TORRENT_VERSION_NAMESPACE_3
 		std::string message() const override;
 
 		// the target hash of the immutable item. This must
-		// match the SHA-1 hash of the bencoded form of ``item``.
-		sha1_hash target;
+		// match the SHA-2 hash of the bencoded form of ``item``.
+		sha256_hash target;
 
 		// the data for this item
 		entry item;
@@ -2236,7 +2236,7 @@ TORRENT_VERSION_NAMESPACE_3
 	struct TORRENT_EXPORT dht_put_alert final : alert
 	{
 		// internal
-		TORRENT_UNEXPORT dht_put_alert(aux::stack_allocator& alloc, sha1_hash const& t, int n);
+		TORRENT_UNEXPORT dht_put_alert(aux::stack_allocator& alloc, sha256_hash const& t, int n);
 		TORRENT_UNEXPORT dht_put_alert(aux::stack_allocator& alloc, std::array<char, 32> const& key
 			, std::array<char, 64> const& sig
 			, std::string s
@@ -2250,7 +2250,7 @@ TORRENT_VERSION_NAMESPACE_3
 
 		// the target hash the item was stored under if this was an *immutable*
 		// item.
-		sha1_hash target;
+		sha256_hash target;
 
 		// if a mutable item was stored, these are the public key, signature,
 		// salt and sequence number the item was stored under.
@@ -2287,7 +2287,7 @@ TORRENT_VERSION_NAMESPACE_3
 	{
 		// internal
 		TORRENT_UNEXPORT dht_outgoing_get_peers_alert(aux::stack_allocator& alloc
-			, sha1_hash const& ih, sha1_hash const& obfih
+			, sha256_hash const& ih, sha256_hash const& obfih
 			, udp::endpoint ep);
 
 		TORRENT_DEFINE_ALERT(dht_outgoing_get_peers_alert, 78)
@@ -2296,11 +2296,11 @@ TORRENT_VERSION_NAMESPACE_3
 		std::string message() const override;
 
 		// the info_hash of the torrent we're looking for peers for.
-		sha1_hash info_hash;
+		sha256_hash info_hash;
 
 		// if this was an obfuscated lookup, this is the info-hash target
 		// actually sent to the node.
-		sha1_hash obfuscated_info_hash;
+		sha256_hash obfuscated_info_hash;
 
 		// the endpoint we're sending this query to
 		aux::noexcept_movable<udp::endpoint> endpoint;
@@ -2491,7 +2491,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT dht_stats_alert(aux::stack_allocator& alloc
 			, std::vector<dht_routing_bucket> table
 			, std::vector<dht_lookup> requests
-			, sha1_hash id, udp::endpoint ep);
+			, sha256_hash id, udp::endpoint ep);
 
 		TORRENT_DEFINE_ALERT(dht_stats_alert, 83)
 
@@ -2506,7 +2506,7 @@ TORRENT_VERSION_NAMESPACE_3
 		std::vector<dht_routing_bucket> routing_table;
 
 		// the node ID of the DHT node instance
-		sha1_hash nid;
+		sha256_hash nid;
 
 		// the local socket this DHT node is running on
 		aux::noexcept_movable<udp::endpoint> local_endpoint;
@@ -2745,8 +2745,8 @@ TORRENT_VERSION_NAMESPACE_3
 	{
 		// internal
 		TORRENT_UNEXPORT dht_live_nodes_alert(aux::stack_allocator& alloc
-			, sha1_hash const& nid
-			, std::vector<std::pair<sha1_hash, udp::endpoint>> const& nodes);
+			, sha256_hash const& nid
+			, std::vector<std::pair<sha256_hash, udp::endpoint>> const& nodes);
 
 		TORRENT_DEFINE_ALERT(dht_live_nodes_alert, 91)
 
@@ -2754,11 +2754,11 @@ TORRENT_VERSION_NAMESPACE_3
 		std::string message() const override;
 
 		// the local DHT node's node-ID this routing table belongs to
-		sha1_hash node_id;
+		sha256_hash node_id;
 
 		// the number of nodes in the routing table and the actual nodes.
 		int num_nodes() const;
-		std::vector<std::pair<sha1_hash, udp::endpoint>> nodes() const;
+		std::vector<std::pair<sha256_hash, udp::endpoint>> nodes() const;
 
 	private:
 		std::reference_wrapper<aux::stack_allocator> m_alloc;
@@ -2793,12 +2793,12 @@ TORRENT_VERSION_NAMESPACE_3
 	{
 		// internal
 		TORRENT_UNEXPORT dht_sample_infohashes_alert(aux::stack_allocator& alloc
-			, sha1_hash const& nid
+			, sha256_hash const& nid
 			, udp::endpoint const& endp
 			, time_duration interval
 			, int num
-			, std::vector<sha1_hash> const& samples
-			, std::vector<std::pair<sha1_hash, udp::endpoint>> const& nodes);
+			, std::vector<sha256_hash> const& samples
+			, std::vector<std::pair<sha256_hash, udp::endpoint>> const& nodes);
 
 		static inline constexpr alert_category_t static_category = alert_category::dht_operation;
 		TORRENT_DEFINE_ALERT(dht_sample_infohashes_alert, 93)
@@ -2806,7 +2806,7 @@ TORRENT_VERSION_NAMESPACE_3
 		std::string message() const override;
 
 		// id of the node the request was sent to (and this response was received from)
-		sha1_hash node_id;
+		sha256_hash node_id;
 
 		// the node the request was sent to (and this response was received from)
 		aux::noexcept_movable<udp::endpoint> endpoint;
@@ -2823,7 +2823,7 @@ TORRENT_VERSION_NAMESPACE_3
 		// actual info-hashes. ``num_samples()`` is more efficient than
 		// ``samples().size()``.
 		int num_samples() const;
-		std::vector<sha1_hash> samples() const;
+		std::vector<sha256_hash> samples() const;
 
 		// The total number of nodes returned by ``nodes()``.
 		int num_nodes() const;
@@ -2833,7 +2833,7 @@ TORRENT_VERSION_NAMESPACE_3
 		// The information is included so that indexing nodes can perform a key
 		// space traversal with a single RPC per node by adjusting the target
 		// value for each RPC.
-		std::vector<std::pair<sha1_hash, udp::endpoint>> nodes() const;
+		std::vector<std::pair<sha256_hash, udp::endpoint>> nodes() const;
 
 	private:
 		std::reference_wrapper<aux::stack_allocator> m_alloc;

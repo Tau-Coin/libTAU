@@ -23,13 +23,12 @@ see LICENSE file.
 #include <libtorrent/kademlia/refresh.hpp>
 #include <libtorrent/kademlia/node.hpp>
 #include <libtorrent/kademlia/dht_observer.hpp>
-#include <libtorrent/kademlia/direct_request.hpp>
 #include <libtorrent/kademlia/get_item.hpp>
-#include <libtorrent/kademlia/sample_infohashes.hpp>
 #include <libtorrent/aux_/session_settings.hpp>
 
 #include <libtorrent/aux_/socket_io.hpp> // for print_endpoint
 #include <libtorrent/aux_/time.hpp> // for aux::time_now
+#include <libtorrent/aux_/aligned_union.hpp>
 #include <libtorrent/aux_/ip_helpers.hpp> // for is_v6
 
 #include <type_traits>
@@ -116,13 +115,9 @@ namespace {
 
 	std::size_t const observer_storage_size = std::max(
 	{sizeof(find_data_observer)
-	, sizeof(announce_observer)
 	, sizeof(put_data_observer)
-	, sizeof(direct_observer)
 	, sizeof(get_item_observer)
 	, sizeof(get_peers_observer)
-	, sizeof(obfuscated_get_peers_observer)
-	, sizeof(sample_infohashes_observer)
 	, sizeof(null_observer)
 	, sizeof(traversal_observer)});
 }
@@ -329,11 +324,6 @@ bool rpc_manager::incoming(msg const& m, node_id* id)
 	}
 
 	node_id const nid = node_id(node_id_ent.string_ptr());
-	if (m_settings.get_bool(settings_pack::dht_enforce_node_id) && !verify_id(nid, m.addr.address()))
-	{
-		o->timeout();
-		return false;
-	}
 
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_log->should_log(dht_logger::rpc_manager))

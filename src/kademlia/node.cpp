@@ -40,7 +40,6 @@ see LICENSE file.
 
 #include "libtorrent/kademlia/node.hpp"
 #include "libtorrent/kademlia/dht_observer.hpp"
-#include "libtorrent/kademlia/direct_request.hpp"
 #include "libtorrent/kademlia/io.hpp"
 #include "libtorrent/kademlia/dht_settings.hpp"
 
@@ -49,7 +48,6 @@ see LICENSE file.
 #include "libtorrent/kademlia/get_item.hpp"
 #include "libtorrent/kademlia/msg.hpp"
 #include <libtorrent/kademlia/put_data.hpp>
-#include <libtorrent/kademlia/sample_infohashes.hpp>
 
 using namespace std::placeholders;
 
@@ -61,25 +59,6 @@ namespace {
 constexpr int write_token_size = 4;
 
 void nop() {}
-
-node_id calculate_node_id(node_id const& nid, aux::listen_socket_handle const& sock)
-{
-	address const external_address = sock.get_external_address();
-
-	// if we don't have an observer, don't pretend that external_address is valid
-	// generating an ID based on 0.0.0.0 would be terrible. random is better
-	if (external_address.is_unspecified())
-	{
-		return nid.is_all_zeros()
-			? generate_random_id()
-			: nid;
-	}
-
-	if (nid.is_all_zeros() || !verify_id(nid, external_address))
-		return generate_id(external_address);
-
-	return nid;
-}
 
 // generate an error response message
 void incoming_error(entry& e, char const* msg, int error_code = 203)
@@ -100,7 +79,7 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	, get_foreign_node_t get_foreign_node
 	, dht_storage_interface& storage)
 	: m_settings(settings)
-	, m_id(calculate_node_id(nid, sock))
+	, m_id(nid)
 	, m_table(m_id, aux::is_v4(sock.get_local_endpoint()) ? udp::v4() : udp::v6(), 8, settings, observer)
 	, m_rpc(m_id, m_settings, m_table, sock, sock_man, observer)
 	, m_sock(sock)
@@ -121,32 +100,7 @@ node::~node() = default;
 
 int node::branch_factor() const { return m_settings.get_int(settings_pack::dht_search_branching); }
 
-void node::update_node_id()
-{
-	// if we don't have an observer, we can't ask for the external IP (and our
-	// current node ID is likely not generated from an external address), so we
-	// can just stop here in that case.
-	if (m_observer == nullptr) return;
-
-	auto ext_address = m_sock.get_external_address();
-
-	// it's possible that our external address hasn't actually changed. If our
-	// current ID is still valid, don't do anything.
-	if (verify_id(m_id, ext_address))
-		return;
-
-#ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr) m_observer->log(dht_logger::node
-		, "updating node ID (because external IP address changed)");
-#endif
-
-	m_id = generate_id(ext_address);
-
-	m_table.update_node_id(m_id);
-	m_rpc.update_node_id(m_id);
-}
-
-bool node::verify_token(string_view token, sha1_hash const& info_hash
+bool node::verify_token(string_view token, sha256_hash const& info_hash
 	, udp::endpoint const& addr) const
 {
 	if (token.length() != write_token_size)
@@ -161,17 +115,17 @@ bool node::verify_token(string_view token, sha1_hash const& info_hash
 		return false;
 	}
 
-	hasher h1;
+	hasher256 h1;
 	std::string const address = addr.address().to_string();
 	h1.update(address);
 	h1.update(m_secret[0]);
 	h1.update(info_hash);
 
-	sha1_hash h = h1.final();
+	sha256_hash h = h1.final();
 	if (std::equal(token.begin(), token.end(), reinterpret_cast<char*>(&h[0])))
 		return true;
 
-	hasher h2;
+	hasher256 h2;
 	h2.update(address);
 	h2.update(m_secret[1]);
 	h2.update(info_hash);
@@ -180,17 +134,17 @@ bool node::verify_token(string_view token, sha1_hash const& info_hash
 }
 
 std::string node::generate_token(udp::endpoint const& addr
-	, sha1_hash const& info_hash)
+	, sha256_hash const& info_hash)
 {
 	std::string token;
 	token.resize(write_token_size);
-	hasher h;
+	hasher256 h;
 	std::string const address = addr.address().to_string();
 	h.update(address);
 	h.update(m_secret[0]);
 	h.update(info_hash);
 
-	sha1_hash const hash = h.final();
+	sha256_hash const hash = h.final();
 	std::copy(hash.begin(), hash.begin() + write_token_size, token.begin());
 	TORRENT_ASSERT(std::equal(token.begin(), token.end(), hash.data()));
 	return token;
@@ -336,54 +290,6 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 	}
 }
 
-namespace {
-
-	void announce_fun(std::vector<std::pair<node_entry, std::string>> const& v
-		, node& node, int const listen_port, sha1_hash const& ih, announce_flags_t const flags)
-	{
-#ifndef TORRENT_DISABLE_LOGGING
-		auto* logger = node.observer();
-		if (logger != nullptr && logger->should_log(dht_logger::node))
-		{
-			logger->log(dht_logger::node, "sending announce_peer [ ih: %s "
-				" p: %d nodes: %d ]", aux::to_hex(ih).c_str(), listen_port, int(v.size()));
-		}
-#endif
-
-		// create a dummy traversal_algorithm
-		auto algo = std::make_shared<traversal_algorithm>(node, node_id());
-		// store on the first k nodes
-		for (auto const& p : v)
-		{
-#ifndef TORRENT_DISABLE_LOGGING
-			if (logger != nullptr && logger->should_log(dht_logger::node))
-			{
-				logger->log(dht_logger::node, "announce-distance: %d"
-					, (160 - distance_exp(ih, p.first.id)));
-			}
-#endif
-
-			auto o = node.m_rpc.allocate_observer<announce_observer>(algo
-				, p.first.ep(), p.first.id);
-			if (!o) return;
-#if TORRENT_USE_ASSERTS
-			o->m_in_constructor = false;
-#endif
-			entry e;
-			e["y"] = "q";
-			e["q"] = "announce_peer";
-			entry& a = e["a"];
-			a["info_hash"] = ih;
-			a["port"] = listen_port;
-			a["token"] = p.second;
-			a["seed"] = (flags & announce::seed) ? 1 : 0;
-			if (flags & announce::implied_port) a["implied_port"] = 1;
-			node.stats_counters().inc_stats_counter(counters::dht_announce_peer_out);
-			node.m_rpc.invoke(e, p.first.ep(), o);
-		}
-	}
-}
-
 void node::add_router_node(udp::endpoint const& router)
 {
 #ifndef TORRENT_DISABLE_LOGGING
@@ -404,60 +310,7 @@ void node::add_node(udp::endpoint const& node)
 	send_single_refresh(node, m_table.num_active_buckets());
 }
 
-void node::get_peers(sha1_hash const& info_hash
-	, std::function<void(std::vector<tcp::endpoint> const&)> dcallback
-	, std::function<void(std::vector<std::pair<node_entry, std::string>> const&)> ncallback
-	, announce_flags_t const flags)
-{
-	// search for nodes with ids close to id or with peers
-	// for info-hash id. then send announce_peer to them.
-	bool const noseeds = bool(flags & announce::seed);
-
-	auto ta = m_settings.get_bool(settings_pack::dht_privacy_lookups)
-		? std::make_shared<dht::obfuscated_get_peers>(*this, info_hash, std::move(dcallback), std::move(ncallback), noseeds)
-		: std::make_shared<dht::get_peers>(*this, info_hash, std::move(dcallback), std::move(ncallback), noseeds);
-
-	ta->start();
-}
-
-void node::announce(sha1_hash const& info_hash, int listen_port, announce_flags_t const flags
-	, std::function<void(std::vector<tcp::endpoint> const&)> f)
-{
-#ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
-	{
-		m_observer->log(dht_logger::node, "announcing [ ih: %s p: %d ]"
-			, aux::to_hex(info_hash).c_str(), listen_port);
-	}
-#endif
-
-	if (listen_port == 0 && m_observer != nullptr)
-	{
-		listen_port = m_observer->get_listen_port(
-			(flags & announce::ssl_torrent) ? aux::transport::ssl : aux::transport::plaintext
-			, m_sock);
-	}
-
-	get_peers(info_hash, std::move(f)
-		, std::bind(&announce_fun, _1, std::ref(*this)
-		, listen_port, info_hash, flags), flags);
-}
-
-void node::direct_request(udp::endpoint const& ep, entry& e
-	, std::function<void(msg const&)> f)
-{
-	// not really a traversal
-	auto algo = std::make_shared<direct_traversal>(*this, node_id(), f);
-
-	auto o = m_rpc.allocate_observer<direct_observer>(std::move(algo), ep, node_id());
-	if (!o) return;
-#if TORRENT_USE_ASSERTS
-	o->m_in_constructor = false;
-#endif
-	m_rpc.invoke(e, ep, o);
-}
-
-void node::get_item(sha1_hash const& target, std::function<void(item const&)> f)
+void node::get_item(sha256_hash const& target, std::function<void(item const&)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
@@ -513,7 +366,7 @@ void put_data_cb(item const& i, bool auth
 
 } // namespace
 
-void node::put_item(sha1_hash const& target, entry const& data, std::function<void(int)> f)
+void node::put_item(sha256_hash const& target, entry const& data, std::function<void(int)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
@@ -552,39 +405,6 @@ void node::put_item(public_key const& pk, std::string const& salt
 		, std::bind(&put_data_cb, _1, _2, put_ta, data_cb)
 		, std::bind(&put, _1, put_ta));
 	ta->start();
-}
-
-void node::sample_infohashes(udp::endpoint const& ep, sha1_hash const& target
-	, std::function<void(sha1_hash
-		, time_duration
-		, int, std::vector<sha1_hash>
-		, std::vector<std::pair<sha1_hash, udp::endpoint>>)> f)
-{
-#ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
-	{
-		m_observer->log(dht_logger::node, "starting sample_infohashes for [ node: %s, target: %s ]"
-			, aux::print_endpoint(ep).c_str(), aux::to_hex(target).c_str());
-	}
-#endif
-
-	// not an actual traversal
-	auto ta = std::make_shared<dht::sample_infohashes>(*this, node_id(), std::move(f));
-
-	auto o = m_rpc.allocate_observer<sample_infohashes_observer>(ta, ep, node_id());
-	if (!o) return;
-#if TORRENT_USE_ASSERTS
-	o->m_in_constructor = false;
-#endif
-
-	entry e;
-
-	e["q"] = "sample_infohashes";
-	e["a"]["target"] = target;
-
-	stats_counters().inc_stats_counter(counters::dht_sample_infohashes_out);
-
-	m_rpc.invoke(e, ep, o);
 }
 
 struct ping_observer : observer
@@ -642,8 +462,8 @@ void node::tick()
 	TORRENT_ASSERT(m_id != ne->id);
 	if (ne->id == m_id) return;
 
-	int const bucket = 159 - distance_exp(m_id, ne->id);
-	TORRENT_ASSERT(bucket < 160);
+	int const bucket = 255 - distance_exp(m_id, ne->id);
+	TORRENT_ASSERT(bucket < 256);
 	send_single_refresh(ne->ep(), bucket, ne->id);
 }
 
@@ -652,7 +472,7 @@ void node::send_single_refresh(udp::endpoint const& ep, int const bucket
 {
 	TORRENT_ASSERT(id != m_id);
 	TORRENT_ASSERT(bucket >= 0);
-	TORRENT_ASSERT(bucket <= 159);
+	TORRENT_ASSERT(bucket <= 255);
 
 	// generate a random node_id within the given bucket
 	// TODO: 2 it would be nice to have a bias towards node-id prefixes that
@@ -743,13 +563,14 @@ void node::status(session_status& s)
 }
 #endif
 
-bool node::lookup_peers(sha1_hash const& info_hash, entry& reply
+bool node::lookup_peers(sha256_hash const& info_hash, entry& reply
 	, bool noseed, bool scrape, address const& requester) const
 {
 	if (m_observer)
 		m_observer->get_peers(info_hash);
 
-	return m_storage.get_peers(info_hash, noseed, scrape, requester, reply);
+	// return m_storage.get_peers(info_hash, noseed, scrape, requester, reply);
+    return false;
 }
 
 entry write_nodes_entry(std::vector<node_entry> const& nodes)
@@ -775,7 +596,7 @@ void node::incoming_request(msg const& m, entry& e)
 		{"q", bdecode_node::string_t, 0, 0},
 		{"ro", bdecode_node::int_t, 0, key_desc_t::optional},
 		{"a", bdecode_node::dict_t, 0, key_desc_t::parse_children},
-			{"id", bdecode_node::string_t, 20, key_desc_t::last_child},
+			{"id", bdecode_node::string_t, 32, key_desc_t::last_child},
 	};
 
 	bdecode_node top_level[4];
@@ -791,15 +612,6 @@ void node::incoming_request(msg const& m, entry& e)
 	bdecode_node const arg_ent = top_level[2];
 	bool const read_only = top_level[1] && top_level[1].int_value() != 0;
 	node_id const id(top_level[3].string_ptr());
-
-	// if this nodes ID doesn't match its IP, tell it what
-	// its IP is with an error
-	// don't enforce this yet
-	if (m_settings.get_bool(settings_pack::dht_enforce_node_id) && !verify_id(id, m.addr.address()))
-	{
-		incoming_error(e, "invalid node ID");
-		return;
-	}
 
 	if (!read_only)
 		m_table.heard_about(id, m.addr);
@@ -824,7 +636,7 @@ void node::incoming_request(msg const& m, entry& e)
 	else if (query == "get_peers")
 	{
 		static key_desc_t const msg_desc[] = {
-			{"info_hash", bdecode_node::string_t, 20, 0},
+			{"info_hash", bdecode_node::string_t, 32, 0},
 			{"noseed", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"scrape", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
@@ -838,7 +650,7 @@ void node::incoming_request(msg const& m, entry& e)
 			return;
 		}
 
-		sha1_hash const info_hash(msg_keys[0].string_ptr());
+		sha256_hash const info_hash(msg_keys[0].string_ptr());
 
 		m_counters.inc_stats_counter(counters::dht_get_peers_in);
 
@@ -864,7 +676,7 @@ void node::incoming_request(msg const& m, entry& e)
 	else if (query == "find_node")
 	{
 		static key_desc_t const msg_desc[] = {
-			{"target", bdecode_node::string_t, 20, 0},
+			{"target", bdecode_node::string_t, 32, 0},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
 		};
 
@@ -877,68 +689,9 @@ void node::incoming_request(msg const& m, entry& e)
 		}
 
 		m_counters.inc_stats_counter(counters::dht_find_node_in);
-		sha1_hash const target(msg_keys[0].string_ptr());
+		sha256_hash const target(msg_keys[0].string_ptr());
 
 		write_nodes_entries(target, msg_keys[1], reply);
-	}
-	else if (query == "announce_peer")
-	{
-		static key_desc_t const msg_desc[] = {
-			{"info_hash", bdecode_node::string_t, 20, 0},
-			{"port", bdecode_node::int_t, 0, 0},
-			{"token", bdecode_node::string_t, 0, 0},
-			{"n", bdecode_node::string_t, 0, key_desc_t::optional},
-			{"seed", bdecode_node::int_t, 0, key_desc_t::optional},
-			{"implied_port", bdecode_node::int_t, 0, key_desc_t::optional},
-		};
-
-		bdecode_node msg_keys[6];
-		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string))
-		{
-			m_counters.inc_stats_counter(counters::dht_invalid_announce);
-			incoming_error(e, error_string);
-			return;
-		}
-
-		auto port = int(msg_keys[1].int_value());
-
-		// is the announcer asking to ignore the explicit
-		// listen port and instead use the source port of the packet?
-		if (msg_keys[5] && msg_keys[5].int_value() != 0)
-			port = m.addr.port();
-
-		if (port < 0 || port >= 65536)
-		{
-			m_counters.inc_stats_counter(counters::dht_invalid_announce);
-			incoming_error(e, "invalid port");
-			return;
-		}
-
-		sha1_hash const info_hash(msg_keys[0].string_ptr());
-
-		if (m_observer)
-			m_observer->announce(info_hash, m.addr.address(), port);
-
-		if (!verify_token(msg_keys[2].string_value()
-			, sha1_hash(msg_keys[0].string_ptr()), m.addr))
-		{
-			m_counters.inc_stats_counter(counters::dht_invalid_announce);
-			incoming_error(e, "invalid token");
-			return;
-		}
-
-		m_counters.inc_stats_counter(counters::dht_announce_peer_in);
-
-		// the token was correct. That means this
-		// node is not spoofing its address. So, let
-		// the table get a chance to add it.
-		m_table.node_seen(id, m.addr, 0xffff);
-
-		tcp::endpoint const addr = tcp::endpoint(m.addr.address(), std::uint16_t(port));
-		string_view const name = msg_keys[3] ? msg_keys[3].string_value() : string_view();
-		bool const seed = msg_keys[4] && msg_keys[4].int_value();
-
-		m_storage.announce_peer(info_hash, addr, name, seed);
 	}
 	else if (query == "put")
 	{
@@ -1000,7 +753,7 @@ void node::incoming_request(msg const& m, entry& e)
 			return;
 		}
 
-		sha1_hash const target = pub_key
+		sha256_hash const target = pub_key
 			? item_target_id(salt, public_key(pub_key))
 			: item_target_id(buf);
 
@@ -1085,7 +838,7 @@ void node::incoming_request(msg const& m, entry& e)
 	{
 		static key_desc_t const msg_desc[] = {
 			{"seq", bdecode_node::int_t, 0, key_desc_t::optional},
-			{"target", bdecode_node::string_t, 20, 0},
+			{"target", bdecode_node::string_t, 32, 0},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
 		};
 
@@ -1101,7 +854,7 @@ void node::incoming_request(msg const& m, entry& e)
 		}
 
 		m_counters.inc_stats_counter(counters::dht_get_in);
-		sha1_hash const target(msg_keys[1].string_ptr());
+		sha256_hash const target(msg_keys[1].string_ptr());
 
 //		std::fprintf(stderr, "%s GET target: %s\n"
 //			, msg_keys[1] ? "mutable":"immutable"
@@ -1129,54 +882,30 @@ void node::incoming_request(msg const& m, entry& e)
 				, reply);
 		}
 	}
-	else if (query == "sample_infohashes")
-	{
-		static key_desc_t const msg_desc[] = {
-			{"target", bdecode_node::string_t, 20, 0},
-			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
-		};
-
-		bdecode_node msg_keys[2];
-		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string))
-		{
-			m_counters.inc_stats_counter(counters::dht_invalid_sample_infohashes);
-			incoming_error(e, error_string);
-			return;
-		}
-
-		m_counters.inc_stats_counter(counters::dht_sample_infohashes_in);
-		sha1_hash const target(msg_keys[0].string_ptr());
-
-		// TODO: keep the returned value to pass as a limit
-		// to write_nodes_entries when implemented
-		m_storage.get_infohashes_sample(reply);
-
-		write_nodes_entries(target, msg_keys[1], reply);
-	}
 	else
 	{
 		// if we don't recognize the message but there's a
 		// 'target' or 'info_hash' in the arguments, treat it
 		// as find_node to be future compatible
 		bdecode_node target_ent = arg_ent.dict_find_string("target");
-		if (!target_ent || target_ent.string_length() != 20)
+		if (!target_ent || target_ent.string_length() != 32)
 		{
 			target_ent = arg_ent.dict_find_string("info_hash");
-			if (!target_ent || target_ent.string_length() != 20)
+			if (!target_ent || target_ent.string_length() != 32)
 			{
 				incoming_error(e, "unknown message");
 				return;
 			}
 		}
 
-		sha1_hash const target(target_ent.string_ptr());
+		sha256_hash const target(target_ent.string_ptr());
 		// always return nodes as well as peers
 		write_nodes_entries(target, arg_ent.dict_find_list("want"), reply);
 	}
 }
 
 // TODO: limit number of entries in the result
-void node::write_nodes_entries(sha1_hash const& info_hash
+void node::write_nodes_entries(sha256_hash const& info_hash
 	, bdecode_node const& want, entry& r)
 {
 	// if no wants entry was specified, include a nodes

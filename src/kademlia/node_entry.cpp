@@ -22,7 +22,7 @@ namespace libtorrent { namespace dht {
 		, endpoint(ep)
 		, rtt(roundtriptime & 0xffff)
 		, timeout_count(pinged ? 0 : 0xff)
-		, verified(verify_id(id_, ep.address()))
+		, verified(true)
 	{
 	}
 
