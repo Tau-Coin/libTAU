@@ -16,8 +16,7 @@ if plain_output:
     plain_file = open('plain_text_out.txt', 'w+')
 in_code = None
 
-#paths = ['include/libtorrent/*.hpp', 'include/libtorrent/kademlia/*.hpp', 'include/libtorrent/extensions/*.hpp', 'include/libtorrent/communication/*.hpp']
-paths = ['include/libtorrent/communication/online_signal.hpp']
+paths = ['include/libtorrent/*.hpp', 'include/libtorrent/kademlia/*.hpp', 'include/libtorrent/extensions/*.hpp', 'include/libtorrent/communication/*.hpp']
 
 if internal:
     paths.append('include/libtorrent/aux_/*.hpp')

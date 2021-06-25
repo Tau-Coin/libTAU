@@ -8,7 +8,7 @@
 %(stylesheet)s
 %(body_prefix)s
     <div id="container">
-    <a href="index.html"><div id="logo">
+    <a href="../index.html"><div id="logo">
     <img src="img/logo-color-text.png" alt="libtorrent logo"/>
     </div></a>
     <div id="main">

@@ -39,8 +39,7 @@ REFERENCE_TARGETS = \
 	reference-Settings \
 	reference-Bdecoding \
 	reference-ed25519 \
-	reference-Data \
-	reference-Message
+	reference-Communication
 
 MANUAL_TARGETS = index \
 	udp_tracker_protocol \
