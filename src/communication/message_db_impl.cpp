@@ -6,6 +6,8 @@
 // see LICENSE file.
 //
 
+#include <libtorrent/aux_/common.h>
+#include "libtorrent/aux_/vector_ref.h"
 #include "libtorrent/communication/message_db_impl.hpp"
 
 namespace libtorrent {
@@ -13,9 +15,9 @@ namespace libtorrent {
 
         // table friends: public key
         bool message_db_impl::init() {
-            char *sql = "CREATE TABLE IF NOT EXISTS FRIENDS(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);";
+            std::string sql = "CREATE TABLE IF NOT EXISTS FRIENDS(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);";
             char *zErrMsg = nullptr;
-            int ok = sqlite3_exec(m_sqlite, sql, nullptr, nullptr, &zErrMsg);
+            int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
             if (ok != SQLITE_OK) {
                 sqlite3_free(zErrMsg);
                 return false;
@@ -25,21 +27,28 @@ namespace libtorrent {
         }
 
         std::vector<aux::bytes> message_db_impl::get_all_friends() {
-            char *sql = "";
-            /* Create SQL statement */
-            char *zErrMsg = nullptr;
-            int rc = sqlite3_exec(m_sqlite, sql, nullptr, nullptr, &zErrMsg);
-            if (rc != SQLITE_OK) {
-                sqlite3_free(zErrMsg);
+            std::vector<aux::bytes> friends;
+
+            sqlite3_stmt * stmt;
+            std::string sql = "SELECT * FROM FRIENDS";
+            int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+            if (ok == SQLITE_OK) {
+                for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                    auto pubKey = sqlite3_column_text(stmt,0);
+                    aux::bytes public_key = (const std::vector<unsigned char> &) pubKey;
+                    friends.push_back(public_key);
+                }
             }
 
-            return std::vector<aux::bytes>();
+            sqlite3_finalize(stmt);
+
+            return friends;
         }
 
         bool message_db_impl::save_friend(aux::bytes public_key) {
             sqlite3_stmt * stmt;
-            char * sql = "INSERT INTO FRIENDS VALUES(?)";
-            int ok = sqlite3_prepare_v2(m_sqlite, sql, -1, &stmt, nullptr);
+            std::string sql = "INSERT INTO FRIENDS VALUES(?)";
+            int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
             if (ok != SQLITE_OK) {
                 return false;
             }
@@ -55,8 +64,8 @@ namespace libtorrent {
 
         bool message_db_impl::delete_friend(aux::bytes public_key) {
             sqlite3_stmt * stmt;
-            char * sql = "DELETE FROM FRIENDS WHERE PUBKEY=?";
-            int ok = sqlite3_prepare_v2(m_sqlite, sql, -1, &stmt, nullptr);
+            std::string sql = "DELETE FROM FRIENDS WHERE PUBKEY=?";
+            int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
             if (ok != SQLITE_OK) {
                 return false;
             }
@@ -71,27 +80,43 @@ namespace libtorrent {
         }
 
         communication::message message_db_impl::get_message(aux::bytes hash) {
-            return communication::message();
+            std::string value;
+            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), reinterpret_cast<char*>(hash.data()), &value);
+            aux::bytes buffer;
+            buffer.insert(buffer.end(), value.begin(), value.end());
+            return communication::message(&buffer);
         }
 
-        void message_db_impl::save_message(communication::message msg) {
-
+        bool message_db_impl::save_message(communication::message msg) {
+            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(),
+                                                    msg.sha256().to_string(),
+                                                    reinterpret_cast<char*>(msg.rlp().data()));
+            return status.ok();
         }
 
-        void message_db_impl::delete_message(aux::bytes hash) {
-
+        bool message_db_impl::delete_message(aux::bytes hash) {
+            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), reinterpret_cast<char*>(hash.data()));
+            return status.ok();
         }
 
         aux::bytes message_db_impl::get_latest_message_hash_list_encode(aux::bytes public_key) {
-            return libtorrent::aux::bytes();
+            std::string value;
+            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), reinterpret_cast<char*>(public_key.data()), &value);
+            aux::bytes buffer;
+            buffer.insert(buffer.end(), value.begin(), value.end());
+            return buffer;
         }
 
-        void message_db_impl::save_latest_message_hash_list_encode(aux::bytes public_key, aux::bytes encode) {
-
+        bool message_db_impl::save_latest_message_hash_list_encode(aux::bytes public_key, aux::bytes encode) {
+            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(),
+                                                    reinterpret_cast<char*>(public_key.data()),
+                                                    reinterpret_cast<char*>(encode.data()));
+            return status.ok();
         }
 
-        void message_db_impl::delete_latest_message_hash_list_encode(aux::bytes public_key) {
-
+        bool message_db_impl::delete_latest_message_hash_list_encode(aux::bytes public_key) {
+            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), reinterpret_cast<char*>(public_key.data()));
+            return status.ok();
         }
     }
 }

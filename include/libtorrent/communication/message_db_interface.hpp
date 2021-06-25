@@ -42,19 +42,19 @@ namespace libtorrent {
             virtual communication::message get_message(aux::bytes hash) = 0;
 
             // save message
-            virtual void save_message(communication::message msg) = 0;
+            virtual bool save_message(communication::message msg) = 0;
 
             // delete message
-            virtual void delete_message(aux::bytes hash) = 0;
+            virtual bool delete_message(aux::bytes hash) = 0;
 
             // get encode of the latest message hash list
             virtual aux::bytes get_latest_message_hash_list_encode(aux::bytes public_key) = 0;
 
             // save encode of the latest message hash list
-            virtual void save_latest_message_hash_list_encode(aux::bytes public_key, aux::bytes encode) = 0;
+            virtual bool save_latest_message_hash_list_encode(aux::bytes public_key, aux::bytes encode) = 0;
 
             // delete encode of the latest message hash list
-            virtual void delete_latest_message_hash_list_encode(aux::bytes public_key) = 0;
+            virtual bool delete_latest_message_hash_list_encode(aux::bytes public_key) = 0;
         };
     }
 }

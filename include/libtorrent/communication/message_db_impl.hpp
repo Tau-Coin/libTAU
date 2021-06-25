@@ -11,7 +11,7 @@ see LICENSE file.
 
 
 #include <sqlite3.h>
-//#include <leveldb/db.h>
+#include <leveldb/db.h>
 
 #include "libtorrent/communication/message_db_interface.hpp"
 
@@ -20,8 +20,10 @@ namespace libtorrent {
 
         struct message_db_impl final : message_db_interface {
 
+            message_db_impl(sqlite3 *mSqlite, leveldb::DB *mLeveldb) : m_sqlite(mSqlite), m_leveldb(mLeveldb) {}
+
             // init db
-            bool init();
+            bool init() override;
 
             // get all friends
             std::vector<aux::bytes> get_all_friends() override;
@@ -36,26 +38,27 @@ namespace libtorrent {
             communication::message get_message(aux::bytes hash) override;
 
             // save message
-            void save_message(communication::message msg) override;
+            bool save_message(communication::message msg) override;
 
             // delete message
-            void delete_message(aux::bytes hash) override;
+            bool delete_message(aux::bytes hash) override;
 
             // get encode of the latest message hash list
             aux::bytes get_latest_message_hash_list_encode(aux::bytes public_key) override;
 
             // save encode of the latest message hash list
-            void save_latest_message_hash_list_encode(aux::bytes public_key, aux::bytes encode) override;
+            bool save_latest_message_hash_list_encode(aux::bytes public_key, aux::bytes encode) override;
 
             // delete encode of the latest message hash list
-            void delete_latest_message_hash_list_encode(aux::bytes public_key) override;
+            bool delete_latest_message_hash_list_encode(aux::bytes public_key) override;
 
         private:
 
             // sqlite3 instance
             sqlite3 *m_sqlite;
+
             // level db instance
-//            leveldb::DB* m_leveldb;
+            leveldb::DB* m_leveldb;
         };
     }
 }
