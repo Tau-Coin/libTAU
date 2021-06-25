@@ -16,7 +16,16 @@ if plain_output:
     plain_file = open('plain_text_out.txt', 'w+')
 in_code = None
 
-paths = ['include/libtorrent/*.hpp', 'include/libtorrent/kademlia/*.hpp', 'include/libtorrent/extensions/*.hpp', 'include/libtorrent/communication/*.hpp']
+paths = ['include/libtorrent/*session*.hpp', \
+        'include/libtorrent/alert*.hpp', \
+        'include/libtorrent/*filter*.hpp', \
+        'include/libtorrent/settings_pack.hpp', \
+        'include/libtorrent/entry.hpp', \
+        'include/libtorrent/bencode.hpp', \
+        'include/libtorrent/bdecode.hpp', \
+        'include/libtorrent/*hash*.hpp', \
+        'include/libtorrent/kademlia/*.hpp', \
+        'include/libtorrent/communication/*.hpp']
 
 if internal:
     paths.append('include/libtorrent/aux_/*.hpp')
@@ -1476,6 +1485,9 @@ __ reference.html
 ''')
 
     for cat in categories:
+        if(cat==' '):
+            continue
+        print(cat)
         render(out, categories[cat])
 
     out.close()
@@ -1498,6 +1510,8 @@ reference documentation
     out.close()
 
     for cat in categories:
+        if(cat==' '):
+            continue
         out = open(categories[cat]['filename'], 'w+')
 
         out.write('''.. include:: header.rst
