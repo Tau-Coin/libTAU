@@ -23,6 +23,7 @@ see LICENSE file.
 #include "libtorrent/aux_/alert_manager.hpp" // for alert_manager
 #include "libtorrent/aux_/session_interface.hpp"
 #include "libtorrent/kademlia/item.hpp"
+#include "libtorrent/communication/message_db_impl.hpp"
 #include "libtorrent/communication/message_db_interface.hpp"
 
 namespace libtorrent {
@@ -36,8 +37,12 @@ namespace libtorrent {
 
     namespace communication {
 
-        class TORRENT_EXPORT communication final: std::enable_shared_from_this<communication> {
+        class TORRENT_EXPORT communication final: public std::enable_shared_from_this<communication> {
         public:
+
+            communication(io_context &mIoc, aux::session_interface &mSes) : m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
+                m_message_db = new message_db_impl(m_ses.sqldb(), m_ses.kvdb());
+            }
 
             // start communication
             void start();
@@ -89,6 +94,9 @@ namespace libtorrent {
 
             static constexpr int default_refresh_time = 50;
 
+            // io context
+            io_context& m_ioc;
+
             // session interface
             aux::session_interface& m_ses;
 
@@ -99,7 +107,7 @@ namespace libtorrent {
             int m_refresh_time = default_refresh_time;
 
             // message db
-//            message_db_interface m_message_db;
+            message_db_interface *m_message_db;
 
             // all friends
             std::vector<aux::bytes> m_friends;

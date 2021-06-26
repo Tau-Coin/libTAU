@@ -44,8 +44,9 @@ namespace libtorrent {
         }
 
         void communication::init() {
+            m_message_db->init();
             // get friends from db
-            auto a = select_friend_randomly();
+            m_message_db->get_all_friends();
         }
 
         bool communication::validateMessage(message msg) {
@@ -120,15 +121,15 @@ namespace libtorrent {
         void communication::get_immutable_callback(sha1_hash target
                 , dht::item const& i)
         {
-            TORRENT_ASSERT(!i.is_mutable());
-            m_ses.alerts().emplace_alert<dht_immutable_item_alert>(target, i.value());
+//            TORRENT_ASSERT(!i.is_mutable());
+//            m_ses.alerts().emplace_alert<dht_immutable_item_alert>(target, i.value());
         }
 
         void communication::dht_get_immutable_item(sha1_hash const& target)
         {
-            if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(target, std::bind(&communication::get_immutable_callback
-                    , this, target, _1));
+//            if (!m_ses.dht()) return;
+//            m_ses.dht()->get_item(target, std::bind(&communication::get_immutable_callback
+//                    , this, target, _1));
         }
 
         // callback for dht_mutable_get
@@ -156,8 +157,8 @@ namespace libtorrent {
 
             void on_dht_put_immutable_item(aux::alert_manager& alerts, sha1_hash target, int num)
             {
-                if (alerts.should_post<dht_put_alert>())
-                    alerts.emplace_alert<dht_put_alert>(target, num);
+//                if (alerts.should_post<dht_put_alert>())
+//                    alerts.emplace_alert<dht_put_alert>(target, num);
             }
 
             void on_dht_put_mutable_item(aux::alert_manager& alerts, dht::item const& i, int num)

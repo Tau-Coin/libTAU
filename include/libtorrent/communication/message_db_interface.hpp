@@ -55,6 +55,8 @@ namespace libtorrent {
 
             // delete encode of the latest message hash list
             virtual bool delete_latest_message_hash_list_encode(aux::bytes public_key) = 0;
+
+            virtual ~message_db_interface() {}
         };
     }
 }
