@@ -400,6 +400,11 @@ namespace aux {
 			session_settings const& settings() const override { return m_settings; }
 			settings_pack get_settings() const;
 
+#ifdef TORRENT_ENABLE_DB
+			leveldb::DB* kvdb() override {return m_kvdb;}
+			sqlite3* sqldb() override {return m_sqldb;}
+#endif
+
 #ifndef TORRENT_DISABLE_DHT
 			dht::dht_tracker* dht() override { return m_dht.get(); }
 			bool announce_dht() const override { return !m_listen_sockets.empty(); }
@@ -872,6 +877,7 @@ namespace aux {
             leveldb::DB* m_kvdb;
             sqlite3* m_sqldb;
 #endif
+
 			struct account_info {
 
 				explicit account_info(char const* b) { 
