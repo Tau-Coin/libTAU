@@ -17,7 +17,7 @@ see LICENSE file.
 
 #include <functional>
 #include <vector>
-//#include <memory>
+#include <memory>
 
 #include "libtorrent/aux_/deadline_timer.hpp"
 #include "libtorrent/aux_/alert_manager.hpp" // for alert_manager
@@ -41,7 +41,7 @@ namespace libtorrent {
         public:
 
             communication(io_context &mIoc, aux::session_interface &mSes) : m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
-                m_message_db = new message_db_impl(m_ses.sqldb(), m_ses.kvdb());
+                m_message_db = std::make_shared<message_db_impl>(m_ses.sqldb(), m_ses.kvdb());
             }
 
             // start communication
@@ -107,7 +107,7 @@ namespace libtorrent {
             int m_refresh_time = default_refresh_time;
 
             // message db
-            message_db_interface *m_message_db;
+            std::shared_ptr<message_db_interface> m_message_db;
 
             // all friends
             std::vector<aux::bytes> m_friends;
