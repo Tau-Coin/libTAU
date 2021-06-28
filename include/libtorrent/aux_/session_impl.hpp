@@ -404,6 +404,8 @@ namespace aux {
 			leveldb::DB* kvdb() override {return m_kvdb;}
 			sqlite3* sqldb() override {return m_sqldb;}
 #endif
+			dht::public_key* pubkey() override {return &(std::get<dht::public_key>(m_keypair));}
+			dht::secret_key* serkey() override {return &(std::get<dht::secret_key>(m_keypair));}
 
 #ifndef TORRENT_DISABLE_DHT
 			dht::dht_tracker* dht() override { return m_dht.get(); }

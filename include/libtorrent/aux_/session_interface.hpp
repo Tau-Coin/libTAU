@@ -30,6 +30,7 @@ see LICENSE file.
 #include "libtorrent/info_hash.hpp"
 #include "libtorrent/aux_/socket_type.hpp"
 #include "libtorrent/aux_/ssl.hpp"
+#include "libtorrent/kademlia/types.hpp"
 
 #include <functional>
 #include <memory>
@@ -230,6 +231,8 @@ namespace libtorrent::aux {
 		virtual leveldb::DB* kvdb() = 0;
 		virtual sqlite3* sqldb() = 0;
 #endif
+		virtual dht::public_key* pubkey() = 0;
+		virtual dht::secret_key* serkey() = 0;
 
 		virtual counters& stats_counters() = 0;
 		virtual void received_buffer(int size) = 0;
