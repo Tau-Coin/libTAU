@@ -340,7 +340,7 @@ namespace aux {
 #endif
 			using connection_map = std::set<std::shared_ptr<peer_connection>>;
 
-			session_impl(io_context&, settings_pack const&, disk_io_constructor_type, session_flags_t, const char* seed);
+			session_impl(io_context&, settings_pack const&, disk_io_constructor_type, session_flags_t);
 			~session_impl() override;
 
 			session_impl(session_impl const&) = delete;
@@ -877,23 +877,6 @@ namespace aux {
             leveldb::DB* m_kvdb;
             sqlite3* m_sqldb;
 #endif
-
-			struct account_info {
-
-				explicit account_info(char const* b) { 
-					std::copy(b, b + len, seed.begin()); 
-					aux::ed25519_create_keypair(pubkey.data(), prikey.data(), seed.data());
-				}
-
-				static constexpr int len = 32;
-
-				std::array<unsigned char, len> seed;
-				std::array<unsigned char, len> pubkey;
-				std::array<unsigned char, 2*len> prikey;
-
-			};
-
-			account_info m_account;
 
 			// this is initialized to the unchoke_interval
 			// session_setting and decreased every second.
