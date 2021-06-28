@@ -110,6 +110,7 @@ namespace libtorrent {
         SET(i2p_hostname, "", nullptr), // tau-modify
 		SET(peer_fingerprint, "-LT2030-", nullptr),
         SET(db_dir, "/.libTAU", &session_impl::update_db_dir),
+        SET(account_seed, "", &session_impl::update_account_seed),
 		SET(dht_bootstrap_nodes, "dht.libtorrent.org:25401", &session_impl::update_dht_bootstrap_nodes),
 		SET(webtorrent_stun_server, "stun.l.google.com:19302", nullptr)
 	}});

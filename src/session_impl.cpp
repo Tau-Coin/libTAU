@@ -55,6 +55,7 @@ see LICENSE file.
 #include "libtorrent/ip_filter.hpp"
 #include "libtorrent/socket.hpp"
 #include "libtorrent/aux_/session_impl.hpp"
+#include "libtorrent/kademlia/ed25519.hpp"
 #ifndef TORRENT_DISABLE_DHT
 #include "libtorrent/kademlia/dht_tracker.hpp"
 #include "libtorrent/kademlia/types.hpp"
@@ -447,7 +448,7 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 
 	session_impl::session_impl(io_context& ioc, settings_pack const& pack
 		, disk_io_constructor_type disk_io_constructor
-		, session_flags_t const flags, const char* seed)
+		, session_flags_t const flags)
 		: m_settings(pack)
 		, m_io_context(ioc)
 #if TORRENT_USE_SSL
@@ -480,7 +481,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 #endif
 		, m_timer(m_io_context)
 		, m_paused(flags & session::paused)
-		, m_account(seed)
 	{
 	}
 
@@ -3121,6 +3121,17 @@ namespace {
 #endif
 
     }   
+
+	void session_impl::update_account_seed() {
+
+		std::array<char, 32> seed;
+		const char* account_seed = m_settings.get_str(settings_pack::account_seed).c_str();
+		std::copy(account_seed, account_seed + 32, seed.begin());			
+
+		m_keypair = dht::ed25519_create_keypair(seed);
+
+	}
+
 	// TODO: 2 this function should be removed and users need to deal with the
 	// more generic case of having multiple listen ports
 	std::uint16_t session_impl::listen_port() const

@@ -207,7 +207,7 @@ namespace {
 		return set;
 	}
 
-	void session::start(session_flags_t const flags, session_params&& params, io_context* ios, const char* seed)
+	void session::start(session_flags_t const flags, session_params&& params, io_context* ios)
 	{
 		bool const internal_executor = ios == nullptr;
 
@@ -263,7 +263,7 @@ namespace {
 		m_impl = std::make_shared<aux::session_impl>(std::ref(*ios)
 			, std::move(params.settings)
 			, std::move(params.disk_io_constructor)
-			, flags, seed);
+			, flags);
 		*static_cast<session_handle*>(this) = session_handle(m_impl);
 
 #ifndef TORRENT_DISABLE_EXTENSIONS
@@ -318,61 +318,51 @@ namespace {
 
 	session::session(session_params const& params)
 	{
-		start(params.flags, session_params(params), nullptr, "test_seed");
+		start(params.flags, session_params(params), nullptr);
 	}
 
 	session::session(session_params&& params)
 	{
-		start(params.flags, std::move(params), nullptr, "test_seed");
-	}
-
-	session::session(session_params const& params, const char* seed)
-	{
-		start(params.flags, session_params(params), nullptr, seed);
-	}
-
-	session::session(session_params&& params, const char* seed)
-	{
-		start(params.flags, std::move(params), nullptr, seed);
+		start(params.flags, std::move(params), nullptr);
 	}
 
 #if TORRENT_ABI_VERSION < 4
 	session::session(session_params const& params, session_flags_t const flags)
 	{
-		start(flags, session_params(params), nullptr, "test_seed");
+		start(flags, session_params(params), nullptr);
 	}
 
 	session::session(session_params&& params, session_flags_t const flags)
 	{
-		start(flags, std::move(params), nullptr, "test_seed");
+		start(flags, std::move(params), nullptr);
 	}
 #endif
 
 	session::session()
 	{
 		session_params params;
-		start(params.flags, std::move(params), nullptr, "test_seed");
+		start(params.flags, std::move(params), nullptr);
 	}
 
 	session::session(session_params&& params, io_context& ios)
 	{
-		start(params.flags, std::move(params), &ios, "test_seed");
+		start(params.flags, std::move(params), &ios);
 	}
 
 	session::session(session_params const& params, io_context& ios)
 	{
-		start(params.flags, session_params(params), &ios, "test_seed");
+		start(params.flags, session_params(params), &ios);
 	}
 
 #if TORRENT_ABI_VERSION < 4
 	session::session(session_params&& params, io_context& ios, session_flags_t const flags)
 	{
-		start(flags, std::move(params), &ios, "test_seed");
+		start(flags, std::move(params), &ios);
 	}
 
 	session::session(session_params const& params, io_context& ios, session_flags_t const flags)
 	{
-		start(flags, session_params(params), &ios, "test_seed");
+		start(flags, session_params(params), &ios);
 	}
 #endif
 

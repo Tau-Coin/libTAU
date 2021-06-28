@@ -25,7 +25,6 @@ see LICENSE file.
 #include "libtorrent/performance_counters.hpp" // for counters
 #include "libtorrent/aux_/allocating_handler.hpp"
 #include "libtorrent/aux_/time.hpp"
-#include "libtorrent/aux_/ed25519.hpp"
 #include "libtorrent/aux_/torrent_list.hpp"
 #include "libtorrent/session_params.hpp" // for disk_io_constructor_type
 
@@ -60,6 +59,7 @@ see LICENSE file.
 #include "libtorrent/kademlia/dht_observer.hpp"
 #include "libtorrent/kademlia/dht_state.hpp"
 #include "libtorrent/kademlia/announce_flags.hpp"
+#include "libtorrent/kademlia/types.hpp"
 #include "libtorrent/aux_/resolver.hpp"
 #include "libtorrent/aux_/invariant_check.hpp"
 #include "libtorrent/extensions.hpp"
@@ -681,6 +681,7 @@ namespace aux {
 			void update_natpmp();
 			void update_dht();
 			void update_db_dir();
+			void update_account_seed();
 			void update_dht_bootstrap_nodes();
 
 			void update_socket_buffer_size();
@@ -877,6 +878,8 @@ namespace aux {
             leveldb::DB* m_kvdb;
             sqlite3* m_sqldb;
 #endif
+			
+	 		std::tuple<dht::public_key, dht::secret_key> m_keypair;
 
 			// this is initialized to the unchoke_interval
 			// session_setting and decreased every second.

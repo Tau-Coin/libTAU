@@ -351,6 +351,10 @@ namespace aux {
             // Now using leveldb and sqlite3.
 			db_dir,
 
+			// User's seed.
+            // since session constructor and given from apply layer.
+			account_seed,
+
 			// This is a comma-separated list of IP port-pairs. They will be added
 			// to the DHT node (if it's enabled) as back-up nodes in case we don't
 			// know of any.
