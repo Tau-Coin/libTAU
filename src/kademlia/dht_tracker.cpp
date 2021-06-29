@@ -376,6 +376,13 @@ namespace libtorrent::dht {
 			n.second.dht.get_item(target, std::bind(&get_immutable_item_callback, _1, ctx, cb));
 	}
 
+	void dht_tracker::get_item(sha256_hash const& target
+		, std::vector<node_entry> const& eps
+		, std::function<void(item const&)> cb)
+	{
+		// TODO: directly get item from specified endpoints
+	}
+
 	// key is a 32-byte binary string, the public key to look up.
 	// the salt is optional
 	void dht_tracker::get_item(public_key const& key

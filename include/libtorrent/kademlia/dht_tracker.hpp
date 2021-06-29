@@ -17,6 +17,7 @@ see LICENSE file.
 #include <functional>
 
 #include <libtorrent/kademlia/node.hpp>
+#include <libtorrent/kademlia/node_entry.hpp>
 #include <libtorrent/kademlia/dos_blocker.hpp>
 #include <libtorrent/kademlia/dht_state.hpp>
 
@@ -89,6 +90,10 @@ namespace libtorrent::dht {
 		dht_state state() const;
 
 		void get_item(sha256_hash const& target
+			, std::function<void(item const&)> cb);
+
+		void get_item(sha256_hash const& target
+			, std::vector<node_entry> const& eps
 			, std::function<void(item const&)> cb);
 
 		// key is a 32-byte binary string, the public key to look up.
