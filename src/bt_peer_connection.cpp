@@ -2640,12 +2640,6 @@ namespace {
 
 		stats_counters().inc_stats_counter(counters::num_outgoing_piece);
 
-		if (t->alerts().should_post<block_uploaded_alert>())
-		{
-			t->alerts().emplace_alert<block_uploaded_alert>(t->get_handle(),
-				remote(), pid(), r.start / t->block_size() , r.piece);
-		}
-
 #ifndef TORRENT_DISABLE_EXTENSIONS
 		extension_notify(&peer_plugin::sent_piece, r);
 #endif

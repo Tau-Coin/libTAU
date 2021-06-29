@@ -415,17 +415,14 @@ bool rtc_signaling::offer_batch::is_complete() const
 #ifndef TORRENT_DISABLE_LOGGING
 bool rtc_signaling::should_log() const
 {
-	return alerts().should_post<torrent_log_alert>();
+	return true;
 }
 
 TORRENT_FORMAT(2,3)
 void rtc_signaling::debug_log(char const* fmt, ...) const noexcept try
 {
-	if (!alerts().should_post<torrent_log_alert>()) return;
-
 	va_list v;
 	va_start(v, fmt);
-	alerts().emplace_alert<torrent_log_alert>(m_torrent->get_handle(), fmt, v);
 	va_end(v);
 }
 catch (std::exception const&) {}

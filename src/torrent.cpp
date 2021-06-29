@@ -500,16 +500,6 @@ bool is_downloading_state(int const st)
 		// constructed, as it relies on get_shared_from_this()
 		if (m_add_torrent_params)
 		{
-#if TORRENT_ABI_VERSION == 1
-			if (m_add_torrent_params->internal_resume_data_error
-				&& m_ses.alerts().should_post<fastresume_rejected_alert>())
-			{
-				m_ses.alerts().emplace_alert<fastresume_rejected_alert>(get_handle()
-					, m_add_torrent_params->internal_resume_data_error, ""
-					, operation_t::unknown);
-			}
-#endif
-
 			add_torrent_params const& p = *m_add_torrent_params;
 
 			set_max_uploads(p.max_uploads, false);
@@ -689,7 +679,6 @@ bool is_downloading_state(int const st)
 
 		if (ec)
 		{
-			m_ses.alerts().emplace_alert<read_piece_alert>(get_handle(), piece, ec);
 			return;
 		}
 
@@ -703,8 +692,6 @@ bool is_downloading_state(int const st)
 		{
 			// this shouldn't actually happen
 			boost::shared_array<char> buf;
-			m_ses.alerts().emplace_alert<read_piece_alert>(
-				get_handle(), piece, buf, 0);
 			return;
 		}
 
@@ -712,8 +699,6 @@ bool is_downloading_state(int const st)
 		rp->piece_data.reset(new (std::nothrow) char[std::size_t(piece_size)]);
 		if (!rp->piece_data)
 		{
-			m_ses.alerts().emplace_alert<read_piece_alert>(
-				get_handle(), piece, error_code(boost::system::errc::not_enough_memory, generic_category()));
 			return;
 		}
 		rp->blocks_left = blocks_in_piece;
@@ -1009,9 +994,6 @@ bool is_downloading_state(int const st)
 
 		if (error.ec == boost::system::errc::not_enough_memory)
 		{
-			if (alerts().should_post<file_error_alert>())
-				alerts().emplace_alert<file_error_alert>(error.ec
-					, resolve_filename(error.file()), error.operation, get_handle());
 			if (c) c->disconnect(errors::no_memory, error.operation);
 			return;
 		}
@@ -1019,9 +1001,6 @@ bool is_downloading_state(int const st)
 		if (error.ec == boost::asio::error::operation_aborted) return;
 
 		// notify the user of the error
-		if (alerts().should_post<file_error_alert>())
-			alerts().emplace_alert<file_error_alert>(error.ec
-				, resolve_filename(error.file()), error.operation, get_handle());
 
 		// if a write operation failed, and future writes are likely to
 		// fail, while reads may succeed, just set the torrent to upload mode
@@ -1100,20 +1079,6 @@ bool is_downloading_state(int const st)
 			std::memcpy(rp->piece_data.get() + r.start, buffer.data(), aux::numeric_cast<std::size_t>(r.length));
 		}
 
-		if (rp->blocks_left == 0)
-		{
-			int size = m_torrent_file->piece_size(r.piece);
-			if (rp->fail)
-			{
-				m_ses.alerts().emplace_alert<read_piece_alert>(
-					get_handle(), r.piece, rp->error);
-			}
-			else
-			{
-				m_ses.alerts().emplace_alert<read_piece_alert>(
-					get_handle(), r.piece, rp->piece_data, size);
-			}
-		}
 	}
 	catch (...) { handle_exception(); }
 
@@ -1356,13 +1321,6 @@ bool is_downloading_state(int const st)
 
 		picker().mark_as_finished(block_finished, nullptr);
 		maybe_done_flushing();
-
-		if (alerts().should_post<block_finished_alert>())
-		{
-			alerts().emplace_alert<block_finished_alert>(get_handle(),
-				tcp::endpoint(), peer_id(), block_finished.block_index
-				, block_finished.piece_index);
-		}
 	}
 	catch (...) { handle_exception(); }
 
@@ -1637,8 +1595,6 @@ bool is_downloading_state(int const st)
 
 		// if all went well, set the torrent ssl context to this one
 		m_ssl_ctx = std::move(ctx);
-		// tell the client we need a cert for this torrent
-		alerts().emplace_alert<torrent_need_cert_alert>(get_handle());
 	}
 #endif // TORRENT_SSL_PEERS
 
@@ -2018,19 +1974,6 @@ bool is_downloading_state(int const st)
 #endif
 		}
 
-		// only report this error if the user actually provided resume data
-		// (i.e. m_add_torrent_params->have_pieces)
-		if ((error || status != status_t::no_error)
-			&& m_add_torrent_params
-			&& aux::contains_resume_data(*m_add_torrent_params)
-			&& m_ses.alerts().should_post<fastresume_rejected_alert>())
-		{
-			m_ses.alerts().emplace_alert<fastresume_rejected_alert>(get_handle()
-				, error.ec
-				, resolve_filename(error.file())
-				, error.operation);
-		}
-
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
@@ -2366,9 +2309,6 @@ bool is_downloading_state(int const st)
 			{
 				m_checking_piece = piece_index_t{0};
 				m_num_checked_pieces = piece_index_t{0};
-				if (m_ses.alerts().should_post<file_error_alert>())
-					m_ses.alerts().emplace_alert<file_error_alert>(error.ec,
-						resolve_filename(error.file()), error.operation, get_handle());
 
 #ifndef TORRENT_DISABLE_LOGGING
 				if (should_log())
@@ -2455,13 +2395,6 @@ bool is_downloading_state(int const st)
 #ifndef TORRENT_DISABLE_LOGGING
 				debug_log("on_piece_hashed, checking paused");
 #endif
-				if (m_checking_piece == m_num_checked_pieces)
-				{
-					// we are paused, and we just completed the last outstanding job.
-					// now we can be considered paused
-					if (alerts().should_post<torrent_paused_alert>())
-						alerts().emplace_alert<torrent_paused_alert>(get_handle());
-				}
 				return;
 			}
 
@@ -2638,12 +2571,6 @@ bool is_downloading_state(int const st)
 
 		if (m_abort) return;
 		if (peers.empty()) return;
-
-		if (m_ses.alerts().should_post<dht_reply_alert>())
-		{
-			m_ses.alerts().emplace_alert<dht_reply_alert>(
-				get_handle(), int(peers.size()));
-		}
 
 		if (torrent_file().priv() || (torrent_file().is_i2p()
 			&& !settings().get_bool(settings_pack::allow_i2p_mixed))) return;
@@ -2871,10 +2798,6 @@ bool is_downloading_state(int const st)
 				break;
 			}
 		}
-
-		if (m_ses.alerts().should_post<tracker_warning_alert>())
-			m_ses.alerts().emplace_alert<tracker_warning_alert>(get_handle()
-				, local_endpoint, req.url, msg);
 	}
 
 	void torrent::tracker_scrape_response(tracker_request const& req
@@ -2904,15 +2827,6 @@ bool is_downloading_state(int const st)
 			}
 		}
 
-		// if this was triggered manually we need to post this unconditionally,
-		// since the client expects a response from its action, regardless of
-		// whether all tracker events have been enabled by the alert mask
-		if (m_ses.alerts().should_post<scrape_reply_alert>()
-			|| req.triggered_manually)
-		{
-			m_ses.alerts().emplace_alert<scrape_reply_alert>(
-				get_handle(), local_endpoint, incomplete, complete, req.url);
-		}
 	}
 
 	void torrent::update_scrape_state()
@@ -3017,9 +2931,6 @@ bool is_downloading_state(int const st)
 				if ((!resp.trackerid.empty()) && (ae->trackerid != resp.trackerid))
 				{
 					ae->trackerid = resp.trackerid;
-					if (m_ses.alerts().should_post<trackerid_alert>())
-						m_ses.alerts().emplace_alert<trackerid_alert>(get_handle()
-							, aep->local_endpoint, r.url, resp.trackerid);
 				}
 
 				update_scrape_state();
@@ -3108,16 +3019,6 @@ bool is_downloading_state(int const st)
 		if (need_update) state_updated();
 
 		update_want_peers();
-
-		// post unconditionally if the announce was triggered manually
-		if (m_ses.alerts().should_post<tracker_reply_alert>()
-			|| r.triggered_manually)
-		{
-			m_ses.alerts().emplace_alert<tracker_reply_alert>(
-				get_handle(), local_endpoint, int(resp.peers.size() + resp.peers4.size())
-				+ int(resp.peers6.size())
-				, r.url);
-		}
 
 		do_connect_boost();
 
@@ -3257,9 +3158,6 @@ bool is_downloading_state(int const st)
 				debug_log("blocked ip from tracker: %s", host.address().to_string().c_str());
 			}
 #endif
-			if (m_ses.alerts().should_post<peer_blocked_alert>())
-				m_ses.alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, host, peer_blocked_alert::ip_filter);
 			return;
 		}
 
@@ -3604,21 +3502,6 @@ bool is_downloading_state(int const st)
 		set_need_save_resume();
 		state_updated();
 		update_want_tick();
-
-		if (m_ses.alerts().should_post<piece_finished_alert>())
-			m_ses.alerts().emplace_alert<piece_finished_alert>(get_handle(), index);
-
-		// update m_file_progress (if we have one)
-		m_file_progress.update(m_torrent_file->files(), index
-			, [this](file_index_t const file_index)
-			{
-				if (m_ses.alerts().should_post<file_completed_alert>())
-				{
-					// this file just completed, post alert
-					m_ses.alerts().emplace_alert<file_completed_alert>(
-						get_handle(), file_index);
-				}
-			});
 
 #ifndef TORRENT_DISABLE_STREAMING
 		remove_time_critical_piece(index, true);
@@ -3993,16 +3876,6 @@ bool is_downloading_state(int const st)
 			if (p->trust_points <= -7
 				|| (known_bad_peer && allow_disconnect))
 			{
-				// we don't trust this peer anymore
-				// ban it.
-				if (m_ses.alerts().should_post<peer_ban_alert>())
-				{
-					peer_id const pid = p->connection
-						? p->connection->pid() : peer_id();
-					m_ses.alerts().emplace_alert<peer_ban_alert>(
-						get_handle(), p->ip(), pid);
-				}
-
 				// mark the peer as banned
 				ban_peer(p);
 				update_want_peers();
@@ -4095,9 +3968,6 @@ bool is_downloading_state(int const st)
 		// unlock the piece and restore it, as if no block was
 		// ever downloaded for it.
 		m_picker->restore_piece(piece, blocks);
-
-		if (m_ses.alerts().should_post<hash_failed_alert>())
-			m_ses.alerts().emplace_alert<hash_failed_alert>(get_handle(), piece);
 
 		// we have to let the piece_picker know that
 		// this piece failed the check as it can restore it
@@ -4301,17 +4171,6 @@ bool is_downloading_state(int const st)
 	void torrent::on_files_deleted(storage_error const& error) try
 	{
 		TORRENT_ASSERT(is_single_thread());
-
-		if (error)
-		{
-			if (alerts().should_post<torrent_delete_failed_alert>())
-				alerts().emplace_alert<torrent_delete_failed_alert>(get_handle()
-					, error.ec, m_torrent_file->info_hashes());
-		}
-		else
-		{
-			alerts().emplace_alert<torrent_deleted_alert>(get_handle(), m_torrent_file->info_hashes());
-		}
 	}
 	catch (...) { handle_exception(); }
 
@@ -4321,17 +4180,8 @@ bool is_downloading_state(int const st)
 	{
 		TORRENT_ASSERT(is_single_thread());
 
-		if (error)
+		if (!error)
 		{
-			if (alerts().should_post<file_rename_failed_alert>())
-				alerts().emplace_alert<file_rename_failed_alert>(get_handle()
-					, file_idx, error.ec);
-		}
-		else
-		{
-			if (alerts().should_post<file_renamed_alert>())
-				alerts().emplace_alert<file_renamed_alert>(get_handle()
-					, filename, m_torrent_file->files().file_path(file_idx), file_idx);
 			m_torrent_file->rename_file(file_idx, filename);
 
 			set_need_save_resume();
@@ -4342,9 +4192,6 @@ bool is_downloading_state(int const st)
 	void torrent::on_torrent_paused() try
 	{
 		TORRENT_ASSERT(is_single_thread());
-
-		if (alerts().should_post<torrent_paused_alert>())
-			alerts().emplace_alert<torrent_paused_alert>(get_handle());
 	}
 	catch (...) { handle_exception(); }
 
@@ -4418,12 +4265,6 @@ bool is_downloading_state(int const st)
 			|| piece < piece_index_t(0)
 			|| piece >= m_torrent_file->end_piece())
 		{
-			// failed
-			if (flags & torrent_handle::alert_when_available)
-			{
-				m_ses.alerts().emplace_alert<read_piece_alert>(
-					get_handle(), piece, error_code(boost::system::errc::operation_canceled, generic_category()));
-			}
 			return;
 		}
 
@@ -4563,12 +4404,6 @@ bool is_downloading_state(int const st)
 					}
 				}
 			}
-			else if (i->flags & torrent_handle::alert_when_available)
-			{
-				// post an empty read_piece_alert to indicate it failed
-				alerts().emplace_alert<read_piece_alert>(
-					get_handle(), piece, error_code(boost::system::errc::operation_canceled, generic_category()));
-			}
 			if (has_picker()) m_picker->set_piece_priority(piece, low_priority);
 			m_time_critical_pieces.erase(i);
 			return;
@@ -4579,12 +4414,6 @@ bool is_downloading_state(int const st)
 	{
 		for (auto i = m_time_critical_pieces.begin(); i != m_time_critical_pieces.end();)
 		{
-			if (i->flags & torrent_handle::alert_when_available)
-			{
-				// post an empty read_piece_alert to indicate it failed
-				m_ses.alerts().emplace_alert<read_piece_alert>(
-					get_handle(), i->piece, error_code(boost::system::errc::operation_canceled, generic_category()));
-			}
 			if (has_picker()) m_picker->set_piece_priority(i->piece, low_priority);
 			i = m_time_critical_pieces.erase(i);
 		}
@@ -4597,12 +4426,6 @@ bool is_downloading_state(int const st)
 		{
 			if (priority[i->piece] == dont_download)
 			{
-				if (i->flags & torrent_handle::alert_when_available)
-				{
-					// post an empty read_piece_alert to indicate it failed
-					alerts().emplace_alert<read_piece_alert>(
-						get_handle(), i->piece, error_code(boost::system::errc::operation_canceled, generic_category()));
-				}
 				i = m_time_critical_pieces.erase(i);
 				continue;
 			}
@@ -4833,18 +4656,10 @@ bool is_downloading_state(int const st)
 
 		if (err)
 		{
-			// in this case, some file priorities failed to get set
-			if (alerts().should_post<file_error_alert>())
-				alerts().emplace_alert<file_error_alert>(err.ec
-					, resolve_filename(err.file()), err.operation, get_handle());
-
 			set_error(err.ec, err.file());
 			pause();
 			return;
 		}
-
-		if (alerts().should_post<file_prio_alert>())
-			alerts().emplace_alert<file_prio_alert>(get_handle());
 
 		if (!m_deferred_file_priorities.empty() && !m_abort)
 		{
@@ -5630,11 +5445,6 @@ bool is_downloading_state(int const st)
 			if (should_log())
 				debug_log("IDNA disallowed in web seeds: %s", web->url.c_str());
 #endif
-			if (m_ses.alerts().should_post<url_seed_alert>())
-			{
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle()
-					, web->url, error_code(errors::blocked_by_idna));
-			}
 			// never try it again
 			remove_web_seed_iter(web);
 			return;
@@ -5651,11 +5461,6 @@ bool is_downloading_state(int const st)
 			if (should_log())
 				debug_log("failed to parse web seed url: %s", ec.message().c_str());
 #endif
-			if (m_ses.alerts().should_post<url_seed_alert>())
-			{
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle()
-					, web->url, ec);
-			}
 			// never try it again
 			remove_web_seed_iter(web);
 			return;
@@ -5666,11 +5471,6 @@ bool is_downloading_state(int const st)
 #ifndef TORRENT_DISABLE_LOGGING
 			debug_log("banned web seed: %s", web->url.c_str());
 #endif
-			if (m_ses.alerts().should_post<url_seed_alert>())
-			{
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle(), web->url
-					, libtorrent::errors::peer_banned);
-			}
 			// never try it again
 			remove_web_seed_iter(web);
 			return;
@@ -5708,12 +5508,6 @@ bool is_downloading_state(int const st)
 
 		if (e || addrs.empty())
 		{
-			if (m_ses.alerts().should_post<url_seed_alert>())
-			{
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle()
-					, web->url, e);
-			}
-
 			// the name lookup failed for the http host. Don't try
 			// this host again
 			remove_web_seed_iter(web);
@@ -5731,20 +5525,12 @@ bool is_downloading_state(int const st)
 
 		if (ec)
 		{
-			if (m_ses.alerts().should_post<url_seed_alert>())
-			{
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle()
-					, web->url, ec);
-			}
 			remove_web_seed_iter(web);
 			return;
 		}
 
 		if (m_ip_filter && m_ip_filter->access(a.address()) & ip_filter::blocked)
 		{
-			if (m_ses.alerts().should_post<peer_blocked_alert>())
-				m_ses.alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, a, peer_blocked_alert::ip_filter);
 			return;
 		}
 
@@ -5778,8 +5564,6 @@ bool is_downloading_state(int const st)
 
 		if (e || addrs.empty())
 		{
-			if (m_ses.alerts().should_post<url_seed_alert>())
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle(), web->url, e);
 #ifndef TORRENT_DISABLE_LOGGING
 			if (should_log())
 			{
@@ -5811,12 +5595,6 @@ bool is_downloading_state(int const st)
 
 		if (web->endpoints.empty())
 		{
-			if (m_ses.alerts().should_post<url_seed_alert>())
-			{
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle()
-					, web->url, errors::banned_by_ip_filter);
-			}
-
 			// the name lookup failed for the http host. Don't try
 			// this host again
 			remove_web_seed_iter(web);
@@ -5840,9 +5618,6 @@ bool is_downloading_state(int const st)
 
 		if (m_ip_filter && m_ip_filter->access(a.address()) & ip_filter::blocked)
 		{
-			if (m_ses.alerts().should_post<peer_blocked_alert>())
-				m_ses.alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, a, peer_blocked_alert::ip_filter);
 			return;
 		}
 
@@ -5894,8 +5669,6 @@ bool is_downloading_state(int const st)
 			= parse_url_components(web->url, ec);
 		if (ec)
 		{
-			if (m_ses.alerts().should_post<url_seed_alert>())
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle(), web->url, ec);
 			return;
 		}
 
@@ -5905,11 +5678,6 @@ bool is_downloading_state(int const st)
 			if (should_log())
 				debug_log("IDNA disallowed in web seeds: %s", web->url.c_str());
 #endif
-			if (m_ses.alerts().should_post<url_seed_alert>())
-			{
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle()
-					, web->url, error_code(errors::blocked_by_idna));
-			}
 			// never try it again
 			remove_web_seed_iter(web);
 			return;
@@ -5928,12 +5696,6 @@ bool is_downloading_state(int const st)
 					, web->url.c_str());
 			}
 #endif
-			if (m_ses.alerts().should_post<url_seed_alert>())
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle()
-					, web->url, errors::ssrf_mitigation);
-			if (m_ses.alerts().should_post<peer_blocked_alert>())
-				m_ses.alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, a, peer_blocked_alert::ssrf_mitigation);
 			// never try it again
 			remove_web_seed_iter(web);
 			return;
@@ -5965,8 +5727,6 @@ bool is_downloading_state(int const st)
 		setup_ssl_hostname(s, hostname, ec);
 		if (ec)
 		{
-			if (m_ses.alerts().should_post<url_seed_alert>())
-				m_ses.alerts().emplace_alert<url_seed_alert>(get_handle(), web->url, ec);
 			return;
 		}
 
@@ -6563,11 +6323,6 @@ bool is_downloading_state(int const st)
 				sha256_hash const info_hash2 = hasher256(metadata_buf).final();
 				if (sha1_hash(info_hash2.data()) != m_torrent_file->info_hashes().v1)
 				{
-					if (alerts().should_post<metadata_failed_alert>())
-					{
-						alerts().emplace_alert<metadata_failed_alert>(get_handle()
-							, errors::mismatching_info_hash);
-					}
 					return false;
 				}
 			}
@@ -6580,11 +6335,6 @@ bool is_downloading_state(int const st)
 			sha256_hash const info_hash = hasher256(metadata_buf).final();
 			if (info_hash != m_torrent_file->info_hashes().v2)
 			{
-				if (alerts().should_post<metadata_failed_alert>())
-				{
-					alerts().emplace_alert<metadata_failed_alert>(get_handle()
-						, errors::mismatching_info_hash);
-				}
 				return false;
 			}
 		}
@@ -6595,13 +6345,6 @@ bool is_downloading_state(int const st)
 			, settings().get_int(settings_pack::max_piece_count)))
 		{
 			update_gauge();
-			// this means the metadata is correct, since we
-			// verified it against the info-hash, but we
-			// failed to parse it. Pause the torrent
-			if (alerts().should_post<metadata_failed_alert>())
-			{
-				alerts().emplace_alert<metadata_failed_alert>(get_handle(), ec);
-			}
 			set_error(errors::invalid_swarm_metadata, torrent_status::error_file_none);
 			pause();
 			return false;
@@ -6681,9 +6424,6 @@ bool is_downloading_state(int const st)
 			&& m_ip_filter
 			&& m_ip_filter->access(p->remote().address()) & ip_filter::blocked)
 		{
-			if (m_ses.alerts().should_post<peer_blocked_alert>())
-				m_ses.alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, p->remote(), peer_blocked_alert::ip_filter);
 			p->disconnect(errors::banned_by_ip_filter, operation_t::bittorrent);
 			return false;
 		}
@@ -7301,12 +7041,6 @@ bool is_downloading_state(int const st)
 
 		INVARIANT_CHECK;
 
-		if (m_ses.alerts().should_post<torrent_checked_alert>())
-		{
-			m_ses.alerts().emplace_alert<torrent_checked_alert>(
-				get_handle());
-		}
-
 #ifndef TORRENT_DISABLE_EXTENSIONS
 		for (auto& ext : m_extensions)
 		{
@@ -7394,9 +7128,6 @@ bool is_downloading_state(int const st)
 		// storage may be nullptr during shutdown
 		if (!m_storage)
 		{
-			if (alerts().should_post<file_rename_failed_alert>())
-				alerts().emplace_alert<file_rename_failed_alert>(get_handle()
-					, index, errors::session_is_closing);
 			return;
 		}
 
@@ -7412,10 +7143,6 @@ bool is_downloading_state(int const st)
 
 		if (m_abort)
 		{
-			if (alerts().should_post<storage_moved_failed_alert>())
-				alerts().emplace_alert<storage_moved_failed_alert>(get_handle()
-					, boost::asio::error::operation_aborted
-					, "", operation_t::unknown);
 			return;
 		}
 
@@ -7423,8 +7150,6 @@ bool is_downloading_state(int const st)
 		// structure and we have to assume we don't have any file.
 		if (!valid_metadata())
 		{
-			if (alerts().should_post<storage_moved_alert>())
-				alerts().emplace_alert<storage_moved_alert>(get_handle(), save_path, m_save_path);
 #if TORRENT_USE_UNC_PATHS
 			std::string path = canonicalize_path(save_path);
 #else
@@ -7449,9 +7174,6 @@ bool is_downloading_state(int const st)
 		}
 		else
 		{
-			if (alerts().should_post<storage_moved_alert>())
-				alerts().emplace_alert<storage_moved_alert>(get_handle(), save_path, m_save_path);
-
 #if TORRENT_USE_UNC_PATHS
 			m_save_path = canonicalize_path(save_path);
 #else
@@ -7471,18 +7193,10 @@ bool is_downloading_state(int const st)
 		if (status == status_t::no_error
 			|| status == status_t::need_full_check)
 		{
-			if (alerts().should_post<storage_moved_alert>())
-				alerts().emplace_alert<storage_moved_alert>(get_handle(), path, m_save_path);
 			m_save_path = path;
 			set_need_save_resume();
 			if (status == status_t::need_full_check)
 				force_recheck();
-		}
-		else
-		{
-			if (alerts().should_post<storage_moved_failed_alert>())
-				alerts().emplace_alert<storage_moved_failed_alert>(get_handle(), error.ec
-					, resolve_filename(error.file()), error.operation);
 		}
 	}
 	catch (...) { handle_exception(); }
@@ -8080,15 +7794,11 @@ bool is_downloading_state(int const st)
 
 		if (m_abort)
 		{
-			alerts().emplace_alert<save_resume_data_failed_alert>(get_handle()
-				, errors::torrent_removed);
 			return;
 		}
 
 		if ((flags & torrent_handle::only_if_modified) && !m_need_save_resume_data)
 		{
-			alerts().emplace_alert<save_resume_data_failed_alert>(get_handle()
-				, errors::resume_data_not_modified);
 			return;
 		}
 
@@ -8105,7 +7815,6 @@ bool is_downloading_state(int const st)
 
 		add_torrent_params atp;
 		write_resume_data(flags, atp);
-		alerts().emplace_alert<save_resume_data_alert>(std::move(atp), get_handle());
 	}
 
 	bool torrent::should_check_files() const
@@ -8139,8 +7848,6 @@ bool is_downloading_state(int const st)
 
 		if (m_ses.is_aborted()) return;
 
-		if (manually_triggered || alerts().should_post<cache_flushed_alert>())
-			alerts().emplace_alert<cache_flushed_alert>(get_handle());
 	}
 	catch (...) { handle_exception(); }
 
@@ -8236,11 +7943,6 @@ bool is_downloading_state(int const st)
 		// post the paused alert when the last outstanding disk job completes
 		if (m_state == torrent_status::checking_files)
 		{
-			if (m_checking_piece == m_num_checked_pieces)
-			{
-				if (alerts().should_post<torrent_paused_alert>())
-					alerts().emplace_alert<torrent_paused_alert>(get_handle());
-			}
 			disconnect_all(errors::torrent_paused, operation_t::bittorrent);
 			return;
 		}
@@ -8255,11 +7957,6 @@ bool is_downloading_state(int const st)
 				m_ses.disk_thread().async_stop_torrent(m_storage
 					, [self = shared_from_this()] { self->on_torrent_paused(); });
 				m_ses.deferred_submit_jobs();
-			}
-			else
-			{
-				if (alerts().should_post<torrent_paused_alert>())
-					alerts().emplace_alert<torrent_paused_alert>(get_handle());
 			}
 
 			disconnect_all(errors::torrent_paused, operation_t::bittorrent);
@@ -8435,9 +8132,6 @@ bool is_downloading_state(int const st)
 			if (ext->on_resume()) return;
 		}
 #endif
-
-		if (alerts().should_post<torrent_resumed_alert>())
-			alerts().emplace_alert<torrent_resumed_alert>(get_handle());
 
 		m_started = aux::time_now32();
 		if (is_seed()) m_became_seed = m_started;
@@ -8763,28 +8457,6 @@ bool is_downloading_state(int const st)
 			update_want_tick();
 
 			return;
-		}
-
-		if (settings().get_bool(settings_pack::rate_limit_ip_overhead))
-		{
-			int const up_limit = upload_limit();
-			int const down_limit = download_limit();
-
-			if (down_limit > 0
-				&& m_stat.download_ip_overhead() >= down_limit
-				&& alerts().should_post<performance_alert>())
-			{
-				alerts().emplace_alert<performance_alert>(get_handle()
-					, performance_alert::download_limit_too_low);
-			}
-
-			if (up_limit > 0
-				&& m_stat.upload_ip_overhead() >= up_limit
-				&& alerts().should_post<performance_alert>())
-			{
-				alerts().emplace_alert<performance_alert>(get_handle()
-					, performance_alert::upload_limit_too_low);
-			}
 		}
 
 #ifndef TORRENT_DISABLE_STREAMING
@@ -9755,10 +9427,6 @@ bool is_downloading_state(int const st)
 			&& m_ip_filter
 			&& m_ip_filter->access(adr.address()) & ip_filter::blocked)
 		{
-			if (alerts().should_post<peer_blocked_alert>())
-				alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, adr, peer_blocked_alert::ip_filter);
-
 #ifndef TORRENT_DISABLE_EXTENSIONS
 			notify_extension_add_peer(adr, source, torrent_plugin::filtered);
 #endif
@@ -9767,9 +9435,6 @@ bool is_downloading_state(int const st)
 
 		if (m_ses.get_port_filter().access(adr.port()) & port_filter::blocked)
 		{
-			if (alerts().should_post<peer_blocked_alert>())
-				alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, adr, peer_blocked_alert::port_filter);
 #ifndef TORRENT_DISABLE_EXTENSIONS
 			notify_extension_add_peer(adr, source, torrent_plugin::filtered);
 #endif
@@ -9781,18 +9446,12 @@ bool is_downloading_state(int const st)
 		// no regular peers should ever be added!
 		if (!settings().get_bool(settings_pack::allow_i2p_mixed) && is_i2p())
 		{
-			if (alerts().should_post<peer_blocked_alert>())
-				alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, adr, peer_blocked_alert::i2p_mixed);
 			return nullptr;
 		}
 #endif
 
 		if (settings().get_bool(settings_pack::no_connect_privileged_ports) && adr.port() < 1024)
 		{
-			if (alerts().should_post<peer_blocked_alert>())
-				alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, adr, peer_blocked_alert::privileged_ports);
 #ifndef TORRENT_DISABLE_EXTENSIONS
 			notify_extension_add_peer(adr, source, torrent_plugin::filtered);
 #endif
@@ -9934,14 +9593,6 @@ bool is_downloading_state(int const st)
 		std::vector<address> banned;
 		m_peer_list->apply_ip_filter(*m_ip_filter, &st, banned);
 
-		if (alerts().should_post<peer_blocked_alert>())
-		{
-			for (auto const& addr : banned)
-				alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, tcp::endpoint(addr, 0)
-					, peer_blocked_alert::ip_filter);
-		}
-
 		peers_erased(st.erased);
 	}
 
@@ -9953,14 +9604,6 @@ bool is_downloading_state(int const st)
 		torrent_state st = get_peer_list_state();
 		std::vector<address> banned;
 		m_peer_list->apply_port_filter(m_ses.get_port_filter(), &st, banned);
-
-		if (alerts().should_post<peer_blocked_alert>())
-		{
-			for (auto const& addr : banned)
-				alerts().emplace_alert<peer_blocked_alert>(get_handle()
-					, tcp::endpoint(addr, 0)
-					, peer_blocked_alert::port_filter);
-		}
 
 		peers_erased(st.erased);
 	}
@@ -10175,19 +9818,6 @@ bool is_downloading_state(int const st)
 #endif
 
 		if (int(m_state) == s) return;
-
-		if (m_ses.alerts().should_post<state_changed_alert>())
-		{
-			m_ses.alerts().emplace_alert<state_changed_alert>(get_handle()
-				, s, static_cast<torrent_status::state_t>(m_state));
-		}
-
-		if (s == torrent_status::finished
-			&& alerts().should_post<torrent_finished_alert>())
-		{
-			alerts().emplace_alert<torrent_finished_alert>(
-				get_handle());
-		}
 
 		if (m_stop_when_ready
 			&& !is_downloading_state(m_state)
@@ -10708,12 +10338,6 @@ bool is_downloading_state(int const st)
 					deprioritize_tracker(tracker_index);
 				}
 			}
-			if (m_ses.alerts().should_post<tracker_error_alert>()
-				|| r.triggered_manually)
-			{
-				m_ses.alerts().emplace_alert<tracker_error_alert>(get_handle()
-					, local_endpoint, fails, r.url, op, ec, msg);
-			}
 		}
 		else
 		{
@@ -10724,22 +10348,6 @@ bool is_downloading_state(int const st)
 			{
 				// never talk to this tracker again
 				if (ae != nullptr) ae->fail_limit = 1;
-			}
-
-			// if this was triggered manually we need to post this unconditionally,
-			// since the client expects a response from its action, regardless of
-			// whether all tracker events have been enabled by the alert mask
-			if (m_ses.alerts().should_post<scrape_failed_alert>()
-				|| r.triggered_manually)
-			{
-				tcp::endpoint local_endpoint;
-				if (ae != nullptr)
-				{
-					auto* aep = ae->find_endpoint(r.outgoing_socket);
-					if (aep != nullptr) local_endpoint = aep->local_endpoint;
-				}
-
-				m_ses.alerts().emplace_alert<scrape_failed_alert>(get_handle(), local_endpoint, r.url, ec);
 			}
 		}
 		// announce to the next working tracker
@@ -10756,18 +10364,14 @@ bool is_downloading_state(int const st)
 #ifndef TORRENT_DISABLE_LOGGING
 	bool torrent::should_log() const
 	{
-		return alerts().should_post<torrent_log_alert>();
+		return true;
 	}
 
 	TORRENT_FORMAT(2,3)
 	void torrent::debug_log(char const* fmt, ...) const noexcept try
 	{
-		if (!alerts().should_post<torrent_log_alert>()) return;
-
 		va_list v;
 		va_start(v, fmt);
-		alerts().emplace_alert<torrent_log_alert>(
-			const_cast<torrent*>(this)->get_handle(), fmt, v);
 		va_end(v);
 	}
 	catch (std::exception const&) {}

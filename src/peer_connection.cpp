@@ -412,11 +412,6 @@ namespace {
 
 		sent_syn(aux::is_v6(m_remote));
 
-		if (t && t->alerts().should_post<peer_connect_alert>())
-		{
-			t->alerts().emplace_alert<peer_connect_alert>(
-				t->get_handle(), remote(), pid(), socket_type_idx(m_socket), peer_connect_alert::direction_t::out);
-		}
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log(peer_log_alert::info))
 		{
@@ -2158,15 +2153,6 @@ namespace {
 
 			write_reject_request(r);
 
-			if (t->alerts().should_post<invalid_request_alert>())
-			{
-				// msvc 12 appears to deduce the rvalue reference template
-				// incorrectly for bool temporaries. So, create a dummy instance
-				bool const peer_interested = bool(m_peer_interested);
-				t->alerts().emplace_alert<invalid_request_alert>(
-					t->get_handle(), m_remote, m_peer_id, r
-					, t->has_piece_passed(r.piece), peer_interested, true);
-			}
 			return;
 		}
 #endif // TORRENT_DISABLE_SUPERSEEDING
@@ -2230,14 +2216,6 @@ namespace {
 				peer_log(peer_log_alert::info, "INTERESTED", "artificial incoming INTERESTED message");
 			}
 #endif
-			if (t->alerts().should_post<invalid_request_alert>())
-			{
-				t->alerts().emplace_alert<invalid_request_alert>(
-					t->get_handle(), m_remote, m_peer_id, r
-					, t->has_piece_passed(r.piece)
-					, false, false);
-			}
-
 			// be lenient and pretend that the peer said it was interested
 			incoming_interested();
 		}
@@ -2277,16 +2255,6 @@ namespace {
 			write_reject_request(r);
 			if (m_num_invalid_requests < std::numeric_limits<decltype(m_num_invalid_requests)>::max())
 				++m_num_invalid_requests;
-
-			if (t->alerts().should_post<invalid_request_alert>())
-			{
-				// msvc 12 appears to deduce the rvalue reference template
-				// incorrectly for bool temporaries. So, create a dummy instance
-				bool const peer_interested = bool(m_peer_interested);
-				t->alerts().emplace_alert<invalid_request_alert>(
-					t->get_handle(), m_remote, m_peer_id, r
-					, t->has_piece_passed(r.piece), peer_interested, false);
-			}
 
 			// every ten invalid request, remind the peer that it's choked
 			if (!m_peer_interested && m_num_invalid_requests % 10 == 0 && m_choked)
@@ -2357,12 +2325,6 @@ namespace {
 			TORRENT_ASSERT(r.length > 0);
 
 			m_requests.push_back(r);
-
-			if (t->alerts().should_post<incoming_request_alert>())
-			{
-				t->alerts().emplace_alert<incoming_request_alert>(r, t->get_handle()
-					, m_remote, m_peer_id);
-			}
 
 			m_last_incoming_request.set(m_connect, aux::time_now());
 			fill_send_buffer();
@@ -2464,11 +2426,6 @@ namespace {
 			m_download_queue.insert(m_download_queue.begin(), b);
 			if (!in_req_queue)
 			{
-				if (t->alerts().should_post<unwanted_block_alert>())
-				{
-					t->alerts().emplace_alert<unwanted_block_alert>(t->get_handle()
-						, m_remote, m_peer_id, b.block_index, b.piece_index);
-				}
 #ifndef TORRENT_DISABLE_LOGGING
 				peer_log(peer_log_alert::info, "INVALID_REQUEST"
 					, "The block we just got was not in the request queue");
@@ -2579,11 +2536,6 @@ namespace {
 
 		if (p.length == 0)
 		{
-			if (t->alerts().should_post<peer_error_alert>())
-			{
-				t->alerts().emplace_alert<peer_error_alert>(t->get_handle(), m_remote
-					, m_peer_id, operation_t::bittorrent, errors::peer_sent_empty_piece);
-			}
 			// This is used as a reject-request by bitcomet
 			incoming_reject_request(p);
 			return;
@@ -2621,12 +2573,6 @@ namespace {
 
 		if (b == m_download_queue.end())
 		{
-			if (t->alerts().should_post<unwanted_block_alert>())
-			{
-				t->alerts().emplace_alert<unwanted_block_alert>(t->get_handle()
-					, m_remote, m_peer_id, block_finished.block_index
-					, block_finished.piece_index);
-			}
 #ifndef TORRENT_DISABLE_LOGGING
 			peer_log(peer_log_alert::info, "INVALID_REQUEST", "The block we just got was not in the request queue");
 #endif
@@ -2696,11 +2642,6 @@ namespace {
 			&& m_snubbed)
 		{
 			m_snubbed = false;
-			if (t->alerts().should_post<peer_unsnubbed_alert>())
-			{
-				t->alerts().emplace_alert<peer_unsnubbed_alert>(t->get_handle()
-					, m_remote, m_peer_id);
-			}
 		}
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -2740,13 +2681,6 @@ namespace {
 
 		std::int64_t const max_queue_size = m_settings.get_int(
 			settings_pack::max_queued_disk_bytes);
-		if (write_queue_size > max_queue_size
-			&& write_queue_size - p.length < max_queue_size
-			&& t->alerts().should_post<performance_alert>())
-		{
-			t->alerts().emplace_alert<performance_alert>(t->get_handle()
-				, performance_alert::too_high_disk_queue_limit);
-		}
 
 		m_request_time.add_sample(int(total_milliseconds(now - m_requested.get(m_connect))));
 #ifndef TORRENT_DISABLE_LOGGING
@@ -2978,13 +2912,6 @@ namespace {
 		picker.mark_as_finished(block_finished, peer_info_struct());
 
 		t->maybe_done_flushing();
-
-		if (t->alerts().should_post<block_finished_alert>())
-		{
-			t->alerts().emplace_alert<block_finished_alert>(t->get_handle(),
-				remote(), pid(), block_finished.block_index
-				, block_finished.piece_index);
-		}
 
 		disconnect_if_redundant();
 
@@ -3397,12 +3324,6 @@ namespace {
 				, static_cast<int>(block.piece_index), block.block_index);
 #endif
 			return false;
-		}
-
-		if (t->alerts().should_post<block_downloading_alert>())
-		{
-			t->alerts().emplace_alert<block_downloading_alert>(t->get_handle()
-				, remote(), pid(), block.block_index, block.piece_index);
 		}
 
 		pending_block pb(block);
@@ -4173,35 +4094,10 @@ namespace {
 		}
 #endif
 
-		if (ec == error::address_in_use
-			&& m_settings.get_int(settings_pack::outgoing_port) != 0
-			&& t)
-		{
-			if (t->alerts().should_post<performance_alert>())
-				t->alerts().emplace_alert<performance_alert>(
-					handle, performance_alert::too_few_outgoing_ports);
-		}
-
 		m_disconnecting = true;
 
 		if (t)
 		{
-			if (ec)
-			{
-				if ((error > failure || ec.category() == socks_category())
-					&& t->alerts().should_post<peer_error_alert>())
-				{
-					t->alerts().emplace_alert<peer_error_alert>(handle, remote()
-						, pid(), op, ec);
-				}
-
-				if (error <= failure && t->alerts().should_post<peer_disconnected_alert>())
-				{
-					t->alerts().emplace_alert<peer_disconnected_alert>(handle
-						, remote(), pid(), op, socket_type_idx(m_socket), ec, close_reason);
-				}
-			}
-
 			// make sure we keep all the stats!
 			if (!m_ignore_stats)
 			{
@@ -4565,18 +4461,6 @@ namespace {
 
 		std::uint8_t warning = 0;
 
-		if (warning && t->alerts().should_post<performance_alert>())
-		{
-			for (int channel = 0; channel < 2; ++channel)
-			{
-				if (((warning >> channel) & 1u) == 0) continue;
-				t->alerts().emplace_alert<performance_alert>(t->get_handle()
-					, channel == peer_connection::download_channel
-					? performance_alert::download_limit_too_low
-					: performance_alert::upload_limit_too_low);
-			}
-		}
-
 		if (!t || m_disconnecting)
 		{
 			TORRENT_ASSERT(t || !m_connecting);
@@ -4745,11 +4629,6 @@ namespace {
 		{
 			m_snubbed = true;
 			m_slow_start = false;
-			if (t->alerts().should_post<peer_snubbed_alert>())
-			{
-				t->alerts().emplace_alert<peer_snubbed_alert>(t->get_handle()
-					, m_remote, m_peer_id);
-			}
 		}
 		m_desired_queue_size = 1;
 
@@ -4799,13 +4678,6 @@ namespace {
 			{
 				send_block_requests();
 				return;
-			}
-
-			if (t->alerts().should_post<block_timeout_alert>())
-			{
-				t->alerts().emplace_alert<block_timeout_alert>(t->get_handle()
-					, remote(), pid(), qe.block.block_index
-					, qe.block.piece_index);
 			}
 
 			// request a new block before removing the previous
@@ -5182,10 +5054,6 @@ namespace {
 
 			write_dont_have(r.piece);
 			write_reject_request(r);
-			if (t->alerts().should_post<file_error_alert>())
-				t->alerts().emplace_alert<file_error_alert>(error.ec
-					, t->resolve_filename(error.file())
-					, error.operation, t->get_handle());
 
 			++m_disk_read_failures;
 			if (m_disk_read_failures > 100) disconnect(error.ec, operation_t::file_read);
@@ -5348,29 +5216,6 @@ namespace {
 			peer_log(peer_log_alert::outgoing, "WAITING_FOR_DISK", "outstanding: %d"
 				, m_reading_bytes);
 #endif
-
-			if (!m_connecting
-				&& !m_requests.empty()
-				&& m_reading_bytes > m_settings.get_int(settings_pack::send_buffer_watermark) - 0x4000)
-			{
-				auto t = m_torrent.lock();
-
-				// we're stalled on the disk. We want to write and we can write
-				// but our send buffer is empty, waiting to be refilled from the disk
-				// this either means the disk is slower than the network connection
-				// or that our send buffer watermark is too small, because we can
-				// send it all before the disk gets back to us. That's why we only
-				// trigger this if we've also filled the allowed send buffer. The
-				// first request would not fill it all the way up because of the
-				// upload rate being virtually 0. If m_requests is empty, it doesn't
-				// matter anyway, because we don't have any more requests from the
-				// peer to hang on to the disk
-				if (t && t->alerts().should_post<performance_alert>())
-				{
-					t->alerts().emplace_alert<performance_alert>(t->get_handle()
-						, performance_alert::send_buffer_watermark_too_low);
-				}
-			}
 		}
 		else
 		{
