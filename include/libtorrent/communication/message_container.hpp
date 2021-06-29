@@ -9,9 +9,10 @@ see LICENSE file.
 #ifndef LIBTAU_MESSAGE_CONTAINER_HPP
 #define LIBTAU_MESSAGE_CONTAINER_HPP
 
-#include <libtorrent/aux_/common.h>
-#include <libtorrent/aux_/rlp.h>
-#include <libtorrent/communication/message.hpp>
+#include "libtorrent/aux_/common.h"
+#include "libtorrent/aux_/rlp.h"
+#include "libtorrent/aux_/export.hpp"
+#include "libtorrent/communication/message.hpp"
 
 namespace libtorrent {
     namespace communication {
@@ -22,7 +23,9 @@ namespace libtorrent {
         class TORRENT_EXPORT message_container {
 
         public:
-            message_container(aux::bytesConstRef _rlp);
+            explicit message_container(aux::bytesConstRef _rlp);
+
+            explicit message_container(std::vector<message> messages);
 
             // @returns all messages in this container
             std::vector<message> messages() const { return m_messages; }

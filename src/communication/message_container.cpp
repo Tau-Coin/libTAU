@@ -15,6 +15,10 @@ namespace libtorrent { namespace communication {
             populate(rlp);
         }
 
+        message_container::message_container(std::vector<message> messages) {
+            m_messages = std::move(messages);
+        }
+
         void message_container::streamRLP(aux::RLPStream &_s) const {
             for (auto const& msg: m_messages) {
                 aux::RLPStream msg_rlp;

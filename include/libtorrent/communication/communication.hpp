@@ -59,11 +59,20 @@ namespace libtorrent {
             // set active friends
             void set_active_friends(std::vector<aux::bytes> &&active_friends);
 
+            // reset when account changed
+            void account_changed();
+
         private:
             // initialize member variables
             void init();
 
+            // select a friend randomly
             aux::bytes select_friend_randomly() const;
+
+            // save the latest message hash list in database
+            void save_friend_latest_message_hash_list(const aux::bytes& peer);
+
+            bool try_to_update_Latest_message_list(const aux::bytes& peer, message msg);
 
             // validate message, check if message is oversize( >1000 bytes)
             bool validateMessage(message msg);
@@ -117,6 +126,9 @@ namespace libtorrent {
 
             // active friends
             std::vector<aux::bytes> m_active_friends;
+
+            // message list map:key-peer, value-message list
+            std::map<aux::bytes, std::list<message>> m_message_list_map;
         };
     }
 }

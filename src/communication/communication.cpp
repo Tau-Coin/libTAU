@@ -10,6 +10,7 @@ see LICENSE file.
 #include <cstdlib>
 #include <utility>
 
+#include "libtorrent/communication/message_hash_list.hpp"
 #include "libtorrent/communication/communication.hpp"
 #include "libtorrent/kademlia/dht_tracker.hpp"
 
@@ -28,7 +29,15 @@ namespace libtorrent {
 
         void communication::stop()
         {
+            m_friends.clear();
+            m_message_list_map.clear();
+
             m_refresh_timer.cancel();
+        }
+
+        void communication::account_changed() {
+            stop();
+            start();
         }
 
         void communication::set_loop_time_interval(int milliseconds) {
@@ -116,6 +125,117 @@ namespace libtorrent {
             m_refresh_timer.async_wait(
                     std::bind(&communication::refresh_timeout, self(), _1));
         }
+
+        void communication::save_friend_latest_message_hash_list(const aux::bytes& peer) {
+            auto message_list = m_message_list_map.at(peer);
+            if (!message_list.empty()) {
+                std::vector<aux::bytes> hash_list;
+                for (const auto & msg: message_list) {
+                    char *p = msg.sha256().data();
+                    aux::bytes hash;
+                    hash.insert(hash.end(), p, p + strlen(p));
+                    hash_list.push_back(hash);
+                }
+
+//                const auto &pubkey = m_ses.pubkey();
+//                aux::bytes public_key;
+//                public_key.insert(public_key.end(), pubkey->bytes.begin(), pubkey->bytes.end());
+                m_message_db->save_latest_message_hash_list_encode(peer, message_hash_list(hash_list).rlp());
+            }
+        }
+
+        bool communication::try_to_update_Latest_message_list(const aux::bytes &peer, message msg) {
+            return false;
+        }
+
+//        /**
+//         * 尝试往聊天消息集合里面插入新消息
+//         * @param friend 通信的朋友
+//         * @param message 新消息
+//         * @return true if message list changed, false otherwise
+//         */
+//        private boolean tryToUpdateLatestMessageList(ByteArrayWrapper friend, Message message) throws DBException {
+//                LinkedList<Message> linkedList = this.messageListMap.get(friend);
+//
+//                // 更新成功标志
+//                boolean updated = false;
+//
+//                if (null != linkedList) {
+//                    if (!linkedList.isEmpty()) {
+//                        try {
+//                            // 先判断一下是否比最后一个消息时间戳大，如果是，则直接插入末尾
+//                            if (message.getTimestamp().compareTo(linkedList.getLast().getTimestamp()) > 0) {
+//                                linkedList.add(message);
+//                                updated = true;
+//                            } else {
+//                                // 寻找从后往前寻找第一个时间小于当前消息时间的消息，将当前消息插入到到该消息后面
+//                                Iterator<Message> it = linkedList.descendingIterator();
+//                                // 是否插入第一个位置，在没找到的情况下会插入到第一个位置
+//                                boolean insertFirst = true;
+//                                while (it.hasNext()) {
+//                                    Message reference = it.next();
+//                                    int diff = reference.getTimestamp().compareTo(message.getTimestamp());
+//                                    // 如果差值小于零，说明找到了比当前消息时间戳小的消息位置，将消息插入到目标位置后面一位
+//                                    if (diff < 0) {
+//                                        updated = true;
+//                                        insertFirst = false;
+//                                        int i = linkedList.indexOf(reference);
+//                                        linkedList.add(i + 1, message);
+//                                        break;
+//                                    } else if (diff == 0) {
+//                                        // 如果时间戳一样，寻找第一个哈希比我小的消息
+//                                        byte[] referenceHash = reference.getHash();
+//                                        byte[] msgHash = message.getHash();
+//                                        if (!Arrays.equals(referenceHash, msgHash)) {
+//                                            // 寻找第一个哈希比我小的消息，插入其前面，否则，继续往前找
+//                                            if (FastByteComparisons.compareTo(msgHash, 0,
+//                                                                              msgHash.length, referenceHash, 0, referenceHash.length) > 0) {
+//                                                updated = true;
+//                                                insertFirst = false;
+//                                                int i = linkedList.indexOf(reference);
+//                                                linkedList.add(i + 1, message);
+//                                                break;
+//                                            }
+//                                        } else {
+//                                            // 如果哈希一样，则本身已经在列表中，也不再进行查找
+//                                            insertFirst = false;
+//                                            break;
+//                                        }
+//                                    }
+//                                }
+//
+//                                if (insertFirst) {
+//                                    updated = true;
+//                                    linkedList.add(0, message);
+//                                }
+//                            }
+//                        } catch (RuntimeException e) {
+//                            logger.error(e.getMessage(), e);
+//                        }
+//                    } else {
+//                        linkedList.add(message);
+//                        updated = true;
+//                    }
+//                } else {
+//                    linkedList = new LinkedList<>();
+//                    linkedList.add(message);
+//                    updated = true;
+//                }
+//
+//                // 更新成功
+//                if (updated) {
+//                    // 如果更新了消息列表，则判断是否列表长度过长，过长则删掉旧数据，然后停止循环
+//                    if (linkedList.size() > ChainParam.BLOOM_FILTER_MESSAGE_SIZE) {
+//                        linkedList.removeFirst();
+//                    }
+//
+//                    this.messageListMap.put(friend, linkedList);
+//
+//                    saveFriendLatestMessageHashList(friend);
+//                }
+//
+//                return updated;
+//        }
 
         // callback for dht_immutable_get
         void communication::get_immutable_callback(sha1_hash target
