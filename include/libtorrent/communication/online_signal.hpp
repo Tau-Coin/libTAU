@@ -17,10 +17,7 @@ see LICENSE file.
 namespace libtorrent {
     namespace communication {
 
-	    // The ``online_signal`` class represents 在线信号
-        // 对类的说明
-        // T------_EXPORT 需要，否则该类不会导出，整个导出文件都有影响
-        // online signal
+	    // The ``online_signal`` class represents
         // one type of mutable wrapper,
         // is used to publish online info in XX channel
         struct TORRENT_EXPORT online_signal {
@@ -47,7 +44,6 @@ namespace libtorrent {
             aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
 
         private:
-            // 私有变量目前网页不导出
             // Construct online signal object from rlp serialisation
             void populate(aux::RLP const& _online_signal);
 

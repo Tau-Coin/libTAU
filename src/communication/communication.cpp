@@ -35,6 +35,12 @@ namespace libtorrent {
             m_refresh_timer.cancel();
         }
 
+        void communication::init() {
+            m_message_db->init();
+            // get friends from db
+            m_message_db->get_all_friends();
+        }
+
         void communication::account_changed() {
             stop();
             start();
@@ -42,6 +48,23 @@ namespace libtorrent {
 
         void communication::set_loop_time_interval(int milliseconds) {
             m_refresh_time = milliseconds;
+        }
+
+        void communication::add_new_friend(const aux::bytes& pubkey) {
+            m_friends.push_back(pubkey);
+            m_message_db->save_friend(pubkey);
+        }
+
+        void communication::delete_friend(const aux::bytes& pubkey) {
+            for(auto it = m_friends.begin(); it != m_friends.end(); ++it) {
+                if (*it == pubkey) {
+                    m_friends.erase(it);
+                    break;
+                }
+            }
+
+            m_message_db->delete_friend(pubkey);
+            m_message_db->delete_latest_message_hash_list_encode(pubkey);
         }
 
         void communication::set_chatting_friend(aux::bytes chatting_friend) {
@@ -52,13 +75,11 @@ namespace libtorrent {
             m_active_friends = std::move(active_friends);
         }
 
-        void communication::init() {
-            m_message_db->init();
-            // get friends from db
-            m_message_db->get_all_friends();
+        void communication::add_new_message(const message& msg) {
+            try_to_update_Latest_message_list(msg.sender(), msg);
         }
 
-        bool communication::validateMessage(message msg) {
+        bool communication::validateMessage(const message& msg) {
             if (msg.rlp().size() > 1000) {
                 return false;
             }
@@ -145,15 +166,16 @@ namespace libtorrent {
         }
 
         bool communication::try_to_update_Latest_message_list(const aux::bytes &peer, message msg) {
-            return false;
+            bool updated = false;
+
+            auto message_list = m_message_list_map[peer];
+            if (!message_list.empty()) {
+
+            }
+
+            return updated;
         }
 
-//        /**
-//         * 尝试往聊天消息集合里面插入新消息
-//         * @param friend 通信的朋友
-//         * @param message 新消息
-//         * @return true if message list changed, false otherwise
-//         */
 //        private boolean tryToUpdateLatestMessageList(ByteArrayWrapper friend, Message message) throws DBException {
 //                LinkedList<Message> linkedList = this.messageListMap.get(friend);
 //

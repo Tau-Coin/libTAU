@@ -50,14 +50,23 @@ namespace libtorrent {
             // stop
             void stop();
 
-            // set main loop time interval
+            // set main loop time interval (ms)
             void set_loop_time_interval(int milliseconds);
+
+            // add new friend in memory & db
+            void add_new_friend(const aux::bytes& pubkey);
+
+            // delete friend and all related data in memory & db
+            void delete_friend(const aux::bytes& pubkey);
 
             // set chatting friends
             void set_chatting_friend(aux::bytes chatting_friend);
 
             // set active friends
             void set_active_friends(std::vector<aux::bytes> &&active_friends);
+
+            // add a new message
+            void add_new_message(const message& msg);
 
             // reset when account changed
             void account_changed();
@@ -72,10 +81,12 @@ namespace libtorrent {
             // save the latest message hash list in database
             void save_friend_latest_message_hash_list(const aux::bytes& peer);
 
+            // try to update the latest message list
+            // @return true if message list changed, false otherwise
             bool try_to_update_Latest_message_list(const aux::bytes& peer, message msg);
 
             // validate message, check if message is oversize( >1000 bytes)
-            bool validateMessage(message msg);
+            bool validateMessage(const message& msg);
 
             // immutable data callback
             void get_immutable_callback(sha1_hash target
