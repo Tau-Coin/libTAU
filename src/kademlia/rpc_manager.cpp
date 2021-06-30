@@ -28,7 +28,6 @@ see LICENSE file.
 
 #include <libtorrent/aux_/socket_io.hpp> // for print_endpoint
 #include <libtorrent/aux_/time.hpp> // for aux::time_now
-#include <libtorrent/aux_/aligned_union.hpp>
 #include <libtorrent/aux_/ip_helpers.hpp> // for is_v6
 
 #include <type_traits>
