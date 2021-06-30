@@ -140,6 +140,7 @@ namespace libtorrent {
             aux::bytes peer = select_friend_randomly();
             if (!peer.empty()) {
                 // put / get
+                dht_get_mutable_item();
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
@@ -165,99 +166,97 @@ namespace libtorrent {
             }
         }
 
-        bool communication::try_to_update_Latest_message_list(const aux::bytes &peer, message msg) {
+        bool communication::try_to_update_Latest_message_list(const aux::bytes &peer, const message& msg) {
             bool updated = false;
 
-            auto message_list = m_message_list_map[peer];
+            std::list<message> message_list = m_message_list_map[peer];
             if (!message_list.empty()) {
+                // 先判断一下是否比最后一个消息时间戳大，如果是，则直接插入末尾
+                if (msg.timestamp() == message_list.back().timestamp()) {
+                    message_list.push_back(msg);
+                    updated = true;
+                } else {
+                    // 寻找从后往前寻找第一个时间小于当前消息时间的消息，将当前消息插入到到该消息后面
+                    auto it = message_list.rbegin();
+                    // 是否插入第一个位置，在没找到的情况下会插入到第一个位置
+                    bool insertFirst = true;
+                    for (; it != message_list.rend(); ++it) {
+                        message reference = *it;
+                        int diff = reference.timestamp() - msg.timestamp();
+                        // 如果差值小于零，说明找到了比当前消息时间戳小的消息位置，将消息插入到目标位置后面一位
+                        if (diff < 0) {
+                            updated = true;
+                            insertFirst = false;
+                            message_list.insert((++it).base(), msg);
+//                            int i = linkedList.indexOf(reference);
+//                            linkedList.add(i + 1, message);
+                            break;
+                        } else if (diff == 0) {
+                            // 如果时间戳一样，寻找第一个哈希比我小的消息
+                            auto reference_hash = reference.sha256();
+                            auto msg_hash = msg.sha256();
+                            if (reference_hash != msg_hash) {
+                                // 寻找第一个哈希比我小的消息，插入其前面，否则，继续往前找
+                                if (reference_hash < msg_hash) {
+                                    updated = true;
+                                    insertFirst = false;
+                                    message_list.insert((++it).base(), msg);
+                                    break;
+                                }
+                            } else {
+                                // 如果哈希一样，则本身已经在列表中，也不再进行查找
+                                insertFirst = false;
+                                break;
+                            }
+                        }
+                    }
 
+                    if (insertFirst) {
+                        updated = true;
+                        message_list.insert(std::begin(message_list), msg);
+                    }
+                }
+            } else {
+                message_list.push_back(msg);
+                updated = true;
+            }
+
+            // 更新成功
+            if (updated) {
+                // 如果更新了消息列表，则判断是否列表长度过长，过长则删掉旧数据，然后停止循环
+                if (message_list.size() > communication_max_message_list_size) {
+                    message_list.pop_front();
+                }
+
+                m_message_list_map[peer] = message_list;
+
+                save_friend_latest_message_hash_list(peer);
             }
 
             return updated;
         }
 
-//        private boolean tryToUpdateLatestMessageList(ByteArrayWrapper friend, Message message) throws DBException {
-//                LinkedList<Message> linkedList = this.messageListMap.get(friend);
-//
-//                // 更新成功标志
-//                boolean updated = false;
-//
-//                if (null != linkedList) {
-//                    if (!linkedList.isEmpty()) {
-//                        try {
-//                            // 先判断一下是否比最后一个消息时间戳大，如果是，则直接插入末尾
-//                            if (message.getTimestamp().compareTo(linkedList.getLast().getTimestamp()) > 0) {
-//                                linkedList.add(message);
-//                                updated = true;
-//                            } else {
-//                                // 寻找从后往前寻找第一个时间小于当前消息时间的消息，将当前消息插入到到该消息后面
-//                                Iterator<Message> it = linkedList.descendingIterator();
-//                                // 是否插入第一个位置，在没找到的情况下会插入到第一个位置
-//                                boolean insertFirst = true;
-//                                while (it.hasNext()) {
-//                                    Message reference = it.next();
-//                                    int diff = reference.getTimestamp().compareTo(message.getTimestamp());
-//                                    // 如果差值小于零，说明找到了比当前消息时间戳小的消息位置，将消息插入到目标位置后面一位
-//                                    if (diff < 0) {
-//                                        updated = true;
-//                                        insertFirst = false;
-//                                        int i = linkedList.indexOf(reference);
-//                                        linkedList.add(i + 1, message);
-//                                        break;
-//                                    } else if (diff == 0) {
-//                                        // 如果时间戳一样，寻找第一个哈希比我小的消息
-//                                        byte[] referenceHash = reference.getHash();
-//                                        byte[] msgHash = message.getHash();
-//                                        if (!Arrays.equals(referenceHash, msgHash)) {
-//                                            // 寻找第一个哈希比我小的消息，插入其前面，否则，继续往前找
-//                                            if (FastByteComparisons.compareTo(msgHash, 0,
-//                                                                              msgHash.length, referenceHash, 0, referenceHash.length) > 0) {
-//                                                updated = true;
-//                                                insertFirst = false;
-//                                                int i = linkedList.indexOf(reference);
-//                                                linkedList.add(i + 1, message);
-//                                                break;
-//                                            }
-//                                        } else {
-//                                            // 如果哈希一样，则本身已经在列表中，也不再进行查找
-//                                            insertFirst = false;
-//                                            break;
-//                                        }
-//                                    }
-//                                }
-//
-//                                if (insertFirst) {
-//                                    updated = true;
-//                                    linkedList.add(0, message);
-//                                }
-//                            }
-//                        } catch (RuntimeException e) {
-//                            logger.error(e.getMessage(), e);
-//                        }
-//                    } else {
-//                        linkedList.add(message);
-//                        updated = true;
-//                    }
-//                } else {
-//                    linkedList = new LinkedList<>();
-//                    linkedList.add(message);
-//                    updated = true;
-//                }
-//
-//                // 更新成功
-//                if (updated) {
-//                    // 如果更新了消息列表，则判断是否列表长度过长，过长则删掉旧数据，然后停止循环
-//                    if (linkedList.size() > ChainParam.BLOOM_FILTER_MESSAGE_SIZE) {
-//                        linkedList.removeFirst();
-//                    }
-//
-//                    this.messageListMap.put(friend, linkedList);
-//
-//                    saveFriendLatestMessageHashList(friend);
-//                }
-//
-//                return updated;
-//        }
+        std::string communication::make_sender_salt(aux::bytes peer) {
+            dht::public_key *pubkey = m_ses.pubkey();
+            std::string salt;
+
+            std::copy(pubkey, pubkey + communication_short_address_length, salt.begin());
+            std::copy(peer.begin(), peer.begin() + communication_short_address_length,
+                      salt.begin() + communication_short_address_length);
+
+            return salt;
+        }
+
+        std::string communication::make_receiver_salt(aux::bytes peer) {
+            dht::public_key *pubkey = m_ses.pubkey();
+            std::string salt;
+
+            std::copy(peer.begin(), peer.begin() + communication_short_address_length, salt.begin());
+            std::copy(pubkey, pubkey + communication_short_address_length,
+                      salt.begin() + communication_short_address_length);
+
+            return salt;
+        }
 
         // callback for dht_immutable_get
         void communication::get_immutable_callback(sha1_hash target
@@ -286,7 +285,6 @@ namespace libtorrent {
 
         // key is a 32-byte binary string, the public key to look up.
         // the salt is optional
-        // TODO: 3 use public_key here instead of std::array
         void communication::dht_get_mutable_item(std::array<char, 32> key
                 , std::string salt)
         {

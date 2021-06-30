@@ -18,6 +18,7 @@ see LICENSE file.
 #include <functional>
 #include <vector>
 #include <memory>
+#include <list>
 
 #include "libtorrent/aux_/deadline_timer.hpp"
 #include "libtorrent/aux_/alert_manager.hpp" // for alert_manager
@@ -29,13 +30,21 @@ see LICENSE file.
 namespace libtorrent {
 
     namespace dht {
-
         struct dht_tracker;
         class item;
-
     }
 
     namespace communication {
+
+        // default refresh time of main task
+        constexpr int communication_default_refresh_time = 50;
+
+        // max message list size(used in Levenshtein Distance)
+        constexpr int communication_max_message_list_size = 50;
+
+        // short address(public key) length
+        constexpr int communication_short_address_length = 4;
+
 
         class TORRENT_EXPORT communication final: public std::enable_shared_from_this<communication> {
         public:
@@ -83,7 +92,13 @@ namespace libtorrent {
 
             // try to update the latest message list
             // @return true if message list changed, false otherwise
-            bool try_to_update_Latest_message_list(const aux::bytes& peer, message msg);
+            bool try_to_update_Latest_message_list(const aux::bytes& peer, const message& msg);
+
+            // make a salt in sender channel
+            std::string make_sender_salt(aux::bytes peer);
+
+            // make a salt in receiver channel
+            std::string make_receiver_salt(aux::bytes peer);
 
             // validate message, check if message is oversize( >1000 bytes)
             bool validateMessage(const message& msg);
@@ -95,13 +110,17 @@ namespace libtorrent {
             // mutable data callback
             void get_mutable_callback(dht::item const& i, bool);
 
+            // get immutable item from dht
             void dht_get_immutable_item(sha1_hash const& target);
 
+            // get mutable item from dht
             void dht_get_mutable_item(std::array<char, 32> key
                     , std::string salt = std::string());
 
+            // put immutable item to dht
             void dht_put_immutable_item(entry const& data, sha1_hash target);
 
+            // put mutable item to dht
             void dht_put_mutable_item(std::array<char, 32> key
                     , std::function<void(entry&, std::array<char,64>&
                     , std::int64_t&, std::string const&)> cb
@@ -111,8 +130,6 @@ namespace libtorrent {
             { return shared_from_this(); }
 
             void refresh_timeout(error_code const& e);
-
-            static constexpr int default_refresh_time = 50;
 
             // io context
             io_context& m_ioc;
@@ -124,7 +141,7 @@ namespace libtorrent {
             aux::deadline_timer m_refresh_timer;
 
             // refresh time interval
-            int m_refresh_time = default_refresh_time;
+            int m_refresh_time = communication_default_refresh_time;
 
             // message db
             std::shared_ptr<message_db_interface> m_message_db;
