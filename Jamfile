@@ -951,6 +951,21 @@ KADEMLIA_SOURCES =
 	dht_settings
 	;
 
+COMMUNICATION_SOURECS =
+	rlp
+	fixed_hash
+	common_data
+	common
+	online_signal
+	new_msg_signal
+	mutable_data_wrapper
+	message
+	message_db_impl
+	communication
+	message_hash_list
+	message_container
+	;
+
 ED25519_SOURCES =
 	add_scalar
 	fe
@@ -1006,6 +1021,7 @@ lib torrent
 
 	<dht>on:<source>src/kademlia/$(KADEMLIA_SOURCES).cpp
 	<dht>on:<source>src/ed25519/$(ED25519_SOURCES).cpp
+	# <kvdb>on:<source>src/communication/$(COMMUNICATION_SOURECS).cpp
 
 	<conditional>@building
 	<conditional>@warnings
