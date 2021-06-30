@@ -140,7 +140,7 @@ namespace libtorrent {
             aux::bytes peer = select_friend_randomly();
             if (!peer.empty()) {
                 // put / get
-                dht_get_mutable_item();
+//                dht_get_mutable_item();
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
