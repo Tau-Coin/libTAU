@@ -407,6 +407,26 @@ void node::put_item(public_key const& pk, std::string const& salt
 	ta->start();
 }
 
+void node::find_live_nodes(node_id const& id
+	, std::vector<node_entry>& l
+	, int count)
+{
+	auto nes = m_table.find_node(id, routing_table::include_failed, count);
+
+	for (auto& ne : nes)
+	{
+		l.push_back(ne);
+	}
+
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		m_observer->log(dht_logger::node, "find node for [ hash: %s nodes:%d ]"
+			, aux::to_hex(id).c_str(), int(l.size()));
+	}
+#endif
+}
+
 struct ping_observer : observer
 {
 	ping_observer(

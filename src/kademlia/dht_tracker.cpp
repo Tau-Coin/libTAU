@@ -407,6 +407,13 @@ namespace libtorrent::dht {
 			, _1, ctx, cb));
 	}
 
+	void dht_tracker::put_item(entry const& data
+		, std::vector<node_entry> const& eps
+		, std::function<void(int)> cb)
+	{
+		// TODO: directly put item from specified endpoints
+	}
+
 	void dht_tracker::put_item(public_key const& key
 		, std::function<void(item const&, int)> cb
 		, std::function<void(item&)> data_cb, std::string salt)
@@ -415,6 +422,14 @@ namespace libtorrent::dht {
 		for (auto& n : m_nodes)
 			n.second.dht.put_item(key, salt, std::bind(&put_mutable_item_callback
 				, _1, _2, ctx, cb), data_cb);
+	}
+
+	void dht_tracker::find_live_nodes(sha256_hash const& id
+		, std::vector<node_entry>& l
+		, int count)
+	{
+		for (auto& n : m_nodes)
+			n.second.dht.find_live_nodes(id, l, count);
 	}
 
 	void dht_tracker::incoming_error(error_code const& ec, udp::endpoint const& ep)

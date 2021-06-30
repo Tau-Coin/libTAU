@@ -123,6 +123,12 @@ public:
 		, std::function<void(item const&, int)> f
 		, std::function<void(item&)> data_cb);
 
+	// fills the vector with the count nodes from routing table buckets that
+	// are nearest to the given id.
+	void find_live_nodes(node_id const& id
+		, std::vector<node_entry>& l
+		, int count);
+
 	bool verify_token(string_view token, sha256_hash const& info_hash
 		, udp::endpoint const& addr) const;
 
