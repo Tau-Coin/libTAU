@@ -36,6 +36,7 @@
 #pragma GCC diagnostic pop
 #include "libtorrent/aux_/vector_ref.h"
 
+namespace libtorrent { namespace aux {
 // CryptoPP defines byte in the global namespace, so must we.
 using byte = uint8_t;
 
@@ -43,7 +44,6 @@ using byte = uint8_t;
 
 #define DEV_IF_THROWS(X) try{X;}catch(...)
 
-namespace libtorrent { namespace aux {
 using namespace boost::multiprecision::literals;
 
 extern std::string const EmptyString;
