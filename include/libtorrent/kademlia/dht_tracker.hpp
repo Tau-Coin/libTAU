@@ -108,12 +108,25 @@ namespace libtorrent::dht {
 		void put_item(entry const& data
 			, std::function<void(int)> cb);
 
+		// put immutable_item into specified endpoints.
+		// the callback function will be called when put operation is done.
+		// the int parameter indicates the success numbers of put operation.
+		void put_item(entry const& data
+			, std::vector<node_entry> const& eps
+			, std::function<void(int)> cb);
+
 		// for mutable_item.
 		// the data_cb will be called when we get authoritative mutable_item,
 		// the cb is same as put immutable_item.
 		void put_item(public_key const& key
 			, std::function<void(item const&, int)> cb
 			, std::function<void(item&)> data_cb, std::string salt = std::string());
+
+		// fills the vector with the count nodes from routing table buckets that
+		// are nearest to the given id.
+		void find_live_nodes(sha256_hash const& id
+			, std::vector<node_entry>& l
+			, int count = 0);
 
 #if TORRENT_ABI_VERSION == 1
 #include "libtorrent/aux_/disable_deprecation_warnings_push.hpp"
