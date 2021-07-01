@@ -38,7 +38,7 @@
 
 namespace libtorrent { namespace aux {
 // CryptoPP defines byte in the global namespace, so must we.
-using byte = uint8_t;
+using u_byte = uint8_t;
 
 #define DEV_IGNORE_EXCEPTIONS(X) try { X; } catch (...) {}
 
@@ -49,9 +49,9 @@ using namespace boost::multiprecision::literals;
 extern std::string const EmptyString;
 
 // Binary data types.
-using bytes = std::vector<byte>;
-using bytesRef = vector_ref<byte>;
-using bytesConstRef = vector_ref<byte const>;
+using bytes = std::vector<u_byte>;
+using bytesRef = vector_ref<u_byte>;
+using bytesConstRef = vector_ref<u_byte const>;
 
 template <class T>
 class secure_vector
@@ -92,7 +92,7 @@ private:
     std::vector<T> m_data;
 };
 
-using bytesSec = secure_vector<byte>;
+using bytesSec = secure_vector<u_byte>;
 
 // Numeric types.
 using bigint = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>>;

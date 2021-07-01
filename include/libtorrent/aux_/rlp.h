@@ -25,14 +25,14 @@ template <> struct intTraits<u160> { static const unsigned maxSize = 20; };
 template <> struct intTraits<u256> { static const unsigned maxSize = 32; };
 template <> struct intTraits<bigint> { static const unsigned maxSize = ~(unsigned)0; };
 
-static const byte c_rlpMaxLengthBytes = 8;
-static const byte c_rlpDataImmLenStart = 0x80;
-static const byte c_rlpListStart = 0xc0;
+static const u_byte c_rlpMaxLengthBytes = 8;
+static const u_byte c_rlpDataImmLenStart = 0x80;
+static const u_byte c_rlpListStart = 0xc0;
 
-static const byte c_rlpDataImmLenCount = c_rlpListStart - c_rlpDataImmLenStart - c_rlpMaxLengthBytes;
-static const byte c_rlpDataIndLenZero = c_rlpDataImmLenStart + c_rlpDataImmLenCount - 1;
-static const byte c_rlpListImmLenCount = 256 - c_rlpListStart - c_rlpMaxLengthBytes;
-static const byte c_rlpListIndLenZero = c_rlpListStart + c_rlpListImmLenCount - 1;
+static const u_byte c_rlpDataImmLenCount = c_rlpListStart - c_rlpDataImmLenStart - c_rlpMaxLengthBytes;
+static const u_byte c_rlpDataIndLenZero = c_rlpDataImmLenStart + c_rlpDataImmLenCount - 1;
+static const u_byte c_rlpListImmLenCount = 256 - c_rlpListStart - c_rlpMaxLengthBytes;
+static const u_byte c_rlpListIndLenZero = c_rlpListStart + c_rlpListImmLenCount - 1;
 
 template <class T> struct Converter { static T convert(RLP const&, int) { BOOST_THROW_EXCEPTION(BadCast()); } };
 
@@ -66,10 +66,10 @@ public:
     explicit RLP(bytes const& _d, Strictness _s = VeryStrict): RLP(&_d, _s) {}
 
     /// Construct a node to read RLP data in the bytes given.
-    RLP(byte const* _b, unsigned _s, Strictness _st = VeryStrict): RLP(bytesConstRef(_b, _s), _st) {}
+    RLP(u_byte const* _b, unsigned _s, Strictness _st = VeryStrict): RLP(bytesConstRef(_b, _s), _st) {}
 
     /// Construct a node to read RLP data in the string.
-    explicit RLP(std::string const& _s, Strictness _st = VeryStrict): RLP(bytesConstRef((byte const*)_s.data(), _s.size()), _st) {}
+    explicit RLP(std::string const& _s, Strictness _st = VeryStrict): RLP(bytesConstRef((u_byte const*)_s.data(), _s.size()), _st) {}
 
     /// The bare data of the RLP.
     bytesConstRef data() const { return m_data; }
@@ -427,15 +427,15 @@ private:
 
     /// Push the node-type byte (using @a _base) along with the item count @a _count.
     /// @arg _count is number of characters for strings, data-bytes for ints, or items for lists.
-    void pushCount(size_t _count, byte _offset);
+    void pushCount(size_t _count, u_byte _offset);
 
     /// Push an integer as a raw big-endian byte-stream.
     template <class _T> void pushInt(_T _i, size_t _br)
     {
         m_out.resize(m_out.size() + _br);
-        byte* b = &m_out.back();
+        u_byte* b = &m_out.back();
         for (; _i; _i >>= 8)
-            *(b--) = (byte)(_i & 0xff);
+            *(b--) = (u_byte)(_i & 0xff);
     }
 
     /// Our output byte stream.
