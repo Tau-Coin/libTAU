@@ -95,8 +95,8 @@ public:
 	void incoming(aux::listen_socket_handle const& s, msg const& m);
 
 #if TORRENT_ABI_VERSION == 1
-	int num_torrents() const { return int(m_storage.num_torrents()); }
-	int num_peers() const { return int(m_storage.num_peers()); }
+	int num_torrents() const { return 0; }
+	int num_peers() const { return 0; }
 #endif
 
 	int bucket_size(int bucket);

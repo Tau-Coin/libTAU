@@ -175,7 +175,7 @@ namespace libtorrent::dht {
 #if TORRENT_ABI_VERSION == 1
 	void dht_tracker::dht_status(session_status& s)
 	{
-		s.dht_torrents += int(m_storage.num_torrents());
+		s.dht_torrents = 0;
 
 		s.dht_nodes = 0;
 		s.dht_node_cache = 0;
