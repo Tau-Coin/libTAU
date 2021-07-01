@@ -12,6 +12,7 @@ see LICENSE file.
 
 #include "libtorrent/communication/message_hash_list.hpp"
 #include "libtorrent/communication/communication.hpp"
+#include "libtorrent/communication/mutable_data_wrapper.hpp"
 #include "libtorrent/kademlia/dht_tracker.hpp"
 
 using namespace std::placeholders;
@@ -19,26 +20,33 @@ using namespace std::placeholders;
 namespace libtorrent {
     namespace communication {
 
-        void communication::start()
+        bool communication::start()
         {
-            init();
+            if (!init())
+                return false;
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
         }
 
-        void communication::stop()
+        bool communication::stop()
         {
             m_friends.clear();
             m_message_list_map.clear();
 
             m_refresh_timer.cancel();
+
+            return true;
         }
 
-        void communication::init() {
-            m_message_db->init();
+        bool communication::init() {
+            if (m_message_db->init())
+                return false;
+
             // get friends from db
-            m_message_db->get_all_friends();
+            m_friends = m_message_db->get_all_friends();
+
+            return true;
         }
 
         void communication::account_changed() {
@@ -50,12 +58,26 @@ namespace libtorrent {
             m_refresh_time = milliseconds;
         }
 
-        void communication::add_new_friend(const aux::bytes& pubkey) {
-            m_friends.push_back(pubkey);
-            m_message_db->save_friend(pubkey);
+        bool communication::add_new_friend(const aux::bytes& pubkey) {
+            bool update = true;
+            for(auto & peer : m_friends) {
+                if (peer == pubkey) {
+                    update = false;
+                    break;
+                }
+            }
+
+            if (update) {
+                m_friends.push_back(pubkey);
+            }
+
+            if (!m_message_db->save_friend(pubkey))
+                return false;
+
+            return true;
         }
 
-        void communication::delete_friend(const aux::bytes& pubkey) {
+        bool communication::delete_friend(const aux::bytes& pubkey) {
             for(auto it = m_friends.begin(); it != m_friends.end(); ++it) {
                 if (*it == pubkey) {
                     m_friends.erase(it);
@@ -63,23 +85,35 @@ namespace libtorrent {
                 }
             }
 
-            m_message_db->delete_friend(pubkey);
-            m_message_db->delete_latest_message_hash_list_encode(pubkey);
+            if (!m_message_db->delete_friend(pubkey))
+                return false;
+
+            if (!m_message_db->delete_latest_message_hash_list_encode(pubkey))
+                return false;
+
+            return true;
         }
 
         void communication::set_chatting_friend(aux::bytes chatting_friend) {
             m_chatting_friend = std::move(chatting_friend);
         }
 
+        void communication::unset_chatting_friend() {
+            m_chatting_friend = aux::bytes();
+        }
+
         void communication::set_active_friends(std::vector<aux::bytes> &&active_friends) {
             m_active_friends = std::move(active_friends);
         }
 
-        void communication::add_new_message(const message& msg) {
-            try_to_update_Latest_message_list(msg.sender(), msg);
+        bool communication::add_new_message(const message& msg) {
+            if (!validate_message(msg))
+                return false;
+
+            return try_to_update_Latest_message_list(msg.sender(), msg);
         }
 
-        bool communication::validateMessage(const message& msg) {
+        bool communication::validate_message(const message& msg) {
             if (msg.rlp().size() > 1000) {
                 return false;
             }
@@ -149,9 +183,13 @@ namespace libtorrent {
         }
 
         void communication::request_signal(const aux::bytes &peer) {
+            auto salt = make_receiver_salt(peer);
+            dht_get_mutable_item(m_ses.pubkey()->bytes, salt);
         }
 
         void communication::publish_signal(const aux::bytes &peer) {
+            auto salt = make_sender_salt(peer);
+//            dht_put_mutable_item(m_ses.pubkey()->bytes, salt);
         }
 
         void communication::save_friend_latest_message_hash_list(const aux::bytes& peer) {

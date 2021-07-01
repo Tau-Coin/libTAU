@@ -36,6 +36,8 @@ namespace libtorrent {
             // @param _rlp rlp encode
             explicit mutable_data_wrapper(aux::bytesConstRef _rlp);
 
+            mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, aux::bytes mPayload);
+
             // @returns timestamp
             uint32_t timestamp() const { return m_timestamp; }
 

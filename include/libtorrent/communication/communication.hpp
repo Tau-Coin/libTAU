@@ -54,35 +54,38 @@ namespace libtorrent {
             }
 
             // start communication
-            void start();
+            bool start();
 
             // stop
-            void stop();
+            bool stop();
 
             // set main loop time interval (ms)
             void set_loop_time_interval(int milliseconds);
 
             // add new friend in memory & db
-            void add_new_friend(const aux::bytes& pubkey);
+            bool add_new_friend(const aux::bytes& pubkey);
 
             // delete friend and all related data in memory & db
-            void delete_friend(const aux::bytes& pubkey);
+            bool delete_friend(const aux::bytes& pubkey);
 
             // set chatting friends
             void set_chatting_friend(aux::bytes chatting_friend);
+
+            // unset chatting friends
+            void unset_chatting_friend();
 
             // set active friends
             void set_active_friends(std::vector<aux::bytes> &&active_friends);
 
             // add a new message
-            void add_new_message(const message& msg);
+            bool add_new_message(const message& msg);
 
             // reset when account changed
             void account_changed();
 
         private:
             // initialize member variables
-            void init();
+            bool init();
 
             // request online/new message signal from a given peer
             void request_signal(const aux::bytes& peer);
@@ -107,7 +110,7 @@ namespace libtorrent {
             std::string make_receiver_salt(aux::bytes peer);
 
             // validate message, check if message is oversize( >1000 bytes)
-            bool validateMessage(const message& msg);
+            static bool validate_message(const message& msg);
 
             // immutable data callback
             void get_immutable_callback(sha1_hash target
