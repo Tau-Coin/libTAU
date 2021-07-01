@@ -139,13 +139,19 @@ namespace libtorrent {
         {
             aux::bytes peer = select_friend_randomly();
             if (!peer.empty()) {
-                // put / get
-//                dht_get_mutable_item();
+                request_signal(peer);
+                publish_signal(peer);
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(
                     std::bind(&communication::refresh_timeout, self(), _1));
+        }
+
+        void communication::request_signal(const aux::bytes &peer) {
+        }
+
+        void communication::publish_signal(const aux::bytes &peer) {
         }
 
         void communication::save_friend_latest_message_hash_list(const aux::bytes& peer) {
@@ -240,7 +246,7 @@ namespace libtorrent {
             dht::public_key *pubkey = m_ses.pubkey();
             std::string salt;
 
-            std::copy(pubkey, pubkey + communication_short_address_length, salt.begin());
+            std::copy(pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length, salt.begin());
             std::copy(peer.begin(), peer.begin() + communication_short_address_length,
                       salt.begin() + communication_short_address_length);
 
@@ -252,7 +258,7 @@ namespace libtorrent {
             std::string salt;
 
             std::copy(peer.begin(), peer.begin() + communication_short_address_length, salt.begin());
-            std::copy(pubkey, pubkey + communication_short_address_length,
+            std::copy(pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length,
                       salt.begin() + communication_short_address_length);
 
             return salt;

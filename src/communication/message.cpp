@@ -41,7 +41,6 @@ namespace libtorrent {
         }
 
         std::string message::to_string() const {
-            // todo
             return std::__cxx11::string();
         }
     }

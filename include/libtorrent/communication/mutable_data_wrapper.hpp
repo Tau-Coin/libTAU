@@ -19,6 +19,7 @@ namespace libtorrent {
     namespace communication {
 
         enum mutable_data_type {
+            MESSAGE,
             MESSAGE_CONTAINER,
             ONLINE_SIGNAL,
             NEW_MSG_SIGNAL,
@@ -33,7 +34,7 @@ namespace libtorrent {
         public:
 
             // @param _rlp rlp encode
-            mutable_data_wrapper(aux::bytesConstRef _rlp);
+            explicit mutable_data_wrapper(aux::bytesConstRef _rlp);
 
             // @returns timestamp
             uint32_t timestamp() const { return m_timestamp; }

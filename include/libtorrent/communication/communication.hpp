@@ -84,6 +84,12 @@ namespace libtorrent {
             // initialize member variables
             void init();
 
+            // request online/new message signal from a given peer
+            void request_signal(const aux::bytes& peer);
+
+            // publish online/new message signal to a given peer
+            void publish_signal(const aux::bytes& peer);
+
             // select a friend randomly
             aux::bytes select_friend_randomly() const;
 
@@ -155,7 +161,7 @@ namespace libtorrent {
             // active friends
             std::vector<aux::bytes> m_active_friends;
 
-            // message list map:key-peer, value-message list
+            // message list map:key->peer, value->message list
             std::map<aux::bytes, std::list<message>> m_message_list_map;
         };
     }
