@@ -1596,8 +1596,9 @@ namespace {
 		"picker_log", "session_error", "dht_live_nodes",
 		"session_stats_header", "dht_sample_infohashes",
 		"alerts_dropped", "socks5",
-		"communication_new_device_id", "communication_new_message_alert",
-		"communication_confirmation_root_alert", "communication_syncing_message_alert"
+		"communication_new_device_id", "communication_new_message",
+		"communication_confirmation_root", "communication_syncing_message",
+		"communication_friend_info"
 		}};
 
 		TORRENT_ASSERT(alert_type >= 0);
@@ -1707,6 +1708,23 @@ namespace {
         char msg[1050];
         std::snprintf(msg, sizeof(msg), "sync message hash %s"
                 , syncing_msg_hash.toString().c_str());
+        return msg;
+#endif
+    }
+
+    communication_friend_info_alert::communication_friend_info_alert(aux::stack_allocator&
+            , aux::bytes t)
+            : friend_info(std::move(t))
+    {}
+
+    std::string communication_friend_info_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char msg[1050];
+        std::snprintf(msg, sizeof(msg), "friend info %s"
+                , friend_info.data());
         return msg;
 #endif
     }

@@ -76,7 +76,7 @@ namespace libtorrent {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 102;
+	constexpr int num_alert_types = 103;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1493,6 +1493,22 @@ TORRENT_VERSION_NAMESPACE_3
 
         // syncing message hash
         aux::bytesConstRef syncing_msg_hash;
+    };
+
+    // this alert is posted when friend info found in new mutable data.
+    struct TORRENT_EXPORT communication_friend_info_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_friend_info_alert(aux::stack_allocator& alloc, aux::bytes t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_friend_info_alert, 102, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // friend info
+        aux::bytes friend_info;
     };
 
 TORRENT_VERSION_NAMESPACE_3_END
