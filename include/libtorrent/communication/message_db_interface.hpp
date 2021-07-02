@@ -38,6 +38,15 @@ namespace libtorrent {
             // delete a friend
             virtual bool delete_friend(aux::bytes public_key) = 0;
 
+            // get friend info by public key
+            virtual aux::bytes get_friend_info(aux::bytes public_key) = 0;
+
+            // save friend info
+            virtual bool save_friend_info(aux::bytes public_key, aux::bytes friend_info) = 0;
+
+            // delete friend info
+            virtual bool delete_friend_info(aux::bytes public_key) = 0;
+
             // get message by hash
             virtual communication::message get_message(aux::bytes hash) = 0;
 

@@ -34,6 +34,12 @@ namespace libtorrent {
             // delete a friend
             bool delete_friend(aux::bytes public_key) override;
 
+            aux::bytes get_friend_info(aux::bytes public_key) override;
+
+            bool save_friend_info(aux::bytes public_key, aux::bytes friend_info) override;
+
+            bool delete_friend_info(aux::bytes public_key) override;
+
             // get message by hash
             communication::message get_message(aux::bytes hash) override;
 

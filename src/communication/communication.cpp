@@ -88,10 +88,21 @@ namespace libtorrent {
             if (!m_message_db->delete_friend(pubkey))
                 return false;
 
+            if (!m_message_db->delete_friend_info(pubkey))
+                return false;
+
             if (!m_message_db->delete_latest_message_hash_list_encode(pubkey))
                 return false;
 
             return true;
+        }
+
+        aux::bytes communication::get_friend_info(aux::bytes pubkey) {
+            return m_message_db->get_friend_info(std::move(pubkey));
+        }
+
+        bool communication::update_friend_info(aux::bytes pubkey, aux::bytes friend_info) {
+            return m_message_db->save_friend_info(std::move(pubkey), std::move(friend_info));
         }
 
         void communication::set_chatting_friend(aux::bytes chatting_friend) {

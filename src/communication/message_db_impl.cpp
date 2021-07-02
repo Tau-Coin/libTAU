@@ -79,6 +79,26 @@ namespace libtorrent {
             return true;
         }
 
+        aux::bytes message_db_impl::get_friend_info(aux::bytes public_key) {
+            std::string value;
+            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), reinterpret_cast<char*>(public_key.data()), &value);
+            aux::bytes buffer;
+            buffer.insert(buffer.end(), value.begin(), value.end());
+            return buffer;
+        }
+
+        bool message_db_impl::save_friend_info(aux::bytes public_key, aux::bytes friend_info) {
+            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(),
+                                                    reinterpret_cast<char*>(public_key.data()),
+                                                    reinterpret_cast<char*>(friend_info.data()));
+            return status.ok();
+        }
+
+        bool message_db_impl::delete_friend_info(aux::bytes public_key) {
+            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), reinterpret_cast<char*>(public_key.data()));
+            return status.ok();
+        }
+
         communication::message message_db_impl::get_message(aux::bytes hash) {
             std::string value;
             leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), reinterpret_cast<char*>(hash.data()), &value);
