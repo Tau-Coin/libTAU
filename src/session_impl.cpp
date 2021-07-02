@@ -87,11 +87,8 @@ see LICENSE file.
 
 #include <cstdarg> // for va_list
 
-#ifdef TORRENT_ENABLE_DB
 #include <leveldb/db.h>
 #include <sqlite3.h>
-#endif
-
 
 // for logging the size of DHT structures
 #ifndef TORRENT_DISABLE_DHT
@@ -890,7 +887,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 		stop_dht();
 #endif
 
-#ifdef TORRENT_ENABLE_DB
 		if(m_kvdb) {
 			delete m_kvdb;
 		}
@@ -899,7 +895,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 			sqlite3_close_v2(m_sqldb);
 			m_sqldb = nullptr;
 		}
-#endif
 
 #ifdef TORRENT_SSL_PEERS
 		for (auto const& s : m_incoming_sockets)
@@ -3046,13 +3041,11 @@ namespace {
 		std::string const nodes_key = "bootstrap_nodes";
 		std::string nodes_list;
 
-#ifdef TORRENT_ENABLE_DB
 		leveldb::Status s = m_kvdb->Get(leveldb::ReadOptions(), nodes_key, &nodes_list);
 		if (!s.ok()){
 			s = m_kvdb->Put(leveldb::WriteOptions(), nodes_key, nodes_from_settings);
 			nodes_list = nodes_from_settings;
 		}
-#endif
 
 		std::vector<std::pair<std::string, int>> nodes;
 		parse_comma_separated_string_port(nodes_list, nodes);
@@ -3071,8 +3064,6 @@ namespace {
     void session_impl::update_db_dir()
     {    
 
-#ifdef TORRENT_ENABLE_DB
-
         std::string home_dir = boost::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
@@ -3087,6 +3078,7 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("ERROR: create leveldb directory failed !");
 #endif
+
 			}
 		}
 
@@ -3117,9 +3109,6 @@ namespace {
 			session_log("open sqldb error !!!");
 #endif
 		}
-    
-#endif
-
     }   
 
 	void session_impl::update_account_seed() {
@@ -4023,22 +4012,6 @@ namespace {
 #endif
 	}
 
-#ifdef TORRENT_ENABLE_DB
-
-	bool session_impl::get_data_from_db(const std::string&  key, std::string* value) {
-		leveldb::Status s = m_kvdb->Get(leveldb::ReadOptions(), key, value);
-		if (s.ok()) return true;
-		else return false;
-	} 
-
-	bool session_impl::put_data_into_db(const std::string& key, const std::string& value) {
-		leveldb::Status s = m_kvdb->Put(leveldb::WriteOptions(), key, value);
-		if (s.ok()) return true;
-		else return false;
-	}
-
-#endif
-	
 	void session_impl::pop_alerts(std::vector<alert*>* alerts)
 	{
 		m_alerts.get_all(*alerts);

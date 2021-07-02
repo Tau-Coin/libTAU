@@ -1021,7 +1021,7 @@ lib torrent
 
 	<dht>on:<source>src/kademlia/$(KADEMLIA_SOURCES).cpp
 	<dht>on:<source>src/ed25519/$(ED25519_SOURCES).cpp
-	# <kvdb>on:<source>src/communication/$(COMMUNICATION_SOURECS).cpp
+	<kvdb>on:<source>src/communication/$(COMMUNICATION_SOURECS).cpp
 
 	<conditional>@building
 	<conditional>@warnings

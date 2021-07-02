@@ -35,10 +35,8 @@ see LICENSE file.
 #include <functional>
 #include <memory>
 
-#ifdef TORRENT_ENABLE_DB
 #include <leveldb/db.h>
 #include <sqlite3.h>
-#endif
 
 namespace libtorrent {
 
@@ -227,10 +225,9 @@ namespace libtorrent::aux {
 		virtual dht::dht_tracker* dht() = 0;
 #endif
 
-#ifdef TORRENT_ENABLE_DB
 		virtual leveldb::DB* kvdb() = 0;
 		virtual sqlite3* sqldb() = 0;
-#endif
+
 		virtual dht::public_key* pubkey() = 0;
 		virtual dht::secret_key* serkey() = 0;
 

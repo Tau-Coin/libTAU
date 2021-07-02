@@ -73,11 +73,8 @@ see LICENSE file.
 #include "libtorrent/session_settings.hpp"
 #endif
 
-#ifdef TORRENT_ENABLE_DB
 #include <leveldb/db.h>
 #include <sqlite3.h>
-#endif
-
 #include <algorithm>
 #include <vector>
 #include <set>
@@ -400,10 +397,9 @@ namespace aux {
 			session_settings const& settings() const override { return m_settings; }
 			settings_pack get_settings() const;
 
-#ifdef TORRENT_ENABLE_DB
 			leveldb::DB* kvdb() override {return m_kvdb;}
 			sqlite3* sqldb() override {return m_sqldb;}
-#endif
+
 			dht::public_key* pubkey() override {return &(std::get<dht::public_key>(m_keypair));}
 			dht::secret_key* serkey() override {return &(std::get<dht::secret_key>(m_keypair));}
 
@@ -690,23 +686,6 @@ namespace aux {
 			void update_connections_limit();
 			void update_alert_mask();
 			void update_validate_https();
-
-#ifdef TORRENT_ENABLE_DB
-            // get data from db
-			// If the database contains an entry for "key" store the
-			// corresponding value in *value and return OK.
-			//
-			// If there is no entry for "key" leave *value unchanged and return
-			// a status for which Status::IsNotFound() returns true.
-			//
-			// May return some other Status on an error.
-			bool get_data_from_db(const std::string&  key, std::string* value);
-
-			// put data into db.Returns OK on success,
-			// and a non-OK status on error.
-			// Note: consider setting options.sync = true
-			bool put_data_into_db(const std::string& key, const std::string& value);
-#endif
 
 		private:
 
