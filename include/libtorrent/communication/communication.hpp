@@ -15,6 +15,7 @@ see LICENSE file.
 // communication模块主要负责朋友或者区块链群组之间消息的沟通，
 // 同时作为time server，通过统计网络中位数时间，为其它模块提供时间基准
 
+#include <ctime>
 #include <functional>
 #include <vector>
 #include <memory>
@@ -78,6 +79,7 @@ namespace libtorrent {
             void set_chatting_friend(aux::bytes chatting_friend);
 
             // unset chatting friends
+            // todo::unset after 30min
             void unset_chatting_friend();
 
             // set active friends
@@ -166,6 +168,7 @@ namespace libtorrent {
 
             // chatting friend
             aux::bytes m_chatting_friend;
+            std::pair<aux::bytes, time_t> m_chatting_friend_t;
 
             // active friends
             std::vector<aux::bytes> m_active_friends;

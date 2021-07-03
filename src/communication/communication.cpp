@@ -6,7 +6,6 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <ctime>
 #include <cstdlib>
 #include <utility>
 
@@ -217,6 +216,7 @@ namespace libtorrent {
 //                const auto &pubkey = m_ses.pubkey();
 //                aux::bytes public_key;
 //                public_key.insert(public_key.end(), pubkey->bytes.begin(), pubkey->bytes.end());
+                // TODO::sqlite or leveldb?
                 m_message_db->save_latest_message_hash_list_encode(peer, message_hash_list(hash_list).rlp());
             }
         }
@@ -227,7 +227,7 @@ namespace libtorrent {
             std::list<message> message_list = m_message_list_map[peer];
             if (!message_list.empty()) {
                 // 先判断一下是否比最后一个消息时间戳大，如果是，则直接插入末尾
-                if (msg.timestamp() == message_list.back().timestamp()) {
+                if (msg.timestamp() > message_list.back().timestamp()) {
                     message_list.push_back(msg);
                     updated = true;
                 } else {
@@ -237,14 +237,12 @@ namespace libtorrent {
                     bool insertFirst = true;
                     for (; it != message_list.rend(); ++it) {
                         message reference = *it;
-                        int diff = reference.timestamp() - msg.timestamp();
+                        long diff = reference.timestamp() - msg.timestamp();
                         // 如果差值小于零，说明找到了比当前消息时间戳小的消息位置，将消息插入到目标位置后面一位
                         if (diff < 0) {
                             updated = true;
                             insertFirst = false;
                             message_list.insert((++it).base(), msg);
-//                            int i = linkedList.indexOf(reference);
-//                            linkedList.add(i + 1, message);
                             break;
                         } else if (diff == 0) {
                             // 如果时间戳一样，寻找第一个哈希比我小的消息
@@ -332,10 +330,13 @@ namespace libtorrent {
         void communication::get_mutable_callback(dht::item const& i
                 , bool const authoritative)
         {
-//            TORRENT_ASSERT(i.is_mutable());
-//            m_alerts.emplace_alert<dht_mutable_item_alert>(i.pk().bytes
-//                    , i.sig().bytes, i.seq().value
-//                    , i.salt(), i.value(), authoritative);
+            TORRENT_ASSERT(i.is_mutable());
+//            i.value().string();
+//            mutable_data_wrapper data = new mutable_data_wrapper();
+
+            m_ses.alerts().emplace_alert<dht_mutable_item_alert>(i.pk().bytes
+                    , i.sig().bytes, i.seq().value
+                    , i.salt(), i.value(), authoritative);
         }
 
         // key is a 32-byte binary string, the public key to look up.
@@ -354,6 +355,26 @@ namespace libtorrent {
             {
 //                if (alerts.should_post<dht_put_alert>())
 //                    alerts.emplace_alert<dht_put_alert>(target, num);
+            }
+
+            void put_mutable_data(entry& e, std::array<char, 64>& sig
+                    , std::int64_t& seq
+                    , std::string const& salt
+                    , std::array<char, 32> const& pk
+                    , std::array<char, 64> const& sk
+                    , char const* data)
+            {
+                using lt::dht::sign_mutable_item;
+
+                e = std::string(data);
+                std::vector<char> buf;
+                bencode(std::back_inserter(buf), e);
+                dht::signature sign;
+                ++seq;
+                sign = sign_mutable_item(buf, salt, dht::sequence_number(seq)
+                        , dht::public_key(pk.data())
+                        , dht::secret_key(sk.data()));
+                sig = sign.bytes;
             }
 
             void on_dht_put_mutable_item(aux::alert_manager& alerts, dht::item const& i, int num)
