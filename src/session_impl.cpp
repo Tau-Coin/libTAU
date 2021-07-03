@@ -52,6 +52,8 @@ see LICENSE file.
 #include "libtorrent/socket.hpp"
 #include "libtorrent/aux_/session_impl.hpp"
 
+#include "libtorrent/aux_/common.h"
+
 #include "libtorrent/kademlia/ed25519.hpp"
 #include "libtorrent/kademlia/dht_tracker.hpp"
 #include "libtorrent/kademlia/types.hpp"
@@ -540,10 +542,12 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log(" done starting session");
 #endif
-
 		// apply all m_settings to this session
 		run_all_updates(*this);
+
 		reopen_listen_sockets(false);
+
+		start_communication();
 	}
 
 #if TORRENT_ABI_VERSION <= 2
@@ -2923,7 +2927,8 @@ namespace {
 				TORRENT_ASSERT(!boost::filesystem::create_directory(kvdb_dir));
 				alerts().emplace_alert<session_error_alert>(error_code(),
 					 "libTAU ERROR: create kvdb directory falied");
-				}
+				m_abort = true;	
+			}
 		}
 
         // create the directory for storing sqldb data
@@ -2935,7 +2940,8 @@ namespace {
 				TORRENT_ASSERT(!boost::filesystem::create_directory(sqldb_dir));
 				alerts().emplace_alert<session_error_alert>(error_code(),
 					 "libTAU ERROR: create sqldb directory falied");
-				}
+				m_abort = true;	
+			}
 		}
 
 		// open kvdb - leveldb
@@ -2946,6 +2952,7 @@ namespace {
 			TORRENT_ASSERT(!status.ok());
 			alerts().emplace_alert<session_error_alert>(error_code(),
 					 "libTAU ERROR: open kvdb failed");
+			m_abort = true;	
 		}
 
 		// open sqldb - sqlite3
@@ -2954,6 +2961,7 @@ namespace {
 			TORRENT_ASSERT(sqlrc != SQLITE_OK);
 			alerts().emplace_alert<session_error_alert>(error_code(),
 					 "libTAU ERROR: open sqldb failed");
+			m_abort = true;	
 		}
     }
 
@@ -3269,6 +3277,8 @@ namespace {
 
 		m_communication = std::make_shared<communication::communication>(m_io_context, *this);
 
+		m_communication->start();
+
 	}
 
 	void session_impl::start_dht()
@@ -3372,6 +3382,25 @@ namespace {
 		}
 
 		m_dht_storage.reset();
+	}
+
+	void session_impl::set_loop_time_interval(int milliseconds)
+	{
+		m_communication->set_loop_time_interval(milliseconds);
+	}
+
+	bool session_impl::add_new_friend(const aux::bytes& pubkey)
+	{
+		return m_communication->add_new_friend(pubkey);
+	}
+
+	bool session_impl::delete_friend(const aux::bytes& pubkey)
+	{
+		return m_communication->delete_friend(pubkey);
+	}
+
+	void session_impl::set_chatting_friend(aux::bytes chatting_friend){
+		m_communication->set_chatting_friend(chatting_friend);
 	}
 
 #if TORRENT_ABI_VERSION <= 2

@@ -482,6 +482,28 @@ namespace {
 	}
 #endif // TORRENT_ABI_VERSION
 
+	void session_handle::set_loop_time_interval(int milliseconds)
+	{
+		async_call(&session_impl::set_loop_time_interval, milliseconds);
+	}
+
+	bool session_handle::add_new_friend(const aux::bytes& pubkey)
+	{
+		sync_call(&session_impl::add_new_friend, pubkey);
+		return true;
+	}
+
+	bool session_handle::delete_friend(const aux::bytes& pubkey)
+	{
+		sync_call(&session_impl::delete_friend, pubkey);
+		return true;
+	}
+
+	void session_handle::set_chatting_friend(aux::bytes chatting_friend)
+	{
+		sync_call(&session_impl::set_chatting_friend, chatting_friend);
+	}
+
 	void session_handle::set_ip_filter(ip_filter f)
 	{
 		std::shared_ptr<ip_filter> copy = std::make_shared<ip_filter>(std::move(f));

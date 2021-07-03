@@ -26,6 +26,7 @@ see LICENSE file.
 #include "libtorrent/aux_/allocating_handler.hpp"
 #include "libtorrent/aux_/time.hpp"
 #include "libtorrent/aux_/torrent_list.hpp"
+#include "libtorrent/aux_/common.h"
 #include "libtorrent/session_params.hpp" // for disk_io_constructor_type
 
 #ifdef TORRENT_SSL_PEERS
@@ -687,6 +688,11 @@ namespace aux {
 			void update_connections_limit();
 			void update_alert_mask();
 			void update_validate_https();
+
+			void set_loop_time_interval(int milliseconds);
+			bool add_new_friend(const aux::bytes& pubkey);
+			bool delete_friend(const aux::bytes& pubkey);
+			void set_chatting_friend(aux::bytes chatting_friend);
 
 		private:
 
