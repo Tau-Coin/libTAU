@@ -32,10 +32,6 @@ see LICENSE file.
 #include <type_traits>
 #include <numeric> // for accumulate
 
-#if TORRENT_USE_INVARIANT_CHECKS
-#include <unordered_set>
-#endif
-
 #include "libtorrent/aux_/disable_warnings_push.hpp"
 #include <boost/filesystem.hpp>
 #include <boost/asio/ts/internet.hpp>
@@ -55,12 +51,16 @@ see LICENSE file.
 #include "libtorrent/ip_filter.hpp"
 #include "libtorrent/socket.hpp"
 #include "libtorrent/aux_/session_impl.hpp"
+
+#include "libtorrent/aux_/common.h"
+
 #include "libtorrent/kademlia/ed25519.hpp"
-#ifndef TORRENT_DISABLE_DHT
 #include "libtorrent/kademlia/dht_tracker.hpp"
 #include "libtorrent/kademlia/types.hpp"
 #include "libtorrent/kademlia/node_entry.hpp"
-#endif
+
+#include "libtorrent/communication/communication.hpp"
+
 #include "libtorrent/aux_/enum_net.hpp"
 #include "libtorrent/upnp.hpp"
 #include "libtorrent/natpmp.hpp"
@@ -91,13 +91,11 @@ see LICENSE file.
 #include <sqlite3.h>
 
 // for logging the size of DHT structures
-#ifndef TORRENT_DISABLE_DHT
 #include <libtorrent/kademlia/find_data.hpp>
 #include <libtorrent/kademlia/refresh.hpp>
 #include <libtorrent/kademlia/node.hpp>
 #include <libtorrent/kademlia/observer.hpp>
 #include <libtorrent/kademlia/item.hpp>
-#endif // TORRENT_DISABLE_DHT
 
 #include "libtorrent/aux_/http_tracker_connection.hpp"
 #include "libtorrent/aux_/udp_tracker_connection.hpp"
@@ -403,46 +401,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		}
 	}
 
-#ifdef TORRENT_SSL_PEERS
-	namespace {
-	// when running bittorrent over SSL, the SNI (server name indication)
-	// extension is used to know which torrent the incoming connection is
-	// trying to connect to. The 40 first bytes in the name is expected to
-	// be the hex encoded info-hash
-	bool ssl_server_name_callback_impl(ssl::stream_handle_type stream_handle, std::string const& name, session_impl* si)
-	{
-		if (name.size() < 40)
-			return false;
-
-		info_hash_t info_hash;
-		bool valid = aux::from_hex({name.c_str(), 40}, info_hash.v1.data());
-
-		// the server name is not a valid hex-encoded info-hash
-		if (!valid)
-			return false;
-
-		return true;
-	}
-
-#if defined TORRENT_USE_OPENSSL
-int ssl_server_name_callback(SSL* s, int*, void* arg)
-{
-	char const* name = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-	auto* si = reinterpret_cast<session_impl*>(arg);
-	return ssl_server_name_callback_impl(s, name ? std::string(name) : "", si)
-			? SSL_TLSEXT_ERR_OK
-			: SSL_TLSEXT_ERR_ALERT_FATAL;
-}
-#elif defined TORRENT_USE_GNUTLS
-bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string const& name, void* arg)
-{
-	auto* si = reinterpret_cast<session_impl*>(arg);
-	return ssl_server_name_callback_impl(stream_handle, name, si);
-}
-#endif
-	} // anonymous namespace
-#endif // TORRENT_SSL_PEERS
-
 	session_impl::session_impl(io_context& ioc, settings_pack const& pack
 		, disk_io_constructor_type disk_io_constructor
 		, session_flags_t const flags)
@@ -511,29 +469,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("start session");
 #endif
-
-#if TORRENT_USE_SSL
-		error_code ec;
-		m_ssl_ctx.set_default_verify_paths(ec);
-#ifndef TORRENT_DISABLE_LOGGING
-		if (ec) session_log("SSL set_default verify_paths failed: %s", ec.message().c_str());
-		ec.clear();
-#endif
-#ifndef TORRENT_DISABLE_LOGGING
-		if (ec) session_log("SSL load_verify_file failed: %s", ec.message().c_str());
-		ec.clear();
-#endif
-		m_ssl_ctx.add_verify_path("/etc/ssl/certs", ec);
-#ifndef TORRENT_DISABLE_LOGGING
-		if (ec) session_log("SSL add_verify_path failed: %s", ec.message().c_str());
-		ec.clear();
-#endif
-#endif // TORRENT_USE_SSL
-
-#ifdef TORRENT_SSL_PEERS
-		m_peer_ssl_ctx.set_verify_mode(ssl::context::verify_none, ec);
-		ssl::set_server_name_callback(ssl::get_handle(m_peer_ssl_ctx), ssl_server_name_callback, this, ec);
-#endif // TORRENT_SSL_PEERS
 
 		m_global_class = m_classes.new_peer_class("global");
 		m_tcp_peer_class = m_classes.new_peer_class("tcp");
@@ -607,10 +542,12 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log(" done starting session");
 #endif
-
 		// apply all m_settings to this session
 		run_all_updates(*this);
+
 		reopen_listen_sockets(false);
+
+		start_communication();
 	}
 
 #if TORRENT_ABI_VERSION <= 2
@@ -629,7 +566,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 			save_settings_to_dict(non_default_settings(m_settings), sett);
 		}
 
-#ifndef TORRENT_DISABLE_DHT
 		if (flags & session::save_dht_settings)
 		{
 			e["dht"] = dht::save_dht_settings(get_dht_settings());
@@ -639,7 +575,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 		{
 			e["dht state"] = dht::save_dht_state(m_dht->state());
 		}
-#endif
 
 #ifndef TORRENT_DISABLE_EXTENSIONS
 		for (auto const& ext : m_ses_extensions[plugins_all_idx])
@@ -657,7 +592,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 		bdecode_node settings;
 		if (e->type() != bdecode_node::dict_t) return;
 
-#ifndef TORRENT_DISABLE_DHT
 		bool need_update_dht = false;
 		if (flags & session_handle::save_dht_state)
 		{
@@ -668,7 +602,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 				need_update_dht = true;
 			}
 		}
-#endif
 
 #if TORRENT_ABI_VERSION == 1
 		bool need_update_proxy = false;
@@ -731,9 +664,7 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 				pack.clear(settings_pack::peer_fingerprint);
 
 				apply_settings_pack_impl(pack);
-#ifndef TORRENT_DISABLE_DHT
 				need_update_dht = false;
-#endif
 #if TORRENT_ABI_VERSION == 1
 				need_update_proxy = false;
 #endif
@@ -754,9 +685,8 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 			}
 		}
 
-#ifndef TORRENT_DISABLE_DHT
 		if (need_update_dht) start_dht();
-#endif
+
 #if TORRENT_ABI_VERSION == 1
 		if (need_update_proxy) update_proxy();
 #endif
@@ -778,7 +708,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 		if (flags & session::save_settings)
 			ret.settings = non_default_settings(m_settings);
 
-#ifndef TORRENT_DISABLE_DHT
 #if TORRENT_ABI_VERSION <= 2
 	if (flags & session_handle::save_dht_settings)
 	{
@@ -788,7 +717,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 
 		if (m_dht && (flags & session::save_dht_state))
 			ret.dht_state = m_dht->state();
-#endif
 
 #ifndef TORRENT_DISABLE_EXTENSIONS
 		if (flags & session::save_extension_state)
@@ -883,9 +811,7 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 		stop_ip_notifier();
 		stop_upnp();
 		stop_natpmp();
-#ifndef TORRENT_DISABLE_DHT
 		stop_dht();
-#endif
 
 		if(m_kvdb) {
 			delete m_kvdb;
@@ -960,8 +886,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 
 	void session_impl::set_ip_filter(std::shared_ptr<ip_filter> f)
 	{
-		INVARIANT_CHECK;
-
 		m_ip_filter = std::move(f);
 
 	}
@@ -1009,16 +933,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 		TORRENT_ASSERT_PRECOND(pc);
 		if (pc == nullptr)
 		{
-#if TORRENT_USE_INVARIANT_CHECKS
-			// make it obvious that the return value is undefined
-			ret.upload_limit = 0xf0f0f0f;
-			ret.download_limit = 0xf0f0f0f;
-			ret.label.resize(20);
-			url_random(span<char>(ret.label));
-			ret.connection_limit_factor = 0xf0f0f0f;
-			ret.upload_priority = 0xf0f0f0f;
-			ret.download_priority = 0xf0f0f0f;
-#endif
 			return ret;
 		}
 
@@ -1038,7 +952,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 
 	void session_impl::set_peer_class_filter(ip_filter const& f)
 	{
-		INVARIANT_CHECK;
 		m_peer_class_filter = f;
 	}
 
@@ -1076,7 +989,6 @@ bool ssl_server_name_callback(ssl::stream_handle_type stream_handle, std::string
 	// session_impl is responsible for deleting 'pack'
 	void session_impl::apply_settings_pack(std::shared_ptr<settings_pack> pack)
 	{
-		INVARIANT_CHECK;
 		apply_settings_pack_impl(*pack);
 	}
 
@@ -1684,10 +1596,8 @@ namespace {
 
 		while (remove_iter != m_listen_sockets.end())
 		{
-#ifndef TORRENT_DISABLE_DHT
 			if (m_dht)
 				m_dht->delete_socket(*remove_iter);
-#endif
 
 #ifndef TORRENT_DISABLE_LOGGING
 			if (should_log())
@@ -1726,14 +1636,12 @@ namespace {
 			{
 				m_listen_sockets.emplace_back(s);
 
-#ifndef TORRENT_DISABLE_DHT
 				if (m_dht
 					&& s->ssl != transport::ssl
 					&& !(s->flags & listen_socket_t::local_network))
 				{
 					m_dht->new_socket(m_listen_sockets.back());
 				}
-#endif
 
 				TORRENT_ASSERT(bool(s->flags & listen_socket_t::accept_incoming) == bool(s->sock));
 				if (s->sock) async_accept(s->sock, s->ssl);
@@ -1885,7 +1793,6 @@ namespace {
 		}
 	}
 
-#ifndef TORRENT_DISABLE_DHT
 	int session_impl::external_udp_port(address const& local_address) const
 	{
 		auto ls = std::find_if(m_listen_sockets.begin(), m_listen_sockets.end()
@@ -1899,7 +1806,6 @@ namespace {
 		else
 			return -1;
 	}
-#endif
 
 	void session_impl::send_udp_packet_hostname(std::weak_ptr<utp_socket_interface> sock
 		, char const* hostname
@@ -2037,10 +1943,8 @@ namespace {
 					// TODO: 3 it would be neat if the utp socket manager would
 					// handle ICMP errors too
 
-#ifndef TORRENT_DISABLE_DHT
 					if (m_dht)
 						m_dht->incoming_error(packet.error, packet.from);
-#endif
 
 				}
 
@@ -2052,7 +1956,6 @@ namespace {
 				{
 					// if it wasn't a uTP packet, try the other users of the UDP
 					// socket
-#ifndef TORRENT_DISABLE_DHT
 					auto listen_socket = ls.lock();
 					if (m_dht && buf.size() > 20
 						&& buf.front() == 'd'
@@ -2061,7 +1964,6 @@ namespace {
 					{
 						m_dht->incoming_packet(listen_socket, packet.from, buf);
 					}
-#endif
 				}
 			}
 
@@ -2560,9 +2462,6 @@ namespace {
 
 		time_point const now = aux::time_now();
 
-// too expensive
-//		INVARIANT_CHECK;
-
 		// we have to keep ticking the utp socket manager
 		// until they're all closed
 		// we also have to keep updating the aux time while
@@ -2654,8 +2553,6 @@ namespace {
 		m_stats_counters.inc_stats_counter(counters::socket_send_size3 + index);
 	}
 
-#ifndef TORRENT_DISABLE_DHT
-
 	void session_impl::add_dht_node(udp::endpoint const& n)
 	{
 		TORRENT_ASSERT(is_single_thread());
@@ -2667,8 +2564,6 @@ namespace {
 	{
 		return m_dht != nullptr;
 	}
-
-#endif
 
 #ifndef TORRENT_DISABLE_LOGGING
     bool session_impl::should_log() const
@@ -2705,17 +2600,14 @@ namespace {
 		}
 		m_disk_thread->update_stats_counters(m_stats_counters);
 
-#ifndef TORRENT_DISABLE_DHT
 		if (m_dht)
 			m_dht->update_stats_counters(m_stats_counters);
-#endif
 
 		m_alerts.emplace_alert<session_stats_alert>(m_stats_counters);
 	}
 
 	void session_impl::post_dht_stats()
 	{
-#ifndef TORRENT_DISABLE_DHT
 		std::vector<dht::dht_status> dht_stats;
 		if (m_dht)
 			dht_stats = m_dht->dht_status();
@@ -2736,7 +2628,6 @@ namespace {
 					, s.our_id, s.local_endpoint);
 			}
 		}
-#endif
 	}
 
 	void session_impl::update_outgoing_interfaces()
@@ -2898,8 +2789,6 @@ namespace {
 
 	void session_impl::update_ssl_listen()
 	{
-		INVARIANT_CHECK;
-
 		// this function maps the previous functionality of just setting the ssl
 		// listen port in order to enable the ssl listen sockets, to the new
 		// mechanism where SSL sockets are specified in listen_interfaces.
@@ -2936,8 +2825,6 @@ namespace {
 
 	void session_impl::update_listen_interfaces()
 	{
-		INVARIANT_CHECK;
-
 		std::string const net_interfaces = m_settings.get_str(settings_pack::listen_interfaces);
 		std::vector<std::string> err;
 		m_listen_interfaces = parse_listen_interfaces(net_interfaces, err);
@@ -3009,56 +2896,18 @@ namespace {
 
 	void session_impl::update_dht()
 	{
-#ifndef TORRENT_DISABLE_DHT
-		if (m_settings.get_bool(settings_pack::enable_dht))
+		if (!m_settings.get_str(settings_pack::dht_bootstrap_nodes).empty()
+			&& m_dht_router_nodes.empty())
 		{
-			if (!m_settings.get_str(settings_pack::dht_bootstrap_nodes).empty()
-				&& m_dht_router_nodes.empty())
-			{
-				// if we have bootstrap nodes configured, make sure we initiate host
-				// name lookups. once these complete, the DHT will be started.
-				// they are tracked by m_outstanding_router_lookups
-				update_dht_bootstrap_nodes();
-			}
-			else
-			{
-				start_dht();
-			}
+			// if we have bootstrap nodes configured, make sure we initiate host
+			// name lookups. once these complete, the DHT will be started.
+			// they are tracked by m_outstanding_router_lookups
+			update_dht_bootstrap_nodes();
 		}
 		else
-			stop_dht();
-#endif
-	}
-
-	void session_impl::update_dht_bootstrap_nodes()
-	{
-#ifndef TORRENT_DISABLE_DHT
-		if (!m_settings.get_bool(settings_pack::enable_dht)) return;
-
-		//std::string const& node_list = m_settings.get_str(settings_pack::dht_bootstrap_nodes);
-		std::string const& nodes_from_settings = m_settings.get_str(settings_pack::dht_bootstrap_nodes);
-
-		std::string const nodes_key = "bootstrap_nodes";
-		std::string nodes_list;
-
-		leveldb::Status s = m_kvdb->Get(leveldb::ReadOptions(), nodes_key, &nodes_list);
-		if (!s.ok()){
-			s = m_kvdb->Put(leveldb::WriteOptions(), nodes_key, nodes_from_settings);
-			nodes_list = nodes_from_settings;
-		}
-
-		std::vector<std::pair<std::string, int>> nodes;
-		parse_comma_separated_string_port(nodes_list, nodes);
-
-#ifndef TORRENT_DISABLE_LOGGING
-		if (!nodes_list.empty() && nodes.empty())
 		{
-			session_log("ERROR: failed to parse DHT bootstrap list: %s", nodes_list.c_str());
+			start_dht();
 		}
-#endif
-		for (auto const& n : nodes)
-			add_dht_router(n);
-#endif
 	}
 
     void session_impl::update_db_dir()
@@ -3075,10 +2924,10 @@ namespace {
 			session_log("create directory for storing kvdb data: %s", kvdb_dir.c_str());
 #endif
 			if(!boost::filesystem::create_directory(kvdb_dir)){
-#ifndef TORRENT_DISABLE_LOGGING
-			session_log("ERROR: create leveldb directory failed !");
-#endif
-
+				TORRENT_ASSERT(!boost::filesystem::create_directory(kvdb_dir));
+				alerts().emplace_alert<session_error_alert>(error_code(),
+					 "libTAU ERROR: create kvdb directory falied");
+				m_abort = true;	
 			}
 		}
 
@@ -3088,28 +2937,64 @@ namespace {
 			session_log("create directory for storing sqldb data: %s", sqldb_dir.c_str());
 #endif
 			if(!boost::filesystem::create_directory(sqldb_dir)){
-#ifndef TORRENT_DISABLE_LOGGING
-			session_log("ERROR: create sqldb directory failed !");
-#endif
+				TORRENT_ASSERT(!boost::filesystem::create_directory(sqldb_dir));
+				alerts().emplace_alert<session_error_alert>(error_code(),
+					 "libTAU ERROR: create sqldb directory falied");
+				m_abort = true;	
 			}
 		}
 
+		// open kvdb - leveldb
 		leveldb::Options options;
 		options.create_if_missing = true;
 		leveldb::Status status = leveldb::DB::Open(options, kvdb_dir, &m_kvdb);
 		if (!status.ok()){
+			TORRENT_ASSERT(!status.ok());
+			alerts().emplace_alert<session_error_alert>(error_code(),
+					 "libTAU ERROR: open kvdb failed");
+			m_abort = true;	
+		}
+
+		// open sqldb - sqlite3
+		int sqlrc = sqlite3_open_v2(sqldb_path.c_str(), &m_sqldb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		if (sqlrc != SQLITE_OK) {
+			TORRENT_ASSERT(sqlrc != SQLITE_OK);
+			alerts().emplace_alert<session_error_alert>(error_code(),
+					 "libTAU ERROR: open sqldb failed");
+			m_abort = true;	
+		}
+    }
+
+	void session_impl::update_dht_bootstrap_nodes()
+	{
+
+		//std::string const& node_list = m_settings.get_str(settings_pack::dht_bootstrap_nodes);
+		std::string const& nodes_from_settings = m_settings.get_str(settings_pack::dht_bootstrap_nodes);
+
+		std::string const nodes_key = "bootstrap_nodes";
+		std::string nodes_list;
+
+		leveldb::Status s = m_kvdb->Get(leveldb::ReadOptions(), nodes_key, &nodes_list);
+		if (!s.ok()){
+			s = m_kvdb->Put(leveldb::WriteOptions(), nodes_key, nodes_from_settings);
+			nodes_list = nodes_from_settings;
+		}
+
+		std::vector<std::pair<std::string, int>> nodes;
+		parse_comma_separated_string_port(nodes_list, nodes);
+
+		TORRENT_ASSERT(nodes.empty());
+
+		if (nodes.empty())
+		{
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("open leveldb error !!!");
+			session_log("ERROR: failed to parse DHT bootstrap list");
 #endif
 		}
 
-		int sqlrc = sqlite3_open_v2(sqldb_path.c_str(), &m_sqldb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
-		if (sqlrc != SQLITE_OK) {
-#ifndef TORRENT_DISABLE_LOGGING
-			session_log("open sqldb error !!!");
-#endif
-		}
-    }   
+		for (auto const& n : nodes)
+			add_dht_router(n);
+	}
 
 	void session_impl::update_account_seed() {
 
@@ -3291,7 +3176,6 @@ namespace {
 #if TORRENT_ABI_VERSION == 1
 	session_status session_impl::status() const
 	{
-//		INVARIANT_CHECK;
 		TORRENT_ASSERT(is_single_thread());
 
 		session_status s;
@@ -3344,13 +3228,11 @@ namespace {
 		s.dht_download_rate = 0;
 		s.dht_upload_rate = 0;
 
-#ifndef TORRENT_DISABLE_DHT
 		if (m_dht)
 		{
 			m_dht->dht_status(s);
 		}
 		else
-#endif
 		{
 			s.dht_nodes = 0;
 			s.dht_node_cache = 0;
@@ -3381,15 +3263,27 @@ namespace {
 	}
 #endif // TORRENT_ABI_VERSION
 
-#ifndef TORRENT_DISABLE_DHT
+	void session_impl::start_communication()
+	{
+		stop_communication();
+
+		if (m_abort)
+		{
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("not starting Communication, aborting");
+#endif
+			return;
+		}
+
+		m_communication = std::make_shared<communication::communication>(m_io_context, *this);
+
+		m_communication->start();
+
+	}
 
 	void session_impl::start_dht()
 	{
-		INVARIANT_CHECK;
-
 		stop_dht();
-
-		if (!m_settings.get_bool(settings_pack::enable_dht)) return;
 
 		// postpone starting the DHT if we're still resolving the DHT router
 		if (m_outstanding_router_lookups > 0)
@@ -3461,6 +3355,20 @@ namespace {
 		m_dht->start(cb);
 	}
 
+	void session_impl::stop_communication()
+	{
+
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("about to stop Communication, running: %s", m_communication ? "true" : "false");
+#endif
+
+		if(m_communication)
+		{
+			m_communication->stop();
+		}
+
+	}
+
 	void session_impl::stop_dht()
 	{
 #ifndef TORRENT_DISABLE_LOGGING
@@ -3474,6 +3382,25 @@ namespace {
 		}
 
 		m_dht_storage.reset();
+	}
+
+	void session_impl::set_loop_time_interval(int milliseconds)
+	{
+		m_communication->set_loop_time_interval(milliseconds);
+	}
+
+	bool session_impl::add_new_friend(const aux::bytes& pubkey)
+	{
+		return m_communication->add_new_friend(pubkey);
+	}
+
+	bool session_impl::delete_friend(const aux::bytes& pubkey)
+	{
+		return m_communication->delete_friend(pubkey);
+	}
+
+	void session_impl::set_chatting_friend(aux::bytes chatting_friend){
+		m_communication->set_chatting_friend(chatting_friend);
 	}
 
 #if TORRENT_ABI_VERSION <= 2
@@ -3539,7 +3466,6 @@ namespace {
 #undef SET_INT
 		return sett;
 	}
-#endif
 
 	void session_impl::set_dht_state(dht::dht_state&& state)
 	{
@@ -3791,7 +3717,6 @@ namespace {
 
 	void session_impl::set_local_download_rate_limit(int bytes_per_second)
 	{
-		INVARIANT_CHECK;
 		settings_pack p;
 		p.set_int(settings_pack::local_download_rate_limit, bytes_per_second);
 		apply_settings_pack_impl(p);
@@ -3799,7 +3724,6 @@ namespace {
 
 	void session_impl::set_local_upload_rate_limit(int bytes_per_second)
 	{
-		INVARIANT_CHECK;
 		settings_pack p;
 		p.set_int(settings_pack::local_upload_rate_limit, bytes_per_second);
 		apply_settings_pack_impl(p);
@@ -3807,7 +3731,6 @@ namespace {
 
 	void session_impl::set_download_rate_limit_depr(int bytes_per_second)
 	{
-		INVARIANT_CHECK;
 		settings_pack p;
 		p.set_int(settings_pack::download_rate_limit, bytes_per_second);
 		apply_settings_pack_impl(p);
@@ -3815,7 +3738,6 @@ namespace {
 
 	void session_impl::set_upload_rate_limit_depr(int bytes_per_second)
 	{
-		INVARIANT_CHECK;
 		settings_pack p;
 		p.set_int(settings_pack::upload_rate_limit, bytes_per_second);
 		apply_settings_pack_impl(p);
@@ -3823,7 +3745,6 @@ namespace {
 
 	void session_impl::set_max_connections(int limit)
 	{
-		INVARIANT_CHECK;
 		settings_pack p;
 		p.set_int(settings_pack::connections_limit, limit);
 		apply_settings_pack_impl(p);
@@ -3831,7 +3752,6 @@ namespace {
 
 	void session_impl::set_max_uploads(int limit)
 	{
-		INVARIANT_CHECK;
 		settings_pack p;
 		p.set_int(settings_pack::unchoke_slots_limit, limit);
 		apply_settings_pack_impl(p);
@@ -3857,7 +3777,6 @@ namespace {
 		return download_rate_limit(m_global_class);
 	}
 #endif // DEPRECATE
-
 
 	namespace {
 		template <typename Socket>
@@ -3936,12 +3855,10 @@ namespace {
 
 	void session_impl::update_dht_upload_rate_limit()
 	{
-#ifndef TORRENT_DISABLE_DHT
 		if (m_settings.get_int(settings_pack::dht_upload_rate_limit) > std::numeric_limits<int>::max() / 3)
 		{
 			m_settings.set_int(settings_pack::dht_upload_rate_limit, std::numeric_limits<int>::max() / 3);
 		}
-#endif
 	}
 
 	void session_impl::update_disk_threads()
@@ -4091,8 +4008,6 @@ namespace {
 
 	void session_impl::start_ip_notifier()
 	{
-		INVARIANT_CHECK;
-
 		if (m_ip_notifier) return;
 
 		m_ip_notifier = create_ip_notifier(m_io_context);
@@ -4102,7 +4017,6 @@ namespace {
 
 	void session_impl::start_natpmp()
 	{
-		INVARIANT_CHECK;
 		for (auto& s : m_listen_sockets)
 		{
 			start_natpmp(s);
@@ -4112,7 +4026,6 @@ namespace {
 
 	void session_impl::start_upnp()
 	{
-		INVARIANT_CHECK;
 		for (auto const& s : m_listen_sockets)
 		{
 			start_upnp(s);
@@ -4356,10 +4269,8 @@ namespace {
 
 		// since we have a new external IP now, we need to
 		// restart the DHT with a new node ID
-
-#ifndef TORRENT_DISABLE_DHT
 		if (m_dht) m_dht->update_node_id(sock);
-#endif
+
 	}
 
 #ifndef TORRENT_DISABLE_LOGGING

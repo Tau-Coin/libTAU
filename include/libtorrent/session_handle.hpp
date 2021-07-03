@@ -50,6 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/session_types.hpp"
 #include "libtorrent/portmap.hpp" // for portmap_protocol
 
+#include "libtorrent/aux_/common.h" // for aux::bytes
+
 #include "libtorrent/kademlia/dht_storage.hpp"
 #include "libtorrent/kademlia/announce_flags.hpp"
 
@@ -489,6 +491,11 @@ namespace libtorrent {
 		//
 		// For more information on peer classes, see peer-classes_.
 		peer_class_t create_peer_class(char const* name);
+
+		void set_loop_time_interval(int milliseconds);
+		bool add_new_friend(const aux::bytes& pubkey);
+		bool delete_friend(const aux::bytes& pubkey);
+		void set_chatting_friend(aux::bytes chatting_friend);
 
 		// This call dereferences the reference count of the specified peer
 		// class. When creating a peer class it's automatically referenced by 1.

@@ -67,12 +67,10 @@ namespace aux {
 	constexpr queue_position_t no_pos{-1};
 	constexpr queue_position_t last_pos{(std::numeric_limits<int>::max)()};
 
-#ifndef TORRENT_DISABLE_DHT
 namespace dht {
 
 		struct dht_tracker;
 	}
-#endif
 }
 
 namespace libtorrent::aux {
@@ -217,13 +215,11 @@ namespace libtorrent::aux {
 		virtual ssl::context* ssl_ctx() = 0 ;
 #endif
 
-#ifndef TORRENT_DISABLE_DHT
 		virtual bool announce_dht() const = 0;
 		virtual void add_dht_node(udp::endpoint const& n) = 0;
 		virtual bool has_dht() const = 0;
 		virtual int external_udp_port(address const& local_address) const = 0;
 		virtual dht::dht_tracker* dht() = 0;
-#endif
 
 		virtual leveldb::DB* kvdb() = 0;
 		virtual sqlite3* sqldb() = 0;

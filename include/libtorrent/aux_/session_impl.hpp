@@ -26,6 +26,7 @@ see LICENSE file.
 #include "libtorrent/aux_/allocating_handler.hpp"
 #include "libtorrent/aux_/time.hpp"
 #include "libtorrent/aux_/torrent_list.hpp"
+#include "libtorrent/aux_/common.h"
 #include "libtorrent/session_params.hpp" // for disk_io_constructor_type
 
 #ifdef TORRENT_SSL_PEERS
@@ -60,6 +61,9 @@ see LICENSE file.
 #include "libtorrent/kademlia/dht_state.hpp"
 #include "libtorrent/kademlia/announce_flags.hpp"
 #include "libtorrent/kademlia/types.hpp"
+
+#include "libtorrent/communication/communication.hpp"
+
 #include "libtorrent/aux_/resolver.hpp"
 #include "libtorrent/aux_/invariant_check.hpp"
 #include "libtorrent/extensions.hpp"
@@ -403,7 +407,6 @@ namespace aux {
 			dht::public_key* pubkey() override {return &(std::get<dht::public_key>(m_keypair));}
 			dht::secret_key* serkey() override {return &(std::get<dht::secret_key>(m_keypair));}
 
-#ifndef TORRENT_DISABLE_DHT
 			dht::dht_tracker* dht() override { return m_dht.get(); }
 			bool announce_dht() const override { return !m_listen_sockets.empty(); }
 
@@ -417,9 +420,11 @@ namespace aux {
 #include "libtorrent/aux_/disable_warnings_pop.hpp"
 #endif
 
+			void start_communication();
+			void stop_communication();
+
 			// you must give up ownership of the dht state
 			void set_dht_state(dht::dht_state&& state);
-
 			void set_dht_storage(dht::dht_storage_constructor_type sc);
 			void start_dht();
 			void stop_dht();
@@ -453,7 +458,6 @@ namespace aux {
 				, std::vector<address> const& addresses, int port);
 			void on_dht_router_name_lookup(error_code const& e
 				, std::vector<address> const& addresses, int port);
-#endif
 
 			// called when a port mapping is successful, or a router returns
 			// a failure to map a port
@@ -574,10 +578,8 @@ namespace aux {
 
 			proxy_settings proxy() const override;
 
-#ifndef TORRENT_DISABLE_DHT
 			bool is_dht_running() const { return (m_dht.get() != nullptr); }
 			int external_udp_port(address const& local_address) const override;
-#endif
 
 			void start_ip_notifier();
 			void start_natpmp();
@@ -686,6 +688,11 @@ namespace aux {
 			void update_connections_limit();
 			void update_alert_mask();
 			void update_validate_https();
+
+			void set_loop_time_interval(int milliseconds);
+			bool add_new_friend(const aux::bytes& pubkey);
+			bool delete_friend(const aux::bytes& pubkey);
+			void set_chatting_friend(aux::bytes chatting_friend);
 
 		private:
 
@@ -851,14 +858,10 @@ namespace aux {
 			std::shared_ptr<listen_socket_t> setup_listener(
 				listen_endpoint_t const& lep, error_code& ec);
 
-#ifndef TORRENT_DISABLE_DHT
 			dht::dht_state m_dht_state;
-#endif
 
-#ifdef TORRENT_ENABLE_DB
             leveldb::DB* m_kvdb;
             sqlite3* m_sqldb;
-#endif
 			
 	 		std::tuple<dht::public_key, dht::secret_key> m_keypair;
 
@@ -934,11 +937,13 @@ namespace aux {
 			// port we'll bind the next outgoing socket to
 			mutable int m_next_port = 0;
 
-#ifndef TORRENT_DISABLE_DHT
 			std::unique_ptr<dht::dht_storage_interface> m_dht_storage;
 			std::shared_ptr<dht::dht_tracker> m_dht;
 			dht::dht_storage_constructor_type m_dht_storage_constructor
 				= dht::dht_default_storage_constructor;
+
+			// communication
+			std::shared_ptr<communication::communication> m_communication;
 
 			// these are used when starting the DHT
 			// (and bootstrapping it), and then erased
@@ -951,7 +956,6 @@ namespace aux {
 			// the number of DHT router lookups there are currently outstanding. As
 			// long as this is > 0, we'll postpone starting the DHT
 			int m_outstanding_router_lookups = 0;
-#endif
 
 			void send_udp_packet_hostname(std::weak_ptr<utp_socket_interface> sock
 				, char const* hostname
