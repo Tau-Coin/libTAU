@@ -50,27 +50,21 @@ session_params::session_params(settings_pack const& sp)
 
 session_params::session_params()
 	: extensions(default_plugins())
-#ifndef TORRENT_DISABLE_DHT
 	, dht_storage_constructor(dht::dht_default_storage_constructor)
-#endif
 {}
 
 session_params::session_params(settings_pack&& sp
 	, std::vector<std::shared_ptr<plugin>> exts)
 	: settings(std::move(sp))
 	, extensions(std::move(exts))
-#ifndef TORRENT_DISABLE_DHT
 	, dht_storage_constructor(dht::dht_default_storage_constructor)
-#endif
 {}
 
 session_params::session_params(settings_pack const& sp // NOLINT
 	, std::vector<std::shared_ptr<plugin>> exts)
 	: settings(sp)
 	, extensions(std::move(exts))
-#ifndef TORRENT_DISABLE_DHT
 	, dht_storage_constructor(dht::dht_default_storage_constructor)
-#endif
 	{}
 
 session_params::session_params(session_params const&) = default;
@@ -88,7 +82,6 @@ session_params read_session_params(bdecode_node const& e, save_state_flags_t con
 
 	if (e.type() != bdecode_node::dict_t) return params;
 
-#ifndef TORRENT_DISABLE_DHT
 #if TORRENT_ABI_VERSION <= 2
 	if (flags & session_handle::save_dht_settings)
 #else
@@ -104,7 +97,6 @@ session_params read_session_params(bdecode_node const& e, save_state_flags_t con
 #endif
 		}
 	}
-#endif
 
 	if (flags & session_handle::save_settings)
 	{
@@ -112,7 +104,6 @@ session_params read_session_params(bdecode_node const& e, save_state_flags_t con
 		if (settings) params.settings = load_pack_from_dict(settings);
 	}
 
-#ifndef TORRENT_DISABLE_DHT
 	if (flags & session_handle::save_dht_state)
 	{
 		bdecode_node settings = e.dict_find_dict("dht state");
@@ -121,7 +112,6 @@ session_params read_session_params(bdecode_node const& e, save_state_flags_t con
 			params.dht_state = dht::read_dht_state(settings);
 		}
 	}
-#endif
 
 #ifndef TORRENT_DISABLE_EXTENSIONS
 	if (flags & session::save_extension_state)
@@ -197,7 +187,6 @@ entry write_session_params(session_params const& sp, save_state_flags_t const fl
 {
 	entry e;
 
-#ifndef TORRENT_DISABLE_DHT
 #if TORRENT_ABI_VERSION <= 2
 	if (flags & session_handle::save_dht_settings)
 	{
@@ -209,7 +198,6 @@ entry write_session_params(session_params const& sp, save_state_flags_t const fl
 	{
 		e["dht state"] = dht::save_dht_state(sp.dht_state);
 	}
-#endif
 
 	if (flags & session_handle::save_settings)
 	{

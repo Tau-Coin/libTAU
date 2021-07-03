@@ -219,7 +219,6 @@ namespace {
 		}
 
 #if TORRENT_ABI_VERSION <= 2
-#ifndef TORRENT_DISABLE_DHT
 		// in case the session_params has its dht_settings in use, pick out the
 		// non-default settings from there and move them into the main settings.
 		// any conflicting options set in main settings take precedence
@@ -257,7 +256,6 @@ namespace {
 #undef SET_INT
 		}
 #endif
-#endif
 
 		// TODO: start() should just use flags out of the session_params object,
 		m_impl = std::make_shared<aux::session_impl>(std::ref(*ios)
@@ -274,12 +272,10 @@ namespace {
 		}
 #endif
 
-#ifndef TORRENT_DISABLE_DHT
 		m_impl->set_dht_state(std::move(params.dht_state));
 
 		TORRENT_ASSERT(params.dht_storage_constructor);
 		m_impl->set_dht_storage(std::move(params.dht_storage_constructor));
-#endif
 
 		if (!params.ip_filter.empty())
 		{

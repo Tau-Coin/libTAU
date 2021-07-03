@@ -213,20 +213,12 @@ namespace libtorrent {
 
 	void session_handle::set_dht_state(dht::dht_state const& st)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::set_dht_state, dht::dht_state(st));
-#else
-		TORRENT_UNUSED(st);
-#endif
 	}
 
 	void session_handle::set_dht_state(dht::dht_state&& st)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::set_dht_state, std::move(st));
-#else
-		TORRENT_UNUSED(st);
-#endif
 	}
 
 #if TORRENT_ABI_VERSION == 1
@@ -382,79 +374,46 @@ namespace {
 #if TORRENT_ABI_VERSION <= 2
 	void session_handle::set_dht_settings(dht::dht_settings const& settings)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::set_dht_settings, settings);
-#else
-		TORRENT_UNUSED(settings);
-#endif
 	}
 
 	dht::dht_settings session_handle::get_dht_settings() const
 	{
-#ifndef TORRENT_DISABLE_DHT
 		return sync_call_ret<dht::dht_settings>(&session_impl::get_dht_settings);
-#else
-		return dht::dht_settings();
-#endif
 	}
 #endif
 
 	bool session_handle::is_dht_running() const
 	{
-#ifndef TORRENT_DISABLE_DHT
 		return sync_call_ret<bool>(&session_impl::is_dht_running);
-#else
-		return false;
-#endif
 	}
 
 	void session_handle::set_dht_storage(dht::dht_storage_constructor_type sc)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::set_dht_storage, sc);
-#else
-		TORRENT_UNUSED(sc);
-#endif
 	}
 
 	void session_handle::add_dht_node(std::pair<std::string, int> const& node)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::add_dht_node_name, node);
-#else
-		TORRENT_UNUSED(node);
-#endif
 	}
 
 #if TORRENT_ABI_VERSION == 1
 	void session_handle::add_dht_router(std::pair<std::string, int> const& node)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::add_dht_router, node);
-#else
-		TORRENT_UNUSED(node);
-#endif
 	}
 #endif // TORRENT_ABI_VERSION
 
 	void session_handle::dht_get_item(sha256_hash const& target)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::dht_get_immutable_item, target);
-#else
-		TORRENT_UNUSED(target);
-#endif
 	}
 
 	void session_handle::dht_get_item(std::array<char, 32> key
 		, std::string salt)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::dht_get_mutable_item, key, salt);
-#else
-		TORRENT_UNUSED(key);
-		TORRENT_UNUSED(salt);
-#endif
 	}
 
 	// TODO: 3 expose the sequence_number, public_key, secret_key and signature
@@ -464,10 +423,7 @@ namespace {
 		std::vector<char> buf;
 		bencode(std::back_inserter(buf), data);
 		sha256_hash const ret = hasher256(buf).final();
-
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::dht_put_immutable_item, data, ret);
-#endif
 		return ret;
 	}
 
@@ -476,41 +432,23 @@ namespace {
 			, std::int64_t&, std::string const&)> cb
 		, std::string salt)
 	{
-#ifndef TORRENT_DISABLE_DHT
-		// async_call(&session_impl::dht_put_mutable_item, key, cb, salt);
-#else
-		TORRENT_UNUSED(key);
-		TORRENT_UNUSED(cb);
-		TORRENT_UNUSED(salt);
-#endif
+		async_call(&session_impl::dht_put_mutable_item, key, cb, salt);
 	}
 
 	void session_handle::dht_live_nodes(sha256_hash const& nid)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::dht_live_nodes, nid);
-#else
-		TORRENT_UNUSED(nid);
-#endif
 	}
 
 #if TORRENT_ABI_VERSION == 1
 	entry session_handle::dht_state() const
 	{
-#ifndef TORRENT_DISABLE_DHT
 		return sync_call_ret<entry>(&session_impl::dht_state);
-#else
-		return entry();
-#endif
 	}
 
 	void session_handle::start_dht(entry const& startup_state)
 	{
-#ifndef TORRENT_DISABLE_DHT
 		async_call(&session_impl::start_dht_deprecated, startup_state);
-#else
-		TORRENT_UNUSED(startup_state);
-#endif
 	}
 #endif // TORRENT_ABI_VERSION
 
