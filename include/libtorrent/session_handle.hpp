@@ -492,10 +492,32 @@ namespace libtorrent {
 		// For more information on peer classes, see peer-classes_.
 		peer_class_t create_peer_class(char const* name);
 
+		// set main loop time interval (ms)
 		void set_loop_time_interval(int milliseconds);
-		bool add_new_friend(const aux::bytes& pubkey);
-		bool delete_friend(const aux::bytes& pubkey);
-		void set_chatting_friend(aux::bytes chatting_friend);
+
+		// add new friend in memory & db
+		bool add_new_friend(std::array<unsigned char, 32> pubkey);
+
+		// delete friend and all related data in memory & db
+		bool delete_friend(std::array<unsigned char, 32> pubkey);
+
+		// get friend info by public key
+		std::vector<unsigned char> get_friend_info(std::array<unsigned char, 32> pubkey);
+
+		// set chatting friends
+		void set_chatting_friend(std::array<unsigned char, 32> pubkey);
+
+		// unset chatting friends
+		void unset_chatting_friend();
+
+		// save friend info
+		bool update_friend_info(std::array<unsigned char, 32> pubkey, std::vector<unsigned char> friend_info);
+
+		// set active friends
+		void set_active_friends(std::vector<aux::bytes> &&active_friends);
+
+		// add a new message
+		bool add_new_message(std::vector<char> msg);
 
 		// This call dereferences the reference count of the specified peer
 		// class. When creating a peer class it's automatically referenced by 1.

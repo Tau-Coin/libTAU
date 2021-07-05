@@ -487,21 +487,52 @@ namespace {
 		async_call(&session_impl::set_loop_time_interval, milliseconds);
 	}
 
-	bool session_handle::add_new_friend(const aux::bytes& pubkey)
+	bool session_handle::add_new_friend(std::array<unsigned char, 32> pubkey)
 	{
-		sync_call(&session_impl::add_new_friend, pubkey);
+		sync_call(&session_impl::add_new_friend, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 		return true;
 	}
 
-	bool session_handle::delete_friend(const aux::bytes& pubkey)
+	bool session_handle::delete_friend(std::array<unsigned char, 32> pubkey)
 	{
-		sync_call(&session_impl::delete_friend, pubkey);
+		sync_call(&session_impl::delete_friend, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 		return true;
 	}
 
-	void session_handle::set_chatting_friend(aux::bytes chatting_friend)
+	void session_handle::set_chatting_friend(std::array<unsigned char, 32> pubkey)
 	{
-		sync_call(&session_impl::set_chatting_friend, chatting_friend);
+		sync_call(&session_impl::set_chatting_friend, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
+	}
+
+	std::vector<unsigned char> get_friend_info(std::array<unsigned char, 32> pubkey)
+	{
+		std::vector<unsigned char> info;
+		return info;
+	}
+
+	void set_chatting_friend(std::array<unsigned char, 32> pubkey)
+	{
+		
+	}
+
+	void unset_chatting_friend()
+	{
+		
+	}
+
+	bool update_friend_info(std::array<unsigned char, 32> pubkey, std::vector<unsigned char> friend_info)
+	{
+		return true;
+	}
+
+	void set_active_friends(std::vector<aux::bytes> &&active_friends)
+	{
+
+	}
+
+	bool add_new_message(std::vector<char> msg)
+	{
+		return true;
 	}
 
 	void session_handle::set_ip_filter(ip_filter f)

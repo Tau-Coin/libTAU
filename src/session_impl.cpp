@@ -812,6 +812,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		stop_upnp();
 		stop_natpmp();
 		stop_dht();
+		stop_communication();
 
 		if(m_kvdb) {
 			delete m_kvdb;
@@ -3265,6 +3266,7 @@ namespace {
 
 	void session_impl::start_communication()
 	{
+
 		stop_communication();
 
 		if (m_abort)
@@ -3274,8 +3276,8 @@ namespace {
 #endif
 			return;
 		}
-
-		m_communication = std::make_shared<communication::communication>(m_io_context, *this);
+		// todo: initialize device_id
+		m_communication = std::make_shared<communication::communication>(m_device_id, m_io_context, *this);
 
 		m_communication->start();
 
@@ -3399,9 +3401,34 @@ namespace {
 		return m_communication->delete_friend(pubkey);
 	}
 
+	aux::bytes session_impl::get_friend_info(aux::bytes pubkey)
+	{
+		return m_communication->get_friend_info(pubkey);
+	}
+
+	bool session_impl::update_friend_info(aux::bytes pubkey, aux::bytes friend_info)
+	{
+		return m_communication->update_friend_info(pubkey, friend_info);
+	}
+
+	void session_impl::unset_chatting_friend()
+	{
+		m_communication->unset_chatting_friend();
+	}
+	
 	void session_impl::set_chatting_friend(aux::bytes chatting_friend){
 		m_communication->set_chatting_friend(chatting_friend);
 	}
+
+	void session_impl::set_active_friends(std::vector<aux::bytes> active_friends)
+	{
+		m_communication->set_active_friends(active_friends);
+	}
+
+	bool session_impl::add_new_message(const communication::message& msg)
+	{
+		return m_communication->add_new_message(msg);
+	}	
 
 #if TORRENT_ABI_VERSION <= 2
 	void session_impl::set_dht_settings(dht::dht_settings const& settings)

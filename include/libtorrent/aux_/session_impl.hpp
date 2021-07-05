@@ -692,7 +692,12 @@ namespace aux {
 			void set_loop_time_interval(int milliseconds);
 			bool add_new_friend(const aux::bytes& pubkey);
 			bool delete_friend(const aux::bytes& pubkey);
+            aux::bytes get_friend_info(aux::bytes pubkey);
+            bool update_friend_info(aux::bytes pubkey, aux::bytes friend_info);
 			void set_chatting_friend(aux::bytes chatting_friend);
+            void unset_chatting_friend();
+            void set_active_friends(std::vector<aux::bytes> active_friends);
+            bool add_new_message(const communication::message& msg);
 
 		private:
 
@@ -944,6 +949,7 @@ namespace aux {
 
 			// communication
 			std::shared_ptr<communication::communication> m_communication;
+			aux::bytes m_device_id;
 
 			// these are used when starting the DHT
 			// (and bootstrapping it), and then erased
