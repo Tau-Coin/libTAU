@@ -87,7 +87,7 @@ namespace libtorrent {
             void unset_chatting_friend();
 
             // set active friends
-            void set_active_friends(std::vector<aux::bytes> &&active_friends);
+            void set_active_friends(std::vector<aux::bytes> active_friends);
 
             // add a new message
             bool add_new_message(const message& msg);

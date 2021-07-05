@@ -112,7 +112,7 @@ namespace libtorrent {
             m_chatting_friend = aux::bytes();
         }
 
-        void communication::set_active_friends(std::vector<aux::bytes> &&active_friends) {
+        void communication::set_active_friends(std::vector<aux::bytes> active_friends) {
             m_active_friends = std::move(active_friends);
         }
 
