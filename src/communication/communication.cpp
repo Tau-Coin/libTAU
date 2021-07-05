@@ -192,16 +192,6 @@ namespace libtorrent {
                     std::bind(&communication::refresh_timeout, self(), _1));
         }
 
-        void communication::request_signal(const aux::bytes &peer) {
-            auto salt = make_receiver_salt(peer);
-            dht_get_mutable_item(m_ses.pubkey()->bytes, salt);
-        }
-
-        void communication::publish_signal(const aux::bytes &peer) {
-            auto salt = make_sender_salt(peer);
-//            dht_put_mutable_item(m_ses.pubkey()->bytes, salt);
-        }
-
         void communication::save_friend_latest_message_hash_list(const aux::bytes& peer) {
             auto message_list = m_message_list_map.at(peer);
             if (!message_list.empty()) {
@@ -311,9 +301,16 @@ namespace libtorrent {
             return salt;
         }
 
-//        online_signal communication::make_online_signal() {
-//            return online_signal(aux::vector_ref());
-//        }
+        online_signal communication::make_online_signal() {
+            time_t now_time = time(nullptr);
+
+            const auto &pubkey = m_ses.pubkey();
+            aux::bytes public_key;
+            public_key.insert(public_key.end(), pubkey->bytes.begin(), pubkey->bytes.end());
+            aux::bytes friend_info = m_message_db->get_friend_info(public_key);
+
+            return online_signal(m_device_id, aux::bytes(), now_time, friend_info);
+        }
 
         // callback for dht_immutable_get
         void communication::get_immutable_callback(sha1_hash target
@@ -435,6 +432,32 @@ namespace libtorrent {
                 i.assign(std::move(value), salt, seq, pk, sig);
             }
         } // anonymous namespace
+
+        void communication::request_signal(const aux::bytes &peer) {
+            auto salt = make_receiver_salt(peer);
+            dht_get_mutable_item(m_ses.pubkey()->bytes, salt);
+        }
+
+        void communication::publish_signal(const aux::bytes &peer) {
+            char *data;
+            dht::public_key * pk = m_ses.pubkey();
+            dht::secret_key * sk = m_ses.serkey();
+            auto salt = make_sender_salt(peer);
+
+            aux::bytes public_key;
+            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
+            if (peer == public_key) {
+                // publish online signal
+                online_signal onlineSignal = make_online_signal();
+                mutable_data_wrapper wrapper(time(nullptr), ONLINE_SIGNAL, onlineSignal.rlp());
+                data = reinterpret_cast<char *>(wrapper.rlp().data());
+            } else {
+                // publish new message signal
+            }
+
+            dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
+                    , pk->bytes, sk->bytes, data), salt);
+        }
 
         void communication::dht_put_immutable_item(entry const& data, sha1_hash target)
         {

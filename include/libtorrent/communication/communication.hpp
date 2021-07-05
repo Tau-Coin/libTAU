@@ -122,7 +122,7 @@ namespace libtorrent {
             std::string make_receiver_salt(aux::bytes peer);
 
             // make online signal for me
-//            online_signal make_online_signal();
+            online_signal make_online_signal();
 
             // validate message, check if message is oversize( >1000 bytes)
             static bool validate_message(const message& msg);
