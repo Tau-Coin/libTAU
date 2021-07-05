@@ -81,7 +81,7 @@ inline std::string asString(bytesConstRef _b)
 /// Converts a string to a byte array containing the string's (byte) data.
 inline bytes asBytes(std::string const& _b)
 {
-	return bytes((u_byte const*)_b.data(), (u_byte const*)(_b.data() + _b.size()));
+	return bytes((ibyte const*)_b.data(), (ibyte const*)(_b.data() + _b.size()));
 }
 
 /// Converts a string into the big-endian base-16 stream of integers (NOT ASCII).
@@ -115,7 +115,7 @@ inline T fromBigEndian(_In const& _bytes)
 {
 	T ret = (T)0;
 	for (auto i: _bytes)
-		ret = (T)((ret << 8) | (u_byte)(typename std::make_unsigned<decltype(i)>::type)i);
+		ret = (T)((ret << 8) | (ibyte)(typename std::make_unsigned<decltype(i)>::type)i);
 	return ret;
 }
 
@@ -137,7 +137,7 @@ inline bytes toCompactBigEndian(T _val, unsigned _min = 0)
 	toBigEndian(_val, ret);
 	return ret;
 }
-inline bytes toCompactBigEndian(u_byte _val, unsigned _min = 0)
+inline bytes toCompactBigEndian(ibyte _val, unsigned _min = 0)
 {
 	return (_min || _val) ? bytes{ _val } : bytes{};
 }

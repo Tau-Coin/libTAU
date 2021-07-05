@@ -17,6 +17,7 @@ see LICENSE file.
 
 #include <ctime>
 #include <functional>
+#include <utility>
 #include <vector>
 #include <memory>
 #include <list>
@@ -27,6 +28,8 @@ see LICENSE file.
 #include "libtorrent/kademlia/item.hpp"
 #include "libtorrent/communication/message_db_impl.hpp"
 #include "libtorrent/communication/message_db_interface.hpp"
+#include "libtorrent/communication/online_signal.hpp"
+#include "libtorrent/communication/new_msg_signal.hpp"
 
 namespace libtorrent {
 
@@ -50,7 +53,8 @@ namespace libtorrent {
         class TORRENT_EXPORT communication final: public std::enable_shared_from_this<communication> {
         public:
 
-            communication(io_context &mIoc, aux::session_interface &mSes) : m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
+            communication(aux::bytes device_id, io_context &mIoc, aux::session_interface &mSes) :
+            m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
                 m_message_db = std::make_shared<message_db_impl>(m_ses.sqldb(), m_ses.kvdb());
             }
 
@@ -116,6 +120,9 @@ namespace libtorrent {
 
             // make a salt in receiver channel
             std::string make_receiver_salt(aux::bytes peer);
+
+            // make online signal for me
+//            online_signal make_online_signal();
 
             // validate message, check if message is oversize( >1000 bytes)
             static bool validate_message(const message& msg);

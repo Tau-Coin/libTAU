@@ -12,8 +12,6 @@ see LICENSE file.
 #include "libtorrent/communication/message_hash_list.hpp"
 #include "libtorrent/communication/communication.hpp"
 #include "libtorrent/communication/mutable_data_wrapper.hpp"
-#include "libtorrent/communication/online_signal.hpp"
-#include "libtorrent/communication/new_msg_signal.hpp"
 #include "libtorrent/kademlia/dht_tracker.hpp"
 
 using namespace std::placeholders;
@@ -313,6 +311,10 @@ namespace libtorrent {
             return salt;
         }
 
+//        online_signal communication::make_online_signal() {
+//            return online_signal(aux::vector_ref());
+//        }
+
         // callback for dht_immutable_get
         void communication::get_immutable_callback(sha1_hash target
                 , dht::item const& i)
@@ -334,7 +336,7 @@ namespace libtorrent {
         {
             TORRENT_ASSERT(i.is_mutable());
 
-            aux::vector_ref<aux::u_byte> ref((std::string &) i.value().string());
+            aux::vector_ref<aux::ibyte> ref((std::string &) i.value().string());
             mutable_data_wrapper data(ref);
 
             // 6h limit
@@ -347,10 +349,10 @@ namespace libtorrent {
 
                     if (onlineSignal.device_id() != m_device_id) {
                         m_ses.alerts().emplace_alert<communication_new_device_id_alert>(onlineSignal.device_id());
-                    }
 
-                    if (!onlineSignal.friend_info().empty()) {
-                        m_ses.alerts().emplace_alert<communication_friend_info_alert>(onlineSignal.friend_info());
+                        if (!onlineSignal.friend_info().empty()) {
+                            m_ses.alerts().emplace_alert<communication_friend_info_alert>(onlineSignal.friend_info());
+                        }
                     }
 
                     break;
