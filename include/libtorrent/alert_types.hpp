@@ -1435,7 +1435,7 @@ TORRENT_VERSION_NAMESPACE_3
     struct TORRENT_EXPORT communication_new_device_id_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_new_device_id_alert(aux::stack_allocator& alloc, aux::bytesConstRef t);
+        TORRENT_UNEXPORT communication_new_device_id_alert(aux::stack_allocator& alloc, aux::bytes t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_new_device_id_alert, 98, alert_priority::critical)
 
@@ -1444,7 +1444,7 @@ TORRENT_VERSION_NAMESPACE_3
         std::string message() const override;
 
         // device id found
-        aux::bytesConstRef device_id;
+        aux::bytes device_id;
     };
 
     // this alert is posted when new message is found from other peers.
@@ -1467,7 +1467,7 @@ TORRENT_VERSION_NAMESPACE_3
     struct TORRENT_EXPORT communication_confirmation_root_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, aux::bytesConstRef t);
+        TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, aux::bytes t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_confirmation_root_alert, 100, alert_priority::critical)
 
@@ -1476,14 +1476,14 @@ TORRENT_VERSION_NAMESPACE_3
         std::string message() const override;
 
         // confirmation root
-        aux::bytesConstRef confirmation_root;
+        aux::bytes confirmation_root;
     };
 
     // this alert is posted when a message is syncing.
     struct TORRENT_EXPORT communication_syncing_message_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, aux::bytesConstRef t);
+        TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, aux::bytes t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_syncing_message_alert, 101, alert_priority::critical)
 
@@ -1492,7 +1492,7 @@ TORRENT_VERSION_NAMESPACE_3
         std::string message() const override;
 
         // syncing message hash
-        aux::bytesConstRef syncing_msg_hash;
+        aux::bytes syncing_msg_hash;
     };
 
     // this alert is posted when friend info found in new mutable data.

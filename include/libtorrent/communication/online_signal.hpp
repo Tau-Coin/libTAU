@@ -12,6 +12,8 @@ see LICENSE file.
 
 #include <libtorrent/aux_/common.h>
 #include <libtorrent/aux_/rlp.h>
+
+#include <utility>
 #include "libtorrent/aux_/export.hpp"
 
 namespace libtorrent {
@@ -22,8 +24,16 @@ namespace libtorrent {
         // is used to publish online info in XX channel
         struct TORRENT_EXPORT online_signal {
 
+            // @param _rlp rlp encode ref
+            explicit online_signal(aux::bytesConstRef _rlp);
+
             // @param _rlp rlp encode
-            online_signal(aux::bytesConstRef _rlp);
+            explicit online_signal(aux::bytes const& _rlp): online_signal(&_rlp) {}
+
+            online_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp,
+                          aux::bytes mFriendInfo) : m_device_id(std::move(mDeviceId)),
+                          m_hash_prefix_bytes(std::move(mHashPrefixBytes)),
+                          m_timestamp(mTimestamp), m_friend_info(std::move(mFriendInfo)) {}
 
             // @returns device id
             inline aux::bytes device_id() const { return m_device_id; }

@@ -1645,8 +1645,8 @@ namespace {
 	}
 
     communication_new_device_id_alert::communication_new_device_id_alert(aux::stack_allocator&
-            , aux::bytesConstRef t)
-            : device_id(t)
+            , aux::bytes t)
+            : device_id(std::move(t))
     {}
 
     std::string communication_new_device_id_alert::message() const
@@ -1656,7 +1656,7 @@ namespace {
 #else
         char msg[1050];
         std::snprintf(msg, sizeof(msg), "device id %s"
-                , device_id.toString().c_str());
+                , device_id.data());
         return msg;
 #endif
     }
@@ -1679,8 +1679,8 @@ namespace {
     }
 
     communication_confirmation_root_alert::communication_confirmation_root_alert(aux::stack_allocator&
-            , aux::bytesConstRef t)
-            : confirmation_root(t)
+            , aux::bytes t)
+            : confirmation_root(std::move(t))
     {}
 
     std::string communication_confirmation_root_alert::message() const
@@ -1690,14 +1690,14 @@ namespace {
 #else
         char msg[1050];
         std::snprintf(msg, sizeof(msg), "confirmation root %s"
-                , confirmation_root.toString().c_str());
+                , confirmation_root.data());
         return msg;
 #endif
     }
 
     communication_syncing_message_alert::communication_syncing_message_alert(aux::stack_allocator&
-            , aux::bytesConstRef t)
-            : syncing_msg_hash(t)
+            , aux::bytes t)
+            : syncing_msg_hash(std::move(t))
     {}
 
     std::string communication_syncing_message_alert::message() const
@@ -1707,7 +1707,7 @@ namespace {
 #else
         char msg[1050];
         std::snprintf(msg, sizeof(msg), "sync message hash %s"
-                , syncing_msg_hash.toString().c_str());
+                , syncing_msg_hash.data());
         return msg;
 #endif
     }

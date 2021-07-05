@@ -10,6 +10,7 @@ see LICENSE file.
 #define LIBTAU_MESSAGE_HPP
 
 #include <boost/multiprecision/cpp_int.hpp>
+#include <utility>
 #include "libtorrent/sha1_hash.hpp"
 #include "libtorrent/hasher.hpp"
 #include <libtorrent/aux_/common.h>
@@ -42,6 +43,13 @@ namespace libtorrent {
             message() = default;
             // @param _rlp rlp encode
             message(aux::bytesConstRef _rlp);
+
+            message(message_version mVersion, uint32_t mTimestamp, aux::bytes mSender,
+                    aux::bytes mReceiver, aux::bytes mLogicMsgHash, aux::bigint mNonce,
+                    message_type mType, aux::bytes mEncryptedContent) : m_version(mVersion),
+                    m_timestamp(mTimestamp), m_sender(std::move(mSender)), m_receiver(std::move(mReceiver)),
+                    m_logic_msg_hash(std::move(mLogicMsgHash)), m_nonce(std::move(mNonce)), m_type(mType),
+                    m_encrypted_content(std::move(mEncryptedContent)) {}
 
             // @returns message version
             message_version version() const { return m_version; }

@@ -163,6 +163,9 @@ namespace libtorrent {
             // message db
             std::shared_ptr<message_db_interface> m_message_db;
 
+            // device id
+            aux::bytes m_device_id;
+
             // all friends
             std::vector<aux::bytes> m_friends;
 
@@ -173,7 +176,13 @@ namespace libtorrent {
             // active friends
             std::vector<aux::bytes> m_active_friends;
 
-            // message list map:key->peer, value->message list
+            // friend last seen time(map:key->peer, value->signal time)
+            std::map<aux::bytes, time_t> m_last_seen;
+
+            // online/new message signal time(map:key->peer, value->signal time)
+            std::map<aux::bytes, time_t> m_signal_time;
+
+            // message list(map:key->peer, value->message list)
             std::map<aux::bytes, std::list<message>> m_message_list_map;
         };
     }
