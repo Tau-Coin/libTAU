@@ -514,7 +514,7 @@ namespace libtorrent {
 		bool update_friend_info(std::array<unsigned char, 32> pubkey, std::vector<unsigned char> friend_info);
 
 		// set active friends
-		void set_active_friends(std::vector<aux::bytes> &&active_friends);
+		void set_active_friends(std::vector<aux::bytes> active_friends);
 
 		// add a new message
 		bool add_new_message(std::vector<char> msg);

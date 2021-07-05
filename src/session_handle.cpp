@@ -510,27 +510,24 @@ namespace {
 		return info;
 	}
 
-	void set_chatting_friend(std::array<unsigned char, 32> pubkey)
+	void session_handle::unset_chatting_friend()
 	{
-		
+		sync_call(&session_impl::unset_chatting_friend);
 	}
 
-	void unset_chatting_friend()
+	bool session_handle::update_friend_info(std::array<unsigned char, 32> pubkey, std::vector<unsigned char> friend_info)
 	{
-		
-	}
-
-	bool update_friend_info(std::array<unsigned char, 32> pubkey, std::vector<unsigned char> friend_info)
-	{
+		sync_call(&session_impl::update_friend_info, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()),
+					 								 std::vector<aux::ibyte>(friend_info.begin(), friend_info.end()));
 		return true;
 	}
 
-	void set_active_friends(std::vector<aux::bytes> &&active_friends)
+	void session_handle::set_active_friends(std::vector<aux::bytes> active_friends)
 	{
 
 	}
 
-	bool add_new_message(std::vector<char> msg)
+	bool session_handle::add_new_message(std::vector<char> msg)
 	{
 		return true;
 	}
