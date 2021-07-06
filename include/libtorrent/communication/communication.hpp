@@ -49,6 +49,9 @@ namespace libtorrent {
         // short address(public key) length
         constexpr int communication_short_address_length = 4;
 
+        // salt length (first 16 bytes of public key)
+        constexpr int communication_salt_length = 16;
+
         // max chatting time(30min)
         constexpr int communication_max_chatting_time = 30 * 60;
 
@@ -120,10 +123,13 @@ namespace libtorrent {
             // @return true if message list changed, false otherwise
             bool try_to_update_Latest_message_list(const aux::bytes& peer, const message& msg);
 
-            // make a salt in sender channel
+            // make a salt on mutable channel
+            static std::string make_salt(aux::bytes peer);
+
+            // make a salt on sender channel
             std::string make_sender_salt(aux::bytes peer);
 
-            // make a salt in receiver channel
+            // make a salt on receiver channel
             std::string make_receiver_salt(aux::bytes peer);
 
             // make online signal for me

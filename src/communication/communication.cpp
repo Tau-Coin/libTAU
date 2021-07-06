@@ -150,7 +150,7 @@ namespace libtorrent {
                     unset_chatting_friend();
                 }
 
-                // chatting friend有80的概率选中
+                // chatting friend有80%的概率选中
                 if (!m_chatting_friend.first.empty() && index < 8) {
                     peer = m_chatting_friend.first;
                 } else {
@@ -158,7 +158,7 @@ namespace libtorrent {
                     srand((unsigned)time(nullptr) + index);
                     index = rand() % 10;
 
-                    // active friends有70的概率选中
+                    // active friends有70%的概率选中
                     if (!m_active_friends.empty() && index < 7) {
                         srand((unsigned)time(nullptr) + index);
                         index = rand() % m_active_friends.size();
@@ -294,6 +294,13 @@ namespace libtorrent {
             return updated;
         }
 
+        std::string communication::make_salt(aux::bytes peer) {
+            std::string salt;
+            std::copy(peer.begin(), peer.begin() + communication_salt_length, salt.begin());
+
+            return salt;
+        }
+
         std::string communication::make_sender_salt(aux::bytes peer) {
             dht::public_key *pubkey = m_ses.pubkey();
             std::string salt;
@@ -354,6 +361,7 @@ namespace libtorrent {
             mutable_data_wrapper data(ref);
 
             auto now_time = time(nullptr);
+            // validate timestamp
             if ((data.timestamp() + communication_data_accepted_time < now_time) ||
             (data.timestamp() - communication_data_accepted_time > now_time)) {
                 return;
@@ -362,6 +370,7 @@ namespace libtorrent {
             aux::bytes public_key;
             public_key.insert(public_key.end(), i.pk().bytes.begin(), i.pk().bytes.end());
 
+            // record latest timestamp
             if (data.timestamp() > m_last_seen[public_key]) {
                 m_last_seen[public_key] = data.timestamp();
             }
@@ -375,13 +384,16 @@ namespace libtorrent {
 
                     auto device_id = onlineSignal.device_id();
                     auto device_map = m_latest_signal_time[public_key];
+                    // 检查相应设备信号的时间戳，只处理最新的数据
                     if (onlineSignal.timestamp() > device_map[device_id]) {
                         device_map[device_id] = onlineSignal.timestamp();
 
                         if (onlineSignal.device_id() != m_device_id) {
+                            // 通知用户新的device id
                             m_ses.alerts().emplace_alert<communication_new_device_id_alert>(onlineSignal.device_id());
 
                             if (!onlineSignal.friend_info().empty()) {
+                                // 通知用户新的friend info
                                 m_ses.alerts().emplace_alert<communication_friend_info_alert>(onlineSignal.friend_info());
                             }
                         }
@@ -465,8 +477,11 @@ namespace libtorrent {
         } // anonymous namespace
 
         void communication::request_signal(const aux::bytes &peer) {
-            auto salt = make_receiver_salt(peer);
-            dht_get_mutable_item(m_ses.pubkey()->bytes, salt);
+            auto salt = make_salt(peer);
+
+            std::array<char, 32> pk{};
+            std::copy(peer.begin(), peer.end(), pk.begin());
+            dht_get_mutable_item(pk, salt);
         }
 
         void communication::publish_signal(const aux::bytes &peer) {
@@ -474,7 +489,7 @@ namespace libtorrent {
             dht::public_key * pk = m_ses.pubkey();
             dht::secret_key * sk = m_ses.serkey();
 
-            auto salt = make_sender_salt(peer);
+            auto salt = make_salt(peer);
 
             aux::bytes public_key;
             public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
