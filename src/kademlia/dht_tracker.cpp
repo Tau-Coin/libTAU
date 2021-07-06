@@ -91,11 +91,6 @@ namespace libtorrent::dht {
 		m_blocker.set_rate_limit(m_settings.get_int(settings_pack::dht_block_ratelimit));
 	}
 
-	void dht_tracker::update_node_id(aux::listen_socket_handle const& s)
-	{
-		// TODO: seed change in impl
-	}
-
 	void dht_tracker::update_node_id()
 	{
 		m_public_key = get_node_id(m_settings);
