@@ -178,6 +178,13 @@ void node::bootstrap(std::vector<udp::endpoint> const& nodes
 	r->start();
 }
 
+void node::update_node_id(node_id const& id)
+{
+	m_id = id;
+	m_table.update_node_id(m_id);
+	m_rpc.update_node_id(m_id);
+}
+
 int node::bucket_size(int bucket)
 {
 	return m_table.bucket_size(bucket);

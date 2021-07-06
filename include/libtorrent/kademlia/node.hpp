@@ -103,6 +103,8 @@ public:
 
 	node_id const& nid() const { return m_id; }
 
+	void update_node_id(node_id const& id);
+
 #ifndef TORRENT_DISABLE_LOGGING
 	std::uint32_t search_id() { return m_search_id++; }
 #endif
@@ -112,7 +114,7 @@ public:
 	{ return m_table.num_global_nodes(); }
 
 #if TORRENT_ABI_VERSION == 1
-	int data_size() const { return int(m_storage.num_torrents()); }
+	int data_size() const { return 0; }
 #endif
 
 	void get_item(sha256_hash const& target, std::function<void(item const&)> f);

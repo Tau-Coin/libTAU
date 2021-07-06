@@ -13,6 +13,9 @@ see LICENSE file.
 #include <vector>
 #include <cstdint>
 
+
+#include <libtorrent/aux_/session_settings.hpp>
+#include <libtorrent/settings_pack.hpp>
 #include <libtorrent/config.hpp>
 #include <libtorrent/sha1_hash.hpp>
 #include <libtorrent/address.hpp>
@@ -38,6 +41,7 @@ TORRENT_EXTRA_EXPORT bool compare_ref(node_id const& n1, node_id const& n2, node
 TORRENT_EXTRA_EXPORT int distance_exp(node_id const& n1, node_id const& n2);
 TORRENT_EXTRA_EXPORT int min_distance_exp(node_id const& n1, std::vector<node_id> const& ids);
 
+TORRENT_EXTRA_EXPORT node_id get_node_id(libtorrent::aux::session_settings const& settings);
 TORRENT_EXTRA_EXPORT node_id generate_random_id();
 TORRENT_EXTRA_EXPORT void make_id_secret(node_id& in);
 TORRENT_EXTRA_EXPORT node_id generate_secret_id();
