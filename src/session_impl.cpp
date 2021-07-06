@@ -4293,11 +4293,6 @@ namespace {
 
 		if (m_alerts.should_post<external_ip_alert>())
 			m_alerts.emplace_alert<external_ip_alert>(ip);
-
-		// since we have a new external IP now, we need to
-		// restart the DHT with a new node ID
-		if (m_dht) m_dht->update_node_id(sock);
-
 	}
 
 #ifndef TORRENT_DISABLE_LOGGING

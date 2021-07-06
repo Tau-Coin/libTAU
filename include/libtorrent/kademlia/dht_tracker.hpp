@@ -78,10 +78,6 @@ namespace libtorrent::dht {
 		void start(find_data::nodes_callback const& f);
 		void stop();
 
-		// tell the node to recalculate its node id based on the current
-		// understanding of its external address (which may have changed)
-		void update_node_id(aux::listen_socket_handle const& s);
-
 		// tell the node to update its node id from session settings.
 		void update_node_id();
 
