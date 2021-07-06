@@ -504,9 +504,10 @@ namespace {
 		sync_call(&session_impl::set_chatting_friend, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 	}
 
-	std::vector<unsigned char> get_friend_info(std::array<unsigned char, 32> pubkey)
+	std::vector<unsigned char> session_handle::get_friend_info(std::array<unsigned char, 32> pubkey)
 	{
 		std::vector<unsigned char> info;
+		sync_call(&session_impl::get_friend_info, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()), info); 
 		return info;
 	}
 
@@ -522,13 +523,21 @@ namespace {
 		return true;
 	}
 
-	void session_handle::set_active_friends(std::vector<aux::bytes> active_friends)
+	void session_handle::set_active_friends(std::vector<std::array<unsigned char, 32>> active_friends)
 	{
+		std::vector<aux::bytes> friends;
 
+		for (auto f: active_friends)
+		{
+			friends.push_back(std::vector<aux::ibyte>(*f.begin(), *f.end()));
+		}
+
+		sync_call(&session_impl::set_active_friends, friends);	
 	}
 
-	bool session_handle::add_new_message(std::vector<char> msg)
+	bool session_handle::add_new_message(std::vector<unsigned char> msg)
 	{
+		sync_call(&session_impl::add_new_message, aux::vector_ref<unsigned char>(msg.data(), msg.size()));
 		return true;
 	}
 

@@ -3401,9 +3401,9 @@ namespace {
 		return m_communication->delete_friend(pubkey);
 	}
 
-	aux::bytes session_impl::get_friend_info(aux::bytes pubkey)
+	void session_impl::get_friend_info(aux::bytes pubkey, std::vector<unsigned char>& info)
 	{
-		return m_communication->get_friend_info(pubkey);
+		info = m_communication->get_friend_info(pubkey);
 	}
 
 	bool session_impl::update_friend_info(aux::bytes pubkey, aux::bytes friend_info)
@@ -3425,9 +3425,9 @@ namespace {
 		m_communication->set_active_friends(active_friends);
 	}
 
-	bool session_impl::add_new_message(const communication::message& msg)
+	bool session_impl::add_new_message(const aux::vector_ref<unsigned char>& msg)
 	{
-		return m_communication->add_new_message(msg);
+		return m_communication->add_new_message(communication::message(msg));
 	}	
 
 #if TORRENT_ABI_VERSION <= 2
