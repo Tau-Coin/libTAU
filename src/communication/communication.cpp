@@ -32,6 +32,10 @@ namespace libtorrent {
         {
             m_friends.clear();
             m_message_list_map.clear();
+            m_chatting_friend = std::make_pair(aux::bytes(), 0);
+            m_active_friends.clear();
+            m_last_seen.clear();
+            m_latest_signal_time.clear();
 
             m_refresh_timer.cancel();
 
@@ -49,6 +53,7 @@ namespace libtorrent {
         }
 
         void communication::account_changed() {
+            // 账户发生改变，模块重新启动
             stop();
             start();
         }
@@ -136,26 +141,30 @@ namespace libtorrent {
 
             if (!m_friends.empty())
             {
+                // 产生随机数
                 srand((unsigned)time(nullptr));
                 auto index = rand() % 10;
 
+                // 检查chatting friend设置时间，如果超过30分钟，则重置
                 if (time(nullptr) - m_chatting_friend.second > communication_max_chatting_time) {
                     unset_chatting_friend();
                 }
 
-                // chatting friend(80%)
+                // chatting friend有80的概率选中
                 if (!m_chatting_friend.first.empty() && index < 8) {
                     peer = m_chatting_friend.first;
                 } else {
+                    // 以上一次产生的随机数和时间的和作为种子，产生新的随机数，避免时钟太快，产生的随机数一样的情况
                     srand((unsigned)time(nullptr) + index);
                     index = rand() % 10;
 
-                    // active friends(70%)
+                    // active friends有70的概率选中
                     if (!m_active_friends.empty() && index < 7) {
                         srand((unsigned)time(nullptr) + index);
                         index = rand() % m_active_friends.size();
                         peer = m_active_friends[index];
                     } else {
+                        // 筛选剩余的朋友
                         std::vector<aux::bytes> other_friends = m_friends;
                         for (const auto& fri: m_friends) {
                             bool found = false;
@@ -171,6 +180,7 @@ namespace libtorrent {
                             }
                         }
 
+                        // 在剩余的朋友中随机挑选一个
                         if (!other_friends.empty()) {
                             srand((unsigned)time(nullptr) + index);
                             index = rand() % other_friends.size();
@@ -185,6 +195,7 @@ namespace libtorrent {
 
         void communication::refresh_timeout(error_code const& e)
         {
+            // 随机挑选一个朋友put/get
             aux::bytes peer = select_friend_randomly();
             if (!peer.empty()) {
                 request_signal(peer);
@@ -287,6 +298,7 @@ namespace libtorrent {
             dht::public_key *pubkey = m_ses.pubkey();
             std::string salt;
 
+            // sender channel salt由我和对方的public key各取前4个字节，拼接而成
             std::copy(pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length, salt.begin());
             std::copy(peer.begin(), peer.begin() + communication_short_address_length,
                       salt.begin() + communication_short_address_length);
@@ -298,6 +310,7 @@ namespace libtorrent {
             dht::public_key *pubkey = m_ses.pubkey();
             std::string salt;
 
+            // receiver channel salt由对方和我的public key各取前4个字节，拼接而成
             std::copy(peer.begin(), peer.begin() + communication_short_address_length, salt.begin());
             std::copy(pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length,
                       salt.begin() + communication_short_address_length);
@@ -340,7 +353,19 @@ namespace libtorrent {
             aux::vector_ref<aux::ibyte> ref((std::string &) i.value().string());
             mutable_data_wrapper data(ref);
 
-            // 6h limit
+            auto now_time = time(nullptr);
+            if ((data.timestamp() + communication_data_accepted_time < now_time) ||
+            (data.timestamp() - communication_data_accepted_time > now_time)) {
+                return;
+            }
+
+            aux::bytes public_key;
+            public_key.insert(public_key.end(), i.pk().bytes.begin(), i.pk().bytes.end());
+
+            if (data.timestamp() > m_last_seen[public_key]) {
+                m_last_seen[public_key] = data.timestamp();
+            }
+
             switch (data.type()) {
                 case MESSAGE: {
                     break;
@@ -348,11 +373,17 @@ namespace libtorrent {
                 case ONLINE_SIGNAL: {
                     online_signal onlineSignal(data.payload());
 
-                    if (onlineSignal.device_id() != m_device_id) {
-                        m_ses.alerts().emplace_alert<communication_new_device_id_alert>(onlineSignal.device_id());
+                    auto device_id = onlineSignal.device_id();
+                    auto device_map = m_latest_signal_time[public_key];
+                    if (onlineSignal.timestamp() > device_map[device_id]) {
+                        device_map[device_id] = onlineSignal.timestamp();
 
-                        if (!onlineSignal.friend_info().empty()) {
-                            m_ses.alerts().emplace_alert<communication_friend_info_alert>(onlineSignal.friend_info());
+                        if (onlineSignal.device_id() != m_device_id) {
+                            m_ses.alerts().emplace_alert<communication_new_device_id_alert>(onlineSignal.device_id());
+
+                            if (!onlineSignal.friend_info().empty()) {
+                                m_ses.alerts().emplace_alert<communication_friend_info_alert>(onlineSignal.friend_info());
+                            }
                         }
                     }
 
@@ -366,10 +397,6 @@ namespace libtorrent {
                     ;
                 }
             }
-
-            m_ses.alerts().emplace_alert<dht_mutable_item_alert>(i.pk().bytes
-                    , i.sig().bytes, i.seq().value
-                    , i.salt(), i.value(), authoritative);
         }
 
         // key is a 32-byte binary string, the public key to look up.
@@ -412,15 +439,15 @@ namespace libtorrent {
 
             void on_dht_put_mutable_item(aux::alert_manager& alerts, dht::item const& i, int num)
             {
-                if (alerts.should_post<dht_put_alert>())
-                {
-                    dht::signature const sig = i.sig();
-                    dht::public_key const pk = i.pk();
-                    dht::sequence_number const seq = i.seq();
-                    std::string salt = i.salt();
-                    alerts.emplace_alert<dht_put_alert>(pk.bytes, sig.bytes
-                            , std::move(salt), seq.value, num);
-                }
+//                if (alerts.should_post<dht_put_alert>())
+//                {
+//                    dht::signature const sig = i.sig();
+//                    dht::public_key const pk = i.pk();
+//                    dht::sequence_number const seq = i.seq();
+//                    std::string salt = i.salt();
+//                    alerts.emplace_alert<dht_put_alert>(pk.bytes, sig.bytes
+//                            , std::move(salt), seq.value, num);
+//                }
             }
 
             void put_mutable_callback(dht::item& i
@@ -446,17 +473,20 @@ namespace libtorrent {
             char *data;
             dht::public_key * pk = m_ses.pubkey();
             dht::secret_key * sk = m_ses.serkey();
+
             auto salt = make_sender_salt(peer);
 
             aux::bytes public_key;
             public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
+
+            // check if peer is myself
             if (peer == public_key) {
-                // publish online signal
+                // publish online signal on XX channel
                 online_signal onlineSignal = make_online_signal();
                 mutable_data_wrapper wrapper(time(nullptr), ONLINE_SIGNAL, onlineSignal.rlp());
                 data = reinterpret_cast<char *>(wrapper.rlp().data());
             } else {
-                // publish new message signal
+                // publish new message signal on XY channel
             }
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4

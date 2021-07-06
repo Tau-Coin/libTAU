@@ -52,6 +52,9 @@ namespace libtorrent {
         // max chatting time(30min)
         constexpr int communication_max_chatting_time = 30 * 60;
 
+        // data accepted time(6h)
+        constexpr int communication_data_accepted_time = 6 * 60 * 60;
+
 
         class TORRENT_EXPORT communication final: public std::enable_shared_from_this<communication> {
         public:
@@ -184,11 +187,11 @@ namespace libtorrent {
             // active friends
             std::vector<aux::bytes> m_active_friends;
 
-            // friend last seen time(map:key->peer, value->signal time)
+            // friend last seen time(map:key->peer, value->last seen signal time)
             std::map<aux::bytes, time_t> m_last_seen;
 
-            // online/new message signal time(map:key->peer, value->signal time)
-            std::map<aux::bytes, time_t> m_signal_time;
+            // online/new message signal time(map:key1->peer, key2->device id, value->signal time)
+            std::map<aux::bytes, std::map<aux::bytes, time_t>> m_latest_signal_time;
 
             // message list(map:key->peer, value->message list)
             std::map<aux::bytes, std::list<message>> m_message_list_map;
