@@ -105,11 +105,11 @@ namespace libtorrent {
         }
 
         void communication::set_chatting_friend(aux::bytes chatting_friend) {
-            m_chatting_friend = std::move(chatting_friend);
+            m_chatting_friend = std::make_pair(std::move(chatting_friend), time(nullptr));
         }
 
         void communication::unset_chatting_friend() {
-            m_chatting_friend = aux::bytes();
+            m_chatting_friend = std::make_pair(aux::bytes(), 0);
         }
 
         void communication::set_active_friends(std::vector<aux::bytes> active_friends) {
@@ -131,7 +131,7 @@ namespace libtorrent {
             return true;
         }
 
-        aux::bytes communication::select_friend_randomly() const {
+        aux::bytes communication::select_friend_randomly() {
             aux::bytes peer;
 
             if (!m_friends.empty())
@@ -139,9 +139,13 @@ namespace libtorrent {
                 srand((unsigned)time(nullptr));
                 auto index = rand() % 10;
 
+                if (time(nullptr) - m_chatting_friend.second > communication_max_chatting_time) {
+                    unset_chatting_friend();
+                }
+
                 // chatting friend(80%)
-                if (!m_chatting_friend.empty() && index < 8) {
-                    peer = m_chatting_friend;
+                if (!m_chatting_friend.first.empty() && index < 8) {
+                    peer = m_chatting_friend.first;
                 } else {
                     srand((unsigned)time(nullptr) + index);
                     index = rand() % 10;

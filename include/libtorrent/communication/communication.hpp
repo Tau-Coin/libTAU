@@ -49,6 +49,9 @@ namespace libtorrent {
         // short address(public key) length
         constexpr int communication_short_address_length = 4;
 
+        // max chatting time(30min)
+        constexpr int communication_max_chatting_time = 30 * 60;
+
 
         class TORRENT_EXPORT communication final: public std::enable_shared_from_this<communication> {
         public:
@@ -83,7 +86,6 @@ namespace libtorrent {
             void set_chatting_friend(aux::bytes chatting_friend);
 
             // unset chatting friends
-            // todo::unset after 30min
             void unset_chatting_friend();
 
             // set active friends
@@ -106,7 +108,7 @@ namespace libtorrent {
             void publish_signal(const aux::bytes& peer);
 
             // select a friend randomly
-            aux::bytes select_friend_randomly() const;
+            aux::bytes select_friend_randomly();
 
             // save the latest message hash list in database
             void save_friend_latest_message_hash_list(const aux::bytes& peer);
@@ -177,8 +179,7 @@ namespace libtorrent {
             std::vector<aux::bytes> m_friends;
 
             // chatting friend
-            aux::bytes m_chatting_friend;
-            std::pair<aux::bytes, time_t> m_chatting_friend_t;
+            std::pair<aux::bytes, time_t> m_chatting_friend = std::make_pair(aux::bytes(), 0);
 
             // active friends
             std::vector<aux::bytes> m_active_friends;
