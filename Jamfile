@@ -15,6 +15,9 @@ import cast ;
 VERSION = 2.0.3 ;
 
 BOOST_ROOT = [ modules.peek : BOOST_ROOT ] ;
+LEVELDB_ROOT = [ modules.peek : LEVELDB_ROOT ] ;
+SQLITE_ROOT = [ modules.peek : SQLITE_ROOT ] ;
+
 ECHO "OS =" [ os.name ] ;
 
 if $(BOOST_ROOT)
@@ -349,7 +352,7 @@ rule building ( properties * )
 	local VERSION = [ feature.get-values <cxxstd> : $(properties) ] ;
 	if ! $(VERSION) || $(VERSION) < 17
 	{
-		ECHO "libtorrent requires at least C++17. Specify cxxstd=17 or higher" ;
+		ECHO "libTAU requires at least C++17. Specify cxxstd=17 or higher" ;
 		result += <build>no ;
 	}
 
@@ -391,7 +394,7 @@ rule tag ( name : type ? : property-set )
 	# static libraries are not versioned
 	if $(type) = STATIC_LIB
 	{
-		return [ virtual-target.add-prefix-and-suffix $(name)-rasterbar : $(type) : $(property-set) ] ;
+		return [ virtual-target.add-prefix-and-suffix $(name) : $(type) : $(property-set) ] ;
 	}
 
 	# shared libraries have the version number before the filename extension on
@@ -399,58 +402,13 @@ rule tag ( name : type ? : property-set )
 	if [ $(property-set).get <target-os> ] in windows cygwin
 	{
 		# TODO: add version on windows too
-		# return [ virtual-target.add-prefix-and-suffix $(name)-rasterbar-$(VERSION) : $(type) : $(property-set) ] ;
-		return [ virtual-target.add-prefix-and-suffix $(name)-rasterbar : $(type) : $(property-set) ] ;
+		return [ virtual-target.add-prefix-and-suffix $(name) : $(type) : $(property-set) ] ;
 	}
 	else
 	{
-		local name = [ virtual-target.add-prefix-and-suffix $(name)-rasterbar : $(type) : $(property-set) ] ;
+		local name = [ virtual-target.add-prefix-and-suffix $(name) : $(type) : $(property-set) ] ;
 		return $(name).$(VERSION) ;
 	}
-}
-
-# the search path to pick up the leveldb libraries from. This is the <search>
-# property of those libraries
-rule leveldb-lib-path ( properties * )
-{
-    local LEVELDB_LIB = [ feature.get-values <leveldb-lib> : $(properties) ] ;
-
-    local result ;
-    result += <search>$(LEVELDB_LIB) ;
-    return $(result) ;
-}
-
-# the include path to pick up leveldb headers from. This is the
-# usage-requirement for the leveldb-related libraries
-rule leveldb-include-path ( properties * )
-{
-    local LEVELDB_INCLUDE = [ feature.get-values <leveldb-include> : $(properties) ] ;
-
-    local result ;
-    result += <include>$(LEVELDB_INCLUDE) ;
-    return $(result) ;
-}
-
-# the search path to pick up the sqlite libraries from. This is the <search>
-# property of those libraries
-rule sqlite-lib-path ( properties * )
-{
-    local SQLITE_LIB = [ feature.get-values <sqlite-lib> : $(properties) ] ;
-
-    local result ;
-    result += <search>$(SQLITE_LIB) ;
-    return $(result) ;
-}
-
-# the include path to pick up sqlite headers from. This is the
-# usage-requirement for the sqlite-related libraries
-rule sqlite-include-path ( properties * )
-{
-    local SQLITE_INCLUDE = [ feature.get-values <sqlite-include> : $(properties) ] ;
-
-    local result ;
-    result += <include>$(SQLITE_INCLUDE) ;
-    return $(result) ;
 }
 
 # the search path to pick up the openssl libraries from. This is the <search>
@@ -578,13 +536,46 @@ rule wolfssl-include-path ( properties * )
 	return $(result) ;
 }
 
+# the search path to pick up the leveldb libraries from. This is the <search>
+# property of those libraries
+rule leveldb-lib-path ( properties * )
+{
+    local result ;
+    result += <search>$(LEVELDB_ROOT)/lib ;
+    return $(result) ;
+}
+
+# the include path to pick up leveldb headers from. This is the
+# usage-requirement for the leveldb-related libraries
+rule leveldb-include-path ( properties * )
+{
+    local result ;
+    result += <include>$(LEVELDB_ROOT)/include ;
+    return $(result) ;
+}
+
+# the search path to pick up the sqlite libraries from. This is the <search>
+# property of those libraries
+rule sqlite-lib-path ( properties * )
+{
+    local result ;
+    result += <search>$(SQLITE_ROOT)/lib ;
+    return $(result) ;
+}
+
+# the include path to pick up sqlite headers from. This is the
+# usage-requirement for the sqlite-related libraries
+rule sqlite-include-path ( properties * )
+{
+    local result ;
+    result += <include>$(SQLITE_ROOT)/include ;
+    return $(result) ;
+}
+
 path-constant blacklist-file : tools/sanitizer-blacklist.txt ;
 
 feature openssl-lib : : free path ;
 feature openssl-include : : free path ;
-
-feature leveldb-lib : : free path ;
-feature leveldb-include : : free path ;
 
 feature sqlite-lib : : free path ;
 feature sqlite-include : : free path ;
@@ -673,7 +664,7 @@ feature kvdatabase : kvdb : composite propagated ;
 feature.compose <kvdatabase>kvdb : <define>TORRENT_ENABLE_DB ;
 
 feature sqldatabase : sqldb : composite propagated ;
-feature.compose <sqldatabase>sqldb : <define>TORRENT_ENABLE_DB ;
+feature.compose <sqldatabase>sqldb : <define>TORRENT_ABI_VERSION=3 ;
 
 feature crypto : built-in openssl wolfssl gnutls libcrypto gcrypt : composite propagated ;
 feature.compose <crypto>openssl
@@ -722,9 +713,9 @@ feature profile-calls : off on : composite propagated link-incompatible ;
 feature.compose <profile-calls>on : <define>TORRENT_PROFILE_CALLS=1 ;
 
 # controls whether or not to export some internal
-# libtorrent functions. Used for unit testing
+# libTAU functions. Used for unit testing
 feature export-extra : off on : composite propagated ;
-# export some internal libtorrent functions
+# export some internal libTAU functions
 # in order to me able to unit test them.
 # this is off by default to keep the export
 # symbol table reasonably small
@@ -738,8 +729,14 @@ lib bcrypt : : <name>bcrypt ;
 lib crypt32 : : <name>crypt32 ;
 lib z : : <link>shared <name>z ;
 
+lib leveldb : : <name>leveldb <conditional>@leveldb-lib-path : :
+    <conditional>@leveldb-include-path ;
+
+lib sqlite3 : : <name>sqlite3 <conditional>@sqlite-lib-path : :
+    <conditional>@sqlite-include-path ;
+
 # openssl libraries on windows
-# technically, crypt32 is not an OpenSSL dependency, but libtorrent needs it on
+# technically, crypt32 is not an OpenSSL dependency, but libTAU needs it on
 # windows to access the system certificate store, for authenticating trackers
 alias ssl-deps : advapi32 user32 shell32 gdi32 crypt32 ;
 
@@ -760,12 +757,6 @@ lib crypto : : <name>crypto <use>z <conditional>@openssl-lib-path : :
 	<conditional>@openssl-include-path ;
 lib ssl : : <name>ssl <use>crypto <conditional>@openssl-lib-path : :
 	<conditional>@openssl-include-path ;
-
-lib leveldb : : <name>leveldb <conditional>@leveldb-lib-path : :
-    <conditional>@leveldb-include-path ;
-
-lib sqlite3 : : <name>sqlite3 <conditional>@sqlite-lib-path : :
-    <conditional>@sqlite-include-path ;
 
 lib gnutls : : <name>gnutls <conditional>@gnutls-lib-path : :
 	<conditional>@gnutls-include-path ;
@@ -1008,6 +999,7 @@ lib torrent
 
 	: # sources
 	src/$(SOURCES).cpp
+	src/communication/$(COMMUNICATION_SOURECS).cpp
 
 	: # requirements
 	<threading>multi
@@ -1021,7 +1013,6 @@ lib torrent
 
 	<dht>on:<source>src/kademlia/$(KADEMLIA_SOURCES).cpp
 	<dht>on:<source>src/ed25519/$(ED25519_SOURCES).cpp
-	<kvdb>on:<source>src/communication/$(COMMUNICATION_SOURECS).cpp
 
 	<conditional>@building
 	<conditional>@warnings
@@ -1071,7 +1062,7 @@ rule install-paths ( properties * )
 	}
 	else
 	{
-		local p = [ package.paths libtorrent : $(properties) ] ;
+		local p = [ package.paths libTAU : $(properties) ] ;
 		return [ $(p).libdir ] [ $(p).includedir ] ;
 	}
 }
@@ -1151,13 +1142,13 @@ rule generate-pkg-config ( properties * )
 	}
 
 	# TODO: use $(libname) in future versions
-	local config = "Name: libtorrent-rasterbar"
+	local config = "Name: libTAU"
 		"\nDescription: libtorrent is an open source C++ library implementing the BitTorrent protocol"
-		"\nURL: https://libtorrent.org"
+		"\nURL: https://taucoin.io"
 		"\nVersion: $(VERSION)"
 		"\nLibs:"
 		" -L\"$(libdir)\""
-		" -ltorrent-rasterbar"
+		" -lTAU"
 		" -l$(shared_deps)"
 		"\nLibs.private:"
 		" -L\"$(libdir)\""
@@ -1168,7 +1159,7 @@ rule generate-pkg-config ( properties * )
 		"\n"
 		;
 
-	local dummy = @("libtorrent-rasterbar.pc":E=$(config)) ;
+	local dummy = @("libTAU.pc":E=$(config)) ;
 }
 
 rule install-pkg-config ( target-name : data * : requirements * )
@@ -1205,7 +1196,7 @@ package.install-data install-cmake-module
 	: examples/cmake/FindLibtorrentRasterbar.cmake
 	;
 
-install-pkg-config pkg-config-target : libtorrent-rasterbar.pc : <conditional>@generate-pkg-config ;
+install-pkg-config pkg-config-target : libTAU.pc : <conditional>@generate-pkg-config ;
 
 alias install : install-torrent-lib install-cmake-module pkg-config-target ;
 
