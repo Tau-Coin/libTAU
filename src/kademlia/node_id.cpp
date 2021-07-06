@@ -85,6 +85,18 @@ node_id generate_random_id()
 	return node_id(span<char const>(pk.bytes));
 }
 
+node_id get_node_id(libtorrent::aux::session_settings const& settings)
+{
+	std::array<char, 32> seed;
+	public_key pk;
+
+	const char* account_seed = settings.get_str(libtorrent::settings_pack::account_seed).c_str();
+	std::copy(account_seed, account_seed + 32, seed.begin());
+	std::tie(pk, std::ignore) = ed25519_create_keypair(ed25519_create_seed());
+
+	return node_id(span<char const>(pk.bytes));
+}
+
 node_id generate_secret_id()
 {
 	node_id ret = generate_random_id();

@@ -22,6 +22,7 @@ see LICENSE file.
 #include <libtorrent/kademlia/dht_state.hpp>
 
 #include <libtorrent/aux_/listen_socket_handle.hpp>
+#include <libtorrent/sha1_hash.hpp>
 #include <libtorrent/socket.hpp>
 #include <libtorrent/aux_/deadline_timer.hpp>
 #include <libtorrent/span.hpp>
@@ -81,6 +82,9 @@ namespace libtorrent::dht {
 		// understanding of its external address (which may have changed)
 		void update_node_id(aux::listen_socket_handle const& s);
 
+		// tell the node to update its node id from session settings.
+		void update_node_id();
+
 		void new_socket(aux::listen_socket_handle const& s);
 		void delete_socket(aux::listen_socket_handle const& s);
 
@@ -105,6 +109,7 @@ namespace libtorrent::dht {
 		// for immutable_item.
 		// the callback function will be called when put operation is done.
 		// the int parameter indicates the success numbers of put operation.
+		// TODO: removed.
 		void put_item(entry const& data
 			, std::function<void(int)> cb);
 
@@ -202,6 +207,9 @@ namespace libtorrent::dht {
 		time_point m_last_tick;
 
 		io_context& m_ioc;
+
+		// public key as node id
+		libtorrent::sha256_hash m_public_key;
 	};
 } // namespace libtorrent::dht
 

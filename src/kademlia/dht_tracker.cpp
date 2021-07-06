@@ -20,6 +20,7 @@ see LICENSE file.
 #include <libtorrent/kademlia/msg.hpp>
 #include <libtorrent/kademlia/dht_observer.hpp>
 #include <libtorrent/kademlia/dht_settings.hpp>
+#include <libtorrent/kademlia/node_id.hpp>
 
 #include <libtorrent/bencode.hpp>
 #include <libtorrent/version.hpp>
@@ -74,6 +75,7 @@ namespace libtorrent::dht {
 		: m_counters(cnt)
 		, m_storage(storage)
 		, m_state(std::move(state))
+		, m_public_key(get_node_id(settings))
 		, m_send_fun(std::move(send_fun))
 		, m_log(observer)
 		, m_key_refresh_timer(ios)
@@ -94,12 +96,24 @@ namespace libtorrent::dht {
 		// TODO: seed change in impl
 	}
 
+	void dht_tracker::update_node_id()
+	{
+		m_public_key = get_node_id(m_settings);
+
+		for (auto& n : m_nodes)
+		{
+			n.second.dht.update_node_id(m_public_key);
+		}
+
+		update_storage_node_ids();
+	}
+
 	void dht_tracker::new_socket(aux::listen_socket_handle const& s)
 	{
 		address const local_address = s.get_local_endpoint().address();
 		auto stored_nid = std::find_if(m_state.nids.begin(), m_state.nids.end()
 			, [&](node_ids_t::value_type const& nid) { return nid.first == local_address; });
-		node_id const nid = stored_nid != m_state.nids.end() ? stored_nid->second : node_id();
+		node_id const nid = stored_nid != m_state.nids.end() ? stored_nid->second : m_public_key;
 		// must use piecewise construction because tracker_node::connection_timer
 		// is neither copyable nor movable
 		auto n = m_nodes.emplace(std::piecewise_construct_t(), std::forward_as_tuple(s)
@@ -268,9 +282,18 @@ namespace libtorrent::dht {
 
 	void dht_tracker::update_storage_node_ids()
 	{
+		std::set<sha256_hash> idset;
 		std::vector<sha256_hash> ids;
+
 		for (auto& n : m_nodes)
-			ids.push_back(n.second.dht.nid());
+		{
+			idset.insert(n.second.dht.nid());
+		}
+		for (auto& id : idset)
+		{
+			ids.push_back(id);
+		}
+
 		m_storage.update_node_ids(ids);
 	}
 
