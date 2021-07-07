@@ -328,10 +328,11 @@ namespace libtorrent {
         online_signal communication::make_online_signal() {
             time_t now_time = time(nullptr);
 
-            const auto &pubkey = m_ses.pubkey();
-            aux::bytes public_key;
-            public_key.insert(public_key.end(), pubkey->bytes.begin(), pubkey->bytes.end());
-            aux::bytes friend_info = m_message_db->get_friend_info(public_key);
+            srand(now_time);
+            auto index = rand() % m_friends.size();
+            auto peer = m_friends[index];
+
+            aux::bytes friend_info = m_message_db->get_friend_info(peer);
 
             return online_signal(m_device_id, aux::bytes(), now_time, friend_info);
         }
