@@ -9,15 +9,15 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/disk_buffer_pool.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/settings_pack.hpp" // for settings_interface
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/disk_observer.hpp"
-#include "libtorrent/disk_interface.hpp" // for default_block_size
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/disk_buffer_pool.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/settings_pack.hpp" // for settings_interface
+#include "libTAU/io_context.hpp"
+#include "libTAU/disk_observer.hpp"
+#include "libTAU/disk_interface.hpp" // for default_block_size
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #ifdef TORRENT_BSD
 #include <sys/sysctl.h>
@@ -27,9 +27,9 @@ see LICENSE file.
 #include <linux/unistd.h>
 #endif
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 namespace {

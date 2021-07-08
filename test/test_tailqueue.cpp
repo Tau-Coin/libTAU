@@ -9,7 +9,7 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/tailqueue.hpp"
+#include "libTAU/aux_/tailqueue.hpp"
 
 using namespace lt;
 

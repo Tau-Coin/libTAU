@@ -12,16 +12,16 @@ see LICENSE file.
 #include <iostream>
 #include <optional>
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/disk_interface.hpp" // for default_block_size
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/disabled_disk_io.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/disk_interface.hpp" // for default_block_size
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/disabled_disk_io.hpp"
 #include "read_bits.hpp"
 
 using namespace lt;

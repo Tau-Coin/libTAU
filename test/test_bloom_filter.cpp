@@ -9,9 +9,9 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/bloom_filter.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/sha1_hash.hpp"
+#include "libTAU/aux_/bloom_filter.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/sha1_hash.hpp"
 #include <cstdint>
 
 using namespace lt;

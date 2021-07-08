@@ -9,13 +9,13 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/bandwidth_manager.hpp"
+#include "libTAU/aux_/bandwidth_manager.hpp"
 
 #if TORRENT_USE_ASSERTS
 #include <climits>
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	bandwidth_manager::bandwidth_manager(int channel)

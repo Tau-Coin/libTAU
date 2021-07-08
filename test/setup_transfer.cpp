@@ -17,23 +17,23 @@ see LICENSE file.
 #include <tuple>
 #include <functional>
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/aux_/http_parser.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // print_endpoint
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/session_stats.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/hex.hpp" // to_hex
-#include "libtorrent/aux_/vector.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/disk_interface.hpp" // for default_block_size
-#include "libtorrent/aux_/ip_helpers.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/aux_/http_parser.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/aux_/socket_io.hpp" // print_endpoint
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/session_stats.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/hex.hpp" // to_hex
+#include "libTAU/aux_/vector.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/disk_interface.hpp" // for default_block_size
+#include "libTAU/aux_/ip_helpers.hpp"
 
 #include "test.hpp"
 #include "test_utils.hpp"
@@ -75,7 +75,7 @@ std::shared_ptr<torrent_info> generate_torrent(bool const with_files, bool const
 	lt::create_torrent t(fs, 128 * 1024);
 
 	t.set_comment("test comment");
-	t.set_creator("libtorrent test");
+	t.set_creator("libTAU test");
 	t.add_tracker("http://torrent_file_tracker.com/announce");
 	t.add_url_seed("http://torrent_file_url_seed.com/");
 

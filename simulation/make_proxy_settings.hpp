@@ -33,7 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef TORRENT_MAKE_PROXY_SETTINGS_HPP
 #define TORRENT_MAKE_PROXY_SETTINGS_HPP
 
-#include "libtorrent/aux_/proxy_settings.hpp"
+#include "libTAU/aux_/proxy_settings.hpp"
 
 inline lt::aux::proxy_settings make_proxy_settings(
 	lt::settings_pack::proxy_type_t const proxy_type)

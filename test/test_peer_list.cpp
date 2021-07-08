@@ -8,16 +8,16 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/peer_list.hpp"
-#include "libtorrent/torrent_handle.hpp"
-#include "libtorrent/aux_/torrent_peer_allocator.hpp"
-#include "libtorrent/peer_connection_interface.hpp"
-#include "libtorrent/aux_/stat.hpp"
-#include "libtorrent/aux_/ip_voter.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
+#include "libTAU/aux_/peer_list.hpp"
+#include "libTAU/torrent_handle.hpp"
+#include "libTAU/aux_/torrent_peer_allocator.hpp"
+#include "libTAU/peer_connection_interface.hpp"
+#include "libTAU/aux_/stat.hpp"
+#include "libTAU/aux_/ip_voter.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/socket_io.hpp"
 
 #include "test.hpp"
 #include "setup_transfer.hpp"

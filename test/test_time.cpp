@@ -10,7 +10,7 @@ see LICENSE file.
 
 #include "test.hpp"
 
-#include "libtorrent/time.hpp"
+#include "libTAU/time.hpp"
 
 #include <functional>
 #include <thread>

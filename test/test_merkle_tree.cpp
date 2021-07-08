@@ -12,8 +12,8 @@ see LICENSE file.
 
 #include <iostream>
 
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/aux_/merkle_tree.hpp"
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/aux_/merkle_tree.hpp"
 
 #include "test.hpp"
 #include "test_utils.hpp"

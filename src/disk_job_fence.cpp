@@ -10,9 +10,9 @@ see LICENSE file.
 */
 
 
-#include "libtorrent/aux_/disk_job_fence.hpp"
-#include "libtorrent/aux_/disk_io_job.hpp"
-#include "libtorrent/performance_counters.hpp"
+#include "libTAU/aux_/disk_job_fence.hpp"
+#include "libTAU/aux_/disk_io_job.hpp"
+#include "libTAU/performance_counters.hpp"
 
 #define DEBUG_STORAGE 0
 
@@ -22,7 +22,7 @@ see LICENSE file.
 #define DLOG(...) do {} while (false)
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	int disk_job_fence::job_complete(disk_io_job* j, tailqueue<disk_io_job>& jobs)

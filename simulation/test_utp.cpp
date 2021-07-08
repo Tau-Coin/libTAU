@@ -30,12 +30,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/time.hpp" // for clock_type
-#include "libtorrent/aux_/utp_stream.hpp"
-#include "libtorrent/session_stats.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/time.hpp" // for clock_type
+#include "libTAU/aux_/utp_stream.hpp"
+#include "libTAU/session_stats.hpp"
 
 #include "test.hpp"
 #include "utils.hpp"

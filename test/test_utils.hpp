@@ -13,17 +13,17 @@ see LICENSE file.
 #include <string>
 
 #include "test.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/download_priority.hpp"
-#include "libtorrent/fwd.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/download_priority.hpp"
+#include "libTAU/fwd.hpp"
 
-#include "libtorrent/sha1_hash.hpp"
-#include "libtorrent/aux_/vector.hpp"
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/sha1_hash.hpp"
+#include "libTAU/aux_/vector.hpp"
+#include "libTAU/aux_/path.hpp"
 #include <vector>
 #include <fstream>
 
-namespace libtorrent
+namespace libTAU
 {
 	EXPORT std::string time_now_string();
 	EXPORT std::string time_to_string(lt::time_point const tp);

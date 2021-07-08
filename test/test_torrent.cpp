@@ -12,20 +12,20 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_settings.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/aux_/path.hpp" // for combine_path, current_working_directory
-#include "libtorrent/magnet_uri.hpp"
-#include "libtorrent/span.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/aux_/random.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_settings.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/aux_/path.hpp" // for combine_path, current_working_directory
+#include "libTAU/magnet_uri.hpp"
+#include "libTAU/span.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/aux_/random.hpp"
 #include "settings.hpp"
 #include <tuple>
 #include <iostream>
@@ -726,7 +726,7 @@ TORRENT_TEST(test_read_piece_no_metadata)
 	TEST_CHECK(a);
 	if (auto* rp = alert_cast<read_piece_alert>(a))
 	{
-		TEST_CHECK(rp->error == error_code(lt::errors::no_metadata, lt::libtorrent_category()));
+		TEST_CHECK(rp->error == error_code(lt::errors::no_metadata, lt::libTAU_category()));
 	}
 }
 
@@ -749,7 +749,7 @@ TORRENT_TEST(test_read_piece_out_of_range)
 	if (auto* rp = alert_cast<read_piece_alert>(a))
 	{
 		TEST_CHECK(rp->error == error_code(lt::errors::invalid_piece_index
-			, lt::libtorrent_category()));
+			, lt::libTAU_category()));
 	}
 }
 

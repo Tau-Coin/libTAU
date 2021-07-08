@@ -1,7 +1,7 @@
-libtorrent fuzzing
+libTAU fuzzing
 ==================
 
-Fuzzing of various libtorrent APIs (both internal and external),
+Fuzzing of various libTAU APIs (both internal and external),
 inspired by Kostya Serebryany's `cppcon 2017 presentation`_
 
 This project requires:
@@ -34,7 +34,7 @@ for testing more mutations. The corpus is not checked into the repository,
 before running the fuzzer it is advised to download and unzip the corpus
 associated with the latest release on github.
 
-	https://github.com/arvidn/libtorrent/releases/download/libtorrent_1_2_0/corpus.zip
+	https://github.com/arvidn/libTAU/releases/download/libTAU_1_2_0/corpus.zip
 
 Uzip the corpus in the fuzzers directory::
 
@@ -60,5 +60,5 @@ contribute
 ..........
 
 Please consider contributing back any updated corpuses (amended by more seed
-inputs) or fuzzers for more APIs in libtorrent.
+inputs) or fuzzers for more APIs in libTAU.
 

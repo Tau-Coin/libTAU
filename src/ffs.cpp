@@ -9,19 +9,19 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/ffs.hpp"
-#include "libtorrent/aux_/byteswap.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/ffs.hpp"
+#include "libTAU/aux_/byteswap.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #if (defined _MSC_VER && _MSC_VER >= 1600 && (defined _M_IX86 || defined _M_X64))
 #include <nmmintrin.h>
 #endif
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	// returns the index of the first set bit.

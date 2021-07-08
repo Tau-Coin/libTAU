@@ -9,16 +9,16 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/hex.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/bdecode.hpp"
+#include "libTAU/hex.hpp"
 #include "setup_transfer.hpp" // for addr6
 #include "settings.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/extensions.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/extensions.hpp"
 
 #include "test.hpp"
 #include "setup_transfer.hpp"

@@ -12,19 +12,19 @@ see LICENSE file.
 
 #include <sys/stat.h> // for chmod
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
 #include "test.hpp"
 #include "settings.hpp"
 #include "setup_transfer.hpp"
 #include "test_utils.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/torrent_status.hpp"
-#include "libtorrent/hex.hpp" // to_hex
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/open_mode.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/torrent_status.hpp"
+#include "libTAU/hex.hpp" // to_hex
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/open_mode.hpp"
 
 namespace {
 

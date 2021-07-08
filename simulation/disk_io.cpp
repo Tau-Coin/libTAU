@@ -31,12 +31,12 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "disk_io.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/aux_/deadline_timer.hpp"
-#include "libtorrent/disk_observer.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/aux_/deadline_timer.hpp"
+#include "libTAU/disk_observer.hpp"
 
 #include <utility> // for exchange()
 

@@ -10,23 +10,23 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #if TORRENT_HAVE_MMAP || TORRENT_HAVE_MAP_VIEW_OF_FILE
 
-#include "libtorrent/aux_/mmap.hpp"
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/error_code.hpp"
+#include "libTAU/aux_/mmap.hpp"
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/error_code.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/scope_exit.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include <cstdint>
 
 #ifdef TORRENT_WINDOWS
-#include "libtorrent/aux_/win_util.hpp"
+#include "libTAU/aux_/win_util.hpp"
 #endif
 
 #if TORRENT_HAVE_MMAP
@@ -34,12 +34,12 @@ see LICENSE file.
 #include <sys/stat.h>
 #include <fcntl.h> // for open
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 auto const map_failed = MAP_FAILED;
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 namespace {
@@ -644,7 +644,7 @@ file_mapping::file_mapping(file_mapping&& rhs)
 	}
 
 } // aux
-} // libtorrent
+} // libTAU
 
 #endif // HAVE_MMAP || HAVE_MAP_VIEW_OF_FILE
 

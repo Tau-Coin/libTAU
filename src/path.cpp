@@ -11,7 +11,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
@@ -40,20 +40,20 @@ see LICENSE file.
 #pragma GCC diagnostic pop
 #endif
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/directory.hpp"
-#include "libtorrent/aux_/string_util.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/alloca.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/directory.hpp"
+#include "libTAU/aux_/string_util.hpp"
 #include <cstring>
 
-#include "libtorrent/aux_/escape_string.hpp" // for convert_to_native
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/throw.hpp"
+#include "libTAU/aux_/escape_string.hpp" // for convert_to_native
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/throw.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #include <sys/stat.h>
 #include <climits> // for IOV_MAX
@@ -61,9 +61,9 @@ see LICENSE file.
 #ifdef TORRENT_WINDOWS
 // windows part
 
-#include "libtorrent/aux_/win_util.hpp"
+#include "libTAU/aux_/win_util.hpp"
 
-#include "libtorrent/aux_/windows.hpp"
+#include "libTAU/aux_/windows.hpp"
 #include <winioctl.h>
 #ifndef TORRENT_MINGW
 #include <direct.h> // for _getcwd, _mkdir
@@ -93,9 +93,9 @@ see LICENSE file.
 
 #endif // posix part
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	int bufs_size(span<iovec_t const> bufs)
 	{

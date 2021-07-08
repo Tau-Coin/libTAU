@@ -10,8 +10,8 @@ see LICENSE file.
 #ifndef PRINT_ALERTS_HPP
 #define PRINT_ALERTS_HPP
 
-#include "libtorrent/time.hpp"
-#include "libtorrent/session.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/session.hpp"
 #include "test.hpp" // for EXPORT
 
 EXPORT void print_alerts(lt::session* ses, lt::time_point start_time);

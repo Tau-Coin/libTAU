@@ -10,10 +10,10 @@ see LICENSE file.
 
 #include "test.hpp"
 #include "setup_transfer.hpp" // for supports_ipv6
-#include "libtorrent/aux_/enum_net.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp"
-#include "libtorrent/error_code.hpp"
+#include "libTAU/aux_/enum_net.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/aux_/ip_helpers.hpp"
+#include "libTAU/error_code.hpp"
 #include <cstring>
 
 using namespace lt;

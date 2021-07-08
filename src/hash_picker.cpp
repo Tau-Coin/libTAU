@@ -10,12 +10,12 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/hash_picker.hpp"
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/aux_/peer_connection.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/hash_picker.hpp"
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/aux_/peer_connection.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
 
-namespace libtorrent::aux
+namespace libTAU::aux
 {
 	namespace
 	{

@@ -9,14 +9,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/peer_connection_handle.hpp"
-#include "libtorrent/aux_/bt_peer_connection.hpp"
+#include "libTAU/peer_connection_handle.hpp"
+#include "libTAU/aux_/bt_peer_connection.hpp"
 
 #ifndef TORRENT_DISABLE_LOGGING
 #include <cstdarg> // for va_start, va_end
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 
 connection_type peer_connection_handle::type() const
 {
@@ -331,4 +331,4 @@ std::shared_ptr<aux::bt_peer_connection> bt_peer_connection_handle::native_handl
 		peer_connection_handle::native_handle());
 }
 
-} // namespace libtorrent
+} // namespace libTAU

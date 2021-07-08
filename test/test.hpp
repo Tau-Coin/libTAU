@@ -11,8 +11,8 @@ see LICENSE file.
 #ifndef TEST_HPP
 #define TEST_HPP
 
-#include "libtorrent/address.hpp"
-#include "libtorrent/socket.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/socket.hpp"
 
 #include <boost/config.hpp>
 #include <exception>
@@ -23,13 +23,13 @@ see LICENSE file.
 
 #include <boost/preprocessor/cat.hpp>
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 // tests are expected to even test deprecated functionality. There is no point
 // in warning about deprecated use in any of the tests.
 // the unreachable code warnings are disabled since the test macros may
 // sometimes have conditions that are known at compile time
-#include "libtorrent/aux_/disable_deprecation_warnings_push.hpp"
+#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
 
 #if defined TORRENT_BUILDING_TEST_SHARED
 #define EXPORT BOOST_SYMBOL_EXPORT

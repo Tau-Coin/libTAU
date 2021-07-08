@@ -9,10 +9,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/aux_/vector.hpp"
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/aux_/vector.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	int merkle_layer_start(int const layer)
 	{

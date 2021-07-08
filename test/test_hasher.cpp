@@ -10,8 +10,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/hex.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/hex.hpp"
 
 #include "test.hpp"
 

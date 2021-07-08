@@ -30,22 +30,22 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "libtorrent/kademlia/dht_settings.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/aux_/deadline_timer.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/kademlia/node.hpp"
-#include "libtorrent/kademlia/dht_observer.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
+#include "libTAU/kademlia/dht_settings.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/aux_/deadline_timer.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/kademlia/node.hpp"
+#include "libTAU/kademlia/dht_observer.hpp"
+#include "libTAU/aux_/session_impl.hpp"
 #include "setup_transfer.hpp"
 #include <memory> // for unique_ptr
 #include <random>
-#include "libtorrent/aux_/socket_io.hpp" // print_endpoint
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/crc32c.hpp"
-#include "libtorrent/alert_types.hpp" // for dht_routing_bucket
-#include "libtorrent/aux_/listen_socket_handle.hpp"
+#include "libTAU/aux_/socket_io.hpp" // print_endpoint
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/crc32c.hpp"
+#include "libTAU/alert_types.hpp" // for dht_routing_bucket
+#include "libTAU/aux_/listen_socket_handle.hpp"
 
 #include "setup_dht.hpp"
 

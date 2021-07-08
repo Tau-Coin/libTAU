@@ -8,9 +8,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/torrent_status.hpp"
+#include "libTAU/torrent_status.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	torrent_status::torrent_status() noexcept {}
 	torrent_status::~torrent_status() = default;

@@ -12,23 +12,23 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <libtorrent/config.hpp>
-#include <libtorrent/aux_/io_bytes.hpp>
-#include <libtorrent/aux_/random.hpp>
-#include <libtorrent/aux_/invariant_check.hpp>
-#include <libtorrent/kademlia/rpc_manager.hpp>
-#include <libtorrent/kademlia/routing_table.hpp>
-#include <libtorrent/kademlia/find_data.hpp>
-#include <libtorrent/kademlia/put_data.hpp>
-#include <libtorrent/kademlia/refresh.hpp>
-#include <libtorrent/kademlia/node.hpp>
-#include <libtorrent/kademlia/dht_observer.hpp>
-#include <libtorrent/kademlia/get_item.hpp>
-#include <libtorrent/aux_/session_settings.hpp>
+#include <libTAU/config.hpp>
+#include <libTAU/aux_/io_bytes.hpp>
+#include <libTAU/aux_/random.hpp>
+#include <libTAU/aux_/invariant_check.hpp>
+#include <libTAU/kademlia/rpc_manager.hpp>
+#include <libTAU/kademlia/routing_table.hpp>
+#include <libTAU/kademlia/find_data.hpp>
+#include <libTAU/kademlia/put_data.hpp>
+#include <libTAU/kademlia/refresh.hpp>
+#include <libTAU/kademlia/node.hpp>
+#include <libTAU/kademlia/dht_observer.hpp>
+#include <libTAU/kademlia/get_item.hpp>
+#include <libTAU/aux_/session_settings.hpp>
 
-#include <libtorrent/aux_/socket_io.hpp> // for print_endpoint
-#include <libtorrent/aux_/time.hpp> // for aux::time_now
-#include <libtorrent/aux_/ip_helpers.hpp> // for is_v6
+#include <libTAU/aux_/socket_io.hpp> // for print_endpoint
+#include <libTAU/aux_/time.hpp> // for aux::time_now
+#include <libTAU/aux_/ip_helpers.hpp> // for is_v6
 
 #include <type_traits>
 #include <functional>
@@ -39,7 +39,7 @@ see LICENSE file.
 
 using namespace std::placeholders;
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 
 dht_observer* observer::get_observer() const
 {
@@ -476,4 +476,4 @@ observer::~observer()
 #endif
 }
 
-} // namespace libtorrent::dht
+} // namespace libTAU::dht

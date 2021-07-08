@@ -11,19 +11,19 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/storage_utils.hpp"
-#include "libtorrent/file_storage.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/aux_/path.hpp" // for count_bufs
-#include "libtorrent/session.hpp" // for session::delete_files
-#include "libtorrent/aux_/stat_cache.hpp"
-#include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/torrent_status.hpp"
-#include "libtorrent/error_code.hpp"
+#include "libTAU/aux_/storage_utils.hpp"
+#include "libTAU/file_storage.hpp"
+#include "libTAU/aux_/alloca.hpp"
+#include "libTAU/aux_/path.hpp" // for count_bufs
+#include "libTAU/session.hpp" // for session::delete_files
+#include "libTAU/aux_/stat_cache.hpp"
+#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/torrent_status.hpp"
+#include "libTAU/error_code.hpp"
 
 #include <set>
 
-namespace libtorrent { namespace aux {
+namespace libTAU { namespace aux {
 
 	int copy_bufs(span<iovec_t const> bufs, int bytes
 		, span<iovec_t> target)

@@ -9,12 +9,12 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/kademlia/dht_state.hpp"
+#include "libTAU/kademlia/dht_state.hpp"
 
-#include <libtorrent/bdecode.hpp>
-#include <libtorrent/aux_/socket_io.hpp>
+#include <libTAU/bdecode.hpp>
+#include <libTAU/aux_/socket_io.hpp>
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 
 	node_ids_t extract_node_ids(bdecode_node const& e, string_view key)
 	{

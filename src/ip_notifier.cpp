@@ -11,29 +11,29 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/ip_notifier.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/aux_/ip_notifier.hpp"
+#include "libTAU/assert.hpp"
 
 #if defined TORRENT_BUILD_SIMULATOR
 // TODO: simulator support
 #elif TORRENT_USE_NETLINK
-#include "libtorrent/aux_/netlink.hpp"
-#include "libtorrent/socket.hpp"
+#include "libTAU/aux_/netlink.hpp"
+#include "libTAU/socket.hpp"
 #include <array>
 #elif TORRENT_USE_SYSTEMCONFIGURATION
 #include <SystemConfiguration/SystemConfiguration.h>
 #elif defined TORRENT_WINDOWS
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <iphlpapi.h>
 #ifdef TORRENT_WINRT
 #include <netioapi.h>
 #endif
 #include <mutex>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 #endif
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 namespace {
 
@@ -64,7 +64,7 @@ struct ip_change_notifier_impl final : ip_change_notifier
 		// Linux can generate ENOBUFS if the socket's buffers are full
 		// don't treat it as an error
 		error_code ec;
-		m_socket.set_option(libtorrent::no_enobufs(true), ec);
+		m_socket.set_option(libTAU::no_enobufs(true), ec);
 	}
 
 	// non-copyable
@@ -175,7 +175,7 @@ struct ip_change_notifier_impl final : ip_change_notifier
 	explicit ip_change_notifier_impl(io_context& ios)
 		: m_ios(ios)
 	{
-		m_queue = dispatch_queue_create("libtorrent.IPChangeNotifierQueue", nullptr);
+		m_queue = dispatch_queue_create("libTAU.IPChangeNotifierQueue", nullptr);
 		m_reach = create_reachability(
 			[](SCNetworkReachabilityRef /*target*/, SCNetworkReachabilityFlags /*flags*/, void *info)
 			{
@@ -258,7 +258,7 @@ CFRef<SCDynamicStoreRef> create_dynamic_store(SCDynamicStoreCallBack callback, v
 #pragma clang diagnostic ignored "-Wold-style-cast"
 #endif
 	CFRef<SCDynamicStoreRef> store{SCDynamicStoreCreate(nullptr
-		, CFSTR("libtorrent.IPChangeNotifierStore"), callback, &context)};
+		, CFSTR("libTAU.IPChangeNotifierStore"), callback, &context)};
 #if defined __clang__
 #pragma clang diagnostic pop
 #endif
@@ -275,7 +275,7 @@ struct ip_change_notifier_impl final : ip_change_notifier
 	explicit ip_change_notifier_impl(io_context& ios)
 		: m_ios(ios)
 	{
-		m_queue = dispatch_queue_create("libtorrent.IPChangeNotifierQueue", nullptr);
+		m_queue = dispatch_queue_create("libTAU.IPChangeNotifierQueue", nullptr);
 		m_store = create_dynamic_store(
 			[](SCDynamicStoreRef /*store*/, CFArrayRef /*changedKeys*/, void *info)
 			{

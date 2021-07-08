@@ -8,11 +8,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/packet_buffer.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
+#include "libTAU/aux_/packet_buffer.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	bool compare_less_wrap(std::uint32_t lhs, std::uint32_t rhs

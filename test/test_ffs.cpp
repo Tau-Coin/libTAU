@@ -9,10 +9,10 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/span.hpp"
-#include "libtorrent/hex.hpp" // from_hex
-#include "libtorrent/aux_/ffs.hpp"
-#include "libtorrent/aux_/byteswap.hpp"
+#include "libTAU/span.hpp"
+#include "libTAU/hex.hpp" // from_hex
+#include "libTAU/aux_/ffs.hpp"
+#include "libTAU/aux_/byteswap.hpp"
 
 using namespace lt;
 

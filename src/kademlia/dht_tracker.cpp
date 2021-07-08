@@ -13,30 +13,30 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/kademlia/dht_tracker.hpp"
+#include "libTAU/kademlia/dht_tracker.hpp"
 
-#include <libtorrent/config.hpp>
+#include <libTAU/config.hpp>
 
-#include <libtorrent/kademlia/msg.hpp>
-#include <libtorrent/kademlia/dht_observer.hpp>
-#include <libtorrent/kademlia/dht_settings.hpp>
-#include <libtorrent/kademlia/node_id.hpp>
+#include <libTAU/kademlia/msg.hpp>
+#include <libTAU/kademlia/dht_observer.hpp>
+#include <libTAU/kademlia/dht_settings.hpp>
+#include <libTAU/kademlia/node_id.hpp>
 
-#include <libtorrent/bencode.hpp>
-#include <libtorrent/version.hpp>
-#include <libtorrent/time.hpp>
-#include <libtorrent/performance_counters.hpp> // for counters
-#include <libtorrent/aux_/time.hpp>
-#include <libtorrent/session_status.hpp>
-#include <libtorrent/aux_/ip_helpers.hpp> // for is_v6
+#include <libTAU/bencode.hpp>
+#include <libTAU/version.hpp>
+#include <libTAU/time.hpp>
+#include <libTAU/performance_counters.hpp> // for counters
+#include <libTAU/aux_/time.hpp>
+#include <libTAU/session_status.hpp>
+#include <libTAU/aux_/ip_helpers.hpp> // for is_v6
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include <libtorrent/hex.hpp> // to_hex
+#include <libTAU/hex.hpp> // to_hex
 #endif
 
 using namespace std::placeholders;
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 
 	namespace {
 
@@ -532,7 +532,7 @@ namespace libtorrent::dht {
 		m_log->log_packet(dht_logger::incoming_message, buf, ep);
 #endif
 
-		libtorrent::dht::msg const m(m_msg, ep);
+		libTAU::dht::msg const m(m_msg, ep);
 		for (auto& n : m_nodes)
 			n.second.dht.incoming(s, m);
 		return true;

@@ -8,10 +8,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/crc32c.hpp"
-#include "libtorrent/aux_/cpuid.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/byteswap.hpp"
+#include "libTAU/aux_/crc32c.hpp"
+#include "libTAU/aux_/cpuid.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/byteswap.hpp"
 #include "test.hpp"
 
 TORRENT_TEST(crc32)

@@ -10,20 +10,20 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/read_resume_data.hpp"
-#include "libtorrent/write_resume_data.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/file.hpp"
-#include "libtorrent/alert_types.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/read_resume_data.hpp"
+#include "libTAU/write_resume_data.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/file.hpp"
+#include "libTAU/alert_types.hpp"
 #include "setup_transfer.hpp"
 #include "test_utils.hpp"
 
@@ -57,7 +57,7 @@ std::vector<char> generate_resume_data(torrent_info* ti
 {
 	entry rd;
 
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["file-version"] = 1;
 	rd["info-hash"] = ti->info_hashes().v1.to_string();
 	rd["blocks per piece"] = std::max(1, ti->piece_length() / 0x4000);
@@ -289,7 +289,7 @@ TORRENT_TEST(test_non_metadata)
 	h.add_url_seed("http://torrent.com/");
 
 	TEST_EQUAL(ti->comment(), "test comment");
-	TEST_EQUAL(ti->creator(), "libtorrent test");
+	TEST_EQUAL(ti->creator(), "libTAU test");
 	auto const creation_date = ti->creation_date();
 
 	h.save_resume_data(torrent_handle::save_info_dict);
@@ -305,7 +305,7 @@ TORRENT_TEST(test_non_metadata)
 		TEST_CHECK(atp.url_seeds == std::vector<std::string>{"http://torrent.com/"});
 		TEST_CHECK(atp.ti);
 		TEST_EQUAL(atp.ti->comment(), "test comment");
-		TEST_EQUAL(atp.ti->creator(), "libtorrent test");
+		TEST_EQUAL(atp.ti->creator(), "libTAU test");
 		TEST_EQUAL(atp.ti->creation_date(), creation_date);
 
 		std::vector<char> resume_data = write_resume_data_buf(atp);
@@ -324,7 +324,7 @@ TORRENT_TEST(test_non_metadata)
 	TEST_CHECK(h.url_seeds() == std::set<std::string>{"http://torrent.com/"});
 	auto t = h.status().torrent_file.lock();
 	TEST_EQUAL(ti->comment(), "test comment");
-	TEST_EQUAL(ti->creator(), "libtorrent test");
+	TEST_EQUAL(ti->creator(), "libTAU test");
 	TEST_EQUAL(ti->creation_date(), creation_date);
 }
 
@@ -956,7 +956,7 @@ void test_zero_file_prio(bool test_deprecated = false, bool mix_prios = false)
 
 	entry rd;
 
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["file-version"] = 1;
 	rd["info-hash"] = ti->info_hashes().v1.to_string();
 	rd["blocks per piece"] = std::max(1, ti->piece_length() / 0x4000);
@@ -1034,7 +1034,7 @@ TORRENT_TEST(backwards_compatible_resume_info_dict)
 
 	std::shared_ptr<torrent_info> ti = generate_torrent();
 	entry rd;
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["name"] = ti->name();
 	rd["info-hash"] = ti->info_hashes().v1;
 	rd["info"] = bdecode(ti->info_section());
@@ -1103,7 +1103,7 @@ TORRENT_TEST(resume_info_dict)
 
 	std::shared_ptr<torrent_info> ti = generate_torrent();
 	entry rd;
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["name"] = ti->name();
 	rd["info-hash"] = ti->info_hashes().v1;
 	rd["info"] = bdecode(ti->info_section());
@@ -1171,7 +1171,7 @@ void test_seed_mode(test_mode_t const flags)
 
 	entry rd;
 
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["file-version"] = 1;
 	rd["info-hash"] = ti->info_hashes().v1.to_string();
 	rd["blocks per piece"] = std::max(1, ti->piece_length() / 0x4000);
@@ -1774,7 +1774,7 @@ TORRENT_TEST(resume_data_have_pieces)
 }
 #endif
 
-// See https://github.com/arvidn/libtorrent/issues/5174
+// See https://github.com/arvidn/libTAU/issues/5174
 TORRENT_TEST(removed)
 {
 	lt::session ses(settings());

@@ -80,11 +80,11 @@
  */
 
 // this whole file is just preserved and warnings are suppressed
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #include <csetjmp>             /* for setjmp(), longjmp(), and jmp_buf */
 #include <cstring>             /* for nullptr */
-#include "libtorrent/aux_/puff.hpp"             /* prototype for puff() */
+#include "libTAU/aux_/puff.hpp"             /* prototype for puff() */
 
 #define local static            /* for local function definitions */
 

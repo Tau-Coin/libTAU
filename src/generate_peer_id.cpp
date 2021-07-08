@@ -8,14 +8,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/generate_peer_id.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/peer_id.hpp"
-#include "libtorrent/aux_/string_util.hpp" // for url_random
+#include "libTAU/aux_/generate_peer_id.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/peer_id.hpp"
+#include "libTAU/aux_/string_util.hpp" // for url_random
 
 #include <string>
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 peer_id generate_peer_id(session_settings const& sett)
 {

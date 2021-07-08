@@ -11,18 +11,18 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <libtorrent/kademlia/find_data.hpp>
-#include <libtorrent/kademlia/node.hpp>
-#include <libtorrent/kademlia/dht_observer.hpp>
-#include <libtorrent/aux_/io_bytes.hpp>
-#include <libtorrent/socket.hpp>
-#include <libtorrent/aux_/socket_io.hpp>
+#include <libTAU/kademlia/find_data.hpp>
+#include <libTAU/kademlia/node.hpp>
+#include <libTAU/kademlia/dht_observer.hpp>
+#include <libTAU/aux_/io_bytes.hpp>
+#include <libTAU/socket.hpp>
+#include <libTAU/aux_/socket_io.hpp>
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include <libtorrent/hex.hpp> // to_hex
+#include <libTAU/hex.hpp> // to_hex
 #endif
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 
 void find_data_observer::reply(msg const& m)
 {
@@ -171,4 +171,4 @@ void find_data::done()
 	traversal_algorithm::done();
 }
 
-} // namespace libtorrent::dht
+} // namespace libTAU::dht

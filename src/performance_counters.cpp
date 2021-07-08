@@ -8,11 +8,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/assert.hpp"
 #include <cstring> // for memset
 
-namespace libtorrent {
+namespace libTAU {
 
 	// TODO: move stats_counter_t out of counters
 	// TODO: should bittorrent keep-alive messages have a counter too?

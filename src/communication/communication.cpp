@@ -9,14 +9,14 @@ see LICENSE file.
 #include <cstdlib>
 #include <utility>
 
-#include "libtorrent/communication/message_hash_list.hpp"
-#include "libtorrent/communication/communication.hpp"
-#include "libtorrent/communication/mutable_data_wrapper.hpp"
-#include "libtorrent/kademlia/dht_tracker.hpp"
+#include "libTAU/communication/message_hash_list.hpp"
+#include "libTAU/communication/communication.hpp"
+#include "libTAU/communication/mutable_data_wrapper.hpp"
+#include "libTAU/kademlia/dht_tracker.hpp"
 
 using namespace std::placeholders;
 
-namespace libtorrent {
+namespace libTAU {
     namespace communication {
 
         bool communication::start()

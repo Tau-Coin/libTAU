@@ -9,13 +9,13 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/ip_voter.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // for hash_address
-#include "libtorrent/aux_/random.hpp" // for random()
-#include "libtorrent/aux_/time.hpp" // for aux::time_now()
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_local() etc.
+#include "libTAU/aux_/ip_voter.hpp"
+#include "libTAU/aux_/socket_io.hpp" // for hash_address
+#include "libTAU/aux_/random.hpp" // for random()
+#include "libTAU/aux_/time.hpp" // for aux::time_now()
+#include "libTAU/aux_/ip_helpers.hpp" // for is_local() etc.
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	ip_voter::ip_voter()
 		: m_total_votes(0)

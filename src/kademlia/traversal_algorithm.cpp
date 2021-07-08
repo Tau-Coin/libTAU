@@ -11,23 +11,23 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <libtorrent/kademlia/traversal_algorithm.hpp>
-#include <libtorrent/kademlia/rpc_manager.hpp>
-#include <libtorrent/kademlia/node.hpp>
-#include <libtorrent/kademlia/dht_observer.hpp> // for dht_logger
-#include <libtorrent/kademlia/dht_settings.hpp>
-#include <libtorrent/kademlia/io.hpp>
-#include <libtorrent/aux_/socket_io.hpp> // for read_*_endpoint
-#include <libtorrent/alert_types.hpp> // for dht_lookup
-#include <libtorrent/aux_/time.hpp>
+#include <libTAU/kademlia/traversal_algorithm.hpp>
+#include <libTAU/kademlia/rpc_manager.hpp>
+#include <libTAU/kademlia/node.hpp>
+#include <libTAU/kademlia/dht_observer.hpp> // for dht_logger
+#include <libTAU/kademlia/dht_settings.hpp>
+#include <libTAU/kademlia/io.hpp>
+#include <libTAU/aux_/socket_io.hpp> // for read_*_endpoint
+#include <libTAU/alert_types.hpp> // for dht_lookup
+#include <libTAU/aux_/time.hpp>
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include <libtorrent/hex.hpp> // to_hex
+#include <libTAU/hex.hpp> // to_hex
 #endif
 
 using namespace std::placeholders;
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 
 #if TORRENT_USE_ASSERTS
 template <class It, class Cmp>
@@ -89,7 +89,7 @@ void traversal_algorithm::resort_result(observer* o)
 	TORRENT_ASSERT(std::size_t(m_sorted_results) <= m_results.size());
 	auto end = m_results.begin() + m_sorted_results;
 
-	TORRENT_ASSERT(libtorrent::dht::is_sorted(m_results.begin(), end
+	TORRENT_ASSERT(libTAU::dht::is_sorted(m_results.begin(), end
 		, [this](observer_ptr const& lhs, observer_ptr const& rhs)
 		{ return compare_ref(lhs->id(), rhs->id(), m_target); }));
 
@@ -146,7 +146,7 @@ void traversal_algorithm::add_entry(node_id const& id
 		TORRENT_ASSERT(std::size_t(m_sorted_results) <= m_results.size());
 		auto end = m_results.begin() + m_sorted_results;
 
-		TORRENT_ASSERT(libtorrent::dht::is_sorted(m_results.begin(), end
+		TORRENT_ASSERT(libTAU::dht::is_sorted(m_results.begin(), end
 				, [this](observer_ptr const& lhs, observer_ptr const& rhs)
 				{ return compare_ref(lhs->id(), rhs->id(), m_target); }));
 
@@ -217,7 +217,7 @@ void traversal_algorithm::add_entry(node_id const& id
 	}
 
 	TORRENT_ASSERT(std::size_t(m_sorted_results) <= m_results.size());
-	TORRENT_ASSERT(libtorrent::dht::is_sorted(m_results.begin()
+	TORRENT_ASSERT(libTAU::dht::is_sorted(m_results.begin()
 		, m_results.begin() + m_sorted_results
 		, [this](observer_ptr const& lhs, observer_ptr const& rhs)
 		{ return compare_ref(lhs->id(), rhs->id(), m_target); }));
@@ -646,4 +646,4 @@ void traversal_observer::reply(msg const& m)
 	set_id(node_id(id.string_ptr()));
 }
 
-} // namespace libtorrent::dht
+} // namespace libTAU::dht

@@ -8,14 +8,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/time.hpp"
-#include "libtorrent/bdecode.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/time.hpp"
+#include "libTAU/bdecode.hpp"
 #include "dht_server.hpp"
 #include "test_utils.hpp"
 

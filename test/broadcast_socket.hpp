@@ -12,21 +12,21 @@ see LICENSE file.
 #ifndef TORRENT_BROADCAST_SOCKET_HPP_INCLUDED
 #define TORRENT_BROADCAST_SOCKET_HPP_INCLUDED
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/string_view.hpp"
-#include "libtorrent/span.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/string_view.hpp"
+#include "libTAU/span.hpp"
+#include "libTAU/aux_/ip_helpers.hpp"
 #include "test.hpp"
 
 #include <memory>
 #include <list>
 #include <array>
 
-namespace libtorrent {
+namespace libTAU {
 
 	using receive_handler_t = std::function<void(udp::endpoint const& from
 		, span<char const> buffer)>;

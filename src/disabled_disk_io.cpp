@@ -9,21 +9,21 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/disabled_disk_io.hpp"
-#include "libtorrent/disk_buffer_holder.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/aux_/debug.hpp"
-#include "libtorrent/units.hpp"
-#include "libtorrent/disk_interface.hpp"
-#include "libtorrent/peer_request.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/disabled_disk_io.hpp"
+#include "libTAU/disk_buffer_holder.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/aux_/debug.hpp"
+#include "libTAU/units.hpp"
+#include "libTAU/disk_interface.hpp"
+#include "libTAU/peer_request.hpp"
 
 #include <vector>
 #include <functional>
 
-namespace libtorrent {
+namespace libTAU {
 
 // This is a dummy implementation of the disk_interface. It discards any data
 // written to it and when reading, it returns zeroes. It is primarily useful for

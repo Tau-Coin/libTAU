@@ -10,12 +10,12 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/ip_voter.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/aux_/session_interface.hpp"
+#include "libTAU/aux_/ip_voter.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/aux_/session_interface.hpp"
 #include "setup_transfer.hpp" // for rand_v4, supports_ipv6
 
 using namespace lt;

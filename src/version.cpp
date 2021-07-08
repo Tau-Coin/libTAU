@@ -7,9 +7,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/version.hpp"
+#include "libTAU/version.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 char const* version()
 {

@@ -9,13 +9,13 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/extensions/ut_pex.hpp"
-#include "libtorrent/extensions/ut_metadata.hpp"
-#include "libtorrent/extensions/smart_ban.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/extensions/ut_pex.hpp"
+#include "libTAU/extensions/ut_metadata.hpp"
+#include "libTAU/extensions/smart_ban.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 namespace {
 

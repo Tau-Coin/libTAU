@@ -34,15 +34,15 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "simulator/simulator.hpp"
 
-#include "libtorrent/aux_/listen_socket_handle.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/aux_/udp_socket.hpp"
-#include "libtorrent/kademlia/dht_tracker.hpp"
-#include "libtorrent/kademlia/dht_state.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/span.hpp"
-#include "libtorrent/kademlia/dht_observer.hpp"
+#include "libTAU/aux_/listen_socket_handle.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/aux_/udp_socket.hpp"
+#include "libTAU/kademlia/dht_tracker.hpp"
+#include "libTAU/kademlia/dht_state.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/span.hpp"
+#include "libTAU/kademlia/dht_observer.hpp"
 
 #include <functional>
 #include <cstdarg>

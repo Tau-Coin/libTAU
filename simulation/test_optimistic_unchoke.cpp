@@ -39,13 +39,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "simulator/utils.hpp"
 #include "setup_transfer.hpp" // for addr()
 
-#include "libtorrent/alert.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_stats.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/deadline_timer.hpp"
+#include "libTAU/alert.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_stats.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/deadline_timer.hpp"
 
 #include <memory>
 

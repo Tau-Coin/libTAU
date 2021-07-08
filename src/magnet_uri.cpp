@@ -32,17 +32,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "libtorrent/magnet_uri.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/aux_/escape_string.hpp"
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/torrent_status.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/announce_entry.hpp"
-#include "libtorrent/hex.hpp" // to_hex, from_hex
-#include "libtorrent/aux_/socket_io.hpp"
+#include "libTAU/magnet_uri.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/aux_/escape_string.hpp"
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/torrent_status.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/announce_entry.hpp"
+#include "libTAU/hex.hpp" // to_hex, from_hex
+#include "libTAU/aux_/socket_io.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	std::string make_magnet_uri(torrent_handle const& handle)
 	{

@@ -24,29 +24,29 @@ see LICENSE file.
 #include <cinttypes> // for PRId64 et.al.
 #include <utility>
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/alert.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/aux_/stack_allocator.hpp"
-#include "libtorrent/piece_block.hpp"
-#include "libtorrent/hex.hpp" // to_hex
-#include "libtorrent/session_stats.hpp"
-#include "libtorrent/socket_type.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_v4
-#include "libtorrent/aux_/common.h"
-#include "libtorrent/communication/message.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/alert.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/aux_/stack_allocator.hpp"
+#include "libTAU/piece_block.hpp"
+#include "libTAU/hex.hpp" // to_hex
+#include "libTAU/session_stats.hpp"
+#include "libTAU/socket_type.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_v4
+#include "libTAU/aux_/common.h"
+#include "libTAU/communication/message.hpp"
 
 #if TORRENT_ABI_VERSION == 1
-#include "libtorrent/write_resume_data.hpp"
+#include "libTAU/write_resume_data.hpp"
 #endif
 
-#include "libtorrent/aux_/escape_string.hpp" // for convert_from_native
+#include "libTAU/aux_/escape_string.hpp" // for convert_from_native
 
-namespace libtorrent {
+namespace libTAU {
 
 	alert::alert() : m_timestamp(clock_type::now()) {}
 	alert::~alert() = default;
@@ -154,7 +154,7 @@ namespace {
 		using lfo = listen_failed_alert::op_t;
 
 		// we have to use deprecated enum values here. suppress the warnings
-#include "libtorrent/aux_/disable_deprecation_warnings_push.hpp"
+#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
 		switch (op)
 		{
 			case o::bittorrent: return -1;
@@ -207,7 +207,7 @@ namespace {
 		}
 		return -1;
 	}
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #endif // TORRENT_ABI_VERSION
 
@@ -216,11 +216,11 @@ namespace {
 	listen_failed_alert::listen_failed_alert(
 		aux::stack_allocator& alloc
 		, string_view iface
-		, libtorrent::address const& listen_addr
+		, libTAU::address const& listen_addr
 		, int listen_port
 		, operation_t const op_
 		, error_code const& ec
-		, libtorrent::socket_type_t t)
+		, libTAU::socket_type_t t)
 		: error(ec)
 		, op(op_)
 		, socket_type(t)
@@ -241,7 +241,7 @@ namespace {
 		, tcp::endpoint const& ep
 		, operation_t const op_
 		, error_code const& ec
-		, libtorrent::socket_type_t t)
+		, libTAU::socket_type_t t)
 		: listen_failed_alert(alloc
 			, iface
 			, ep.address()
@@ -257,7 +257,7 @@ namespace {
 		, udp::endpoint const& ep
 		, operation_t const op_
 		, error_code const& ec
-		, libtorrent::socket_type_t t)
+		, libTAU::socket_type_t t)
 		: listen_failed_alert(alloc
 			, iface
 			, ep.address()
@@ -272,10 +272,10 @@ namespace {
 		, string_view iface
 		, operation_t const op_
 		, error_code const& ec
-		, libtorrent::socket_type_t t)
+		, libTAU::socket_type_t t)
 		: listen_failed_alert(alloc
 			, iface
-			, libtorrent::address()
+			, libTAU::address()
 			, 0
 			, op_
 			, ec
@@ -339,9 +339,9 @@ namespace {
 	}
 
 	listen_succeeded_alert::listen_succeeded_alert(aux::stack_allocator&
-		, libtorrent::address const& listen_addr
+		, libTAU::address const& listen_addr
 		, int listen_port
-		, libtorrent::socket_type_t t)
+		, libTAU::socket_type_t t)
 		: address(listen_addr)
 		, port(listen_port)
 		, socket_type(t)
@@ -353,7 +353,7 @@ namespace {
 
 	listen_succeeded_alert::listen_succeeded_alert(aux::stack_allocator& alloc
 		, tcp::endpoint const& ep
-		, libtorrent::socket_type_t t)
+		, libTAU::socket_type_t t)
 		: listen_succeeded_alert(alloc
 			, ep.address()
 			, ep.port()
@@ -362,7 +362,7 @@ namespace {
 
 	listen_succeeded_alert::listen_succeeded_alert(aux::stack_allocator& alloc
 		, udp::endpoint const& ep
-		, libtorrent::socket_type_t t)
+		, libTAU::socket_type_t t)
 		: listen_succeeded_alert(alloc
 			, ep.address()
 			, ep.port()
@@ -1729,4 +1729,4 @@ namespace {
 #endif
     }
 
-} // namespace libtorrent
+} // namespace libTAU

@@ -37,14 +37,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "settings.hpp"
 #include "setup_transfer.hpp" // for ep()
-#include "libtorrent/config.hpp"
-#include "libtorrent/kademlia/dht_storage.hpp"
-#include "libtorrent/kademlia/dht_settings.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/kademlia/dht_storage.hpp"
+#include "libTAU/kademlia/dht_settings.hpp"
 
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/aux_/time.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/aux_/time.hpp"
 
 #include "simulator/simulator.hpp"
 

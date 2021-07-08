@@ -7,16 +7,16 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session.hpp" // for default_disk_io_constructor
-#include "libtorrent/disk_interface.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/file_storage.hpp"
-#include "libtorrent/flags.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/add_torrent_params.hpp"
+#include "libTAU/session.hpp" // for default_disk_io_constructor
+#include "libTAU/disk_interface.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/file_storage.hpp"
+#include "libTAU/flags.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/add_torrent_params.hpp"
 
 // TODO: remove this dependency
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/aux_/path.hpp"
 
 #include <random>
 #include <algorithm>

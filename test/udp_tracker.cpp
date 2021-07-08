@@ -9,16 +9,16 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/aux_/time.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_v6
+#include "libTAU/bencode.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/aux_/time.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_v6
 #include "udp_tracker.hpp"
 #include "test_utils.hpp"
 

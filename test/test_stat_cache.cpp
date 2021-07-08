@@ -8,8 +8,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/stat_cache.hpp"
-#include "libtorrent/error_code.hpp"
+#include "libTAU/aux_/stat_cache.hpp"
+#include "libTAU/error_code.hpp"
 #include "test.hpp"
 #include "test_utils.hpp"
 

@@ -10,11 +10,11 @@ see LICENSE file.
 */
 
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/torrent_peer_allocator.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/torrent_peer_allocator.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	torrent_peer* torrent_peer_allocator::allocate_peer_entry(int type)
 	{

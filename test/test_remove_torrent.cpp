@@ -10,14 +10,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/torrent_handle.hpp"
-#include "libtorrent/torrent_status.hpp"
-#include "libtorrent/session_settings.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/torrent_handle.hpp"
+#include "libTAU/torrent_status.hpp"
+#include "libTAU/session_settings.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/aux_/path.hpp"
 
 #include "test.hpp"
 #include "test_utils.hpp"
@@ -27,8 +27,8 @@ see LICENSE file.
 #include <iostream>
 #include <cstdint>
 
-using namespace libtorrent;
-namespace lt = libtorrent;
+using namespace libTAU;
+namespace lt = libTAU;
 using std::ignore;
 
 namespace {

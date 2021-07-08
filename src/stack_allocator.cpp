@@ -8,10 +8,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/stack_allocator.hpp"
+#include "libTAU/aux_/stack_allocator.hpp"
 #include <cstdarg> // for va_list, va_copy, va_end
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	allocation_slot stack_allocator::copy_string(string_view str)
 	{

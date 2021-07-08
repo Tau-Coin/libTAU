@@ -13,24 +13,24 @@ see LICENSE file.
 #include <cstdint>
 #include <algorithm>
 
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/write_resume_data.hpp"
-#include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // for write_*_endpoint()
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp"
+#include "libTAU/bdecode.hpp"
+#include "libTAU/write_resume_data.hpp"
+#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/aux_/socket_io.hpp" // for write_*_endpoint()
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/ip_helpers.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	entry write_resume_data(add_torrent_params const& atp)
 	{
 		entry ret;
 
-		using namespace libtorrent::aux; // for write_*_endpoint()
-		ret["file-format"] = "libtorrent resume file";
+		using namespace libTAU::aux; // for write_*_endpoint()
+		ret["file-format"] = "libTAU resume file";
 		ret["file-version"] = 1;
-		ret["libtorrent-version"] = lt::version_str;
+		ret["libTAU-version"] = lt::version_str;
 		ret["allocation"] = atp.storage_mode == storage_mode_allocate
 			? "allocate" : "sparse";
 

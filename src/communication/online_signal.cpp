@@ -6,9 +6,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/communication/online_signal.hpp"
+#include "libTAU/communication/online_signal.hpp"
 
-namespace libtorrent { namespace communication {
+namespace libTAU { namespace communication {
 
         online_signal::online_signal(aux::bytesConstRef _rlp) {
             aux::RLP const rlp(_rlp);

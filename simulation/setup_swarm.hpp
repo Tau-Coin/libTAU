@@ -31,9 +31,9 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "simulator/simulator.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/fwd.hpp"
-#include "libtorrent/flags.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/fwd.hpp"
+#include "libTAU/flags.hpp"
 #include <functional>
 
 #ifndef TORRENT_SETUP_SWARM_HPP_INCLUDED

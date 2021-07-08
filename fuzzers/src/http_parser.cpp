@@ -8,8 +8,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/http_parser.hpp"
-#include "libtorrent/string_view.hpp"
+#include "libTAU/aux_/http_parser.hpp"
+#include "libTAU/string_view.hpp"
 
 void feed_bytes(lt::aux::http_parser& parser, lt::string_view str)
 {

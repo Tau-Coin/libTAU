@@ -9,9 +9,9 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/http_parser.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/string_view.hpp"
+#include "libTAU/aux_/http_parser.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/string_view.hpp"
 
 #include <tuple>
 

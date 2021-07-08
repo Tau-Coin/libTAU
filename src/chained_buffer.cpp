@@ -8,12 +8,12 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/chained_buffer.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/aux_/chained_buffer.hpp"
+#include "libTAU/assert.hpp"
 
 #include <algorithm> // for copy
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	void chained_buffer::pop_front(int bytes_to_pop)

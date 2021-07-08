@@ -19,25 +19,25 @@ see LICENSE file.
 #include <cstdio>
 #include <functional>
 
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/torrent_handle.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/extensions/smart_ban.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/aux_/peer_connection.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/operations.hpp" // for operation_t enum
+#include "libTAU/hasher.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/torrent_handle.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/extensions/smart_ban.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/aux_/peer_connection.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/operations.hpp" // for operation_t enum
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/hex.hpp" // to_hex
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/hex.hpp" // to_hex
 #endif
 
 using namespace std::placeholders;
 
-namespace libtorrent {
+namespace libTAU {
 
 namespace aux { struct torrent; }
 
@@ -294,7 +294,7 @@ namespace {
 
 } }
 
-namespace libtorrent {
+namespace libTAU {
 
 	std::shared_ptr<torrent_plugin> create_smart_ban_plugin(torrent_handle const& th, client_data_t)
 	{

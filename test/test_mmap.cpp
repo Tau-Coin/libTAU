@@ -10,12 +10,12 @@ see LICENSE file.
 
 #include "test.hpp"
 
-#include "libtorrent/aux_/mmap.hpp"
+#include "libTAU/aux_/mmap.hpp"
 #include <fstream>
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/range/combine.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #if TORRENT_HAVE_MMAP || TORRENT_HAVE_MAP_VIEW_OF_FILE
 

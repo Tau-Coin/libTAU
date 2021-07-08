@@ -12,12 +12,12 @@ see LICENSE file.
 
 #include <iostream>
 
-#include "libtorrent/aux_/hash_picker.hpp"
-#include "libtorrent/peer_connection_interface.hpp"
-#include "libtorrent/aux_/stat.hpp"
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/hex.hpp"
-#include "libtorrent/disk_interface.hpp" // for default_block_size
+#include "libTAU/aux_/hash_picker.hpp"
+#include "libTAU/peer_connection_interface.hpp"
+#include "libTAU/aux_/stat.hpp"
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/hex.hpp"
+#include "libTAU/disk_interface.hpp" // for default_block_size
 
 #include "test.hpp"
 #include "test_utils.hpp"

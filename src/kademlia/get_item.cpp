@@ -12,14 +12,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <libtorrent/config.hpp>
-#include <libtorrent/bdecode.hpp>
-#include <libtorrent/kademlia/get_item.hpp>
-#include <libtorrent/kademlia/node.hpp>
-#include <libtorrent/kademlia/dht_observer.hpp>
-#include <libtorrent/performance_counters.hpp>
+#include <libTAU/config.hpp>
+#include <libTAU/bdecode.hpp>
+#include <libTAU/kademlia/get_item.hpp>
+#include <libTAU/kademlia/node.hpp>
+#include <libTAU/kademlia/dht_observer.hpp>
+#include <libTAU/performance_counters.hpp>
 
-namespace libtorrent { namespace dht {
+namespace libTAU { namespace dht {
 
 void get_item::got_data(bdecode_node const& v,
 	public_key const& pk,
@@ -196,4 +196,4 @@ void get_item_observer::reply(msg const& m)
 	find_data_observer::reply(m);
 }
 
-} } // namespace libtorrent::dht
+} } // namespace libTAU::dht

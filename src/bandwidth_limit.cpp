@@ -10,10 +10,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/bandwidth_limit.hpp"
+#include "libTAU/aux_/bandwidth_limit.hpp"
 #include <algorithm>
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	bandwidth_channel::bandwidth_channel()

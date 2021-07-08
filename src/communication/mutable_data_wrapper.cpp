@@ -6,11 +6,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/communication/mutable_data_wrapper.hpp"
+#include "libTAU/communication/mutable_data_wrapper.hpp"
 
 #include <utility>
 
-namespace libtorrent { namespace communication {
+namespace libTAU { namespace communication {
 
         mutable_data_wrapper::mutable_data_wrapper(aux::bytesConstRef _rlp) {
             aux::RLP const rlp(_rlp);

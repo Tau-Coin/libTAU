@@ -7,11 +7,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/kademlia/dht_settings.hpp"
-#include "libtorrent/bdecode.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/kademlia/dht_settings.hpp"
+#include "libTAU/bdecode.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace dht {
 
 #if TORRENT_ABI_VERSION <= 2

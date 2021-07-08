@@ -14,14 +14,14 @@ see LICENSE file.
 
 #include <vector>
 
-#include "libtorrent/entry.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/read_resume_data.hpp"
-#include "libtorrent/write_resume_data.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/read_resume_data.hpp"
+#include "libTAU/write_resume_data.hpp"
 
 using namespace lt;
 
@@ -29,7 +29,7 @@ TORRENT_TEST(read_resume)
 {
 	entry rd;
 
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["file-version"] = 1;
 	rd["info-hash"] = "abcdefghijklmnopqrst";
 	rd["pieces"] = "\x01\x01\x01\x01\x01\x01";
@@ -96,7 +96,7 @@ TORRENT_TEST(read_resume_missing_info_hash)
 {
 	entry rd;
 
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["file-version"] = 1;
 	// missing info-hash
 
@@ -112,7 +112,7 @@ TORRENT_TEST(read_resume_info_hash2)
 {
 	entry rd;
 
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["file-version"] = 1;
 	// it's OK to *only* have a v2 hash
 	rd["info-hash2"] = "01234567890123456789012345678901";
@@ -145,7 +145,7 @@ TORRENT_TEST(read_resume_mismatching_torrent)
 {
 	entry rd;
 
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["file-version"] = 1;
 	rd["info-hash"] = "abcdefghijklmnopqrst";
 	entry& info = rd["info"];
@@ -194,7 +194,7 @@ TORRENT_TEST(read_resume_torrent)
 	std::shared_ptr<torrent_info> ti = generate_torrent();
 
 	entry rd;
-	rd["file-format"] = "libtorrent resume file";
+	rd["file-format"] = "libTAU resume file";
 	rd["file-version"] = 1;
 	rd["info-hash"] = ti->info_hashes().v1.to_string();
 	rd["info"] = bdecode(ti->info_section());

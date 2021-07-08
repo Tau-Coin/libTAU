@@ -33,10 +33,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "setup_swarm.hpp"
 #include "test.hpp"
 #include "utils.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/extensions.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/extensions.hpp"
 #include "simulator/simulator.hpp"
 #include "simulator/utils.hpp" // for timer
 #include "settings.hpp"
@@ -180,7 +180,7 @@ TORRENT_TEST(add_extension_while_transfer)
 // make sure TCP and UDP listen sockets use the same port
 TORRENT_TEST(tie_listen_ports)
 {
-	using namespace libtorrent;
+	using namespace libTAU;
 
 	sim::default_config network_cfg;
 	sim::simulation sim{network_cfg};
@@ -227,7 +227,7 @@ TORRENT_TEST(tie_listen_ports)
 #if TORRENT_ABI_VERSION < 4
 TORRENT_TEST(construct_paused_session_deprecated)
 {
-	using namespace libtorrent;
+	using namespace libTAU;
 
 	sim::default_config network_cfg;
 	sim::simulation sim{network_cfg};
@@ -257,7 +257,7 @@ TORRENT_TEST(construct_paused_session_deprecated)
 
 TORRENT_TEST(construct_paused_session)
 {
-	using namespace libtorrent;
+	using namespace libTAU;
 
 	sim::default_config network_cfg;
 	sim::simulation sim{network_cfg};

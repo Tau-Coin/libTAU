@@ -30,11 +30,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/torrent_handle.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/deadline_timer.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/torrent_handle.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/deadline_timer.hpp"
 #include "simulator/http_server.hpp"
 #include "settings.hpp"
 #include "create_torrent.hpp"
@@ -249,7 +249,7 @@ TORRENT_TEST(socks5_udp_retry)
 	// this test is asserting that when a UDP associate command fails, we have a
 	// 5 second delay before we try again. There is no need to actually add a
 	// torrent for this test, just to open the udp socket with a socks5 proxy
-	using namespace libtorrent;
+	using namespace libTAU;
 
 	// setup the simulation
 	sim::default_config network_cfg;

@@ -8,9 +8,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/add_torrent_params.hpp"
+#include "libTAU/add_torrent_params.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	add_torrent_params::add_torrent_params() = default;
 	add_torrent_params::~add_torrent_params() = default;

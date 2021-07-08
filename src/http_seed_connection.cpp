@@ -37,15 +37,15 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <cinttypes> // for PRId64 et.al.
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/http_seed_connection.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/hex.hpp" // for is_hex
-#include "libtorrent/optional.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/http_seed_connection.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/hex.hpp" // for is_hex
+#include "libTAU/optional.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	http_seed_connection::http_seed_connection(peer_connection_args& pack
 		, web_seed_t& web)

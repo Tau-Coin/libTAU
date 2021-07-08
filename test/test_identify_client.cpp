@@ -8,7 +8,7 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/identify_client.hpp"
+#include "libTAU/identify_client.hpp"
 
 using namespace lt;
 

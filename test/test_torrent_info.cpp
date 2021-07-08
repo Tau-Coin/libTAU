@@ -14,15 +14,15 @@ see LICENSE file.
 #include "test.hpp"
 #include "setup_transfer.hpp" // for load_file
 #include "test_utils.hpp"
-#include "libtorrent/file_storage.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/announce_entry.hpp"
-#include "libtorrent/disk_interface.hpp" // for default_block_size
-#include "libtorrent/aux_/escape_string.hpp" // for convert_path_to_posix
-#include "libtorrent/aux_/piece_picker.hpp"
-#include "libtorrent/hex.hpp" // to_hex
+#include "libTAU/file_storage.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/announce_entry.hpp"
+#include "libTAU/disk_interface.hpp" // for default_block_size
+#include "libTAU/aux_/escape_string.hpp" // for convert_path_to_posix
+#include "libTAU/aux_/piece_picker.hpp"
+#include "libTAU/hex.hpp" // to_hex
 
 #include <iostream>
 

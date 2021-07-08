@@ -17,16 +17,16 @@ see LICENSE file.
 #include <algorithm>
 #include <random>
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/multiprecision/integer.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/aux_/pe_crypto.hpp"
-#include "libtorrent/hasher.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/alloca.hpp"
+#include "libTAU/aux_/pe_crypto.hpp"
+#include "libTAU/hasher.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	namespace {
 		// TODO: it would be nice to get the literal working
@@ -317,7 +317,7 @@ namespace libtorrent::aux {
 
 // All this code is based on libTomCrypt (http://www.libtomcrypt.com/)
 // this library is public domain and has been specially
-// tailored for libtorrent by Arvid Norberg
+// tailored for libTAU by Arvid Norberg
 
 void rc4_init(const unsigned char* in, std::size_t len, rc4 *state)
 {
@@ -380,6 +380,6 @@ std::size_t rc4_encrypt(unsigned char *out, std::size_t outlen, rc4 *state)
 	return n;
 }
 
-} // namespace libtorrent::aux
+} // namespace libTAU::aux
 
 #endif // TORRENT_DISABLE_ENCRYPTION

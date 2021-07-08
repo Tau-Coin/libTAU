@@ -1,12 +1,12 @@
 // Aleth: Ethereum C++ client, tools and libraries.
 // Copyright 2013-2019 Aleth Authors.
 // Licensed under the GNU General Public License, Version 3.
-#include "libtorrent/aux_/rlp.h"
+#include "libTAU/aux_/rlp.h"
 using namespace std;
-using namespace libtorrent::aux;
+using namespace libTAU::aux;
 
-bytes libtorrent::aux::RLPNull = rlp("");
-bytes libtorrent::aux::RLPEmptyList = rlpList();
+bytes libTAU::aux::RLPNull = rlp("");
+bytes libTAU::aux::RLPEmptyList = rlpList();
 
 namespace {
 
@@ -332,7 +332,7 @@ void RLPStream::pushCount(size_t _count, ibyte _base)
     pushInt(_count, br);
 }
 
-static void streamOut(std::ostream& _out, libtorrent::aux::RLP const& _d, unsigned _depth = 0)
+static void streamOut(std::ostream& _out, libTAU::aux::RLP const& _d, unsigned _depth = 0)
 {
     if (_depth > 64)
         _out << "<max-depth-reached>";
@@ -355,7 +355,7 @@ static void streamOut(std::ostream& _out, libtorrent::aux::RLP const& _d, unsign
     }
 }
 
-std::ostream& libtorrent::aux::operator<<(std::ostream& _out, RLP const& _d)
+std::ostream& libTAU::aux::operator<<(std::ostream& _out, RLP const& _d)
 {
     streamOut(_out, _d);
     return _out;

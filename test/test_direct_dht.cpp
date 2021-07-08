@@ -13,12 +13,12 @@ see LICENSE file.
 
 #if !defined TORRENT_DISABLE_EXTENSIONS && !defined TORRENT_DISABLE_DHT
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/bdecode.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/bdecode.hpp"
 #include "setup_transfer.hpp"
 
 using namespace lt;

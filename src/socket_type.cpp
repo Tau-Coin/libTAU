@@ -10,14 +10,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/socket_type.hpp"
-#include "libtorrent/aux_/array.hpp"
-#include "libtorrent/aux_/deadline_timer.hpp"
-#include "libtorrent/aux_/ssl.hpp"
-#include "libtorrent/aux_/debug.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/socket_type.hpp"
+#include "libTAU/aux_/array.hpp"
+#include "libTAU/aux_/deadline_timer.hpp"
+#include "libTAU/aux_/ssl.hpp"
+#include "libTAU/aux_/debug.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	char const* socket_type_name(socket_type_t const s)
 	{

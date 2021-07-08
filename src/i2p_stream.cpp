@@ -10,17 +10,17 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #if TORRENT_USE_I2P
 
-#include "libtorrent/i2p_stream.hpp"
-#include "libtorrent/aux_/proxy_settings.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/settings_pack.hpp"
+#include "libTAU/i2p_stream.hpp"
+#include "libTAU/aux_/proxy_settings.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/settings_pack.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	struct i2p_error_category final : boost::system::error_category
 	{

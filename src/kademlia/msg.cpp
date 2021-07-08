@@ -9,11 +9,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/kademlia/msg.hpp"
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/entry.hpp"
+#include "libTAU/kademlia/msg.hpp"
+#include "libTAU/bdecode.hpp"
+#include "libTAU/entry.hpp"
 
-namespace libtorrent { namespace dht {
+namespace libTAU { namespace dht {
 
 bool verify_message_impl(bdecode_node const& message, span<key_desc_t const> desc
 	, span<bdecode_node> ret, span<char> error)

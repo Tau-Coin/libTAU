@@ -15,18 +15,18 @@ see LICENSE file.
 #include "settings.hpp"
 #include "test_utils.hpp"
 
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/aux_/alloca.hpp" // for use of private TORRENT_ALLOCA
-#include "libtorrent/time.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/aux_/alloca.hpp" // for use of private TORRENT_ALLOCA
+#include "libTAU/time.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/bdecode.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
 
 #include <cstring>
 #include <functional>

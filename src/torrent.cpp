@@ -26,7 +26,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #include <cstdarg> // for va_list
 #include <ctime>
@@ -42,69 +42,69 @@ see LICENSE file.
 #include <cstdio> // for snprintf
 #include <functional>
 
-#include "libtorrent/aux_/torrent.hpp"
+#include "libTAU/aux_/torrent.hpp"
 
 #ifdef TORRENT_SSL_PEERS
-#include "libtorrent/aux_/ssl_stream.hpp"
-#include "libtorrent/aux_/ssl.hpp"
+#include "libTAU/aux_/ssl_stream.hpp"
+#include "libTAU/aux_/ssl.hpp"
 #endif // TORRENT_SSL_PEERS
 
-#include "libtorrent/torrent_handle.hpp"
-#include "libtorrent/announce_entry.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/aux_/peer.hpp"
-#include "libtorrent/aux_/peer_connection.hpp"
-#include "libtorrent/aux_/bt_peer_connection.hpp"
-#include "libtorrent/aux_/web_peer_connection.hpp"
-#include "libtorrent/peer_connection_handle.hpp"
-#include "libtorrent/peer_id.hpp"
-#include "libtorrent/identify_client.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/aux_/session_interface.hpp"
-#include "libtorrent/aux_/instantiate_connection.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/kademlia/dht_tracker.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/aux_/http_connection.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/peer_class.hpp" // for peer_class
-#include "libtorrent/aux_/socket_io.hpp" // for read_*_endpoint
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/aux_/request_blocks.hpp"
-#include "libtorrent/performance_counters.hpp" // for counters
-#include "libtorrent/aux_/resolver_interface.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/aux_/resolve_links.hpp"
-#include "libtorrent/aux_/file_progress.hpp"
-#include "libtorrent/aux_/has_block.hpp"
-#include "libtorrent/aux_/alert_manager.hpp"
-#include "libtorrent/disk_interface.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_ip_address
-#include "libtorrent/download_priority.hpp"
-#include "libtorrent/hex.hpp" // to_hex
-#include "libtorrent/aux_/range.hpp"
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/mmap_disk_io.hpp" // for hasher_thread_divisor
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/generate_peer_id.hpp"
-#include "libtorrent/aux_/announce_entry.hpp"
-#include "libtorrent/aux_/ssl.hpp"
+#include "libTAU/torrent_handle.hpp"
+#include "libTAU/announce_entry.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/aux_/peer.hpp"
+#include "libTAU/aux_/peer_connection.hpp"
+#include "libTAU/aux_/bt_peer_connection.hpp"
+#include "libTAU/aux_/web_peer_connection.hpp"
+#include "libTAU/peer_connection_handle.hpp"
+#include "libTAU/peer_id.hpp"
+#include "libTAU/identify_client.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/aux_/session_interface.hpp"
+#include "libTAU/aux_/instantiate_connection.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/kademlia/dht_tracker.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/aux_/http_connection.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/peer_class.hpp" // for peer_class
+#include "libTAU/aux_/socket_io.hpp" // for read_*_endpoint
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/aux_/request_blocks.hpp"
+#include "libTAU/performance_counters.hpp" // for counters
+#include "libTAU/aux_/resolver_interface.hpp"
+#include "libTAU/aux_/alloca.hpp"
+#include "libTAU/aux_/resolve_links.hpp"
+#include "libTAU/aux_/file_progress.hpp"
+#include "libTAU/aux_/has_block.hpp"
+#include "libTAU/aux_/alert_manager.hpp"
+#include "libTAU/disk_interface.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_ip_address
+#include "libTAU/download_priority.hpp"
+#include "libTAU/hex.hpp" // to_hex
+#include "libTAU/aux_/range.hpp"
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/mmap_disk_io.hpp" // for hasher_thread_divisor
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/generate_peer_id.hpp"
+#include "libTAU/aux_/announce_entry.hpp"
+#include "libTAU/aux_/ssl.hpp"
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include "libtorrent/aux_/session_impl.hpp" // for tracker_logger
+#include "libTAU/aux_/session_impl.hpp" // for tracker_logger
 #endif
 
-#include "libtorrent/aux_/torrent_impl.hpp"
+#include "libTAU/aux_/torrent_impl.hpp"
 
 using namespace std::placeholders;
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 namespace {
 
 bool is_downloading_state(int const st)
@@ -670,11 +670,11 @@ bool is_downloading_state(int const st)
 		}
 		else if (!valid_metadata())
 		{
-			ec.assign(errors::no_metadata, libtorrent_category());
+			ec.assign(errors::no_metadata, libTAU_category());
 		}
 		else if (piece < piece_index_t{0} || piece >= m_torrent_file->end_piece())
 		{
-			ec.assign(errors::invalid_piece_index, libtorrent_category());
+			ec.assign(errors::invalid_piece_index, libTAU_category());
 		}
 
 		if (ec)
@@ -3052,7 +3052,7 @@ bool is_downloading_state(int const st)
 
 	// this is the entry point for the client to force a re-announce. It's
 	// considered a client-initiated announce (as opposed to the regular ones,
-	// issued by libtorrent)
+	// issued by libTAU)
 	void torrent::force_tracker_request(time_point const t, int const tracker_idx
 		, reannounce_flags_t const flags)
 	{
@@ -4286,7 +4286,7 @@ bool is_downloading_state(int const st)
 		{
 			// defer this by posting it to the end of the message queue.
 			// this gives the client a chance to specify multiple time-critical
-			// pieces before libtorrent cancels requests
+			// pieces before libTAU cancels requests
 			auto self = shared_from_this();
 			post(m_ses.get_context(), [self] { self->wrap(&torrent::cancel_non_critical); });
 		}
@@ -4933,7 +4933,7 @@ bool is_downloading_state(int const st)
 #endif
 				}
 #if TORRENT_ABI_VERSION <= 2
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 				aep.message = aep.info_hashes[protocol_version::V1].message;
 				aep.scrape_incomplete = ep.info_hashes[protocol_version::V1].scrape_incomplete;
 				aep.scrape_complete = ep.info_hashes[protocol_version::V1].scrape_complete;
@@ -4944,7 +4944,7 @@ bool is_downloading_state(int const st)
 				aep.next_announce = ep.info_hashes[protocol_version::V1].next_announce;
 				aep.min_announce = ep.info_hashes[protocol_version::V1].min_announce;
 				aep.updating = ep.info_hashes[protocol_version::V1].updating;
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 #endif
 			}
 		}
@@ -6409,7 +6409,7 @@ bool is_downloading_state(int const st)
 		if (is_ssl_torrent())
 		{
 			// Don't accidentally allow seeding of SSL torrents, just
-			// because libtorrent wasn't built with SSL support
+			// because libTAU wasn't built with SSL support
 			p->disconnect(errors::requires_ssl_connection, operation_t::ssl_handshake);
 			return false;
 		}
@@ -8477,8 +8477,8 @@ bool is_downloading_state(int const st)
 			, m_piece_time_deviation / 1000.f);
 		for (auto& i : queue)
 		{
-			extern void print_piece(libtorrent::partial_piece_info* pp
-				, std::vector<libtorrent::peer_info> const& peers
+			extern void print_piece(libTAU::partial_piece_info* pp
+				, std::vector<libTAU::peer_info> const& peers
 				, std::vector<time_critical_piece> const& time_critical);
 
 			print_piece(&i, peer_list, m_time_critical_pieces);
@@ -8779,8 +8779,8 @@ bool is_downloading_state(int const st)
 		return ret;
 	}
 
-	int peer_index(libtorrent::tcp::endpoint addr
-		, std::vector<libtorrent::peer_info> const& peers)
+	int peer_index(libTAU::tcp::endpoint addr
+		, std::vector<libTAU::peer_info> const& peers)
 	{
 		std::vector<peer_info>::const_iterator i = std::find_if(peers.begin()
 			, peers.end(), std::bind(&peer_info::ip, _1) == addr);
@@ -8789,8 +8789,8 @@ bool is_downloading_state(int const st)
 		return i - peers.begin();
 	}
 
-	void print_piece(libtorrent::partial_piece_info* pp
-		, std::vector<libtorrent::peer_info> const& peers
+	void print_piece(libTAU::partial_piece_info* pp
+		, std::vector<libTAU::peer_info> const& peers
 		, std::vector<time_critical_piece> const& time_critical)
 	{
 		time_point const now = clock_type::now();

@@ -20,23 +20,23 @@ see LICENSE file.
 #include <functional>
 #include <tuple>
 
-#include "libtorrent/aux_/piece_picker.hpp"
-#include "libtorrent/bitfield.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/aux_/range.hpp"
-#include "libtorrent/performance_counters.hpp" // for counters
-#include "libtorrent/alert_types.hpp" // for picker_log_alert
-#include "libtorrent/download_priority.hpp"
-#include "libtorrent/disk_interface.hpp" // for default_block_size
+#include "libTAU/aux_/piece_picker.hpp"
+#include "libTAU/bitfield.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/alloca.hpp"
+#include "libTAU/aux_/range.hpp"
+#include "libTAU/performance_counters.hpp" // for counters
+#include "libTAU/alert_types.hpp" // for picker_log_alert
+#include "libTAU/download_priority.hpp"
+#include "libTAU/disk_interface.hpp" // for default_block_size
 
 #if TORRENT_USE_ASSERTS
-#include "libtorrent/aux_/peer_connection.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/aux_/torrent_peer.hpp"
+#include "libTAU/aux_/peer_connection.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/aux_/torrent_peer.hpp"
 #endif
 
-#include "libtorrent/aux_/invariant_check.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
 
 // this is really only useful for debugging unit tests
 //#define TORRENT_PICKER_LOG
@@ -46,7 +46,7 @@ using namespace std::placeholders;
 #if defined TORRENT_PICKER_LOG
 #include <iostream>
 
-namespace libtorrent {
+namespace libTAU {
 	void print_pieces(piece_picker const& p)
 	{
 		int limit = 20;
@@ -85,7 +85,7 @@ namespace libtorrent {
 }
 #endif // TORRENT_PICKER_LOG
 
-namespace libtorrent {
+namespace libTAU {
 
 	// TODO: find a better place for this
 	const piece_block piece_block::invalid(
@@ -93,7 +93,7 @@ namespace libtorrent {
 		, std::numeric_limits<int>::max());
 }
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	// the max number of blocks to create an affinity for
 	constexpr int max_piece_affinity_extent = 4 * 1024 * 1024 / default_block_size;

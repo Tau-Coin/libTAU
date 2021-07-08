@@ -8,9 +8,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/puff.hpp"
-#include "libtorrent/gzip.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/puff.hpp"
+#include "libTAU/gzip.hpp"
 
 #include <string>
 
@@ -31,7 +31,7 @@ namespace {
 
 }
 
-namespace libtorrent {
+namespace libTAU {
 
 	struct gzip_error_category final : boost::system::error_category
 	{

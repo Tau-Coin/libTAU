@@ -12,24 +12,24 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/peer_connection.hpp"
-#include "libtorrent/aux_/bt_peer_connection.hpp"
-#include "libtorrent/peer_connection_handle.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/aux_/socket_type.hpp" // for is_utp
-#include "libtorrent/performance_counters.hpp" // for counters
-#include "libtorrent/extensions/ut_pex.hpp"
-#include "libtorrent/aux_/time.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_v4
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/peer_connection.hpp"
+#include "libTAU/aux_/bt_peer_connection.hpp"
+#include "libTAU/peer_connection_handle.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/aux_/socket_type.hpp" // for is_utp
+#include "libTAU/performance_counters.hpp" // for counters
+#include "libTAU/extensions/ut_pex.hpp"
+#include "libTAU/aux_/time.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_v4
 
 #ifndef TORRENT_DISABLE_EXTENSIONS
 
-namespace libtorrent { namespace {
+namespace libTAU { namespace {
 
 	const char extension_name[] = "ut_pex";
 
@@ -605,7 +605,7 @@ namespace libtorrent { namespace {
 	}
 } }
 
-namespace libtorrent {
+namespace libTAU {
 
 	std::shared_ptr<torrent_plugin> create_ut_pex_plugin(torrent_handle const& th, client_data_t)
 	{

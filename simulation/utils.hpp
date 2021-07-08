@@ -34,14 +34,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #define TORRENT_UTILS_HPP_INCLUDED
 
 #include <functional>
-#include "libtorrent/address.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/flags.hpp"
-#include "libtorrent/torrent_status.hpp"
-#include "libtorrent/settings_pack.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/flags.hpp"
+#include "libTAU/torrent_status.hpp"
+#include "libTAU/settings_pack.hpp"
 #include "simulator/simulator.hpp"
 
-namespace libtorrent
+namespace libTAU
 {
 	struct session;
 	struct alert;
@@ -72,7 +72,7 @@ std::unique_ptr<sim::asio::io_context> make_io_context(
 
 using lt::operator""_bit;
 
-using test_transfer_flags_t = libtorrent::flags::bitfield_flag<std::uint32_t, struct test_transfer_flags_tag>;
+using test_transfer_flags_t = libTAU::flags::bitfield_flag<std::uint32_t, struct test_transfer_flags_tag>;
 
 namespace tx {
 constexpr test_transfer_flags_t ipv6 = 0_bit;

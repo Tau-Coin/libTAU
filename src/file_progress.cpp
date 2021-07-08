@@ -8,12 +8,12 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/piece_picker.hpp"
-#include "libtorrent/file_storage.hpp"
-#include "libtorrent/aux_/file_progress.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
+#include "libTAU/aux_/piece_picker.hpp"
+#include "libTAU/file_storage.hpp"
+#include "libTAU/aux_/file_progress.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	void file_progress::init(piece_picker const& picker, file_storage const& fs)
 	{

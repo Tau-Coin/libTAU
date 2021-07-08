@@ -10,16 +10,16 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/alert_manager.hpp"
-#include "libtorrent/alert_types.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/alert_manager.hpp"
+#include "libTAU/alert_types.hpp"
 
 #ifndef TORRENT_DISABLE_EXTENSIONS
-#include "libtorrent/extensions.hpp"
+#include "libTAU/extensions.hpp"
 #include <memory> // for shared_ptr
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	alert_manager::alert_manager(int const queue_limit, alert_category_t const alert_mask)

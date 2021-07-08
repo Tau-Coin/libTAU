@@ -7,14 +7,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/ip_helpers.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	bool is_ip_address(std::string const& host)

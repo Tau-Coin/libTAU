@@ -16,24 +16,24 @@ see LICENSE file.
 #include <functional>
 #include <tuple>
 
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/aux_/udp_tracker_connection.hpp"
-#include "libtorrent/hex.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/aux_/resolver_interface.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/aux_/time.hpp"
-#include "libtorrent/aux_/io.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_v6
-#include "libtorrent/aux_/peer.hpp"
-#include "libtorrent/error_code.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/aux_/udp_tracker_connection.hpp"
+#include "libTAU/hex.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/aux_/resolver_interface.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/aux_/time.hpp"
+#include "libTAU/aux_/io.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_v6
+#include "libTAU/aux_/peer.hpp"
+#include "libTAU/error_code.hpp"
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include "libtorrent/aux_/socket_io.hpp"
+#include "libTAU/aux_/socket_io.hpp"
 #endif
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	std::map<address, udp_tracker_connection::connection_cache_entry>
 		udp_tracker_connection::m_connection_cache;

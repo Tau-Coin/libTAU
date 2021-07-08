@@ -32,7 +32,7 @@ from __future__ import print_function
 # POSSIBILITY OF SUCH DAMAGE.
 
 # this script can parse and generate reports from the alert log from a
-# libtorrent session
+# libTAU session
 
 import os
 import sys

@@ -14,23 +14,23 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/http_connection.hpp"
-#include "libtorrent/aux_/escape_string.hpp"
-#include "libtorrent/aux_/instantiate_connection.hpp"
-#include "libtorrent/gzip.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/socket_type.hpp" // for async_shutdown
-#include "libtorrent/aux_/resolver_interface.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/aux_/time.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/debug.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/i2p_stream.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp"
-#include "libtorrent/aux_/ssl.hpp"
+#include "libTAU/aux_/http_connection.hpp"
+#include "libTAU/aux_/escape_string.hpp"
+#include "libTAU/aux_/instantiate_connection.hpp"
+#include "libTAU/gzip.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/socket_type.hpp" // for async_shutdown
+#include "libTAU/aux_/resolver_interface.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/aux_/time.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/debug.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/i2p_stream.hpp"
+#include "libTAU/aux_/ip_helpers.hpp"
+#include "libTAU/aux_/ssl.hpp"
 
 #include <functional>
 #include <string>
@@ -39,7 +39,7 @@ see LICENSE file.
 
 using namespace std::placeholders;
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 http_connection::http_connection(io_context& ios
 	, aux::resolver_interface& resolver

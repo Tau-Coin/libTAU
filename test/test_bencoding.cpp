@@ -9,8 +9,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/bdecode.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/bdecode.hpp"
 
 #include <iostream>
 #include <cstring>

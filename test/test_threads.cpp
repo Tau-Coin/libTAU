@@ -16,7 +16,7 @@ see LICENSE file.
 #include <condition_variable>
 
 #include "test.hpp"
-#include "libtorrent/time.hpp"
+#include "libTAU/time.hpp"
 
 using namespace lt;
 

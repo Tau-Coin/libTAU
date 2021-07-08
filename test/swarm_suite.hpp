@@ -10,7 +10,7 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/flags.hpp"
+#include "libTAU/flags.hpp"
 
 using test_flags_t = lt::flags::bitfield_flag<std::uint32_t, struct test_flags_tag>;
 

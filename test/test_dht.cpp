@@ -16,29 +16,29 @@ see LICENSE file.
 
 #ifndef TORRENT_DISABLE_DHT
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/kademlia/msg.hpp" // for verify_message
-#include "libtorrent/kademlia/node.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // for hash_address
-#include "libtorrent/aux_/ip_helpers.hpp"
-#include "libtorrent/performance_counters.hpp" // for counters
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/kademlia/ed25519.hpp"
-#include "libtorrent/hex.hpp" // to_hex, from_hex
-#include "libtorrent/aux_/bloom_filter.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/aux_/time.hpp"
-#include "libtorrent/aux_/listen_socket_handle.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/kademlia/msg.hpp" // for verify_message
+#include "libTAU/kademlia/node.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/bdecode.hpp"
+#include "libTAU/aux_/socket_io.hpp" // for hash_address
+#include "libTAU/aux_/ip_helpers.hpp"
+#include "libTAU/performance_counters.hpp" // for counters
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/kademlia/ed25519.hpp"
+#include "libTAU/hex.hpp" // to_hex, from_hex
+#include "libTAU/aux_/bloom_filter.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/aux_/time.hpp"
+#include "libTAU/aux_/listen_socket_handle.hpp"
+#include "libTAU/aux_/session_impl.hpp"
 
-#include "libtorrent/kademlia/node_id.hpp"
-#include "libtorrent/kademlia/routing_table.hpp"
-#include "libtorrent/kademlia/item.hpp"
-#include "libtorrent/kademlia/dht_observer.hpp"
-#include "libtorrent/kademlia/dht_tracker.hpp"
+#include "libTAU/kademlia/node_id.hpp"
+#include "libTAU/kademlia/routing_table.hpp"
+#include "libTAU/kademlia/item.hpp"
+#include "libTAU/kademlia/dht_observer.hpp"
+#include "libTAU/kademlia/dht_tracker.hpp"
 
 #include <numeric>
 #include <cstdarg>
@@ -1007,7 +1007,7 @@ void test_id_enforcement(address(&rand_addr)())
 	if (aux::is_v4(t.source))
 	{
 		// this is one of the test vectors from:
-		// http://libtorrent.org/dht_sec.html
+		// http://libTAU.org/dht_sec.html
 		t.source = udp::endpoint(addr("124.31.75.21"), 1);
 		nid = to_hash("5fbfbff10c5d6a4ec8a88e4c6ab4c28b95eee401");
 	}

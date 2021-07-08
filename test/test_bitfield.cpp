@@ -11,8 +11,8 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/bitfield.hpp"
-#include "libtorrent/aux_/cpuid.hpp"
+#include "libTAU/bitfield.hpp"
+#include "libTAU/aux_/cpuid.hpp"
 #include <cstdlib>
 
 using namespace lt;

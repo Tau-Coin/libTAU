@@ -10,14 +10,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session_stats.hpp" // for stats_metric
-#include "libtorrent/aux_/vector.hpp"
-#include "libtorrent/performance_counters.hpp" // for counters
+#include "libTAU/session_stats.hpp" // for stats_metric
+#include "libTAU/aux_/vector.hpp"
+#include "libTAU/performance_counters.hpp" // for counters
 
 #include <cstring>
 #include <algorithm>
 
-namespace libtorrent {
+namespace libTAU {
 
 namespace {
 

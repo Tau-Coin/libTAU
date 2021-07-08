@@ -11,14 +11,14 @@ see LICENSE file.
 
 #include "test.hpp"
 
-#include "libtorrent/aux_/bandwidth_manager.hpp"
-#include "libtorrent/aux_/bandwidth_queue_entry.hpp"
-#include "libtorrent/aux_/bandwidth_limit.hpp"
-#include "libtorrent/aux_/bandwidth_socket.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/stat.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
+#include "libTAU/aux_/bandwidth_manager.hpp"
+#include "libTAU/aux_/bandwidth_queue_entry.hpp"
+#include "libTAU/aux_/bandwidth_limit.hpp"
+#include "libTAU/aux_/bandwidth_socket.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/stat.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/session_settings.hpp"
 
 #include <cmath>
 #include <functional>

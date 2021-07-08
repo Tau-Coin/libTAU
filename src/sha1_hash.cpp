@@ -10,15 +10,15 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/sha1_hash.hpp"
-#include "libtorrent/hex.hpp" // to_hex, from_hex
+#include "libTAU/sha1_hash.hpp"
+#include "libTAU/hex.hpp" // to_hex, from_hex
 
 #if TORRENT_USE_IOSTREAM
 #include <iostream>
 #include <iomanip>
 #endif // TORRENT_USE_IOSTREAM
 
-namespace libtorrent {
+namespace libTAU {
 
 #if TORRENT_USE_IOSTREAM
 

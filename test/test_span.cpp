@@ -9,8 +9,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/span.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/span.hpp"
 
 #include "test.hpp"
 #include "setup_transfer.hpp"

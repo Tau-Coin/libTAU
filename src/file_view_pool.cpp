@@ -8,26 +8,26 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #if TORRENT_HAVE_MMAP || TORRENT_HAVE_MAP_VIEW_OF_FILE
 
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/file_view_pool.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/file_storage.hpp"
-#include "libtorrent/units.hpp"
-#include "libtorrent/disk_interface.hpp"
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/file_view_pool.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/file_storage.hpp"
+#include "libTAU/units.hpp"
+#include "libTAU/disk_interface.hpp"
+#include "libTAU/aux_/path.hpp"
 #ifdef TORRENT_WINDOWS
-#include "libtorrent/aux_/win_util.hpp"
+#include "libTAU/aux_/win_util.hpp"
 #endif
 
 #include <limits>
 
-using namespace libtorrent::flags;
+using namespace libTAU::flags;
 
-namespace libtorrent { namespace aux {
+namespace libTAU { namespace aux {
 
 	file_view_pool::file_view_pool(int size) : m_size(size) {}
 	file_view_pool::~file_view_pool() = default;

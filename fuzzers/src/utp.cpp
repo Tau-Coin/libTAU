@@ -8,11 +8,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/utp_socket_manager.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/aux_/utp_stream.hpp"
-#include "libtorrent/aux_/udp_socket.hpp"
+#include "libTAU/aux_/utp_socket_manager.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/aux_/utp_stream.hpp"
+#include "libTAU/aux_/udp_socket.hpp"
 
 using namespace lt;
 

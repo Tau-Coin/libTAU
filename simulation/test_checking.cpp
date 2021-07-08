@@ -30,14 +30,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/aux_/deadline_timer.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/torrent_status.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/file.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/hex.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/aux_/deadline_timer.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/torrent_status.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/file.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/hex.hpp"
 #include "simulator/simulator.hpp"
 #include "simulator/utils.hpp"
 

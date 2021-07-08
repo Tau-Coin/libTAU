@@ -11,33 +11,33 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/udp_socket.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/error.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/aux_/debug.hpp"
-#include "libtorrent/aux_/deadline_timer.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_v4
-#include "libtorrent/aux_/alert_manager.hpp"
-#include "libtorrent/socks5_stream.hpp" // for socks_error
-#include "libtorrent/aux_/keepalive.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/udp_socket.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/error.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/debug.hpp"
+#include "libTAU/aux_/deadline_timer.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_v4
+#include "libTAU/aux_/alert_manager.hpp"
+#include "libTAU/socks5_stream.hpp" // for socks_error
+#include "libTAU/aux_/keepalive.hpp"
 
 #include <cstdlib>
 #include <functional>
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/asio/ip/v6_only.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #ifdef _WIN32
 // for SIO_KEEPALIVE_VALS
 #include <mstcpip.h>
 #endif
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 using namespace std::placeholders;
 
@@ -131,7 +131,7 @@ struct set_dont_frag
 	{
 		if (!m_df) return;
 		error_code ignore_errors;
-		m_socket.set_option(libtorrent::dont_fragment(true), ignore_errors);
+		m_socket.set_option(libTAU::dont_fragment(true), ignore_errors);
 		TORRENT_ASSERT_VAL(!ignore_errors, ignore_errors.message());
 	}
 
@@ -139,7 +139,7 @@ struct set_dont_frag
 	{
 		if (!m_df) return;
 		error_code ignore_errors;
-		m_socket.set_option(libtorrent::dont_fragment(false), ignore_errors);
+		m_socket.set_option(libTAU::dont_fragment(false), ignore_errors);
 		TORRENT_ASSERT_VAL(!ignore_errors, ignore_errors.message());
 	}
 
@@ -320,7 +320,7 @@ void udp_socket::wrap(udp::endpoint const& ep, span<char const> p
 	, error_code& ec, udp_send_flags_t const flags)
 {
 	TORRENT_UNUSED(flags);
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	std::array<char, max_header_size> header;
 	char* h = header.data();
@@ -343,7 +343,7 @@ void udp_socket::wrap(udp::endpoint const& ep, span<char const> p
 void udp_socket::wrap(char const* hostname, int const port, span<char const> p
 	, error_code& ec, udp_send_flags_t const flags)
 {
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	std::array<char, max_header_size> header;
 	char* h = header.data();
@@ -374,7 +374,7 @@ void udp_socket::wrap(char const* hostname, int const port, span<char const> p
 // forwarded packet
 bool udp_socket::unwrap(udp::endpoint& from, span<char>& buf)
 {
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	// the minimum socks5 header size
 	auto const size = aux::numeric_cast<int>(buf.size());
@@ -415,7 +415,7 @@ bool udp_socket::unwrap(udp::endpoint& from, span<char>& buf)
 }
 
 #if !defined BOOST_ASIO_ENABLE_CANCELIO && defined TORRENT_WINDOWS
-#error BOOST_ASIO_ENABLE_CANCELIO needs to be defined when building libtorrent to enable cancel() in asio on windows
+#error BOOST_ASIO_ENABLE_CANCELIO needs to be defined when building libTAU to enable cancel() in asio on windows
 #endif
 
 void udp_socket::close()
@@ -675,7 +675,7 @@ void socks5::on_connected(error_code const& e)
 		return;
 	}
 
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	// send SOCKS5 authentication methods
 	char* p = m_tmp_buf.data();
@@ -731,7 +731,7 @@ void socks5::handshake2(error_code const& e)
 		return;
 	}
 
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	char* p = m_tmp_buf.data();
 	int const version = read_uint8(p);
@@ -821,7 +821,7 @@ void socks5::handshake4(error_code const& e)
 		return;
 	}
 
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	char* p = m_tmp_buf.data();
 	int const version = read_uint8(p);
@@ -834,7 +834,7 @@ void socks5::handshake4(error_code const& e)
 
 void socks5::socks_forward_udp()
 {
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	// send SOCKS5 UDP command
 	char* p = m_tmp_buf.data();
@@ -883,7 +883,7 @@ void socks5::connect2(error_code const& e)
 		return;
 	}
 
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	char* p = m_tmp_buf.data();
 	int const version = read_uint8(p); // VERSION

@@ -10,8 +10,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/xml_parse.hpp"
-#include "libtorrent/upnp.hpp"
+#include "libTAU/aux_/xml_parse.hpp"
+#include "libTAU/upnp.hpp"
 #include "test.hpp"
 #include <iostream>
 #include <functional>

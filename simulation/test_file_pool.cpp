@@ -33,12 +33,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "setup_swarm.hpp"
 #include "test.hpp"
 #include "utils.hpp"
-#include "libtorrent/alert.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_stats.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/disk_interface.hpp"
+#include "libTAU/alert.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_stats.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/disk_interface.hpp"
 
 using namespace lt;
 

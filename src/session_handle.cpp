@@ -32,23 +32,23 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "libtorrent/session_handle.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/aux_/session_call.hpp"
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/peer_class.hpp"
-#include "libtorrent/peer_class_type_filter.hpp"
-#include "libtorrent/aux_/scope_end.hpp"
+#include "libTAU/session_handle.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/aux_/session_call.hpp"
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/peer_class.hpp"
+#include "libTAU/peer_class_type_filter.hpp"
+#include "libTAU/aux_/scope_end.hpp"
 
 #if TORRENT_ABI_VERSION == 1
-#include "libtorrent/read_resume_data.hpp"
+#include "libTAU/read_resume_data.hpp"
 #endif
 
-using libtorrent::aux::session_impl;
+using libTAU::aux::session_impl;
 
-namespace libtorrent {
+namespace libTAU {
 
 	constexpr peer_class_t session_handle::global_peer_class_id;
 	constexpr peer_class_t session_handle::tcp_peer_class_id;
@@ -971,4 +971,4 @@ namespace {
 		async_call(&session_impl::reopen_network_sockets, options);
 	}
 
-} // namespace libtorrent
+} // namespace libTAU

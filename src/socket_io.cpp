@@ -10,15 +10,15 @@ see LICENSE file.
 
 #include <string>
 
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/aux_/io_bytes.hpp" // for write_uint16
-#include "libtorrent/hasher.hpp" // for hasher
-#include "libtorrent/aux_/escape_string.hpp" // for trim
+#include "libTAU/error_code.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/aux_/io_bytes.hpp" // for write_uint16
+#include "libTAU/hasher.hpp" // for hasher
+#include "libTAU/aux_/escape_string.hpp" // for trim
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	std::string print_address(address const& addr)
 	{

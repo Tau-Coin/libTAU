@@ -12,18 +12,18 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <libtorrent/kademlia/get_peers.hpp>
-#include <libtorrent/kademlia/node.hpp>
-#include <libtorrent/kademlia/dht_observer.hpp>
-#include <libtorrent/aux_/socket_io.hpp>
-#include <libtorrent/performance_counters.hpp>
-#include <libtorrent/aux_/ip_helpers.hpp> // for is_v4
+#include <libTAU/kademlia/get_peers.hpp>
+#include <libTAU/kademlia/node.hpp>
+#include <libTAU/kademlia/dht_observer.hpp>
+#include <libTAU/aux_/socket_io.hpp>
+#include <libTAU/performance_counters.hpp>
+#include <libTAU/aux_/ip_helpers.hpp> // for is_v4
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include <libtorrent/hex.hpp> // to_hex
+#include <libTAU/hex.hpp> // to_hex
 #endif
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 
 void get_peers_observer::reply(msg const& m)
 {
@@ -58,7 +58,7 @@ void get_peers_observer::reply(msg const& m)
 		}
 		else
 		{
-			// assume it's uTorrent/libtorrent format
+			// assume it's uTorrent/libTAU format
 			peer_list = aux::read_endpoint_list<tcp::endpoint>(n);
 #ifndef TORRENT_DISABLE_LOGGING
 			log_peers(m, r, n.list_size());
@@ -142,4 +142,4 @@ observer_ptr get_peers::new_observer(udp::endpoint const& ep
 	return o;
 }
 
-} // namespace libtorrent::dht
+} // namespace libTAU::dht

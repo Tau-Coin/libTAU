@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cstring>
 
-#include "libtorrent/aux_/sha512.hpp"
+#include "libTAU/aux_/sha512.hpp"
 
 #if !defined TORRENT_USE_LIBGCRYPT \
 	&& !TORRENT_USE_COMMONCRYPTO \
@@ -10,7 +10,7 @@
 	&& !defined TORRENT_USE_LIBCRYPTO
 
 // ignore warnings in this file
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 /* LibTomCrypt, modular cryptographic library -- Tom St Denis
  *
@@ -31,7 +31,7 @@ using i32 = std::int32_t;
 #define UINT64_C(x) x ## LL
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 /* the K array */
@@ -286,6 +286,6 @@ int SHA512_final(std::uint8_t* out, sha512_ctx* md)
     return 0;
 }
 } // aux namespace
-} // libtorrent namespace
+} // libTAU namespace
 
 #endif

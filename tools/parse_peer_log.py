@@ -7,7 +7,7 @@ import glob
 import os
 import sys
 
-# usage: parse_peer_log <path-to-libtorrent-peer-logs>
+# usage: parse_peer_log <path-to-libTAU-peer-logs>
 
 log_files = []
 

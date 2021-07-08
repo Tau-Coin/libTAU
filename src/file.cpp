@@ -12,9 +12,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/disable_warnings_push.hpp"
-#include "libtorrent/span.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
+#include "libTAU/span.hpp"
 #include <mutex> // for call_once
 
 #ifdef __GNUC__
@@ -57,25 +57,25 @@ struct iovec
 #pragma GCC diagnostic pop
 #endif
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-#include "libtorrent/aux_/file.hpp"
-#include "libtorrent/aux_/path.hpp" // for convert_to_native_path_string
-#include "libtorrent/aux_/string_util.hpp"
+#include "libTAU/aux_/file.hpp"
+#include "libTAU/aux_/path.hpp" // for convert_to_native_path_string
+#include "libTAU/aux_/string_util.hpp"
 #include <cstring>
 
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/aux_/open_mode.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/aux_/open_mode.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #include <sys/stat.h>
 
 #ifdef TORRENT_WINDOWS
 // windows part
 
-#include "libtorrent/aux_/win_util.hpp"
+#include "libTAU/aux_/win_util.hpp"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -103,13 +103,13 @@ struct iovec
 
 #endif // posix part
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #ifndef INVALID_HANDLE_VALUE
 #define INVALID_HANDLE_VALUE (-1)
 #endif
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 #ifdef TORRENT_WINDOWS
 namespace {

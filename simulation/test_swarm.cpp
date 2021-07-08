@@ -33,14 +33,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "setup_swarm.hpp"
 #include "test.hpp"
 #include "utils.hpp"
-#include "libtorrent/alert.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_stats.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/time.hpp"
+#include "libTAU/alert.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_stats.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/time.hpp"
 #include "settings.hpp"
 #include "setup_transfer.hpp" // for ep()
 #include "fake_peer.hpp"
@@ -406,7 +406,7 @@ TORRENT_TEST(shutdown)
 		});
 }
 
-// make the delays on the connections unreasonable long, so libtorrent times-out
+// make the delays on the connections unreasonable long, so libTAU times-out
 // the connection attempts
 struct timeout_config : sim::default_config
 {
@@ -931,7 +931,7 @@ TORRENT_TEST(pex)
 		ses->async_add_torrent(p);
 
 		ses->set_alert_notify([&, i]() {
-			// this function is called inside libtorrent and we cannot perform work
+			// this function is called inside libTAU and we cannot perform work
 			// immediately in it. We have to notify the outside to pull all the alerts
 			post(*io_service[i], [&,i]()
 			{

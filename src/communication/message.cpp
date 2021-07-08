@@ -6,9 +6,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/communication/message.hpp"
+#include "libTAU/communication/message.hpp"
 
-namespace libtorrent {
+namespace libTAU {
     namespace communication {
 
         message::message(aux::bytesConstRef _rlp) {

@@ -9,21 +9,21 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <libtorrent/hasher.hpp>
-#include <libtorrent/kademlia/item.hpp>
-#include <libtorrent/bencode.hpp>
-#include <libtorrent/kademlia/ed25519.hpp>
-#include <libtorrent/aux_/numeric_cast.hpp>
+#include <libTAU/hasher.hpp>
+#include <libTAU/kademlia/item.hpp>
+#include <libTAU/bencode.hpp>
+#include <libTAU/kademlia/ed25519.hpp>
+#include <libTAU/aux_/numeric_cast.hpp>
 
 #include <cstdio> // for snprintf
 #include <cinttypes> // for PRId64 et.al.
 #include <algorithm> // for copy
 
 #if TORRENT_USE_ASSERTS
-#include "libtorrent/bdecode.hpp"
+#include "libTAU/bdecode.hpp"
 #endif
 
-namespace libtorrent { namespace dht {
+namespace libTAU { namespace dht {
 
 namespace {
 
@@ -186,4 +186,4 @@ void item::assign(entry v, span<char const> salt
 	m_value = std::move(v);
 }
 
-} } // namespace libtorrent::dht
+} } // namespace libTAU::dht

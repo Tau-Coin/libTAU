@@ -12,10 +12,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/aux_/storage_utils.hpp"
-#include "libtorrent/hasher.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/aux_/storage_utils.hpp"
+#include "libTAU/hasher.hpp"
 
 #include "try_signal.hpp"
 
@@ -27,27 +27,27 @@ see LICENSE file.
 #include <cstdio>
 #include <optional>
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #if TORRENT_HAS_SYMLINK
 #include <unistd.h> // for symlink()
 #endif
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-#include "libtorrent/aux_/mmap_storage.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/aux_/file_view_pool.hpp"
-#include "libtorrent/disk_buffer_holder.hpp"
-#include "libtorrent/aux_/stat_cache.hpp"
-#include "libtorrent/hex.hpp" // to_hex
+#include "libTAU/aux_/mmap_storage.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/aux_/file_view_pool.hpp"
+#include "libTAU/disk_buffer_holder.hpp"
+#include "libTAU/aux_/stat_cache.hpp"
+#include "libTAU/hex.hpp" // to_hex
 
 #if TORRENT_HAVE_MMAP || TORRENT_HAVE_MAP_VIEW_OF_FILE
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	mmap_storage::mmap_storage(storage_params const& params
 		, aux::file_view_pool& pool)
@@ -233,7 +233,7 @@ namespace libtorrent::aux {
 		// if some files have priority 0, we need to check if they exist on the
 		// filesystem, in which case we won't use a partfile for them.
 		// this is to be backwards compatible with previous versions of
-		// libtorrent, when part files were not supported.
+		// libTAU, when part files were not supported.
 		for (file_index_t i(0); i < m_file_priority.end_index(); ++i)
 		{
 			if (m_file_priority[i] != dont_download || fs.pad_file_at(i))
@@ -890,6 +890,6 @@ namespace libtorrent::aux {
 
 		return false;
 	}
-} // namespace libtorrent::aux
+} // namespace libTAU::aux
 
 #endif // TORRENT_HAVE_MMAP || TORRENT_HAVE_MAP_VIEW_OF_FILE

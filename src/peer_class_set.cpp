@@ -8,11 +8,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/peer_class_set.hpp"
+#include "libTAU/aux_/peer_class_set.hpp"
 
 #include <algorithm> // for find
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	void peer_class_set::add_class(peer_class_pool& pool, peer_class_t c)
 	{

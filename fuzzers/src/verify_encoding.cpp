@@ -7,7 +7,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/torrent_info.hpp"
+#include "libTAU/torrent_info.hpp"
 
 extern "C" int LLVMFuzzerTestOneInput(uint8_t const* data, size_t size)
 {

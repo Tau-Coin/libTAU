@@ -3,7 +3,7 @@
 
 import sys
 
-# to use this script, first run 'sample' to sample your libtorrent based process
+# to use this script, first run 'sample' to sample your libTAU based process
 # the output can then be passed to this script to auto-fold call stacks at
 # relevant depths and to filter out low sample counts
 f = open(sys.argv[1])
@@ -71,7 +71,7 @@ for line in f:
         fold = indentation
     if 'free_multiple_buffers' in fun:
         fold = indentation
-    if 'libtorrent::condition::wait' in fun:
+    if 'libTAU::condition::wait' in fun:
         fold = indentation
     if 'allocate_buffer' in fun:
         fold = indentation
@@ -95,13 +95,13 @@ for line in f:
         fold = indentation
     if '::check_invariant()' in fun:
         fold = indentation
-    if 'libtorrent::condition::wait' in fun:
+    if 'libTAU::condition::wait' in fun:
         fold = indentation
     if '_sigtramp' in fun:
         fold = indentation
     if 'time_now_hires' in fun:
         fold = indentation
-    if 'libtorrent::sleep' in fun:
+    if 'libTAU::sleep' in fun:
         fold = indentation
     if 'puts' == fun:
         fold = indentation

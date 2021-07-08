@@ -11,13 +11,13 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/file.hpp"
-#include "libtorrent/aux_/directory.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/string_view.hpp"
-#include "libtorrent/aux_/file_view_pool.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/file.hpp"
+#include "libTAU/aux_/directory.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/string_view.hpp"
+#include "libTAU/aux_/file_view_pool.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
 #include "test.hpp"
 #include "test_utils.hpp"
 #include <vector>

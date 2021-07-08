@@ -9,13 +9,13 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/platform_util.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/platform_util.hpp"
 
 #include <cstdint>
 #include <limits>
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #if TORRENT_USE_RLIMIT
 
@@ -34,12 +34,12 @@ const rlim_t rlim_infinity = RLIM_INFINITY;
 #endif
 
 #if defined TORRENT_WINDOWS
-#include "libtorrent/aux_/windows.hpp"
+#include "libTAU/aux_/windows.hpp"
 #endif
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	int max_open_files()
 	{

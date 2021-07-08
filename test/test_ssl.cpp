@@ -10,14 +10,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/session_status.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/hex.hpp" // for to_hex
-#include "libtorrent/time.hpp"
-#include "libtorrent/aux_/ssl.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/session_status.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/hex.hpp" // for to_hex
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/ssl.hpp"
 
 #include "test.hpp"
 #include "test_utils.hpp"
@@ -26,9 +26,9 @@ see LICENSE file.
 
 #if TORRENT_USE_SSL
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/asio/connect.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include <functional>
 #include <tuple>

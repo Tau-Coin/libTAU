@@ -7,12 +7,12 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/settings_pack.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/settings_pack.hpp"
 
 #include <functional>
 
-namespace libtorrent { namespace aux {
+namespace libTAU { namespace aux {
 
 	session_settings::session_settings() = default;
 

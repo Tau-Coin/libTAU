@@ -12,23 +12,23 @@ see LICENSE file.
 
 #include <cctype>
 
-#include "libtorrent/aux_/io.hpp"
-#include "libtorrent/aux_/session_interface.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/aux_/http_tracker_connection.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/aux_/ssl.hpp"
-#include "libtorrent/aux_/tracker_manager.hpp"
-#include "libtorrent/aux_/udp_tracker_connection.hpp"
+#include "libTAU/aux_/io.hpp"
+#include "libTAU/aux_/session_interface.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/aux_/http_tracker_connection.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/aux_/ssl.hpp"
+#include "libTAU/aux_/tracker_manager.hpp"
+#include "libTAU/aux_/udp_tracker_connection.hpp"
 
 #if TORRENT_USE_RTC
-#include "libtorrent/aux_/websocket_tracker_connection.hpp"
+#include "libTAU/aux_/websocket_tracker_connection.hpp"
 #endif
 
 using namespace std::placeholders;
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	timeout_handler::timeout_handler(io_context& ios)
 		: m_start_time(clock_type::now())

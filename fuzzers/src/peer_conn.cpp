@@ -10,15 +10,15 @@ see LICENSE file.
 
 #include <memory>
 #include <iostream>
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/random.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/random.hpp"
 
-#include "libtorrent/io_context.hpp"
+#include "libTAU/io_context.hpp"
 
 using namespace lt;
 
@@ -160,7 +160,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t const* data, size_t size)
 	size -= 8;
 	std::memcpy(handshake.data() + 68, data, size);
 
-	// we're likely to fail to write entire (garbage) messages, as libtorrent may
+	// we're likely to fail to write entire (garbage) messages, as libTAU may
 	// disconnect us half-way through. This may fail with broken_pipe for
 	// instance
 	error_code ignore;

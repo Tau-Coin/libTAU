@@ -11,10 +11,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/error_code.hpp"
+#include "libTAU/bdecode.hpp"
+#include "libTAU/aux_/alloca.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/error_code.hpp"
 #include <limits>
 #include <cstring> // for memset
 #include <cstdio> // for snprintf
@@ -25,7 +25,7 @@ see LICENSE file.
 #define BOOST_SYSTEM_NOEXCEPT throw()
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 
 	using aux::bdecode_token;
 

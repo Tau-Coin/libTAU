@@ -8,11 +8,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/resolver.hpp"
-#include "libtorrent/aux_/debug.hpp"
-#include "libtorrent/aux_/time.hpp"
+#include "libTAU/aux_/resolver.hpp"
+#include "libTAU/aux_/debug.hpp"
+#include "libTAU/aux_/time.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	resolver::resolver(io_context& ios)
 		: m_ios(ios)

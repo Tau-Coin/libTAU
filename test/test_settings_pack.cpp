@@ -9,11 +9,11 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/bdecode.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/bdecode.hpp"
 #include <iostream>
 
 using namespace lt;
@@ -206,7 +206,7 @@ TORRENT_TEST(load_pack_from_dict)
 
 TORRENT_TEST(settings_pack_abi)
 {
-	// make sure enum values are preserved across libtorrent versions
+	// make sure enum values are preserved across libTAU versions
 	// for ABI compatibility
 	// These values are only allowed to change across major versions
 

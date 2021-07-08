@@ -15,17 +15,17 @@ see LICENSE file.
 #include <cstdlib>
 #include <cinttypes>
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/http_parser.hpp"
-#include "libtorrent/hex.hpp" // for hex_to_int
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/parse_url.hpp" // for parse_url_components
-#include "libtorrent/aux_/string_util.hpp" // for ensure_trailing_slash, to_lower
-#include "libtorrent/aux_/escape_string.hpp" // for read_until
-#include "libtorrent/time.hpp" // for seconds32
-#include "libtorrent/aux_/numeric_cast.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/http_parser.hpp"
+#include "libTAU/hex.hpp" // for hex_to_int
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/parse_url.hpp" // for parse_url_components
+#include "libTAU/aux_/string_util.hpp" // for ensure_trailing_slash, to_lower
+#include "libTAU/aux_/escape_string.hpp" // for read_until
+#include "libTAU/time.hpp" // for seconds32
+#include "libTAU/aux_/numeric_cast.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	bool is_ok_status(int http_status)
 	{

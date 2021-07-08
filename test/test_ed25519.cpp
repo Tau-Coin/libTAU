@@ -14,8 +14,8 @@ see LICENSE file.
 
 #include <memory>
 
-#include "libtorrent/kademlia/ed25519.hpp"
-#include "libtorrent/hex.hpp"
+#include "libTAU/kademlia/ed25519.hpp"
+#include "libTAU/hex.hpp"
 
 using namespace lt;
 using namespace lt::dht;

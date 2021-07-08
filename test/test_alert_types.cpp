@@ -9,8 +9,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/alert_manager.hpp"
-#include "libtorrent/alert_types.hpp"
+#include "libTAU/aux_/alert_manager.hpp"
+#include "libTAU/alert_types.hpp"
 #include "test.hpp"
 #include "setup_transfer.hpp"
 

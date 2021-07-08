@@ -9,14 +9,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/disk_io_job.hpp"
-#include "libtorrent/disk_buffer_holder.hpp"
+#include "libTAU/aux_/disk_io_job.hpp"
+#include "libTAU/disk_buffer_holder.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/variant/get.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 namespace {

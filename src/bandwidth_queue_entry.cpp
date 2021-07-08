@@ -12,9 +12,9 @@ see LICENSE file.
 #include <cstdint>
 #include <algorithm>
 
-#include "libtorrent/aux_/bandwidth_queue_entry.hpp"
+#include "libTAU/aux_/bandwidth_queue_entry.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	bw_request::bw_request(std::shared_ptr<bandwidth_socket> pe

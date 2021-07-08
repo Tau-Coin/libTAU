@@ -6,11 +6,11 @@
 // see LICENSE file.
 //
 
-#include <libtorrent/aux_/common.h>
-#include "libtorrent/aux_/vector_ref.h"
-#include "libtorrent/communication/message_db_impl.hpp"
+#include <libTAU/aux_/common.h>
+#include "libTAU/aux_/vector_ref.h"
+#include "libTAU/communication/message_db_impl.hpp"
 
-namespace libtorrent {
+namespace libTAU {
     namespace communication {
 
         // table friends: public key

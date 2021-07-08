@@ -8,11 +8,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <libtorrent/kademlia/ed25519.hpp>
-#include <libtorrent/aux_/random.hpp>
-#include <libtorrent/aux_/ed25519.hpp>
+#include <libTAU/kademlia/ed25519.hpp>
+#include <libTAU/aux_/random.hpp>
+#include <libTAU/aux_/ed25519.hpp>
 
-namespace libtorrent { namespace dht {
+namespace libTAU { namespace dht {
 
 	std::array<char, 32> ed25519_create_seed()
 	{

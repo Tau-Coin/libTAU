@@ -8,8 +8,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/string_view.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/string_view.hpp"
 
 #include <cstdint>
 

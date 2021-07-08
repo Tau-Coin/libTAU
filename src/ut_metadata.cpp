@@ -20,24 +20,24 @@ see LICENSE file.
 #include <numeric>
 #include <cstdio>
 
-#include "libtorrent/aux_/bt_peer_connection.hpp"
-#include "libtorrent/peer_connection_handle.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/torrent_handle.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/extensions/ut_metadata.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/performance_counters.hpp" // for counters
-#include "libtorrent/aux_/time.hpp"
+#include "libTAU/aux_/bt_peer_connection.hpp"
+#include "libTAU/peer_connection_handle.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/torrent_handle.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/extensions/ut_metadata.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/performance_counters.hpp" // for counters
+#include "libTAU/aux_/time.hpp"
 
 #if TORRENT_USE_ASSERTS
-#include "libtorrent/hasher.hpp"
+#include "libTAU/hasher.hpp"
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 namespace {
 
 	enum
@@ -597,7 +597,7 @@ namespace {
 
 } }
 
-namespace libtorrent {
+namespace libTAU {
 
 	std::shared_ptr<torrent_plugin> create_ut_metadata_plugin(torrent_handle const& th, client_data_t)
 	{

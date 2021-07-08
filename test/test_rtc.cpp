@@ -9,9 +9,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include <libtorrent/aux_/torrent.hpp>
-#include <libtorrent/magnet_uri.hpp>
+#include "libTAU/config.hpp"
+#include <libTAU/aux_/torrent.hpp>
+#include <libTAU/magnet_uri.hpp>
 
 #include "test.hpp"
 #include "test_utils.hpp"

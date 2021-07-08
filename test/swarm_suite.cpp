@@ -11,13 +11,13 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_settings.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_settings.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/aux_/path.hpp"
 #include <iostream>
 #include <tuple>
 

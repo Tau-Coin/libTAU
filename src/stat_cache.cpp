@@ -9,12 +9,12 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/stat_cache.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/aux_/stat_cache.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/aux_/path.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	stat_cache::stat_cache() = default;
 	stat_cache::~stat_cache() = default;

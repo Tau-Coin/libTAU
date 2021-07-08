@@ -3,7 +3,7 @@ import feature : feature ;
 
 use-project /torrent : .. ;
 
-lib libtorrent_test
+lib libTAU_test
 	: # sources
 	main.cpp
 	test.cpp
@@ -40,7 +40,7 @@ lib libtorrent_test
 	<include>.
 ;
 
-explicit libtorrent_test ;
+explicit libTAU_test ;
 
 lib advapi32 : : <name>Advapi32 ;
 
@@ -60,7 +60,7 @@ local default-build =
 project
 	: requirements
 	<export-extra>on
-	<library>libtorrent_test
+	<library>libTAU_test
 	<library>/torrent//torrent
 	# C4127: conditional expression is constant
 	<toolset>msvc:<cflags>/wd4127
@@ -102,7 +102,7 @@ install stage_enum_if : enum_if : <location>. ;
 
 install stage_dependencies
 	: /torrent//torrent
-	  libtorrent_test
+	  libTAU_test
 	: <location>dependencies
 	<install-dependencies>on
 	<install-type>SHARED_LIB
@@ -237,7 +237,7 @@ explicit test_hasher ;
 run test_hasher512.cpp ;
 explicit test_hasher512 ;
 
-# unfortunately, some tests spin up full libtorrent sessions, with threads and
+# unfortunately, some tests spin up full libTAU sessions, with threads and
 # real sockets and sometimes fail for timing issues. This is a list of all the
 # deterministic tests
 alias deterministic-tests :

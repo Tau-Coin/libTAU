@@ -20,14 +20,14 @@ see LICENSE file.
 #include <cstring>
 #include <optional>
 
-#include "libtorrent/identify_client.hpp"
-#include "libtorrent/fingerprint.hpp"
-#include "libtorrent/aux_/string_util.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
+#include "libTAU/identify_client.hpp"
+#include "libTAU/fingerprint.hpp"
+#include "libTAU/aux_/string_util.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
 
 namespace {
 
-	using namespace libtorrent;
+	using namespace libTAU;
 
 	int decode_digit(std::uint8_t c)
 	{
@@ -168,7 +168,7 @@ namespace {
 		, {"LK", "Linkage"}
 		, {"LP", "lphant"}
 		, {"LR", "LibreTorrent"}
-		, {"LT", "libtorrent"}
+		, {"LT", "libTAU"}
 		, {"LW", "Limewire"}
 		, {"M",  "Mainline"}
 		, {"ML", "MLDonkey"}
@@ -331,7 +331,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace libtorrent {
+namespace libTAU {
 
 #if TORRENT_ABI_VERSION == 1
 
@@ -414,4 +414,4 @@ namespace aux {
 	}
 
 } // aux
-} // libtorrent
+} // libTAU

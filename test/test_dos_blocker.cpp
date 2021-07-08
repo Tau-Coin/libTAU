@@ -10,12 +10,12 @@ see LICENSE file.
 
 #include "test.hpp"
 #include "setup_transfer.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/kademlia/dos_blocker.hpp"
-#include "libtorrent/kademlia/dht_observer.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // for print_endpoint
+#include "libTAU/address.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/kademlia/dos_blocker.hpp"
+#include "libTAU/kademlia/dht_observer.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/aux_/socket_io.hpp" // for print_endpoint
 #include <cstdarg>
 
 using namespace lt;

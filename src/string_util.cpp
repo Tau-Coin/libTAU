@@ -10,17 +10,17 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/string_util.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/string_util.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/assert.hpp"
 
 #include <algorithm> // for search
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	// We need well defined results that don't depend on locale
 	std::array<char, 4 + std::numeric_limits<std::int64_t>::digits10>

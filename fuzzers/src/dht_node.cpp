@@ -8,11 +8,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/kademlia/dht_tracker.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/kademlia/dht_observer.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
+#include "libTAU/kademlia/dht_tracker.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/kademlia/dht_observer.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/aux_/session_impl.hpp"
 
 #include <memory>
 

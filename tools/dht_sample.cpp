@@ -9,10 +9,10 @@ see LICENSE file.
 */
 
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/aux_/random.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/aux_/random.hpp"
 
 #include <fstream>
 #include <chrono>

@@ -11,16 +11,16 @@ see LICENSE file.
 
 #include <algorithm>
 
-#include "libtorrent/kademlia/node_id.hpp"
-#include "libtorrent/kademlia/node_entry.hpp"
-#include "libtorrent/kademlia/ed25519.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_local et.al
-#include "libtorrent/aux_/random.hpp" // for random
-#include "libtorrent/hasher.hpp" // for hasher
-#include "libtorrent/aux_/crc32c.hpp" // for crc32c
+#include "libTAU/kademlia/node_id.hpp"
+#include "libTAU/kademlia/node_entry.hpp"
+#include "libTAU/kademlia/ed25519.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_local et.al
+#include "libTAU/aux_/random.hpp" // for random
+#include "libTAU/hasher.hpp" // for hasher
+#include "libTAU/aux_/crc32c.hpp" // for crc32c
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 
 // returns the distance between the two nodes
 // using the kademlia XOR-metric
@@ -85,12 +85,12 @@ node_id generate_random_id()
 	return node_id(span<char const>(pk.bytes));
 }
 
-node_id get_node_id(libtorrent::aux::session_settings const& settings)
+node_id get_node_id(libTAU::aux::session_settings const& settings)
 {
 	std::array<char, 32> seed;
 	public_key pk;
 
-	const char* account_seed = settings.get_str(libtorrent::settings_pack::account_seed).c_str();
+	const char* account_seed = settings.get_str(libTAU::settings_pack::account_seed).c_str();
 	std::copy(account_seed, account_seed + 32, seed.begin());
 	std::tie(pk, std::ignore) = ed25519_create_keypair(ed25519_create_seed());
 
@@ -125,4 +125,4 @@ node_id generate_prefix_mask(int const bits)
 	return mask;
 }
 
-} // namespace libtorrent::dht
+} // namespace libTAU::dht

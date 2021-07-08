@@ -9,7 +9,7 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/heterogeneous_queue.hpp"
+#include "libTAU/aux_/heterogeneous_queue.hpp"
 
 namespace {
 

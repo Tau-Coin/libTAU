@@ -15,35 +15,35 @@ see LICENSE file.
 
 #include <functional>
 
-#include "libtorrent/aux_/peer_connection.hpp"
-#include "libtorrent/aux_/web_peer_connection.hpp"
-#include "libtorrent/aux_/peer_list.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/socket_type.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/aux_/session_interface.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/aux_/torrent_peer_allocator.hpp"
-#include "libtorrent/aux_/ip_voter.hpp" // for external_ip
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_v6
+#include "libTAU/aux_/peer_connection.hpp"
+#include "libTAU/aux_/web_peer_connection.hpp"
+#include "libTAU/aux_/peer_list.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/socket_type.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/session_interface.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/aux_/torrent_peer_allocator.hpp"
+#include "libTAU/aux_/ip_voter.hpp" // for external_ip
+#include "libTAU/aux_/ip_helpers.hpp" // for is_v6
 
 #if TORRENT_USE_ASSERTS
-#include "libtorrent/aux_/socket_io.hpp" // for print_endpoint
+#include "libTAU/aux_/socket_io.hpp" // for print_endpoint
 #endif
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include "libtorrent/aux_/socket_io.hpp" // for print_endpoint
+#include "libTAU/aux_/socket_io.hpp" // for print_endpoint
 #endif
 
 using namespace std::placeholders;
 
 namespace {
 
-	using namespace libtorrent;
+	using namespace libTAU;
 
 	struct match_peer_endpoint
 	{
@@ -120,7 +120,7 @@ namespace {
 
 } // anonymous namespace
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	peer_list::peer_list(torrent_peer_allocator_interface& alloc)
 		: m_locked_peer(nullptr)

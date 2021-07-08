@@ -7,10 +7,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/disk_buffer_holder.hpp"
+#include "libTAU/disk_buffer_holder.hpp"
 #include <utility>
 
-namespace libtorrent {
+namespace libTAU {
 
 	disk_buffer_holder::disk_buffer_holder(buffer_allocator_interface& alloc
 		, char* const buf, int const sz) noexcept

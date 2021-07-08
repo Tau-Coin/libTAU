@@ -17,13 +17,13 @@ see LICENSE file.
 #include "test_utils.hpp"
 #include "settings.hpp"
 
-#include "libtorrent/alert.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/flags.hpp"
-#include "libtorrent/session_params.hpp"
+#include "libTAU/alert.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/flags.hpp"
+#include "libTAU/session_params.hpp"
 
 #include <fstream>
 
@@ -236,7 +236,7 @@ TORRENT_TEST(no_proxy)
 		| expect_http_connection | expect_dht_msg | expect_peer_connection);
 }
 
-// since we don't actually have a proxy in this test, make sure libtorrent
+// since we don't actually have a proxy in this test, make sure libTAU
 // doesn't send any outgoing packets to either tracker or the peer
 TORRENT_TEST(socks4)
 {

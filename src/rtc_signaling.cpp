@@ -9,23 +9,23 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #if TORRENT_USE_RTC
 
-#include "libtorrent/alert.hpp"
-#include "libtorrent/aux_/alert_manager.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/aux_/rtc_signaling.hpp"
-#include "libtorrent/aux_/rtc_stream.hpp"
-#include "libtorrent/aux_/session_interface.hpp"
-#include "libtorrent/aux_/generate_peer_id.hpp"
+#include "libTAU/alert.hpp"
+#include "libTAU/aux_/alert_manager.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/aux_/rtc_signaling.hpp"
+#include "libTAU/aux_/rtc_stream.hpp"
+#include "libTAU/aux_/session_interface.hpp"
+#include "libTAU/aux_/generate_peer_id.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <rtc/rtc.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include <cstdarg>
 #include <utility>
@@ -39,7 +39,7 @@ see LICENSE file.
 #include <plog/Formatters/FuncMessageFormatter.h>
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 namespace errc = boost::system::errc;

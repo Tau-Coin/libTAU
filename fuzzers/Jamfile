@@ -1,4 +1,4 @@
-# to fuzz libtorrent, you need a recent version of clang.
+# to fuzz libTAU, you need a recent version of clang.
 
 # if you have a favourite component to fuzz, you can run that specific binary
 # without specifying the "-runs=" argument, it's probably a good idea to seed

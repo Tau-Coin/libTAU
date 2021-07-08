@@ -1,12 +1,12 @@
 // ignore warnings in this file
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
-#include "libtorrent/aux_/ed25519.hpp"
-#include "libtorrent/aux_/hasher512.hpp"
+#include "libTAU/aux_/ed25519.hpp"
+#include "libTAU/aux_/hasher512.hpp"
 #include "ge.h"
 #include "sc.h"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 static int consttime_equal(const unsigned char *x, const unsigned char *y) {

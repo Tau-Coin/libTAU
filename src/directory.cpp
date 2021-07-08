@@ -8,10 +8,10 @@ see LICENSE file.
 */
 
 #include <string>
-#include "libtorrent/aux_/directory.hpp"
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/aux_/directory.hpp"
+#include "libTAU/aux_/path.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	directory::directory(std::string const& path, error_code& ec)

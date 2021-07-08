@@ -11,13 +11,13 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <libtorrent/kademlia/put_data.hpp>
-#include <libtorrent/kademlia/dht_observer.hpp>
-#include <libtorrent/kademlia/node.hpp>
-#include <libtorrent/aux_/io_bytes.hpp>
-#include <libtorrent/performance_counters.hpp>
+#include <libTAU/kademlia/put_data.hpp>
+#include <libTAU/kademlia/dht_observer.hpp>
+#include <libTAU/kademlia/node.hpp>
+#include <libTAU/aux_/io_bytes.hpp>
+#include <libTAU/performance_counters.hpp>
 
-namespace libtorrent { namespace dht {
+namespace libTAU { namespace dht {
 
 put_data::put_data(node& dht_node, put_callback callback)
 	: traversal_algorithm(dht_node, {})
@@ -92,4 +92,4 @@ bool put_data::invoke(observer_ptr o)
 	return m_node.m_rpc.invoke(e, o->target_ep(), o);
 }
 
-} } // namespace libtorrent::dht
+} } // namespace libTAU::dht

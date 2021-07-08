@@ -37,18 +37,18 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "simulator/http_server.hpp"
 #include "simulator/http_proxy.hpp"
 #include "simulator/socks_server.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/proxy_settings.hpp"
-#include "libtorrent/aux_/http_connection.hpp"
-#include "libtorrent/aux_/resolver.hpp"
-#include "libtorrent/aux_/random.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/proxy_settings.hpp"
+#include "libTAU/aux_/http_connection.hpp"
+#include "libTAU/aux_/resolver.hpp"
+#include "libTAU/aux_/random.hpp"
 
 #include "make_proxy_settings.hpp"
 
 #include <iostream>
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/crc.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 using namespace lt;
 using namespace sim;
@@ -143,7 +143,7 @@ std::shared_ptr<lt::aux::http_connection> test_request(io_context& ios
 			++*handler_called;
 
 			// this is pretty gross. Since boost.asio is a header-only library, when this test is
-			// build against shared libraries of libtorrent and simulator, there will be multiple
+			// build against shared libraries of libTAU and simulator, there will be multiple
 			// (distinct) error categories in boost.asio. The traditional comparison of error_code
 			// and error_condition may hence fail.
 			const bool error_ok = ec == expected_error
@@ -488,7 +488,7 @@ TORRENT_TEST(http_connection_timeout_server_stalls)
 	int connect_counter = 0;
 	int handler_counter = 0;
 
-	error_condition timed_out(lt::errors::timed_out, lt::libtorrent_category());
+	error_condition timed_out(lt::errors::timed_out, lt::libTAU_category());
 
 	auto c = test_request(client_ios, resolver
 		, "http://dual-stack.test-hostname.com:8080/timeout", data_buffer, -1, -1
@@ -535,7 +535,7 @@ TORRENT_TEST(http_connection_timeout_server_does_not_accept)
 	int connect_counter = 0;
 	int handler_counter = 0;
 
-	error_condition timed_out(lt::errors::timed_out, lt::libtorrent_category());
+	error_condition timed_out(lt::errors::timed_out, lt::libTAU_category());
 
 	char data_buffer[4000];
 	lt::aux::random_bytes(data_buffer);

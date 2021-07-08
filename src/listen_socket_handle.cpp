@@ -8,10 +8,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/listen_socket_handle.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
+#include "libTAU/aux_/listen_socket_handle.hpp"
+#include "libTAU/aux_/session_impl.hpp"
 
-namespace libtorrent { namespace aux {
+namespace libTAU { namespace aux {
 
 	address listen_socket_handle::get_external_address() const
 	{

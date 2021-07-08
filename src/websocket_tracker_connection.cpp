@@ -10,28 +10,28 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp" // for TORRENT_USE_RTC
+#include "libTAU/config.hpp" // for TORRENT_USE_RTC
 
 #if TORRENT_USE_RTC
 
-#include "libtorrent/aux_/escape_string.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/aux_/websocket_tracker_connection.hpp"
-#include "libtorrent/aux_/utf8.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/span.hpp"
-#include "libtorrent/aux_/tracker_manager.hpp"
+#include "libTAU/aux_/escape_string.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/aux_/websocket_tracker_connection.hpp"
+#include "libTAU/aux_/utf8.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/span.hpp"
+#include "libTAU/aux_/tracker_manager.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/system/system_error.hpp>
 #include <boost/json.hpp>
 #ifdef BOOST_JSON_HEADER_ONLY
 #include <boost/json/src.hpp>
 #endif
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -44,7 +44,7 @@ see LICENSE file.
 #include <string_view>
 #include <vector>
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 using namespace std::placeholders;
 namespace errc = boost::system::errc;

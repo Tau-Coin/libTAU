@@ -8,15 +8,15 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/close_reason.hpp"
-#include "libtorrent/error.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/close_reason.hpp"
+#include "libTAU/error.hpp"
+#include "libTAU/assert.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	close_reason_t error_to_close_reason(error_code const& ec)
 	{
-		if (ec.category() == libtorrent_category())
+		if (ec.category() == libTAU_category())
 		{
 #define TORRENT_MAP(error, close_reason) \
 	case errors:: error : \

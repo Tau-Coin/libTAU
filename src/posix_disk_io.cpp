@@ -9,25 +9,25 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/posix_disk_io.hpp"
-#include "libtorrent/disk_interface.hpp"
-#include "libtorrent/aux_/disk_buffer_pool.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/aux_/posix_storage.hpp"
-#include "libtorrent/aux_/stat_cache.hpp"
-#include "libtorrent/file_storage.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/aux_/merkle.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/posix_disk_io.hpp"
+#include "libTAU/disk_interface.hpp"
+#include "libTAU/aux_/disk_buffer_pool.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/posix_storage.hpp"
+#include "libTAU/aux_/stat_cache.hpp"
+#include "libTAU/file_storage.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/aux_/merkle.hpp"
 
 #include <vector>
 
-namespace libtorrent {
+namespace libTAU {
 
 namespace {
 

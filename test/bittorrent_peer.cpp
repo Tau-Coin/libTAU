@@ -10,15 +10,15 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/socket.hpp"
-#include "libtorrent/sha1_hash.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/sha1_hash.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/assert.hpp"
 #include "bittorrent_peer.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/aux_/random.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/aux_/random.hpp"
 
 #include <cstdlib>
 #include <functional>

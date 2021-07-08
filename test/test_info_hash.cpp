@@ -9,8 +9,8 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/info_hash.hpp"
-#include "libtorrent/sha1_hash.hpp"
+#include "libTAU/info_hash.hpp"
+#include "libTAU/sha1_hash.hpp"
 
 #include <unordered_set>
 

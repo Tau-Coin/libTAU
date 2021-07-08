@@ -8,10 +8,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/disk_job_pool.hpp"
-#include "libtorrent/aux_/disk_io_job.hpp"
+#include "libTAU/aux_/disk_job_pool.hpp"
+#include "libTAU/aux_/disk_io_job.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	disk_job_pool::disk_job_pool()

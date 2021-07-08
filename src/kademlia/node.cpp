@@ -13,7 +13,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #include <utility>
 #include <cinttypes> // for PRId64 et.al.
@@ -22,36 +22,36 @@ see LICENSE file.
 #include <array>
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include "libtorrent/hex.hpp" // to_hex
+#include "libTAU/hex.hpp" // to_hex
 #endif
 
-#include <libtorrent/aux_/socket_io.hpp>
-#include <libtorrent/session_status.hpp>
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include <libtorrent/assert.hpp>
-#include <libtorrent/aux_/time.hpp>
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/alert_types.hpp" // for dht_lookup
-#include "libtorrent/performance_counters.hpp" // for counters
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_v4
+#include <libTAU/aux_/socket_io.hpp>
+#include <libTAU/session_status.hpp>
+#include "libTAU/bencode.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/aux_/random.hpp"
+#include <libTAU/assert.hpp>
+#include <libTAU/aux_/time.hpp>
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/alert_types.hpp" // for dht_lookup
+#include "libTAU/performance_counters.hpp" // for counters
+#include "libTAU/aux_/ip_helpers.hpp" // for is_v4
 
-#include "libtorrent/kademlia/node.hpp"
-#include "libtorrent/kademlia/dht_observer.hpp"
-#include "libtorrent/kademlia/io.hpp"
-#include "libtorrent/kademlia/dht_settings.hpp"
+#include "libTAU/kademlia/node.hpp"
+#include "libTAU/kademlia/dht_observer.hpp"
+#include "libTAU/kademlia/io.hpp"
+#include "libTAU/kademlia/dht_settings.hpp"
 
-#include "libtorrent/kademlia/refresh.hpp"
-#include "libtorrent/kademlia/get_peers.hpp"
-#include "libtorrent/kademlia/get_item.hpp"
-#include "libtorrent/kademlia/msg.hpp"
-#include <libtorrent/kademlia/put_data.hpp>
+#include "libTAU/kademlia/refresh.hpp"
+#include "libTAU/kademlia/get_peers.hpp"
+#include "libTAU/kademlia/get_item.hpp"
+#include "libTAU/kademlia/msg.hpp"
+#include <libTAU/kademlia/put_data.hpp>
 
 using namespace std::placeholders;
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 
 namespace {
 
@@ -981,4 +981,4 @@ node::protocol_descriptor const& node::map_protocol_to_descriptor(udp const prot
 	return *iter;
 }
 
-} // namespace libtorrent::dht
+} // namespace libTAU::dht

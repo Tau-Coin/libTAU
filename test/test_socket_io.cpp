@@ -10,8 +10,8 @@ see LICENSE file.
 
 #include "test.hpp"
 #include "setup_transfer.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/socket.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/socket.hpp"
 
 #include <string>
 

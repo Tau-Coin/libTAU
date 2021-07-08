@@ -10,8 +10,8 @@ see LICENSE file.
 
 #ifndef TORRENT_DISABLE_DHT
 
-#include "libtorrent/aux_/hasher512.hpp"
-#include "libtorrent/hex.hpp"
+#include "libTAU/aux_/hasher512.hpp"
+#include "libTAU/hex.hpp"
 
 #include "test.hpp"
 

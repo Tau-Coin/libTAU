@@ -41,12 +41,12 @@ see LICENSE file.
 
 */
 
-#include "libtorrent/aux_/part_file.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/vector.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/storage_utils.hpp" // for iovec_t
+#include "libTAU/aux_/part_file.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/vector.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/storage_utils.hpp" // for iovec_t
 
 #include <functional> // for std::function
 #include <cstdint>
@@ -58,7 +58,7 @@ namespace {
 	{ return (n + 1023) & ~0x3ff; }
 }
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	part_file::part_file(std::string path, std::string name
 		, int const num_pieces, int const piece_size)
@@ -83,7 +83,7 @@ namespace libtorrent::aux {
 
 		// we don't have a full header. consider the file empty
 		if (n < m_header_size) return;
-		using namespace libtorrent::aux;
+		using namespace libTAU::aux;
 
 		char* ptr = header.data();
 		// we have a header. Parse it
@@ -402,7 +402,7 @@ namespace libtorrent::aux {
 
 		std::vector<char> header(static_cast<std::size_t>(m_header_size));
 
-		using namespace libtorrent::aux;
+		using namespace libTAU::aux;
 
 		char* ptr = header.data();
 		write_uint32(m_max_pieces, ptr);

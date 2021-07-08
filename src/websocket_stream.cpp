@@ -9,27 +9,27 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp" // for TORRENT_USE_RTC
+#include "libTAU/config.hpp" // for TORRENT_USE_RTC
 
 #if TORRENT_USE_RTC
 
-#include "libtorrent/aux_/websocket_stream.hpp"
-#include "libtorrent/aux_/debug.hpp"
-#include "libtorrent/error.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/aux_/random.hpp"
+#include "libTAU/aux_/websocket_stream.hpp"
+#include "libTAU/aux_/debug.hpp"
+#include "libTAU/error.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/aux_/random.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/asio/connect.hpp>
 #include <rtc/rtc.hpp> // for overloaded
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include <algorithm>
 #include <tuple>
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 constexpr seconds WEBSOCKET_KEEPALIVE_PERIOD(10);
 

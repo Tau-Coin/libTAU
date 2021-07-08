@@ -9,27 +9,27 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/session_interface.hpp"
-#include "libtorrent/aux_/alert_manager.hpp"
-#include "libtorrent/aux_/resolver.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/disabled_disk_io.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/aux_/torrent_peer_allocator.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/peer_class.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/session_interface.hpp"
+#include "libTAU/aux_/alert_manager.hpp"
+#include "libTAU/aux_/resolver.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/disabled_disk_io.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/aux_/torrent_peer_allocator.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/peer_class.hpp"
 
 #if TORRENT_USE_SSL
-#include "libtorrent/aux_/ssl.hpp"
+#include "libTAU/aux_/ssl.hpp"
 #endif
 
-#include "libtorrent/io_context.hpp"
+#include "libTAU/io_context.hpp"
 
 #include <cstdio>
 
-namespace libtorrent {
+namespace libTAU {
 
 struct session_mock : aux::session_interface
 {

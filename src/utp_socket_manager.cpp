@@ -10,21 +10,21 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/utp_stream.hpp"
-#include "libtorrent/aux_/udp_socket.hpp"
-#include "libtorrent/aux_/utp_socket_manager.hpp"
-#include "libtorrent/aux_/instantiate_connection.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/socket.hpp" // for TORRENT_HAS_DONT_FRAGMENT
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_teredo
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/aux_/time.hpp" // for aux::time_now()
-#include "libtorrent/span.hpp"
+#include "libTAU/aux_/utp_stream.hpp"
+#include "libTAU/aux_/udp_socket.hpp"
+#include "libTAU/aux_/utp_socket_manager.hpp"
+#include "libTAU/aux_/instantiate_connection.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/socket.hpp" // for TORRENT_HAS_DONT_FRAGMENT
+#include "libTAU/aux_/ip_helpers.hpp" // for is_teredo
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/aux_/time.hpp" // for aux::time_now()
+#include "libTAU/span.hpp"
 
 // #define TORRENT_DEBUG_MTU 1135
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	utp_socket_manager::utp_socket_manager(
 		send_fun_t send_fun

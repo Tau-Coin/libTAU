@@ -9,9 +9,9 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/gzip.hpp"
+#include "libTAU/gzip.hpp"
 #include "setup_transfer.hpp" // for load_file
-#include "libtorrent/aux_/path.hpp" // for combine_path
+#include "libTAU/aux_/path.hpp" // for combine_path
 
 using namespace lt;
 

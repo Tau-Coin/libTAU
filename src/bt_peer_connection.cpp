@@ -38,45 +38,45 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #include <memory> // unique_ptr
 #include <vector>
 #include <functional>
 
 #ifndef TORRENT_DISABLE_LOGGING
-#include "libtorrent/hex.hpp" // to_hex
+#include "libTAU/hex.hpp" // to_hex
 #endif
 
-#include "libtorrent/aux_/bt_peer_connection.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/identify_client.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/aux_/io.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/aux_/session_interface.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/aux_/socket_type.hpp"
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/performance_counters.hpp" // for counters
-#include "libtorrent/aux_/alert_manager.hpp" // for alert_manager
-#include "libtorrent/aux_/string_util.hpp" // for search
-#include "libtorrent/aux_/generate_peer_id.hpp"
+#include "libTAU/aux_/bt_peer_connection.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/identify_client.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/aux_/io.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/aux_/session_interface.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/alloca.hpp"
+#include "libTAU/aux_/socket_type.hpp"
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/performance_counters.hpp" // for counters
+#include "libTAU/aux_/alert_manager.hpp" // for alert_manager
+#include "libTAU/aux_/string_util.hpp" // for search
+#include "libTAU/aux_/generate_peer_id.hpp"
 
 #if !defined TORRENT_DISABLE_ENCRYPTION
-#include "libtorrent/aux_/pe_crypto.hpp"
-#include "libtorrent/hasher.hpp"
+#include "libTAU/aux_/pe_crypto.hpp"
+#include "libTAU/hasher.hpp"
 #endif
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 #if !defined TORRENT_DISABLE_ENCRYPTION
 namespace {

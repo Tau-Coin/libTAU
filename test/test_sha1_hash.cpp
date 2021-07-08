@@ -9,8 +9,8 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/sha1_hash.hpp"
-#include "libtorrent/hex.hpp" // from_hex
+#include "libTAU/sha1_hash.hpp"
+#include "libTAU/hex.hpp" // from_hex
 
 using namespace lt;
 

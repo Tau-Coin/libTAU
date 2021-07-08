@@ -9,17 +9,17 @@ see LICENSE file.
 */
 
 #include "test_utils.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/aux_/merkle.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/aux_/merkle.hpp"
 
 #ifdef _WIN32
 #include <io.h>
 #include <fcntl.h> // for _O_WRONLY
 #endif
 
-namespace libtorrent
+namespace libTAU
 {
 	std::string time_now_string()
 	{

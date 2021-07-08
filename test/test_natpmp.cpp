@@ -8,11 +8,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/natpmp.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp"
+#include "libTAU/natpmp.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/ip_helpers.hpp"
 #include <functional>
 #include <iostream>
 #include <memory>

@@ -9,8 +9,8 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/torrent_list.hpp"
-#include "libtorrent/sha1_hash.hpp"
+#include "libTAU/aux_/torrent_list.hpp"
+#include "libTAU/sha1_hash.hpp"
 
 using namespace lt;
 

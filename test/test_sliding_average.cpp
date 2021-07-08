@@ -9,7 +9,7 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/sliding_average.hpp"
+#include "libTAU/aux_/sliding_average.hpp"
 
 namespace {
 

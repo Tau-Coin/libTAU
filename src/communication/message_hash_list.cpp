@@ -6,9 +6,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/communication/message_hash_list.hpp"
+#include "libTAU/communication/message_hash_list.hpp"
 
-namespace libtorrent {
+namespace libTAU {
     namespace communication {
 
         message_hash_list::message_hash_list(aux::bytesConstRef _rlp) {

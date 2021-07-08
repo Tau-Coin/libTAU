@@ -1,10 +1,10 @@
 // Aleth: Ethereum C++ client, tools and libraries.
 // Copyright 2014-2019 Aleth Authors.
 // Licensed under the GNU General Public License, Version 3.
-#include "libtorrent/aux_/fixed_hash.h"
+#include "libTAU/aux_/fixed_hash.h"
 #include <boost/algorithm/string.hpp>
 
-namespace libtorrent { namespace aux {
+namespace libTAU { namespace aux {
 
 std::random_device s_fixedHashEngine;
 

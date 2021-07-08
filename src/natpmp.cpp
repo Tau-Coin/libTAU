@@ -9,9 +9,9 @@ All rights reserved.
 You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #if defined TORRENT_OS2
 #include <pthread.h>
@@ -19,7 +19,7 @@ see LICENSE file.
 
 #include <boost/asio/ip/host_name.hpp>
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include <cstdio> // for snprintf
 #include <cinttypes> // for PRId64 et.al.
@@ -27,20 +27,20 @@ see LICENSE file.
 #include <functional>
 #include <cstring> // for memcpy
 
-#include "libtorrent/natpmp.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/enum_net.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/aux_/time.hpp"
-#include "libtorrent/aux_/debug.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_local
-#include "libtorrent/aux_/escape_string.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
+#include "libTAU/natpmp.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/enum_net.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/aux_/time.hpp"
+#include "libTAU/aux_/debug.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_local
+#include "libTAU/aux_/escape_string.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 struct pcp_error_category final : boost::system::error_category
 {
@@ -215,7 +215,7 @@ void natpmp::start(aux::ip_interface const& ip)
 void natpmp::send_get_ip_address_request()
 {
 	TORRENT_ASSERT(is_single_thread());
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	// this opcode only exists in NAT-PMP
 	// PCP routers report the external IP in the response to a MAP operation
@@ -420,7 +420,7 @@ void natpmp::update_mapping(port_mapping_t const i)
 void natpmp::send_map_request(port_mapping_t const i)
 {
 	TORRENT_ASSERT(is_single_thread());
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 
 	TORRENT_ASSERT(m_currently_mapping == port_mapping_t{-1}
 		|| m_currently_mapping == i);
@@ -584,7 +584,7 @@ void natpmp::on_reply(error_code const& e
 
 	COMPLETE_ASYNC("natpmp::on_reply");
 
-	using namespace libtorrent::aux;
+	using namespace libTAU::aux;
 	if (e)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
@@ -903,4 +903,4 @@ void natpmp::close_impl()
 	update_mapping(port_mapping_t{});
 }
 
-} // namespace libtorrent
+} // namespace libTAU

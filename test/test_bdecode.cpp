@@ -9,8 +9,8 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/entry.hpp"
+#include "libTAU/bdecode.hpp"
+#include "libTAU/entry.hpp"
 
 using namespace lt;
 

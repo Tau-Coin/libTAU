@@ -8,14 +8,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_settings.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/torrent_info.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_settings.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/torrent_info.hpp"
 
 #include "test.hpp"
 #include "setup_transfer.hpp"

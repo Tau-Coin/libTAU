@@ -14,23 +14,23 @@ see LICENSE file.
 #include <functional>
 #include <cstdio> // for vsnprintf
 
-#include "libtorrent/aux_/lsd.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/http_parser.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // for print_address
-#include "libtorrent/aux_/debug.hpp"
-#include "libtorrent/hex.hpp" // to_hex, from_hex
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/aux_/enum_net.hpp"
+#include "libTAU/aux_/lsd.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/http_parser.hpp"
+#include "libTAU/aux_/socket_io.hpp" // for print_address
+#include "libTAU/aux_/debug.hpp"
+#include "libTAU/hex.hpp" // to_hex, from_hex
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/enum_net.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/asio/ip/multicast.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 using namespace std::placeholders;
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 namespace {
 
@@ -312,4 +312,4 @@ void lsd::close()
 	m_disabled = true;
 }
 
-} // libtorrent::aux namespace
+} // libTAU::aux namespace

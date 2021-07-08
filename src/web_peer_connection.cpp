@@ -12,30 +12,30 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #include <functional>
 #include <cstdlib>
 #include <cstdio> // for snprintf
 #include <cinttypes> // for PRId64 et.al.
 
-#include "libtorrent/aux_/web_peer_connection.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/peer_info.hpp"
-#include "libtorrent/aux_/session_interface.hpp"
-#include "libtorrent/aux_/alert_manager.hpp" // for alert_manager
-#include "libtorrent/aux_/escape_string.hpp" // for escape_path
-#include "libtorrent/hex.hpp" // for is_hex
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/aux_/http_parser.hpp"
+#include "libTAU/aux_/web_peer_connection.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/peer_info.hpp"
+#include "libTAU/aux_/session_interface.hpp"
+#include "libTAU/aux_/alert_manager.hpp" // for alert_manager
+#include "libTAU/aux_/escape_string.hpp" // for escape_path
+#include "libTAU/hex.hpp" // for is_hex
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/aux_/http_parser.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 constexpr int request_size_overhead = 5000;
 
@@ -1205,4 +1205,4 @@ void web_peer_connection::handle_padfile()
 	}
 }
 
-} // libtorrent namespace
+} // libTAU namespace

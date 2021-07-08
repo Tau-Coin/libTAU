@@ -22,24 +22,24 @@ see LICENSE file.
 #include <cinttypes> // for PRId64 et.al.
 #include <cstdint>
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
-#include <libtorrent/hex.hpp> // to_hex
-#include "libtorrent/kademlia/routing_table.hpp"
-#include "libtorrent/session_status.hpp"
-#include "libtorrent/kademlia/node_id.hpp"
-#include "libtorrent/kademlia/dht_observer.hpp"
-#include "libtorrent/kademlia/dht_settings.hpp"
-#include "libtorrent/aux_/time.hpp"
-#include "libtorrent/alert_types.hpp" // for dht_routing_bucket
-#include "libtorrent/aux_/socket_io.hpp" // for print_endpoint
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/aux_/array.hpp"
+#include <libTAU/hex.hpp> // to_hex
+#include "libTAU/kademlia/routing_table.hpp"
+#include "libTAU/session_status.hpp"
+#include "libTAU/kademlia/node_id.hpp"
+#include "libTAU/kademlia/dht_observer.hpp"
+#include "libTAU/kademlia/dht_settings.hpp"
+#include "libTAU/aux_/time.hpp"
+#include "libTAU/alert_types.hpp" // for dht_routing_bucket
+#include "libTAU/aux_/socket_io.hpp" // for print_endpoint
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/aux_/array.hpp"
 
 using namespace std::placeholders;
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 
 namespace {
 
@@ -1204,4 +1204,4 @@ void routing_table::log_node_failed(node_id const& nid, node_entry const& ne) co
 }
 #endif
 
-} // namespace libtorrent::dht
+} // namespace libTAU::dht

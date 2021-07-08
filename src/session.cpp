@@ -10,17 +10,17 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/extensions.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/aux_/session_call.hpp"
-#include "libtorrent/extensions.hpp" // for add_peer_flags_t
-#include "libtorrent/disk_interface.hpp"
-#include "libtorrent/mmap_disk_io.hpp"
-#include "libtorrent/posix_disk_io.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/extensions.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/aux_/session_call.hpp"
+#include "libTAU/extensions.hpp" // for add_peer_flags_t
+#include "libTAU/disk_interface.hpp"
+#include "libTAU/mmap_disk_io.hpp"
+#include "libTAU/posix_disk_io.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 namespace {
 
@@ -385,7 +385,7 @@ namespace {
 #endif
 
 #if TORRENT_ABI_VERSION == 1
-#include "libtorrent/aux_/disable_deprecation_warnings_push.hpp"
+#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
 	session::session(fingerprint const& print, session_flags_t const flags
 		, alert_category_t const alert_mask)
 	{
@@ -427,7 +427,7 @@ namespace {
 		}
 		start(flags, std::move(pack), nullptr);
 	}
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 #endif // TORRENT_ABI_VERSION
 	session& session::operator=(session&&) & = default;
 
@@ -486,12 +486,12 @@ namespace {
 	{
 #if TORRENT_HAVE_MMAP || TORRENT_HAVE_MAP_VIEW_OF_FILE
 		// TODO: In C++17. use if constexpr instead
-#include "libtorrent/aux_/disable_deprecation_warnings_push.hpp"
+#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
 		if (sizeof(void*) == 8)
 			return mmap_disk_io_constructor(ios, sett, cnt);
 		else
 			return posix_disk_io_constructor(ios, sett, cnt);
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 #else
 		return posix_disk_io_constructor(ios, sett, cnt);
 #endif

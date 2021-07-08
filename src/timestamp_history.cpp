@@ -9,10 +9,10 @@ see LICENSE file.
 */
 
 
-#include "libtorrent/aux_/timestamp_history.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/timestamp_history.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 constexpr std::uint32_t TIME_MASK = 0xffffffff;

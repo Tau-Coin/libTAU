@@ -8,15 +8,15 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/ip_filter.hpp"
+#include "libTAU/ip_filter.hpp"
 #include "setup_transfer.hpp" // for addr()
 #include <utility>
 
 #include "test.hpp"
 #include "settings.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
 
 /*
 

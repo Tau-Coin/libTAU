@@ -11,9 +11,9 @@ see LICENSE file.
 
 #include <cstdio>
 #include <string>
-#include "libtorrent/aux_/enum_net.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp"
+#include "libTAU/aux_/enum_net.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/ip_helpers.hpp"
 
 using namespace lt;
 

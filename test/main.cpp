@@ -15,8 +15,8 @@ see LICENSE file.
 #include <fcntl.h>
 #include <cstdio>
 #include <cstdlib> // for exit()
-#include "libtorrent/address.hpp"
-#include "libtorrent/socket.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/socket.hpp"
 #include "setup_transfer.hpp" // for _g_test_failures
 #include "test.hpp"
 #include "dht_server.hpp" // for stop_dht
@@ -24,14 +24,14 @@ see LICENSE file.
 #include "udp_tracker.hpp" // for stop_udp_tracker
 #include <boost/system/system_error.hpp>
 
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/escape_string.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/escape_string.hpp"
 #include <csignal>
 
 #ifdef _WIN32
-#include "libtorrent/aux_/windows.hpp" // fot SetErrorMode
+#include "libTAU/aux_/windows.hpp" // fot SetErrorMode
 #include <io.h> // for _dup and _dup2
 #include <process.h> // for _getpid
 #include <crtdbg.h>

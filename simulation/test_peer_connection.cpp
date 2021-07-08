@@ -32,13 +32,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <functional>
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/torrent_handle.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/disabled_disk_io.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/torrent_flags.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/torrent_handle.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/disabled_disk_io.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/torrent_flags.hpp"
 #include "settings.hpp"
 #include "fake_peer.hpp"
 #include "utils.hpp"

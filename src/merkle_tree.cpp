@@ -8,13 +8,13 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/merkle_tree.hpp"
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/aux_/vector.hpp"
-#include "libtorrent/aux_/ffs.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/merkle_tree.hpp"
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/aux_/vector.hpp"
+#include "libTAU/aux_/ffs.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	merkle_tree::merkle_tree(int const num_blocks, int const blocks_per_piece, char const* r)

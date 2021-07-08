@@ -11,17 +11,17 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/mmap_disk_io.hpp" // for hasher_thread_divisor
-#include "libtorrent/disk_interface.hpp"
-#include "libtorrent/aux_/merkle.hpp" // for merkle_*()
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/performance_counters.hpp" // for counters
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/session.hpp" // for default_disk_io_constructor
-#include "libtorrent/aux_/directory.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/mmap_disk_io.hpp" // for hasher_thread_divisor
+#include "libTAU/disk_interface.hpp"
+#include "libTAU/aux_/merkle.hpp" // for merkle_*()
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/performance_counters.hpp" // for counters
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/session.hpp" // for default_disk_io_constructor
+#include "libTAU/aux_/directory.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,7 +31,7 @@ see LICENSE file.
 
 using namespace std::placeholders;
 
-namespace libtorrent {
+namespace libTAU {
 namespace {
 
 	bool default_pred(std::string const&) { return true; }

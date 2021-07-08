@@ -9,9 +9,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/session_call.hpp"
+#include "libTAU/aux_/session_call.hpp"
 
-namespace libtorrent { namespace aux {
+namespace libTAU { namespace aux {
 
 #ifdef TORRENT_PROFILE_CALLS
 static std::mutex g_calls_mutex;
@@ -56,4 +56,4 @@ void torrent_wait(bool& done, aux::session_impl& ses)
 	while (!done) { ses.cond.wait(l); }
 }
 
-} } // namespace aux namespace libtorrent
+} } // namespace aux namespace libTAU

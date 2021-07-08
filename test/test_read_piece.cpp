@@ -9,17 +9,17 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
 #include "test.hpp"
 #include "test_utils.hpp"
 #include "setup_transfer.hpp"
 #include "settings.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/hex.hpp" // to_hex
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/hex.hpp" // to_hex
+#include "libTAU/aux_/path.hpp"
 
 namespace {
 

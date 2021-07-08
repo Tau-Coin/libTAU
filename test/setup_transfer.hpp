@@ -17,10 +17,10 @@ see LICENSE file.
 #include <memory>
 #include <tuple>
 #include "test.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/units.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/fwd.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/units.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/fwd.hpp"
 
 EXPORT std::shared_ptr<lt::torrent_info> generate_torrent(bool with_files = false, bool with_hashes = false);
 

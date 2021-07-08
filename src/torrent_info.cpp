@@ -11,31 +11,31 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/string_util.hpp" // is_space, is_i2p_url
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/open_mode.hpp"
-#include "libtorrent/aux_/utf8.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/aux_/escape_string.hpp" // maybe_url_encode
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/magnet_uri.hpp"
-#include "libtorrent/announce_entry.hpp"
-#include "libtorrent/hex.hpp" // to_hex
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/aux_/file_pointer.hpp"
-#include "libtorrent/disk_interface.hpp" // for default_block_size
-#include "libtorrent/span.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/string_util.hpp" // is_space, is_i2p_url
+#include "libTAU/bencode.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/open_mode.hpp"
+#include "libTAU/aux_/utf8.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/aux_/escape_string.hpp" // maybe_url_encode
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/magnet_uri.hpp"
+#include "libTAU/announce_entry.hpp"
+#include "libTAU/hex.hpp" // to_hex
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/file_pointer.hpp"
+#include "libTAU/disk_interface.hpp" // for default_block_size
+#include "libTAU/span.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/crc.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -48,7 +48,7 @@ see LICENSE file.
 #include <ctime>
 #include <array>
 
-namespace libtorrent {
+namespace libTAU {
 
 	TORRENT_EXPORT from_span_t from_span;
 
@@ -1181,7 +1181,7 @@ namespace {
 		file_storage files;
 		files.set_piece_length(static_cast<int>(piece_length));
 
-		// extract file name (or the directory name if it's a multi file libtorrent)
+		// extract file name (or the directory name if it's a multi file libTAU)
 		bdecode_node name_ent = info.dict_find_string("name.utf-8");
 		if (!name_ent) name_ent = info.dict_find_string("name");
 		if (!name_ent)
@@ -1296,7 +1296,7 @@ namespace {
 		// ensure hybrid torrents have compatible v1 and v2 file storages
 		if (version >= 2 && v1_files.num_files() > 0)
 		{
-			// previous versions of libtorrent did not not create hybrid
+			// previous versions of libTAU did not not create hybrid
 			// torrents with "tail-padding". When loading, accept both.
 			if (files.num_files() == v1_files.num_files() + 1)
 			{

@@ -9,10 +9,10 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/tracker_manager.hpp"
-#include "libtorrent/aux_/session_interface.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/aux_/resolver.hpp"
+#include "libTAU/aux_/tracker_manager.hpp"
+#include "libTAU/aux_/session_interface.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/aux_/resolver.hpp"
 
 using namespace lt;
 using namespace lt::aux;

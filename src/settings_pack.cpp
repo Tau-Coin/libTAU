@@ -12,12 +12,12 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/aux_/array.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/aux_/array.hpp"
+#include "libTAU/aux_/session_settings.hpp"
 
 #include <algorithm>
 
@@ -44,7 +44,7 @@ namespace {
 	{ return str == nullptr ? "" : str; }
 }
 
-namespace libtorrent {
+namespace libTAU {
 
 	struct str_setting_entry_t
 	{
@@ -98,7 +98,7 @@ namespace libtorrent {
 	CONSTEXPR_SETTINGS
 	aux::array<str_setting_entry_t, settings_pack::num_string_settings> const str_settings
 	({{
-		SET(user_agent, "libtorrent/" LIBTORRENT_VERSION, &session_impl::update_user_agent),
+		SET(user_agent, "libTAU/" LIBTORRENT_VERSION, &session_impl::update_user_agent),
 		SET(announce_ip, nullptr, nullptr),
 		DEPRECATED_SET_STR(mmap_cache, nullptr, nullptr),
 		SET(handshake_client_version, nullptr, nullptr),
@@ -111,7 +111,7 @@ namespace libtorrent {
 		SET(peer_fingerprint, "-LT2030-", nullptr),
         SET(db_dir, "/.libTAU", &session_impl::update_db_dir),
         SET(account_seed, "", &session_impl::update_account_seed),
-		SET(dht_bootstrap_nodes, "dht.libtorrent.org:25401", &session_impl::update_dht_bootstrap_nodes),
+		SET(dht_bootstrap_nodes, "dht.libTAU.org:25401", &session_impl::update_dht_bootstrap_nodes),
 		SET(webtorrent_stun_server, "stun.l.google.com:19302", nullptr)
 	}});
 

@@ -9,15 +9,15 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/bitfield.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/aux_/cpuid.hpp"
+#include "libTAU/bitfield.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/cpuid.hpp"
 
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 
 	bool bitfield::all_set() const noexcept
 	{

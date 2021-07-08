@@ -10,21 +10,21 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // for hash_address
-#include "libtorrent/performance_counters.hpp" // for counters
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/kademlia/ed25519.hpp"
-#include "libtorrent/hex.hpp" // from_hex
+#include "libTAU/config.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/aux_/socket_io.hpp" // for hash_address
+#include "libTAU/performance_counters.hpp" // for counters
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/kademlia/ed25519.hpp"
+#include "libTAU/hex.hpp" // from_hex
 
-#include "libtorrent/kademlia/dht_storage.hpp"
-#include "libtorrent/kademlia/node_id.hpp"
-#include "libtorrent/kademlia/routing_table.hpp"
-#include "libtorrent/kademlia/item.hpp"
-#include "libtorrent/kademlia/dht_observer.hpp"
+#include "libTAU/kademlia/dht_storage.hpp"
+#include "libTAU/kademlia/node_id.hpp"
+#include "libTAU/kademlia/routing_table.hpp"
+#include "libTAU/kademlia/item.hpp"
+#include "libTAU/kademlia/dht_observer.hpp"
 
 #include <numeric>
 

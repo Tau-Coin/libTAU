@@ -14,8 +14,8 @@ see LICENSE file.
 #include "setup_transfer.hpp"
 #include "test_utils.hpp"
 
-#include "libtorrent/file_storage.hpp"
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/file_storage.hpp"
+#include "libTAU/aux_/path.hpp"
 
 using namespace lt;
 

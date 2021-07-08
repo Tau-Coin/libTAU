@@ -10,18 +10,18 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/torrent_handle.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/torrent_handle.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/path.hpp"
 #include "settings.hpp"
 #include "setup_transfer.hpp"
 #include "test_utils.hpp"
 
-using namespace libtorrent;
-namespace lt = libtorrent;
+using namespace libTAU;
+namespace lt = libTAU;
 
 namespace {
 

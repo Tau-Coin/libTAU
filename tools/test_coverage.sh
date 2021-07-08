@@ -133,5 +133,5 @@ run_test test_web_seed_ban "*/web_peer_connection.*"
 run_test test_torrent "*/torrent.*"
 run_test test_auto_unchoke "*/session_impl.*"
 
-genhtml -o test-coverage/ -t libtorrent-unit-tests --num-spaces=4 test-coverage/coverage_all
+genhtml -o test-coverage/ -t libTAU-unit-tests --num-spaces=4 test-coverage/coverage_all
 

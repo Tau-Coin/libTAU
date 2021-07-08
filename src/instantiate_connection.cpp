@@ -9,14 +9,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/socket_type.hpp"
-#include "libtorrent/aux_/utp_socket_manager.hpp"
-#include "libtorrent/aux_/instantiate_connection.hpp"
-#include "libtorrent/aux_/utp_stream.hpp"
-#include "libtorrent/aux_/ssl_stream.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/socket_type.hpp"
+#include "libTAU/aux_/utp_socket_manager.hpp"
+#include "libTAU/aux_/instantiate_connection.hpp"
+#include "libTAU/aux_/utp_stream.hpp"
+#include "libTAU/aux_/ssl_stream.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	// TODO: 2 peer_connection and tracker_connection should probably be flags
 	aux::socket_type instantiate_connection(io_context& ios

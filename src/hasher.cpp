@@ -11,11 +11,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/assert.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 TORRENT_CRYPTO_NAMESPACE
 

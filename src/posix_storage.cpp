@@ -10,19 +10,19 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/aux_/posix_storage.hpp"
-#include "libtorrent/aux_/path.hpp" // for bufs_size
-#include "libtorrent/aux_/open_mode.hpp"
-#include "libtorrent/aux_/file_pointer.hpp"
-#include "libtorrent/torrent_status.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/aux_/posix_storage.hpp"
+#include "libTAU/aux_/path.hpp" // for bufs_size
+#include "libTAU/aux_/open_mode.hpp"
+#include "libTAU/aux_/file_pointer.hpp"
+#include "libTAU/torrent_status.hpp"
 
 #if TORRENT_HAS_SYMLINK
 #include <unistd.h> // for symlink()
 #endif
 
-using namespace libtorrent::flags; // for flag operators
+using namespace libTAU::flags; // for flag operators
 
 #ifndef TORRENT_WINDOWS
 // make sure the _FILE_OFFSET_BITS define worked
@@ -34,7 +34,7 @@ static_assert(sizeof(ftello(nullptr)) >= 8, "64 bit file operations are required
 static_assert(sizeof(off_t) >= 8, "64 bit file operations are required");
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	posix_storage::posix_storage(storage_params const& p)
@@ -92,7 +92,7 @@ namespace aux {
 						if (r != buf.size())
 						{
 							if (ferror(f.file())) ec.ec.assign(errno, generic_category());
-							else ec.ec.assign(errors::file_too_short, libtorrent_category());
+							else ec.ec.assign(errors::file_too_short, libTAU_category());
 							return;
 						}
 					}, fs.file_offset(i), fs.file_size(i), ec.ec);
@@ -187,7 +187,7 @@ namespace aux {
 				if (r == 0)
 				{
 					if (ferror(f.file())) ec.ec.assign(errno, generic_category());
-					else ec.ec.assign(errors::file_too_short, libtorrent_category());
+					else ec.ec.assign(errors::file_too_short, libTAU_category());
 					break;
 				}
 				ret += r;
@@ -263,7 +263,7 @@ namespace aux {
 				if (r != buf.size())
 				{
 					if (ferror(f.file())) ec.ec.assign(errno, generic_category());
-					else ec.ec.assign(errors::file_too_short, libtorrent_category());
+					else ec.ec.assign(errors::file_too_short, libTAU_category());
 					break;
 				}
 				ret += r;
@@ -391,7 +391,7 @@ namespace aux {
 		// if some files have priority 0, we need to check if they exist on the
 		// filesystem, in which case we won't use a partfile for them.
 		// this is to be backwards compatible with previous versions of
-		// libtorrent, when part files were not supported.
+		// libTAU, when part files were not supported.
 		for (file_index_t i(0); i < m_file_priority.end_index(); ++i)
 		{
 			if (m_file_priority[i] != dont_download || fs.pad_file_at(i))

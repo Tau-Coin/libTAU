@@ -13,8 +13,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/kademlia/dht_storage.hpp"
-#include "libtorrent/settings_pack.hpp"
+#include "libTAU/kademlia/dht_storage.hpp"
+#include "libTAU/settings_pack.hpp"
 
 #include <tuple>
 #include <algorithm>
@@ -23,17 +23,17 @@ see LICENSE file.
 #include <set>
 #include <string>
 
-#include <libtorrent/aux_/socket_io.hpp>
-#include <libtorrent/aux_/time.hpp>
-#include <libtorrent/config.hpp>
-#include <libtorrent/aux_/bloom_filter.hpp>
-#include <libtorrent/aux_/random.hpp>
-#include <libtorrent/aux_/vector.hpp>
-#include <libtorrent/aux_/numeric_cast.hpp>
-#include <libtorrent/aux_/ip_helpers.hpp> // for is_v4
-#include <libtorrent/bdecode.hpp>
+#include <libTAU/aux_/socket_io.hpp>
+#include <libTAU/aux_/time.hpp>
+#include <libTAU/config.hpp>
+#include <libTAU/aux_/bloom_filter.hpp>
+#include <libTAU/aux_/random.hpp>
+#include <libTAU/aux_/vector.hpp>
+#include <libTAU/aux_/numeric_cast.hpp>
+#include <libTAU/aux_/ip_helpers.hpp> // for is_v4
+#include <libTAU/bdecode.hpp>
 
-namespace libtorrent::dht {
+namespace libTAU::dht {
 namespace {
 
 	struct dht_immutable_item
@@ -330,4 +330,4 @@ std::unique_ptr<dht_storage_interface> dht_default_storage_constructor(
 	return std::make_unique<dht_default_storage>(settings);
 }
 
-} // namespace libtorrent::dht
+} // namespace libTAU::dht

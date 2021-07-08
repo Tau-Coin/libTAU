@@ -34,9 +34,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "setup_swarm.hpp"
 #include "utils.hpp"
 #include "simulator/simulator.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/session.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/session.hpp"
 
 #include <iostream>
 

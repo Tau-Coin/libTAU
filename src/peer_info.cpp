@@ -7,9 +7,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/peer_info.hpp"
+#include "libTAU/peer_info.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	peer_info::peer_info() = default;
 	peer_info::~peer_info() = default;

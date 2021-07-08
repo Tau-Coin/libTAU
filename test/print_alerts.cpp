@@ -8,9 +8,9 @@ see LICENSE file.
 */
 
 #include "print_alerts.hpp"
-#include "libtorrent/time.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/alert_types.hpp"
+#include "libTAU/time.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/alert_types.hpp"
 #include "print_alerts.hpp"
 
 void print_alerts(lt::session* ses, lt::time_point start_time)

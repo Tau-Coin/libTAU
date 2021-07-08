@@ -8,7 +8,7 @@ see LICENSE file.
 */
 
 #include <cstdint>
-#include "libtorrent/session_params.hpp"
+#include "libTAU/session_params.hpp"
 
 extern "C" int LLVMFuzzerTestOneInput(uint8_t const* data, size_t size)
 {

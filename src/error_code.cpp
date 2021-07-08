@@ -10,15 +10,15 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/aux_/string_util.hpp" // for to_string()
+#include "libTAU/config.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/aux_/string_util.hpp" // for to_string()
 
 #include <sstream>
 
-namespace libtorrent {
+namespace libTAU {
 
-	struct libtorrent_error_category final : boost::system::error_category
+	struct libTAU_error_category final : boost::system::error_category
 	{
 		const char* name() const BOOST_SYSTEM_NOEXCEPT override;
 		std::string message(int ev) const override;
@@ -26,12 +26,12 @@ namespace libtorrent {
 		{ return {ev, *this}; }
 	};
 
-	const char* libtorrent_error_category::name() const BOOST_SYSTEM_NOEXCEPT
+	const char* libTAU_error_category::name() const BOOST_SYSTEM_NOEXCEPT
 	{
-		return "libtorrent";
+		return "libTAU";
 	}
 
-	std::string libtorrent_error_category::message(int ev) const
+	std::string libTAU_error_category::message(int ev) const
 	{
 		static char const* msgs[] =
 		{
@@ -278,10 +278,10 @@ namespace libtorrent {
 		return msgs[ev];
 	}
 
-	boost::system::error_category& libtorrent_category()
+	boost::system::error_category& libTAU_category()
 	{
-		static libtorrent_error_category libtorrent_category;
-		return libtorrent_category;
+		static libTAU_error_category libTAU_category;
+		return libTAU_category;
 	}
 
 	struct http_error_category final : boost::system::error_category
@@ -332,7 +332,7 @@ namespace libtorrent {
 		// hidden
 		boost::system::error_code make_error_code(error_code_enum e)
 		{
-			return {e, libtorrent_category()};
+			return {e, libTAU_category()};
 		}
 	}
 

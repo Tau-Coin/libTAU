@@ -1,10 +1,10 @@
 // ignore warnings in this file
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
-#include "libtorrent/aux_/ed25519.hpp"
+#include "libTAU/aux_/ed25519.hpp"
 #include "fe.h"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 void ed25519_key_exchange(unsigned char *shared_secret

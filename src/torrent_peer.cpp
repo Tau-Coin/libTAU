@@ -10,16 +10,16 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/torrent_peer.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/string_util.hpp"
-#include "libtorrent/aux_/peer_connection.hpp"
-#include "libtorrent/aux_/crc32c.hpp"
-#include "libtorrent/aux_/ip_voter.hpp"
-#include "libtorrent/aux_/io_bytes.hpp" // for write_uint16
-#include "libtorrent/aux_/ip_helpers.hpp"
+#include "libTAU/aux_/torrent_peer.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/string_util.hpp"
+#include "libTAU/aux_/peer_connection.hpp"
+#include "libTAU/aux_/crc32c.hpp"
+#include "libTAU/aux_/ip_voter.hpp"
+#include "libTAU/aux_/io_bytes.hpp" // for write_uint16
+#include "libTAU/aux_/ip_helpers.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	namespace {
 
@@ -268,10 +268,10 @@ namespace libtorrent::aux {
 	}
 #endif
 
-	libtorrent::address torrent_peer::address() const
+	libTAU::address torrent_peer::address() const
 	{
 		if (is_v6_addr)
-			return libtorrent::address_v6(
+			return libTAU::address_v6(
 				static_cast<ipv6_peer const*>(this)->addr);
 		else
 #if TORRENT_USE_I2P

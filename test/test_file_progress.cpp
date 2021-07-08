@@ -9,9 +9,9 @@ see LICENSE file.
 */
 
 #include "test_utils.hpp"
-#include "libtorrent/aux_/file_progress.hpp"
-#include "libtorrent/file_storage.hpp"
-#include "libtorrent/aux_/piece_picker.hpp"
+#include "libTAU/aux_/file_progress.hpp"
+#include "libTAU/file_storage.hpp"
+#include "libTAU/aux_/piece_picker.hpp"
 
 using namespace lt;
 

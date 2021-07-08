@@ -32,17 +32,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "test.hpp"
 #include "utils.hpp"
-#include "libtorrent/alert.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/add_torrent_params.hpp"
+#include "libTAU/alert.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/add_torrent_params.hpp"
 #include "create_torrent.hpp"
 #include "settings.hpp"
 #include "fake_peer.hpp"
 #include "setup_transfer.hpp" // for ep()
 #include "simulator/utils.hpp"
-#include "libtorrent/string_view.hpp"
-#include "libtorrent/aux_/random.hpp"
+#include "libTAU/string_view.hpp"
+#include "libTAU/aux_/random.hpp"
 
 using namespace lt::literals;
 
@@ -71,8 +71,8 @@ void run_fake_peer_test(
 	params.flags &= ~lt::torrent_flags::paused;
 	ses->async_add_torrent(params);
 
-	// the alert notification function is called from within libtorrent's
-	// context. It's not OK to talk to libtorrent in there, post it back out and
+	// the alert notification function is called from within libTAU's
+	// context. It's not OK to talk to libTAU in there, post it back out and
 	// then ask for alerts.
 	print_alerts(*ses, [&](lt::session& ses, lt::alert const* a) {
 		alert(ses, a, p1);
@@ -176,8 +176,8 @@ lt::time_duration run_timeout_sim(sim::simulation& sim)
 	lt::time_point peer_timeout_timestamp{};
 	lt::time_point const start = lt::clock_type::now();
 
-	// the alert notification function is called from within libtorrent's
-	// context. It's not OK to talk to libtorrent in there, post it back out and
+	// the alert notification function is called from within libTAU's
+	// context. It's not OK to talk to libTAU in there, post it back out and
 	// then ask for alerts.
 	print_alerts(*ses, [&](lt::session& ses, lt::alert const* a) {
 
@@ -271,7 +271,7 @@ TORRENT_TEST(allow_fast)
 }
 
 // This tests a worst case scenario of allow-fast configuration where we must
-// verify that libtorrent correctly aborts before satisfying the settings
+// verify that libTAU correctly aborts before satisfying the settings
 // (because doing so would be too expensive)
 //
 // we have a torrent with a lot of pieces, and we want to send that many minus

@@ -9,8 +9,8 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/packet_buffer.hpp"
-#include "libtorrent/aux_/packet_pool.hpp"
+#include "libTAU/aux_/packet_buffer.hpp"
+#include "libTAU/aux_/packet_pool.hpp"
 
 using lt::aux::packet_buffer;
 using lt::aux::packet_ptr;

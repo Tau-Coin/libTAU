@@ -9,8 +9,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/disk_io_thread_pool.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/aux_/disk_io_thread_pool.hpp"
+#include "libTAU/assert.hpp"
 
 #include <algorithm>
 
@@ -19,7 +19,7 @@ namespace {
 	constexpr std::chrono::seconds reap_idle_threads_interval(60);
 }
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 	disk_io_thread_pool::disk_io_thread_pool(pool_thread_interface& thread_iface
@@ -183,4 +183,4 @@ namespace aux {
 	}
 
 }
-} // namespace libtorrent
+} // namespace libTAU

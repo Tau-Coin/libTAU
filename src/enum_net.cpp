@@ -13,22 +13,22 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
-#include "libtorrent/aux_/enum_net.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/socket_type.hpp"
-#include "libtorrent/span.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp"
+#include "libTAU/aux_/enum_net.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/socket_type.hpp"
+#include "libTAU/span.hpp"
+#include "libTAU/aux_/ip_helpers.hpp"
 #ifdef TORRENT_WINDOWS
-#include "libtorrent/aux_/win_util.hpp"
+#include "libTAU/aux_/win_util.hpp"
 #endif
 
 #include <functional>
 #include <cstdlib> // for wcstombscstombs
 #include <optional>
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 
 #include <boost/asio/ip/host_name.hpp>
 
@@ -52,14 +52,14 @@ see LICENSE file.
 
 #if defined TARGET_IPHONE_SIMULATOR || defined TARGET_OS_IPHONE
 // net/route.h is not included in the iphone sdk.
-#include "libtorrent/aux_/route.h"
+#include "libTAU/aux_/route.h"
 #else
 #include <net/route.h>
 #endif
 #endif // TORRENT_USE_SYSCTL
 
 #if TORRENT_USE_GETIPFORWARDTABLE || TORRENT_USE_GETADAPTERSADDRESSES
-#include "libtorrent/aux_/windows.hpp"
+#include "libTAU/aux_/windows.hpp"
 #include <iphlpapi.h>
 #include <ifdef.h> // for IF_OPER_STATUS
 #ifdef TORRENT_WINRT
@@ -127,13 +127,13 @@ enum : int {
 const unsigned long siocgifmtu = SIOCGIFMTU;
 #endif
 
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #if defined(TORRENT_OS2) && !defined(IF_NAMESIZE)
 #define IF_NAMESIZE IFNAMSIZ
 #endif
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 namespace {
 

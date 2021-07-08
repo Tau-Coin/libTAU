@@ -10,12 +10,12 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <libtorrent/kademlia/refresh.hpp>
-#include <libtorrent/kademlia/node.hpp>
-#include <libtorrent/kademlia/dht_observer.hpp>
-#include <libtorrent/performance_counters.hpp>
+#include <libTAU/kademlia/refresh.hpp>
+#include <libTAU/kademlia/node.hpp>
+#include <libTAU/kademlia/dht_observer.hpp>
+#include <libTAU/performance_counters.hpp>
 
-namespace libtorrent { namespace dht {
+namespace libTAU { namespace dht {
 
 observer_ptr bootstrap::new_observer(udp::endpoint const& ep
 	, node_id const& id)
@@ -81,4 +81,4 @@ void bootstrap::done()
 	get_peers::done();
 }
 
-} } // namespace libtorrent::dht
+} } // namespace libTAU::dht

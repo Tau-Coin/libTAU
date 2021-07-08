@@ -10,7 +10,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #include <string>
 #include <cctype>
@@ -19,20 +19,20 @@ see LICENSE file.
 #include <cstring>
 
 #ifdef TORRENT_WINDOWS
-#include "libtorrent/aux_/windows.hpp"
+#include "libTAU/aux_/windows.hpp"
 #else
 #include <clocale>
 #endif
 
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/parse_url.hpp"
 
-#include "libtorrent/aux_/utf8.hpp"
-#include "libtorrent/aux_/escape_string.hpp"
-#include "libtorrent/aux_/string_util.hpp" // for to_string
-#include "libtorrent/aux_/array.hpp"
+#include "libTAU/aux_/utf8.hpp"
+#include "libTAU/aux_/escape_string.hpp"
+#include "libTAU/aux_/string_util.hpp" // for to_string
+#include "libTAU/aux_/array.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	// defined in hex.cpp
 	namespace aux {

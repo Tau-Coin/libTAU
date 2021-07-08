@@ -10,7 +10,7 @@ see LICENSE file.
 
 #include "test.hpp"
 
-#include "libtorrent/aux_/vector_utils.hpp"
+#include "libTAU/aux_/vector_utils.hpp"
 
 #include <vector>
 #include <algorithm>

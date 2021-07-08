@@ -20,26 +20,26 @@ see LICENSE file.
 #include <set>
 #include <cctype>
 
-#include "libtorrent/torrent_handle.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/aux_/session_call.hpp"
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/announce_entry.hpp"
-#include "libtorrent/write_resume_data.hpp"
-#include "libtorrent/torrent_flags.hpp"
-#include "libtorrent/pex_flags.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp" // for is_v6
+#include "libTAU/torrent_handle.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/aux_/session_call.hpp"
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/announce_entry.hpp"
+#include "libTAU/write_resume_data.hpp"
+#include "libTAU/torrent_flags.hpp"
+#include "libTAU/pex_flags.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_v6
 
 #if TORRENT_ABI_VERSION == 1
-#include "libtorrent/peer_info.hpp" // for peer_list_entry
+#include "libTAU/peer_info.hpp" // for peer_list_entry
 #endif
 
-using libtorrent::aux::session_impl;
+using libTAU::aux::session_impl;
 
-namespace libtorrent {
+namespace libTAU {
 
 	void block_info::set_peer(tcp::endpoint const& ep)
 	{
@@ -713,7 +713,7 @@ namespace libtorrent {
 		add_torrent_params params;
 		auto retr = std::ref(params);
 		sync_call(&aux::torrent::write_resume_data, resume_data_flags_t{}, retr);
-		return libtorrent::write_resume_data(params);
+		return libTAU::write_resume_data(params);
 	}
 
 	std::string torrent_handle::save_path() const

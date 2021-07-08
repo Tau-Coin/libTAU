@@ -10,8 +10,8 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
-#include "libtorrent/aux_/string_util.hpp"
+#include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/aux_/string_util.hpp"
 
 using namespace lt;
 using namespace lt::aux;

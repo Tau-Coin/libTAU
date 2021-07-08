@@ -11,15 +11,15 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/hex.hpp"
-#include "libtorrent/aux_/string_util.hpp"
-#include "libtorrent/aux_/throw.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/bdecode.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/hex.hpp"
+#include "libTAU/aux_/string_util.hpp"
+#include "libTAU/aux_/throw.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 namespace aux {
 

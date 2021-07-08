@@ -8,10 +8,10 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/generate_peer_id.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/aux_/escape_string.hpp"
-#include "libtorrent/settings_pack.hpp"
+#include "libTAU/aux_/generate_peer_id.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/aux_/escape_string.hpp"
+#include "libTAU/settings_pack.hpp"
 
 TORRENT_TEST(generate_peer_id)
 {

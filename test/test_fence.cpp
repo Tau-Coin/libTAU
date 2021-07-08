@@ -9,9 +9,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/disk_io_job.hpp"
-#include "libtorrent/aux_/disk_job_fence.hpp"
-#include "libtorrent/performance_counters.hpp"
+#include "libTAU/aux_/disk_io_job.hpp"
+#include "libTAU/aux_/disk_job_fence.hpp"
+#include "libTAU/performance_counters.hpp"
 #include "test.hpp"
 
 #include <atomic>

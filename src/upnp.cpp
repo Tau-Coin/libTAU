@@ -15,28 +15,28 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
-#include "libtorrent/upnp.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/aux_/xml_parse.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/time.hpp" // for aux::time_now()
-#include "libtorrent/aux_/escape_string.hpp" // for convert_from_native
-#include "libtorrent/aux_/http_connection.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/aux_/ssl.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/socket_io.hpp"
+#include "libTAU/upnp.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/aux_/xml_parse.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/time.hpp" // for aux::time_now()
+#include "libTAU/aux_/escape_string.hpp" // for convert_from_native
+#include "libTAU/aux_/http_connection.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/aux_/ssl.hpp"
 
 #if defined TORRENT_ASIO_DEBUGGING
-#include "libtorrent/aux_/debug.hpp"
+#include "libTAU/aux_/debug.hpp"
 #endif
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/asio/ip/host_name.hpp>
 #include <boost/asio/ip/multicast.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include <cstdlib>
 #include <cstdio> // for snprintf
@@ -45,7 +45,7 @@ see LICENSE file.
 
 using namespace std::placeholders;
 
-namespace libtorrent {
+namespace libTAU {
 
 using namespace aux;
 

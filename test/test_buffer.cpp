@@ -14,9 +14,9 @@ see LICENSE file.
 #include <utility>
 #include <set>
 
-#include "libtorrent/aux_/buffer.hpp"
-#include "libtorrent/aux_/chained_buffer.hpp"
-#include "libtorrent/socket.hpp"
+#include "libTAU/aux_/buffer.hpp"
+#include "libTAU/aux_/chained_buffer.hpp"
+#include "libTAU/socket.hpp"
 
 #include "test.hpp"
 

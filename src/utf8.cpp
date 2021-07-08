@@ -10,14 +10,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #include <iterator>
 #include <stdexcept>
-#include "libtorrent/aux_/utf8.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/aux_/utf8.hpp"
+#include "libTAU/assert.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 namespace {
 	// return the number of bytes in the UTF-8 sequence starting with this

@@ -13,10 +13,10 @@ see LICENSE file.
 
 #include "test.hpp"
 #include "test_utils.hpp"
-#include "libtorrent/aux_/part_file.hpp"
-#include "libtorrent/aux_/posix_part_file.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/error_code.hpp"
+#include "libTAU/aux_/part_file.hpp"
+#include "libTAU/aux_/posix_part_file.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/error_code.hpp"
 
 using namespace lt;
 

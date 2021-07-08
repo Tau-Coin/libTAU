@@ -10,8 +10,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/cpuid.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/cpuid.hpp"
 
 #include <cstdint>
 
@@ -53,7 +53,7 @@ unsigned long int helper_getauxval(unsigned long int type)
 #endif
 #endif // TORRENT_HAS_ARM && TORRENT_HAS_AUXV
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 namespace {
 

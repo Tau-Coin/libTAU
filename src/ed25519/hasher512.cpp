@@ -30,11 +30,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "libtorrent/aux_/hasher512.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/ssl.hpp"
+#include "libTAU/aux_/hasher512.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/ssl.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	hasher512::hasher512()
 	{

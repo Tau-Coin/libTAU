@@ -9,7 +9,7 @@ if $(BOOST_ROOT)
 	use-project /boost : $(BOOST_ROOT) ;
 }
 
-rule link_libtorrent ( properties * )
+rule link_libTAU ( properties * )
 {
 	local result ;
 	if <link>shared in $(properties)
@@ -33,7 +33,7 @@ project tools
 	# C4268: 'identifier' : 'const' static/global data initialized
 	#        with compiler generated default constructor fills the object with zeros
 	<toolset>msvc:<cflags>/wd4268
-	<conditional>@link_libtorrent
+	<conditional>@link_libTAU
 	: default-build
 	<link>static
 	<cxxstd>17

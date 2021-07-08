@@ -9,19 +9,19 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #if TORRENT_USE_RTC
 
-#include "libtorrent/aux_/rtc_stream.hpp"
-#include "libtorrent/error.hpp"
-#include "libtorrent/span.hpp"
+#include "libTAU/aux_/rtc_stream.hpp"
+#include "libTAU/error.hpp"
+#include "libTAU/span.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <rtc/rtc.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 namespace aux {
 
 namespace ip = boost::asio::ip;

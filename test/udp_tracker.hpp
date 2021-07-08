@@ -8,7 +8,7 @@ see LICENSE file.
 */
 
 #include "test.hpp" // for EXPORT
-#include "libtorrent/address.hpp"
+#include "libTAU/address.hpp"
 
 // returns the port the udp tracker is running on
 int EXPORT start_udp_tracker(lt::address iface

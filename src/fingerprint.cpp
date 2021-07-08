@@ -8,11 +8,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/fingerprint.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/fingerprint.hpp"
+#include "libTAU/assert.hpp"
 #include <cstring> // for strlen
 
-namespace libtorrent {
+namespace libTAU {
 
 	namespace {
 

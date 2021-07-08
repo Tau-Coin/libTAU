@@ -8,7 +8,7 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/timestamp_history.hpp"
+#include "libTAU/aux_/timestamp_history.hpp"
 
 TORRENT_TEST(timestamp_history)
 {

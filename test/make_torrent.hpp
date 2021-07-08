@@ -10,7 +10,7 @@ see LICENSE file.
 #ifndef MAKE_TORRENT_HPP
 #define MAKE_TORRENT_HPP
 
-#include "libtorrent/torrent_info.hpp"
+#include "libTAU/torrent_info.hpp"
 #include <vector>
 #include <string>
 #include "test.hpp"

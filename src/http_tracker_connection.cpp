@@ -14,8 +14,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/socket_io.hpp"
 
 #include <string>
 #include <functional>
@@ -26,19 +26,19 @@ see LICENSE file.
 #include <cstdio> // for snprintf
 #include <cinttypes> // for PRId64 et.al.
 
-#include "libtorrent/aux_/http_tracker_connection.hpp"
-#include "libtorrent/aux_/http_connection.hpp"
-#include "libtorrent/aux_/escape_string.hpp"
-#include "libtorrent/aux_/io_bytes.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/string_util.hpp" // for is_i2p_url
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/aux_/resolver_interface.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/aux_/array.hpp"
+#include "libTAU/aux_/http_tracker_connection.hpp"
+#include "libTAU/aux_/http_connection.hpp"
+#include "libTAU/aux_/escape_string.hpp"
+#include "libTAU/aux_/io_bytes.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/string_util.hpp" // for is_i2p_url
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/aux_/resolver_interface.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/aux_/array.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	http_tracker_connection::http_tracker_connection(
 		io_context& ios

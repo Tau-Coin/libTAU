@@ -14,11 +14,11 @@ see LICENSE file.
 #include "setup_transfer.hpp"
 #include "web_seed_suite.hpp"
 #include "settings.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/create_torrent.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/session_params.hpp"
-#include "libtorrent/aux_/open_mode.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/create_torrent.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/session_params.hpp"
+#include "libTAU/aux_/open_mode.hpp"
 
 using namespace lt;
 

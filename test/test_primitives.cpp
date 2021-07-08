@@ -9,13 +9,13 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/entry.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // for print_endpoint
-#include "libtorrent/aux_/announce_entry.hpp"
-#include "libtorrent/aux_/byteswap.hpp"
-#include "libtorrent/hex.hpp" // from_hex
-#include "libtorrent/fingerprint.hpp"
-#include "libtorrent/client_data.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/aux_/socket_io.hpp" // for print_endpoint
+#include "libTAU/aux_/announce_entry.hpp"
+#include "libTAU/aux_/byteswap.hpp"
+#include "libTAU/hex.hpp" // from_hex
+#include "libTAU/fingerprint.hpp"
+#include "libTAU/client_data.hpp"
 
 #include "test.hpp"
 #include "setup_transfer.hpp"  // for supports_ipv6

@@ -18,16 +18,16 @@ see LICENSE file.
 #ifndef TORRENT_FWD_HPP
 #define TORRENT_FWD_HPP
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 '''
 
 file_footer = '''
 
 }
 
-namespace lt = libtorrent;
+namespace lt = libTAU;
 
 #endif // TORRENT_FWD_HPP
 '''
@@ -106,11 +106,11 @@ def print_classes(out, classes, keyword):
 
 
 try:
-    os.remove('include/libtorrent/fwd.hpp')
+    os.remove('include/libTAU/fwd.hpp')
 except FileNotFoundError:
     pass
 
-with open('include/libtorrent/fwd.hpp', 'w+') as f:
+with open('include/libTAU/fwd.hpp', 'w+') as f:
     f.write(file_header)
 
     print_classes(f, classes, 'TORRENT_EXPORT')

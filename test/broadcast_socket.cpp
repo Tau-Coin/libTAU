@@ -9,23 +9,23 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/asio/ip/multicast.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/enum_net.hpp"
-#include "libtorrent/assert.hpp"
-#include "libtorrent/aux_/debug.hpp"
-#include "libtorrent/aux_/ip_helpers.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/enum_net.hpp"
+#include "libTAU/assert.hpp"
+#include "libTAU/aux_/debug.hpp"
+#include "libTAU/aux_/ip_helpers.hpp"
 
 #include "broadcast_socket.hpp"
 
 using namespace std::placeholders;
 
-namespace libtorrent {
+namespace libTAU {
 
 	broadcast_socket::broadcast_socket(
 		udp::endpoint multicast_endpoint)

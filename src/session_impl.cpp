@@ -21,7 +21,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #include <ctime>
 #include <algorithm>
@@ -32,58 +32,58 @@ see LICENSE file.
 #include <type_traits>
 #include <numeric> // for accumulate
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/filesystem.hpp>
 #include <boost/asio/ts/internet.hpp>
 #include <boost/asio/ts/executor.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
-#include "libtorrent/aux_/ssl.hpp"
-#include "libtorrent/peer_id.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/entry.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/fingerprint.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/peer_connection_handle.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/session_impl.hpp"
+#include "libTAU/aux_/ssl.hpp"
+#include "libTAU/peer_id.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/fingerprint.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/peer_connection_handle.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/session_impl.hpp"
 
-#include "libtorrent/aux_/common.h"
+#include "libTAU/aux_/common.h"
 
-#include "libtorrent/kademlia/ed25519.hpp"
-#include "libtorrent/kademlia/dht_tracker.hpp"
-#include "libtorrent/kademlia/types.hpp"
-#include "libtorrent/kademlia/node_entry.hpp"
+#include "libTAU/kademlia/ed25519.hpp"
+#include "libTAU/kademlia/dht_tracker.hpp"
+#include "libTAU/kademlia/types.hpp"
+#include "libTAU/kademlia/node_entry.hpp"
 
-#include "libtorrent/communication/communication.hpp"
+#include "libTAU/communication/communication.hpp"
 
-#include "libtorrent/aux_/enum_net.hpp"
-#include "libtorrent/upnp.hpp"
-#include "libtorrent/natpmp.hpp"
-#include "libtorrent/aux_/instantiate_connection.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/magnet_uri.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
-#include "libtorrent/error.hpp"
-#include "libtorrent/aux_/platform_util.hpp"
-#include "libtorrent/aux_/bind_to_device.hpp"
-#include "libtorrent/hex.hpp" // to_hex, from_hex
-#include "libtorrent/aux_/scope_end.hpp"
-#include "libtorrent/aux_/set_socket_buffer.hpp"
-#include "libtorrent/aux_/generate_peer_id.hpp"
-#include "libtorrent/aux_/ffs.hpp"
-#include "libtorrent/aux_/array.hpp"
+#include "libTAU/aux_/enum_net.hpp"
+#include "libTAU/upnp.hpp"
+#include "libTAU/natpmp.hpp"
+#include "libTAU/aux_/instantiate_connection.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/magnet_uri.hpp"
+#include "libTAU/aux_/session_settings.hpp"
+#include "libTAU/error.hpp"
+#include "libTAU/aux_/platform_util.hpp"
+#include "libTAU/aux_/bind_to_device.hpp"
+#include "libTAU/hex.hpp" // to_hex, from_hex
+#include "libTAU/aux_/scope_end.hpp"
+#include "libTAU/aux_/set_socket_buffer.hpp"
+#include "libTAU/aux_/generate_peer_id.hpp"
+#include "libTAU/aux_/ffs.hpp"
+#include "libTAU/aux_/array.hpp"
 
 #ifndef TORRENT_DISABLE_LOGGING
 
-#include "libtorrent/aux_/socket_io.hpp"
+#include "libTAU/aux_/socket_io.hpp"
 
 // for logging stat layout
-#include "libtorrent/aux_/stat.hpp"
+#include "libTAU/aux_/stat.hpp"
 
 #include <cstdarg> // for va_list
 
@@ -91,14 +91,14 @@ see LICENSE file.
 #include <sqlite3.h>
 
 // for logging the size of DHT structures
-#include <libtorrent/kademlia/find_data.hpp>
-#include <libtorrent/kademlia/refresh.hpp>
-#include <libtorrent/kademlia/node.hpp>
-#include <libtorrent/kademlia/observer.hpp>
-#include <libtorrent/kademlia/item.hpp>
+#include <libTAU/kademlia/find_data.hpp>
+#include <libTAU/kademlia/refresh.hpp>
+#include <libTAU/kademlia/node.hpp>
+#include <libTAU/kademlia/observer.hpp>
+#include <libTAU/kademlia/item.hpp>
 
-#include "libtorrent/aux_/http_tracker_connection.hpp"
-#include "libtorrent/aux_/udp_tracker_connection.hpp"
+#include "libTAU/aux_/http_tracker_connection.hpp"
+#include "libTAU/aux_/udp_tracker_connection.hpp"
 
 #endif // TORRENT_DISABLE_LOGGING
 
@@ -150,7 +150,7 @@ namespace boost {
 }
 #endif
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 #if defined TORRENT_ASIO_DEBUGGING
 	std::map<std::string, async_t> _async_ops;
@@ -4304,7 +4304,7 @@ namespace {
         }
 
         void tracker_logger::tracker_response(tracker_request const&
-            , libtorrent::address const& tracker_ip
+            , libTAU::address const& tracker_ip
             , std::list<address> const& tracker_ips
             , struct tracker_response const& resp)
         {

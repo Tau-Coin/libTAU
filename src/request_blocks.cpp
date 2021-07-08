@@ -9,18 +9,18 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/bitfield.hpp"
-#include "libtorrent/aux_/peer_connection.hpp"
-#include "libtorrent/aux_/torrent.hpp"
-#include "libtorrent/aux_/socket_type.hpp"
-#include "libtorrent/peer_info.hpp" // for peer_info flags
-#include "libtorrent/aux_/request_blocks.hpp"
-#include "libtorrent/aux_/alert_manager.hpp"
-#include "libtorrent/aux_/has_block.hpp"
+#include "libTAU/bitfield.hpp"
+#include "libTAU/aux_/peer_connection.hpp"
+#include "libTAU/aux_/torrent.hpp"
+#include "libTAU/aux_/socket_type.hpp"
+#include "libTAU/peer_info.hpp" // for peer_info flags
+#include "libTAU/aux_/request_blocks.hpp"
+#include "libTAU/aux_/alert_manager.hpp"
+#include "libTAU/aux_/has_block.hpp"
 
 #include <vector>
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	int source_rank(peer_source_flags_t const source_bitmask)
 	{

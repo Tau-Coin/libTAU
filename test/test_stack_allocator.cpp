@@ -10,8 +10,8 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/stack_allocator.hpp"
-#include "libtorrent/string_view.hpp"
+#include "libTAU/aux_/stack_allocator.hpp"
+#include "libTAU/string_view.hpp"
 #include <cstdarg> // for va_list, va_start, va_end
 
 using lt::aux::stack_allocator;

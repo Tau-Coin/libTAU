@@ -32,14 +32,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.hpp"
 #include "test.hpp"
-#include "libtorrent/session.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/address.hpp"
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/alert_types.hpp"
-#include "libtorrent/session_stats.hpp"
-#include "libtorrent/alert.hpp"
-#include "libtorrent/io_context.hpp"
+#include "libTAU/session.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/address.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/alert_types.hpp"
+#include "libTAU/session_stats.hpp"
+#include "libTAU/alert.hpp"
+#include "libTAU/io_context.hpp"
 #include "setup_swarm.hpp"
 #include "setup_transfer.hpp" // for addr()
 

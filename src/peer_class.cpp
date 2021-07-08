@@ -8,10 +8,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/peer_class.hpp"
-#include "libtorrent/aux_/peer_connection.hpp"
+#include "libTAU/peer_class.hpp"
+#include "libTAU/aux_/peer_connection.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	void peer_class::set_upload_limit(int limit)
 	{

@@ -32,8 +32,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "test.hpp"
 #include "simulator/simulator.hpp"
-#include "libtorrent/aux_/disk_io_thread_pool.hpp"
-#include "libtorrent/io_context.hpp"
+#include "libTAU/aux_/disk_io_thread_pool.hpp"
+#include "libTAU/io_context.hpp"
 #include <condition_variable>
 
 using lt::io_context;

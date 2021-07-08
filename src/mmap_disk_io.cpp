@@ -11,51 +11,51 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #if TORRENT_HAVE_MMAP || TORRENT_HAVE_MAP_VIEW_OF_FILE
 
-#include "libtorrent/aux_/mmap_storage.hpp"
-#include "libtorrent/mmap_disk_io.hpp"
-#include "libtorrent/disk_buffer_holder.hpp"
-#include "libtorrent/aux_/throw.hpp"
-#include "libtorrent/error_code.hpp"
-#include "libtorrent/error.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/disk_buffer_pool.hpp"
-#include "libtorrent/aux_/disk_io_job.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/aux_/debug.hpp"
-#include "libtorrent/units.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/aux_/disk_job_pool.hpp"
-#include "libtorrent/aux_/disk_io_thread_pool.hpp"
-#include "libtorrent/aux_/store_buffer.hpp"
-#include "libtorrent/aux_/time.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/aux_/array.hpp"
-#include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/aux_/file_view_pool.hpp"
-#include "libtorrent/aux_/scope_end.hpp"
+#include "libTAU/aux_/mmap_storage.hpp"
+#include "libTAU/mmap_disk_io.hpp"
+#include "libTAU/disk_buffer_holder.hpp"
+#include "libTAU/aux_/throw.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/error.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/disk_buffer_pool.hpp"
+#include "libTAU/aux_/disk_io_job.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/aux_/debug.hpp"
+#include "libTAU/units.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/aux_/disk_job_pool.hpp"
+#include "libTAU/aux_/disk_io_thread_pool.hpp"
+#include "libTAU/aux_/store_buffer.hpp"
+#include "libTAU/aux_/time.hpp"
+#include "libTAU/aux_/alloca.hpp"
+#include "libTAU/aux_/array.hpp"
+#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/aux_/file_view_pool.hpp"
+#include "libTAU/aux_/scope_end.hpp"
 
 #ifdef _WIN32
-#include "libtorrent/aux_/windows.hpp"
-#include "libtorrent/aux_/win_util.hpp"
+#include "libTAU/aux_/windows.hpp"
+#include "libTAU/aux_/win_util.hpp"
 #endif
 
 #include <functional>
 #include <condition_variable>
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/variant/get.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #define DEBUG_DISK_THREAD 0
 
-namespace libtorrent {
+namespace libTAU {
 char const* job_name(aux::job_action_t job);
 }
 
@@ -69,7 +69,7 @@ char const* job_name(aux::job_action_t job);
 #define DLOG(...) do {} while(false)
 #endif
 
-namespace libtorrent {
+namespace libTAU {
 namespace {
 
 #if DEBUG_DISK_THREAD

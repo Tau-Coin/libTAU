@@ -8,9 +8,9 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 #include "test.hpp"
-#include "libtorrent/aux_/receive_buffer.hpp"
+#include "libTAU/aux_/receive_buffer.hpp"
 
 using namespace lt;
 using lt::aux::receive_buffer;

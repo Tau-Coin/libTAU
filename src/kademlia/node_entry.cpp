@@ -9,10 +9,10 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/kademlia/node_entry.hpp"
-#include "libtorrent/aux_/time.hpp" // for aux::time_now()
+#include "libTAU/kademlia/node_entry.hpp"
+#include "libTAU/aux_/time.hpp" // for aux::time_now()
 
-namespace libtorrent { namespace dht {
+namespace libTAU { namespace dht {
 
 	node_entry::node_entry(node_id const& id_, udp::endpoint const& ep
 		, int roundtriptime

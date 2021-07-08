@@ -13,10 +13,10 @@ see LICENSE file.
 #include <algorithm>
 #include <iostream>
 
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/aux_/pe_crypto.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/span.hpp"
+#include "libTAU/hasher.hpp"
+#include "libTAU/aux_/pe_crypto.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/span.hpp"
 
 #include "test.hpp"
 

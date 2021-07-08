@@ -9,12 +9,12 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/socks5_stream.hpp"
-#include "libtorrent/aux_/socket_io.hpp"
+#include "libTAU/socks5_stream.hpp"
+#include "libTAU/aux_/socket_io.hpp"
 
 using namespace std::placeholders;
 
-namespace libtorrent {
+namespace libTAU {
 
 	namespace socks_error
 	{

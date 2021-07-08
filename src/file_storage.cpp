@@ -10,18 +10,18 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/file_storage.hpp"
-#include "libtorrent/aux_/string_util.hpp" // for allocate_string_copy
-#include "libtorrent/index_range.hpp"
-#include "libtorrent/aux_/path.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/disk_interface.hpp" // for default_block_size
-#include "libtorrent/aux_/merkle.hpp"
-#include "libtorrent/aux_/throw.hpp"
+#include "libTAU/file_storage.hpp"
+#include "libTAU/aux_/string_util.hpp" // for allocate_string_copy
+#include "libTAU/index_range.hpp"
+#include "libTAU/aux_/path.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/disk_interface.hpp" // for default_block_size
+#include "libTAU/aux_/merkle.hpp"
+#include "libTAU/aux_/throw.hpp"
 
-#include "libtorrent/aux_/disable_warnings_push.hpp"
+#include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/crc.hpp>
-#include "libtorrent/aux_/disable_warnings_pop.hpp"
+#include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include <cstdio>
 #include <cinttypes>
@@ -38,7 +38,7 @@ see LICENSE file.
 
 using namespace std::placeholders;
 
-namespace libtorrent {
+namespace libTAU {
 
 	file_storage::file_storage() = default;
 	file_storage::~file_storage() = default;
@@ -46,7 +46,7 @@ namespace libtorrent {
 	// even though this copy constructor and the copy assignment
 	// operator are identical to what the compiler would have
 	// generated, they are put here to explicitly make them part
-	// of libtorrent and properly exported by the .dll.
+	// of libTAU and properly exported by the .dll.
 	file_storage::file_storage(file_storage const&) = default;
 	file_storage& file_storage::operator=(file_storage const&) & = default;
 	file_storage::file_storage(file_storage&&) noexcept = default;
@@ -818,7 +818,7 @@ namespace aux {
 	}
 
 	// this is here for backwards compatibility with hybrid torrents created
-	// with libtorrent 2.0.0-2.0.3, which would not add tail-padding
+	// with libTAU 2.0.0-2.0.3, which would not add tail-padding
 	void file_storage::remove_tail_padding()
 	{
 		file_index_t f = end_file();

@@ -11,17 +11,17 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
+#include "libTAU/config.hpp"
 
 #include <limits>
 #include <cstdlib>
 
-#include "libtorrent/aux_/web_connection_base.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/aux_/parse_url.hpp"
-#include "libtorrent/peer_info.hpp"
+#include "libTAU/aux_/web_connection_base.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/aux_/parse_url.hpp"
+#include "libTAU/peer_info.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	web_connection_base::web_connection_base(
 		peer_connection_args& pack

@@ -7,11 +7,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/aux_/proxy_settings.hpp"
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/aux_/session_settings.hpp"
+#include "libTAU/aux_/proxy_settings.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/aux_/session_settings.hpp"
 
-namespace libtorrent { namespace aux {
+namespace libTAU { namespace aux {
 
 namespace {
 
@@ -41,4 +41,4 @@ proxy_settings::proxy_settings(aux::session_settings const& sett)
 { init(*this, sett); }
 
 } // namespace aux
-} // namespace libtorrent
+} // namespace libTAU

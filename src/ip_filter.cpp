@@ -10,10 +10,10 @@ see LICENSE file.
 
 #include <iterator> // for next
 
-#include "libtorrent/ip_filter.hpp"
-#include "libtorrent/assert.hpp"
+#include "libTAU/ip_filter.hpp"
+#include "libTAU/assert.hpp"
 
-namespace libtorrent {
+namespace libTAU {
 
 	ip_filter::ip_filter() = default;
 	ip_filter::ip_filter(ip_filter const&) = default;

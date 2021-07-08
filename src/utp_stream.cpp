@@ -14,16 +14,16 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/config.hpp"
-#include "libtorrent/aux_/utp_stream.hpp"
-#include "libtorrent/aux_/utp_socket_manager.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/error.hpp"
-#include "libtorrent/aux_/random.hpp"
-#include "libtorrent/aux_/invariant_check.hpp"
-#include "libtorrent/performance_counters.hpp"
-#include "libtorrent/io_context.hpp"
-#include "libtorrent/aux_/storage_utils.hpp" // for iovec_t
+#include "libTAU/config.hpp"
+#include "libTAU/aux_/utp_stream.hpp"
+#include "libTAU/aux_/utp_socket_manager.hpp"
+#include "libTAU/aux_/alloca.hpp"
+#include "libTAU/error.hpp"
+#include "libTAU/aux_/random.hpp"
+#include "libTAU/aux_/invariant_check.hpp"
+#include "libTAU/performance_counters.hpp"
+#include "libTAU/io_context.hpp"
+#include "libTAU/aux_/storage_utils.hpp" // for iovec_t
 #include <cstdint>
 #include <limits>
 
@@ -34,10 +34,10 @@ see LICENSE file.
 #if TORRENT_UTP_LOG
 #include <cstdarg>
 #include <cinttypes> // for PRId64 et.al.
-#include "libtorrent/aux_/socket_io.hpp"
+#include "libTAU/aux_/socket_io.hpp"
 #endif
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 #if TORRENT_UTP_LOG
 

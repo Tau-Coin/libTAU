@@ -14,16 +14,16 @@ see LICENSE file.
 #include <cstdint>
 #include <algorithm>
 
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/read_resume_data.hpp"
-#include "libtorrent/add_torrent_params.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // for read_*_endpoint()
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/aux_/numeric_cast.hpp"
-#include "libtorrent/download_priority.hpp" // for default_priority
+#include "libTAU/bdecode.hpp"
+#include "libTAU/read_resume_data.hpp"
+#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/aux_/socket_io.hpp" // for read_*_endpoint()
+#include "libTAU/hasher.hpp"
+#include "libTAU/torrent_info.hpp"
+#include "libTAU/aux_/numeric_cast.hpp"
+#include "libTAU/download_priority.hpp" // for default_priority
 
-namespace libtorrent {
+namespace libTAU {
 
 namespace {
 
@@ -62,7 +62,7 @@ namespace {
 		}
 
 		if (rd.dict_find_string_value("file-format")
-			!= "libtorrent resume file")
+			!= "libTAU resume file")
 		{
 			ec = errors::invalid_file_tag;
 			return ret;
@@ -319,7 +319,7 @@ namespace {
 
 		int const v6_size = 18;
 		int const v4_size = 6;
-		using namespace libtorrent::aux; // for read_*_endpoint()
+		using namespace libTAU::aux; // for read_*_endpoint()
 		if (bdecode_node const peers_entry = rd.dict_find_string("peers"))
 		{
 			char const* ptr = peers_entry.string_ptr();

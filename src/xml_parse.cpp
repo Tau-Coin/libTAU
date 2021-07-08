@@ -10,10 +10,10 @@ see LICENSE file.
 
 #include <cstring>
 
-#include "libtorrent/aux_/xml_parse.hpp"
-#include "libtorrent/aux_/string_util.hpp"
+#include "libTAU/aux_/xml_parse.hpp"
+#include "libTAU/aux_/string_util.hpp"
 
-namespace libtorrent::aux {
+namespace libTAU::aux {
 
 	void xml_parse(string_view input
 		, std::function<void(int, string_view, string_view)> callback)

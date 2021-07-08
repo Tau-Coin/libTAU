@@ -10,7 +10,7 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/merkle.hpp"
+#include "libTAU/aux_/merkle.hpp"
 #include <iostream>
 
 using namespace lt;

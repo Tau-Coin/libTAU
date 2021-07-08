@@ -10,14 +10,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/upnp.hpp"
-#include "libtorrent/socket.hpp"
-#include "libtorrent/aux_/socket_io.hpp" // print_endpoint
-#include "libtorrent/aux_/http_parser.hpp"
+#include "libTAU/upnp.hpp"
+#include "libTAU/socket.hpp"
+#include "libTAU/aux_/socket_io.hpp" // print_endpoint
+#include "libTAU/aux_/http_parser.hpp"
 #include "broadcast_socket.hpp"
 #include "test.hpp"
 #include "setup_transfer.hpp"
-#include "libtorrent/aux_/path.hpp"
+#include "libTAU/aux_/path.hpp"
 #include <fstream>
 #include <functional>
 #include <iostream>

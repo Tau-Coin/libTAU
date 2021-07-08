@@ -34,9 +34,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "simulator/simulator.hpp"
 #include "utils.hpp"
 #include "fake_peer.hpp" // for fake_node
-#include "libtorrent/time.hpp"
+#include "libTAU/time.hpp"
 #include "settings.hpp"
-#include "libtorrent/aux_/deadline_timer.hpp"
+#include "libTAU/aux_/deadline_timer.hpp"
 #include "setup_transfer.hpp" // for addr()
 
 using namespace sim;
@@ -51,7 +51,7 @@ struct sim_config : sim::default_config
 		, std::vector<asio::ip::address>& result
 		, boost::system::error_code& ec)
 	{
-		if (hostname == "dht.libtorrent.org")
+		if (hostname == "dht.libTAU.org")
 		{
 			result.push_back(addr("10.0.0.10"));
 			return lt::duration_cast<chrono::high_resolution_clock::duration>(chrono::milliseconds(100));

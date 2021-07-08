@@ -2,7 +2,7 @@ import testing ;
 import feature : feature ;
 
 use-project /torrent : .. ;
-use-project /libtorrent_test : ../test ;
+use-project /libTAU_test : ../test ;
 
 use-project /libsimulator : libsimulator ;
 
@@ -11,7 +11,7 @@ project
 	<simulator>on
 	<export-extra>on
 	<library>/torrent//torrent
-	<library>/libtorrent_test//libtorrent_test
+	<library>/libTAU_test//libTAU_test
 	<source>setup_swarm.cpp
 	<source>setup_dht.cpp
 	<source>create_torrent.cpp

@@ -7,8 +7,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libtorrent/settings_pack.hpp"
-#include "libtorrent/alert.hpp"
+#include "libTAU/settings_pack.hpp"
+#include "libTAU/alert.hpp"
 #include "settings.hpp"
 
 using namespace lt;

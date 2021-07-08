@@ -47,8 +47,8 @@ def substitute_file(name):
             line = '#define LIBTORRENT_VERSION "%d.%d.%d.%d"\n' % (version[0], version[1], version[2], version[3])
         elif '#define LIBTORRENT_REVISION ' in line and name.endswith('.hpp'):
             line = '#define LIBTORRENT_REVISION "%s"\n' % revision
-        elif 'AC_INIT([libtorrent-rasterbar]' in line and name.endswith('.ac'):
-            line = 'AC_INIT([libtorrent-rasterbar],[%d.%d.%d],[arvid@libtorrent.org],\n' % (
+        elif 'AC_INIT([libTAU-rasterbar]' in line and name.endswith('.ac'):
+            line = 'AC_INIT([libTAU-rasterbar],[%d.%d.%d],[arvid@libTAU.org],\n' % (
                 version[0], version[1], version[2])
         elif 'set (VERSION ' in line and name.endswith('.txt'):
             line = 'set (VERSION "%d.%d.%d")\n' % (version[0], version[1], version[2])
@@ -69,7 +69,7 @@ def substitute_file(name):
     open(name, 'w+').write(subst)
 
 
-substitute_file('include/libtorrent/version.hpp')
+substitute_file('include/libTAU/version.hpp')
 substitute_file('Makefile')
 substitute_file('CMakeLists.txt')
 substitute_file('bindings/python/setup.py')

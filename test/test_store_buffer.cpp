@@ -8,8 +8,8 @@ see LICENSE file.
 */
 
 #include "test.hpp"
-#include "libtorrent/aux_/store_buffer.hpp"
-#include "libtorrent/disk_interface.hpp" // for default_block_size
+#include "libTAU/aux_/store_buffer.hpp"
+#include "libTAU/disk_interface.hpp" // for default_block_size
 
 using lt::aux::torrent_location;
 using lt::aux::store_buffer;
