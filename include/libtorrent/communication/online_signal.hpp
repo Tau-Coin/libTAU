@@ -30,22 +30,23 @@ namespace libtorrent {
             // @param _rlp rlp encode
             explicit online_signal(aux::bytes const& _rlp): online_signal(&_rlp) {}
 
+            // construct online signal
             online_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp,
                           aux::bytes mFriendInfo) : m_device_id(std::move(mDeviceId)),
                           m_hash_prefix_bytes(std::move(mHashPrefixBytes)),
                           m_timestamp(mTimestamp), m_friend_info(std::move(mFriendInfo)) {}
 
             // @returns device id
-            inline aux::bytes device_id() const { return m_device_id; }
+            aux::bytes device_id() const { return m_device_id; }
 
             // @returns hash prefix bytes
-            inline aux::bytes hash_prefix_bytes() const { return m_hash_prefix_bytes; }
+            aux::bytes hash_prefix_bytes() const { return m_hash_prefix_bytes; }
 
             // @returns timestamp
-            inline uint32_t timestamp() const { return m_timestamp; }
+            uint32_t timestamp() const { return m_timestamp; }
 
             // @returns friend info bytes
-            inline aux::bytes friend_info() const { return m_friend_info; }
+            aux::bytes friend_info() const { return m_friend_info; }
 
             // Serialises this online signal to an RLPStream
             void streamRLP(aux::RLPStream& _s) const;

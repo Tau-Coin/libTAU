@@ -328,13 +328,40 @@ namespace libtorrent {
         online_signal communication::make_online_signal() {
             time_t now_time = time(nullptr);
 
+            // 随机挑选一个朋友发送其信息
             srand(now_time);
             auto index = rand() % m_friends.size();
             auto peer = m_friends[index];
-
             aux::bytes friend_info = m_message_db->get_friend_info(peer);
 
-            return online_signal(m_device_id, aux::bytes(), now_time, friend_info);
+            // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
+            dht::public_key * pk = m_ses.pubkey();
+            aux::bytes public_key;
+            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
+            aux::bytes hash_prefix_bytes;
+            auto message_list = m_message_list_map[public_key];
+            if (!message_list.empty()) {
+                for (const auto & msg: message_list) {
+                    hash_prefix_bytes.push_back(msg.sha256()[0]);
+                }
+            }
+
+            return online_signal(m_device_id, hash_prefix_bytes, now_time, friend_info);
+        }
+
+        new_msg_signal communication::make_new_message_signal(const aux::bytes& peer) {
+            time_t now_time = time(nullptr);
+
+            // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
+            aux::bytes hash_prefix_bytes;
+            auto message_list = m_message_list_map[peer];
+            if (!message_list.empty()) {
+                for (const auto & msg: message_list) {
+                    hash_prefix_bytes.push_back(msg.sha256()[0]);
+                }
+            }
+
+            return new_msg_signal(m_device_id, hash_prefix_bytes, now_time);
         }
 
         // callback for dht_immutable_get
@@ -358,11 +385,12 @@ namespace libtorrent {
         {
             TORRENT_ASSERT(i.is_mutable());
 
+            // construct mutable data wrapper from entry
             aux::vector_ref<aux::ibyte> ref((std::string &) i.value().string());
             mutable_data_wrapper data(ref);
 
             auto now_time = time(nullptr);
-            // validate timestamp
+            // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
             if ((data.timestamp() + communication_data_accepted_time < now_time) ||
             (data.timestamp() - communication_data_accepted_time > now_time)) {
                 return;
@@ -387,6 +415,7 @@ namespace libtorrent {
                     auto device_map = m_latest_signal_time[public_key];
                     // 检查相应设备信号的时间戳，只处理最新的数据
                     if (onlineSignal.timestamp() > device_map[device_id]) {
+                        // update the latest signal time
                         device_map[device_id] = onlineSignal.timestamp();
 
                         if (onlineSignal.device_id() != m_device_id) {
@@ -403,6 +432,16 @@ namespace libtorrent {
                     break;
                 }
                 case NEW_MSG_SIGNAL: {
+                    new_msg_signal newMsgSignal(data.payload());
+
+                    auto device_id = newMsgSignal.device_id();
+                    auto device_map = m_latest_signal_time[public_key];
+                    // 检查相应设备信号的时间戳，只处理最新的数据
+                    if (newMsgSignal.timestamp() > device_map[device_id]) {
+                        // update the latest signal time
+                        device_map[device_id] = newMsgSignal.timestamp();
+                    }
+
                     break;
                 }
                 default: {
@@ -441,9 +480,12 @@ namespace libtorrent {
 
                 e = std::string(data);
                 std::vector<char> buf;
+                // bencode要发布的mutable data
                 bencode(std::back_inserter(buf), e);
                 dht::signature sign;
+                // 递增seq
                 ++seq;
+                // 对编码完成之后的数据(data + salt + seq)进行签名
                 sign = sign_mutable_item(buf, salt, dht::sequence_number(seq)
                         , dht::public_key(pk.data())
                         , dht::secret_key(sk.data()));
@@ -452,6 +494,7 @@ namespace libtorrent {
 
             void on_dht_put_mutable_item(aux::alert_manager& alerts, dht::item const& i, int num)
             {
+                // put完成之后，暂无动作
 //                if (alerts.should_post<dht_put_alert>())
 //                {
 //                    dht::signature const sig = i.sig();
@@ -472,7 +515,9 @@ namespace libtorrent {
                 dht::public_key pk = i.pk();
                 dht::sequence_number seq = i.seq();
                 std::string salt = i.salt();
+                // 提取item信息，交给cb处理
                 cb(value, sig.bytes, seq.value, salt);
+                // 使用新生成的item信息替换旧的item
                 i.assign(std::move(value), salt, seq, pk, sig);
             }
         } // anonymous namespace
@@ -503,6 +548,9 @@ namespace libtorrent {
                 data = reinterpret_cast<char *>(wrapper.rlp().data());
             } else {
                 // publish new message signal on XY channel
+                new_msg_signal newMsgSignal = make_new_message_signal(peer);
+                mutable_data_wrapper wrapper(time(nullptr), NEW_MSG_SIGNAL, newMsgSignal.rlp());
+                data = reinterpret_cast<char *>(wrapper.rlp().data());
             }
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4

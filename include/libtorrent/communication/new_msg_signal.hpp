@@ -12,6 +12,8 @@ see LICENSE file.
 
 #include <libtorrent/aux_/common.h>
 #include <libtorrent/aux_/rlp.h>
+
+#include <utility>
 #include "libtorrent/aux_/export.hpp"
 
 namespace libtorrent {
@@ -26,6 +28,14 @@ namespace libtorrent {
 
             // @param _rlp rlp encode
             new_msg_signal(aux::bytesConstRef _rlp);
+
+            // @param _rlp rlp encode
+            explicit new_msg_signal(aux::bytes const& _rlp): new_msg_signal(&_rlp) {}
+
+            // construct new msg signal
+            new_msg_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp)
+                    : m_device_id(std::move(mDeviceId)), m_hash_prefix_bytes(std::move(mHashPrefixBytes)),
+                    m_timestamp(mTimestamp) {}
 
             // @returns device id
             aux::bytes device_id() const { return m_device_id; }
