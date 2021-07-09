@@ -3493,6 +3493,7 @@ namespace {
 #undef SET_INT
 		return sett;
 	}
+#endif
 
 	void session_impl::set_dht_state(dht::dht_state&& state)
 	{
@@ -3686,8 +3687,6 @@ namespace {
 		auto nodes = m_dht->live_nodes(nid);
 		m_alerts.emplace_alert<dht_live_nodes_alert>(nid, nodes);
 	}
-
-#endif
 
 	bool session_impl::is_listening() const
 	{
