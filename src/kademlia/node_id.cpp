@@ -18,6 +18,7 @@ see LICENSE file.
 #include "libTAU/aux_/ip_helpers.hpp" // for is_local et.al
 #include "libTAU/aux_/random.hpp" // for random
 #include "libTAU/hasher.hpp" // for hasher
+#include "libTAU/hex.hpp" // for hex
 #include "libTAU/aux_/crc32c.hpp" // for crc32c
 
 namespace libTAU::dht {
@@ -91,8 +92,9 @@ node_id get_node_id(libTAU::aux::session_settings const& settings)
 	public_key pk;
 
 	const char* account_seed = settings.get_str(libTAU::settings_pack::account_seed).c_str();
-	std::copy(account_seed, account_seed + 32, seed.begin());
-	std::tie(pk, std::ignore) = ed25519_create_keypair(ed25519_create_seed());
+	span<char const> hexseed(account_seed, 64);
+	libTAU::aux::from_hex(hexseed, seed.data());
+	std::tie(pk, std::ignore) = ed25519_create_keypair(seed);
 
 	return node_id(span<char const>(pk.bytes));
 }

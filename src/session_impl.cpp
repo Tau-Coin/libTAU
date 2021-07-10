@@ -43,6 +43,7 @@ see LICENSE file.
 #include "libTAU/peer_id.hpp"
 #include "libTAU/bencode.hpp"
 #include "libTAU/hasher.hpp"
+#include "libTAU/hex.hpp"
 #include "libTAU/entry.hpp"
 #include "libTAU/session.hpp"
 #include "libTAU/fingerprint.hpp"
@@ -3014,8 +3015,10 @@ namespace {
 	void session_impl::update_account_seed() {
 
 		std::array<char, 32> seed;
+
 		const char* account_seed = m_settings.get_str(settings_pack::account_seed).c_str();
-		std::copy(account_seed, account_seed + 32, seed.begin());			
+        span<char const> hexseed(account_seed, 64);
+        libTAU::aux::from_hex(hexseed, seed.data());
 
 		m_keypair = dht::ed25519_create_keypair(seed);
 
