@@ -215,7 +215,6 @@ TORRENT_VERSION_NAMESPACE_3_END
 
 // include/libTAU/alert_types.hpp
 TORRENT_VERSION_NAMESPACE_3
-struct torrent_added_alert;
 struct stats_alert;
 struct anonymous_mode_alert;
 struct mmap_cache_alert;
