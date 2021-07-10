@@ -155,7 +155,7 @@ namespace alert_category {
     inline constexpr alert_category_t communication = 23_bit;
 
     // alerts on communication log
-    inline constexpr alert_category_t communication_log = 26_bit;
+    inline constexpr alert_category_t communication_log = 24_bit;
 
 	// The full bitmask, representing all available categories.
 	//
