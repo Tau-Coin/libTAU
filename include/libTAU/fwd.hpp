@@ -69,6 +69,7 @@ struct communication_new_message_alert;
 struct communication_confirmation_root_alert;
 struct communication_syncing_message_alert;
 struct communication_friend_info_alert;
+struct communication_log_alert;
 TORRENT_VERSION_NAMESPACE_3_END
 
 // include/libTAU/announce_entry.hpp

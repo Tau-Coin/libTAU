@@ -154,6 +154,9 @@ namespace alert_category {
 	// alerts on events in communication
     inline constexpr alert_category_t communication = 25_bit;
 
+    // alerts on communication log
+    inline constexpr alert_category_t communication_log = 26_bit;
+
 	// The full bitmask, representing all available categories.
 	//
 	// since the enum is signed, make sure this isn't

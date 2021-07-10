@@ -43,11 +43,17 @@ namespace libTAU {
         }
 
         bool communication::init() {
-            if (m_message_db->init())
+            if (m_message_db->init()) {
+                log("ERROR: DB init fail!");
                 return false;
+            }
 
             // get friends from db
             m_friends = m_message_db->get_all_friends();
+            log("INFO: friend size: %i", m_friends.size());
+            for (auto const & peer: m_friends) {
+                log("INFO: friend: %s", peer.data());
+            }
 
             return true;
         }
@@ -574,6 +580,26 @@ namespace libTAU {
                     , std::bind(&on_dht_put_mutable_item, std::ref(m_ses.alerts()), _1, _2)
                     , std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
         }
+
+
+#ifndef TORRENT_DISABLE_LOGGING
+        bool communication::should_log() const
+        {
+            return m_ses.alerts().should_post<communication_log_alert>();
+        }
+
+        TORRENT_FORMAT(2,3)
+        void communication::log(char const* fmt, ...) const noexcept try
+        {
+            if (!should_log()) return;
+
+            va_list v;
+            va_start(v, fmt);
+            m_ses.alerts().emplace_alert<communication_log_alert>(fmt, v);
+            va_end(v);
+        }
+        catch (std::exception const&) {}
+#endif
 
     }
 }

@@ -58,8 +58,24 @@ namespace libTAU {
         // data accepted time(6h)
         constexpr int communication_data_accepted_time = 6 * 60 * 60;
 
+#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
+        // This is the basic logging and debug interface offered by the communication.
+        // a release build with logging disabled (which is the default) will
+        // not have this class at all
+        struct TORRENT_EXTRA_EXPORT communication_logger
+        {
+#ifndef TORRENT_DISABLE_LOGGING
+            virtual bool should_log() const = 0;
+            virtual void log(char const* fmt, ...) const TORRENT_FORMAT(2,3) = 0;
+#endif
+        protected:
+            ~communication_logger() {}
+        };
+#endif // TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
 
-        class TORRENT_EXPORT communication final: public std::enable_shared_from_this<communication> {
+
+        class TORRENT_EXPORT communication final:
+                public std::enable_shared_from_this<communication>, communication_logger {
         public:
 
             communication(aux::bytes device_id, io_context &mIoc, aux::session_interface &mSes) :
@@ -166,6 +182,11 @@ namespace libTAU {
 
             std::shared_ptr<communication> self()
             { return shared_from_this(); }
+
+#ifndef TORRENT_DISABLE_LOGGING
+            bool should_log() const override;
+            void log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
+#endif
 
             void refresh_timeout(error_code const& e);
 

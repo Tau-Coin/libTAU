@@ -1598,7 +1598,7 @@ namespace {
 		"alerts_dropped", "socks5",
 		"communication_new_device_id", "communication_new_message",
 		"communication_confirmation_root", "communication_syncing_message",
-		"communication_friend_info"
+		"communication_friend_info", "communication_log"
 		}};
 
 		TORRENT_ASSERT(alert_type >= 0);
@@ -1726,6 +1726,36 @@ namespace {
         std::snprintf(msg, sizeof(msg), "friend info %s"
                 , friend_info.data());
         return msg;
+#endif
+    }
+
+    communication_log_alert::communication_log_alert(aux::stack_allocator& alloc, char const* log)
+            : m_alloc(alloc)
+            , m_str_idx(alloc.copy_string(log))
+    {}
+    communication_log_alert::communication_log_alert(aux::stack_allocator& alloc, char const* fmt, va_list v)
+            : m_alloc(alloc)
+            , m_str_idx(alloc.format_string(fmt, v))
+    {}
+
+    char const* communication_log_alert::log_message() const
+    {
+        return m_alloc.get().ptr(m_str_idx);
+    }
+
+#if TORRENT_ABI_VERSION == 1
+    char const* communication_log_alert::msg() const
+    {
+        return log_message();
+    }
+#endif
+
+    std::string communication_log_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        return log_message();
 #endif
     }
 

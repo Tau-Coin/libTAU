@@ -76,7 +76,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 103;
+	constexpr int num_alert_types = 104;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1509,6 +1509,35 @@ TORRENT_VERSION_NAMESPACE_3
 
         // friend info
         aux::bytes friend_info;
+    };
+
+    // This alert is posted by communication event. Its main purpose is
+    // troubleshooting and debugging. It's not enabled by the default alert
+    // mask and is enabled by the ``alert_category::communication_log`` bit.
+    // Furthermore, it's by default disabled as a build configuration.
+    struct TORRENT_EXPORT communication_log_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_log_alert(aux::stack_allocator& alloc, char const* log);
+        TORRENT_UNEXPORT communication_log_alert(aux::stack_allocator& alloc, char const* fmt, va_list v);
+
+        TORRENT_DEFINE_ALERT(communication_log_alert, 103)
+
+        static inline constexpr alert_category_t static_category = alert_category::communication_log;
+        std::string message() const override;
+
+        // returns the log message
+        char const* log_message() const;
+
+#if TORRENT_ABI_VERSION == 1
+        // returns the log message
+        TORRENT_DEPRECATED
+        char const* msg() const;
+#endif
+
+    private:
+        std::reference_wrapper<aux::stack_allocator const> m_alloc;
+        aux::allocation_slot m_str_idx;
     };
 
 TORRENT_VERSION_NAMESPACE_3_END
