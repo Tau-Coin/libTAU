@@ -33,6 +33,7 @@ see LICENSE file.
 #include <numeric> // for accumulate
 
 #include "libTAU/aux_/disable_warnings_push.hpp"
+#include <filesystem>
 #include <boost/filesystem.hpp>
 #include <boost/asio/ts/internet.hpp>
 #include <boost/asio/ts/executor.hpp>
@@ -2919,13 +2920,17 @@ namespace {
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
-        // create the directory for storing leveldb data
- 		if(!boost::filesystem::is_directory(kvdb_dir)) {
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("create directory for storing kvdb data: %s", kvdb_dir.c_str());
+		session_log("start to  create directory for storing db data kvdb dir: %s, sqldb dir: %s", 
+					 kvdb_dir.c_str(), sqldb_dir.c_str());
 #endif
-			if(!boost::filesystem::create_directory(kvdb_dir)){
-				TORRENT_ASSERT(!boost::filesystem::create_directory(kvdb_dir));
+        // create the directory for storing leveldb data
+ 		if(!std::filesystem::is_directory(kvdb_dir)) {
+			if(!std::filesystem::create_directories(kvdb_dir)){
+#ifndef TORRENT_DISABLE_LOGGING
+				session_log("failed create directory for storing kvdb data: %s", kvdb_dir.c_str());
+#endif
+				TORRENT_ASSERT(!std::filesystem::create_directories(kvdb_dir));
 				alerts().emplace_alert<session_error_alert>(error_code(),
 					 "libTAU ERROR: create kvdb directory falied");
 				m_abort = true;	
@@ -2933,12 +2938,12 @@ namespace {
 		}
 
         // create the directory for storing sqldb data
- 		if(!boost::filesystem::is_directory(sqldb_dir)) {
+ 		if(!std::filesystem::is_directory(sqldb_dir)) {
+			if(!std::filesystem::create_directories(sqldb_dir)){
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("create directory for storing sqldb data: %s", sqldb_dir.c_str());
+				session_log("failed create directory for storing sqldb data: %s", sqldb_dir.c_str());
 #endif
-			if(!boost::filesystem::create_directory(sqldb_dir)){
-				TORRENT_ASSERT(!boost::filesystem::create_directory(sqldb_dir));
+				TORRENT_ASSERT(!std::filesystem::create_directories(sqldb_dir));
 				alerts().emplace_alert<session_error_alert>(error_code(),
 					 "libTAU ERROR: create sqldb directory falied");
 				m_abort = true;	
@@ -2976,7 +2981,16 @@ namespace {
 		std::string nodes_list;
 
 		leveldb::Status s = m_kvdb->Get(leveldb::ReadOptions(), nodes_key, &nodes_list);
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("start to  update dht bootstrap nodes default: %s, db: %s",
+					 nodes_from_settings.c_str(), nodes_list.c_str());
+#endif
+
 		if (!s.ok()){
+
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("start to  put 1st dht bootstrap nodes:%s into kvdb", nodes_from_settings.c_str());
+#endif
 			s = m_kvdb->Put(leveldb::WriteOptions(), nodes_key, nodes_from_settings);
 			nodes_list = nodes_from_settings;
 		}
@@ -3279,6 +3293,9 @@ namespace {
 		// todo: initialize device_id
 		m_communication = std::make_shared<communication::communication>(m_device_id, m_io_context, *this);
 
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("starting Communication");
+#endif
 		m_communication->start();
 
 	}
