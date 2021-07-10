@@ -43,7 +43,7 @@ namespace libTAU {
         }
 
         bool communication::init() {
-            if (m_message_db->init()) {
+            if (!m_message_db->init()) {
                 log("ERROR: DB init fail!");
                 return false;
             }
