@@ -617,22 +617,6 @@ namespace {
 		return m_alloc.get().ptr(m_file_idx);
 	}
 
-#if TORRENT_ABI_VERSION == 1
-	torrent_added_alert::torrent_added_alert(aux::stack_allocator& alloc
-		, torrent_handle const& h)
-		: torrent_alert(alloc, h)
-	{}
-
-	std::string torrent_added_alert::message() const
-	{
-#ifdef TORRENT_DISABLE_ALERT_MSG
-		return {};
-#else
-		return torrent_alert::message() + " added";
-#endif
-	}
-#endif
-
 	incoming_connection_alert::incoming_connection_alert(aux::stack_allocator&
 		, socket_type_t t, tcp::endpoint const& i)
 		: socket_type(t)
@@ -1565,16 +1549,15 @@ namespace {
 	{
 		static std::array<char const*, num_alert_types> const names = {{
 #if TORRENT_ABI_VERSION == 1
-		"torrent", "peer", "tracker", "torrent_added",
+		"torrent", "peer",
 #else
-		"", "", "", "",
+		"", "",
 #endif
-		"dht_reply", 
 		"udp_error", "external_ip", "listen_failed",
 		"listen_succeeded", "portmap_error", "portmap",
-		"portmap_log", "fastresume_rejected",
+		"portmap_log",
 		"dht_announce", "dht_get_peers", "stats",
-		"dht_bootstrap", "", "torrent_error",
+		"dht_bootstrap", "torrent_error",
 		"incoming_connection",
 		"state_update",
 #if TORRENT_ABI_VERSION == 1
@@ -1583,17 +1566,11 @@ namespace {
 		"",
 #endif
 		"session_stats",
-#if TORRENT_ABI_VERSION == 1
-		"torrent_update",
-#else
-		"",
-#endif
-		"", "dht_error", "dht_immutable_item", "dht_mutable_item",
+		"dht_error", "dht_immutable_item", "dht_mutable_item",
 		"dht_put", "dht_outgoing_get_peers", "log",
-		"peer_log", "lsd_error",
-		"dht_stats", "dht_log",
+		"peer_log", "dht_stats", "dht_log",
 		"dht_pkt", "dht_get_peers_reply", "dht_direct_response",
-		"picker_log", "session_error", "dht_live_nodes",
+		"session_error", "dht_live_nodes",
 		"session_stats_header", "dht_sample_infohashes",
 		"alerts_dropped", "socks5",
 		"communication_new_device_id", "communication_new_message",

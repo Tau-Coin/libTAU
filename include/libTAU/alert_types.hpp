@@ -76,7 +76,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 104;
+	constexpr int num_alert_types = 43;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -181,30 +181,6 @@ TORRENT_VERSION_NAMESPACE_3
 #define TORRENT_DEFINE_ALERT_PRIO(name, seq, prio) \
 	TORRENT_DEFINE_ALERT_IMPL(name, seq, prio)
 
-#if TORRENT_ABI_VERSION == 1
-
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-
-	// The ``torrent_added_alert`` is posted once every time a torrent is successfully
-	// added. It doesn't contain any members of its own, but inherits the torrent handle
-	// from its base class.
-	// It's posted when the ``alert_category::status`` bit is set in the alert_mask.
-	// deprecated in 1.1.3
-	// use add_torrent_alert instead
-	struct TORRENT_DEPRECATED_EXPORT torrent_added_alert final : torrent_alert
-	{
-		// internal
-		TORRENT_UNEXPORT torrent_added_alert(aux::stack_allocator& alloc, torrent_handle const& h);
-
-		TORRENT_DEFINE_ALERT(torrent_added_alert, 3)
-		static inline constexpr alert_category_t static_category = alert_category::status;
-		std::string message() const override;
-	};
-
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-
-#endif
-
 	// This alert is posted when there is an error on a UDP socket. The
 	// UDP sockets are used for all uTP, DHT and UDP tracker traffic. They are
 	// global to the session.
@@ -217,7 +193,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, operation_t op
 			, error_code const& ec);
 
-		TORRENT_DEFINE_ALERT(udp_error_alert, 46)
+		TORRENT_DEFINE_ALERT(udp_error_alert, 2)
 
 		static inline constexpr alert_category_t static_category = alert_category::error;
 		std::string message() const override;
@@ -241,7 +217,7 @@ TORRENT_VERSION_NAMESPACE_3
 		// internal
 		TORRENT_UNEXPORT external_ip_alert(aux::stack_allocator& alloc, address const& ip);
 
-		TORRENT_DEFINE_ALERT(external_ip_alert, 47)
+		TORRENT_DEFINE_ALERT(external_ip_alert, 3)
 
 		static inline constexpr alert_category_t static_category = alert_category::status;
 		std::string message() const override;
@@ -292,7 +268,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT listen_failed_alert(aux::stack_allocator& alloc, string_view iface
 			, operation_t op, error_code const& ec, lt::socket_type_t t);
 
-		TORRENT_DEFINE_ALERT_PRIO(listen_failed_alert, 48, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(listen_failed_alert, 4, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::status | alert_category::error;
 		std::string message() const override;
@@ -374,7 +350,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, udp::endpoint const& ep
 			, lt::socket_type_t t);
 
-		TORRENT_DEFINE_ALERT_PRIO(listen_succeeded_alert, 49, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(listen_succeeded_alert, 5, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::status;
 		std::string message() const override;
@@ -411,7 +387,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT portmap_error_alert(aux::stack_allocator& alloc, port_mapping_t i
 			, portmap_transport t, error_code const& e, address const& local);
 
-		TORRENT_DEFINE_ALERT(portmap_error_alert, 50)
+		TORRENT_DEFINE_ALERT(portmap_error_alert, 6)
 
 		static inline constexpr alert_category_t static_category = alert_category::port_mapping
 			| alert_category::error;
@@ -447,7 +423,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT portmap_alert(aux::stack_allocator& alloc, port_mapping_t i, int port
 			, portmap_transport t, portmap_protocol protocol, address const& local);
 
-		TORRENT_DEFINE_ALERT(portmap_alert, 51)
+		TORRENT_DEFINE_ALERT(portmap_alert, 7)
 
 		static inline constexpr alert_category_t static_category = alert_category::port_mapping;
 		std::string message() const override;
@@ -493,7 +469,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT portmap_log_alert(aux::stack_allocator& alloc, portmap_transport t
 			, const char* m, address const& local);
 
-		TORRENT_DEFINE_ALERT(portmap_log_alert, 52)
+		TORRENT_DEFINE_ALERT(portmap_log_alert, 8)
 
 		static inline constexpr alert_category_t static_category = alert_category::port_mapping_log;
 		std::string message() const override;
@@ -527,7 +503,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT dht_announce_alert(aux::stack_allocator& alloc, address const& i, int p
 			, sha256_hash const& ih);
 
-		TORRENT_DEFINE_ALERT(dht_announce_alert, 55)
+		TORRENT_DEFINE_ALERT(dht_announce_alert, 9)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -544,7 +520,7 @@ TORRENT_VERSION_NAMESPACE_3
 		// internal
 		TORRENT_UNEXPORT dht_get_peers_alert(aux::stack_allocator& alloc, sha256_hash const& ih);
 
-		TORRENT_DEFINE_ALERT(dht_get_peers_alert, 56)
+		TORRENT_DEFINE_ALERT(dht_get_peers_alert, 10)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -566,7 +542,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT stats_alert(aux::stack_allocator& alloc, torrent_handle const& h, int interval
 			, aux::stat const& s);
 
-		TORRENT_DEFINE_ALERT(stats_alert, 57)
+		TORRENT_DEFINE_ALERT(stats_alert, 11)
 
 		static inline constexpr alert_category_t static_category = alert_category::stats;
 		std::string message() const override;
@@ -616,7 +592,7 @@ TORRENT_VERSION_NAMESPACE_3
 		// internal
 		explicit TORRENT_UNEXPORT dht_bootstrap_alert(aux::stack_allocator& alloc);
 
-		TORRENT_DEFINE_ALERT(dht_bootstrap_alert, 62)
+		TORRENT_DEFINE_ALERT(dht_bootstrap_alert, 12)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -629,7 +605,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT torrent_error_alert(aux::stack_allocator& alloc, torrent_handle const& h
 			, error_code const& e, string_view f);
 
-		TORRENT_DEFINE_ALERT_PRIO(torrent_error_alert, 64, alert_priority::high)
+		TORRENT_DEFINE_ALERT_PRIO(torrent_error_alert, 13, alert_priority::high)
 
 		static inline constexpr alert_category_t static_category = alert_category::error | alert_category::status;
 		std::string message() const override;
@@ -662,7 +638,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT incoming_connection_alert(aux::stack_allocator& alloc
 			, socket_type_t t, tcp::endpoint const& i);
 
-		TORRENT_DEFINE_ALERT(incoming_connection_alert, 66)
+		TORRENT_DEFINE_ALERT(incoming_connection_alert, 14)
 
 		static inline constexpr alert_category_t static_category = alert_category::peer;
 		std::string message() const override;
@@ -690,7 +666,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT state_update_alert(aux::stack_allocator& alloc
 			, std::vector<torrent_status> st);
 
-		TORRENT_DEFINE_ALERT_PRIO(state_update_alert, 68, alert_priority::high)
+		TORRENT_DEFINE_ALERT_PRIO(state_update_alert, 15, alert_priority::high)
 
 		static inline constexpr alert_category_t static_category = alert_category::status;
 		std::string message() const override;
@@ -709,7 +685,7 @@ TORRENT_VERSION_NAMESPACE_3
 	{
 		mmap_cache_alert(aux::stack_allocator& alloc
 			, error_code const& ec);
-		TORRENT_DEFINE_ALERT(mmap_cache_alert, 69)
+		TORRENT_DEFINE_ALERT(mmap_cache_alert, 16)
 
 		static inline constexpr alert_category_t static_category = alert_category::error;
 		std::string message() const override;
@@ -738,7 +714,7 @@ TORRENT_VERSION_NAMESPACE_3
 #include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
 #endif
 
-		TORRENT_DEFINE_ALERT_PRIO(session_stats_alert, 70, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(session_stats_alert, 17, alert_priority::critical)
 
 #if TORRENT_ABI_VERSION == 1
 #include "libTAU/aux_/disable_warnings_pop.hpp"
@@ -775,7 +751,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT dht_error_alert(aux::stack_allocator& alloc, operation_t op
 			, error_code const& ec);
 
-		TORRENT_DEFINE_ALERT(dht_error_alert, 73)
+		TORRENT_DEFINE_ALERT(dht_error_alert, 18)
 
 		static inline constexpr alert_category_t static_category = alert_category::error | alert_category::dht;
 		std::string message() const override;
@@ -806,7 +782,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT dht_immutable_item_alert(aux::stack_allocator& alloc, sha256_hash const& t
 			, entry i);
 
-		TORRENT_DEFINE_ALERT_PRIO(dht_immutable_item_alert, 74, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(dht_immutable_item_alert, 19, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 
@@ -829,7 +805,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, std::array<char, 32> const& k, std::array<char, 64> const& sig
 			, std::int64_t sequence, string_view s, entry i, bool a);
 
-		TORRENT_DEFINE_ALERT_PRIO(dht_mutable_item_alert, 75, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(dht_mutable_item_alert, 20, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -870,7 +846,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, std::int64_t sequence_number
 			, int n);
 
-		TORRENT_DEFINE_ALERT(dht_put_alert, 76)
+		TORRENT_DEFINE_ALERT(dht_put_alert, 21)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -902,7 +878,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, sha256_hash const& ih, sha256_hash const& obfih
 			, udp::endpoint ep);
 
-		TORRENT_DEFINE_ALERT(dht_outgoing_get_peers_alert, 78)
+		TORRENT_DEFINE_ALERT(dht_outgoing_get_peers_alert, 22)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -933,7 +909,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT log_alert(aux::stack_allocator& alloc, char const* log);
 		TORRENT_UNEXPORT log_alert(aux::stack_allocator& alloc, char const* fmt, va_list v);
 
-		TORRENT_DEFINE_ALERT(log_alert, 79)
+		TORRENT_DEFINE_ALERT(log_alert, 23)
 
 		static inline constexpr alert_category_t static_category = alert_category::session_log;
 		std::string message() const override;
@@ -975,7 +951,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, peer_log_alert::direction_t dir
 			, char const* event, char const* fmt, va_list v);
 
-		TORRENT_DEFINE_ALERT(peer_log_alert, 81)
+		TORRENT_DEFINE_ALERT(peer_log_alert, 24)
 
 		static inline constexpr alert_category_t static_category = alert_category::peer_log;
 		std::string message() const override;
@@ -1056,7 +1032,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, std::vector<dht_lookup> requests
 			, sha256_hash id, udp::endpoint ep);
 
-		TORRENT_DEFINE_ALERT(dht_stats_alert, 83)
+		TORRENT_DEFINE_ALERT(dht_stats_alert, 25)
 
 		static inline constexpr alert_category_t static_category = {};
 		std::string message() const override;
@@ -1093,7 +1069,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, dht_module_t m, char const* fmt, va_list v);
 
 		static inline constexpr alert_category_t static_category = alert_category::dht_log;
-		TORRENT_DEFINE_ALERT(dht_log_alert, 85)
+		TORRENT_DEFINE_ALERT(dht_log_alert, 26)
 
 		std::string message() const override;
 
@@ -1121,7 +1097,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, dht_pkt_alert::direction_t d, udp::endpoint const& ep);
 
 		static inline constexpr alert_category_t static_category = alert_category::dht_log;
-		TORRENT_DEFINE_ALERT(dht_pkt_alert, 86)
+		TORRENT_DEFINE_ALERT(dht_pkt_alert, 27)
 
 		std::string message() const override;
 
@@ -1158,7 +1134,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, std::vector<tcp::endpoint> const& peers);
 
 		static inline constexpr alert_category_t static_category = alert_category::dht_operation;
-		TORRENT_DEFINE_ALERT(dht_get_peers_reply_alert, 87)
+		TORRENT_DEFINE_ALERT(dht_get_peers_reply_alert, 28)
 
 		std::string message() const override;
 
@@ -1193,7 +1169,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT dht_direct_response_alert(aux::stack_allocator& alloc, client_data_t userdata
 			, udp::endpoint const& addr);
 
-		TORRENT_DEFINE_ALERT_PRIO(dht_direct_response_alert, 88, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(dht_direct_response_alert, 29, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -1226,7 +1202,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, tcp::endpoint const& ep, peer_id const& peer_id, picker_flags_t flags
 			, span<piece_block const> blocks);
 
-		TORRENT_DEFINE_ALERT(picker_log_alert, 89)
+		TORRENT_DEFINE_ALERT(picker_log_alert, 30)
 
 		static inline constexpr alert_category_t static_category = alert_category::picker_log;
 		std::string message() const override;
@@ -1268,7 +1244,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT session_error_alert(aux::stack_allocator& alloc, error_code err
 			, string_view error_str);
 
-		TORRENT_DEFINE_ALERT(session_error_alert, 90)
+		TORRENT_DEFINE_ALERT(session_error_alert, 31)
 
 		static inline constexpr alert_category_t static_category = alert_category::error;
 		std::string message() const override;
@@ -1291,7 +1267,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, sha256_hash const& nid
 			, std::vector<std::pair<sha256_hash, udp::endpoint>> const& nodes);
 
-		TORRENT_DEFINE_ALERT(dht_live_nodes_alert, 91)
+		TORRENT_DEFINE_ALERT(dht_live_nodes_alert, 32)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -1324,7 +1300,7 @@ TORRENT_VERSION_NAMESPACE_3
 	{
 		// internal
 		explicit TORRENT_UNEXPORT session_stats_header_alert(aux::stack_allocator& alloc);
-		TORRENT_DEFINE_ALERT(session_stats_header_alert, 92)
+		TORRENT_DEFINE_ALERT(session_stats_header_alert, 33)
 
 		static inline constexpr alert_category_t static_category = {};
 		std::string message() const override;
@@ -1344,7 +1320,7 @@ TORRENT_VERSION_NAMESPACE_3
 			, std::vector<std::pair<sha256_hash, udp::endpoint>> const& nodes);
 
 		static inline constexpr alert_category_t static_category = alert_category::dht_operation;
-		TORRENT_DEFINE_ALERT(dht_sample_infohashes_alert, 93)
+		TORRENT_DEFINE_ALERT(dht_sample_infohashes_alert, 34)
 
 		std::string message() const override;
 
@@ -1397,7 +1373,7 @@ TORRENT_VERSION_NAMESPACE_3
 		// internal
 		explicit TORRENT_UNEXPORT alerts_dropped_alert(aux::stack_allocator& alloc
 			, std::bitset<abi_alert_count> const&);
-		TORRENT_DEFINE_ALERT_PRIO(alerts_dropped_alert, 95, alert_priority::meta)
+		TORRENT_DEFINE_ALERT_PRIO(alerts_dropped_alert, 35, alert_priority::meta)
 
 		static inline constexpr alert_category_t static_category = alert_category::error;
 		std::string message() const override;
@@ -1416,7 +1392,7 @@ TORRENT_VERSION_NAMESPACE_3
 		// internal
 		explicit socks5_alert(aux::stack_allocator& alloc
 			, tcp::endpoint const& ep, operation_t operation, error_code const& ec);
-		TORRENT_DEFINE_ALERT(socks5_alert, 96)
+		TORRENT_DEFINE_ALERT(socks5_alert, 36)
 
 		static inline constexpr alert_category_t static_category = alert_category::error;
 		std::string message() const override;
@@ -1437,7 +1413,7 @@ TORRENT_VERSION_NAMESPACE_3
         // internal
         TORRENT_UNEXPORT communication_new_device_id_alert(aux::stack_allocator& alloc, aux::bytes t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_new_device_id_alert, 98, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_new_device_id_alert, 37, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1453,7 +1429,7 @@ TORRENT_VERSION_NAMESPACE_3
         // internal
         TORRENT_UNEXPORT communication_new_message_alert(aux::stack_allocator& alloc, communication::message t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_new_message_alert, 99, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_new_message_alert, 38, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1469,7 +1445,7 @@ TORRENT_VERSION_NAMESPACE_3
         // internal
         TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, aux::bytes t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_confirmation_root_alert, 100, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_confirmation_root_alert, 39, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1485,7 +1461,7 @@ TORRENT_VERSION_NAMESPACE_3
         // internal
         TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, aux::bytes t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_syncing_message_alert, 101, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_syncing_message_alert, 40, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1501,7 +1477,7 @@ TORRENT_VERSION_NAMESPACE_3
         // internal
         TORRENT_UNEXPORT communication_friend_info_alert(aux::stack_allocator& alloc, aux::bytes t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_friend_info_alert, 102, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_friend_info_alert, 41, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
