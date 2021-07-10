@@ -1497,7 +1497,7 @@ TORRENT_VERSION_NAMESPACE_3
         TORRENT_UNEXPORT communication_log_alert(aux::stack_allocator& alloc, char const* log);
         TORRENT_UNEXPORT communication_log_alert(aux::stack_allocator& alloc, char const* fmt, va_list v);
 
-        TORRENT_DEFINE_ALERT(communication_log_alert, 103)
+        TORRENT_DEFINE_ALERT(communication_log_alert, 42)
 
         static inline constexpr alert_category_t static_category = alert_category::communication_log;
         std::string message() const override;
