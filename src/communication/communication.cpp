@@ -50,7 +50,7 @@ namespace libTAU {
 
             // get friends from db
             m_friends = m_message_db->get_all_friends();
-            log("INFO: friend size: %i", m_friends.size());
+            log("INFO: friend size: %zu", m_friends.size());
             for (auto const & peer: m_friends) {
                 log("INFO: friend: %s", peer.data());
             }
