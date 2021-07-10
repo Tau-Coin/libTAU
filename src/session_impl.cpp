@@ -4189,21 +4189,21 @@ namespace {
 	void session_impl::get_peers(sha256_hash const& ih)
 	{
 		if (!m_alerts.should_post<dht_get_peers_alert>()) return;
-		m_alerts.emplace_alert<dht_get_peers_alert>(ih);
+		//m_alerts.emplace_alert<dht_get_peers_alert>(ih);
 	}
 
 	void session_impl::announce(sha256_hash const& ih, address const& addr
 		, int port)
 	{
 		if (!m_alerts.should_post<dht_announce_alert>()) return;
-		m_alerts.emplace_alert<dht_announce_alert>(addr, port, ih);
+		//m_alerts.emplace_alert<dht_announce_alert>(addr, port, ih);
 	}
 
 	void session_impl::outgoing_get_peers(sha256_hash const& target
 		, sha256_hash const& sent_target, udp::endpoint const& ep)
 	{
 		if (!m_alerts.should_post<dht_outgoing_get_peers_alert>()) return;
-		m_alerts.emplace_alert<dht_outgoing_get_peers_alert>(target, sent_target, ep);
+		//m_alerts.emplace_alert<dht_outgoing_get_peers_alert>(target, sent_target, ep);
 	}
 
 #ifndef TORRENT_DISABLE_LOGGING
