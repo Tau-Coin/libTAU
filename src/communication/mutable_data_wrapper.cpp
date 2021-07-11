@@ -26,8 +26,4 @@ namespace libTAU { namespace communication {
             m_type = static_cast<mutable_data_type>(_mutable_data_wrapper[1].toInt<uint8_t>());
             m_payload = _mutable_data_wrapper[2].toBytes();
         }
-
-        mutable_data_wrapper::mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType,
-                                                   aux::bytes mPayload) : m_timestamp(mTimestamp), m_type(mType),
-                                                                                 m_payload(std::move(mPayload)) {}
     }}

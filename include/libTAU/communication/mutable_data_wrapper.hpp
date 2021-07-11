@@ -12,6 +12,8 @@ see LICENSE file.
 
 #include <libTAU/aux_/common.h>
 #include <libTAU/aux_/rlp.h>
+
+#include <utility>
 #include "libTAU/aux_/export.hpp"
 
 
@@ -36,7 +38,8 @@ namespace libTAU {
             // @param _rlp rlp encode
             explicit mutable_data_wrapper(aux::bytesConstRef _rlp);
 
-            mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, aux::bytes mPayload);
+            mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, aux::bytes mPayload)
+                    : m_timestamp(mTimestamp), m_type(mType), m_payload(std::move(mPayload)) {}
 
             // @returns timestamp
             uint32_t timestamp() const { return m_timestamp; }

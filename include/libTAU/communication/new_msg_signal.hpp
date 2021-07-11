@@ -27,7 +27,7 @@ namespace libTAU {
         public:
 
             // @param _rlp rlp encode
-            new_msg_signal(aux::bytesConstRef _rlp);
+            explicit new_msg_signal(aux::bytesConstRef _rlp);
 
             // @param _rlp rlp encode
             explicit new_msg_signal(aux::bytes const& _rlp): new_msg_signal(&_rlp) {}

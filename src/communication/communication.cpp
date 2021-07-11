@@ -21,6 +21,7 @@ namespace libTAU {
 
         bool communication::start()
         {
+            log("INFO: Start Communication...");
             if (!init())
                 return false;
 
@@ -39,10 +40,13 @@ namespace libTAU {
 
             m_refresh_timer.cancel();
 
+            log("INFO: Stop Communication...");
+
             return true;
         }
 
         bool communication::init() {
+            log("INFO: Communication init...");
             if (!m_message_db->init()) {
                 log("ERROR: DB init fail!");
                 return false;
@@ -69,6 +73,13 @@ namespace libTAU {
         }
 
         bool communication::add_new_friend(const aux::bytes& pubkey) {
+            if (pubkey.empty()) {
+                log("ERROR: Public key is empty.");
+                return false;
+            }
+
+            log("INFO: Public key %s.", pubkey.data());
+
             bool update = true;
             for(auto & peer : m_friends) {
                 if (peer == pubkey) {
@@ -81,8 +92,10 @@ namespace libTAU {
                 m_friends.push_back(pubkey);
             }
 
-            if (!m_message_db->save_friend(pubkey))
+            if (!m_message_db->save_friend(pubkey)) {
+                log("ERROR: Save friend failed!");
                 return false;
+            }
 
             return true;
         }
@@ -95,14 +108,20 @@ namespace libTAU {
                 }
             }
 
-            if (!m_message_db->delete_friend(pubkey))
+            if (!m_message_db->delete_friend(pubkey)) {
+                log("ERROR: Delete friend failed!");
                 return false;
+            }
 
-            if (!m_message_db->delete_friend_info(pubkey))
+            if (!m_message_db->delete_friend_info(pubkey)) {
+                log("ERROR: Delete friend info failed!");
                 return false;
+            }
 
-            if (!m_message_db->delete_latest_message_hash_list_encode(pubkey))
+            if (!m_message_db->delete_latest_message_hash_list_encode(pubkey)) {
+                log("ERROR: Delete friend message hash list encode failed!");
                 return false;
+            }
 
             return true;
         }
@@ -136,6 +155,7 @@ namespace libTAU {
 
         bool communication::validate_message(const message& msg) {
             if (msg.rlp().size() > 1000) {
+                log("ERROR: Message is oversize!");
                 return false;
             }
 
@@ -399,6 +419,7 @@ namespace libTAU {
             // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
             if ((data.timestamp() + communication_data_accepted_time < now_time) ||
             (data.timestamp() - communication_data_accepted_time > now_time)) {
+                log("INFO: Mutable data wrapper timestamp mismatch!");
                 return;
             }
 
@@ -427,6 +448,7 @@ namespace libTAU {
                         if (onlineSignal.device_id() != m_device_id) {
                             // 通知用户新的device id
                             m_ses.alerts().emplace_alert<communication_new_device_id_alert>(onlineSignal.device_id());
+                            log("INFO: Found new device id: %s", onlineSignal.device_id().data());
 
                             if (!onlineSignal.friend_info().empty()) {
                                 // 通知用户新的friend info

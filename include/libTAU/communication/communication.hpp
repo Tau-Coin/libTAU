@@ -155,7 +155,7 @@ namespace libTAU {
             new_msg_signal make_new_message_signal(const aux::bytes& peer);
 
             // validate message, check if message is oversize( >1000 bytes)
-            static bool validate_message(const message& msg);
+            bool validate_message(const message& msg);
 
             // immutable data callback
             void get_immutable_callback(sha1_hash target
