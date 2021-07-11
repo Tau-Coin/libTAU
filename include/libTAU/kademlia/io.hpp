@@ -27,8 +27,8 @@ namespace libTAU::dht {
 	node_endpoint read_node_endpoint(udp protocol, InIt&& in)
 	{
 		node_endpoint ep;
-		std::copy(in, in + 20, ep.id.begin());
-		in += 20;
+		std::copy(in, in + 32, ep.id.begin());
+		in += 32;
 		if (protocol == udp::v6())
 			ep.ep = aux::read_v6_endpoint<udp::endpoint>(in);
 		else

@@ -588,7 +588,7 @@ void look_for_nodes(char const* nodes_key, udp const& protocol, bdecode_node con
 		char const* end = nodes + n.string_length();
 		int const protocol_size = int(aux::address_size(protocol));
 
-		while (end - nodes >= 20 + protocol_size + 2)
+		while (end - nodes >= 32 + protocol_size + 2)
 		{
 			f(read_node_endpoint(protocol, nodes));
 		}
@@ -618,7 +618,7 @@ void traversal_observer::reply(msg const& m)
 	if (logger != nullptr && logger->should_log(dht_logger::traversal))
 	{
 		char hex_id[41];
-		aux::to_hex({id.string_ptr(), 20}, hex_id);
+		aux::to_hex({id.string_ptr(), 32}, hex_id);
 		logger->log(dht_logger::traversal
 			, "[%u] RESPONSE id: %s invoke-count: %d addr: %s type: %s"
 			, algorithm()->id(), hex_id, algorithm()->invoke_count()
@@ -629,7 +629,7 @@ void traversal_observer::reply(msg const& m)
 	look_for_nodes(algorithm()->get_node().protocol_nodes_key(), algorithm()->get_node().protocol(), r,
 		[this](node_endpoint const& nep) { algorithm()->traverse(nep.id, nep.ep); });
 
-	if (!id || id.string_length() != 20)
+	if (!id || id.string_length() != 32)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
 		if (get_observer() != nullptr)

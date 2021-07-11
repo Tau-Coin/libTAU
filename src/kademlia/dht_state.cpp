@@ -22,7 +22,7 @@ namespace libTAU::dht {
 		node_ids_t ret;
 		// first look for an old-style nid
 		auto const old_nid = e.dict_find_string_value(key);
-		if (old_nid.size() == 20)
+		if (old_nid.size() == 32)
 		{
 			ret.emplace_back(address(), node_id(old_nid));
 			return ret;
@@ -33,7 +33,7 @@ namespace libTAU::dht {
 		{
 			bdecode_node nid = nids.list_at(i);
 			if (nid.type() != bdecode_node::string_t) continue;
-			if (nid.string_length() < 20) continue;
+			if (nid.string_length() < 32) continue;
 			char const* in = nid.string_ptr();
 			node_id id(in);
 			in += id.size();

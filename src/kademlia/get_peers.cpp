@@ -76,7 +76,7 @@ void get_peers_observer::log_peers(msg const& m, bdecode_node const& r, int cons
 			if (logger != nullptr && logger->should_log(dht_logger::traversal))
 			{
 				bdecode_node const id = r.dict_find_string("id");
-				if (id && id.string_length() == 20)
+				if (id && id.string_length() == 32)
 				{
 					logger->log(dht_logger::traversal, "[%u] PEERS "
 						"invoke-count: %d branch-factor: %d addr: %s id: %s distance: %d p: %d"

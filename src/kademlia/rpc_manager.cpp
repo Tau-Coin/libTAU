@@ -316,7 +316,7 @@ bool rpc_manager::incoming(msg const& m, node_id* id)
 	}
 
 	bdecode_node const node_id_ent = ret_ent.dict_find_string("id");
-	if (!node_id_ent || node_id_ent.string_length() != 20)
+	if (!node_id_ent || node_id_ent.string_length() != 32)
 	{
 		o->timeout();
 		return false;

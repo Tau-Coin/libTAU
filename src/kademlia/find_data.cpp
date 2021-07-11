@@ -38,7 +38,7 @@ void find_data_observer::reply(msg const& m)
 	}
 
 	bdecode_node const id = r.dict_find_string("id");
-	if (!id || id.string_length() != 20)
+	if (!id || id.string_length() != 32)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
 		get_observer()->log(dht_logger::traversal, "[%u] invalid id in response"
