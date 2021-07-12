@@ -617,7 +617,7 @@ void traversal_observer::reply(msg const& m)
 	dht_observer* logger = get_observer();
 	if (logger != nullptr && logger->should_log(dht_logger::traversal))
 	{
-		char hex_id[41];
+		char hex_id[65];
 		aux::to_hex({id.string_ptr(), 32}, hex_id);
 		logger->log(dht_logger::traversal
 			, "[%u] RESPONSE id: %s invoke-count: %d addr: %s type: %s"
