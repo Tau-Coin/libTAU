@@ -34,10 +34,13 @@ namespace libTAU {
             // delete a friend
             bool delete_friend(aux::bytes public_key) override;
 
+            // get friend info by public key
             aux::bytes get_friend_info(aux::bytes public_key) override;
 
+            // save friend info
             bool save_friend_info(aux::bytes public_key, aux::bytes friend_info) override;
 
+            // delete friend info
             bool delete_friend_info(aux::bytes public_key) override;
 
             // get message by hash
