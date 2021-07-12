@@ -227,7 +227,6 @@ namespace libTAU {
                 request_signal(peer);
                 publish_signal(peer);
             }
-
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(
                     std::bind(&communication::refresh_timeout, self(), _1));

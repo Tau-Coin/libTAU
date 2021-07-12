@@ -830,10 +830,6 @@ namespace aux {
 			// upnp-and-nat-pmp_.
 			enable_natpmp,
 
-			// starts the dht node and makes the trackerless service available to
-			// torrents.
-			enable_dht,
-
 			// if the allowed encryption level is both, setting this to true will
 			// prefer RC4 if both methods are offered, plain text otherwise
 			prefer_rc4,

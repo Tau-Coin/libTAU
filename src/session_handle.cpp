@@ -359,14 +359,12 @@ namespace {
 	void session_handle::start_dht()
 	{
 		settings_pack p;
-		p.set_bool(settings_pack::enable_dht, true);
 		apply_settings(std::move(p));
 	}
 
 	void session_handle::stop_dht()
 	{
 		settings_pack p;
-		p.set_bool(settings_pack::enable_dht, false);
 		apply_settings(std::move(p));
 	}
 #endif // TORRENT_ABI_VERSION

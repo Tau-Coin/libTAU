@@ -549,7 +549,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
 		reopen_listen_sockets(false);
 
-		start_communication();
 	}
 
 #if TORRENT_ABI_VERSION <= 2
@@ -3533,7 +3532,6 @@ namespace {
 
 	void session_impl::start_dht_deprecated(entry const& startup_state)
 	{
-		m_settings.set_bool(settings_pack::enable_dht, true);
 		std::vector<char> tmp;
 		bencode(std::back_inserter(tmp), startup_state);
 
@@ -3578,6 +3576,10 @@ namespace {
 	{
 		ADD_OUTSTANDING_ASYNC("session_impl::on_dht_router_name_lookup");
 		++m_outstanding_router_lookups;
+
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("add_dht_router lookups: %d" , m_outstanding_router_lookups);
+#endif
 		m_host_resolver.async_resolve(node.first, resolver::abort_on_shutdown
 			, std::bind(&session_impl::on_dht_router_name_lookup
 				, this, _1, _2, node.second));
@@ -3589,13 +3591,21 @@ namespace {
 		COMPLETE_ASYNC("session_impl::on_dht_router_name_lookup");
 		--m_outstanding_router_lookups;
 
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("on_dht_router lookups: %d" , m_outstanding_router_lookups);
+#endif
+
 		if (e)
 		{
 			if (m_alerts.should_post<dht_error_alert>())
 				m_alerts.emplace_alert<dht_error_alert>(
 					operation_t::hostname_lookup, e);
 
-			if (m_outstanding_router_lookups == 0) start_dht();
+			if (m_outstanding_router_lookups == 0) 
+			{
+				start_dht();
+				start_communication();
+			}
 			return;
 		}
 
@@ -3608,7 +3618,11 @@ namespace {
 			m_dht_router_nodes.push_back(ep);
 		}
 
-		if (m_outstanding_router_lookups == 0) start_dht();
+		if (m_outstanding_router_lookups == 0)
+		{
+			start_dht();
+			start_communication();
+		}
 	}
 
 	// callback for dht_immutable_get

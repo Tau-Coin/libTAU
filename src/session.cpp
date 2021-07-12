@@ -396,7 +396,6 @@ namespace {
 		{
 			pack.set_bool(settings_pack::enable_upnp, false);
 			pack.set_bool(settings_pack::enable_natpmp, false);
-			pack.set_bool(settings_pack::enable_dht, false);
 		}
 
 		start(flags, std::move(pack), nullptr);
@@ -423,7 +422,6 @@ namespace {
 		{
 			pack.set_bool(settings_pack::enable_upnp, false);
 			pack.set_bool(settings_pack::enable_natpmp, false);
-			pack.set_bool(settings_pack::enable_dht, false);
 		}
 		start(flags, std::move(pack), nullptr);
 	}

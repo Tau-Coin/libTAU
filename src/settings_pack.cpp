@@ -178,7 +178,6 @@ namespace libTAU {
 		SET(announce_crypto_support, true, nullptr),
 		SET(enable_upnp, true, &session_impl::update_upnp),
 		SET(enable_natpmp, true, &session_impl::update_natpmp),
-		SET(enable_dht, true, &session_impl::update_dht),
 		SET(prefer_rc4, false, nullptr),
 		SET(proxy_hostnames, true, nullptr),
 		SET(proxy_peer_connections, true, nullptr),

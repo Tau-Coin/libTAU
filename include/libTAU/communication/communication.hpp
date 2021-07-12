@@ -78,7 +78,7 @@ namespace libTAU {
                 public std::enable_shared_from_this<communication>, communication_logger {
         public:
 
-            communication(aux::bytes device_id, io_context &mIoc, aux::session_interface &mSes) :
+            communication(aux::bytes device_id, io_context& mIoc, aux::session_interface &mSes) :
             m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
                 m_message_db = std::make_shared<message_db_impl>(m_ses.sqldb(), m_ses.kvdb());
             }
