@@ -691,10 +691,10 @@ namespace aux {
 
 			void set_loop_time_interval(int milliseconds);
 			bool add_new_friend(std::array<char, 32>& pubkey);
-			bool delete_friend(const aux::bytes& pubkey);
-            void get_friend_info(aux::bytes pubkey, std::vector<unsigned char>& info);
-            bool update_friend_info(aux::bytes pubkey, aux::bytes friend_info);
-			void set_chatting_friend(aux::bytes chatting_friend);
+			bool delete_friend(std::array<char, 32>& pubkey);
+            void get_friend_info(std::array<char, 32>& pubkey, std::vector<unsigned char>& info);
+            bool update_friend_info(std::array<char, 32>& pubkey, aux::bytes friend_info);
+			void set_chatting_friend(std::array<char, 32> chatting_friend);
             void unset_chatting_friend();
             void set_active_friends(std::vector<aux::bytes> active_friends);
             bool add_new_message(const aux::vector_ref<unsigned char>& msg);

@@ -3415,19 +3415,19 @@ namespace {
 		return m_communication->add_new_friend(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 	}
 
-	bool session_impl::delete_friend(const aux::bytes& pubkey)
+	bool session_impl::delete_friend(std::array<char, 32>& pubkey)
 	{
-		return m_communication->delete_friend(pubkey);
+		return m_communication->delete_friend(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 	}
 
-	void session_impl::get_friend_info(aux::bytes pubkey, std::vector<unsigned char>& info)
+	void session_impl::get_friend_info(std::array<char, 32>& pubkey, std::vector<unsigned char>& info)
 	{
-		info = m_communication->get_friend_info(pubkey);
+		info = m_communication->get_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 	}
 
-	bool session_impl::update_friend_info(aux::bytes pubkey, aux::bytes friend_info)
+	bool session_impl::update_friend_info(std::array<char, 32>& pubkey, aux::bytes friend_info)
 	{
-		return m_communication->update_friend_info(pubkey, friend_info);
+		return m_communication->update_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()), friend_info);
 	}
 
 	void session_impl::unset_chatting_friend()
@@ -3435,8 +3435,8 @@ namespace {
 		m_communication->unset_chatting_friend();
 	}
 	
-	void session_impl::set_chatting_friend(aux::bytes chatting_friend){
-		m_communication->set_chatting_friend(chatting_friend);
+	void session_impl::set_chatting_friend(std::array<char, 32> chatting_friend){
+		m_communication->set_chatting_friend(std::vector<aux::ibyte>(chatting_friend.begin(), chatting_friend.end()));
 	}
 
 	void session_impl::set_active_friends(std::vector<aux::bytes> active_friends)

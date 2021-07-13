@@ -499,21 +499,20 @@ namespace {
 		return sync_call_ret<bool>(&session_impl::add_new_friend, pubkey);
 	}
 
-	bool session_handle::delete_friend(std::array<unsigned char, 32> pubkey)
+	bool session_handle::delete_friend(std::array<char, 32> pubkey)
 	{
-		sync_call(&session_impl::delete_friend, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
-		return true;
+		return sync_call_ret<bool>(&session_impl::delete_friend, pubkey);
 	}
 
-	void session_handle::set_chatting_friend(std::array<unsigned char, 32> pubkey)
+	void session_handle::set_chatting_friend(std::array<char, 32> pubkey)
 	{
-		sync_call(&session_impl::set_chatting_friend, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
+		sync_call(&session_impl::set_chatting_friend, pubkey);
 	}
 
-	std::vector<unsigned char> session_handle::get_friend_info(std::array<unsigned char, 32> pubkey)
+	std::vector<unsigned char> session_handle::get_friend_info(std::array<char, 32> pubkey)
 	{
 		std::vector<unsigned char> info;
-		sync_call(&session_impl::get_friend_info, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()), info); 
+		sync_call(&session_impl::get_friend_info, pubkey, info); 
 		return info;
 	}
 
@@ -522,14 +521,12 @@ namespace {
 		sync_call(&session_impl::unset_chatting_friend);
 	}
 
-	bool session_handle::update_friend_info(std::array<unsigned char, 32> pubkey, std::vector<unsigned char> friend_info)
+	bool session_handle::update_friend_info(std::array<char, 32> pubkey, std::vector<unsigned char> friend_info)
 	{
-		sync_call(&session_impl::update_friend_info, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()),
-					 								 std::vector<aux::ibyte>(friend_info.begin(), friend_info.end()));
-		return true;
+		return sync_call_ret<bool>(&session_impl::update_friend_info, pubkey, friend_info);
 	}
 
-	void session_handle::set_active_friends(std::vector<std::array<unsigned char, 32>> active_friends)
+	void session_handle::set_active_friends(std::vector<std::array<char, 32>> active_friends)
 	{
 		std::vector<aux::bytes> friends;
 
@@ -543,8 +540,7 @@ namespace {
 
 	bool session_handle::add_new_message(std::vector<unsigned char> msg)
 	{
-		sync_call(&session_impl::add_new_message, aux::vector_ref<unsigned char>(msg.data(), msg.size()));
-		return true;
+		return sync_call_ret<bool>(&session_impl::add_new_message, aux::vector_ref<unsigned char>(msg.data(), msg.size()));
 	}
 
 	void session_handle::set_ip_filter(ip_filter f)
