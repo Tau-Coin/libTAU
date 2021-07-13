@@ -38,14 +38,14 @@ namespace libTAU {
             // delete a friend
             virtual bool delete_friend(aux::bytes public_key) = 0;
 
-            // get friend info by public key
-            virtual aux::bytes get_friend_info(aux::bytes public_key) = 0;
+            // get friend info by key pair<my public key, peer public key>
+            virtual aux::bytes get_friend_info(std::pair<aux::bytes, aux::bytes> key) = 0;
 
             // save friend info
-            virtual bool save_friend_info(aux::bytes public_key, aux::bytes friend_info) = 0;
+            virtual bool save_friend_info(std::pair<aux::bytes, aux::bytes> key, aux::bytes friend_info) = 0;
 
-            // delete friend info
-            virtual bool delete_friend_info(aux::bytes public_key) = 0;
+            // delete friend info by key pair<my public key, peer public key>
+            virtual bool delete_friend_info(std::pair<aux::bytes, aux::bytes> key) = 0;
 
             // get message by hash
             virtual communication::message get_message(aux::bytes hash) = 0;
@@ -56,16 +56,16 @@ namespace libTAU {
             // delete message
             virtual bool delete_message(aux::bytes hash) = 0;
 
-            // get encode of the latest message hash list
-            virtual aux::bytes get_latest_message_hash_list_encode(aux::bytes public_key) = 0;
+            // get encode of the latest message hash list by key pair<my public key, peer public key>
+            virtual aux::bytes get_latest_message_hash_list_encode(std::pair<aux::bytes, aux::bytes> key) = 0;
 
-            // save encode of the latest message hash list
-            virtual bool save_latest_message_hash_list_encode(aux::bytes public_key, aux::bytes encode) = 0;
+            // save encode of the latest message hash list with key pair<my public key, peer public key>
+            virtual bool save_latest_message_hash_list_encode(std::pair<aux::bytes, aux::bytes> key, aux::bytes encode) = 0;
 
-            // delete encode of the latest message hash list
-            virtual bool delete_latest_message_hash_list_encode(aux::bytes public_key) = 0;
+            // delete encode of the latest message hash list by key pair<my public key, peer public key>
+            virtual bool delete_latest_message_hash_list_encode(std::pair<aux::bytes, aux::bytes> key) = 0;
 
-            virtual ~message_db_interface() {}
+            virtual ~message_db_interface() = default;
         };
     }
 }

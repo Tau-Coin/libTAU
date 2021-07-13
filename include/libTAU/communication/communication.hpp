@@ -99,10 +99,10 @@ namespace libTAU {
             bool delete_friend(const aux::bytes& pubkey);
 
             // get friend info by public key
-            aux::bytes get_friend_info(aux::bytes pubkey);
+            aux::bytes get_friend_info(const aux::bytes& pubkey);
 
             // save friend info
-            bool update_friend_info(aux::bytes pubkey, aux::bytes friend_info);
+            bool update_friend_info(const aux::bytes& pubkey, aux::bytes friend_info);
 
             // set chatting friends
             void set_chatting_friend(aux::bytes chatting_friend);

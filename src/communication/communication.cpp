@@ -113,12 +113,16 @@ namespace libTAU {
                 return false;
             }
 
-            if (!m_message_db->delete_friend_info(pubkey)) {
+            const auto &pk = m_ses.pubkey();
+            aux::bytes my_pk;
+            my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
+
+            if (!m_message_db->delete_friend_info(std::make_pair(my_pk, pubkey))) {
                 log("ERROR: Delete friend info failed!");
                 return false;
             }
 
-            if (!m_message_db->delete_latest_message_hash_list_encode(pubkey)) {
+            if (!m_message_db->delete_latest_message_hash_list_encode(std::make_pair(my_pk, pubkey))) {
                 log("ERROR: Delete friend message hash list encode failed!");
                 return false;
             }
@@ -126,12 +130,18 @@ namespace libTAU {
             return true;
         }
 
-        aux::bytes communication::get_friend_info(aux::bytes pubkey) {
-            return m_message_db->get_friend_info(std::move(pubkey));
+        aux::bytes communication::get_friend_info(const aux::bytes& pubkey) {
+            const auto &pk = m_ses.pubkey();
+            aux::bytes my_pk;
+            my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
+            return m_message_db->get_friend_info(std::make_pair(my_pk, pubkey));
         }
 
-        bool communication::update_friend_info(aux::bytes pubkey, aux::bytes friend_info) {
-            return m_message_db->save_friend_info(std::move(pubkey), std::move(friend_info));
+        bool communication::update_friend_info(const aux::bytes& pubkey, aux::bytes friend_info) {
+            const auto &pk = m_ses.pubkey();
+            aux::bytes my_pk;
+            my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
+            return m_message_db->save_friend_info(std::make_pair(my_pk, pubkey), std::move(friend_info));
         }
 
         void communication::set_chatting_friend(aux::bytes chatting_friend) {
@@ -243,11 +253,12 @@ namespace libTAU {
                     hash_list.push_back(hash);
                 }
 
-//                const auto &pubkey = m_ses.pubkey();
-//                aux::bytes public_key;
-//                public_key.insert(public_key.end(), pubkey->bytes.begin(), pubkey->bytes.end());
+                const auto &pubkey = m_ses.pubkey();
+                aux::bytes public_key;
+                public_key.insert(public_key.end(), pubkey->bytes.begin(), pubkey->bytes.end());
                 // TODO::sqlite or leveldb?
-                m_message_db->save_latest_message_hash_list_encode(peer, message_hash_list(hash_list).rlp());
+                m_message_db->save_latest_message_hash_list_encode(std::make_pair(public_key, peer),
+                                                                   message_hash_list(hash_list).rlp());
             }
         }
 
@@ -351,18 +362,19 @@ namespace libTAU {
         }
 
         online_signal communication::make_online_signal() {
+            dht::public_key * pk = m_ses.pubkey();
+            aux::bytes public_key;
+            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
+
             time_t now_time = time(nullptr);
 
             // 随机挑选一个朋友发送其信息
             srand(now_time);
             auto index = rand() % m_friends.size();
             auto peer = m_friends[index];
-            aux::bytes friend_info = m_message_db->get_friend_info(peer);
+            aux::bytes friend_info = m_message_db->get_friend_info(std::make_pair(public_key, peer));
 
             // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
-            dht::public_key * pk = m_ses.pubkey();
-            aux::bytes public_key;
-            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
             aux::bytes hash_prefix_bytes;
             auto message_list = m_message_list_map[public_key];
             if (!message_list.empty()) {
