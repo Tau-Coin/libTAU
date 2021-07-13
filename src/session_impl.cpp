@@ -3412,15 +3412,6 @@ namespace {
 
 	bool session_impl::add_new_friend(std::array<char, 32>& pubkey)
 	{
-		char* pkc = new char[32];
-
-        libTAU::aux::to_hex(pubkey.data(), 32, pkc);
-
-#ifndef TORRENT_DISABLE_LOGGING
-		session_log("add new friend: %s", pkc);
-#endif
-		delete pkc;
-
 		return m_communication->add_new_friend(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 	}
 
