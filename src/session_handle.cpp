@@ -485,7 +485,7 @@ namespace {
 		async_call(&session_impl::set_loop_time_interval, milliseconds);
 	}
 
-	bool session_handle::add_new_friend(std::array<signed char, 32> pubkey)
+	bool session_handle::add_new_friend(std::array<char, 32> pubkey)
 	{
 		/*
 		auto* pk_ptr = reinterpret_cast<unsigned char*>(pubkey.data());

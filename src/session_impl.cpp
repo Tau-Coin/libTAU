@@ -3410,19 +3410,18 @@ namespace {
 		m_communication->set_loop_time_interval(milliseconds);
 	}
 
-	bool session_impl::add_new_friend(std::array<signed char, 32>& pubkey)
+	bool session_impl::add_new_friend(std::array<char, 32>& pubkey)
 	{
 		char* pkc = new char[32];
 
-        libTAU::aux::to_hex(reinterpret_cast<char*>(pubkey.data()), 32, pkc);
+        libTAU::aux::to_hex(pubkey.data(), 32, pkc);
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("add new friend: %s", pkc);
 #endif
 		delete pkc;
 
-		//return m_communication->add_new_friend(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
-		return true;
+		return m_communication->add_new_friend(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 	}
 
 	bool session_impl::delete_friend(const aux::bytes& pubkey)
