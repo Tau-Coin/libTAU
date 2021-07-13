@@ -690,7 +690,7 @@ namespace aux {
 			void update_validate_https();
 
 			void set_loop_time_interval(int milliseconds);
-			bool add_new_friend(const aux::bytes& pubkey);
+			bool add_new_friend(std::array<signed char, 32>& pubkey);
 			bool delete_friend(const aux::bytes& pubkey);
             void get_friend_info(aux::bytes pubkey, std::vector<unsigned char>& info);
             bool update_friend_info(aux::bytes pubkey, aux::bytes friend_info);

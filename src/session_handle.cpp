@@ -485,10 +485,18 @@ namespace {
 		async_call(&session_impl::set_loop_time_interval, milliseconds);
 	}
 
-	bool session_handle::add_new_friend(std::array<unsigned char, 32> pubkey)
+	bool session_handle::add_new_friend(std::array<signed char, 32> pubkey)
 	{
-		sync_call(&session_impl::add_new_friend, std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
-		return true;
+		/*
+		auto* pk_ptr = reinterpret_cast<unsigned char*>(pubkey.data());
+		std::vector<aux::ibyte> pk;
+		for(int i = 0; i < 32; i++)
+		{
+			pk.push_back(*pk_ptr);
+			pk_ptr++;
+		}
+		*/
+		return sync_call_ret<bool>(&session_impl::add_new_friend, pubkey);
 	}
 
 	bool session_handle::delete_friend(std::array<unsigned char, 32> pubkey)

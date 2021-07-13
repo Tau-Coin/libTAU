@@ -496,7 +496,7 @@ namespace libTAU {
 		void set_loop_time_interval(int milliseconds);
 
 		// add new friend in memory & db
-		bool add_new_friend(std::array<unsigned char, 32> pubkey);
+		bool add_new_friend(std::array<signed char, 32> pubkey);
 
 		// delete friend and all related data in memory & db
 		bool delete_friend(std::array<unsigned char, 32> pubkey);
