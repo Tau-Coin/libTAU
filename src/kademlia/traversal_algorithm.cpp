@@ -617,6 +617,8 @@ void traversal_observer::reply(msg const& m)
 	dht_observer* logger = get_observer();
 	if (logger != nullptr && logger->should_log(dht_logger::traversal))
 	{
+        // Because node id has 32 bytes, and corresponding hex string
+        // length is 64. So here allocate 64 + 1 bytes.
 		char hex_id[65];
 		aux::to_hex({id.string_ptr(), 32}, hex_id);
 		logger->log(dht_logger::traversal
