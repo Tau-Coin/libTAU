@@ -511,7 +511,7 @@ namespace libTAU {
 		void unset_chatting_friend();
 
 		// save friend info
-		bool update_friend_info(std::array<char, 32> pubkey, std::vector<unsigned char> friend_info);
+		bool update_friend_info(std::array<char, 32> pubkey, std::vector<char> friend_info);
 
 		// set active friends
 		void set_active_friends(std::vector<std::array<char, 32>> active_friends);

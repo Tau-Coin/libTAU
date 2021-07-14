@@ -487,15 +487,6 @@ namespace {
 
 	bool session_handle::add_new_friend(std::array<char, 32> pubkey)
 	{
-		/*
-		auto* pk_ptr = reinterpret_cast<unsigned char*>(pubkey.data());
-		std::vector<aux::ibyte> pk;
-		for(int i = 0; i < 32; i++)
-		{
-			pk.push_back(*pk_ptr);
-			pk_ptr++;
-		}
-		*/
 		return sync_call_ret<bool>(&session_impl::add_new_friend, pubkey);
 	}
 
@@ -521,9 +512,14 @@ namespace {
 		sync_call(&session_impl::unset_chatting_friend);
 	}
 
-	bool session_handle::update_friend_info(std::array<char, 32> pubkey, std::vector<unsigned char> friend_info)
+	bool session_handle::update_friend_info(std::array<char, 32> pubkey, std::vector<char> friend_info)
 	{
-		return sync_call_ret<bool>(&session_impl::update_friend_info, pubkey, friend_info);
+		std::vector<unsigned char> info;
+		for(auto iter = friend_info.begin(); iter != friend_info.end(); iter++)
+		{
+			info.push_back(static_cast<std::uint8_t>(*iter));
+		}
+		return sync_call_ret<bool>(&session_impl::update_friend_info, pubkey, info);
 	}
 
 	void session_handle::set_active_friends(std::vector<std::array<char, 32>> active_friends)

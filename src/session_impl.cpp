@@ -3427,7 +3427,12 @@ namespace {
 
 	bool session_impl::update_friend_info(std::array<char, 32>& pubkey, aux::bytes friend_info)
 	{
-		return m_communication->update_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()), friend_info);
+		char* info = new char[friend_info.size()* 2+ 1];
+        libTAU::aux::to_hex(reinterpret_cast<char*>(friend_info.data()), friend_info.size(), info);
+		session_log("update_friend_info: %s, size: %d", info, friend_info.size());
+
+		//return m_communication->update_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()), friend_info);
+		return true;
 	}
 
 	void session_impl::unset_chatting_friend()
