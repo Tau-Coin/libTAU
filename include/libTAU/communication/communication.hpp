@@ -41,7 +41,7 @@ namespace libTAU {
     namespace communication {
 
         // default refresh time of main task(50ms)
-        constexpr int communication_default_refresh_time = 5;
+        constexpr int communication_default_refresh_time = 3;
 
         // max message list size(used in Levenshtein Distance)
         constexpr int communication_max_message_list_size = 50;

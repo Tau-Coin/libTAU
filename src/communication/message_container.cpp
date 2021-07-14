@@ -20,16 +20,20 @@ namespace libTAU { namespace communication {
         }
 
         void message_container::streamRLP(aux::RLPStream &_s) const {
-            for (auto const& msg: m_messages) {
-                aux::RLPStream msg_rlp;
-                msg.streamRLP(msg_rlp);
-                _s.appendRaw(msg_rlp.out());
+            if (!m_messages.empty()) {
+                _s.appendList(m_messages.size());
+
+                for (auto const &msg: m_messages) {
+                    aux::RLPStream msg_rlp;
+                    msg.streamRLP(msg_rlp);
+                    _s.appendRaw(msg_rlp.out());
+                }
             }
         }
 
         void message_container::populate(const aux::RLP &_msg_container) {
             for (auto const& msg: _msg_container) {
-                m_messages.push_back(message{msg.data()});
+                m_messages.emplace_back(msg.data());
             }
         }
 } }

@@ -16,6 +16,7 @@ namespace libTAU { namespace communication {
         }
 
         void online_signal::streamRLP(aux::RLPStream &_s) const {
+            _s.appendList(4);
             _s << m_device_id << m_hash_prefix_bytes << m_timestamp << m_friend_info;
         }
 
