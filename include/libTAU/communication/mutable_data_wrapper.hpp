@@ -38,6 +38,9 @@ namespace libTAU {
             // @param _rlp rlp encode
             explicit mutable_data_wrapper(aux::bytesConstRef _rlp);
 
+            // @param _rlp rlp encode
+            explicit mutable_data_wrapper(aux::bytes const& _rlp): mutable_data_wrapper(&_rlp) {}
+
             mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, aux::bytes mPayload)
                     : m_timestamp(mTimestamp), m_type(mType), m_payload(std::move(mPayload)) {}
 
