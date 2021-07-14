@@ -21,8 +21,11 @@ namespace libTAU {
         }
 
         void message_hash_list::streamRLP(aux::RLPStream &_s) const {
-            for (auto const& hash: m_message_hash_list) {
-                _s << hash;
+            if (!m_message_hash_list.empty()) {
+                _s.appendList(m_message_hash_list.size());
+                for (auto const &hash: m_message_hash_list) {
+                    _s << hash;
+                }
             }
         }
 

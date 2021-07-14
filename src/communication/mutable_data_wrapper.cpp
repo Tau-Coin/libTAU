@@ -18,6 +18,7 @@ namespace libTAU { namespace communication {
         }
 
         void mutable_data_wrapper::streamRLP(aux::RLPStream &_s) const {
+            _s.appendList(3);
             _s << m_timestamp << static_cast<uint8_t>(m_type) << m_payload;
         }
 

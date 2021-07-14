@@ -25,7 +25,7 @@ namespace libTAU {
             if (!init())
                 return false;
 
-            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
+            m_refresh_timer.expires_after(seconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
         }
 
@@ -54,10 +54,16 @@ namespace libTAU {
 
             // get friends from db
             m_friends = m_message_db->get_all_friends();
+
+            const auto &pk = m_ses.pubkey();
+            aux::bytes my_pk;
+            my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
+            m_friends.push_back(my_pk);
+
             log("INFO: friend size: %zu", m_friends.size());
-            for (auto const & peer: m_friends) {
-                log("INFO: friend: %s", peer.data());
-            }
+//            for (auto const & peer: m_friends) {
+//                log("INFO: friend: %s", peer.data());
+//            }
 
             return true;
         }
@@ -78,7 +84,7 @@ namespace libTAU {
                 return false;
             }
 
-            log("INFO: Public key %s.", pubkey.data());
+//            log("INFO: Public key %s.", pubkey.data());
 
             bool update = true;
             for(auto & peer : m_friends) {
@@ -237,7 +243,8 @@ namespace libTAU {
                 request_signal(peer);
                 publish_signal(peer);
             }
-            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
+
+            m_refresh_timer.expires_after(seconds(m_refresh_time));
             m_refresh_timer.async_wait(
                     std::bind(&communication::refresh_timeout, self(), _1));
         }
@@ -423,69 +430,76 @@ namespace libTAU {
             TORRENT_ASSERT(i.is_mutable());
 
             // construct mutable data wrapper from entry
-            aux::vector_ref<aux::ibyte> ref((std::string &) i.value().string());
-            mutable_data_wrapper data(ref);
+            if (!i.empty()) {
+//                aux::vector_ref<aux::ibyte> ref((std::string &) i.value().string());
+                aux::bytes wrapper_rlp;
+                wrapper_rlp.insert(wrapper_rlp.end(), i.value().string().begin(), i.value().string().end());
+                mutable_data_wrapper data(wrapper_rlp);
 
-            auto now_time = time(nullptr);
-            // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
-            if ((data.timestamp() + communication_data_accepted_time < now_time) ||
-            (data.timestamp() - communication_data_accepted_time > now_time)) {
-                log("INFO: Mutable data wrapper timestamp mismatch!");
-                return;
-            }
-
-            aux::bytes public_key;
-            public_key.insert(public_key.end(), i.pk().bytes.begin(), i.pk().bytes.end());
-
-            // record latest timestamp
-            if (data.timestamp() > m_last_seen[public_key]) {
-                m_last_seen[public_key] = data.timestamp();
-            }
-
-            switch (data.type()) {
-                case MESSAGE: {
-                    break;
+                auto now_time = time(nullptr);
+                // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
+                if ((data.timestamp() + communication_data_accepted_time < now_time) ||
+                    (data.timestamp() - communication_data_accepted_time > now_time)) {
+                    log("INFO: Mutable data wrapper timestamp mismatch!");
+                    return;
                 }
-                case ONLINE_SIGNAL: {
-                    online_signal onlineSignal(data.payload());
 
-                    auto device_id = onlineSignal.device_id();
-                    auto device_map = m_latest_signal_time[public_key];
-                    // 检查相应设备信号的时间戳，只处理最新的数据
-                    if (onlineSignal.timestamp() > device_map[device_id]) {
-                        // update the latest signal time
-                        device_map[device_id] = onlineSignal.timestamp();
+                aux::bytes public_key;
+                public_key.insert(public_key.end(), i.pk().bytes.begin(), i.pk().bytes.end());
 
-                        if (onlineSignal.device_id() != m_device_id) {
-                            // 通知用户新的device id
-                            m_ses.alerts().emplace_alert<communication_new_device_id_alert>(onlineSignal.device_id());
-                            log("INFO: Found new device id: %s", onlineSignal.device_id().data());
+                // record latest timestamp
+                if (data.timestamp() > m_last_seen[public_key]) {
+                    m_last_seen[public_key] = data.timestamp();
+                }
 
-                            if (!onlineSignal.friend_info().empty()) {
-                                // 通知用户新的friend info
-                                m_ses.alerts().emplace_alert<communication_friend_info_alert>(onlineSignal.friend_info());
+                switch (data.type()) {
+                    case MESSAGE: {
+                        break;
+                    }
+                    case ONLINE_SIGNAL: {
+                        online_signal onlineSignal(data.payload());
+
+                        auto device_id = onlineSignal.device_id();
+                        auto device_map = m_latest_signal_time[public_key];
+                        log("INFO: Online signal time:%d", onlineSignal.timestamp());
+                        // 检查相应设备信号的时间戳，只处理最新的数据
+                        if (onlineSignal.timestamp() > device_map[device_id]) {
+                            // update the latest signal time
+                            device_map[device_id] = onlineSignal.timestamp();
+
+                            if (onlineSignal.device_id() != m_device_id) {
+                                // 通知用户新的device id
+                                m_ses.alerts().emplace_alert<communication_new_device_id_alert>(
+                                        onlineSignal.device_id());
+                                log("INFO: Found new device id: %s", onlineSignal.device_id().data());
+
+                                if (!onlineSignal.friend_info().empty()) {
+                                    // 通知用户新的friend info
+                                    m_ses.alerts().emplace_alert<communication_friend_info_alert>(
+                                            onlineSignal.friend_info());
+                                }
                             }
                         }
+
+                        break;
                     }
+                    case NEW_MSG_SIGNAL: {
+                        new_msg_signal newMsgSignal(data.payload());
 
-                    break;
-                }
-                case NEW_MSG_SIGNAL: {
-                    new_msg_signal newMsgSignal(data.payload());
+                        auto device_id = newMsgSignal.device_id();
+                        auto device_map = m_latest_signal_time[public_key];
+                        // 检查相应设备信号的时间戳，只处理最新的数据
+                        if (newMsgSignal.timestamp() > device_map[device_id]) {
+                            // update the latest signal time
+                            device_map[device_id] = newMsgSignal.timestamp();
+                        }
 
-                    auto device_id = newMsgSignal.device_id();
-                    auto device_map = m_latest_signal_time[public_key];
-                    // 检查相应设备信号的时间戳，只处理最新的数据
-                    if (newMsgSignal.timestamp() > device_map[device_id]) {
-                        // update the latest signal time
-                        device_map[device_id] = newMsgSignal.timestamp();
+                        break;
                     }
-
-                    break;
-                }
-                default: {
-                    // mismatch
-                    ;
+                    default: {
+                        // mismatch
+                        ;
+                    }
                 }
             }
         }
@@ -513,11 +527,11 @@ namespace libTAU {
                     , std::string const& salt
                     , std::array<char, 32> const& pk
                     , std::array<char, 64> const& sk
-                    , char const* data)
+                    , std::string const& data)
             {
                 using lt::dht::sign_mutable_item;
 
-                e = std::string(data);
+                e = data;
                 std::vector<char> buf;
                 // bencode要发布的mutable data
                 bencode(std::back_inserter(buf), e);
@@ -557,6 +571,8 @@ namespace libTAU {
                 // 提取item信息，交给cb处理
                 cb(value, sig.bytes, seq.value, salt);
                 // 使用新生成的item信息替换旧的item
+                std::cout << "----ctx put--to string entry:" << value.string() << std::endl;
+                std::cout << "----ctx put--string entry:" << value.to_string() << std::endl;
                 i.assign(std::move(value), salt, seq, pk, sig);
             }
         } // anonymous namespace
@@ -570,7 +586,7 @@ namespace libTAU {
         }
 
         void communication::publish_signal(const aux::bytes &peer) {
-            char *data;
+            std::string data;
             dht::public_key * pk = m_ses.pubkey();
             dht::secret_key * sk = m_ses.serkey();
 
@@ -584,12 +600,17 @@ namespace libTAU {
                 // publish online signal on XX channel
                 online_signal onlineSignal = make_online_signal();
                 mutable_data_wrapper wrapper(time(nullptr), ONLINE_SIGNAL, onlineSignal.rlp());
-                data = reinterpret_cast<char *>(wrapper.rlp().data());
+                log("-----size:%zu", wrapper.rlp().size());
+                auto encode = wrapper.rlp();
+                data.insert(data.end(), encode.begin(), encode.end());
+//                data = reinterpret_cast<char *>(wrapper.rlp().data());
             } else {
                 // publish new message signal on XY channel
                 new_msg_signal newMsgSignal = make_new_message_signal(peer);
                 mutable_data_wrapper wrapper(time(nullptr), NEW_MSG_SIGNAL, newMsgSignal.rlp());
-                data = reinterpret_cast<char *>(wrapper.rlp().data());
+                auto encode = wrapper.rlp();
+                data.insert(data.end(), encode.begin(), encode.end());
+//                data = reinterpret_cast<char *>(wrapper.rlp().data());
             }
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4

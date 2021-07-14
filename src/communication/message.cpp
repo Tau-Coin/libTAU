@@ -17,6 +17,7 @@ namespace libTAU {
         }
 
         void message::streamRLP(aux::RLPStream &_s) const {
+            _s.appendList(8);
             _s << static_cast<uint8_t>(m_version) << m_timestamp << m_sender << m_receiver << m_logic_msg_hash
                << m_nonce << static_cast<uint8_t>(m_type) << m_encrypted_content;
         }
