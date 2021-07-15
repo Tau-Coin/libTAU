@@ -459,18 +459,19 @@ namespace libTAU {
                             // update the latest signal time
                             device_map[device_id] = onlineSignal.timestamp();
 
-                            if (onlineSignal.device_id() != m_device_id) {
+//                            if (onlineSignal.device_id() != m_device_id) {
                                 // 通知用户新的device id
                                 m_ses.alerts().emplace_alert<communication_new_device_id_alert>(
                                         onlineSignal.device_id());
-                                log("INFO: Found new device id: %s", onlineSignal.device_id().data());
+                                log("new device id alert");
+//                                log("INFO: Found new device id: %s", onlineSignal.device_id().data());
 
                                 if (!onlineSignal.friend_info().empty()) {
                                     // 通知用户新的friend info
                                     m_ses.alerts().emplace_alert<communication_friend_info_alert>(
                                             onlineSignal.friend_info());
                                 }
-                            }
+//                            }
                         }
 
                         break;
