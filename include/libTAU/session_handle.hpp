@@ -502,7 +502,7 @@ namespace libTAU {
 		bool delete_friend(std::array<char, 32> pubkey);
 
 		// get friend info by public key
-		std::vector<unsigned char> get_friend_info(std::array<char, 32> pubkey);
+		std::vector<char> get_friend_info(std::array<char, 32> pubkey);
 
 		// set chatting friends
 		void set_chatting_friend(std::array<char, 32> pubkey);

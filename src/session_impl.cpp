@@ -3431,8 +3431,7 @@ namespace {
         libTAU::aux::to_hex(reinterpret_cast<char*>(friend_info.data()), friend_info.size(), info);
 		session_log("update_friend_info: %s, size: %d", info, friend_info.size());
 
-		//return m_communication->update_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()), friend_info);
-		return true;
+		return m_communication->update_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()), friend_info);
 	}
 
 	void session_impl::unset_chatting_friend()
