@@ -3420,9 +3420,9 @@ namespace {
 		return m_communication->delete_friend(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 	}
 
-	void session_impl::get_friend_info(std::array<char, 32>& pubkey, std::vector<unsigned char>& info)
+	void session_impl::get_friend_info(std::array<char, 32>& pubkey, std::vector<unsigned char>* info)
 	{
-		info = m_communication->get_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
+		*info = m_communication->get_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
 	}
 
 	bool session_impl::update_friend_info(std::array<char, 32>& pubkey, aux::bytes friend_info)

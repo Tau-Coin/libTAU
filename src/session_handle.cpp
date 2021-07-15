@@ -503,7 +503,7 @@ namespace {
 	std::vector<char> session_handle::get_friend_info(std::array<char, 32> pubkey)
 	{
 		std::vector<unsigned char> unsigned_info;
-		sync_call(&session_impl::get_friend_info, pubkey, unsigned_info); 
+		sync_call(&session_impl::get_friend_info, pubkey, &unsigned_info); 
 		std::vector<char> info;
 		std::copy(unsigned_info.begin(), unsigned_info.end(), std::inserter(info, info.begin()));
 		return info;
