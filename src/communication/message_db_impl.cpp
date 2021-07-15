@@ -52,7 +52,7 @@ namespace libTAU {
             if (ok != SQLITE_OK) {
                 return false;
             }
-            sqlite3_bind_text(stmt, 1, reinterpret_cast<const char *>(public_key.data()), public_key.size(), nullptr);
+            sqlite3_bind_text(stmt, 1, std::string(public_key.begin(), public_key.end()).c_str(), public_key.size(), nullptr);
             ok = sqlite3_step(stmt);
             if (ok != SQLITE_DONE) {
                 return false;
@@ -69,7 +69,7 @@ namespace libTAU {
             if (ok != SQLITE_OK) {
                 return false;
             }
-            sqlite3_bind_text(stmt, 1, reinterpret_cast<const char *>(public_key.data()), public_key.size(), nullptr);
+            sqlite3_bind_text(stmt, 1, std::string(public_key.begin(), public_key.end()).c_str(), public_key.size(), nullptr);
             ok = sqlite3_step(stmt);
             if (ok != SQLITE_DONE) {
                 return false;
@@ -81,11 +81,12 @@ namespace libTAU {
 
         aux::bytes message_db_impl::get_friend_info(std::pair<aux::bytes, aux::bytes> key) {
             std::string sKey;
-            std::copy(key.first.begin(), key.first.end(), sKey.begin());
-            std::copy(key.second.begin(), key.second.end(), sKey.end());
+            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
+            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
 
             std::string value;
             leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), sKey, &value);
+
             aux::bytes buffer;
             buffer.insert(buffer.end(), value.begin(), value.end());
             return buffer;
@@ -93,26 +94,29 @@ namespace libTAU {
 
         bool message_db_impl::save_friend_info(std::pair<aux::bytes, aux::bytes> key, aux::bytes friend_info) {
             std::string sKey;
-            std::copy(key.first.begin(), key.first.end(), sKey.begin());
-            std::copy(key.second.begin(), key.second.end(), sKey.end());
+            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
+            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
 
-            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(),
-                                                    sKey, reinterpret_cast<char*>(friend_info.data()));
+            std::string value(friend_info.begin(), friend_info.end());
+
+            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), sKey, value);
             return status.ok();
         }
 
         bool message_db_impl::delete_friend_info(std::pair<aux::bytes, aux::bytes> key) {
             std::string sKey;
-            std::copy(key.first.begin(), key.first.end(), sKey.begin());
-            std::copy(key.second.begin(), key.second.end(), sKey.end());
+            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
+            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
 
             leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), sKey);
             return status.ok();
         }
 
         communication::message message_db_impl::get_message(aux::bytes hash) {
+            std::string key(hash.begin(), hash.end());
+
             std::string value;
-            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), reinterpret_cast<char*>(hash.data()), &value);
+            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
             aux::bytes buffer;
             buffer.insert(buffer.end(), value.begin(), value.end());
             return communication::message(&buffer);
@@ -121,19 +125,20 @@ namespace libTAU {
         bool message_db_impl::save_message(communication::message msg) {
             leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(),
                                                     msg.sha256().to_string(),
-                                                    reinterpret_cast<char*>(msg.rlp().data()));
+                                                    std::string (msg.rlp().begin(), msg.rlp().end()));
             return status.ok();
         }
 
         bool message_db_impl::delete_message(aux::bytes hash) {
-            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), reinterpret_cast<char*>(hash.data()));
+            std::string key(hash.begin(), hash.end());
+            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
             return status.ok();
         }
 
         aux::bytes message_db_impl::get_latest_message_hash_list_encode(std::pair<aux::bytes, aux::bytes> key) {
             std::string sKey;
-            std::copy(key.first.begin(), key.first.end(), sKey.begin());
-            std::copy(key.second.begin(), key.second.end(), sKey.end());
+            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
+            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
 
             std::string value;
             leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), sKey, &value);
@@ -144,18 +149,19 @@ namespace libTAU {
 
         bool message_db_impl::save_latest_message_hash_list_encode(std::pair<aux::bytes, aux::bytes> key, aux::bytes encode) {
             std::string sKey;
-            std::copy(key.first.begin(), key.first.end(), sKey.begin());
-            std::copy(key.second.begin(), key.second.end(), sKey.end());
+            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
+            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
 
-            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(),
-                                                    sKey, reinterpret_cast<char*>(encode.data()));
+            std::string value(encode.begin(), encode.end());
+
+            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), sKey, value);
             return status.ok();
         }
 
         bool message_db_impl::delete_latest_message_hash_list_encode(std::pair<aux::bytes, aux::bytes> key) {
             std::string sKey;
-            std::copy(key.first.begin(), key.first.end(), sKey.begin());
-            std::copy(key.second.begin(), key.second.end(), sKey.end());
+            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
+            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
 
             leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), sKey);
             return status.ok();

@@ -8,11 +8,13 @@ see LICENSE file.
 
 #include <cstdlib>
 #include <utility>
+#include <algorithm>
 
 #include "libTAU/communication/message_hash_list.hpp"
 #include "libTAU/communication/communication.hpp"
 #include "libTAU/communication/mutable_data_wrapper.hpp"
 #include "libTAU/kademlia/dht_tracker.hpp"
+#include "libTAU/aux_/common_data.h"
 
 using namespace std::placeholders;
 
@@ -55,14 +57,13 @@ namespace libTAU {
             // get friends from db
             m_friends = m_message_db->get_all_friends();
 
-            const auto &pk = m_ses.pubkey();
-            aux::bytes my_pk;
-            my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
+            dht::public_key *pk = m_ses.pubkey();
+            aux::bytes my_pk(pk->bytes.begin(), pk->bytes.end());
             m_friends.push_back(my_pk);
 
             log("INFO: friend size: %zu", m_friends.size());
 //            for (auto const & peer: m_friends) {
-//                log("INFO: friend: %s", peer.data());
+//                log("INFO: friend: %s", aux::toHex(peer).c_str());
 //            }
 
             return true;
@@ -84,23 +85,17 @@ namespace libTAU {
                 return false;
             }
 
-//            log("INFO: Public key %s.", pubkey.data());
+            log("INFO: Add new friend, public key %s.", aux::toHex(pubkey).c_str());
 
-            bool update = true;
-            for(auto & peer : m_friends) {
-                if (peer == pubkey) {
-                    update = false;
-                    break;
-                }
-            }
+            auto it = find(m_friends.begin(), m_friends.end(), pubkey);
+            if (it != m_friends.end()) {
+                log("INFO: Friend is existed.");
 
-            if (update) {
                 m_friends.push_back(pubkey);
-            }
-
-            if (!m_message_db->save_friend(pubkey)) {
-                log("ERROR: Save friend failed!");
-                return false;
+                if (!m_message_db->save_friend(pubkey)) {
+                    log("ERROR: Save friend failed!");
+                    return false;
+                }
             }
 
             return true;
@@ -338,8 +333,7 @@ namespace libTAU {
         }
 
         std::string communication::make_salt(aux::bytes peer) {
-            std::string salt;
-            std::copy(peer.begin(), peer.begin() + communication_salt_length, salt.begin());
+            std::string salt(peer.begin(), peer.begin() + communication_salt_length);
 
             return salt;
         }
@@ -349,9 +343,8 @@ namespace libTAU {
             std::string salt;
 
             // sender channel salt由我和对方的public key各取前4个字节，拼接而成
-            std::copy(pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length, salt.begin());
-            std::copy(peer.begin(), peer.begin() + communication_short_address_length,
-                      salt.begin() + communication_short_address_length);
+            salt.insert(salt.end(), pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length);
+            salt.insert(salt.end(), peer.begin(), peer.begin() + communication_short_address_length);
 
             return salt;
         }
@@ -361,9 +354,8 @@ namespace libTAU {
             std::string salt;
 
             // receiver channel salt由对方和我的public key各取前4个字节，拼接而成
-            std::copy(peer.begin(), peer.begin() + communication_short_address_length, salt.begin());
-            std::copy(pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length,
-                      salt.begin() + communication_short_address_length);
+            salt.insert(salt.end(), peer.begin(), peer.begin() + communication_short_address_length);
+            salt.insert(salt.end(), pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length);
 
             return salt;
         }
@@ -571,8 +563,6 @@ namespace libTAU {
                 // 提取item信息，交给cb处理
                 cb(value, sig.bytes, seq.value, salt);
                 // 使用新生成的item信息替换旧的item
-                std::cout << "----ctx put--to string entry:" << value.string() << std::endl;
-                std::cout << "----ctx put--string entry:" << value.to_string() << std::endl;
                 i.assign(std::move(value), salt, seq, pk, sig);
             }
         } // anonymous namespace
@@ -592,8 +582,7 @@ namespace libTAU {
 
             auto salt = make_salt(peer);
 
-            aux::bytes public_key;
-            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
+            aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
 
             // check if peer is myself
             if (peer == public_key) {
@@ -601,15 +590,17 @@ namespace libTAU {
                 online_signal onlineSignal = make_online_signal();
                 mutable_data_wrapper wrapper(time(nullptr), ONLINE_SIGNAL, onlineSignal.rlp());
                 log("-----size:%zu", wrapper.rlp().size());
-                auto encode = wrapper.rlp();
-                data.insert(data.end(), encode.begin(), encode.end());
+                data = aux::asString(wrapper.rlp());
+//                auto encode = wrapper.rlp();
+//                data.insert(data.end(), encode.begin(), encode.end());
 //                data = reinterpret_cast<char *>(wrapper.rlp().data());
             } else {
                 // publish new message signal on XY channel
                 new_msg_signal newMsgSignal = make_new_message_signal(peer);
                 mutable_data_wrapper wrapper(time(nullptr), NEW_MSG_SIGNAL, newMsgSignal.rlp());
-                auto encode = wrapper.rlp();
-                data.insert(data.end(), encode.begin(), encode.end());
+                data = aux::asString(wrapper.rlp());
+//                auto encode = wrapper.rlp();
+//                data.insert(data.end(), encode.begin(), encode.end());
 //                data = reinterpret_cast<char *>(wrapper.rlp().data());
             }
 
