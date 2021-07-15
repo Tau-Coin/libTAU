@@ -347,6 +347,10 @@ namespace aux {
 			// to generate a standard client peer ID fingerprint prefix.
 			peer_fingerprint,
 
+			// The device id.
+            // Now using Hex encoded method.
+			device_id,
+
 			// The directory for storing db.
             // Now using leveldb and sqlite3.
 			db_dir,

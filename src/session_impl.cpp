@@ -2912,6 +2912,21 @@ namespace {
 		}
 	}
 
+    void session_impl::update_device_id()
+    {    
+		const char* device_id = m_settings.get_str(settings_pack::device_id).c_str();
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("start to update device id: %s", device_id);
+#endif
+        span<char const> str_device_id(device_id, 64);
+		std::vector<char> vec_device_id;
+		vec_device_id.resize(32);
+        libTAU::aux::from_hex(str_device_id, vec_device_id.data());
+
+		std::copy(vec_device_id.begin(), vec_device_id.end(), std::inserter(m_device_id, m_device_id.begin()));
+
+	}
+
     void session_impl::update_db_dir()
     {    
 
@@ -3427,10 +3442,6 @@ namespace {
 
 	bool session_impl::update_friend_info(std::array<char, 32>& pubkey, aux::bytes friend_info)
 	{
-		char* info = new char[friend_info.size()* 2+ 1];
-        libTAU::aux::to_hex(reinterpret_cast<char*>(friend_info.data()), friend_info.size(), info);
-		session_log("update_friend_info: %s, size: %d", info, friend_info.size());
-
 		return m_communication->update_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()), friend_info);
 	}
 

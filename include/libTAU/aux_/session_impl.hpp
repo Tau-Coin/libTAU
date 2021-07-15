@@ -680,6 +680,7 @@ namespace aux {
 			void update_upnp();
 			void update_natpmp();
 			void update_dht();
+			void update_device_id();
 			void update_db_dir();
 			void update_account_seed();
 			void update_dht_bootstrap_nodes();
