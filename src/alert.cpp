@@ -1633,7 +1633,7 @@ namespace {
 #else
         char msg[1050];
         std::snprintf(msg, sizeof(msg), "device id %s"
-                , device_id.data());
+                , aux::toHex(device_id).c_str());
         return msg;
 #endif
     }
@@ -1667,7 +1667,7 @@ namespace {
 #else
         char msg[1050];
         std::snprintf(msg, sizeof(msg), "confirmation root %s"
-                , confirmation_root.data());
+                , aux::toHex(confirmation_root).c_str());
         return msg;
 #endif
     }
@@ -1684,7 +1684,7 @@ namespace {
 #else
         char msg[1050];
         std::snprintf(msg, sizeof(msg), "sync message hash %s"
-                , syncing_msg_hash.data());
+                , aux::toHex(syncing_msg_hash).c_str());
         return msg;
 #endif
     }
@@ -1701,7 +1701,7 @@ namespace {
 #else
         char msg[1050];
         std::snprintf(msg, sizeof(msg), "friend info %s"
-                , friend_info.data());
+                , aux::toHex(friend_info).c_str());
         return msg;
 #endif
     }

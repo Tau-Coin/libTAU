@@ -34,8 +34,10 @@ namespace libTAU {
             int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
             if (ok == SQLITE_OK) {
                 for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                    auto pubKey = sqlite3_column_text(stmt,0);
-                    aux::bytes public_key = (const std::vector<unsigned char> &) pubKey;
+                    const unsigned char *pK = sqlite3_column_text(stmt,0);
+                    auto length = sqlite3_column_bytes(stmt, 0);
+                    std::string value(pK, pK + length);
+                    aux::bytes public_key = aux::asBytes(value);
                     friends.push_back(public_key);
                 }
             }
@@ -52,7 +54,8 @@ namespace libTAU {
             if (ok != SQLITE_OK) {
                 return false;
             }
-            sqlite3_bind_text(stmt, 1, std::string(public_key.begin(), public_key.end()).c_str(), public_key.size(), nullptr);
+            std::string value = aux::asString(public_key);
+            sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
             ok = sqlite3_step(stmt);
             if (ok != SQLITE_DONE) {
                 return false;
