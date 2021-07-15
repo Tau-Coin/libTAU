@@ -62,9 +62,9 @@ namespace libTAU {
             m_friends.push_back(my_pk);
 
             log("INFO: friend size: %zu", m_friends.size());
-//            for (auto const & peer: m_friends) {
-//                log("INFO: friend: %s", aux::toHex(peer).c_str());
-//            }
+            for (auto const & peer: m_friends) {
+                log("INFO: friend: %s", aux::toHex(peer).c_str());
+            }
 
             return true;
         }
@@ -88,8 +88,8 @@ namespace libTAU {
             log("INFO: Add new friend, public key %s.", aux::toHex(pubkey).c_str());
 
             auto it = find(m_friends.begin(), m_friends.end(), pubkey);
-            if (it != m_friends.end()) {
-                log("INFO: Friend is existed.");
+            if (it == m_friends.end()) {
+                log("INFO: Friend is not existed.");
 
                 m_friends.push_back(pubkey);
                 if (!m_message_db->save_friend(pubkey)) {
@@ -235,6 +235,7 @@ namespace libTAU {
             // 随机挑选一个朋友put/get
             aux::bytes peer = select_friend_randomly();
             if (!peer.empty()) {
+                log("INFO: Select peer:%s", aux::toHex(peer).c_str());
                 request_signal(peer);
                 publish_signal(peer);
             }
@@ -371,6 +372,7 @@ namespace libTAU {
             srand(now_time);
             auto index = rand() % m_friends.size();
             auto peer = m_friends[index];
+            log("INFO: Take friend %s", aux::toHex(peer).c_str());
             aux::bytes friend_info = m_message_db->get_friend_info(std::make_pair(public_key, peer));
 
             // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
@@ -459,19 +461,19 @@ namespace libTAU {
                             // update the latest signal time
                             device_map[device_id] = onlineSignal.timestamp();
 
-//                            if (onlineSignal.device_id() != m_device_id) {
+                            if (onlineSignal.device_id() != m_device_id) {
                                 // 通知用户新的device id
                                 m_ses.alerts().emplace_alert<communication_new_device_id_alert>(
                                         onlineSignal.device_id());
-                                log("new device id alert");
-//                                log("INFO: Found new device id: %s", onlineSignal.device_id().data());
+                                log("INFO: Found new device id: %s", aux::toHex(onlineSignal.device_id()).c_str());
 
                                 if (!onlineSignal.friend_info().empty()) {
                                     // 通知用户新的friend info
                                     m_ses.alerts().emplace_alert<communication_friend_info_alert>(
                                             onlineSignal.friend_info());
+                                    log("INFO: Got friend info:%s", aux::toHex(onlineSignal.friend_info()).c_str());
                                 }
-//                            }
+                            }
                         }
 
                         break;
@@ -511,8 +513,6 @@ namespace libTAU {
 
             void on_dht_put_immutable_item(aux::alert_manager& alerts, sha1_hash target, int num)
             {
-//                if (alerts.should_post<dht_put_alert>())
-//                    alerts.emplace_alert<dht_put_alert>(target, num);
             }
 
             void put_mutable_data(entry& e, std::array<char, 64>& sig
@@ -540,16 +540,6 @@ namespace libTAU {
 
             void on_dht_put_mutable_item(aux::alert_manager& alerts, dht::item const& i, int num)
             {
-                // put完成之后，暂无动作
-//                if (alerts.should_post<dht_put_alert>())
-//                {
-//                    dht::signature const sig = i.sig();
-//                    dht::public_key const pk = i.pk();
-//                    dht::sequence_number const seq = i.seq();
-//                    std::string salt = i.salt();
-//                    alerts.emplace_alert<dht_put_alert>(pk.bytes, sig.bytes
-//                            , std::move(salt), seq.value, num);
-//                }
             }
 
             void put_mutable_callback(dht::item& i
@@ -592,17 +582,11 @@ namespace libTAU {
                 mutable_data_wrapper wrapper(time(nullptr), ONLINE_SIGNAL, onlineSignal.rlp());
                 log("-----size:%zu", wrapper.rlp().size());
                 data = aux::asString(wrapper.rlp());
-//                auto encode = wrapper.rlp();
-//                data.insert(data.end(), encode.begin(), encode.end());
-//                data = reinterpret_cast<char *>(wrapper.rlp().data());
             } else {
                 // publish new message signal on XY channel
                 new_msg_signal newMsgSignal = make_new_message_signal(peer);
                 mutable_data_wrapper wrapper(time(nullptr), NEW_MSG_SIGNAL, newMsgSignal.rlp());
                 data = aux::asString(wrapper.rlp());
-//                auto encode = wrapper.rlp();
-//                data.insert(data.end(), encode.begin(), encode.end());
-//                data = reinterpret_cast<char *>(wrapper.rlp().data());
             }
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
