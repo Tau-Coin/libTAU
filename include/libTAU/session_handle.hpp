@@ -517,7 +517,7 @@ namespace libTAU {
 		void set_active_friends(std::vector<std::array<char, 32>> active_friends);
 
 		// add a new message
-		bool add_new_message(std::vector<unsigned char> msg);
+		bool add_new_message(std::vector<char> msg);
 
 		// This call dereferences the reference count of the specified peer
 		// class. When creating a peer class it's automatically referenced by 1.
