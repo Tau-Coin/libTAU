@@ -139,6 +139,10 @@ namespace libTAU {
             // @return true if message list changed, false otherwise
             bool try_to_update_Latest_message_list(const aux::bytes& peer, const message& msg);
 
+            // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing message和confirmation root)
+            void find_best_solution(std::vector<message> messages, const aux::bytes& hash_prefix_array,
+                                    std::vector<message> &missing_messages, std::vector<aux::bytes> &confirmation_roots);
+
             // make a salt on mutable channel
             static std::string make_salt(aux::bytes peer);
 

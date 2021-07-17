@@ -333,6 +333,133 @@ namespace libTAU {
             return updated;
         }
 
+//        /**
+//     * 求取LevenshteinDistance的解，得到的信息
+//     */
+//        private static class SolutionInfo {
+//            List<Message> missingMessageList = new ArrayList<>();
+//            List<byte[]> confirmationRootList = new ArrayList<>();
+//        }
+
+        void communication::find_best_solution(std::vector<message> messages, const aux::bytes& hash_prefix_array,
+                                               std::vector<message> &missing_messages,
+                                               std::vector<aux::bytes> &confirmation_roots) {
+            // 如果对方没有信息，则本地消息全为缺失消息
+            if (hash_prefix_array.empty()) {
+                missing_messages.insert(missing_messages.end(), messages.begin(), messages.end());
+                return;
+            }
+
+            if (!messages.empty()) {
+                auto size = messages.size();
+                // 对方数组为source
+                const aux::bytes& source = hash_prefix_array;
+                // 本地消息数组为target
+                aux::bytes target(size);
+                for (auto const &message: messages) {
+                    target.push_back(message.sha256()[0]);
+                }
+
+                auto sourceLength = source.size();
+                auto targetLength = size;
+
+                // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
+                if (source == target) {
+                    for (auto const &message: messages) {
+                        auto hash = message.sha256().data();
+                        // to convert
+                        confirmation_roots.emplace_back();
+                    }
+                    return;
+                }
+
+                // 状态转移矩阵
+                int dist[sourceLength + 1][targetLength + 1];
+                // 操作矩阵
+                int operations[sourceLength + 1][targetLength + 1];
+
+                // 初始化，[i, 0]转换到空，需要编辑的距离，也即删除的数量
+                for (int i = 0; i < sourceLength + 1; i++) {
+                    dist[i][0] = i;
+                    if (i > 0) {
+                        operations[i][0] = 2;
+                    }
+                }
+
+                // 初始化，空转换到[0, j]，需要编辑的距离，也即增加的数量
+                for (int j = 0; j < targetLength + 1; j++) {
+                    dist[0][j] = j;
+                    if (j > 0) {
+                        operations[0][j] = 1;
+                    }
+                }
+
+                // 开始填充状态转移矩阵，第0位为空，所以从1开始有数据，[i, j]为当前子串最小编辑操作
+                for (int i = 1; i < sourceLength + 1; i++) {
+                    for (int j = 1; j < targetLength + 1; j++) {
+                        // 第i个数据，实际的index需要i-1，替换的代价，相同无需替换，代价为0，不同代价为1
+                        int cost = source[i - 1] == target[j - 1] ? 0 : 1;
+                        // [i, j]在[i, j-1]的基础上，最小的编辑操作为增加1
+                        int insert = dist[i][j - 1] + 1;
+                        // [i, j]在[i-1, j]的基础上，最小的编辑操作为删除1
+                        int del = dist[i - 1][j] + 1;
+                        // [i, j]在[i-1, j-1]的基础上，最大的编辑操作为1次替换
+                        int swap = dist[i - 1][j - 1] + cost;
+
+                        // 在[i-1, j]， [i, j-1]， [i-1, j-1]三种转换到[i, j]的最小操作中，取最小值
+                        dist[i][j] = std::min(std::min(insert, del), swap);
+
+                        // 选择一种最少编辑的操作
+//                        operations[i][j] = optCode(swap, insert, del);
+                    }
+                }
+
+                // 回溯编辑路径，统计中间信息
+                auto i = sourceLength;
+                auto j = targetLength;
+                while (0 != dist[i][j]) {
+                    if (0 == operations[i][j]) {
+                        // 如果是替换操作，则将target对应的替换消息加入列表
+                        if (source[i - 1] != target[j - 1]) {
+                            missing_messages.push_back(messages[j - 1]);
+                        } else {
+//                            solutionInfo.confirmationRootList.add(messageList.get(j - 1).getHash());
+                        }
+                        i--;
+                        j--;
+                    } else if (1 == operations[i][j]) {
+                        // 如果是插入操作，则将target对应的插入消息加入列表
+                        // 如果缺最后一个，并且此时双方满载，则判定为被挤出去的
+                        if (targetLength != j || targetLength != communication_max_message_list_size ||
+                            sourceLength != communication_max_message_list_size) {
+                            missing_messages.push_back(messages[j - 1]);
+
+                            // 如果是插入操作，则将邻近哈希前缀一样的消息也当作缺失的消息
+                            auto k = j - 1;
+                            while (k + 1 < targetLength && target[k] == target[k + 1]) {
+                                missing_messages.push_back(messages[k + 1]);
+                                k++;
+                            }
+                        }
+
+                        j--;
+                    } else if (2 == operations[i][j]) {
+                        // 如果是删除操作，可能是对方新消息，忽略
+                        i--;
+                    }
+                }
+
+                // 找到距离为0可能仍然不够，可能有前缀相同的情况，这时dist[i][j]很多为0的情况，
+                // 因此，需要把剩余的加入confirmation root集合即可
+                for(; j > 0; j--) {
+//                    solutionInfo.confirmationRootList.add(messageList.get(j - 1).getHash());
+                }
+
+                // check if reverse missing messages
+
+            }
+        }
+
         std::string communication::make_salt(aux::bytes peer) {
             std::string salt(peer.begin(), peer.begin() + communication_salt_length);
 
