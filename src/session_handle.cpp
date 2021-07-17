@@ -480,6 +480,11 @@ namespace {
 	}
 #endif // TORRENT_ABI_VERSION
 
+	void session_handle::new_account_seed(std::array<char, 32> seed)
+	{
+		sync_call(&session_impl::new_account_seed, seed);
+	}
+
 	void session_handle::set_loop_time_interval(int milliseconds)
 	{
 		async_call(&session_impl::set_loop_time_interval, milliseconds);

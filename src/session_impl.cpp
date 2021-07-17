@@ -3033,9 +3033,21 @@ namespace {
 		const char* account_seed = m_settings.get_str(settings_pack::account_seed).c_str();
         span<char const> hexseed(account_seed, 64);
         libTAU::aux::from_hex(hexseed, seed.data());
-
+		//1. update key pair
 		m_keypair = dht::ed25519_create_keypair(seed);
 
+	}
+
+	void session_impl::new_account_seed(std::array<char, 32>& seed) {
+
+		//1. update key pair
+		m_keypair = dht::ed25519_create_keypair(seed);
+
+		//2. dht update node id
+		m_dht->update_node_id();
+
+		//3. communication update node id
+		m_communication->account_changed();
 	}
 
 	// TODO: 2 this function should be removed and users need to deal with the

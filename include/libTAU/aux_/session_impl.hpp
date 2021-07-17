@@ -690,6 +690,7 @@ namespace aux {
 			void update_alert_mask();
 			void update_validate_https();
 
+			void new_account_seed(std::array<char, 32>& seed);
 			void set_loop_time_interval(int milliseconds);
 			bool add_new_friend(std::array<char, 32>& pubkey);
 			bool delete_friend(std::array<char, 32>& pubkey);
