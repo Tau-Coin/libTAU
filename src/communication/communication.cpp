@@ -333,15 +333,32 @@ namespace libTAU {
             return updated;
         }
 
-//        /**
-//     * 求取LevenshteinDistance的解，得到的信息
-//     */
-//        private static class SolutionInfo {
-//            List<Message> missingMessageList = new ArrayList<>();
-//            List<byte[]> confirmationRootList = new ArrayList<>();
-//        }
+        namespace {
+            /**
+             * 选用编辑代价最小的，并返回该操作代表的操作数
+             * @param swap 替换的代价
+             * @param insert 插入的代价
+             * @param del 删除的代价
+             * @return 0:替换，1：插入，2：删除
+             */
+            int optCode(int swap, int insert, int del) {
+                // 如果替换编辑距离最少，则返回0标识，
+                // 即使三种操作距离一样，优先选择替换操作
+                if (swap <= insert && swap <= del) {
+                    return 0;
+                }
 
-        void communication::find_best_solution(std::vector<message> messages, const aux::bytes& hash_prefix_array,
+                // 如果插入操作编辑最少，返回1标识，如果插入和删除距离一样，优先选择插入
+                if (insert < swap && insert <= del) {
+                    return 1;
+                }
+
+                // 如果删除操作编辑最少，返回2标识
+                return 2;
+            }
+        }
+
+        void communication::find_best_solution(const std::vector<message>& messages, const aux::bytes& hash_prefix_array,
                                                std::vector<message> &missing_messages,
                                                std::vector<aux::bytes> &confirmation_roots) {
             // 如果对方没有信息，则本地消息全为缺失消息
@@ -366,9 +383,8 @@ namespace libTAU {
                 // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
                 if (source == target) {
                     for (auto const &message: messages) {
-                        auto hash = message.sha256().data();
-                        // to convert
-                        confirmation_roots.emplace_back();
+                        auto hash = message.sha256();
+                        confirmation_roots.emplace_back(hash.begin(), hash.end());
                     }
                     return;
                 }
@@ -410,7 +426,7 @@ namespace libTAU {
                         dist[i][j] = std::min(std::min(insert, del), swap);
 
                         // 选择一种最少编辑的操作
-//                        operations[i][j] = optCode(swap, insert, del);
+                        operations[i][j] = optCode(swap, insert, del);
                     }
                 }
 
@@ -423,7 +439,8 @@ namespace libTAU {
                         if (source[i - 1] != target[j - 1]) {
                             missing_messages.push_back(messages[j - 1]);
                         } else {
-//                            solutionInfo.confirmationRootList.add(messageList.get(j - 1).getHash());
+                            auto hash = messages[j - 1].sha256();
+                            confirmation_roots.emplace_back(hash.begin(), hash.end());
                         }
                         i--;
                         j--;
@@ -452,7 +469,8 @@ namespace libTAU {
                 // 找到距离为0可能仍然不够，可能有前缀相同的情况，这时dist[i][j]很多为0的情况，
                 // 因此，需要把剩余的加入confirmation root集合即可
                 for(; j > 0; j--) {
-//                    solutionInfo.confirmationRootList.add(messageList.get(j - 1).getHash());
+                    auto hash = messages[j - 1].sha256();
+                    confirmation_roots.emplace_back(hash.begin(), hash.end());
                 }
 
                 // check if reverse missing messages

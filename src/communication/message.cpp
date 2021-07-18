@@ -34,10 +34,10 @@ namespace libTAU {
         }
 
         sha256_hash message::sha256() const {
-            auto data = rlp().data();
-            char* p = reinterpret_cast<char*>(data);
+            auto data = rlp();
             std::vector<char> buffer;
-            buffer.insert(buffer.end(), p, p + strlen(p));
+            buffer.insert(buffer.end(), data.begin(), data.end());
+
             return hasher256(buffer).final();
         }
 

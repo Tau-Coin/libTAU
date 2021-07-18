@@ -39,10 +39,11 @@ namespace libTAU {
         class TORRENT_EXPORT message {
 
         public:
-
-            message() = default;
             // @param _rlp rlp encode
-            message(aux::bytesConstRef _rlp);
+            explicit message(aux::bytesConstRef _rlp);
+
+            // @param _rlp rlp encode
+            explicit message(aux::bytes const& _rlp): message(&_rlp) {}
 
             message(message_version mVersion, uint32_t mTimestamp, aux::bytes mSender,
                     aux::bytes mReceiver, aux::bytes mLogicMsgHash, aux::bigint mNonce,
@@ -95,7 +96,7 @@ namespace libTAU {
             message_version m_version;
 
             // message timestamp
-            uint32_t m_timestamp;
+            uint32_t m_timestamp{};
 
             // message sender
             aux::bytes m_sender;
