@@ -398,7 +398,13 @@ namespace libTAU::dht {
 		, std::vector<node_entry> const& eps
 		, std::function<void(item const&)> cb)
 	{
-		// TODO: directly get item from specified endpoints
+		// directly get item from specified endpoints
+		auto ctx = std::make_shared<get_immutable_item_ctx>(int(m_nodes.size()));
+		for (auto& n : m_nodes)
+		{
+			n.second.dht.get_item(target, eps
+				, std::bind(&get_immutable_item_callback, _1, ctx, cb));
+		}
 	}
 
 	// key is a 32-byte binary string, the public key to look up.
@@ -429,7 +435,17 @@ namespace libTAU::dht {
 		, std::vector<node_entry> const& eps
 		, std::function<void(int)> cb)
 	{
-		// TODO: directly put item from specified endpoints
+		std::string flat_data;
+		bencode(std::back_inserter(flat_data), data);
+		sha256_hash const target = item_target_id(flat_data);
+
+		// directly put item from specified endpoints
+		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
+		for (auto& n : m_nodes)
+		{
+			n.second.dht.put_item(target, data, eps
+				, std::bind(&put_immutable_item_callback, _1, ctx, cb));
+		}
 	}
 
 	void dht_tracker::put_item(public_key const& key

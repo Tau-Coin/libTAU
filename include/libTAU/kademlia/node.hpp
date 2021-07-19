@@ -118,9 +118,16 @@ public:
 #endif
 
 	void get_item(sha256_hash const& target, std::function<void(item const&)> f);
+	void get_item(sha256_hash const& target
+		, std::vector<node_entry> const& eps
+		, std::function<void(item const&)> f);
 	void get_item(public_key const& pk, std::string const& salt, std::function<void(item const&, bool)> f);
 
 	void put_item(sha256_hash const& target, entry const& data, std::function<void(int)> f);
+	void put_item(sha256_hash const& target
+		, entry const& data
+		, std::vector<node_entry> const& eps
+		, std::function<void(int)> f);
 	void put_item(public_key const& pk, std::string const& salt
 		, std::function<void(item const&, int)> f
 		, std::function<void(item&)> data_cb);

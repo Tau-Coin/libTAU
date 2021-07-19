@@ -65,6 +65,11 @@ struct TORRENT_EXTRA_EXPORT traversal_algorithm
 
 	node& get_node() const { return m_node; }
 
+	// Set specified endpoints which traversal algorithm
+	// will communicate with instead of depth traversal.
+	// Make sure this method must be called before start method.
+	void set_direct_endpoints(std::vector<node_entry> const& eps);
+
 #ifndef TORRENT_DISABLE_LOGGING
 	std::uint32_t id() const { return m_id; }
 #endif
@@ -99,6 +104,11 @@ protected:
 	// used when bootstrapping. The ``m_sorted_results`` member indicates how
 	// many of the first elements are sorted.
 	std::vector<observer_ptr> m_results;
+
+	// This flag indicates whether traversal algorithm
+	// will communicate with the specified nodes instead of depth traversal.
+	// The default value "false" means getting or putting mutable items.
+	bool m_direct_invoking = false;
 
 	int num_sorted_results() const { return m_sorted_results; }
 

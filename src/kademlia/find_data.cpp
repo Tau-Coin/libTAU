@@ -72,7 +72,7 @@ void find_data::start()
 {
 	// if the user didn't add seed-nodes manually, grab k (bucket size)
 	// nodes from routing table.
-	if (m_results.empty())
+	if (m_results.empty() && !m_direct_invoking)
 	{
 		std::vector<node_entry> const nodes = m_node.m_table.find_node(
 			target(), routing_table::include_failed);

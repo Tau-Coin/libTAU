@@ -246,11 +246,22 @@ void traversal_algorithm::add_entry(node_id const& id
 	}
 }
 
+void traversal_algorithm::set_direct_endpoints(std::vector<node_entry> const& eps)
+{
+	for (auto const& e : eps)
+	{
+		add_entry(e.id, e.ep(), observer::flag_initial);
+	}
+
+	m_direct_invoking = true;
+}
+
 void traversal_algorithm::start()
 {
 	// in case the routing table is empty, use the
 	// router nodes in the table
-	if (m_results.size() < 3) add_router_entries();
+	// TODO: remove this logic when blockchain can provide more alive nodes.
+	if (m_results.size() < 3 && !m_direct_invoking) add_router_entries();
 	init();
 	bool const is_done = add_requests();
 	if (is_done) done();
@@ -278,7 +289,11 @@ void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 	// let the routing table know this node may exist
 	m_node.m_table.heard_about(id, addr);
 
-	add_entry(id, addr, {});
+	// only accept other nodes when target nodes are not specified.
+	if (!m_direct_invoking)
+	{
+		add_entry(id, addr, {});
+	}
 }
 
 void traversal_algorithm::finished(observer_ptr o)

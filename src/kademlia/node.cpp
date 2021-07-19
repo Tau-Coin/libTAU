@@ -332,6 +332,25 @@ void node::get_item(sha256_hash const& target, std::function<void(item const&)> 
 	ta->start();
 }
 
+void node::get_item(sha256_hash const& target
+	, std::vector<node_entry> const& eps
+	, std::function<void(item const&)> f)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		m_observer->log(dht_logger::node, "starting get for [ hash: %s, target endpoints:%ld ]"
+			, aux::to_hex(target).c_str(), eps.size());
+	}
+#endif
+
+	auto ta = std::make_shared<dht::get_item>(*this, target
+		, std::bind(f, _1), find_data::nodes_callback());
+	// set target endpoints instead of depth traversal
+	ta->set_direct_endpoints(eps);
+	ta->start();
+}
+
 void node::get_item(public_key const& pk, std::string const& salt
 	, std::function<void(item const&, bool)> f)
 {
@@ -390,6 +409,32 @@ void node::put_item(sha256_hash const& target, entry const& data, std::function<
 
 	auto ta = std::make_shared<dht::get_item>(*this, target
 		, get_item::data_callback(), std::bind(&put, _1, put_ta));
+	ta->start();
+}
+
+// TODO: add signature for immutable item.
+void node::put_item(sha256_hash const& target
+	, entry const& data
+	, std::vector<node_entry> const& eps
+	, std::function<void(int)> f)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		m_observer->log(dht_logger::node, "starting put for [ hash: %s, target endpoints:%ld ]"
+			, aux::to_hex(target).c_str(), eps.size());
+	}
+#endif
+
+	item i;
+	i.assign(data);
+	auto put_ta = std::make_shared<dht::put_data>(*this, std::bind(f, _2));
+	put_ta->set_data(std::move(i));
+
+	auto ta = std::make_shared<dht::get_item>(*this, target
+		, get_item::data_callback(), std::bind(&put, _1, put_ta));
+	// set target endpoints instead of depth traversal
+	ta->set_direct_endpoints(eps);
 	ta->start();
 }
 

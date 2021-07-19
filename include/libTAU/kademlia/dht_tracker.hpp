@@ -125,6 +125,7 @@ namespace libTAU::dht {
 
 		// fills the vector with the count nodes from routing table buckets that
 		// are nearest to the given id.
+		// TODO: the strategy of finding live nodes from routing table.
 		void find_live_nodes(sha256_hash const& id
 			, std::vector<node_entry>& l
 			, int count = 0);
