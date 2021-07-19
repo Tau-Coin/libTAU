@@ -39,6 +39,8 @@ namespace libTAU {
         class TORRENT_EXPORT message {
 
         public:
+            message() = default;
+
             // @param _rlp rlp encode
             explicit message(aux::bytesConstRef _rlp);
 
