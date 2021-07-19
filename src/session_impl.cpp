@@ -493,8 +493,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
 #ifndef TORRENT_DISABLE_LOGGING
 
-		session_log("version: %s revision: %" PRIx64
-			, lt::version_str, lt::version_revision);
+		session_log("version: %s " PRIx64 , lt::version_str);
 
 #endif // TORRENT_DISABLE_LOGGING
 

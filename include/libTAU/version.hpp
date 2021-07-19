@@ -14,29 +14,25 @@ see LICENSE file.
 #include "libTAU/aux_/export.hpp"
 #include <cstdint>
 
-#define LIBTORRENT_VERSION_MAJOR 2
-#define LIBTORRENT_VERSION_MINOR 0
-#define LIBTORRENT_VERSION_TINY 3
+#define LIBTAU_VERSION_MAJOR 0
+#define LIBTAU_VERSION_MINOR 0
+#define LIBTAU_VERSION_TINY 0
 
 // the format of this version is: MMmmtt
 // M = Major version, m = minor version, t = tiny version
-#define LIBTORRENT_VERSION_NUM ((LIBTORRENT_VERSION_MAJOR * 10000) + (LIBTORRENT_VERSION_MINOR * 100) + LIBTORRENT_VERSION_TINY)
+#define LIBTAU_VERSION_NUM ((LIBTAU_VERSION_MAJOR * 10000) + (LIBTAU_VERSION_MINOR * 100) + LIBTAU_VERSION_TINY)
 
-#define LIBTORRENT_VERSION "2.0.3.0"
-#define LIBTORRENT_REVISION "af7a96c1d"
+#define LIBTAU_VERSION "0.0.0"
 
 namespace libTAU {
 
 	// the major, minor and tiny versions of libTAU
-	constexpr int version_major = 2;
+	constexpr int version_major = 0;
 	constexpr int version_minor = 0;
-	constexpr int version_tiny = 3;
+	constexpr int version_tiny = 0;
 
 	// the libTAU version in string form
-	constexpr char const* version_str = "2.0.3.0";
-
-	// the git commit of this libTAU version
-	constexpr std::uint64_t version_revision = 0xaf7a96c1d;
+	constexpr char const* version_str = "0.0.0";
 
 	// returns the libTAU version as string form in this format:
 	// "<major>.<minor>.<tiny>.<tag>"

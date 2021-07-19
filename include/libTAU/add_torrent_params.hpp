@@ -109,7 +109,7 @@ TORRENT_VERSION_NAMESPACE_3
 
 		// filled in by the constructor and should be left untouched. It is used
 		// for forward binary compatibility.
-		int version = LIBTORRENT_VERSION_NUM;
+		int version = LIBTAU_VERSION_NUM;
 
 		// torrent_info object with the torrent to add. Unless the
 		// info_hash is set, this is required to be initialized.

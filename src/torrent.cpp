@@ -5937,7 +5937,7 @@ bool is_downloading_state(int const st)
 
 	void torrent::write_resume_data(resume_data_flags_t const flags, add_torrent_params& ret) const
 	{
-		ret.version = LIBTORRENT_VERSION_NUM;
+		ret.version = LIBTAU_VERSION_NUM;
 		ret.storage_mode = storage_mode();
 		ret.total_uploaded = m_total_uploaded;
 		ret.total_downloaded = m_total_downloaded;

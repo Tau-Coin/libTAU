@@ -98,7 +98,7 @@ namespace libTAU {
 	CONSTEXPR_SETTINGS
 	aux::array<str_setting_entry_t, settings_pack::num_string_settings> const str_settings
 	({{
-		SET(user_agent, "libTAU/" LIBTORRENT_VERSION, &session_impl::update_user_agent),
+		SET(user_agent, "libTAU/" LIBTAU_VERSION, &session_impl::update_user_agent),
 		SET(announce_ip, nullptr, nullptr),
 		DEPRECATED_SET_STR(mmap_cache, nullptr, nullptr),
 		SET(handshake_client_version, nullptr, nullptr),
