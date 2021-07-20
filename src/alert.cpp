@@ -580,41 +580,20 @@ namespace {
 #endif
 	}
 
-	torrent_error_alert::torrent_error_alert(
-		aux::stack_allocator& alloc
-		, torrent_handle const& h
-		, error_code const& e, string_view f)
-		: torrent_alert(alloc, h)
-		, error(e)
-		, m_file_idx(alloc.copy_string(f))
-#if TORRENT_ABI_VERSION == 1
-		, error_file(f)
-#endif
+	session_start_over_alert::session_start_over_alert( aux::stack_allocator&
+		, bool start_over)
+		: session_start_over(start_over)
 	{}
 
-	std::string torrent_error_alert::message() const
+	std::string session_start_over_alert::message() const
 	{
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-		char msg[400];
-		if (error)
-		{
-			std::snprintf(msg, sizeof(msg), " ERROR: (%d %s) %s"
-				, error.value(), convert_from_native(error.message()).c_str()
-				, filename());
-		}
-		else
-		{
-			std::snprintf(msg, sizeof(msg), " ERROR: %s", filename());
-		}
-		return torrent_alert::message() + msg;
+		char msg[100];
+		std::snprintf(msg, sizeof(msg), " Session Start Over");
+		return msg;
 #endif
-	}
-
-	char const* torrent_error_alert::filename() const
-	{
-		return m_alloc.get().ptr(m_file_idx);
 	}
 
 	incoming_connection_alert::incoming_connection_alert(aux::stack_allocator&
@@ -654,23 +633,20 @@ namespace {
 #endif
 	}
 
-#if TORRENT_ABI_VERSION == 1
-	mmap_cache_alert::mmap_cache_alert(aux::stack_allocator&
-		, error_code const& ec): error(ec)
+	session_stop_over_alert::session_stop_over_alert(aux::stack_allocator&
+		, bool over): session_stop_over(over)
 	{}
 
-	std::string mmap_cache_alert::message() const
+	std::string session_stop_over_alert::message() const
 	{
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-		char msg[600];
-		std::snprintf(msg, sizeof(msg), "mmap cache failed: (%d) %s", error.value()
-			, convert_from_native(error.message()).c_str());
+		char msg[100];
+		std::snprintf(msg, sizeof(msg), " Session Stop Over");
 		return msg;
 #endif
 	}
-#endif
 
 	char const* operation_name(operation_t const op)
 	{
@@ -1557,7 +1533,7 @@ namespace {
 		"listen_succeeded", "portmap_error", "portmap",
 		"portmap_log",
 		"dht_announce", "dht_get_peers", "stats",
-		"dht_bootstrap", "torrent_error",
+		"dht_bootstrap", "session_start_over",
 		"incoming_connection",
 		"state_update",
 #if TORRENT_ABI_VERSION == 1

@@ -599,31 +599,18 @@ TORRENT_VERSION_NAMESPACE_3
 	};
 
 	// This is posted whenever a torrent is transitioned into the error state.
-	struct TORRENT_EXPORT torrent_error_alert final : torrent_alert
+	struct TORRENT_EXPORT session_start_over_alert final : alert
 	{
 		// internal
-		TORRENT_UNEXPORT torrent_error_alert(aux::stack_allocator& alloc, torrent_handle const& h
-			, error_code const& e, string_view f);
+		TORRENT_UNEXPORT session_start_over_alert(aux::stack_allocator& alloc, bool over);
 
-		TORRENT_DEFINE_ALERT_PRIO(torrent_error_alert, 13, alert_priority::high)
+		TORRENT_DEFINE_ALERT_PRIO(session_start_over_alert, 13, alert_priority::high)
 
-		static inline constexpr alert_category_t static_category = alert_category::error | alert_category::status;
+		static inline constexpr alert_category_t static_category = alert_category::status;
 		std::string message() const override;
 
-		// specifies which error the torrent encountered.
-		error_code const error;
-
 		// the filename (or object) the error occurred on.
-		char const* filename() const;
-
-	private:
-		aux::allocation_slot m_file_idx;
-#if TORRENT_ABI_VERSION == 1
-	public:
-		// the filename (or object) the error occurred on.
-		TORRENT_DEPRECATED std::string error_file;
-#endif
-
+		bool session_start_over;
 	};
 
 	// The incoming connection alert is posted every time we successfully accept
@@ -679,21 +666,17 @@ TORRENT_VERSION_NAMESPACE_3
 		std::vector<torrent_status> status;
 	};
 
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-	struct TORRENT_DEPRECATED_EXPORT mmap_cache_alert final : alert
+	struct TORRENT_DEPRECATED_EXPORT session_stop_over_alert final : alert
 	{
-		mmap_cache_alert(aux::stack_allocator& alloc
-			, error_code const& ec);
-		TORRENT_DEFINE_ALERT(mmap_cache_alert, 16)
+		session_stop_over_alert(aux::stack_allocator& alloc , bool over);
+		TORRENT_DEFINE_ALERT(session_stop_over_alert, 16)
 
-		static inline constexpr alert_category_t static_category = alert_category::error;
+		static inline constexpr alert_category_t static_category = alert_category::status;
+
 		std::string message() const override;
 
-		error_code const error;
+		bool session_stop_over;
 	};
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif // TORRENT_ABI_VERSION
 
 	// The session_stats_alert is posted when the user requests session statistics by
 	// calling post_session_stats() on the session object. This alert does not

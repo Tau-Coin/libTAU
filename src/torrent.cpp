@@ -5089,9 +5089,6 @@ bool is_downloading_state(int const st)
 	{
 		if (!m_ssl_ctx)
 		{
-			if (alerts().should_post<torrent_error_alert>())
-				alerts().emplace_alert<torrent_error_alert>(get_handle()
-					, errors::not_an_ssl_torrent, "");
 			return;
 		}
 
@@ -5102,37 +5099,17 @@ bool is_downloading_state(int const st)
 					return purpose == ssl::context::for_reading ? passphrase : "";
 				}
 				, ec);
-		if (ec)
-		{
-			if (alerts().should_post<torrent_error_alert>())
-				alerts().emplace_alert<torrent_error_alert>(get_handle(), ec, "");
-		}
 		m_ssl_ctx->use_certificate_file(certificate, ssl::context::pem, ec);
-		if (ec)
-		{
-			if (alerts().should_post<torrent_error_alert>())
-				alerts().emplace_alert<torrent_error_alert>(get_handle(), ec, certificate);
-		}
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 			debug_log("*** use certificate file: %s", ec.message().c_str());
 #endif
 		m_ssl_ctx->use_private_key_file(private_key, ssl::context::pem, ec);
-		if (ec)
-		{
-			if (alerts().should_post<torrent_error_alert>())
-				alerts().emplace_alert<torrent_error_alert>(get_handle(), ec, private_key);
-		}
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 			debug_log("*** use private key file: %s", ec.message().c_str());
 #endif
 		m_ssl_ctx->use_tmp_dh_file(dh_params, ec);
-		if (ec)
-		{
-			if (alerts().should_post<torrent_error_alert>())
-				alerts().emplace_alert<torrent_error_alert>(get_handle(), ec, dh_params);
-		}
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 			debug_log("*** use DH file: %s", ec.message().c_str());
@@ -5149,27 +5126,12 @@ bool is_downloading_state(int const st)
 
 		error_code ec;
 		m_ssl_ctx->use_certificate(certificate_buf, ssl::context::pem, ec);
-		if (ec)
-		{
-			if (alerts().should_post<torrent_error_alert>())
-				alerts().emplace_alert<torrent_error_alert>(get_handle(), ec, "[certificate]");
-		}
 
 		boost::asio::const_buffer private_key_buf(private_key.c_str(), private_key.size());
 		m_ssl_ctx->use_private_key(private_key_buf, ssl::context::pem, ec);
-		if (ec)
-		{
-			if (alerts().should_post<torrent_error_alert>())
-				alerts().emplace_alert<torrent_error_alert>(get_handle(), ec, "[private key]");
-		}
 
 		boost::asio::const_buffer dh_params_buf(dh_params.c_str(), dh_params.size());
 		m_ssl_ctx->use_tmp_dh(dh_params_buf, ec);
-		if (ec)
-		{
-			if (alerts().should_post<torrent_error_alert>())
-				alerts().emplace_alert<torrent_error_alert>(get_handle(), ec, "[dh params]");
-		}
 	}
 
 #endif
@@ -7650,10 +7612,6 @@ bool is_downloading_state(int const st)
 		m_error_file = error_file;
 
 		update_gauge();
-
-		if (alerts().should_post<torrent_error_alert>())
-			alerts().emplace_alert<torrent_error_alert>(get_handle(), ec
-				, resolve_filename(error_file));
 
 #ifndef TORRENT_DISABLE_LOGGING
 		if (ec)

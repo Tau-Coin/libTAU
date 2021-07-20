@@ -2928,10 +2928,13 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
-
+		/*
         std::string home_dir = boost::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+		*/
+        std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
+        std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -2993,10 +2996,9 @@ namespace {
 
 		std::string const nodes_key = "bootstrap_nodes";
 		std::string nodes_list;
-
 		leveldb::Status s = m_kvdb->Get(leveldb::ReadOptions(), nodes_key, &nodes_list);
 #ifndef TORRENT_DISABLE_LOGGING
-		session_log("start to  update dht bootstrap nodes default: %s, db: %s",
+		session_log("start to update dht bootstrap nodes default: %s, db: %s",
 					 nodes_from_settings.c_str(), nodes_list.c_str());
 #endif
 
@@ -3008,7 +3010,6 @@ namespace {
 			s = m_kvdb->Put(leveldb::WriteOptions(), nodes_key, nodes_from_settings);
 			nodes_list = nodes_from_settings;
 		}
-
 		std::vector<std::pair<std::string, int>> nodes;
 		parse_comma_separated_string_port(nodes_list, nodes);
 
@@ -3030,6 +3031,9 @@ namespace {
 		std::array<char, 32> seed;
 
 		const char* account_seed = m_settings.get_str(settings_pack::account_seed).c_str();
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("start to update account seed :%s", account_seed);
+#endif
         span<char const> hexseed(account_seed, 64);
         libTAU::aux::from_hex(hexseed, seed.data());
 		//1. update key pair
@@ -3325,7 +3329,8 @@ namespace {
 		session_log("starting Communication");
 #endif
 		m_communication->start();
-
+		
+		m_alerts.emplace_alert<session_start_over_alert>(true);
 	}
 
 	void session_impl::start_dht()

@@ -33,22 +33,16 @@ namespace aux {
 			, e.code().message().c_str()
 			, e.what());
 #endif
-		alerts().emplace_alert<torrent_error_alert>(get_handle()
-			, e.code(), e.what());
 		pause();
 	} catch (std::exception const& e) {
 #ifndef TORRENT_DISABLE_LOGGING
 		debug_log("EXCEPTION: %s", e.what());
 #endif
-		alerts().emplace_alert<torrent_error_alert>(get_handle()
-			, error_code(), e.what());
 		pause();
 	} catch (...) {
 #ifndef TORRENT_DISABLE_LOGGING
 		debug_log("EXCEPTION: unknown");
 #endif
-		alerts().emplace_alert<torrent_error_alert>(get_handle()
-			, error_code(), "unknown error");
 		pause();
 	}
 #endif

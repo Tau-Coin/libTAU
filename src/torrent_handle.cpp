@@ -67,33 +67,6 @@ namespace libTAU {
 #endif
 
 	template<typename Fun, typename... Args>
-	void torrent_handle::async_call(Fun f, Args&&... a) const
-	{
-		auto t = m_torrent.lock();
-		if (!t) aux::throw_ex<system_error>(errors::invalid_torrent_handle);
-		auto& ses = static_cast<session_impl&>(t->session());
-		dispatch(ses.get_context(), [=,&ses] ()
-		{
-#ifndef BOOST_NO_EXCEPTIONS
-			try {
-#endif
-				(t.get()->*f)(a...);
-#ifndef BOOST_NO_EXCEPTIONS
-			} catch (system_error const& e) {
-				ses.alerts().emplace_alert<torrent_error_alert>(torrent_handle(m_torrent)
-					, e.code(), e.what());
-			} catch (std::exception const& e) {
-				ses.alerts().emplace_alert<torrent_error_alert>(torrent_handle(m_torrent)
-					, error_code(), e.what());
-			} catch (...) {
-				ses.alerts().emplace_alert<torrent_error_alert>(torrent_handle(m_torrent)
-					, error_code(), "unknown error");
-			}
-#endif
-		} );
-	}
-
-	template<typename Fun, typename... Args>
 	void torrent_handle::sync_call(Fun f, Args&&... a) const
 	{
 		auto t = m_torrent.lock();
@@ -182,7 +155,6 @@ namespace libTAU {
 	void torrent_handle::set_max_uploads(int max_uploads) const
 	{
 		TORRENT_ASSERT_PRECOND(max_uploads >= 2 || max_uploads == -1);
-		async_call(&aux::torrent::set_max_uploads, max_uploads, true);
 	}
 
 	int torrent_handle::max_connections() const
@@ -193,13 +165,11 @@ namespace libTAU {
 	void torrent_handle::set_max_connections(int max_connections) const
 	{
 		TORRENT_ASSERT_PRECOND(max_connections >= 2 || max_connections == -1);
-		async_call(&aux::torrent::set_max_connections, max_connections, true);
 	}
 
 	void torrent_handle::set_upload_limit(int limit) const
 	{
 		TORRENT_ASSERT_PRECOND(limit >= -1);
-		async_call(&aux::torrent::set_upload_limit, limit);
 	}
 
 	int torrent_handle::upload_limit() const
@@ -210,7 +180,6 @@ namespace libTAU {
 	void torrent_handle::set_download_limit(int limit) const
 	{
 		TORRENT_ASSERT_PRECOND(limit >= -1);
-		async_call(&aux::torrent::set_download_limit, limit);
 	}
 
 	int torrent_handle::download_limit() const
@@ -220,32 +189,27 @@ namespace libTAU {
 
 	void torrent_handle::move_storage(std::string const& save_path, move_flags_t flags) const
 	{
-		async_call(&aux::torrent::move_storage, save_path, flags);
+		return;
 	}
 
 #if TORRENT_ABI_VERSION == 1
 	void torrent_handle::move_storage(
 		std::string const& save_path, int const flags) const
 	{
-		async_call(&aux::torrent::move_storage, save_path, static_cast<move_flags_t>(flags));
+		return;
 	}
 #endif // TORRENT_ABI_VERSION
 
 	void torrent_handle::rename_file(file_index_t index, std::string const& new_name) const
 	{
-		async_call(&aux::torrent::rename_file, index, new_name);
+		return;
 	}
 
 	void torrent_handle::add_extension(
 		std::function<std::shared_ptr<torrent_plugin>(torrent_handle const&, client_data_t)> const& ext
 		, client_data_t userdata)
 	{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		async_call(&aux::torrent::add_extension_fun, ext, userdata);
-#else
-		TORRENT_UNUSED(ext);
-		TORRENT_UNUSED(userdata);
-#endif
+		return;
 	}
 
 	bool torrent_handle::set_metadata(span<char const> metadata) const
@@ -255,7 +219,7 @@ namespace libTAU {
 
 	void torrent_handle::pause(pause_flags_t const flags) const
 	{
-		async_call(&aux::torrent::pause, flags & graceful_pause);
+		return;
 	}
 
 	torrent_flags_t torrent_handle::flags() const
@@ -266,49 +230,49 @@ namespace libTAU {
 	void torrent_handle::set_flags(torrent_flags_t const flags
 		, torrent_flags_t const mask) const
 	{
-		async_call(&aux::torrent::set_flags, flags, mask);
+		return;
 	}
 
 	void torrent_handle::set_flags(torrent_flags_t const flags) const
 	{
-		async_call(&aux::torrent::set_flags, torrent_flags::all, flags);
+		sync_call(&aux::torrent::set_flags, torrent_flags::all, flags);
 	}
 
 	void torrent_handle::unset_flags(torrent_flags_t const flags) const
 	{
-		async_call(&aux::torrent::set_flags, torrent_flags_t{}, flags);
+		sync_call(&aux::torrent::set_flags, torrent_flags_t{}, flags);
 	}
 
 #if TORRENT_ABI_VERSION == 1
 	void torrent_handle::stop_when_ready(bool b) const
-	{ async_call(&aux::torrent::stop_when_ready, b); }
+	{ sync_call(&aux::torrent::stop_when_ready, b); }
 
 	void torrent_handle::set_upload_mode(bool b) const
-	{ async_call(&aux::torrent::set_upload_mode, b); }
+	{ sync_call(&aux::torrent::set_upload_mode, b); }
 
 	void torrent_handle::set_share_mode(bool b) const
 	{
 		TORRENT_UNUSED(b);
 #ifndef TORRENT_DISABLE_SHARE_MODE
-		async_call(&aux::torrent::set_share_mode, b);
+		sync_call(&aux::torrent::set_share_mode, b);
 #endif
 	}
 
 	void torrent_handle::apply_ip_filter(bool b) const
-	{ async_call(&aux::torrent::set_apply_ip_filter, b); }
+	{ sync_call(&aux::torrent::set_apply_ip_filter, b); }
 
 	void torrent_handle::auto_managed(bool m) const
-	{ async_call(&aux::torrent::auto_managed, m); }
+	{ sync_call(&aux::torrent::auto_managed, m); }
 
 	void torrent_handle::set_pinned(bool) const {}
 
 	void torrent_handle::set_sequential_download(bool sd) const
-	{ async_call(&aux::torrent::set_sequential_download, sd); }
+	{ sync_call(&aux::torrent::set_sequential_download, sd); }
 #endif
 
 	void torrent_handle::flush_cache() const
 	{
-		async_call(&aux::torrent::flush_cache);
+		sync_call(&aux::torrent::flush_cache);
 	}
 
 	void torrent_handle::set_ssl_certificate(
@@ -318,7 +282,7 @@ namespace libTAU {
 		, std::string const& passphrase)
 	{
 #ifdef TORRENT_SSL_PEERS
-		async_call(&aux::torrent::set_ssl_cert, certificate, private_key, dh_params, passphrase);
+		sync_call(&aux::torrent::set_ssl_cert, certificate, private_key, dh_params, passphrase);
 #else
 		TORRENT_UNUSED(certificate);
 		TORRENT_UNUSED(private_key);
@@ -333,7 +297,7 @@ namespace libTAU {
 		, std::string const& dh_params)
 	{
 #ifdef TORRENT_SSL_PEERS
-		async_call(&aux::torrent::set_ssl_cert_buffer, certificate, private_key, dh_params);
+		sync_call(&aux::torrent::set_ssl_cert_buffer, certificate, private_key, dh_params);
 #else
 		TORRENT_UNUSED(certificate);
 		TORRENT_UNUSED(private_key);
@@ -343,7 +307,7 @@ namespace libTAU {
 
 	void torrent_handle::save_resume_data(resume_data_flags_t f) const
 	{
-		async_call(&aux::torrent::save_resume_data, f);
+		sync_call(&aux::torrent::save_resume_data, f);
 	}
 
 	bool torrent_handle::need_save_resume_data() const
@@ -353,12 +317,12 @@ namespace libTAU {
 
 	void torrent_handle::force_recheck() const
 	{
-		async_call(&aux::torrent::force_recheck);
+		sync_call(&aux::torrent::force_recheck);
 	}
 
 	void torrent_handle::resume() const
 	{
-		async_call(&aux::torrent::resume);
+		sync_call(&aux::torrent::resume);
 	}
 
 	queue_position_t torrent_handle::queue_position() const
@@ -369,46 +333,46 @@ namespace libTAU {
 
 	void torrent_handle::queue_position_up() const
 	{
-		async_call(&aux::torrent::queue_up);
+		sync_call(&aux::torrent::queue_up);
 	}
 
 	void torrent_handle::queue_position_down() const
 	{
-		async_call(&aux::torrent::queue_down);
+		sync_call(&aux::torrent::queue_down);
 	}
 
 	void torrent_handle::queue_position_set(queue_position_t const p) const
 	{
 		TORRENT_ASSERT_PRECOND(p >= queue_position_t{});
 		if (p < queue_position_t{}) return;
-		async_call(&aux::torrent::set_queue_position, p);
+		sync_call(&aux::torrent::set_queue_position, p);
 	}
 
 	void torrent_handle::queue_position_top() const
 	{
-		async_call(&aux::torrent::set_queue_position, queue_position_t{});
+		sync_call(&aux::torrent::set_queue_position, queue_position_t{});
 	}
 
 	void torrent_handle::queue_position_bottom() const
 	{
-		async_call(&aux::torrent::set_queue_position, last_pos);
+		sync_call(&aux::torrent::set_queue_position, last_pos);
 	}
 
 	void torrent_handle::clear_error() const
 	{
-		async_call(&aux::torrent::clear_error);
+		sync_call(&aux::torrent::clear_error);
 	}
 
 #if TORRENT_ABI_VERSION == 1
 	void torrent_handle::set_priority(int const p) const
 	{
-		async_call(&aux::torrent::set_priority, p);
+		sync_call(&aux::torrent::set_priority, p);
 	}
 
 	void torrent_handle::set_tracker_login(std::string const& name
 		, std::string const& password) const
 	{
-		async_call(&aux::torrent::set_tracker_login, name, password);
+		sync_call(&aux::torrent::set_tracker_login, name, password);
 	}
 #endif
 
@@ -440,7 +404,7 @@ namespace libTAU {
 
 	void torrent_handle::piece_priority(piece_index_t index, download_priority_t priority) const
 	{
-		async_call(&aux::torrent::set_piece_priority, index, priority);
+		sync_call(&aux::torrent::set_piece_priority, index, priority);
 	}
 
 	download_priority_t torrent_handle::piece_priority(piece_index_t index) const
@@ -450,14 +414,14 @@ namespace libTAU {
 
 	void torrent_handle::prioritize_pieces(std::vector<download_priority_t> const& pieces) const
 	{
-		async_call(&aux::torrent::prioritize_pieces
+		sync_call(&aux::torrent::prioritize_pieces
 			, static_cast<aux::vector<download_priority_t, piece_index_t> const&>(pieces));
 	}
 
 	void torrent_handle::prioritize_pieces(std::vector<std::pair<piece_index_t
 		, download_priority_t>> const& pieces) const
 	{
-		async_call(&aux::torrent::prioritize_piece_list, pieces);
+		sync_call(&aux::torrent::prioritize_piece_list, pieces);
 	}
 
 	std::vector<download_priority_t> torrent_handle::get_piece_priorities() const
@@ -476,14 +440,14 @@ namespace libTAU {
 		for (auto const prio : pieces) {
 			p.push_back(download_priority_t(static_cast<std::uint8_t>(prio)));
 		}
-		async_call(&aux::torrent::prioritize_pieces, p);
+		sync_call(&aux::torrent::prioritize_pieces, p);
 	}
 
 	void torrent_handle::prioritize_pieces(std::vector<std::pair<piece_index_t, int>> const& pieces) const
 	{
 		std::vector<std::pair<piece_index_t, download_priority_t>> p;
 		p.reserve(pieces.size());
-		async_call(&aux::torrent::prioritize_piece_list, std::move(p));
+		sync_call(&aux::torrent::prioritize_piece_list, std::move(p));
 	}
 
 	std::vector<int> torrent_handle::piece_priorities() const
@@ -501,7 +465,7 @@ namespace libTAU {
 
 	void torrent_handle::file_priority(file_index_t index, download_priority_t priority) const
 	{
-		async_call(&aux::torrent::set_file_priority, index, priority);
+		sync_call(&aux::torrent::set_file_priority, index, priority);
 	}
 
 	download_priority_t torrent_handle::file_priority(file_index_t index) const
@@ -512,7 +476,7 @@ namespace libTAU {
 	// TODO: support moving files into this call
 	void torrent_handle::prioritize_files(std::vector<download_priority_t> const& files) const
 	{
-		async_call(&aux::torrent::prioritize_files
+		sync_call(&aux::torrent::prioritize_files
 			, static_cast<aux::vector<download_priority_t, file_index_t> const&>(files));
 	}
 
@@ -535,7 +499,7 @@ namespace libTAU {
 		for (auto const p : files) {
 			file_prio.push_back(download_priority_t(static_cast<std::uint8_t>(p)));
 		}
-		async_call(&aux::torrent::prioritize_files, file_prio);
+		sync_call(&aux::torrent::prioritize_files, file_prio);
 	}
 
 	std::vector<int> torrent_handle::file_priorities() const
@@ -558,7 +522,7 @@ namespace libTAU {
 	void torrent_handle::set_ratio(float) const {}
 	void torrent_handle::use_interface(const char* net_interface) const
 	{
-		async_call(&aux::torrent::use_interface, std::string(net_interface));
+		sync_call(&aux::torrent::use_interface, std::string(net_interface));
 	}
 
 #if !TORRENT_NO_FPU
@@ -606,13 +570,13 @@ namespace libTAU {
 
 	void torrent_handle::add_url_seed(std::string const& url) const
 	{
-		async_call(&aux::torrent::add_web_seed, url
+		sync_call(&aux::torrent::add_web_seed, url
 			, std::string(), web_seed_entry::headers_t(), aux::web_seed_flag_t{});
 	}
 
 	void torrent_handle::remove_url_seed(std::string const& url) const
 	{
-		async_call(&aux::torrent::remove_web_seed, url);
+		sync_call(&aux::torrent::remove_web_seed, url);
 	}
 
 	std::set<std::string> torrent_handle::url_seeds() const
@@ -630,12 +594,12 @@ namespace libTAU {
 	void torrent_handle::replace_trackers(
 		std::vector<announce_entry> const& urls) const
 	{
-		async_call(&aux::torrent::replace_trackers, urls);
+		sync_call(&aux::torrent::replace_trackers, urls);
 	}
 
 	void torrent_handle::add_tracker(announce_entry const& url) const
 	{
-		async_call(&aux::torrent::add_tracker, url);
+		sync_call(&aux::torrent::add_tracker, url);
 	}
 
 	void torrent_handle::add_piece(piece_index_t piece, char const* data, add_piece_flags_t const flags) const
@@ -645,7 +609,7 @@ namespace libTAU {
 
 	void torrent_handle::read_piece(piece_index_t piece) const
 	{
-		async_call(&aux::torrent::read_piece, piece);
+		sync_call(&aux::torrent::read_piece, piece);
 	}
 
 	bool torrent_handle::have_piece(piece_index_t piece) const
@@ -657,14 +621,14 @@ namespace libTAU {
 	{
 		TORRENT_ASSERT_PRECOND(first_piece >= piece_index_t(0) && last_piece >= first_piece);
 		if (first_piece >= piece_index_t(0) && last_piece >= first_piece)
-			async_call(static_cast<void (aux::torrent::*)(piece_index_t,piece_index_t)>(&aux::torrent::set_sequential_range), first_piece, last_piece);
+			sync_call(static_cast<void (aux::torrent::*)(piece_index_t,piece_index_t)>(&aux::torrent::set_sequential_range), first_piece, last_piece);
 	}
 
 	void torrent_handle::set_sequential_range(piece_index_t const first_piece) const
 	{
 		TORRENT_ASSERT_PRECOND(first_piece >= piece_index_t(0));
 		if (first_piece >= piece_index_t(0))
-			async_call(static_cast<void (aux::torrent::*)(piece_index_t)>(&aux::torrent::set_sequential_range), first_piece);
+			sync_call(static_cast<void (aux::torrent::*)(piece_index_t)>(&aux::torrent::set_sequential_range), first_piece);
 	}
 
 	bool torrent_handle::is_valid() const
@@ -731,19 +695,19 @@ namespace libTAU {
 	void torrent_handle::connect_peer(tcp::endpoint const& adr
 		, peer_source_flags_t const source, pex_flags_t const flags) const
 	{
-		async_call(&aux::torrent::add_peer, adr, source, flags);
+		sync_call(&aux::torrent::add_peer, adr, source, flags);
 	}
 
 	void torrent_handle::clear_peers()
 	{
-		async_call(&aux::torrent::clear_peers);
+		sync_call(&aux::torrent::clear_peers);
 	}
 
 #if TORRENT_ABI_VERSION == 1
 	void torrent_handle::force_reannounce(
 		boost::posix_time::time_duration duration) const
 	{
-		async_call(&aux::torrent::force_tracker_request, aux::time_now()
+		sync_call(&aux::torrent::force_tracker_request, aux::time_now()
 			+ seconds(duration.total_seconds()), -1, reannounce_flags_t{});
 	}
 
@@ -761,18 +725,18 @@ namespace libTAU {
 	void torrent_handle::force_dht_announce() const
 	{
 #ifndef TORRENT_DISABLE_DHT
-		async_call(&aux::torrent::dht_announce);
+		sync_call(&aux::torrent::dht_announce);
 #endif
 	}
 
 	void torrent_handle::force_lsd_announce() const
 	{
-		async_call(&aux::torrent::lsd_announce);
+		sync_call(&aux::torrent::lsd_announce);
 	}
 
 	void torrent_handle::force_reannounce(int s, int idx, reannounce_flags_t const flags) const
 	{
-		async_call(&aux::torrent::force_tracker_request, aux::time_now() + seconds(s), idx, flags);
+		sync_call(&aux::torrent::force_tracker_request, aux::time_now() + seconds(s), idx, flags);
 	}
 
 	std::vector<open_file_state> torrent_handle::file_status() const
@@ -785,7 +749,7 @@ namespace libTAU {
 
 	void torrent_handle::scrape_tracker(int idx) const
 	{
-		async_call(&aux::torrent::scrape_tracker, idx, true);
+		sync_call(&aux::torrent::scrape_tracker, idx, true);
 	}
 
 #if TORRENT_ABI_VERSION == 1
@@ -793,7 +757,7 @@ namespace libTAU {
 	{
 		TORRENT_UNUSED(on);
 #ifndef TORRENT_DISABLE_SUPERSEEDING
-		async_call(&aux::torrent::set_super_seeding, on);
+		sync_call(&aux::torrent::set_super_seeding, on);
 #endif
 	}
 
@@ -827,18 +791,18 @@ namespace libTAU {
 		, deadline_flags_t const flags) const
 	{
 #ifndef TORRENT_DISABLE_STREAMING
-		async_call(&aux::torrent::set_piece_deadline, index, deadline, flags);
+		sync_call(&aux::torrent::set_piece_deadline, index, deadline, flags);
 #else
 		TORRENT_UNUSED(deadline);
 		if (flags & alert_when_available)
-			async_call(&aux::torrent::read_piece, index);
+			sync_call(&aux::torrent::read_piece, index);
 #endif
 	}
 
 	void torrent_handle::reset_piece_deadline(piece_index_t index) const
 	{
 #ifndef TORRENT_DISABLE_STREAMING
-		async_call(&aux::torrent::reset_piece_deadline, index);
+		sync_call(&aux::torrent::reset_piece_deadline, index);
 #else
 		TORRENT_UNUSED(index);
 #endif
@@ -847,7 +811,7 @@ namespace libTAU {
 	void torrent_handle::clear_piece_deadlines() const
 	{
 #ifndef TORRENT_DISABLE_STREAMING
-		async_call(&aux::torrent::clear_time_critical);
+		sync_call(&aux::torrent::clear_time_critical);
 #endif
 	}
 

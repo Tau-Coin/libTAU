@@ -40,11 +40,12 @@ struct portmap_log_alert;
 struct dht_announce_alert;
 struct dht_get_peers_alert;
 struct dht_bootstrap_alert;
-struct torrent_error_alert;
+struct session_start_over_alert;
 struct incoming_connection_alert;
 struct state_update_alert;
 struct session_stats_alert;
 struct dht_error_alert;
+struct session_stop_over_alert;
 struct dht_immutable_item_alert;
 struct dht_mutable_item_alert;
 struct dht_put_alert;
@@ -218,7 +219,6 @@ TORRENT_VERSION_NAMESPACE_3_END
 TORRENT_VERSION_NAMESPACE_3
 struct stats_alert;
 struct anonymous_mode_alert;
-struct mmap_cache_alert;
 TORRENT_VERSION_NAMESPACE_3_END
 
 // include/libTAU/file_storage.hpp
