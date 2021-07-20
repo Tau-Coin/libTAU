@@ -473,8 +473,8 @@ namespace libTAU {
                     confirmation_roots.emplace_back(hash.begin(), hash.end());
                 }
 
-                // check if reverse missing messages
-
+                // reverse missing messages
+//                std::reverse(missing_messages.begin(), missing_messages.end());
             }
         }
 
@@ -583,12 +583,12 @@ namespace libTAU {
                     return;
                 }
 
-                aux::bytes public_key;
-                public_key.insert(public_key.end(), i.pk().bytes.begin(), i.pk().bytes.end());
+                aux::bytes peer;
+                peer.insert(peer.end(), i.pk().bytes.begin(), i.pk().bytes.end());
 
                 // record latest timestamp
-                if (data.timestamp() > m_last_seen[public_key]) {
-                    m_last_seen[public_key] = data.timestamp();
+                if (data.timestamp() > m_last_seen[peer]) {
+                    m_last_seen[peer] = data.timestamp();
                 }
 
                 switch (data.type()) {
@@ -599,7 +599,7 @@ namespace libTAU {
                         online_signal onlineSignal(data.payload());
 
                         auto device_id = onlineSignal.device_id();
-                        auto device_map = m_latest_signal_time[public_key];
+                        auto device_map = m_latest_signal_time[peer];
                         log("INFO: Online signal time:%d", onlineSignal.timestamp());
                         // 检查相应设备信号的时间戳，只处理最新的数据
                         if (onlineSignal.timestamp() > device_map[device_id]) {
@@ -618,6 +618,34 @@ namespace libTAU {
                                             onlineSignal.friend_info());
                                     log("INFO: Got friend info:%s", aux::toHex(onlineSignal.friend_info()).c_str());
                                 }
+
+                                //
+
+                                std::vector<message> missing_messages;
+                                std::vector<aux::bytes> confirmation_roots;
+                                find_best_solution(std::vector<message>(m_message_list_map[peer].begin(),
+                                                               m_message_list_map[peer].end()),
+                                                   onlineSignal.hash_prefix_bytes(),
+                                                   missing_messages, confirmation_roots);
+
+                                if (!confirmation_roots.empty()) {
+                                    for (auto const& confirmation_root: confirmation_roots) {
+                                        m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(confirmation_root);
+                                        log("INFO: Confirmation root:%s", aux::toHex(confirmation_root).c_str());
+                                    }
+                                }
+
+                                if (!missing_messages.empty()) {
+                                    srand((unsigned)time(nullptr));
+                                    auto index = rand() % missing_messages.size();
+                                    auto missing_message = missing_messages[index];
+
+                                    std::vector<dht::node_entry> entries;
+                                    m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
+                                    auto msg_encode = missing_message.rlp();
+                                    dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
+                                                           entries, missing_message.sha256());
+                                }
                             }
                         }
 
@@ -627,7 +655,7 @@ namespace libTAU {
                         new_msg_signal newMsgSignal(data.payload());
 
                         auto device_id = newMsgSignal.device_id();
-                        auto device_map = m_latest_signal_time[public_key];
+                        auto device_map = m_latest_signal_time[peer];
                         // 检查相应设备信号的时间戳，只处理最新的数据
                         if (newMsgSignal.timestamp() > device_map[device_id]) {
                             // update the latest signal time
@@ -656,7 +684,7 @@ namespace libTAU {
 
         namespace {
 
-            void on_dht_put_immutable_item(aux::alert_manager& alerts, sha1_hash target, int num)
+            void on_dht_put_immutable_item(aux::alert_manager& alerts, sha256_hash target, int num)
             {
             }
 
@@ -738,10 +766,10 @@ namespace libTAU {
                     , pk->bytes, sk->bytes, data), salt);
         }
 
-        void communication::dht_put_immutable_item(entry const& data, sha1_hash target)
+        void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
         {
             if (!m_ses.dht()) return;
-            m_ses.dht()->put_item(data, std::bind(&on_dht_put_immutable_item, std::ref(m_ses.alerts())
+            m_ses.dht()->put_item(data,  eps, std::bind(&on_dht_put_immutable_item, std::ref(m_ses.alerts())
                     , target, _1));
         }
 

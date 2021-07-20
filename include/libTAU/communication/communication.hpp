@@ -176,7 +176,7 @@ namespace libTAU {
                     , std::string salt = std::string());
 
             // put immutable item to dht
-            void dht_put_immutable_item(entry const& data, sha1_hash target);
+            void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
 
             // put mutable item to dht
             void dht_put_mutable_item(std::array<char, 32> key

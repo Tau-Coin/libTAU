@@ -15,6 +15,7 @@ see LICENSE file.
 
 #include <utility>
 #include "libTAU/aux_/export.hpp"
+#include "libTAU/communication/immutable_data_info.hpp"
 
 namespace libTAU {
     namespace communication {
@@ -32,6 +33,12 @@ namespace libTAU {
 
             // construct online signal
             online_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp,
+                          aux::bytes mFriendInfo, immutable_data_info mPayload) :
+                          m_device_id(std::move(mDeviceId)), m_hash_prefix_bytes(std::move(mHashPrefixBytes)),
+                          m_timestamp(mTimestamp), m_friend_info(std::move(mFriendInfo)),
+                          m_payload(std::move(mPayload)) {}
+
+            online_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp,
                           aux::bytes mFriendInfo) : m_device_id(std::move(mDeviceId)),
                           m_hash_prefix_bytes(std::move(mHashPrefixBytes)),
                           m_timestamp(mTimestamp), m_friend_info(std::move(mFriendInfo)) {}
@@ -47,6 +54,9 @@ namespace libTAU {
 
             // @returns friend info bytes
             aux::bytes friend_info() const { return m_friend_info; }
+
+            // payload: immutable data info, including hash, end point
+            const immutable_data_info &payload() const { return m_payload; }
 
             // Serialises this online signal to an RLPStream
             void streamRLP(aux::RLPStream& _s) const;
@@ -69,6 +79,9 @@ namespace libTAU {
 
             // friend info payload, used to exchange friends on multi-device
             aux::bytes m_friend_info;
+
+            // payload: immutable data info, including hash, end point
+            immutable_data_info m_payload;
         };
     }
 }

@@ -15,6 +15,7 @@ see LICENSE file.
 
 #include <utility>
 #include "libTAU/aux_/export.hpp"
+#include "libTAU/communication/immutable_data_info.hpp"
 
 namespace libTAU {
     namespace communication {
@@ -46,6 +47,9 @@ namespace libTAU {
             // @returns timestamp
             uint32_t timestamp() const { return m_timestamp; }
 
+            // payload: immutable data info, including hash, end point
+            const immutable_data_info &payload() const { return m_payload; }
+
             // Serialises this new message signal to an RLPStream
             void streamRLP(aux::RLPStream& _s) const;
 
@@ -64,6 +68,9 @@ namespace libTAU {
 
             // new message signal timestamp
             uint32_t m_timestamp;
+
+            // payload: immutable data info, including hash, end point
+            immutable_data_info m_payload;
         };
     }
 }
