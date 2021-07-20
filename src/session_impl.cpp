@@ -814,6 +814,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		stop_dht();
 		stop_communication();
 
+
 		if(m_kvdb) {
 			delete m_kvdb;
 		}
@@ -865,6 +866,9 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 			post(m_io_context, make_handler([this] { abort_stage2(); }
 				, m_abort_handler_storage, *this));
 		}
+
+		m_alerts.emplace_alert<session_stop_over_alert>(true);
+
 	}
 
 	void session_impl::abort_stage2() noexcept
@@ -2928,13 +2932,13 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
-		/*
         std::string home_dir = boost::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		*/
+		/*
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+		*/
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -3325,12 +3329,14 @@ namespace {
 		// todo: initialize device_id
 		m_communication = std::make_shared<communication::communication>(m_device_id, m_io_context, *this);
 
+		m_alerts.emplace_alert<session_start_over_alert>(true);
+
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("starting Communication");
 #endif
+
 		m_communication->start();
 		
-		m_alerts.emplace_alert<session_start_over_alert>(true);
 	}
 
 	void session_impl::start_dht()
