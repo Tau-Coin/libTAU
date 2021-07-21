@@ -123,6 +123,9 @@ namespace libTAU {
             // initialize member variables
             bool init();
 
+            // clear all cache
+            void clear();
+
             // request online/new message signal from a given peer
             void request_signal(const aux::bytes& peer);
 

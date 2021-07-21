@@ -33,14 +33,14 @@ namespace libTAU {
 
         bool communication::stop()
         {
+            m_refresh_timer.cancel();
+
             m_friends.clear();
             m_message_list_map.clear();
             m_chatting_friend = std::make_pair(aux::bytes(), 0);
             m_active_friends.clear();
             m_last_seen.clear();
             m_latest_signal_time.clear();
-
-            m_refresh_timer.cancel();
 
             log("INFO: Stop Communication...");
 
@@ -69,10 +69,25 @@ namespace libTAU {
             return true;
         }
 
+        void communication::clear() {
+            m_friends.clear();
+            m_message_list_map.clear();
+            m_chatting_friend = std::make_pair(aux::bytes(), 0);
+            m_active_friends.clear();
+            m_last_seen.clear();
+            m_latest_signal_time.clear();
+        }
+
         void communication::account_changed() {
-            // 账户发生改变，模块重新启动
-            stop();
-            start();
+            try {
+                // 账户发生改变，模块重新启动
+//                stop();
+//                start();
+
+                clear();
+                init();
+            } catch (std::exception &e) {
+            }
         }
 
         void communication::set_loop_time_interval(int milliseconds) {
@@ -635,17 +650,17 @@ namespace libTAU {
                                     }
                                 }
 
-                                if (!missing_messages.empty()) {
-                                    srand((unsigned)time(nullptr));
-                                    auto index = rand() % missing_messages.size();
-                                    auto missing_message = missing_messages[index];
-
-                                    std::vector<dht::node_entry> entries;
-                                    m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-                                    auto msg_encode = missing_message.rlp();
-                                    dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
-                                                           entries, missing_message.sha256());
-                                }
+//                                if (!missing_messages.empty()) {
+//                                    srand((unsigned)time(nullptr));
+//                                    auto index = rand() % missing_messages.size();
+//                                    auto missing_message = missing_messages[index];
+//
+//                                    std::vector<dht::node_entry> entries;
+//                                    m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
+//                                    auto msg_encode = missing_message.rlp();
+//                                    dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
+//                                                           entries, missing_message.sha256());
+//                                }
                             }
                         }
 
