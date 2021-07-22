@@ -404,7 +404,7 @@ namespace libTAU {
 
         void communication::find_best_solution(const std::vector<message>& messages, const aux::bytes& hash_prefix_array,
                                                std::vector<message> &missing_messages,
-                                               std::vector<aux::bytes> &confirmation_roots) {
+                                               std::vector<sha256_hash> &confirmation_roots) {
             // 如果对方没有信息，则本地消息全为缺失消息
             if (hash_prefix_array.empty()) {
                 missing_messages.insert(missing_messages.end(), messages.begin(), messages.end());
@@ -427,8 +427,7 @@ namespace libTAU {
                 // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
                 if (source == target) {
                     for (auto const &message: messages) {
-                        auto hash = message.sha256();
-                        confirmation_roots.emplace_back(hash.begin(), hash.end());
+                        confirmation_roots.push_back(message.sha256());
                     }
                     return;
                 }
@@ -483,8 +482,7 @@ namespace libTAU {
                         if (source[i - 1] != target[j - 1]) {
                             missing_messages.push_back(messages[j - 1]);
                         } else {
-                            auto hash = messages[j - 1].sha256();
-                            confirmation_roots.emplace_back(hash.begin(), hash.end());
+                            confirmation_roots.push_back(messages[j - 1].sha256());
                         }
                         i--;
                         j--;
@@ -513,8 +511,7 @@ namespace libTAU {
                 // 找到距离为0可能仍然不够，可能有前缀相同的情况，这时dist[i][j]很多为0的情况，
                 // 因此，需要把剩余的加入confirmation root集合即可
                 for(; j > 0; j--) {
-                    auto hash = messages[j - 1].sha256();
-                    confirmation_roots.emplace_back(hash.begin(), hash.end());
+                    confirmation_roots.push_back(messages[j - 1].sha256());
                 }
 
                 // reverse missing messages
@@ -581,7 +578,9 @@ namespace libTAU {
                 m_missing_messages[public_key].erase(it);
 
                 if (!missing_message.empty()) {
-                    log("INFO: Missing message is empty.");
+                    // post syncing message hash
+                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(public_key, missing_message.sha256());
+
                     std::vector<dht::node_entry> entries;
                     m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
                     auto msg_encode = missing_message.rlp();
@@ -589,6 +588,8 @@ namespace libTAU {
                                            entries, missing_message.sha256());
 
                     payload = immutable_data_info(missing_message.sha256(), entries);
+                } else {
+                    log("INFO: Missing message is empty.");
                 }
             }
 
@@ -617,7 +618,9 @@ namespace libTAU {
                 m_missing_messages[peer].erase(it);
 
                 if (!missing_message.empty()) {
-                    log("INFO: Missing message is empty.");
+                    // post syncing message hash
+                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, missing_message.sha256());
+
                     std::vector<dht::node_entry> entries;
                     m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
                     auto msg_encode = missing_message.rlp();
@@ -625,6 +628,8 @@ namespace libTAU {
                                            entries, missing_message.sha256());
 
                     payload = immutable_data_info(missing_message.sha256(), entries);
+                } else {
+                    log("INFO: Missing message is empty.");
                 }
             }
 
@@ -680,7 +685,7 @@ namespace libTAU {
                 if (data.timestamp() > m_last_seen[peer]) {
                     m_last_seen[peer] = data.timestamp();
                     // 通知用户新的last seen time
-                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(data.timestamp());
+                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, data.timestamp());
                 }
 
                 switch (data.type()) {
@@ -703,7 +708,7 @@ namespace libTAU {
 
                                 if (!onlineSignal.friend_info().empty()) {
                                     // 通知用户新的friend info
-                                    m_ses.alerts().emplace_alert<communication_friend_info_alert>(
+                                    m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer,
                                             onlineSignal.friend_info());
                                     log("INFO: Got friend info:%s", aux::toHex(onlineSignal.friend_info()).c_str());
                                 }
@@ -716,17 +721,14 @@ namespace libTAU {
 
                                 // find out missing messages and confirmation root
                                 std::vector<message> missing_messages;
-                                std::vector<aux::bytes> confirmation_roots;
+                                std::vector<sha256_hash> confirmation_roots;
                                 find_best_solution(std::vector<message>(m_message_list_map[peer].begin(),
                                                                m_message_list_map[peer].end()),
                                                    onlineSignal.hash_prefix_bytes(),
                                                    missing_messages, confirmation_roots);
 
                                 if (!confirmation_roots.empty()) {
-                                    for (auto const& confirmation_root: confirmation_roots) {
-                                        m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(confirmation_root);
-                                        log("INFO: Confirmation root:%s", aux::toHex(confirmation_root).c_str());
-                                    }
+                                    m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots);
                                 }
 
                                 m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
@@ -754,17 +756,14 @@ namespace libTAU {
 
                         // find out missing messages and confirmation root
                         std::vector<message> missing_messages;
-                        std::vector<aux::bytes> confirmation_roots;
+                        std::vector<sha256_hash> confirmation_roots;
                         find_best_solution(std::vector<message>(m_message_list_map[peer].begin(),
                                                                 m_message_list_map[peer].end()),
                                            newMsgSignal.hash_prefix_bytes(),
                                            missing_messages, confirmation_roots);
 
                         if (!confirmation_roots.empty()) {
-                            for (auto const& confirmation_root: confirmation_roots) {
-                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(confirmation_root);
-                                log("INFO: Confirmation root:%s", aux::toHex(confirmation_root).c_str());
-                            }
+                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots);
                         }
 
                         m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());

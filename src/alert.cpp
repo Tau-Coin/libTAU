@@ -1632,8 +1632,8 @@ namespace {
     }
 
     communication_confirmation_root_alert::communication_confirmation_root_alert(aux::stack_allocator&
-            , aux::bytes t)
-            : confirmation_root(std::move(t))
+            , aux::bytes p, std::vector<sha256_hash> t)
+            : peer(std::move(p)), confirmation_roots(std::move(t))
     {}
 
     std::string communication_confirmation_root_alert::message() const
@@ -1642,15 +1642,15 @@ namespace {
         return {};
 #else
         char msg[1050];
-        std::snprintf(msg, sizeof(msg), "confirmation root %s"
-                , aux::toHex(confirmation_root).c_str());
+        std::snprintf(msg, sizeof(msg), "peer[%s] confirmation root size %zu", aux::toHex(peer).c_str()
+                , confirmation_roots.size());
         return msg;
 #endif
     }
 
     communication_syncing_message_alert::communication_syncing_message_alert(aux::stack_allocator&
-            , aux::bytes t)
-            : syncing_msg_hash(std::move(t))
+            , aux::bytes p, sha256_hash t)
+            : peer(std::move(p)), syncing_msg_hash(std::move(t))
     {}
 
     std::string communication_syncing_message_alert::message() const
@@ -1659,15 +1659,16 @@ namespace {
         return {};
 #else
         char msg[1050];
-        std::snprintf(msg, sizeof(msg), "sync message hash %s"
-                , aux::toHex(syncing_msg_hash).c_str());
+        std::snprintf(msg, sizeof(msg), "peer[%s] sync message hash %s", aux::toHex(peer).c_str()
+                , aux::toHex(syncing_msg_hash.to_string()).c_str());
+
         return msg;
 #endif
     }
 
     communication_friend_info_alert::communication_friend_info_alert(aux::stack_allocator&
-            , aux::bytes t)
-            : friend_info(std::move(t))
+            , aux::bytes p, aux::bytes t)
+            : peer(std::move(p)), friend_info(std::move(t))
     {}
 
     std::string communication_friend_info_alert::message() const
@@ -1676,7 +1677,7 @@ namespace {
         return {};
 #else
         char msg[1050];
-        std::snprintf(msg, sizeof(msg), "friend info %s"
+        std::snprintf(msg, sizeof(msg), "peer[%s] friend info %s", aux::toHex(peer).c_str()
                 , aux::toHex(friend_info).c_str());
         return msg;
 #endif
@@ -1713,8 +1714,8 @@ namespace {
     }
 
     communication_last_seen_alert::communication_last_seen_alert(aux::stack_allocator&
-            , uint32_t t)
-            : last_seen(t)
+            , aux::bytes p, uint32_t t)
+            : peer(std::move(p)), last_seen(t)
     {}
 
     std::string communication_last_seen_alert::message() const
@@ -1723,7 +1724,7 @@ namespace {
         return {};
 #else
         char msg[1050];
-        std::snprintf(msg, sizeof(msg), "last seen time %s", last_seen);
+        std::snprintf(msg, sizeof(msg), "peer[%s] last seen time %d", aux::toHex(peer).c_str(), last_seen);
         return msg;
 #endif
     }
