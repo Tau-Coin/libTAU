@@ -48,6 +48,9 @@ struct dht_observer;
 struct msg;
 struct settings;
 
+// libtau token
+static const std::string libtau_token = "taut";
+
 TORRENT_EXTRA_EXPORT entry write_nodes_entry(std::vector<node_entry> const& nodes);
 
 struct socket_manager

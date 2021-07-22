@@ -103,6 +103,11 @@ int node::branch_factor() const { return m_settings.get_int(settings_pack::dht_s
 bool node::verify_token(string_view token, sha256_hash const& info_hash
 	, udp::endpoint const& addr) const
 {
+	// For libtau, there is no need for getting token before putting.
+	// Any token is OK.
+	return true;
+
+	/*
 	if (token.length() != write_token_size)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
@@ -131,11 +136,13 @@ bool node::verify_token(string_view token, sha256_hash const& info_hash
 	h2.update(info_hash);
 	h = h2.final();
 	return std::equal(token.begin(), token.end(), reinterpret_cast<char*>(&h[0]));
+	*/
 }
 
 std::string node::generate_token(udp::endpoint const& addr
 	, sha256_hash const& info_hash)
 {
+	/*
 	std::string token;
 	token.resize(write_token_size);
 	hasher256 h;
@@ -148,6 +155,9 @@ std::string node::generate_token(udp::endpoint const& addr
 	std::copy(hash.begin(), hash.begin() + write_token_size, token.begin());
 	TORRENT_ASSERT(std::equal(token.begin(), token.end(), hash.data()));
 	return token;
+	 */
+
+	return libtau_token;
 }
 
 void node::bootstrap(std::vector<udp::endpoint> const& nodes
@@ -427,14 +437,17 @@ void node::put_item(sha256_hash const& target
 #endif
 
 	item i;
-	i.assign(data);
-	auto put_ta = std::make_shared<dht::put_data>(*this, std::bind(f, _2));
-	put_ta->set_data(std::move(i));
+	std::vector<std::pair<node_entry, std::string>> direct_nodes;
 
-	auto ta = std::make_shared<dht::get_item>(*this, target
-		, get_item::data_callback(), std::bind(&put, _1, put_ta));
-	// set target endpoints instead of depth traversal
-	ta->set_direct_endpoints(eps);
+	i.assign(data);
+	for (auto& n : eps)
+	{
+		direct_nodes.emplace_back(n, libtau_token);
+	}
+
+	auto ta = std::make_shared<dht::put_data>(*this, std::bind(f, _2));
+	ta->set_data(std::move(i));
+	ta->set_targets(direct_nodes);
 	ta->start();
 }
 
