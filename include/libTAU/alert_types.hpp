@@ -76,7 +76,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 43;
+	constexpr int num_alert_types = 44;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1497,6 +1497,22 @@ TORRENT_VERSION_NAMESPACE_3
     private:
         std::reference_wrapper<aux::stack_allocator const> m_alloc;
         aux::allocation_slot m_str_idx;
+    };
+
+    // this alert is posted when last seen time is updated.
+    struct TORRENT_EXPORT communication_last_seen_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_last_seen_alert(aux::stack_allocator& alloc, uint32_t t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_last_seen_alert, 43, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // last seen time
+        uint32_t last_seen;
     };
 
 TORRENT_VERSION_NAMESPACE_3_END

@@ -1712,4 +1712,20 @@ namespace {
 #endif
     }
 
+    communication_last_seen_alert::communication_last_seen_alert(aux::stack_allocator&
+            , uint32_t t)
+            : last_seen(t)
+    {}
+
+    std::string communication_last_seen_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char msg[1050];
+        std::snprintf(msg, sizeof(msg), "last seen time %s", last_seen);
+        return msg;
+#endif
+    }
+
 } // namespace libTAU

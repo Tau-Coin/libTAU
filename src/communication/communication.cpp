@@ -37,12 +37,7 @@ namespace libTAU {
         {
             m_refresh_timer.cancel();
 
-            m_friends.clear();
-            m_message_list_map.clear();
-            m_chatting_friend = std::make_pair(aux::bytes(), 0);
-            m_active_friends.clear();
-            m_last_seen.clear();
-            m_latest_signal_time.clear();
+            clear();
 
             log("INFO: Stop Communication...");
 
