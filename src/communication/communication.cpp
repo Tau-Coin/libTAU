@@ -48,28 +48,33 @@ namespace libTAU {
         }
 
         bool communication::init() {
-            log("INFO: Communication init...");
-            if (!m_message_db->init()) {
-                log("ERROR: DB init fail!");
-                return false;
-            }
-
-            // get friends from db
-            m_friends = m_message_db->get_all_friends();
-
-            dht::public_key *pk = m_ses.pubkey();
-            aux::bytes my_pk(pk->bytes.begin(), pk->bytes.end());
-            m_friends.push_back(my_pk);
-
-            log("INFO: friend size: %zu", m_friends.size());
-            for (auto const & peer: m_friends) {
-                log("INFO: friend: %s", aux::toHex(peer).c_str());
-                aux::bytes encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(my_pk, peer));
-                message_hash_list hashList(encode);
-                for (auto const& hash: hashList.hash_list()) {
-                    message msg = m_message_db->get_message(hash);
-                    m_message_list_map[peer].push_back(msg);
+            try {
+                log("INFO: Communication init...");
+                if (!m_message_db->init()) {
+                    log("ERROR: DB init fail!");
+                    return false;
                 }
+
+                // get friends from db
+                m_friends = m_message_db->get_all_friends();
+
+                dht::public_key *pk = m_ses.pubkey();
+                aux::bytes my_pk(pk->bytes.begin(), pk->bytes.end());
+                m_friends.push_back(my_pk);
+
+                log("INFO: friend size: %zu", m_friends.size());
+                for (auto const & peer: m_friends) {
+                    log("INFO: friend: %s", aux::toHex(peer).c_str());
+                    aux::bytes encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(my_pk, peer));
+                    message_hash_list hashList(encode);
+                    for (auto const& hash: hashList.hash_list()) {
+                        message msg = m_message_db->get_message(hash);
+                        m_message_list_map[peer].push_back(msg);
+                    }
+                }
+            } catch (std::exception &e) {
+                log("Exception init [COMM] %s", e.what());
+                return false;
             }
 
             return true;
