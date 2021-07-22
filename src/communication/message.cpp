@@ -8,12 +8,32 @@ see LICENSE file.
 
 #include "libTAU/communication/message.hpp"
 
+#include <utility>
+
 namespace libTAU {
     namespace communication {
 
         message::message(aux::bytesConstRef _rlp) {
             aux::RLP const rlp(_rlp);
             populate(rlp);
+
+            std::vector<char> buffer;
+            buffer.insert(buffer.end(), _rlp.begin(), _rlp.end());
+
+            m_hash = hasher256(buffer).final();
+        }
+
+        message::message(message_version mVersion, uint32_t mTimestamp, aux::bytes mSender,
+                         aux::bytes mReceiver, aux::bytes mLogicMsgHash, aux::bigint mNonce,
+                         message_type mType, aux::bytes mEncryptedContent) : m_version(mVersion),
+                         m_timestamp(mTimestamp), m_sender(std::move(mSender)), m_receiver(std::move(mReceiver)),
+                         m_logic_msg_hash(std::move(mLogicMsgHash)), m_nonce(std::move(mNonce)), m_type(mType),
+                         m_encrypted_content(std::move(mEncryptedContent)) {
+            auto data = rlp();
+            std::vector<char> buffer;
+            buffer.insert(buffer.end(), data.begin(), data.end());
+
+            m_hash = hasher256(buffer).final();
         }
 
         void message::streamRLP(aux::RLPStream &_s) const {
@@ -33,13 +53,17 @@ namespace libTAU {
             m_encrypted_content = _msg[7].toBytes();
         }
 
-        sha256_hash message::sha256() const {
-            auto data = rlp();
-            std::vector<char> buffer;
-            buffer.insert(buffer.end(), data.begin(), data.end());
-
-            return hasher256(buffer).final();
-        }
+//        sha256_hash message::sha256() {
+//            if (m_hash.is_all_zeros()) {
+//                auto data = rlp();
+//                std::vector<char> buffer;
+//                buffer.insert(buffer.end(), data.begin(), data.end());
+//
+//                m_hash = hasher256(buffer).final();
+//            }
+//
+//            return m_hash;
+//        }
 
         std::string message::to_string() const {
             return std::string();

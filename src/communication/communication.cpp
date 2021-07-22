@@ -29,6 +29,8 @@ namespace libTAU {
 
             m_refresh_timer.expires_after(seconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
+
+            return true;
         }
 
         bool communication::stop()
@@ -64,6 +66,12 @@ namespace libTAU {
             log("INFO: friend size: %zu", m_friends.size());
             for (auto const & peer: m_friends) {
                 log("INFO: friend: %s", aux::toHex(peer).c_str());
+                aux::bytes encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(my_pk, peer));
+                message_hash_list hashList(encode);
+                for (auto const& hash: hashList.hash_list()) {
+                    message msg = m_message_db->get_message(hash);
+                    m_message_list_map[peer].push_back(msg);
+                }
             }
 
             return true;
@@ -544,7 +552,19 @@ namespace libTAU {
                 }
             }
 
-            return online_signal(m_device_id, hash_prefix_bytes, now_time, friend_info);
+            auto it = m_missing_messages[public_key].begin();
+            message missing_message = *it;
+            m_missing_messages[public_key].erase(it);
+
+            std::vector<dht::node_entry> entries;
+            m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
+            auto msg_encode = missing_message.rlp();
+            dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
+                                   entries, missing_message.sha256());
+
+            immutable_data_info payload(missing_message.sha256(), entries);
+
+            return online_signal(m_device_id, hash_prefix_bytes, now_time, friend_info, payload);
         }
 
         new_msg_signal communication::make_new_message_signal(const aux::bytes& peer) {
@@ -559,7 +579,19 @@ namespace libTAU {
                 }
             }
 
-            return new_msg_signal(m_device_id, hash_prefix_bytes, now_time);
+            auto it = m_missing_messages[peer].begin();
+            message missing_message = *it;
+            m_missing_messages[peer].erase(it);
+
+            std::vector<dht::node_entry> entries;
+            m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
+            auto msg_encode = missing_message.rlp();
+            dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
+                                   entries, missing_message.sha256());
+
+            immutable_data_info payload(missing_message.sha256(), entries);
+
+            return new_msg_signal(m_device_id, hash_prefix_bytes, now_time, payload);
         }
 
         // callback for dht_immutable_get
@@ -634,8 +666,7 @@ namespace libTAU {
                                     log("INFO: Got friend info:%s", aux::toHex(onlineSignal.friend_info()).c_str());
                                 }
 
-                                //
-
+                                // find out missing messages and confirmation root
                                 std::vector<message> missing_messages;
                                 std::vector<aux::bytes> confirmation_roots;
                                 find_best_solution(std::vector<message>(m_message_list_map[peer].begin(),
@@ -650,17 +681,7 @@ namespace libTAU {
                                     }
                                 }
 
-//                                if (!missing_messages.empty()) {
-//                                    srand((unsigned)time(nullptr));
-//                                    auto index = rand() % missing_messages.size();
-//                                    auto missing_message = missing_messages[index];
-//
-//                                    std::vector<dht::node_entry> entries;
-//                                    m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-//                                    auto msg_encode = missing_message.rlp();
-//                                    dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
-//                                                           entries, missing_message.sha256());
-//                                }
+                                m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
                             }
                         }
 
@@ -676,6 +697,23 @@ namespace libTAU {
                             // update the latest signal time
                             device_map[device_id] = newMsgSignal.timestamp();
                         }
+
+                        // find out missing messages and confirmation root
+                        std::vector<message> missing_messages;
+                        std::vector<aux::bytes> confirmation_roots;
+                        find_best_solution(std::vector<message>(m_message_list_map[peer].begin(),
+                                                                m_message_list_map[peer].end()),
+                                           newMsgSignal.hash_prefix_bytes(),
+                                           missing_messages, confirmation_roots);
+
+                        if (!confirmation_roots.empty()) {
+                            for (auto const& confirmation_root: confirmation_roots) {
+                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(confirmation_root);
+                                log("INFO: Confirmation root:%s", aux::toHex(confirmation_root).c_str());
+                            }
+                        }
+
+                        m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
 
                         break;
                     }

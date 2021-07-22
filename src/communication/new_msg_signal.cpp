@@ -16,15 +16,15 @@ namespace libTAU { namespace communication {
     }
 
     void new_msg_signal::streamRLP(aux::RLPStream &_s) const {
-        _s.appendList(3);
+        _s.appendList(4);
         _s << m_device_id << m_hash_prefix_bytes << m_timestamp;
-//        m_payload.streamRLP(_s);
+        m_payload.streamRLP(_s);
     }
 
     void new_msg_signal::populate(const aux::RLP &_new_msg_signal) {
         m_device_id = _new_msg_signal[0].toBytes();
         m_hash_prefix_bytes = _new_msg_signal[1].toBytes();
         m_timestamp = _new_msg_signal[2].toInt<uint32_t>();
-//        m_payload = immutable_data_info(_new_msg_signal[3].toBytes());
+        m_payload = immutable_data_info(_new_msg_signal[3].toBytes());
     }
 }}

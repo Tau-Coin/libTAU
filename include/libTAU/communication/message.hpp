@@ -49,10 +49,7 @@ namespace libTAU {
 
             message(message_version mVersion, uint32_t mTimestamp, aux::bytes mSender,
                     aux::bytes mReceiver, aux::bytes mLogicMsgHash, aux::bigint mNonce,
-                    message_type mType, aux::bytes mEncryptedContent) : m_version(mVersion),
-                    m_timestamp(mTimestamp), m_sender(std::move(mSender)), m_receiver(std::move(mReceiver)),
-                    m_logic_msg_hash(std::move(mLogicMsgHash)), m_nonce(std::move(mNonce)), m_type(mType),
-                    m_encrypted_content(std::move(mEncryptedContent)) {}
+                    message_type mType, aux::bytes mEncryptedContent);
 
             // @returns message version
             message_version version() const { return m_version; }
@@ -85,10 +82,35 @@ namespace libTAU {
             aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
 
             // @returns the SHA256 hash of the RLP serialisation of this message
-            sha256_hash sha256() const;
+            sha256_hash sha256() const { return m_hash; }
 
             // @returns a pretty-printed string representation of message structure
             std::string to_string() const;
+
+            bool operator==(const message &rhs) const {
+                return m_hash == rhs.m_hash;
+            }
+
+            bool operator!=(const message &rhs) const {
+                return !(rhs == *this);
+            }
+
+            bool operator<(const message &rhs) const {
+                return m_hash < rhs.m_hash;
+            }
+
+            bool operator>(const message &rhs) const {
+                return rhs < *this;
+            }
+
+            bool operator<=(const message &rhs) const {
+                return !(rhs < *this);
+            }
+
+            bool operator>=(const message &rhs) const {
+                return !(*this < rhs);
+            }
+
 
         private:
             // Construct message object from rlp serialisation
@@ -117,6 +139,9 @@ namespace libTAU {
 
             // encrypted content
             aux::bytes m_encrypted_content;
+
+            // sha256 hash
+            sha256_hash m_hash;
         };
     }
 }

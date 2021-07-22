@@ -34,9 +34,9 @@ namespace libTAU {
             explicit new_msg_signal(aux::bytes const& _rlp): new_msg_signal(&_rlp) {}
 
             // construct new msg signal
-            new_msg_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp)
-                    : m_device_id(std::move(mDeviceId)), m_hash_prefix_bytes(std::move(mHashPrefixBytes)),
-                    m_timestamp(mTimestamp) {}
+            new_msg_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp,
+                           immutable_data_info mPayload) : m_device_id(std::move(mDeviceId)),
+                           m_hash_prefix_bytes(std::move(mHashPrefixBytes)), m_timestamp(mTimestamp), m_payload(std::move(mPayload)) {}
 
             // @returns device id
             aux::bytes device_id() const { return m_device_id; }

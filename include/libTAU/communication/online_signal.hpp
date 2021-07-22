@@ -38,11 +38,6 @@ namespace libTAU {
                           m_timestamp(mTimestamp), m_friend_info(std::move(mFriendInfo)),
                           m_payload(std::move(mPayload)) {}
 
-            online_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp,
-                          aux::bytes mFriendInfo) : m_device_id(std::move(mDeviceId)),
-                          m_hash_prefix_bytes(std::move(mHashPrefixBytes)),
-                          m_timestamp(mTimestamp), m_friend_info(std::move(mFriendInfo)) {}
-
             // @returns device id
             aux::bytes device_id() const { return m_device_id; }
 

@@ -16,9 +16,9 @@ namespace libTAU { namespace communication {
         }
 
         void online_signal::streamRLP(aux::RLPStream &_s) const {
-            _s.appendList(4);
+            _s.appendList(5);
             _s << m_device_id << m_hash_prefix_bytes << m_timestamp << m_friend_info;
-//            m_payload.streamRLP(_s);
+            m_payload.streamRLP(_s);
         }
 
         void online_signal::populate(const aux::RLP &_online_signal) {
@@ -26,6 +26,6 @@ namespace libTAU { namespace communication {
             m_hash_prefix_bytes = _online_signal[1].toBytes();
             m_timestamp = _online_signal[2].toInt<uint32_t>();
             m_friend_info = _online_signal[3].toBytes();
-//            m_payload = immutable_data_info(_online_signal[4].toBytes());
+            m_payload = immutable_data_info(_online_signal[4].toBytes());
         }
 }}

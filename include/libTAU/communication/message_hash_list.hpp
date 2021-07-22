@@ -21,7 +21,11 @@ namespace libTAU {
         class TORRENT_EXPORT message_hash_list {
 
                 public:
+                // @param _rlp rlp encode
                 explicit message_hash_list(aux::bytesConstRef _rlp);
+
+                // @param _rlp rlp encode
+                explicit message_hash_list(aux::bytes const& _rlp): message_hash_list(&_rlp) {}
 
                 explicit message_hash_list(std::vector<aux::bytes> message_hash_list);
 
