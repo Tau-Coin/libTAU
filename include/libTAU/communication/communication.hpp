@@ -165,14 +165,14 @@ namespace libTAU {
             bool validate_message(const message& msg);
 
             // immutable data callback
-            void get_immutable_callback(sha1_hash target
+            void get_immutable_callback(sha256_hash target
                     , dht::item const& i);
 
             // mutable data callback
             void get_mutable_callback(dht::item const& i, bool);
 
             // get immutable item from dht
-            void dht_get_immutable_item(sha1_hash const& target);
+            void dht_get_immutable_item(sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
             // get mutable item from dht
             void dht_get_mutable_item(std::array<char, 32> key
@@ -211,6 +211,8 @@ namespace libTAU {
 
             // message db
             std::shared_ptr<message_db_interface> m_message_db;
+
+            bool m_stop = false;
 
             // device id
             aux::bytes m_device_id;

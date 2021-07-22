@@ -27,6 +27,8 @@ namespace libTAU {
             if (!init())
                 return false;
 
+            m_stop = false;
+
             m_refresh_timer.expires_after(seconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
 
@@ -35,7 +37,8 @@ namespace libTAU {
 
         bool communication::stop()
         {
-            m_refresh_timer.cancel();
+//            m_refresh_timer.cancel();
+            m_stop = true;
 
             clear();
 
@@ -250,6 +253,9 @@ namespace libTAU {
 
         void communication::refresh_timeout(error_code const& e)
         {
+            if (m_stop)
+                return;
+
             // 随机挑选一个朋友put/get
             aux::bytes peer = select_friend_randomly();
             if (!peer.empty()) {
@@ -590,18 +596,24 @@ namespace libTAU {
         }
 
         // callback for dht_immutable_get
-        void communication::get_immutable_callback(sha1_hash target
+        void communication::get_immutable_callback(sha256_hash target
                 , dht::item const& i)
         {
-//            TORRENT_ASSERT(!i.is_mutable());
-//            m_ses.alerts().emplace_alert<dht_immutable_item_alert>(target, i.value());
+            TORRENT_ASSERT(!i.is_mutable());
+            if (!i.empty()) {
+                aux::bytes encode;
+                encode.insert(encode.end(), i.value().string().begin(), i.value().string().end());
+                message msg(encode);
+
+                add_new_message(msg);
+            }
         }
 
-        void communication::dht_get_immutable_item(sha1_hash const& target)
+        void communication::dht_get_immutable_item(sha256_hash const& target, std::vector<dht::node_entry> const& eps)
         {
-//            if (!m_ses.dht()) return;
-//            m_ses.dht()->get_item(target, std::bind(&communication::get_immutable_callback
-//                    , this, target, _1));
+            if (!m_ses.dht()) return;
+            m_ses.dht()->get_item(target, std::bind(&communication::get_immutable_callback
+                    , this, target, _1));
         }
 
         // callback for dht_mutable_get
@@ -636,9 +648,6 @@ namespace libTAU {
                 }
 
                 switch (data.type()) {
-                    case MESSAGE: {
-                        break;
-                    }
                     case ONLINE_SIGNAL: {
                         online_signal onlineSignal(data.payload());
 
@@ -661,6 +670,12 @@ namespace libTAU {
                                     m_ses.alerts().emplace_alert<communication_friend_info_alert>(
                                             onlineSignal.friend_info());
                                     log("INFO: Got friend info:%s", aux::toHex(onlineSignal.friend_info()).c_str());
+                                }
+
+                                // get immutable message
+                                const immutable_data_info& payload = onlineSignal.payload();
+                                if (!payload.target().is_all_zeros()) {
+                                    dht_get_immutable_item(payload.target(), payload.entries());
                                 }
 
                                 // find out missing messages and confirmation root
@@ -693,6 +708,12 @@ namespace libTAU {
                         if (newMsgSignal.timestamp() > device_map[device_id]) {
                             // update the latest signal time
                             device_map[device_id] = newMsgSignal.timestamp();
+                        }
+
+                        // get immutable message
+                        const immutable_data_info& payload = newMsgSignal.payload();
+                        if (!payload.target().is_all_zeros()) {
+                            dht_get_immutable_item(payload.target(), payload.entries());
                         }
 
                         // find out missing messages and confirmation root

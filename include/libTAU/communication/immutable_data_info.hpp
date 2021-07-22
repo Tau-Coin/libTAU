@@ -21,6 +21,7 @@ namespace libTAU::communication {
     class immutable_data_info {
     public:
         immutable_data_info() = default;
+
         // @param _rlp rlp encode ref
         explicit immutable_data_info(aux::bytesConstRef _rlp);
 
