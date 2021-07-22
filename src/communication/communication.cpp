@@ -631,6 +631,8 @@ namespace libTAU {
                 // record latest timestamp
                 if (data.timestamp() > m_last_seen[peer]) {
                     m_last_seen[peer] = data.timestamp();
+                    // 通知用户新的last seen time
+                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(data.timestamp());
                 }
 
                 switch (data.type()) {
