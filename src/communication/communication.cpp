@@ -93,6 +93,7 @@ namespace libTAU {
                 clear();
                 init();
             } catch (std::exception &e) {
+                log("Exception [COMM] %s", e.what());
             }
         }
 
@@ -253,20 +254,23 @@ namespace libTAU {
 
         void communication::refresh_timeout(error_code const& e)
         {
-            if (m_stop)
-                return;
+            try {
+                if (!m_stop) {
+                    // 随机挑选一个朋友put/get
+                    aux::bytes peer = select_friend_randomly();
+                    if (!peer.empty()) {
+                        log("INFO: Select peer:%s", aux::toHex(peer).c_str());
+                        request_signal(peer);
+                        publish_signal(peer);
+                    }
 
-            // 随机挑选一个朋友put/get
-            aux::bytes peer = select_friend_randomly();
-            if (!peer.empty()) {
-                log("INFO: Select peer:%s", aux::toHex(peer).c_str());
-                request_signal(peer);
-                publish_signal(peer);
+                    m_refresh_timer.expires_after(seconds(m_refresh_time));
+                    m_refresh_timer.async_wait(
+                            std::bind(&communication::refresh_timeout, self(), _1));
+                }
+            } catch (std::exception &e) {
+                log("Exception [COMM] %s", e.what());
             }
-
-            m_refresh_timer.expires_after(seconds(m_refresh_time));
-            m_refresh_timer.async_wait(
-                    std::bind(&communication::refresh_timeout, self(), _1));
         }
 
         void communication::save_friend_latest_message_hash_list(const aux::bytes& peer) {
