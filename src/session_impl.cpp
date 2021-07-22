@@ -3444,6 +3444,7 @@ namespace {
 
 	void session_impl::set_loop_time_interval(int milliseconds)
 	{
+		session_log("Set Loop Time: %d", milliseconds);
 		m_communication->set_loop_time_interval(milliseconds);
 	}
 
@@ -3454,7 +3455,14 @@ namespace {
 
 	bool session_impl::delete_friend(std::array<char, 32>& pubkey)
 	{
+		/*
+		char* pk_out = new char[65];
+		char* pk_in = pubkey.data();	
+        libTAU::aux::to_hex(pk_in, 32, pk_out);
+		session_log("Session Delete Friend: %s", pk_out);
+		*/
 		return m_communication->delete_friend(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
+
 	}
 
 	void session_impl::get_friend_info(std::array<char, 32>& pubkey, std::vector<unsigned char>* info)
@@ -3469,20 +3477,42 @@ namespace {
 
 	void session_impl::unset_chatting_friend()
 	{
+		session_log("Session Unset Chatting Friend");
 		m_communication->unset_chatting_friend();
 	}
 	
-	void session_impl::set_chatting_friend(std::array<char, 32> chatting_friend){
+	void session_impl::set_chatting_friend(std::array<char, 32> chatting_friend)
+	{
+		/*
+		char* pk_out = new char[65];
+		char* pk_in = chatting_friend.data();	
+        libTAU::aux::to_hex(pk_in, 32, pk_out);
+		session_log("Session Set Chatting Friend: %s", pk_out);
+		*/
 		m_communication->set_chatting_friend(std::vector<aux::ibyte>(chatting_friend.begin(), chatting_friend.end()));
 	}
 
 	void session_impl::set_active_friends(std::vector<aux::bytes> active_friends)
 	{
+		/*
+		char* pk_out = new char[65];
+		for(auto k = active_friends.begin(); k != active_friends.end(); k++) {
+			char* pk_in = reinterpret_cast<char*>((*k).data());
+			libTAU::aux::to_hex(pk_in, 32, pk_out);
+			session_log("Session Set Active Friend: %s", pk_out);
+		}
+		*/
 		m_communication->set_active_friends(active_friends);
 	}
 
 	bool session_impl::add_new_message(const aux::vector_ref<unsigned char>& msg)
 	{
+		/*
+		char* msg_out = new char[msg.size()*2 + 1];
+		char* msg_in = reinterpret_cast<char*>(msg.data());
+        libTAU::aux::to_hex(msg_in, msg.size(), msg_out);
+		session_log("Session Add New Message: %s", msg_out);
+		*/
 		return m_communication->add_new_message(communication::message(msg));
 	}	
 
