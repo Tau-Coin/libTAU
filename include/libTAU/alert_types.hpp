@@ -666,7 +666,7 @@ TORRENT_VERSION_NAMESPACE_3
 		std::vector<torrent_status> status;
 	};
 
-	struct TORRENT_DEPRECATED_EXPORT session_stop_over_alert final : alert
+	struct TORRENT_EXPORT session_stop_over_alert final : alert
 	{
 		session_stop_over_alert(aux::stack_allocator& alloc , bool over);
 		TORRENT_DEFINE_ALERT(session_stop_over_alert, 16)

@@ -533,9 +533,9 @@ namespace {
 	{
 		std::vector<aux::bytes> friends;
 
-		for (auto f: active_friends)
+		for (auto f = active_friends.begin(); f != active_friends.end(); f++)
 		{
-			friends.push_back(std::vector<aux::ibyte>(*f.begin(), *f.end()));
+			friends.push_back(std::vector<aux::ibyte>((*f).begin(), (*f).end()));
 		}
 
 		sync_call(&session_impl::set_active_friends, friends);	
