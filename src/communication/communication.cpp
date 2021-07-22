@@ -24,8 +24,10 @@ namespace libTAU {
         bool communication::start()
         {
             log("INFO: Start Communication...");
-            if (!init())
+            if (!init()) {
+                log("ERROR: Init fail.");
                 return false;
+            }
 
             m_stop = false;
 
@@ -66,14 +68,23 @@ namespace libTAU {
                 for (auto const & peer: m_friends) {
                     log("INFO: friend: %s", aux::toHex(peer).c_str());
                     aux::bytes encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(my_pk, peer));
-                    message_hash_list hashList(encode);
-                    for (auto const& hash: hashList.hash_list()) {
-                        message msg = m_message_db->get_message(hash);
-                        m_message_list_map[peer].push_back(msg);
+
+                    if (!encode.empty()) {
+                        message_hash_list hashList(encode);
+                        for (auto const &hash: hashList.hash_list()) {
+                            message msg = m_message_db->get_message(hash);
+                            if (!msg.empty()) {
+                                m_message_list_map[peer].push_back(msg);
+                            } else {
+                                log("INFO: Cannot find message[%s] in db.", aux::toHex(hash).c_str());
+                            }
+                        }
+                    } else {
+                        log("INFO: Message hash list is empty.");
                     }
                 }
             } catch (std::exception &e) {
-                log("Exception init [COMM] %s", e.what());
+                log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
                 return false;
             }
 
@@ -98,7 +109,7 @@ namespace libTAU {
                 clear();
                 init();
             } catch (std::exception &e) {
-                log("Exception [COMM] %s", e.what());
+                log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             }
         }
 
@@ -274,7 +285,7 @@ namespace libTAU {
                             std::bind(&communication::refresh_timeout, self(), _1));
                 }
             } catch (std::exception &e) {
-                log("Exception [COMM] %s", e.what());
+                log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             }
         }
 
@@ -562,17 +573,26 @@ namespace libTAU {
                 }
             }
 
+            immutable_data_info payload;
             auto it = m_missing_messages[public_key].begin();
-            message missing_message = *it;
-            m_missing_messages[public_key].erase(it);
+            if (it != m_missing_messages[public_key].end()) {
+                log("INFO: Peer[%s] has no missing messages", aux::toHex(public_key).c_str());
+                message missing_message = *it;
+                m_missing_messages[public_key].erase(it);
 
-            std::vector<dht::node_entry> entries;
-            m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-            auto msg_encode = missing_message.rlp();
-            dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
-                                   entries, missing_message.sha256());
+                if (!missing_message.empty()) {
+                    log("INFO: Missing message is empty.");
+                    std::vector<dht::node_entry> entries;
+                    m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
+                    auto msg_encode = missing_message.rlp();
+                    dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
+                                           entries, missing_message.sha256());
 
-            immutable_data_info payload(missing_message.sha256(), entries);
+                    payload = immutable_data_info(missing_message.sha256(), entries);
+                }
+            }
+
+            log("----------------------------online signal-----------------------------------------");
 
             return online_signal(m_device_id, hash_prefix_bytes, now_time, friend_info, payload);
         }
@@ -589,17 +609,24 @@ namespace libTAU {
                 }
             }
 
+            immutable_data_info payload;
             auto it = m_missing_messages[peer].begin();
-            message missing_message = *it;
-            m_missing_messages[peer].erase(it);
+            if (it != m_missing_messages[peer].end()) {
+                log("INFO: Peer[%s] has no missing messages", aux::toHex(peer).c_str());
+                message missing_message = *it;
+                m_missing_messages[peer].erase(it);
 
-            std::vector<dht::node_entry> entries;
-            m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-            auto msg_encode = missing_message.rlp();
-            dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
-                                   entries, missing_message.sha256());
+                if (!missing_message.empty()) {
+                    log("INFO: Missing message is empty.");
+                    std::vector<dht::node_entry> entries;
+                    m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
+                    auto msg_encode = missing_message.rlp();
+                    dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
+                                           entries, missing_message.sha256());
 
-            immutable_data_info payload(missing_message.sha256(), entries);
+                    payload = immutable_data_info(missing_message.sha256(), entries);
+                }
+            }
 
             return new_msg_signal(m_device_id, hash_prefix_bytes, now_time, payload);
         }

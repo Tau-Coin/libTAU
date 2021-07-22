@@ -14,13 +14,15 @@ namespace libTAU {
     namespace communication {
 
         message::message(aux::bytesConstRef _rlp) {
-            aux::RLP const rlp(_rlp);
-            populate(rlp);
+            if (!_rlp.empty()) {
+                aux::RLP const rlp(_rlp);
+                populate(rlp);
 
-            std::vector<char> buffer;
-            buffer.insert(buffer.end(), _rlp.begin(), _rlp.end());
+                std::vector<char> buffer;
+                buffer.insert(buffer.end(), _rlp.begin(), _rlp.end());
 
-            m_hash = hasher256(buffer).final();
+                m_hash = hasher256(buffer).final();
+            }
         }
 
         message::message(message_version mVersion, uint32_t mTimestamp, aux::bytes mSender,

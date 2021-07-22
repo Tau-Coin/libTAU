@@ -10,8 +10,10 @@ see LICENSE file.
 
 namespace libTAU::communication {
     immutable_data_info::immutable_data_info(aux::bytesConstRef _rlp) {
-        aux::RLP const rlp(_rlp);
-        populate(rlp);
+        if (!_rlp.empty()) {
+            aux::RLP const rlp(_rlp);
+            populate(rlp);
+        }
     }
 
     void immutable_data_info::streamRLP(aux::RLPStream &_s) const {
@@ -40,6 +42,8 @@ namespace libTAU::communication {
                 // 4. port(2 bytes)
                 _s << e.port();
             }
+        } else {
+            _s << aux::bytes();
         }
     }
 

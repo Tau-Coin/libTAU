@@ -12,8 +12,10 @@ namespace libTAU {
     namespace communication {
 
         message_hash_list::message_hash_list(aux::bytesConstRef _rlp) {
-            aux::RLP const rlp(_rlp);
-            populate(rlp);
+            if (!_rlp.empty()) {
+                aux::RLP const rlp(_rlp);
+                populate(rlp);
+            }
         }
 
         message_hash_list::message_hash_list(std::vector<aux::bytes> message_hash_list) {

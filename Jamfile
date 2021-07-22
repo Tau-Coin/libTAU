@@ -955,6 +955,7 @@ COMMUNICATION_SOURECS =
 	communication
 	message_hash_list
 	message_container
+	immutable_data_info
 	;
 
 ED25519_SOURCES =

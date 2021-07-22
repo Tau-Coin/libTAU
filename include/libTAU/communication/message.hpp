@@ -87,6 +87,9 @@ namespace libTAU {
             // @returns a pretty-printed string representation of message structure
             std::string to_string() const;
 
+            // check if this message is null
+            bool empty() { return m_hash.is_all_zeros(); }
+
             bool operator==(const message &rhs) const {
                 return m_hash == rhs.m_hash;
             }
