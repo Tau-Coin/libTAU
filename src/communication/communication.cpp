@@ -364,6 +364,9 @@ namespace libTAU {
 
             // 更新成功
             if (updated) {
+                // 通知用户新的message
+                m_ses.alerts().emplace_alert<communication_new_message_alert>(msg.rlp());
+
                 // 如果更新了消息列表，则判断是否列表长度过长，过长则删掉旧数据，然后停止循环
                 if (message_list.size() > communication_max_message_list_size) {
                     message_list.pop_front();

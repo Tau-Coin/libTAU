@@ -1410,7 +1410,7 @@ TORRENT_VERSION_NAMESPACE_3
     struct TORRENT_EXPORT communication_new_message_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_new_message_alert(aux::stack_allocator& alloc, libTAU::communication::message t);
+        TORRENT_UNEXPORT communication_new_message_alert(aux::stack_allocator& alloc, aux::bytes t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_new_message_alert, 38, alert_priority::critical)
 
@@ -1419,7 +1419,7 @@ TORRENT_VERSION_NAMESPACE_3
         std::string message() const override;
 
         // message found from peers.
-        libTAU::communication::message msg;
+        aux::bytes msg;
     };
 
     // this alert is posted when message hash is confirmed by peers.

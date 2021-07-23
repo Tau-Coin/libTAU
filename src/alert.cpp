@@ -1615,7 +1615,7 @@ namespace {
     }
 
     communication_new_message_alert::communication_new_message_alert(aux::stack_allocator&
-            , communication::message t)
+            , aux::bytes t)
             : msg(std::move(t))
     {}
 
@@ -1625,8 +1625,8 @@ namespace {
         return {};
 #else
         char buffer[1050];
-        std::snprintf(buffer, sizeof(buffer), "message %s"
-                , msg.to_string().c_str());
+        std::snprintf(buffer, sizeof(buffer), "message encode: %s"
+                , aux::toHex(msg).c_str());
         return buffer;
 #endif
     }
