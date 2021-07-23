@@ -31,7 +31,7 @@ namespace libTAU {
 
             m_stop = false;
 
-            m_refresh_timer.expires_after(seconds(m_refresh_time));
+            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
 
             return true;
@@ -280,7 +280,7 @@ namespace libTAU {
                         publish_signal(peer);
                     }
 
-                    m_refresh_timer.expires_after(seconds(m_refresh_time));
+                    m_refresh_timer.expires_after(milliseconds(m_refresh_time));
                     m_refresh_timer.async_wait(
                             std::bind(&communication::refresh_timeout, self(), _1));
                 }
