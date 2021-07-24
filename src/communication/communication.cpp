@@ -582,7 +582,7 @@ namespace libTAU {
 
                 if (!missing_message.empty()) {
                     // post syncing message hash
-                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(public_key, missing_message.sha256());
+                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(public_key, missing_message.sha256(),time(nullptr));
 
                     std::vector<dht::node_entry> entries;
                     m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
@@ -622,7 +622,7 @@ namespace libTAU {
 
                 if (!missing_message.empty()) {
                     // post syncing message hash
-                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, missing_message.sha256());
+                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, missing_message.sha256(), time(nullptr));
 
                     std::vector<dht::node_entry> entries;
                     m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
@@ -731,7 +731,7 @@ namespace libTAU {
                                                    missing_messages, confirmation_roots);
 
                                 if (!confirmation_roots.empty()) {
-                                    m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots);
+                                    m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, onlineSignal.timestamp());
                                 }
 
                                 m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
@@ -766,7 +766,7 @@ namespace libTAU {
                                            missing_messages, confirmation_roots);
 
                         if (!confirmation_roots.empty()) {
-                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots);
+                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, newMsgSignal.timestamp());
                         }
 
                         m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
