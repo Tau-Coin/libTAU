@@ -184,6 +184,7 @@ namespace libTAU {
         }
 
         void communication::set_chatting_friend(aux::bytes chatting_friend) {
+            log("INFO: Set chatting friend:%s", aux::toHex(chatting_friend).c_str());
             m_chatting_friend = std::make_pair(std::move(chatting_friend), time(nullptr));
         }
 
@@ -196,6 +197,13 @@ namespace libTAU {
         }
 
         bool communication::add_new_message(const message& msg) {
+            if (msg.empty()) {
+                log("ERROR: Message is empty.");
+                return false;
+            }
+
+            log("INFO: Add new msg[%s]", msg.to_string().c_str());
+
             if (!validate_message(msg))
                 return false;
 
@@ -364,6 +372,11 @@ namespace libTAU {
 
             // 更新成功
             if (updated) {
+                log("INFO: Add message[%s] into message list", msg.to_string().c_str());
+
+                // save message in db
+                m_message_db->save_message(msg);
+
                 // 通知用户新的message
                 m_ses.alerts().emplace_alert<communication_new_message_alert>(msg.rlp());
 
@@ -684,6 +697,8 @@ namespace libTAU {
                 aux::bytes peer;
                 peer.insert(peer.end(), i.pk().bytes.begin(), i.pk().bytes.end());
 
+                log("INFO: Mutable data from peer[%s]", aux::toHex(peer).c_str());
+
                 // record latest timestamp
                 if (data.timestamp() > m_last_seen[peer]) {
                     m_last_seen[peer] = data.timestamp();
@@ -703,7 +718,7 @@ namespace libTAU {
                             // update the latest signal time
                             device_map[device_id] = onlineSignal.timestamp();
 
-                            if (onlineSignal.device_id() != m_device_id) {
+                            if (onlineSignal.device_id() != m_device_id && !onlineSignal.device_id().empty()) {
                                 // 通知用户新的device id
                                 m_ses.alerts().emplace_alert<communication_new_device_id_alert>(
                                         onlineSignal.device_id());

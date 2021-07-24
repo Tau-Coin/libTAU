@@ -68,7 +68,7 @@ namespace libTAU {
 //        }
 
         std::string message::to_string() const {
-            return std::string();
+            return aux::toHex(m_hash.to_string());
         }
     }
 }
