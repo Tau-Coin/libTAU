@@ -39,7 +39,7 @@ namespace libTAU {
 
         std::string message_hash_list::to_string() const {
             std::ostringstream os;
-            os << this;
+            os << *this;
             return os.str();
         }
 

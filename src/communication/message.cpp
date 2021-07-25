@@ -69,7 +69,7 @@ namespace libTAU {
 
         std::string message::to_string() const {
             std::ostringstream os;
-            os << this;
+            os << *this;
             return os.str();
         }
 

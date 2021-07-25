@@ -80,7 +80,7 @@ namespace libTAU::communication {
 
     std::string immutable_data_info::to_string() const {
         std::ostringstream os;
-        os << this;
+        os << *this;
         return os.str();
     }
 

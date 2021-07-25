@@ -30,7 +30,7 @@ namespace libTAU { namespace communication {
 
     std::string new_msg_signal::to_string() const {
         std::ostringstream os;
-        os << this;
+        os << *this;
         return os.str();
     }
 

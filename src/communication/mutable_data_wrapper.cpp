@@ -30,7 +30,7 @@ namespace libTAU { namespace communication {
 
         std::string mutable_data_wrapper::to_string() const {
             std::ostringstream os;
-            os << this;
+            os << *this;
             return os.str();
         }
 

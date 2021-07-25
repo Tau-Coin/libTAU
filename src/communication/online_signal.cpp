@@ -31,7 +31,7 @@ namespace libTAU { namespace communication {
 
         std::string online_signal::to_string() const {
             std::ostringstream os;
-            os << this;
+            os << *this;
             return os.str();
         }
 
