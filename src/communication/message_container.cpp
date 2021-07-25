@@ -36,4 +36,18 @@ namespace libTAU { namespace communication {
                 m_messages.emplace_back(msg.data());
             }
         }
+
+        std::string message_container::to_string() const {
+            std::ostringstream os;
+            os << this;
+            return os.str();
+        }
+
+        std::ostream &operator<<(std::ostream &os, const message_container &container) {
+            os << "m_messages: ";
+            for (auto const& msg: container.m_messages) {
+                os << " hash " + aux::toHex(msg.sha256().to_string());
+            }
+            return os;
+        }
 } }

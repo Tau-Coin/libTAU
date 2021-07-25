@@ -27,4 +27,16 @@ namespace libTAU { namespace communication {
         m_timestamp = _new_msg_signal[2].toInt<uint32_t>();
         m_payload = immutable_data_info(_new_msg_signal[3].toBytes());
     }
+
+    std::string new_msg_signal::to_string() const {
+        std::ostringstream os;
+        os << this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const new_msg_signal &signal) {
+        os << "m_device_id: " << aux::toHex(signal.m_device_id) << " m_hash_prefix_bytes: " << aux::toHex(signal.m_hash_prefix_bytes)
+           << " m_timestamp: " << signal.m_timestamp << " m_payload: " << signal.m_payload;
+        return os;
+    }
 }}

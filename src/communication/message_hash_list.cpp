@@ -36,5 +36,19 @@ namespace libTAU {
                 m_message_hash_list.push_back(hash.toBytes());
             }
         }
+
+        std::string message_hash_list::to_string() const {
+            std::ostringstream os;
+            os << this;
+            return os.str();
+        }
+
+        std::ostream &operator<<(std::ostream &os, const message_hash_list &list) {
+            os << "m_message_hash_list: ";
+            for (auto const& hash: list.m_message_hash_list) {
+                os << " hash " + aux::toHex(hash);
+            }
+            return os;
+        }
     }
 }

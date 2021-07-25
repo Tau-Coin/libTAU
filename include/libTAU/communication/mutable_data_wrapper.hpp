@@ -14,6 +14,7 @@ see LICENSE file.
 #include <libTAU/aux_/rlp.h>
 
 #include <utility>
+#include <ostream>
 #include "libTAU/aux_/export.hpp"
 
 
@@ -58,6 +59,11 @@ namespace libTAU {
 
             // @returns the RLP serialisation of this mutable data wrapper
             aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+
+            // @returns a pretty-printed string representation of message structure
+            std::string to_string() const;
+
+            friend std::ostream &operator<<(std::ostream &os, const mutable_data_wrapper &wrapper);
 
         private:
             // Construct mutable data wrapper object from rlp serialisation

@@ -77,4 +77,18 @@ namespace libTAU::communication {
             }
         }
     }
+
+    std::string immutable_data_info::to_string() const {
+        std::ostringstream os;
+        os << this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const immutable_data_info &info) {
+        os << "m_target: " << aux::toHex(info.m_target) << " m_entries: ";
+        for (auto const& e: info.m_entries) {
+            os << " public key: " << aux::toHex(e.id) << " address: " << e.addr().to_string() << " port: " << e.port();
+        }
+        return os;
+    }
 }

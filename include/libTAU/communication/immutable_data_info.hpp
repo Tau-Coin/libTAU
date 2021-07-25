@@ -10,11 +10,13 @@ see LICENSE file.
 #define LIBTAU_IMMUTABLE_INFO_HPP
 
 #include <utility>
+#include <ostream>
 
 #include <libTAU/kademlia/node_entry.hpp>
 #include <libTAU/entry.hpp>
 #include <libTAU/aux_/common.h>
 #include <libTAU/aux_/rlp.h>
+#include "libTAU/sha1_hash.hpp"
 
 namespace libTAU::communication {
 
@@ -43,6 +45,11 @@ namespace libTAU::communication {
 
         // @returns the RLP serialisation of this message
         aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+
+        // @returns a pretty-printed string representation of message structure
+        std::string to_string() const;
+
+        friend std::ostream &operator<<(std::ostream &os, const immutable_data_info &info);
 
     private:
         // Construct immutable data info object from rlp serialisation

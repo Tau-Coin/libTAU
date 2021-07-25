@@ -10,6 +10,7 @@ see LICENSE file.
 #define LIBTAU_MESSAGE_HASH_LIST_HPP
 
 
+#include <ostream>
 #include "libTAU/aux_/common.h"
 #include "libTAU/aux_/rlp.h"
 #include "libTAU/aux_/export.hpp"
@@ -37,6 +38,11 @@ namespace libTAU {
 
                 // @returns the RLP serialisation of this message hash list
                 aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+
+                // @returns a pretty-printed string representation of message structure
+                std::string to_string() const;
+
+            friend std::ostream &operator<<(std::ostream &os, const message_hash_list &list);
 
                 private:
                 // Construct message hash list object from rlp serialisation

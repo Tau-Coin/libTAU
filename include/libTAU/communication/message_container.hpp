@@ -9,6 +9,7 @@ see LICENSE file.
 #ifndef LIBTAU_MESSAGE_CONTAINER_HPP
 #define LIBTAU_MESSAGE_CONTAINER_HPP
 
+#include <ostream>
 #include "libTAU/aux_/common.h"
 #include "libTAU/aux_/rlp.h"
 #include "libTAU/aux_/export.hpp"
@@ -35,6 +36,11 @@ namespace libTAU {
 
             // @returns the RLP serialisation of this message container
             aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+
+            // @returns a pretty-printed string representation of message structure
+            std::string to_string() const;
+
+            friend std::ostream &operator<<(std::ostream &os, const message_container &container);
 
         private:
             // Construct message container object from rlp serialisation

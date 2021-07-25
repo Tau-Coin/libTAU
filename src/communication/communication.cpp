@@ -71,6 +71,7 @@ namespace libTAU {
 
                     if (!encode.empty()) {
                         message_hash_list hashList(encode);
+                        log("INFO: %s from peer[%s]", hashList.to_string().c_str(), aux::toHex(peer).c_str());
                         for (auto const &hash: hashList.hash_list()) {
                             message msg = m_message_db->get_message(hash);
                             if (!msg.empty()) {
@@ -102,6 +103,7 @@ namespace libTAU {
 
         void communication::account_changed() {
             try {
+                log("INFO: Change account.");
                 // 账户发生改变，模块重新启动
 //                stop();
 //                start();
@@ -114,6 +116,7 @@ namespace libTAU {
         }
 
         void communication::set_loop_time_interval(int milliseconds) {
+            log("INFO: Set loop time:%d(ms)", milliseconds);
             m_refresh_time = milliseconds;
         }
 
@@ -140,6 +143,8 @@ namespace libTAU {
         }
 
         bool communication::delete_friend(const aux::bytes& pubkey) {
+            log("INFO: Delete friend, public key %s.", aux::toHex(pubkey).c_str());
+
             for(auto it = m_friends.begin(); it != m_friends.end(); ++it) {
                 if (*it == pubkey) {
                     m_friends.erase(it);
@@ -177,6 +182,7 @@ namespace libTAU {
         }
 
         bool communication::update_friend_info(const aux::bytes& pubkey, aux::bytes friend_info) {
+            log("INFO: Update peer[%s] friend info[%s]", aux::toHex(pubkey).c_str(), aux::toHex(friend_info).c_str());
             const auto &pk = m_ses.pubkey();
             aux::bytes my_pk;
             my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
@@ -189,10 +195,12 @@ namespace libTAU {
         }
 
         void communication::unset_chatting_friend() {
+            log("INFO: Unset chatting friend.");
             m_chatting_friend = std::make_pair(aux::bytes(), 0);
         }
 
         void communication::set_active_friends(std::vector<aux::bytes> active_friends) {
+            log("INFO: Set active friends[%zu].", active_friends.size());
             m_active_friends = std::move(active_friends);
         }
 
@@ -302,22 +310,27 @@ namespace libTAU {
             if (!message_list.empty()) {
                 std::vector<aux::bytes> hash_list;
                 for (const auto & msg: message_list) {
-                    char *p = msg.sha256().data();
+                    std::string h = msg.sha256().to_string();
                     aux::bytes hash;
-                    hash.insert(hash.end(), p, p + strlen(p));
+                    hash.insert(hash.end(), h.begin(), h.end());
                     hash_list.push_back(hash);
                 }
 
                 const auto &pubkey = m_ses.pubkey();
                 aux::bytes public_key;
                 public_key.insert(public_key.end(), pubkey->bytes.begin(), pubkey->bytes.end());
-                // TODO::sqlite or leveldb?
+
+                message_hash_list messageHashList(hash_list);
+                log("INFO: Save %s", messageHashList.to_string().c_str());
                 m_message_db->save_latest_message_hash_list_encode(std::make_pair(public_key, peer),
-                                                                   message_hash_list(hash_list).rlp());
+                                                                   messageHashList.rlp());
             }
         }
 
         bool communication::try_to_update_Latest_message_list(const aux::bytes &peer, const message& msg) {
+            if (msg.empty())
+                return false;
+
             bool updated = false;
 
             std::list<message> message_list = m_message_list_map[peer];
@@ -609,9 +622,10 @@ namespace libTAU {
                 }
             }
 
-            log("----------------------------online signal-----------------------------------------");
+            online_signal onlineSignal(m_device_id, hash_prefix_bytes, now_time, friend_info, payload);
+            log("INFO: Online signal:%s", onlineSignal.to_string().c_str());
 
-            return online_signal(m_device_id, hash_prefix_bytes, now_time, friend_info, payload);
+            return onlineSignal;
         }
 
         new_msg_signal communication::make_new_message_signal(const aux::bytes& peer) {
@@ -649,7 +663,10 @@ namespace libTAU {
                 }
             }
 
-            return new_msg_signal(m_device_id, hash_prefix_bytes, now_time, payload);
+            new_msg_signal newMsgSignal(m_device_id, hash_prefix_bytes, now_time, payload);
+            log("INFO: New msg signal:%s", newMsgSignal.to_string().c_str());
+
+            return newMsgSignal;
         }
 
         // callback for dht_immutable_get
@@ -658,6 +675,7 @@ namespace libTAU {
         {
             TORRENT_ASSERT(!i.is_mutable());
             if (!i.empty()) {
+                log("INFO: Got immutable data[%s] callback.", aux::toHex(target.to_string()).c_str());
                 aux::bytes encode;
                 encode.insert(encode.end(), i.value().string().begin(), i.value().string().end());
                 message msg(encode);
@@ -669,7 +687,7 @@ namespace libTAU {
         void communication::dht_get_immutable_item(sha256_hash const& target, std::vector<dht::node_entry> const& eps)
         {
             if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(target, std::bind(&communication::get_immutable_callback
+            m_ses.dht()->get_item(target, eps, std::bind(&communication::get_immutable_callback
                     , this, target, _1));
         }
 
@@ -685,6 +703,7 @@ namespace libTAU {
                 aux::bytes wrapper_rlp;
                 wrapper_rlp.insert(wrapper_rlp.end(), i.value().string().begin(), i.value().string().end());
                 mutable_data_wrapper data(wrapper_rlp);
+                log("INFO: Mutable data wrapper:[%s]", data.to_string().c_str());
 
                 auto now_time = time(nullptr);
                 // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
@@ -704,15 +723,17 @@ namespace libTAU {
                     m_last_seen[peer] = data.timestamp();
                     // 通知用户新的last seen time
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, data.timestamp());
+                    log("INFO: Last seen peer[%s], time[%d]", aux::toHex(peer).c_str(), data.timestamp());
                 }
 
                 switch (data.type()) {
                     case ONLINE_SIGNAL: {
                         online_signal onlineSignal(data.payload());
+                        log("INFO: Online signal:%s", onlineSignal.to_string().c_str());
 
                         auto device_id = onlineSignal.device_id();
                         auto device_map = m_latest_signal_time[peer];
-                        log("INFO: Online signal time:%d", onlineSignal.timestamp());
+
                         // 检查相应设备信号的时间戳，只处理最新的数据
                         if (onlineSignal.timestamp() > device_map[device_id]) {
                             // update the latest signal time
@@ -747,6 +768,7 @@ namespace libTAU {
 
                                 if (!confirmation_roots.empty()) {
                                     m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, onlineSignal.timestamp());
+                                    log("INFO: Confirmation roos:%zu", confirmation_roots.size());
                                 }
 
                                 m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
@@ -757,6 +779,7 @@ namespace libTAU {
                     }
                     case NEW_MSG_SIGNAL: {
                         new_msg_signal newMsgSignal(data.payload());
+                        log("INFO: New msg signal:%s", newMsgSignal.to_string().c_str());
 
                         auto device_id = newMsgSignal.device_id();
                         auto device_map = m_latest_signal_time[peer];
@@ -764,33 +787,34 @@ namespace libTAU {
                         if (newMsgSignal.timestamp() > device_map[device_id]) {
                             // update the latest signal time
                             device_map[device_id] = newMsgSignal.timestamp();
+
+                            // get immutable message
+                            const immutable_data_info& payload = newMsgSignal.payload();
+                            if (!payload.target().is_all_zeros()) {
+                                dht_get_immutable_item(payload.target(), payload.entries());
+                            }
+
+                            // find out missing messages and confirmation root
+                            std::vector<message> missing_messages;
+                            std::vector<sha256_hash> confirmation_roots;
+                            find_best_solution(std::vector<message>(m_message_list_map[peer].begin(),
+                                                                    m_message_list_map[peer].end()),
+                                               newMsgSignal.hash_prefix_bytes(),
+                                               missing_messages, confirmation_roots);
+
+                            if (!confirmation_roots.empty()) {
+                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, newMsgSignal.timestamp());
+                                log("INFO: Confirmation roos:%zu", confirmation_roots.size());
+                            }
+
+                            m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
                         }
-
-                        // get immutable message
-                        const immutable_data_info& payload = newMsgSignal.payload();
-                        if (!payload.target().is_all_zeros()) {
-                            dht_get_immutable_item(payload.target(), payload.entries());
-                        }
-
-                        // find out missing messages and confirmation root
-                        std::vector<message> missing_messages;
-                        std::vector<sha256_hash> confirmation_roots;
-                        find_best_solution(std::vector<message>(m_message_list_map[peer].begin(),
-                                                                m_message_list_map[peer].end()),
-                                           newMsgSignal.hash_prefix_bytes(),
-                                           missing_messages, confirmation_roots);
-
-                        if (!confirmation_roots.empty()) {
-                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, newMsgSignal.timestamp());
-                        }
-
-                        m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
 
                         break;
                     }
                     default: {
                         // mismatch
-                        ;
+                        log("ERROR: Mutable data type mismatch.");
                     }
                 }
             }
@@ -877,12 +901,13 @@ namespace libTAU {
                 // publish online signal on XX channel
                 online_signal onlineSignal = make_online_signal();
                 mutable_data_wrapper wrapper(time(nullptr), ONLINE_SIGNAL, onlineSignal.rlp());
-                log("-----size:%zu", wrapper.rlp().size());
+                log("INFO: Publish online signal:%s", wrapper.to_string().c_str());
                 data = aux::asString(wrapper.rlp());
             } else {
                 // publish new message signal on XY channel
                 new_msg_signal newMsgSignal = make_new_message_signal(peer);
                 mutable_data_wrapper wrapper(time(nullptr), NEW_MSG_SIGNAL, newMsgSignal.rlp());
+                log("INFO: Publish new message signal:%s", wrapper.to_string().c_str());
                 data = aux::asString(wrapper.rlp());
             }
 

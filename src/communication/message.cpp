@@ -68,7 +68,18 @@ namespace libTAU {
 //        }
 
         std::string message::to_string() const {
-            return aux::toHex(m_hash.to_string());
+            std::ostringstream os;
+            os << this;
+            return os.str();
+        }
+
+        std::ostream &operator<<(std::ostream &os, const message &message) {
+            os << "m_version: " << message.m_version << " m_timestamp: " << message.m_timestamp << " m_sender: "
+               << aux::toHex(message.m_sender) << " m_receiver: " << aux::toHex(message.m_receiver) << " m_logic_msg_hash: "
+               << aux::toHex(message.m_logic_msg_hash) << " m_nonce: " << message.m_nonce << " m_type: " << message.m_type
+               << " m_encrypted_content: " << aux::toHex(message.m_encrypted_content) << " m_hash: "
+               << aux::toHex(message.m_hash.to_string());
+            return os;
         }
     }
 }

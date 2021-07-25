@@ -15,6 +15,7 @@ see LICENSE file.
 #include "libTAU/hasher.hpp"
 #include <libTAU/aux_/common.h>
 #include <libTAU/aux_/rlp.h>
+#include <ostream>
 
 namespace libTAU {
     namespace communication {
@@ -113,6 +114,8 @@ namespace libTAU {
             bool operator>=(const message &rhs) const {
                 return !(*this < rhs);
             }
+
+            friend std::ostream &operator<<(std::ostream &os, const message &message);
 
 
         private:
