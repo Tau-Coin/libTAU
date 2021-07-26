@@ -880,10 +880,16 @@ namespace libTAU {
         } // anonymous namespace
 
         void communication::request_signal(const aux::bytes &peer) {
-            auto salt = make_salt(peer);
+            dht::public_key * my_pk = m_ses.pubkey();
+            aux::bytes public_key(my_pk->bytes.begin(), my_pk->bytes.end());
+
+            // salt is x pubkey when request signal
+            auto salt = make_salt(public_key);
 
             std::array<char, 32> pk{};
             std::copy(peer.begin(), peer.end(), pk.begin());
+
+            log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer).c_str(), aux::toHex(salt).c_str());
             dht_get_mutable_item(pk, salt);
         }
 
@@ -892,6 +898,7 @@ namespace libTAU {
             dht::public_key * pk = m_ses.pubkey();
             dht::secret_key * sk = m_ses.serkey();
 
+            // salt is y pubkey when publish signal
             auto salt = make_salt(peer);
 
             aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
@@ -910,6 +917,9 @@ namespace libTAU {
                 log("INFO: Publish new message signal:%s", wrapper.to_string().c_str());
                 data = aux::asString(wrapper.rlp());
             }
+
+            log("INFO: Put mutable data: peer[%s], salt[%s], data[%s]", aux::toHex(pk->bytes).c_str(),
+                aux::toHex(salt).c_str(), aux::toHex(data).c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
                     , pk->bytes, sk->bytes, data), salt);
