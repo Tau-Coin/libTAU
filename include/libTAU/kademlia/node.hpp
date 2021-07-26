@@ -253,6 +253,9 @@ private:
 	// the routing table buckets close to us.
 	time_point m_last_self_refresh;
 
+	// the last time we pinged a node.
+	time_point m_last_ping;
+
 	// secret random numbers used to create write tokens
 	std::array<char, 4> m_secret[2];
 

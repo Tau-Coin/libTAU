@@ -89,6 +89,7 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	, m_protocol(map_protocol_to_descriptor(aux::is_v4(sock.get_local_endpoint()) ? udp::v4() : udp::v6()))
 	, m_last_tracker_tick(aux::time_now())
 	, m_last_self_refresh(min_time())
+	, m_last_ping(min_time())
 	, m_counters(cnt)
 	, m_storage(storage)
 {
@@ -540,6 +541,8 @@ void node::tick()
 		return;
 	}
 
+	if (m_last_ping + minutes(5) > now) return;
+
 	node_entry const* ne = m_table.next_refresh();
 	if (ne == nullptr) return;
 
@@ -550,6 +553,7 @@ void node::tick()
 	int const bucket = 255 - distance_exp(m_id, ne->id);
 	TORRENT_ASSERT(bucket < 256);
 	send_single_refresh(ne->ep(), bucket, ne->id);
+	m_last_ping = now;
 }
 
 void node::send_single_refresh(udp::endpoint const& ep, int const bucket
