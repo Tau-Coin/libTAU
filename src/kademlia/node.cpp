@@ -369,8 +369,11 @@ void node::get_item(public_key const& pk, std::string const& salt
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 	{
 		char hex_key[65];
+		char hex_salt[129]; // 64*2 + 1
 		aux::to_hex(pk.bytes, hex_key);
-		m_observer->log(dht_logger::node, "starting get for [ key: %s ]", hex_key);
+		aux::to_hex(salt, hex_salt);
+		m_observer->log(dht_logger::node, "starting get for [ key: %s, salt: %s ]"
+			, hex_key, hex_salt);
 	}
 #endif
 
@@ -460,8 +463,11 @@ void node::put_item(public_key const& pk, std::string const& salt
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 	{
 		char hex_key[65];
+		char hex_salt[129]; // 64*2 + 1
 		aux::to_hex(pk.bytes, hex_key);
-		m_observer->log(dht_logger::node, "starting put for [ key: %s ]", hex_key);
+		aux::to_hex(salt, hex_salt);
+		m_observer->log(dht_logger::node, "starting put for [ key: %s, salt:%s ]"
+			, hex_key, hex_salt);
 	}
 #endif
 
