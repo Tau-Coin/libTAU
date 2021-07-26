@@ -623,7 +623,7 @@ namespace libTAU {
             }
 
             online_signal onlineSignal(m_device_id, hash_prefix_bytes, now_time, friend_info, payload);
-            log("INFO: Online signal:%s", onlineSignal.to_string().c_str());
+            log("INFO: Make online signal:%s", onlineSignal.to_string().c_str());
 
             return onlineSignal;
         }
@@ -664,7 +664,7 @@ namespace libTAU {
             }
 
             new_msg_signal newMsgSignal(m_device_id, hash_prefix_bytes, now_time, payload);
-            log("INFO: New msg signal:%s", newMsgSignal.to_string().c_str());
+            log("INFO: Make new msg signal:%s", newMsgSignal.to_string().c_str());
 
             return newMsgSignal;
         }
@@ -729,7 +729,7 @@ namespace libTAU {
                 switch (data.type()) {
                     case ONLINE_SIGNAL: {
                         online_signal onlineSignal(data.payload());
-                        log("INFO: Online signal:%s", onlineSignal.to_string().c_str());
+                        log("INFO: Got online signal:%s", onlineSignal.to_string().c_str());
 
                         auto device_id = onlineSignal.device_id();
                         auto device_map = m_latest_signal_time[peer];
@@ -768,7 +768,7 @@ namespace libTAU {
 
                                 if (!confirmation_roots.empty()) {
                                     m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, onlineSignal.timestamp());
-                                    log("INFO: Confirmation roos:%zu", confirmation_roots.size());
+                                    log("INFO: Confirmation roots:%zu", confirmation_roots.size());
                                 }
 
                                 m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
@@ -779,7 +779,7 @@ namespace libTAU {
                     }
                     case NEW_MSG_SIGNAL: {
                         new_msg_signal newMsgSignal(data.payload());
-                        log("INFO: New msg signal:%s", newMsgSignal.to_string().c_str());
+                        log("INFO: Got new msg signal:%s", newMsgSignal.to_string().c_str());
 
                         auto device_id = newMsgSignal.device_id();
                         auto device_map = m_latest_signal_time[peer];
@@ -804,7 +804,7 @@ namespace libTAU {
 
                             if (!confirmation_roots.empty()) {
                                 m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, newMsgSignal.timestamp());
-                                log("INFO: Confirmation roos:%zu", confirmation_roots.size());
+                                log("INFO: Confirmation roots:%zu", confirmation_roots.size());
                             }
 
                             m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());

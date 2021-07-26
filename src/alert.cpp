@@ -1551,7 +1551,8 @@ namespace {
 		"alerts_dropped", "socks5",
 		"communication_new_device_id", "communication_new_message",
 		"communication_confirmation_root", "communication_syncing_message",
-		"communication_friend_info", "communication_log"
+		"communication_friend_info", "communication_log",
+		"communication_last_seen"
 		}};
 
 		TORRENT_ASSERT(alert_type >= 0);
