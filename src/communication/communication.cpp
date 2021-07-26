@@ -213,10 +213,27 @@ namespace libTAU {
 
             log("INFO: Add new msg[%s]", msg.to_string().c_str());
 
+            dht::public_key * pk = m_ses.pubkey();
+            aux::bytes public_key;
+            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
+            if (msg.sender() != public_key && msg.receiver() != public_key) {
+                log("ERROR: Unknown message, sender/receiver is not me.");
+                return false;
+            }
+
+            aux::bytes key_y;
+            if (msg.sender() == public_key) {
+                // sender is me means message comes from me, y is receiver
+                key_y = msg.receiver();
+            } else {
+                // receiver is me means message comes from others, y is sender
+                key_y = msg.sender();
+            }
+
             if (!validate_message(msg))
                 return false;
 
-            return try_to_update_Latest_message_list(msg.sender(), msg, post_alert);
+            return try_to_update_Latest_message_list(key_y, msg, post_alert);
         }
 
         bool communication::validate_message(const message& msg) {

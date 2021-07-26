@@ -136,9 +136,11 @@ namespace libTAU {
             aux::bytes select_friend_randomly();
 
             // save the latest message hash list in database
+            // @param peer is Y public key
             void save_friend_latest_message_hash_list(const aux::bytes& peer);
 
             // try to update the latest message list
+            // @param peer is Y public key
             // @return true if message list changed, false otherwise
             bool try_to_update_Latest_message_list(const aux::bytes& peer, const message& msg, bool post_alert);
 
@@ -232,7 +234,7 @@ namespace libTAU {
             // online/new message signal time(map:key1->peer, key2->device id, value->signal time)
             std::map<aux::bytes, std::map<aux::bytes, time_t>> m_latest_signal_time;
 
-            // message list(map:key->peer, value->message list)
+            // message list(map:key->Y public key, value->message list)
             std::map<aux::bytes, std::list<message>> m_message_list_map;
 
             // missing messages (map:key->peer, value->missing message list)
