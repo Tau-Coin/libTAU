@@ -114,7 +114,7 @@ namespace libTAU {
             void set_active_friends(std::vector<aux::bytes> active_friends);
 
             // add a new message
-            bool add_new_message(const message& msg);
+            bool add_new_message(const message& msg, bool post_alert = false);
 
             // reset when account changed
             void account_changed();
@@ -140,7 +140,7 @@ namespace libTAU {
 
             // try to update the latest message list
             // @return true if message list changed, false otherwise
-            bool try_to_update_Latest_message_list(const aux::bytes& peer, const message& msg);
+            bool try_to_update_Latest_message_list(const aux::bytes& peer, const message& msg, bool post_alert);
 
             // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing message和confirmation root)
             static void find_best_solution(const std::vector<message>& messages, const aux::bytes& hash_prefix_array,

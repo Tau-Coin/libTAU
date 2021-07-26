@@ -99,6 +99,7 @@ namespace libTAU {
             m_active_friends.clear();
             m_last_seen.clear();
             m_latest_signal_time.clear();
+            m_missing_messages.clear();
         }
 
         void communication::account_changed() {
@@ -204,7 +205,7 @@ namespace libTAU {
             m_active_friends = std::move(active_friends);
         }
 
-        bool communication::add_new_message(const message& msg) {
+        bool communication::add_new_message(const message& msg, bool post_alert) {
             if (msg.empty()) {
                 log("ERROR: Message is empty.");
                 return false;
@@ -215,7 +216,7 @@ namespace libTAU {
             if (!validate_message(msg))
                 return false;
 
-            return try_to_update_Latest_message_list(msg.sender(), msg);
+            return try_to_update_Latest_message_list(msg.sender(), msg, post_alert);
         }
 
         bool communication::validate_message(const message& msg) {
@@ -313,6 +314,7 @@ namespace libTAU {
                     std::string h = msg.sha256().to_string();
                     aux::bytes hash;
                     hash.insert(hash.end(), h.begin(), h.end());
+                    log("INFO: Message hash %s", aux::toHex(hash).c_str());
                     hash_list.push_back(hash);
                 }
 
@@ -321,13 +323,13 @@ namespace libTAU {
                 public_key.insert(public_key.end(), pubkey->bytes.begin(), pubkey->bytes.end());
 
                 message_hash_list messageHashList(hash_list);
-                log("INFO: Save %s", messageHashList.to_string().c_str());
+                log("INFO: Save message hash list %s", messageHashList.to_string().c_str());
                 m_message_db->save_latest_message_hash_list_encode(std::make_pair(public_key, peer),
                                                                    messageHashList.rlp());
             }
         }
 
-        bool communication::try_to_update_Latest_message_list(const aux::bytes &peer, const message& msg) {
+        bool communication::try_to_update_Latest_message_list(const aux::bytes &peer, const message& msg, bool post_alert) {
             if (msg.empty())
                 return false;
 
@@ -391,7 +393,10 @@ namespace libTAU {
                 m_message_db->save_message(msg);
 
                 // 通知用户新的message
-                m_ses.alerts().emplace_alert<communication_new_message_alert>(msg.rlp());
+                if (post_alert) {
+                    log("DEBUG: Post new message:%s", msg.to_string().c_str());
+                    m_ses.alerts().emplace_alert<communication_new_message_alert>(msg.rlp());
+                }
 
                 // 如果更新了消息列表，则判断是否列表长度过长，过长则删掉旧数据，然后停止循环
                 if (message_list.size() > communication_max_message_list_size) {
@@ -636,14 +641,16 @@ namespace libTAU {
             auto message_list = m_message_list_map[peer];
             if (!message_list.empty()) {
                 for (const auto & msg: message_list) {
+                    log("DEBUG: Message[%s]", msg.to_string().c_str());
                     hash_prefix_bytes.push_back(msg.sha256()[0]);
                 }
+            } else {
+                log("INFO: Message list from peer[%s] is empty.", aux::toHex(peer).c_str());
             }
 
             immutable_data_info payload;
             auto it = m_missing_messages[peer].begin();
             if (it != m_missing_messages[peer].end()) {
-                log("INFO: Peer[%s] has no missing messages", aux::toHex(peer).c_str());
                 message missing_message = *it;
                 m_missing_messages[peer].erase(it);
 
@@ -661,6 +668,8 @@ namespace libTAU {
                 } else {
                     log("INFO: Missing message is empty.");
                 }
+            } else {
+                log("INFO: Peer[%s] has no missing messages", aux::toHex(peer).c_str());
             }
 
             new_msg_signal newMsgSignal(m_device_id, hash_prefix_bytes, now_time, payload);
@@ -680,7 +689,7 @@ namespace libTAU {
                 encode.insert(encode.end(), i.value().string().begin(), i.value().string().end());
                 message msg(encode);
 
-                add_new_message(msg);
+                add_new_message(msg, true);
             }
         }
 
@@ -771,6 +780,8 @@ namespace libTAU {
                                     log("INFO: Confirmation roots:%zu", confirmation_roots.size());
                                 }
 
+                                log("INFO: Found missing message size %zu", missing_messages.size());
+
                                 m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
                             }
                         }
@@ -806,6 +817,8 @@ namespace libTAU {
                                 m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, newMsgSignal.timestamp());
                                 log("INFO: Confirmation roots:%zu", confirmation_roots.size());
                             }
+
+                            log("INFO: Found missing message size %zu", missing_messages.size());
 
                             m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
                         }
