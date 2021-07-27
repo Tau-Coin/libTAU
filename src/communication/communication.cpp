@@ -76,6 +76,7 @@ namespace libTAU {
                             log("INFO: Get message hash:%s", aux::toHex(hash).c_str());
                             message msg = m_message_db->get_message(hash);
                             if (!msg.empty()) {
+                                log("INFO: Got message from db[%s]", msg.to_string().c_str());
                                 m_message_list_map[peer].push_back(msg);
                             } else {
                                 log("INFO: Cannot find message[%s] in db.", aux::toHex(hash).c_str());
@@ -414,7 +415,7 @@ namespace libTAU {
 
                 // save message in db
                 if (!m_message_db->save_message(msg)) {
-                    log("ERROR: Save message in db fail[%s]", aux::toHex(msg.to_string()).c_str());
+                    log("ERROR: Save message in db fail[%s]", msg.to_string().c_str());
                     return false;
                 }
 
@@ -772,7 +773,7 @@ namespace libTAU {
                             // update the latest signal time
                             device_map[device_id] = onlineSignal.timestamp();
 
-                            if (onlineSignal.device_id() != m_device_id && !onlineSignal.device_id().empty()) {
+                            if (!onlineSignal.device_id().empty() && onlineSignal.device_id() != m_device_id) {
                                 // 通知用户新的device id
                                 m_ses.alerts().emplace_alert<communication_new_device_id_alert>(
                                         onlineSignal.device_id());

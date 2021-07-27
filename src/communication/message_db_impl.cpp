@@ -139,9 +139,11 @@ namespace libTAU {
             if (msg.empty())
                 return false;
 
-            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(),
-                                                    msg.sha256().to_string(),
-                                                    std::string (msg.rlp().begin(), msg.rlp().end()));
+            std::string key = msg.sha256().to_string();
+            auto encode = msg.rlp();
+            std::string value(encode.begin(), encode.end());
+
+            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, value);
             return status.ok();
         }
 
