@@ -74,7 +74,7 @@ namespace libTAU {
                         log("INFO: %s from peer[%s]", hashList.to_string().c_str(), aux::toHex(peer).c_str());
                         for (auto const &hash: hashList.hash_list()) {
                             log("INFO: Get message hash:%s", aux::toHex(hash).c_str());
-                            message msg = m_message_db->get_message(sha256_hash(reinterpret_cast<char const*>(hash.data())));
+                            message msg = m_message_db->get_message(hash);
                             if (!msg.empty()) {
                                 m_message_list_map[peer].push_back(msg);
                             } else {
@@ -331,7 +331,7 @@ namespace libTAU {
                 for (const auto & msg: message_list) {
                     std::string h = msg.sha256().to_string();
                     aux::bytes hash(h.begin(), h.end());
-                    log("INFO: Message hash %s", aux::toHex(hash).c_str());
+                    log("INFO: Push message hash %s into hash list", aux::toHex(hash).c_str());
                     hash_list.push_back(hash);
                 }
 
@@ -406,13 +406,16 @@ namespace libTAU {
             if (updated) {
                 log("INFO: Add message[%s] into message list", msg.to_string().c_str());
 
-                // save message in db
-                m_message_db->save_message(msg);
-
                 // 通知用户新的message
                 if (post_alert) {
                     log("DEBUG: Post new message:%s", msg.to_string().c_str());
                     m_ses.alerts().emplace_alert<communication_new_message_alert>(msg.rlp());
+                }
+
+                // save message in db
+                if (!m_message_db->save_message(msg)) {
+                    log("ERROR: Save message in db fail[%s]", aux::toHex(msg.to_string()).c_str());
+                    return false;
                 }
 
                 // 如果更新了消息列表，则判断是否列表长度过长，过长则删掉旧数据，然后停止循环
@@ -635,6 +638,8 @@ namespace libTAU {
                     std::vector<dht::node_entry> entries;
                     m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
                     auto msg_encode = missing_message.rlp();
+                    log("INFO: Put immutable message target[%s], entries[%zu], data[%s]",
+                        aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size(), aux::toHex(msg_encode).c_str());
                     dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
                                            entries, missing_message.sha256());
 
@@ -702,7 +707,7 @@ namespace libTAU {
             log("DEBUG: Immutable callback");
             TORRENT_ASSERT(!i.is_mutable());
             if (!i.empty()) {
-                log("INFO: Got immutable data[%s] callback.", aux::toHex(target.to_string()).c_str());
+                log("INFO: Got immutable data callback, target[%s].", aux::toHex(target.to_string()).c_str());
                 aux::bytes encode;
                 encode.insert(encode.end(), i.value().string().begin(), i.value().string().end());
                 message msg(encode);
@@ -964,6 +969,9 @@ namespace libTAU {
         void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
         {
             if (!m_ses.dht()) return;
+            log("INFO: Put immutable item target[%s], entries[%zu], data[%s]",
+                aux::toHex(target.to_string()).c_str(), eps.size(), data.to_string().c_str());
+
             m_ses.dht()->put_item(data,  eps, std::bind(&on_dht_put_immutable_item, std::ref(m_ses.alerts())
                     , target, _1));
         }

@@ -48,13 +48,13 @@ namespace libTAU {
             virtual bool delete_friend_info(std::pair<aux::bytes, aux::bytes> key) = 0;
 
             // get message by hash
-            virtual communication::message get_message(sha256_hash hash) = 0;
+            virtual communication::message get_message(aux::bytes hash) = 0;
 
             // save message
             virtual bool save_message(communication::message msg) = 0;
 
             // delete message
-            virtual bool delete_message(sha256_hash hash) = 0;
+            virtual bool delete_message(aux::bytes hash) = 0;
 
             // get encode of the latest message hash list by key pair<my public key, peer public key>
             virtual aux::bytes get_latest_message_hash_list_encode(std::pair<aux::bytes, aux::bytes> key) = 0;

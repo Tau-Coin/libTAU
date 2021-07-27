@@ -44,13 +44,13 @@ namespace libTAU {
             bool delete_friend_info(std::pair<aux::bytes, aux::bytes> key) override;
 
             // get message by hash
-            communication::message get_message(sha256_hash hash) override;
+            communication::message get_message(aux::bytes hash) override;
 
             // save message
             bool save_message(communication::message msg) override;
 
             // delete message
-            bool delete_message(sha256_hash hash) override;
+            bool delete_message(aux::bytes hash) override;
 
             // get encode of the latest message hash list by key pair<my public key, peer public key>
             aux::bytes get_latest_message_hash_list_encode(std::pair<aux::bytes, aux::bytes> key) override;
