@@ -91,6 +91,31 @@ namespace libTAU {
             // check if this message is null
             bool empty() const { return m_hash.is_all_zeros(); }
 
+            message(const message &rhs) {
+                this->m_version = rhs.m_version;
+                this->m_timestamp = rhs.m_timestamp;
+                this->m_sender = rhs.m_sender;
+                this->m_receiver = rhs.m_receiver;
+                this->m_logic_msg_hash = rhs.m_logic_msg_hash;
+                this->m_nonce = rhs.m_nonce;
+                this->m_type = rhs.m_type;
+                this->m_encrypted_content = rhs.m_encrypted_content;
+                this->m_hash.assign(rhs.m_hash.data());
+            }
+
+            message& operator=(const message &rhs) {
+                this->m_version = rhs.m_version;
+                this->m_timestamp = rhs.m_timestamp;
+                this->m_sender = rhs.m_sender;
+                this->m_receiver = rhs.m_receiver;
+                this->m_logic_msg_hash = rhs.m_logic_msg_hash;
+                this->m_nonce = rhs.m_nonce;
+                this->m_type = rhs.m_type;
+                this->m_encrypted_content = rhs.m_encrypted_content;
+                this->m_hash.assign(rhs.m_hash.data());
+                return *this;
+            }
+
             bool operator==(const message &rhs) const {
                 return m_hash == rhs.m_hash;
             }
