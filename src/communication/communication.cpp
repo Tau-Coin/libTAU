@@ -73,7 +73,8 @@ namespace libTAU {
                         message_hash_list hashList(encode);
                         log("INFO: %s from peer[%s]", hashList.to_string().c_str(), aux::toHex(peer).c_str());
                         for (auto const &hash: hashList.hash_list()) {
-                            message msg = m_message_db->get_message(hash);
+                            log("INFO: Get message hash:%s", aux::toHex(hash).c_str());
+                            message msg = m_message_db->get_message(sha256_hash(reinterpret_cast<char const*>(hash.data())));
                             if (!msg.empty()) {
                                 m_message_list_map[peer].push_back(msg);
                             } else {
@@ -329,8 +330,7 @@ namespace libTAU {
                 std::vector<aux::bytes> hash_list;
                 for (const auto & msg: message_list) {
                     std::string h = msg.sha256().to_string();
-                    aux::bytes hash;
-                    hash.insert(hash.end(), h.begin(), h.end());
+                    aux::bytes hash(h.begin(), h.end());
                     log("INFO: Message hash %s", aux::toHex(hash).c_str());
                     hash_list.push_back(hash);
                 }
