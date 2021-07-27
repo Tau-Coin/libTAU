@@ -699,6 +699,7 @@ namespace libTAU {
         void communication::get_immutable_callback(sha256_hash target
                 , dht::item const& i)
         {
+            log("DEBUG: Immutable callback");
             TORRENT_ASSERT(!i.is_mutable());
             if (!i.empty()) {
                 log("INFO: Got immutable data[%s] callback.", aux::toHex(target.to_string()).c_str());
@@ -713,6 +714,7 @@ namespace libTAU {
         void communication::dht_get_immutable_item(sha256_hash const& target, std::vector<dht::node_entry> const& eps)
         {
             if (!m_ses.dht()) return;
+            log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
             m_ses.dht()->get_item(target, eps, std::bind(&communication::get_immutable_callback
                     , this, target, _1));
         }
@@ -780,7 +782,9 @@ namespace libTAU {
 
                                 // get immutable message
                                 const immutable_data_info& payload = onlineSignal.payload();
+                                log("INFO: Payload:%s", payload.to_string().c_str());
                                 if (!payload.target().is_all_zeros()) {
+                                    log("DEBUG: ---------------");
                                     dht_get_immutable_item(payload.target(), payload.entries());
                                 }
 
@@ -818,7 +822,9 @@ namespace libTAU {
 
                             // get immutable message
                             const immutable_data_info& payload = newMsgSignal.payload();
+                            log("INFO: Payload:%s", payload.to_string().c_str());
                             if (!payload.target().is_all_zeros()) {
+                                log("DEBUG: ---------------");
                                 dht_get_immutable_item(payload.target(), payload.entries());
                             }
 
