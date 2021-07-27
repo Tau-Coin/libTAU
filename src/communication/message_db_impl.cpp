@@ -13,6 +13,13 @@
 namespace libTAU {
     namespace communication {
 
+        namespace {
+            // friend info key suffix
+            const std::string key_suffix_friend_info = "fi";
+            // message hash list key suffix
+            const std::string key_suffix_message_hash_list = "mhl";
+        }
+
         // table friends: public key
         bool message_db_impl::init() {
             std::string sql = "CREATE TABLE IF NOT EXISTS FRIENDS(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);";
@@ -86,6 +93,7 @@ namespace libTAU {
             std::string sKey;
             sKey.insert(sKey.end(), key.first.begin(), key.first.end());
             sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key_suffix_friend_info.begin(), key_suffix_friend_info.end());
 
             std::string value;
             leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), sKey, &value);
@@ -99,6 +107,7 @@ namespace libTAU {
             std::string sKey;
             sKey.insert(sKey.end(), key.first.begin(), key.first.end());
             sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key_suffix_friend_info.begin(), key_suffix_friend_info.end());
 
             std::string value(friend_info.begin(), friend_info.end());
 
@@ -110,6 +119,7 @@ namespace libTAU {
             std::string sKey;
             sKey.insert(sKey.end(), key.first.begin(), key.first.end());
             sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key_suffix_friend_info.begin(), key_suffix_friend_info.end());
 
             leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), sKey);
             return status.ok();
@@ -145,6 +155,7 @@ namespace libTAU {
             std::string sKey;
             sKey.insert(sKey.end(), key.first.begin(), key.first.end());
             sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
 
             std::string value;
             leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), sKey, &value);
@@ -157,6 +168,7 @@ namespace libTAU {
             std::string sKey;
             sKey.insert(sKey.end(), key.first.begin(), key.first.end());
             sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
 
             std::string value(encode.begin(), encode.end());
 
@@ -168,6 +180,7 @@ namespace libTAU {
             std::string sKey;
             sKey.insert(sKey.end(), key.first.begin(), key.first.end());
             sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
 
             leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), sKey);
             return status.ok();
