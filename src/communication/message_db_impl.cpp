@@ -125,9 +125,11 @@ namespace libTAU {
             return status.ok();
         }
 
-        communication::message message_db_impl::get_message(sha256_hash hash) {
+        communication::message message_db_impl::get_message(aux::bytes hash) {
+            std::string key(hash.begin(), hash.end());
+
             std::string value;
-            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
+            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
             aux::bytes buffer;
             buffer.insert(buffer.end(), value.begin(), value.end());
             return communication::message(&buffer);
@@ -143,8 +145,9 @@ namespace libTAU {
             return status.ok();
         }
 
-        bool message_db_impl::delete_message(sha256_hash hash) {
-            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), hash.to_string());
+        bool message_db_impl::delete_message(aux::bytes hash) {
+            std::string key(hash.begin(), hash.end());
+            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
             return status.ok();
         }
 
