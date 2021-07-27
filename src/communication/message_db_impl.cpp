@@ -136,7 +136,7 @@ namespace libTAU {
         }
 
         bool message_db_impl::save_message(communication::message msg) {
-            if (!msg.empty())
+            if (msg.empty())
                 return false;
 
             leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(),
