@@ -75,7 +75,7 @@ namespace libTAU::communication {
                     address_v6::bytes_type b;
                     memcpy(&b[0], ip.c_str(), b.size());
 
-                    addr = make_address_v6(ip);
+                    addr = make_address_v6(b);
                 }
 
                 // 4. port

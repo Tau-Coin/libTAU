@@ -140,6 +140,9 @@ namespace libTAU {
                 return false;
 
             std::string key = msg.sha256().to_string();
+            // 注意：rlp返回的aux::bytes转换成std::string()的时候，切勿多次调用rlp()，
+            // 即不要写成std::string(msg.rlp().begin(), msg.rlp().end())，
+            // 这样begin()和end()两个迭代器不在同一个对象上面，会造成内存错误
             auto encode = msg.rlp();
             std::string value(encode.begin(), encode.end());
 
