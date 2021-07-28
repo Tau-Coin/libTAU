@@ -34,9 +34,11 @@ namespace libTAU::communication {
 
                 // 3. ip
                 if (flag) {
-                    _s << e.addr().to_v4().to_bytes();
+                    address_v4::bytes_type b = e.addr().to_v4().to_bytes();
+                    _s << std::string(b.begin(), b.end());
                 } else {
-                    _s << e.addr().to_v6().to_bytes();
+                    address_v6::bytes_type b = e.addr().to_v6().to_bytes();
+                    _s << std::string(b.begin(), b.end());
                 }
 
                 // 4. port(2 bytes)
@@ -48,7 +50,7 @@ namespace libTAU::communication {
     }
 
     void immutable_data_info::populate(const aux::RLP &encode) {
-        auto size = encode.size();
+        auto size = encode.itemCount();
         if (size > 1) {
             auto target = encode[0].toString();
             m_target = sha256_hash(target.c_str());
@@ -65,8 +67,14 @@ namespace libTAU::communication {
                 auto ip = encode[i][2].toString();
                 address addr;
                 if (flag) {
-                    addr = make_address_v4(ip);
+                    address_v4::bytes_type b;
+                    memcpy(&b[0], ip.c_str(), b.size());
+
+                    addr = make_address_v4(b);
                 } else {
+                    address_v6::bytes_type b;
+                    memcpy(&b[0], ip.c_str(), b.size());
+
                     addr = make_address_v6(ip);
                 }
 
