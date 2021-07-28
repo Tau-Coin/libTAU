@@ -17,8 +17,7 @@ namespace libTAU { namespace communication {
 
     void new_msg_signal::streamRLP(aux::RLPStream &_s) const {
         _s.appendList(4);
-        _s << m_device_id << m_hash_prefix_bytes << m_timestamp;
-        m_payload.streamRLP(_s);
+        _s << m_device_id << m_hash_prefix_bytes << m_timestamp << m_payload.rlp();
     }
 
     void new_msg_signal::populate(const aux::RLP &_new_msg_signal) {
