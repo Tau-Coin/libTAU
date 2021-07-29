@@ -7,21 +7,35 @@ see LICENSE file.
 */
 
 #include "libTAU/communication/message.hpp"
+#include "libTAU/kademlia/item.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/entry.hpp"
 
 #include <utility>
 
 namespace libTAU {
     namespace communication {
 
+        namespace {
+            sha256_hash bencode_hash(aux::bytes rlp) {
+                std::string s;
+                s.insert(s.end(), rlp.begin(), rlp.end());
+                entry e = s;
+
+                std::string buffer;
+                // bencode要发布的mutable data
+                bencode(std::back_inserter(buffer), e);
+
+                return dht::item_target_id(buffer);
+            }
+        }
+
         message::message(aux::bytesConstRef _rlp) {
             if (!_rlp.empty()) {
                 aux::RLP const rlp(_rlp);
                 populate(rlp);
 
-                std::vector<char> buffer;
-                buffer.insert(buffer.end(), _rlp.begin(), _rlp.end());
-
-                m_hash = hasher256(buffer).final();
+                m_hash = bencode_hash(_rlp.toBytes());
             }
         }
 
@@ -31,11 +45,7 @@ namespace libTAU {
                          m_timestamp(mTimestamp), m_sender(std::move(mSender)), m_receiver(std::move(mReceiver)),
                          m_logic_msg_hash(std::move(mLogicMsgHash)), m_nonce(std::move(mNonce)), m_type(mType),
                          m_encrypted_content(std::move(mEncryptedContent)) {
-            auto data = rlp();
-            std::vector<char> buffer;
-            buffer.insert(buffer.end(), data.begin(), data.end());
-
-            m_hash = hasher256(buffer).final();
+            m_hash = bencode_hash(rlp());
         }
 
         void message::streamRLP(aux::RLPStream &_s) const {
