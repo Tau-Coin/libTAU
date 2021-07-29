@@ -348,7 +348,7 @@ namespace libTAU {
 		SET(dht_max_dht_items, 700, nullptr),
 		SET(dht_max_peers, 500, nullptr),
 		SET(dht_block_timeout, 5 * 60, nullptr),
-		SET(dht_block_ratelimit, 5, nullptr),
+		SET(dht_block_ratelimit, 500, nullptr),
 		SET(dht_item_lifetime, 0, nullptr),
 		SET(dht_sample_infohashes_interval, 21600, nullptr),
 		SET(dht_max_infohashes_sample_count, 20, nullptr),
