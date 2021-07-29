@@ -371,7 +371,7 @@ namespace libTAU {
                         if (diff < 0) {
                             updated = true;
                             insertFirst = false;
-                            message_list.insert((++it).base(), msg);
+                            message_list.insert(it.base(), msg);
                             break;
                         } else if (diff == 0) {
                             // 如果时间戳一样，寻找第一个哈希比我小的消息
@@ -382,7 +382,7 @@ namespace libTAU {
                                 if (reference_hash < msg_hash) {
                                     updated = true;
                                     insertFirst = false;
-                                    message_list.insert((++it).base(), msg);
+                                    message_list.insert(it.base(), msg);
                                     break;
                                 }
                             } else {
