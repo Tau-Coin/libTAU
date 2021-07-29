@@ -185,7 +185,7 @@ namespace libTAU {
 		SET(proxy_tracker_connections, true, nullptr),
 		SET(enable_ip_notifier, true, &session_impl::update_ip_notifier),
 		SET(dht_prefer_verified_node_ids, true, nullptr),
-		SET(dht_restrict_routing_ips, true, nullptr),
+		SET(dht_restrict_routing_ips, false, nullptr),
 		SET(dht_restrict_search_ips, true, nullptr),
 		SET(dht_extended_routing_table, true, nullptr),
 		SET(dht_aggressive_lookups, true, nullptr),
