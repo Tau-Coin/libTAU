@@ -472,7 +472,7 @@ namespace libTAU {
                 // 对方数组为source
                 const aux::bytes& source = hash_prefix_array;
                 // 本地消息数组为target
-                aux::bytes target(size);
+                aux::bytes target;
                 for (auto const &message: messages) {
                     target.push_back(message.sha256()[0]);
                 }
