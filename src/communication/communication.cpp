@@ -366,14 +366,14 @@ namespace libTAU {
                     bool insertFirst = true;
                     for (; it != message_list.rend(); ++it) {
                         message reference = *it;
-                        long diff = reference.timestamp() - msg.timestamp();
+//                        signed long diff = reference.timestamp() - msg.timestamp();
                         // 如果差值小于零，说明找到了比当前消息时间戳小的消息位置，将消息插入到目标位置后面一位
-                        if (diff < 0) {
+                        if (reference.timestamp() < msg.timestamp()) {
                             updated = true;
                             insertFirst = false;
                             message_list.insert(it.base(), msg);
                             break;
-                        } else if (diff == 0) {
+                        } else if (reference.timestamp() == msg.timestamp()) {
                             // 如果时间戳一样，寻找第一个哈希比我小的消息
                             auto reference_hash = reference.sha256();
                             auto msg_hash = msg.sha256();
