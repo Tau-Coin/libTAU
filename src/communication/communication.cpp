@@ -462,6 +462,7 @@ namespace libTAU {
                                                std::vector<sha256_hash> &confirmation_roots) {
             // 如果对方没有信息，则本地消息全为缺失消息
             if (hash_prefix_array.empty()) {
+                log("INFO: Hash prefix array is empty");
                 missing_messages.insert(missing_messages.end(), messages.begin(), messages.end());
                 return;
             }
@@ -479,10 +480,12 @@ namespace libTAU {
                 auto sourceLength = source.size();
                 auto targetLength = size;
 
+                log("INFO: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
                 // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
                 if (source == target) {
-                    for (auto const &message: messages) {
-                        confirmation_roots.push_back(message.sha256());
+                    for (auto const &msg: messages) {
+                        log("INFO: Confirm message hash[%s]", aux::toHex(msg.sha256().to_string()).c_str());
+                        confirmation_roots.push_back(msg.sha256());
                     }
                     return;
                 }
@@ -537,6 +540,7 @@ namespace libTAU {
                         if (source[i - 1] != target[j - 1]) {
                             missing_messages.push_back(messages[j - 1]);
                         } else {
+                            log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
                             confirmation_roots.push_back(messages[j - 1].sha256());
                         }
                         i--;
@@ -566,6 +570,7 @@ namespace libTAU {
                 // 找到距离为0可能仍然不够，可能有前缀相同的情况，这时dist[i][j]很多为0的情况，
                 // 因此，需要把剩余的加入confirmation root集合即可
                 for(; j > 0; j--) {
+                    log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
                     confirmation_roots.push_back(messages[j - 1].sha256());
                 }
 
@@ -797,9 +802,10 @@ namespace libTAU {
                                 // find out missing messages and confirmation root
                                 std::vector<message> missing_messages;
                                 std::vector<sha256_hash> confirmation_roots;
-                                find_best_solution(std::vector<message>(m_message_list_map[peer].begin(),
-                                                               m_message_list_map[peer].end()),
-                                                   onlineSignal.hash_prefix_bytes(),
+                                auto message_list = m_message_list_map[peer];
+                                std::vector<message> messages(message_list.begin(), message_list.end());
+                                log("INFO: Messages size:%zu", messages.size());
+                                find_best_solution(messages, onlineSignal.hash_prefix_bytes(),
                                                    missing_messages, confirmation_roots);
 
                                 if (!confirmation_roots.empty()) {
@@ -837,9 +843,10 @@ namespace libTAU {
                             // find out missing messages and confirmation root
                             std::vector<message> missing_messages;
                             std::vector<sha256_hash> confirmation_roots;
-                            find_best_solution(std::vector<message>(m_message_list_map[peer].begin(),
-                                                                    m_message_list_map[peer].end()),
-                                               newMsgSignal.hash_prefix_bytes(),
+                            auto message_list = m_message_list_map[peer];
+                            std::vector<message> messages(message_list.begin(), message_list.end());
+                            log("INFO: Messages size:%zu", messages.size());
+                            find_best_solution(messages,newMsgSignal.hash_prefix_bytes(),
                                                missing_messages, confirmation_roots);
 
                             if (!confirmation_roots.empty()) {
