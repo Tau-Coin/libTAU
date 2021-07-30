@@ -631,28 +631,40 @@ namespace libTAU {
             }
 
             immutable_data_info payload;
-            auto it = m_missing_messages[public_key].begin();
-            if (it != m_missing_messages[public_key].end()) {
-                log("INFO: Peer[%s] has no missing messages", aux::toHex(public_key).c_str());
-                message missing_message = *it;
-                m_missing_messages[public_key].erase(it);
+            auto missing_messages = m_missing_messages[public_key];
+            auto size = missing_messages.size();
+            if (size > 0) {
+                srand((unsigned)time(nullptr));
+                index = rand() % size;
 
-                if (!missing_message.empty()) {
-                    // post syncing message hash
-                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(public_key, missing_message.sha256(),time(nullptr));
-
-                    std::vector<dht::node_entry> entries;
-                    m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-                    auto msg_encode = missing_message.rlp();
-                    log("INFO: Put immutable message target[%s], entries[%zu], data[%s]",
-                        aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size(), aux::toHex(msg_encode).c_str());
-                    dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
-                                           entries, missing_message.sha256());
-
-                    payload = immutable_data_info(missing_message.sha256(), entries);
-                } else {
-                    log("INFO: Missing message is empty.");
+                auto it = missing_messages.begin();
+                for (int i = 0; i < index; i++) {
+                    ++it;
                 }
+
+                if (it != missing_messages.end()) {
+                    message missing_message = *it;
+                    m_missing_messages[public_key].erase(missing_message);
+
+                    if (!missing_message.empty()) {
+                        // post syncing message hash
+                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>(public_key, missing_message.sha256(),time(nullptr));
+
+                        std::vector<dht::node_entry> entries;
+                        m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
+                        auto msg_encode = missing_message.rlp();
+                        log("INFO: Put immutable message target[%s], entries[%zu], data[%s]",
+                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size(), aux::toHex(msg_encode).c_str());
+                        dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
+                                               entries, missing_message.sha256());
+
+                        payload = immutable_data_info(missing_message.sha256(), entries);
+                    } else {
+                        log("INFO: Missing message is empty.");
+                    }
+                }
+            } else {
+                log("INFO: Missing messages is empty.");
             }
 
             online_signal onlineSignal(m_device_id, hash_prefix_bytes, now_time, friend_info, payload);
@@ -677,24 +689,37 @@ namespace libTAU {
             }
 
             immutable_data_info payload;
-            auto it = m_missing_messages[peer].begin();
-            if (it != m_missing_messages[peer].end()) {
-                message missing_message = *it;
-                m_missing_messages[peer].erase(it);
+            auto missing_messages = m_missing_messages[peer];
+            auto size = missing_messages.size();
+            if (size > 0) {
+                srand((unsigned)time(nullptr));
+                auto index = rand() % size;
 
-                if (!missing_message.empty()) {
-                    // post syncing message hash
-                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, missing_message.sha256(), time(nullptr));
+                auto it = missing_messages.begin();
+                for (int i = 0; i < index; i++) {
+                    ++it;
+                }
 
-                    std::vector<dht::node_entry> entries;
-                    m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-                    auto msg_encode = missing_message.rlp();
-                    dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
-                                           entries, missing_message.sha256());
+                if (it != missing_messages.end()) {
+                    message missing_message = *it;
+                    m_missing_messages[peer].erase(missing_message);
 
-                    payload = immutable_data_info(missing_message.sha256(), entries);
-                } else {
-                    log("INFO: Missing message is empty.");
+                    if (!missing_message.empty()) {
+                        // post syncing message hash
+                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, missing_message.sha256(),time(nullptr));
+
+                        std::vector<dht::node_entry> entries;
+                        m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
+                        auto msg_encode = missing_message.rlp();
+                        log("INFO: Put immutable message target[%s], entries[%zu], data[%s]",
+                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size(), aux::toHex(msg_encode).c_str());
+                        dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
+                                               entries, missing_message.sha256());
+
+                        payload = immutable_data_info(missing_message.sha256(), entries);
+                    } else {
+                        log("INFO: Missing message is empty.");
+                    }
                 }
             } else {
                 log("INFO: Peer[%s] has no missing messages", aux::toHex(peer).c_str());

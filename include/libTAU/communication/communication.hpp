@@ -239,7 +239,7 @@ namespace libTAU {
             std::map<aux::bytes, std::list<message>> m_message_list_map;
 
             // missing messages (map:key->peer, value->missing message list)
-            std::map<aux::bytes, std::unordered_set<message, message_hasher>> m_missing_messages;
+            std::map<aux::bytes, std::set<message>> m_missing_messages;
         };
     }
 }
