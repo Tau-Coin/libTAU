@@ -815,7 +815,9 @@ namespace libTAU {
 
                                 log("INFO: Found missing message size %zu", missing_messages.size());
 
-                                m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
+                                if (m_missing_messages[peer].size() < communication_max_message_list_size) {
+                                    m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
+                                }
                             }
                         }
 
@@ -856,7 +858,9 @@ namespace libTAU {
 
                             log("INFO: Found missing message size %zu", missing_messages.size());
 
-                            m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
+                            if (m_missing_messages[peer].size() < communication_max_message_list_size) {
+                                m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
+                            }
                         }
 
                         break;

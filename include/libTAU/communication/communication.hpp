@@ -21,6 +21,7 @@ see LICENSE file.
 #include <vector>
 #include <memory>
 #include <list>
+#include <unordered_set>
 
 #include "libTAU/aux_/deadline_timer.hpp"
 #include "libTAU/aux_/alert_manager.hpp" // for alert_manager
@@ -238,7 +239,7 @@ namespace libTAU {
             std::map<aux::bytes, std::list<message>> m_message_list_map;
 
             // missing messages (map:key->peer, value->missing message list)
-            std::map<aux::bytes, std::set<message>> m_missing_messages;
+            std::map<aux::bytes, std::unordered_set<message, message_hasher>> m_missing_messages;
         };
     }
 }

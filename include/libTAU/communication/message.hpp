@@ -174,6 +174,14 @@ namespace libTAU {
             // sha256 hash
             sha256_hash m_hash;
         };
+
+        struct message_hasher
+        {
+            size_t operator()(const message &m) const noexcept
+            {
+                return std::hash<sha256_hash>{}(m.sha256());
+            }
+        };
     }
 }
 
