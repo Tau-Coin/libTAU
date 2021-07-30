@@ -2921,12 +2921,12 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("start to update device id: %s", device_id);
 #endif
-        span<char const> str_device_id(device_id, 64);
-		std::vector<char> vec_device_id;
-		vec_device_id.resize(32);
-        libTAU::aux::from_hex(str_device_id, vec_device_id.data());
+		std::vector<char> device_id_char;
+		device_id_char.resize(16);
+        span<char const> hex_device_id(device_id, 32);
+        libTAU::aux::from_hex(hex_device_id, device_id_char.data());
 
-		std::copy(vec_device_id.begin(), vec_device_id.end(), std::inserter(m_device_id, m_device_id.begin()));
+		std::copy(device_id_char.begin(), device_id_char.end(), std::inserter(m_device_id, m_device_id.begin()));
 
 	}
 
@@ -2938,8 +2938,8 @@ namespace {
 		/*
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		*/
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
+		*/
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("start to  create directory for storing db data kvdb dir: %s, sqldb dir: %s", 
