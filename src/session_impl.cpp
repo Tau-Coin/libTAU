@@ -1635,21 +1635,23 @@ namespace {
 			try
 #endif
 		{
-			std::shared_ptr<listen_socket_t> s = setup_listener(ep, ec);
+			if(ep.addr.is_v4()) {
+				std::shared_ptr<listen_socket_t> s = setup_listener(ep, ec);
 
-			if (!ec && (s->sock || s->udp_sock))
-			{
-				m_listen_sockets.emplace_back(s);
-
-				if (m_dht
-					&& s->ssl != transport::ssl
-					&& !(s->flags & listen_socket_t::local_network))
+				if (!ec && (s->sock || s->udp_sock))
 				{
-					m_dht->new_socket(m_listen_sockets.back());
-				}
+					m_listen_sockets.emplace_back(s);
 
-				TORRENT_ASSERT(bool(s->flags & listen_socket_t::accept_incoming) == bool(s->sock));
-				if (s->sock) async_accept(s->sock, s->ssl);
+					if (m_dht
+						&& s->ssl != transport::ssl
+						&& !(s->flags & listen_socket_t::local_network))
+					{
+						m_dht->new_socket(m_listen_sockets.back());
+					}
+
+					TORRENT_ASSERT(bool(s->flags & listen_socket_t::accept_incoming) == bool(s->sock));
+					if (s->sock) async_accept(s->sock, s->ssl);
+				}
 			}
 		}
 #ifndef BOOST_NO_EXCEPTIONS
@@ -2932,14 +2934,14 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
+		/*
         std::string home_dir = boost::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		/*
+		*/
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
-		*/
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("start to  create directory for storing db data kvdb dir: %s, sqldb dir: %s", 
