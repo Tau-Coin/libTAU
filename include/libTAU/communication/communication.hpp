@@ -200,6 +200,9 @@ namespace libTAU {
 
             void refresh_timeout(error_code const& e);
 
+            // device id
+            aux::bytes m_device_id;
+
             // io context
             io_context& m_ioc;
 
@@ -216,9 +219,6 @@ namespace libTAU {
             std::shared_ptr<message_db_interface> m_message_db;
 
             bool m_stop = false;
-
-            // device id
-            aux::bytes m_device_id;
 
             // all friends
             std::vector<aux::bytes> m_friends;
