@@ -354,7 +354,14 @@ namespace libTAU::dht {
 			f(it, authoritative);
 		}
 		else if (authoritative)
+		{
 			f(it, authoritative);
+		}
+		else
+		{
+			// anyway return the mutable item
+			f(it, authoritative);
+		}
 	}
 
 	struct put_item_ctx
