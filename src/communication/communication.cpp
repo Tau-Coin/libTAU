@@ -257,7 +257,10 @@ namespace libTAU {
                 auto index = rand() % 10;
 
                 // 检查chatting friend设置时间，如果超过30分钟，则重置
-                if (time(nullptr) - m_chatting_friend.second > communication_max_chatting_time) {
+                time_t current_time = time(nullptr);
+                log("INFO: Current time:%ld, chatting time:%ld, diff:%ld", current_time, m_chatting_friend.second,
+                    current_time - m_chatting_friend.second);
+                if (current_time - m_chatting_friend.second > communication_max_chatting_time) {
                     unset_chatting_friend();
                 }
 
@@ -306,20 +309,20 @@ namespace libTAU {
 
         void communication::refresh_timeout(error_code const& e)
         {
-            try {
-                if (!m_stop) {
-                    // 随机挑选一个朋友put/get
-                    aux::bytes peer = select_friend_randomly();
-                    if (!peer.empty()) {
-                        log("INFO: Select peer:%s", aux::toHex(peer).c_str());
-                        request_signal(peer);
-                        publish_signal(peer);
-                    }
+            if (e || m_stop) return;
 
-                    m_refresh_timer.expires_after(milliseconds(m_refresh_time));
-                    m_refresh_timer.async_wait(
-                            std::bind(&communication::refresh_timeout, self(), _1));
+            try {
+                // 随机挑选一个朋友put/get
+                aux::bytes peer = select_friend_randomly();
+                if (!peer.empty()) {
+                    log("INFO: Select peer:%s", aux::toHex(peer).c_str());
+                    request_signal(peer);
+                    publish_signal(peer);
                 }
+
+                m_refresh_timer.expires_after(milliseconds(m_refresh_time));
+                m_refresh_timer.async_wait(
+                        std::bind(&communication::refresh_timeout, self(), _1));
             } catch (std::exception &e) {
                 log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             }
@@ -440,7 +443,7 @@ namespace libTAU {
              * @param del 删除的代价
              * @return 0:替换，1：插入，2：删除
              */
-            int optCode(int swap, int insert, int del) {
+            size_t optCode(size_t swap, size_t insert, size_t del) {
                 // 如果替换编辑距离最少，则返回0标识，
                 // 即使三种操作距离一样，优先选择替换操作
                 if (swap <= insert && swap <= del) {
@@ -477,8 +480,8 @@ namespace libTAU {
                     target.push_back(message.sha256()[0]);
                 }
 
-                auto sourceLength = source.size();
-                auto targetLength = size;
+                const size_t sourceLength = source.size();
+                const size_t targetLength = size;
 
                 log("INFO: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
                 // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
@@ -491,12 +494,12 @@ namespace libTAU {
                 }
 
                 // 状态转移矩阵
-                int dist[sourceLength + 1][targetLength + 1];
+                size_t dist[sourceLength + 1][targetLength + 1];
                 // 操作矩阵
-                int operations[sourceLength + 1][targetLength + 1];
+                size_t operations[sourceLength + 1][targetLength + 1];
 
                 // 初始化，[i, 0]转换到空，需要编辑的距离，也即删除的数量
-                for (int i = 0; i < sourceLength + 1; i++) {
+                for (size_t i = 0; i < sourceLength + 1; i++) {
                     dist[i][0] = i;
                     if (i > 0) {
                         operations[i][0] = 2;
@@ -504,7 +507,7 @@ namespace libTAU {
                 }
 
                 // 初始化，空转换到[0, j]，需要编辑的距离，也即增加的数量
-                for (int j = 0; j < targetLength + 1; j++) {
+                for (size_t j = 0; j < targetLength + 1; j++) {
                     dist[0][j] = j;
                     if (j > 0) {
                         operations[0][j] = 1;
@@ -512,16 +515,16 @@ namespace libTAU {
                 }
 
                 // 开始填充状态转移矩阵，第0位为空，所以从1开始有数据，[i, j]为当前子串最小编辑操作
-                for (int i = 1; i < sourceLength + 1; i++) {
-                    for (int j = 1; j < targetLength + 1; j++) {
+                for (size_t i = 1; i < sourceLength + 1; i++) {
+                    for (size_t j = 1; j < targetLength + 1; j++) {
                         // 第i个数据，实际的index需要i-1，替换的代价，相同无需替换，代价为0，不同代价为1
-                        int cost = source[i - 1] == target[j - 1] ? 0 : 1;
+                        size_t cost = source[i - 1] == target[j - 1] ? 0 : 1;
                         // [i, j]在[i, j-1]的基础上，最小的编辑操作为增加1
-                        int insert = dist[i][j - 1] + 1;
+                        size_t insert = dist[i][j - 1] + 1;
                         // [i, j]在[i-1, j]的基础上，最小的编辑操作为删除1
-                        int del = dist[i - 1][j] + 1;
+                        size_t del = dist[i - 1][j] + 1;
                         // [i, j]在[i-1, j-1]的基础上，最大的编辑操作为1次替换
-                        int swap = dist[i - 1][j - 1] + cost;
+                        size_t swap = dist[i - 1][j - 1] + cost;
 
                         // 在[i-1, j]， [i, j-1]， [i-1, j-1]三种转换到[i, j]的最小操作中，取最小值
                         dist[i][j] = std::min(std::min(insert, del), swap);
@@ -638,7 +641,7 @@ namespace libTAU {
                 index = rand() % size;
 
                 auto it = missing_messages.begin();
-                for (int i = 0; i < index; i++) {
+                for (size_t i = 0; i < index; i++) {
                     ++it;
                 }
 
@@ -696,7 +699,7 @@ namespace libTAU {
                 auto index = rand() % size;
 
                 auto it = missing_messages.begin();
-                for (int i = 0; i < index; i++) {
+                for (size_t i = 0; i < index; i++) {
                     ++it;
                 }
 

@@ -28,7 +28,12 @@
 #include <functional>
 #include <string>
 #include <chrono>
+#pragma warning(push)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <boost/multiprecision/cpp_int.hpp>
+#pragma warning(pop)
+#pragma GCC diagnostic pop
 #include "libTAU/aux_/vector_ref.h"
 
 namespace libTAU { namespace aux {
