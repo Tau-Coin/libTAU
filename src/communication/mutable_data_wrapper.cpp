@@ -17,6 +17,22 @@ namespace libTAU { namespace communication {
             populate(rlp);
         }
 
+        mutable_data_wrapper::mutable_data_wrapper(const entry &e) {
+
+        }
+
+        entry mutable_data_wrapper::get_entry() const {
+            entry e(entry::dictionary_t);
+            // timestamp
+            e["ts"] = entry(m_timestamp);
+            // type
+            e["ty"] = entry(m_type);
+            // payload
+            e["v"] = m_payload1;
+
+            return e;
+        }
+
         void mutable_data_wrapper::streamRLP(aux::RLPStream &_s) const {
             _s.appendList(3);
             _s << m_timestamp << static_cast<uint8_t>(m_type) << m_payload;

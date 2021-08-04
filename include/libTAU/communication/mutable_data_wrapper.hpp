@@ -16,6 +16,7 @@ see LICENSE file.
 #include <utility>
 #include <ostream>
 #include "libTAU/aux_/export.hpp"
+#include "libTAU/entry.hpp"
 
 
 namespace libTAU {
@@ -39,6 +40,9 @@ namespace libTAU {
             // @param _rlp rlp encode
             explicit mutable_data_wrapper(aux::bytesConstRef _rlp);
 
+            // @param Construct with entry
+            explicit mutable_data_wrapper(const entry& e);
+
             // @param _rlp rlp encode
             explicit mutable_data_wrapper(aux::bytes const& _rlp): mutable_data_wrapper(&_rlp) {}
 
@@ -60,6 +64,9 @@ namespace libTAU {
             // @returns the RLP serialisation of this mutable data wrapper
             aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
 
+            // @returns the corresponding entry
+            entry get_entry() const;
+
             // @returns a pretty-printed string representation of message structure
             std::string to_string() const;
 
@@ -77,6 +84,7 @@ namespace libTAU {
 
             // payload
             aux::bytes m_payload;
+            entry m_payload1;
         };
     }
 }

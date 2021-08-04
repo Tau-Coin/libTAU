@@ -29,6 +29,9 @@ namespace libTAU {
             // @param _rlp rlp encode ref
             explicit online_signal(aux::bytesConstRef _rlp);
 
+            // @param Construct with entry
+            explicit online_signal(const entry& e);
+
             // @param _rlp rlp encode
             explicit online_signal(aux::bytes const& _rlp): online_signal(&_rlp) {}
 
@@ -60,6 +63,9 @@ namespace libTAU {
             // @returns the RLP serialisation of this message
             aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
 
+            // @returns the corresponding entry
+            entry get_entry() const;
+
             // @returns a pretty-printed string representation of message structure
             std::string to_string() const;
 
@@ -68,6 +74,9 @@ namespace libTAU {
         private:
             // Construct online signal object from rlp serialisation
             void populate(aux::RLP const& _online_signal);
+
+            // populate online signal data from entry
+            void populate(const entry& e);
 
             // device id
             aux::bytes m_device_id;

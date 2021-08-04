@@ -16,6 +16,22 @@ namespace libTAU::communication {
         }
     }
 
+    immutable_data_info::immutable_data_info(const entry& e) {
+
+    }
+
+    entry immutable_data_info::get_entry() const {
+        entry e(entry::dictionary_t);
+        if (!m_target.is_all_zeros() && !m_entries.empty()) {
+            // target
+            e["t"] = m_target.to_string();
+            // node entries
+//            e["n"] = "";
+        }
+
+        return e;
+    }
+
     void immutable_data_info::streamRLP(aux::RLPStream &_s) const {
         if (!m_target.is_all_zeros() && !m_entries.empty()) {
             auto size = m_entries.size();

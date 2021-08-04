@@ -17,6 +17,7 @@ see LICENSE file.
 #include <libTAU/aux_/common.h>
 #include <libTAU/aux_/rlp.h>
 #include "libTAU/sha1_hash.hpp"
+#include "libTAU/entry.hpp"
 
 namespace libTAU::communication {
 
@@ -26,6 +27,9 @@ namespace libTAU::communication {
 
         // @param _rlp rlp encode ref
         explicit immutable_data_info(aux::bytesConstRef _rlp);
+
+        // @param Construct with entry
+        explicit immutable_data_info(const entry& e);
 
         // @param _rlp rlp encode
         explicit immutable_data_info(aux::bytes const& _rlp): immutable_data_info(&_rlp) {}
@@ -45,6 +49,9 @@ namespace libTAU::communication {
 
         // @returns the RLP serialisation of this message
         aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+
+        // @returns the corresponding entry
+        entry get_entry() const;
 
         // @returns a pretty-printed string representation of message structure
         std::string to_string() const;

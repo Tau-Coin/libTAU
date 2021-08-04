@@ -8,11 +8,29 @@ see LICENSE file.
 
 #include "libTAU/communication/new_msg_signal.hpp"
 
-namespace libTAU { namespace communication {
+namespace libTAU::communication {
 
     new_msg_signal::new_msg_signal(aux::bytesConstRef _rlp) {
         aux::RLP const rlp(_rlp);
         populate(rlp);
+    }
+
+    new_msg_signal::new_msg_signal(const entry &e) {
+
+    }
+
+    entry new_msg_signal::get_entry() const {
+        entry e(entry::dictionary_t);
+        // device id
+        e["d"] = entry(std::string(m_device_id.begin(), m_device_id.end()));
+        // hash prefix bytes
+        e["h"] = entry(std::string(m_hash_prefix_bytes.begin(), m_hash_prefix_bytes.end()));
+        // timestamp
+        e["t"] = entry(m_timestamp);
+        // payload
+        e["v"] = m_payload.get_entry();
+
+        return e;
     }
 
     void new_msg_signal::streamRLP(aux::RLPStream &_s) const {
@@ -38,4 +56,4 @@ namespace libTAU { namespace communication {
            << " m_timestamp: " << signal.m_timestamp << " m_payload: " << signal.m_payload;
         return os;
     }
-}}
+}

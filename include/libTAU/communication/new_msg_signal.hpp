@@ -31,6 +31,9 @@ namespace libTAU {
             // @param _rlp rlp encode
             explicit new_msg_signal(aux::bytesConstRef _rlp);
 
+            // @param Construct with entry
+            explicit new_msg_signal(const entry& e);
+
             // @param _rlp rlp encode
             explicit new_msg_signal(aux::bytes const& _rlp): new_msg_signal(&_rlp) {}
 
@@ -56,6 +59,9 @@ namespace libTAU {
 
             // @returns the RLP serialisation of this new message signal
             aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+
+            // @returns the corresponding entry
+            entry get_entry() const;
 
             // @returns a pretty-printed string representation of message structure
             std::string to_string() const;

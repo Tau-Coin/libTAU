@@ -15,9 +15,36 @@ namespace libTAU { namespace communication {
             populate(rlp);
         }
 
+        online_signal::online_signal(const entry &e) {
+            populate(e);
+        }
+
+        entry online_signal::get_entry() const {
+            entry e(entry::dictionary_t);
+            // device id
+            e["d"] = entry(std::string(m_device_id.begin(), m_device_id.end()));
+            // hash prefix bytes
+            e["h"] = entry(std::string(m_hash_prefix_bytes.begin(), m_hash_prefix_bytes.end()));
+            // timestamp
+            e["t"] = entry(m_timestamp);
+            // friend info
+            e["f"] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
+            // payload
+            e["v"] = m_payload.get_entry();
+
+            return e;
+        }
+
         void online_signal::streamRLP(aux::RLPStream &_s) const {
             _s.appendList(5);
             _s << m_device_id << m_hash_prefix_bytes << m_timestamp << m_friend_info <<  m_payload.rlp();
+        }
+
+        void online_signal::populate(const entry &e) {
+//            if (entry* i = e.find_key("t"))
+//            {
+//                m_timestamp = i->integer();
+//            }
         }
 
         void online_signal::populate(const aux::RLP &_online_signal) {
