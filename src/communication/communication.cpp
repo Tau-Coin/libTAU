@@ -767,9 +767,9 @@ namespace libTAU {
             // construct mutable data wrapper from entry
             if (!i.empty()) {
 //                aux::vector_ref<aux::ibyte> ref((std::string &) i.value().string());
-                aux::bytes wrapper_rlp;
-                wrapper_rlp.insert(wrapper_rlp.end(), i.value().string().begin(), i.value().string().end());
-                mutable_data_wrapper data(wrapper_rlp);
+//                aux::bytes wrapper_rlp;
+//                wrapper_rlp.insert(wrapper_rlp.end(), i.value().string().begin(), i.value().string().end());
+                mutable_data_wrapper data(i.value());
                 log("INFO: Mutable data wrapper:[%s]", data.to_string().c_str());
 
                 auto now_time = time(nullptr);
@@ -922,7 +922,7 @@ namespace libTAU {
                     , std::string const& salt
                     , std::array<char, 32> const& pk
                     , std::array<char, 64> const& sk
-                    , std::string const& data)
+                    , entry const& data)
             {
                 using lt::dht::sign_mutable_item;
 
@@ -975,7 +975,7 @@ namespace libTAU {
         }
 
         void communication::publish_signal(const aux::bytes &peer) {
-            std::string data;
+            entry data;
             dht::public_key * pk = m_ses.pubkey();
             dht::secret_key * sk = m_ses.serkey();
 
@@ -988,19 +988,19 @@ namespace libTAU {
             if (peer == public_key) {
                 // publish online signal on XX channel
                 online_signal onlineSignal = make_online_signal();
-                mutable_data_wrapper wrapper(time(nullptr), ONLINE_SIGNAL, onlineSignal.rlp());
+                mutable_data_wrapper wrapper(time(nullptr), ONLINE_SIGNAL, onlineSignal.get_entry());
                 log("INFO: Publish online signal:%s", wrapper.to_string().c_str());
-                data = aux::asString(wrapper.rlp());
+                data = wrapper.get_entry();
             } else {
                 // publish new message signal on XY channel
                 new_msg_signal newMsgSignal = make_new_message_signal(peer);
-                mutable_data_wrapper wrapper(time(nullptr), NEW_MSG_SIGNAL, newMsgSignal.rlp());
+                mutable_data_wrapper wrapper(time(nullptr), NEW_MSG_SIGNAL, newMsgSignal.get_entry());
                 log("INFO: Publish new message signal:%s", wrapper.to_string().c_str());
-                data = aux::asString(wrapper.rlp());
+                data = wrapper.get_entry();
             }
 
-            log("INFO: Put mutable data: peer[%s], salt[%s], data[%s]", aux::toHex(pk->bytes).c_str(),
-                aux::toHex(salt).c_str(), aux::toHex(data).c_str());
+//            log("INFO: Put mutable data: peer[%s], salt[%s], data[%s]", aux::toHex(pk->bytes).c_str(),
+//                aux::toHex(salt).c_str(), aux::toHex(data).c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
                     , pk->bytes, sk->bytes, data), salt);

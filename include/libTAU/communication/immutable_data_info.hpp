@@ -26,13 +26,13 @@ namespace libTAU::communication {
         immutable_data_info() = default;
 
         // @param _rlp rlp encode ref
-        explicit immutable_data_info(aux::bytesConstRef _rlp);
+//        explicit immutable_data_info(aux::bytesConstRef _rlp);
 
         // @param Construct with entry
         explicit immutable_data_info(const entry& e);
 
         // @param _rlp rlp encode
-        explicit immutable_data_info(aux::bytes const& _rlp): immutable_data_info(&_rlp) {}
+//        explicit immutable_data_info(aux::bytes const& _rlp): immutable_data_info(&_rlp) {}
 
         // construct online signal
         immutable_data_info(sha256_hash target, std::vector<dht::node_entry> entries) :
@@ -45,10 +45,10 @@ namespace libTAU::communication {
         const std::vector<dht::node_entry> &entries() const { return m_entries; }
 
         // Serialises this online signal to an RLPStream
-        void streamRLP(aux::RLPStream& _s) const;
+//        void streamRLP(aux::RLPStream& _s) const;
 
         // @returns the RLP serialisation of this message
-        aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+//        aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
 
         // @returns the corresponding entry
         entry get_entry() const;
@@ -60,7 +60,10 @@ namespace libTAU::communication {
 
     private:
         // Construct immutable data info object from rlp serialisation
-        void populate(aux::RLP const& encode);
+//        void populate(aux::RLP const& encode);
+
+        // populate immutable data info from entry
+        void populate(const entry& e);
 
         sha256_hash m_target;
 

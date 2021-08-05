@@ -10,10 +10,10 @@ see LICENSE file.
 
 namespace libTAU { namespace communication {
 
-        online_signal::online_signal(aux::bytesConstRef _rlp) {
-            aux::RLP const rlp(_rlp);
-            populate(rlp);
-        }
+//        online_signal::online_signal(aux::bytesConstRef _rlp) {
+//            aux::RLP const rlp(_rlp);
+//            populate(rlp);
+//        }
 
         online_signal::online_signal(const entry &e) {
             populate(e);
@@ -35,25 +35,49 @@ namespace libTAU { namespace communication {
             return e;
         }
 
-        void online_signal::streamRLP(aux::RLPStream &_s) const {
-            _s.appendList(5);
-            _s << m_device_id << m_hash_prefix_bytes << m_timestamp << m_friend_info <<  m_payload.rlp();
-        }
+//        void online_signal::streamRLP(aux::RLPStream &_s) const {
+//            _s.appendList(5);
+//            _s << m_device_id << m_hash_prefix_bytes << m_timestamp << m_friend_info <<  m_payload.rlp();
+//        }
 
         void online_signal::populate(const entry &e) {
-//            if (entry* i = e.find_key("t"))
-//            {
-//                m_timestamp = i->integer();
-//            }
+            // device id
+            if (auto* i = const_cast<entry *>(e.find_key("d")))
+            {
+                std::string device_id = i->string();
+                m_device_id = aux::bytes(device_id.begin(), device_id.end());
+            }
+            // hash prefix bytes
+            if (auto* i = const_cast<entry *>(e.find_key("h")))
+            {
+                std::string hash_prefix_array = i->string();
+                m_hash_prefix_bytes = aux::bytes(hash_prefix_array.begin(), hash_prefix_array.end());
+            }
+            // timestamp
+            if (auto* i = const_cast<entry *>(e.find_key("t")))
+            {
+                m_timestamp = i->integer();
+            }
+            // friend info
+            if (auto* i = const_cast<entry *>(e.find_key("f")))
+            {
+                std::string friend_info = i->string();
+                m_friend_info = aux::bytes(friend_info.begin(), friend_info.end());
+            }
+            // payload
+            if (auto* i = const_cast<entry *>(e.find_key("v")))
+            {
+                m_payload = immutable_data_info(*i);
+            }
         }
 
-        void online_signal::populate(const aux::RLP &_online_signal) {
-            m_device_id = _online_signal[0].toBytes();
-            m_hash_prefix_bytes = _online_signal[1].toBytes();
-            m_timestamp = _online_signal[2].toInt<uint32_t>();
-            m_friend_info = _online_signal[3].toBytes();
-            m_payload = immutable_data_info(_online_signal[4].toBytes());
-        }
+//        void online_signal::populate(const aux::RLP &_online_signal) {
+//            m_device_id = _online_signal[0].toBytes();
+//            m_hash_prefix_bytes = _online_signal[1].toBytes();
+//            m_timestamp = _online_signal[2].toInt<uint32_t>();
+//            m_friend_info = _online_signal[3].toBytes();
+//            m_payload = immutable_data_info(_online_signal[4].toBytes());
+//        }
 
         std::string online_signal::to_string() const {
             std::ostringstream os;

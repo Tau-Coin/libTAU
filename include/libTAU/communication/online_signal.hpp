@@ -27,13 +27,13 @@ namespace libTAU {
         struct TORRENT_EXPORT online_signal {
 
             // @param _rlp rlp encode ref
-            explicit online_signal(aux::bytesConstRef _rlp);
+//            explicit online_signal(aux::bytesConstRef _rlp);
 
             // @param Construct with entry
             explicit online_signal(const entry& e);
 
             // @param _rlp rlp encode
-            explicit online_signal(aux::bytes const& _rlp): online_signal(&_rlp) {}
+//            explicit online_signal(aux::bytes const& _rlp): online_signal(&_rlp) {}
 
             // construct online signal
             online_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp,
@@ -58,10 +58,10 @@ namespace libTAU {
             const immutable_data_info &payload() const { return m_payload; }
 
             // Serialises this online signal to an RLPStream
-            void streamRLP(aux::RLPStream& _s) const;
+//            void streamRLP(aux::RLPStream& _s) const;
 
             // @returns the RLP serialisation of this message
-            aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+//            aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
 
             // @returns the corresponding entry
             entry get_entry() const;
@@ -73,7 +73,7 @@ namespace libTAU {
 
         private:
             // Construct online signal object from rlp serialisation
-            void populate(aux::RLP const& _online_signal);
+//            void populate(aux::RLP const& _online_signal);
 
             // populate online signal data from entry
             void populate(const entry& e);

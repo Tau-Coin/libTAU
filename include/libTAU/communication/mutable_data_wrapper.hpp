@@ -23,8 +23,6 @@ namespace libTAU {
     namespace communication {
 
         enum mutable_data_type {
-            MESSAGE,
-            MESSAGE_CONTAINER,
             ONLINE_SIGNAL,
             NEW_MSG_SIGNAL,
             UNKNOWN
@@ -38,15 +36,18 @@ namespace libTAU {
         public:
 
             // @param _rlp rlp encode
-            explicit mutable_data_wrapper(aux::bytesConstRef _rlp);
+//            explicit mutable_data_wrapper(aux::bytesConstRef _rlp);
 
             // @param Construct with entry
             explicit mutable_data_wrapper(const entry& e);
 
             // @param _rlp rlp encode
-            explicit mutable_data_wrapper(aux::bytes const& _rlp): mutable_data_wrapper(&_rlp) {}
+//            explicit mutable_data_wrapper(aux::bytes const& _rlp): mutable_data_wrapper(&_rlp) {}
 
-            mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, aux::bytes mPayload)
+//            mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, aux::bytes mPayload)
+//                    : m_timestamp(mTimestamp), m_type(mType), m_payload(std::move(mPayload)) {}
+
+            mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, entry mPayload)
                     : m_timestamp(mTimestamp), m_type(mType), m_payload(std::move(mPayload)) {}
 
             // @returns timestamp
@@ -56,13 +57,13 @@ namespace libTAU {
             mutable_data_type type() const { return m_type; }
 
             // @returns payload
-            aux::bytes payload() const { return m_payload; }
+            entry payload() const { return m_payload; }
 
             // Serialises this mutable data wrapper to an RLPStream
-            void streamRLP(aux::RLPStream& _s) const;
+//            void streamRLP(aux::RLPStream& _s) const;
 
             // @returns the RLP serialisation of this mutable data wrapper
-            aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+//            aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
 
             // @returns the corresponding entry
             entry get_entry() const;
@@ -74,7 +75,10 @@ namespace libTAU {
 
         private:
             // Construct mutable data wrapper object from rlp serialisation
-            void populate(aux::RLP const& _mutable_data_wrapper);
+//            void populate(aux::RLP const& _mutable_data_wrapper);
+
+            // populate wrapper data from entry
+            void populate(const entry& e);
 
             // mutable data timestamp
             uint32_t m_timestamp;
@@ -83,8 +87,8 @@ namespace libTAU {
             mutable_data_type m_type;
 
             // payload
-            aux::bytes m_payload;
-            entry m_payload1;
+//            aux::bytes m_payload;
+            entry m_payload;
         };
     }
 }
