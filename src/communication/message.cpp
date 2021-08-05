@@ -47,17 +47,8 @@ namespace libTAU {
                 m_timestamp = i->integer();
             }
 
-            std::string buffer;
-            // bencode要发布的mutable data
-            bencode(std::back_inserter(buffer), m_entry);
-            m_hash = dht::item_target_id(buffer);
-        }
-
-        size_t message::bencode_size() const {
-            std::string buffer;
-            // bencode要发布的mutable data
-            bencode(std::back_inserter(buffer), m_entry);
-            return buffer.size();
+            bencode(std::back_inserter(m_encode), m_entry);
+            m_hash = dht::item_target_id(m_encode);
         }
 
         entry message::get_entry() const {
@@ -100,7 +91,9 @@ namespace libTAU {
         }
 
         std::ostream &operator<<(std::ostream &os, const message &message) {
-            os << "m_timestamp: " << message.m_timestamp;
+            os << "message hash: " << aux::toHex(message.m_hash.to_string()) << " message: "
+            << message.m_entry.to_string(true);
+
             return os;
         }
 //        std::ostream &operator<<(std::ostream &os, const message &message) {

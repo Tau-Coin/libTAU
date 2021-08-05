@@ -239,7 +239,7 @@ namespace libTAU {
         }
 
         bool communication::validate_message(const message& msg) {
-            if (msg.bencode_size() > 1000) {
+            if (msg.encode().size() > 1000) {
                 log("ERROR: Message is oversize!");
                 return false;
             }

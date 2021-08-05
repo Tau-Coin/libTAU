@@ -130,9 +130,9 @@ namespace libTAU {
 
             std::string value;
             leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
-            aux::bytes buffer;
-            buffer.insert(buffer.end(), value.begin(), value.end());
-            return communication::message(&buffer);
+//            aux::bytes buffer;
+//            buffer.insert(buffer.end(), value.begin(), value.end());
+            return communication::message(value);
         }
 
         bool message_db_impl::save_message(const communication::message& msg) {
@@ -143,10 +143,10 @@ namespace libTAU {
             // 注意：rlp返回的aux::bytes转换成std::string()的时候，切勿多次调用rlp()，
             // 即不要写成std::string(msg.rlp().begin(), msg.rlp().end())，
             // 这样begin()和end()两个迭代器不在同一个对象上面，会造成内存错误
-            auto encode = msg.rlp();
-            std::string value(encode.begin(), encode.end());
+//            auto encode = msg.rlp();
+//            std::string value(encode.begin(), encode.end());
 
-            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, value);
+            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, msg.encode());
             return status.ok();
         }
 

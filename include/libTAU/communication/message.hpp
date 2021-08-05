@@ -17,6 +17,8 @@ see LICENSE file.
 #include <libTAU/aux_/rlp.h>
 #include <ostream>
 #include "libTAU/entry.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/bdecode.hpp"
 
 namespace libTAU {
     namespace communication {
@@ -30,14 +32,17 @@ namespace libTAU {
             // @param Construct with entry
             explicit message(entry e);
 
+            // @param Construct with bencode
+            explicit message(std::string encode): message(bdecode(encode)) {}
+
             // @returns message timestamp
             uint32_t timestamp() const { return m_timestamp; }
 
             // @returns the corresponding entry
             entry get_entry() const;
 
-            // @return message bencode size
-            size_t bencode_size() const;
+            // @returns the message bencode
+            std::string encode() const { return m_encode; }
 
             // @returns the SHA256 hash of the RLP serialisation of this message
             sha256_hash sha256() const { return m_hash; }
@@ -79,14 +84,11 @@ namespace libTAU {
             // message timestamp
             uint32_t m_timestamp{};
 
-            // message sender
-            aux::bytes m_sender;
-
-            // message receiver
-            aux::bytes m_receiver;
-
             // message entry
             entry m_entry;
+
+            // encode
+            std::string m_encode;
 
             // sha256 hash
             sha256_hash m_hash;
