@@ -16,25 +16,10 @@ see LICENSE file.
 #include <libTAU/aux_/common.h>
 #include <libTAU/aux_/rlp.h>
 #include <ostream>
+#include "libTAU/entry.hpp"
 
 namespace libTAU {
     namespace communication {
-
-        enum message_version {
-            // current version
-            VERSION_1,
-            // unsupported version
-            UNSUPPORTED_VERSION
-        };
-
-        enum message_type {
-            // message type is text
-            TEXT,
-            // message type is picture
-            PICTURE,
-            // unsupported message type
-            UNSUPPORTED_TYPE
-        };
 
         // The ``message`` class shows message struct
         class TORRENT_EXPORT message {
@@ -42,45 +27,17 @@ namespace libTAU {
         public:
             message() = default;
 
-            // @param _rlp rlp encode
-            explicit message(aux::bytesConstRef _rlp);
-
-            // @param _rlp rlp encode
-            explicit message(aux::bytes const& _rlp): message(&_rlp) {}
-
-            message(message_version mVersion, uint32_t mTimestamp, aux::bytes mSender,
-                    aux::bytes mReceiver, aux::bytes mLogicMsgHash, aux::bigint mNonce,
-                    message_type mType, aux::bytes mEncryptedContent);
-
-            // @returns message version
-            message_version version() const { return m_version; }
+            // @param Construct with entry
+            explicit message(entry e);
 
             // @returns message timestamp
             uint32_t timestamp() const { return m_timestamp; }
 
-            // @returns message sender
-            const aux::bytes &sender() const { return m_sender; }
+            // @returns the corresponding entry
+            entry get_entry() const;
 
-            // @returns message receiver
-            const aux::bytes &receiver() const { return m_receiver; }
-
-            // @returns message logic msg hash
-            const aux::bytes &logic_msg_hash() const { return m_logic_msg_hash; }
-
-            // @returns message nonce
-            const aux::bigint &nonce() const { return m_nonce; }
-
-            // @returns message type
-            message_type type() const { return m_type; }
-
-            // @returns encrypted content
-            const aux::bytes &encrypted_content() const { return m_encrypted_content; }
-
-            // Serialises this message to an RLPStream
-            void streamRLP(aux::RLPStream& _s) const;
-
-            // @returns the RLP serialisation of this message
-            aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
+            // @return message bencode size
+            size_t bencode_size() const;
 
             // @returns the SHA256 hash of the RLP serialisation of this message
             sha256_hash sha256() const { return m_hash; }
@@ -90,31 +47,6 @@ namespace libTAU {
 
             // check if this message is null
             bool empty() const { return m_hash.is_all_zeros(); }
-
-            message(const message &rhs) {
-                this->m_version = rhs.m_version;
-                this->m_timestamp = rhs.m_timestamp;
-                this->m_sender = rhs.m_sender;
-                this->m_receiver = rhs.m_receiver;
-                this->m_logic_msg_hash = rhs.m_logic_msg_hash;
-                this->m_nonce = rhs.m_nonce;
-                this->m_type = rhs.m_type;
-                this->m_encrypted_content = rhs.m_encrypted_content;
-                this->m_hash.assign(rhs.m_hash.data());
-            }
-
-            message& operator=(const message &rhs) {
-                this->m_version = rhs.m_version;
-                this->m_timestamp = rhs.m_timestamp;
-                this->m_sender = rhs.m_sender;
-                this->m_receiver = rhs.m_receiver;
-                this->m_logic_msg_hash = rhs.m_logic_msg_hash;
-                this->m_nonce = rhs.m_nonce;
-                this->m_type = rhs.m_type;
-                this->m_encrypted_content = rhs.m_encrypted_content;
-                this->m_hash.assign(rhs.m_hash.data());
-                return *this;
-            }
 
             bool operator==(const message &rhs) const {
                 return m_hash == rhs.m_hash;
@@ -144,12 +76,6 @@ namespace libTAU {
 
 
         private:
-            // Construct message object from rlp serialisation
-            void populate(aux::RLP const& _msg);
-
-            // message version
-            message_version m_version;
-
             // message timestamp
             uint32_t m_timestamp{};
 
@@ -159,17 +85,8 @@ namespace libTAU {
             // message receiver
             aux::bytes m_receiver;
 
-            // logic message hash
-            aux::bytes m_logic_msg_hash;
-
-            // nonce is used to indicate the position of the message in a large segmented message
-            aux::bigint m_nonce;
-
-            // message type
-            message_type m_type;
-
-            // encrypted content
-            aux::bytes m_encrypted_content;
+            // message entry
+            entry m_entry;
 
             // sha256 hash
             sha256_hash m_hash;

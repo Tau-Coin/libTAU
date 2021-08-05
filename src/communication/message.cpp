@@ -16,54 +16,70 @@ see LICENSE file.
 namespace libTAU {
     namespace communication {
 
-        namespace {
-            sha256_hash bencode_hash(aux::bytes rlp) {
-                std::string s;
-                s.insert(s.end(), rlp.begin(), rlp.end());
-                entry e = s;
+//        namespace {
+//            sha256_hash bencode_hash(aux::bytes rlp) {
+//                std::string s;
+//                s.insert(s.end(), rlp.begin(), rlp.end());
+//                entry e = s;
+//
+//                std::string buffer;
+//                // bencode要发布的mutable data
+//                bencode(std::back_inserter(buffer), e);
+//
+//                return dht::item_target_id(buffer);
+//            }
+//
+//            sha256_hash bencode_hash(const entry& e) {
+//                std::string buffer;
+//                // bencode要发布的mutable data
+//                bencode(std::back_inserter(buffer), e);
+//
+//                return dht::item_target_id(buffer);
+//            }
+//        }
 
-                std::string buffer;
-                // bencode要发布的mutable data
-                bencode(std::back_inserter(buffer), e);
+        message::message(entry e) {
+            m_entry = std::move(e);
 
-                return dht::item_target_id(buffer);
+            // timestamp
+            if (auto* i = const_cast<entry *>(m_entry.find_key("time")))
+            {
+                m_timestamp = i->integer();
             }
+
+            std::string buffer;
+            // bencode要发布的mutable data
+            bencode(std::back_inserter(buffer), m_entry);
+            m_hash = dht::item_target_id(buffer);
         }
 
-        message::message(aux::bytesConstRef _rlp) {
-            if (!_rlp.empty()) {
-                aux::RLP const rlp(_rlp);
-                populate(rlp);
-
-                m_hash = bencode_hash(_rlp.toBytes());
-            }
+        size_t message::bencode_size() const {
+            std::string buffer;
+            // bencode要发布的mutable data
+            bencode(std::back_inserter(buffer), m_entry);
+            return buffer.size();
         }
 
-        message::message(message_version mVersion, uint32_t mTimestamp, aux::bytes mSender,
-                         aux::bytes mReceiver, aux::bytes mLogicMsgHash, aux::bigint mNonce,
-                         message_type mType, aux::bytes mEncryptedContent) : m_version(mVersion),
-                         m_timestamp(mTimestamp), m_sender(std::move(mSender)), m_receiver(std::move(mReceiver)),
-                         m_logic_msg_hash(std::move(mLogicMsgHash)), m_nonce(std::move(mNonce)), m_type(mType),
-                         m_encrypted_content(std::move(mEncryptedContent)) {
-            m_hash = bencode_hash(rlp());
+        entry message::get_entry() const {
+            return m_entry;
         }
 
-        void message::streamRLP(aux::RLPStream &_s) const {
-            _s.appendList(8);
-            _s << static_cast<uint8_t>(m_version) << m_timestamp << m_sender << m_receiver << m_logic_msg_hash
-               << m_nonce << static_cast<uint8_t>(m_type) << m_encrypted_content;
-        }
-
-        void message::populate(const aux::RLP &_msg) {
-            m_version = static_cast<message_version>(_msg[0].toInt<uint8_t>());
-            m_timestamp = _msg[1].toInt<uint32_t>();
-            m_sender = _msg[2].toBytes();
-            m_receiver = _msg[3].toBytes();
-            m_logic_msg_hash = _msg[4].toBytes();
-            m_nonce = _msg[5].toInt<aux::bigint>();
-            m_type = static_cast<message_type>(_msg[6].toInt<uint8_t>());
-            m_encrypted_content = _msg[7].toBytes();
-        }
+//        void message::streamRLP(aux::RLPStream &_s) const {
+//            _s.appendList(8);
+//            _s << static_cast<uint8_t>(m_version) << m_timestamp << m_sender << m_receiver << m_logic_msg_hash
+//               << m_nonce << static_cast<uint8_t>(m_type) << m_encrypted_content;
+//        }
+//
+//        void message::populate(const aux::RLP &_msg) {
+//            m_version = static_cast<message_version>(_msg[0].toInt<uint8_t>());
+//            m_timestamp = _msg[1].toInt<uint32_t>();
+//            m_sender = _msg[2].toBytes();
+//            m_receiver = _msg[3].toBytes();
+//            m_logic_msg_hash = _msg[4].toBytes();
+//            m_nonce = _msg[5].toInt<aux::bigint>();
+//            m_type = static_cast<message_type>(_msg[6].toInt<uint8_t>());
+//            m_encrypted_content = _msg[7].toBytes();
+//        }
 
 //        sha256_hash message::sha256() {
 //            if (m_hash.is_all_zeros()) {
@@ -84,12 +100,16 @@ namespace libTAU {
         }
 
         std::ostream &operator<<(std::ostream &os, const message &message) {
-            os << "m_version: " << message.m_version << " m_timestamp: " << message.m_timestamp << " m_sender: "
-               << aux::toHex(message.m_sender) << " m_receiver: " << aux::toHex(message.m_receiver) << " m_logic_msg_hash: "
-               << aux::toHex(message.m_logic_msg_hash) << " m_nonce: " << message.m_nonce << " m_type: " << message.m_type
-               << " m_encrypted_content: " << aux::toHex(message.m_encrypted_content) << " m_hash: "
-               << aux::toHex(message.m_hash.to_string());
+            os << "m_timestamp: " << message.m_timestamp;
             return os;
         }
+//        std::ostream &operator<<(std::ostream &os, const message &message) {
+//            os << "m_version: " << message.m_version << " m_timestamp: " << message.m_timestamp << " m_sender: "
+//               << aux::toHex(message.m_sender) << " m_receiver: " << aux::toHex(message.m_receiver) << " m_logic_msg_hash: "
+//               << aux::toHex(message.m_logic_msg_hash) << " m_nonce: " << message.m_nonce << " m_type: " << message.m_type
+//               << " m_encrypted_content: " << aux::toHex(message.m_encrypted_content) << " m_hash: "
+//               << aux::toHex(message.m_hash.to_string());
+//            return os;
+//        }
     }
 }

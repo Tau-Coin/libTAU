@@ -207,7 +207,7 @@ namespace libTAU {
             m_active_friends = std::move(active_friends);
         }
 
-        bool communication::add_new_message(const message& msg, bool post_alert) {
+        bool communication::add_new_message(const aux::bytes& peer, const message& msg, bool post_alert) {
             if (msg.empty()) {
                 log("ERROR: Message is empty.");
                 return false;
@@ -215,31 +215,31 @@ namespace libTAU {
 
             log("INFO: Add new msg[%s]", msg.to_string().c_str());
 
-            dht::public_key * pk = m_ses.pubkey();
-            aux::bytes public_key;
-            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
-            if (msg.sender() != public_key && msg.receiver() != public_key) {
-                log("ERROR: Unknown message, sender/receiver is not me.");
-                return false;
-            }
+//            dht::public_key * pk = m_ses.pubkey();
+//            aux::bytes public_key;
+//            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
+//            if (msg.sender() != public_key && msg.receiver() != public_key) {
+//                log("ERROR: Unknown message, sender/receiver is not me.");
+//                return false;
+//            }
 
-            aux::bytes key_y;
-            if (msg.sender() == public_key) {
-                // sender is me means message comes from me, y is receiver
-                key_y = msg.receiver();
-            } else {
-                // receiver is me means message comes from others, y is sender
-                key_y = msg.sender();
-            }
+//            aux::bytes key_y;
+//            if (msg.sender() == public_key) {
+//                // sender is me means message comes from me, y is receiver
+//                key_y = msg.receiver();
+//            } else {
+//                // receiver is me means message comes from others, y is sender
+//                key_y = msg.sender();
+//            }
 
             if (!validate_message(msg))
                 return false;
 
-            return try_to_update_Latest_message_list(key_y, msg, post_alert);
+            return try_to_update_Latest_message_list(peer, msg, post_alert);
         }
 
         bool communication::validate_message(const message& msg) {
-            if (msg.rlp().size() > 1000) {
+            if (msg.bencode_size() > 1000) {
                 log("ERROR: Message is oversize!");
                 return false;
             }
@@ -413,7 +413,7 @@ namespace libTAU {
                 // 通知用户新的message
                 if (post_alert) {
                     log("DEBUG: Post new message:%s", msg.to_string().c_str());
-                    m_ses.alerts().emplace_alert<communication_new_message_alert>(msg.rlp());
+                    m_ses.alerts().emplace_alert<communication_new_message_alert>(msg.get_entry());
                 }
 
                 // save message in db
@@ -655,11 +655,10 @@ namespace libTAU {
 
                         std::vector<dht::node_entry> entries;
                         m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-                        auto msg_encode = missing_message.rlp();
-                        log("INFO: Put immutable message target[%s], entries[%zu], data[%s]",
-                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size(), aux::toHex(msg_encode).c_str());
-                        dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
-                                               entries, missing_message.sha256());
+//                        auto msg_encode = missing_message.rlp();
+                        log("INFO: Put immutable message target[%s], entries[%zu]",
+                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
+                        dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
 
                         payload = immutable_data_info(missing_message.sha256(), entries);
                     } else {
@@ -713,11 +712,10 @@ namespace libTAU {
 
                         std::vector<dht::node_entry> entries;
                         m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-                        auto msg_encode = missing_message.rlp();
-                        log("INFO: Put immutable message target[%s], entries[%zu], data[%s]",
-                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size(), aux::toHex(msg_encode).c_str());
-                        dht_put_immutable_item(std::string(msg_encode.begin(), msg_encode.end()),
-                                               entries, missing_message.sha256());
+//                        auto msg_encode = missing_message.rlp();
+                        log("INFO: Put immutable message target[%s], entries[%zu]",
+                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
+                        dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
 
                         payload = immutable_data_info(missing_message.sha256(), entries);
                     } else {
@@ -735,27 +733,27 @@ namespace libTAU {
         }
 
         // callback for dht_immutable_get
-        void communication::get_immutable_callback(sha256_hash target
+        void communication::get_immutable_callback(aux::bytes const& peer, sha256_hash target
                 , dht::item const& i)
         {
             log("DEBUG: Immutable callback");
             TORRENT_ASSERT(!i.is_mutable());
             if (!i.empty()) {
                 log("INFO: Got immutable data callback, target[%s].", aux::toHex(target.to_string()).c_str());
-                aux::bytes encode;
-                encode.insert(encode.end(), i.value().string().begin(), i.value().string().end());
-                message msg(encode);
+//                aux::bytes encode;
+//                encode.insert(encode.end(), i.value().string().begin(), i.value().string().end());
+                message msg(i.value());
 
-                add_new_message(msg, true);
+                add_new_message(peer, msg, true);
             }
         }
 
-        void communication::dht_get_immutable_item(sha256_hash const& target, std::vector<dht::node_entry> const& eps)
+        void communication::dht_get_immutable_item(aux::bytes const& peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
         {
             if (!m_ses.dht()) return;
             log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
             m_ses.dht()->get_item(target, eps, std::bind(&communication::get_immutable_callback
-                    , this, target, _1));
+                    , this, peer, target, _1));
         }
 
         // callback for dht_mutable_get
@@ -824,7 +822,7 @@ namespace libTAU {
                                 log("INFO: Payload:%s", payload.to_string().c_str());
                                 if (!payload.target().is_all_zeros()) {
                                     log("DEBUG: ---------------");
-                                    dht_get_immutable_item(payload.target(), payload.entries());
+                                    dht_get_immutable_item(peer, payload.target(), payload.entries());
                                 }
 
                                 // find out missing messages and confirmation root
@@ -867,7 +865,7 @@ namespace libTAU {
                             log("INFO: Payload:%s", payload.to_string().c_str());
                             if (!payload.target().is_all_zeros()) {
                                 log("DEBUG: ---------------");
-                                dht_get_immutable_item(payload.target(), payload.entries());
+                                dht_get_immutable_item(peer, payload.target(), payload.entries());
                             }
 
                             // find out missing messages and confirmation root
