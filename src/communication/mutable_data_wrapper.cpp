@@ -81,7 +81,7 @@ namespace libTAU { namespace communication {
 
         std::ostream &operator<<(std::ostream &os, const mutable_data_wrapper &wrapper) {
             os << "m_timestamp: " << wrapper.m_timestamp << " m_type: " << wrapper.m_type << " m_payload: "
-               << wrapper.m_payload.to_string();
+               << wrapper.m_payload.to_string(true);
             return os;
         }
 }}

@@ -198,8 +198,10 @@ namespace libTAU {
         }
 
         void communication::unset_chatting_friend() {
-            log("INFO: Unset chatting friend.");
-            m_chatting_friend = std::make_pair(aux::bytes(), 0);
+            if (!m_chatting_friend.first.empty()) {
+                log("INFO: Unset chatting friend.");
+                m_chatting_friend = std::make_pair(aux::bytes(), 0);
+            }
         }
 
         void communication::set_active_friends(std::vector<aux::bytes> active_friends) {
@@ -821,7 +823,6 @@ namespace libTAU {
                                 const immutable_data_info& payload = onlineSignal.payload();
                                 log("INFO: Payload:%s", payload.to_string().c_str());
                                 if (!payload.target().is_all_zeros()) {
-                                    log("DEBUG: ---------------");
                                     dht_get_immutable_item(peer, payload.target(), payload.entries());
                                 }
 
@@ -864,7 +865,6 @@ namespace libTAU {
                             const immutable_data_info& payload = newMsgSignal.payload();
                             log("INFO: Payload:%s", payload.to_string().c_str());
                             if (!payload.target().is_all_zeros()) {
-                                log("DEBUG: ---------------");
                                 dht_get_immutable_item(peer, payload.target(), payload.entries());
                             }
 
