@@ -1026,7 +1026,6 @@ namespace libTAU {
         }
 
 
-#ifndef TORRENT_DISABLE_LOGGING
         bool communication::should_log() const
         {
             return m_ses.alerts().should_post<communication_log_alert>();
@@ -1035,15 +1034,16 @@ namespace libTAU {
         TORRENT_FORMAT(2,3)
         void communication::log(char const* fmt, ...) const noexcept try
         {
+#ifndef TORRENT_DISABLE_LOGGING
             if (!should_log()) return;
 
             va_list v;
             va_start(v, fmt);
             m_ses.alerts().emplace_alert<communication_log_alert>(fmt, v);
             va_end(v);
+#endif
         }
         catch (std::exception const&) {}
-#endif
 
     }
 }
