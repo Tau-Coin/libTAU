@@ -66,6 +66,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "libTAU/extensions.hpp"
 #include "libTAU/session_types.hpp" // for session_flags_t
+#include "libTAU/communication/message.hpp" // for adding new message
 
 namespace libTAU {
 
@@ -520,7 +521,7 @@ namespace libTAU {
 		void set_active_friends(std::vector<std::array<char, 32>> active_friends);
 
 		// add a new message
-		bool add_new_message(std::vector<char> msg);
+		bool add_new_message(std::vector<char>peer, communication::message msg);
 
 		// This call dereferences the reference count of the specified peer
 		// class. When creating a peer class it's automatically referenced by 1.

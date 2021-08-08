@@ -61,6 +61,7 @@ see LICENSE file.
 #include "libTAU/kademlia/types.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
 
+#include "libTAU/communication/message.hpp"
 #include "libTAU/communication/communication.hpp"
 
 #include "libTAU/aux_/enum_net.hpp"
@@ -2934,14 +2935,15 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
-		/*
         std::string home_dir = boost::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		*/
+		/*
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+		*/
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
+		
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("start to  create directory for storing db data kvdb dir: %s, sqldb dir: %s", 
@@ -3507,7 +3509,7 @@ namespace {
 		m_communication->set_active_friends(active_friends);
 	}
 
-	bool session_impl::add_new_message(const aux::vector_ref<unsigned char>& msg)
+	bool session_impl::add_new_message(const aux::bytes & peer, const communication::message& msg)
 	{
 		/*
 		char* msg_out = new char[msg.size()*2 + 1];
@@ -3515,7 +3517,7 @@ namespace {
         libTAU::aux::to_hex(msg_in, msg.size(), msg_out);
 		session_log("Session Add New Message: %s", msg_out);
 		*/
-		return m_communication->add_new_message(communication::message(msg));
+		return m_communication->add_new_message(peer, msg, true);
 	}	
 
 #if TORRENT_ABI_VERSION <= 2

@@ -62,6 +62,7 @@ see LICENSE file.
 #include "libTAU/kademlia/announce_flags.hpp"
 #include "libTAU/kademlia/types.hpp"
 
+#include "libTAU/communication/message.hpp"
 #include "libTAU/communication/communication.hpp"
 
 #include "libTAU/aux_/resolver.hpp"
@@ -699,7 +700,7 @@ namespace aux {
 			void set_chatting_friend(std::array<char, 32> chatting_friend);
             void unset_chatting_friend();
             void set_active_friends(std::vector<aux::bytes> active_friends);
-            bool add_new_message(const aux::vector_ref<unsigned char>& msg);
+            bool add_new_message(const aux::bytes& peer, const communication::message& msg);
 
 		private:
 

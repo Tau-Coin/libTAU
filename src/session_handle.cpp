@@ -541,14 +541,14 @@ namespace {
 		sync_call(&session_impl::set_active_friends, friends);	
 	}
 
-	bool session_handle::add_new_message(std::vector<char> msg)
+	bool session_handle::add_new_message(std::vector<char> peer, communication::message msg)
 	{
-		std::vector<unsigned char> message;
-		for(auto iter = msg.begin(); iter != msg.end(); iter++)
+		std::vector<unsigned char> pubkey;
+		for(auto iter = peer.begin(); iter != peer.end(); iter++)
 		{
-			message.push_back(static_cast<std::uint8_t>(*iter));
+			pubkey.push_back(static_cast<std::uint8_t>(*iter));
 		}
-		return sync_call_ret<bool>(&session_impl::add_new_message, aux::vector_ref<unsigned char>(message.data(), message.size()));
+		return sync_call_ret<bool>(&session_impl::add_new_message, pubkey, msg);
 	}
 
 	void session_handle::set_ip_filter(ip_filter f)
