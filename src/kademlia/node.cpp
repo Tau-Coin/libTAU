@@ -387,7 +387,13 @@ namespace {
 void put(std::vector<std::pair<node_entry, std::string>> const& nodes
 	, std::shared_ptr<put_data> const& ta)
 {
-	ta->set_targets(nodes);
+	std::vector<node_entry> eps;
+	for (auto& n : nodes)
+	{
+		eps.push_back(n.first);
+	}
+
+	ta->set_direct_endpoints(eps);
 	ta->start();
 }
 
@@ -426,7 +432,6 @@ void node::put_item(sha256_hash const& target, entry const& data, std::function<
 	ta->start();
 }
 
-// TODO: add signature for immutable item.
 void node::put_item(sha256_hash const& target
 	, entry const& data
 	, std::vector<node_entry> const& eps
@@ -441,17 +446,11 @@ void node::put_item(sha256_hash const& target
 #endif
 
 	item i;
-	std::vector<std::pair<node_entry, std::string>> direct_nodes;
-
 	i.assign(data);
-	for (auto& n : eps)
-	{
-		direct_nodes.emplace_back(n, libtau_token);
-	}
 
 	auto ta = std::make_shared<dht::put_data>(*this, std::bind(f, _2));
 	ta->set_data(std::move(i));
-	ta->set_targets(direct_nodes);
+	ta->set_direct_endpoints(eps);
 	ta->start();
 }
 
@@ -473,10 +472,11 @@ void node::put_item(public_key const& pk, std::string const& salt
 
 	auto put_ta = std::make_shared<dht::put_data>(*this, f);
 
-	auto ta = std::make_shared<dht::get_item>(*this, pk, salt
-		, std::bind(&put_data_cb, _1, _2, put_ta, data_cb)
-		, std::bind(&put, _1, put_ta));
-	ta->start();
+	item i(pk, salt);
+	data_cb(i);
+	put_ta->set_data(std::move(i));
+
+	put_ta->start();
 }
 
 void node::find_live_nodes(node_id const& id
@@ -801,13 +801,14 @@ void node::incoming_request(msg const& m, entry& e)
 			{"sig", bdecode_node::string_t, signature::len, key_desc_t::optional},
 			{"cas", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"salt", bdecode_node::string_t, 0, key_desc_t::optional},
+			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
 		};
 
 		// attempt to parse the message
 		// also reject the message if it has any non-fatal encoding errors
 		// because put messages contain a signed value they must have correct bencoding
 		// otherwise the value will not round-trip without breaking the signature
-		bdecode_node msg_keys[7];
+		bdecode_node msg_keys[8];
 		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string)
 			|| arg_ent.has_soft_error(error_string))
 		{
@@ -925,6 +926,9 @@ void node::incoming_request(msg const& m, entry& e)
 				m_storage.put_mutable_item(target, buf, sig, seq, pk, salt
 					, m.addr.address());
 			}
+
+			// for mutable item, return 'nodes' field
+			write_nodes_entries(target, msg_keys[7], reply);
 		}
 
 		m_table.node_seen(id, m.addr, 0xffff);
@@ -934,13 +938,14 @@ void node::incoming_request(msg const& m, entry& e)
 		static key_desc_t const msg_desc[] = {
 			{"seq", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"target", bdecode_node::string_t, 32, 0},
+			{"mutable", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
 		};
 
 		// k is not used for now
 
 		// attempt to parse the message
-		bdecode_node msg_keys[3];
+		bdecode_node msg_keys[4];
 		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string))
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_get);
@@ -957,8 +962,12 @@ void node::incoming_request(msg const& m, entry& e)
 
 		reply["token"] = generate_token(m.addr, target);
 
-		// always return nodes as well as peers
-		write_nodes_entries(target, msg_keys[2], reply);
+		// always return nodes as well as peers for mutable item
+		bool const get_mutable = msg_keys[2] && msg_keys[2].int_value() != 0;
+		if (get_mutable)
+		{
+			write_nodes_entries(target, msg_keys[3], reply);
+		}
 
 		// if the get has a sequence number it must be for a mutable item
 		// so don't bother searching the immutable table

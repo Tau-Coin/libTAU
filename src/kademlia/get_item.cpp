@@ -132,6 +132,7 @@ bool get_item::invoke(observer_ptr o)
 
 	e["q"] = "get";
 	a["target"] = target().to_string();
+	a["mutable"] = m_data.is_mutable() ? 1 : 0;
 
 	m_node.stats_counters().inc_stats_counter(counters::dht_get_out);
 

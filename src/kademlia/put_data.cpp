@@ -19,6 +19,35 @@ see LICENSE file.
 
 namespace libTAU { namespace dht {
 
+void put_data_observer::reply(msg const& m)
+{
+    bdecode_node const r = m.message.dict_find_dict("r");
+    if (!r)
+    {
+#ifndef TORRENT_DISABLE_LOGGING
+        get_observer()->log(dht_logger::traversal, "[%u] missing response dict"
+            , algorithm()->id());
+#endif
+        timeout();
+        return;
+    }
+
+    bdecode_node const id = r.dict_find_string("id");
+    if (!id || id.string_length() != 32)
+    {
+#ifndef TORRENT_DISABLE_LOGGING
+        get_observer()->log(dht_logger::traversal, "[%u] invalid id in response"
+            , algorithm()->id());
+#endif
+        timeout();
+        return;
+    }
+
+	// For putting mutable item, add refer nodes into routing table.
+    traversal_observer::reply(m);
+    done();
+}
+
 put_data::put_data(node& dht_node, put_callback callback)
 	: traversal_algorithm(dht_node, {})
 	, m_put_callback(std::move(callback))
@@ -28,25 +57,20 @@ char const* put_data::name() const { return "put_data"; }
 
 void put_data::start()
 {
-	// router nodes must not be added to puts
-	init();
-	bool const is_done = add_requests();
-	if (is_done) done();
-}
-
-void put_data::set_targets(std::vector<std::pair<node_entry, std::string>> const& targets)
-{
-	for (auto const& p : targets)
+	// if the user didn't add seed-nodes manually, grab k (bucket size)
+	// nodes from routing table.
+	if (m_results.empty() && !m_direct_invoking)
 	{
-		auto o = m_node.m_rpc.allocate_observer<put_data_observer>(self(), p.first.ep()
-			, p.first.id, p.second);
-		if (!o) return;
+		std::vector<node_entry> const nodes = m_node.m_table.find_node(
+			target(), routing_table::include_failed);
 
-#if TORRENT_USE_ASSERTS
-		o->m_in_constructor = false;
-#endif
-		m_results.push_back(std::move(o));
+		for (auto const& n : nodes)
+		{
+			add_entry(n.id, n.ep(), observer::flag_initial);
+		}
 	}
+
+	traversal_algorithm::start();
 }
 
 void put_data::done()
@@ -66,16 +90,12 @@ bool put_data::invoke(observer_ptr o)
 {
 	if (m_done) return false;
 
-	// TODO: what if o is not an instance of put_data_observer? This need to be
-	// redesigned for better type safety.
-	auto* po = static_cast<put_data_observer*>(o.get());
-
 	entry e;
 	e["y"] = "q";
 	e["q"] = "put";
 	entry& a = e["a"];
 	a["v"] = m_data.value();
-	a["token"] = po->m_token;
+	a["token"] = libtau_token;
 	if (m_data.is_mutable())
 	{
 		a["k"] = m_data.pk().bytes;
@@ -90,6 +110,16 @@ bool put_data::invoke(observer_ptr o)
 	m_node.stats_counters().inc_stats_counter(counters::dht_put_out);
 
 	return m_node.m_rpc.invoke(e, o->target_ep(), o);
+}
+
+observer_ptr put_data::new_observer(udp::endpoint const& ep
+	, node_id const& id)
+{
+	auto o = m_node.m_rpc.allocate_observer<put_data_observer>(self(), ep, id);
+#if TORRENT_USE_ASSERTS
+	if (o) o->m_in_constructor = false;
+#endif
+	return o;
 }
 
 } } // namespace libTAU::dht

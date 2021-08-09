@@ -37,12 +37,13 @@ struct put_data: traversal_algorithm
 	void set_data(item&& data) { m_data = std::move(data); }
 	void set_data(item const& data) = delete;
 
-	void set_targets(std::vector<std::pair<node_entry, std::string>> const& targets);
-
 protected:
 
 	void done() override;
 	bool invoke(observer_ptr o) override;
+
+	observer_ptr new_observer(udp::endpoint const& ep
+		, node_id const& id) override;
 
 	put_callback m_put_callback;
 	item m_data;
@@ -53,15 +54,12 @@ struct put_data_observer : traversal_observer
 {
 	put_data_observer(
 		std::shared_ptr<traversal_algorithm> algorithm
-		, udp::endpoint const& ep, node_id const& id, std::string token)
+		, udp::endpoint const& ep, node_id const& id)
 		: traversal_observer(std::move(algorithm), ep, id)
-		, m_token(std::move(token))
 	{
 	}
 
-	void reply(msg const&) override { done(); }
-
-	std::string m_token;
+	void reply(msg const&) override;
 };
 
 } // namespace dht
