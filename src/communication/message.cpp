@@ -41,11 +41,30 @@ namespace libTAU {
         message::message(entry e) {
             m_entry = std::move(e);
 
+            populate(m_entry);
+
             // timestamp
-            if (auto* i = const_cast<entry *>(m_entry.find_key("time")))
-            {
-                m_timestamp = i->integer();
-            }
+//            if (auto* i = const_cast<entry *>(m_entry.find_key("time")))
+//            {
+//                m_timestamp = i->integer();
+//            }
+
+
+            bencode(std::back_inserter(m_encode), m_entry);
+            m_hash = dht::item_target_id(m_encode);
+        }
+
+        message::message(uint32_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver, aux::bytes mPayload) :
+        m_timestamp(mTimestamp), m_sender(std::move(mSender)),
+        m_receiver(std::move(mReceiver)), m_payload(std::move(mPayload)) {
+            // timestamp
+            m_entry["t"] = entry(m_timestamp);
+            // sender
+            m_entry["s"] = entry(std::string(m_sender.begin(), m_sender.end()));
+            // receiver
+            m_entry["r"] = entry(std::string(m_receiver.begin(), m_receiver.end()));
+            // payload
+            m_entry["p"] = entry(std::string(m_payload.begin(), m_payload.end()));
 
             bencode(std::back_inserter(m_encode), m_entry);
             m_hash = dht::item_target_id(m_encode);
@@ -53,6 +72,32 @@ namespace libTAU {
 
         entry message::get_entry() const {
             return m_entry;
+        }
+
+        void message::populate(const entry &e) {
+            // timestamp
+            if (auto* i = const_cast<entry *>(e.find_key("t")))
+            {
+                m_timestamp = i->integer();
+            }
+            // sender
+            if (auto* i = const_cast<entry *>(e.find_key("s")))
+            {
+                auto sender = i->string();
+                m_sender = aux::bytes(sender.begin(), sender.end());
+            }
+            // receiver
+            if (auto* i = const_cast<entry *>(e.find_key("s")))
+            {
+                auto receiver = i->string();
+                m_receiver = aux::bytes(receiver.begin(), receiver.end());
+            }
+            // payload
+            if (auto* i = const_cast<entry *>(e.find_key("p")))
+            {
+                auto payload = i->string();
+                m_payload = aux::bytes(payload.begin(), payload.end());
+            }
         }
 
 //        void message::streamRLP(aux::RLPStream &_s) const {

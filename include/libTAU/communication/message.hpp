@@ -35,8 +35,20 @@ namespace libTAU {
             // @param Construct with bencode
             explicit message(std::string encode): message(bdecode(encode)) {}
 
+            message(uint32_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver,
+                    aux::bytes mPayload);
+
             // @returns message timestamp
             uint32_t timestamp() const { return m_timestamp; }
+
+            // @returns sender
+            const aux::bytes &sender() const { return m_sender; }
+
+            // @returns receiver
+            const aux::bytes &receiver() const { return m_receiver; }
+
+            // @returns payload
+            const aux::bytes &payload() const { return m_payload; }
 
             // @returns the corresponding entry
             entry get_entry() const;
@@ -81,8 +93,20 @@ namespace libTAU {
 
 
         private:
+            // populate message data from entry
+            void populate(const entry& e);
+
             // message timestamp
             uint32_t m_timestamp{};
+
+            // message sender
+            aux::bytes m_sender;
+
+            // message receiver
+            aux::bytes m_receiver;
+
+            // payload
+            aux::bytes m_payload;
 
             // message entry
             entry m_entry;
