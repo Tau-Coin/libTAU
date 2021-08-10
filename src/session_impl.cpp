@@ -3509,7 +3509,7 @@ namespace {
 		m_communication->set_active_friends(active_friends);
 	}
 
-	bool session_impl::add_new_message(const aux::bytes & peer, const communication::message& msg)
+	bool session_impl::add_new_message(const communication::message& msg)
 	{
 		/*
 		char* msg_out = new char[msg.size()*2 + 1];
@@ -3517,7 +3517,7 @@ namespace {
         libTAU::aux::to_hex(msg_in, msg.size(), msg_out);
 		session_log("Session Add New Message: %s", msg_out);
 		*/
-		return m_communication->add_new_message(peer, msg, true);
+		return m_communication->add_new_message(msg, true);
 	}	
 
 #if TORRENT_ABI_VERSION <= 2

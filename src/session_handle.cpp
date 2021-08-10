@@ -534,9 +534,9 @@ namespace {
 		sync_call(&session_impl::set_active_friends, friends);	
 	}
 
-	bool session_handle::add_new_message(std::vector<char> peer, communication::message msg)
+	bool session_handle::add_new_message(communication::message msg)
 	{
-		return sync_call_ret<bool>(&session_impl::add_new_message, peer, msg);
+		return sync_call_ret<bool>(&session_impl::add_new_message, msg);
 	}
 
 	void session_handle::set_ip_filter(ip_filter f)
