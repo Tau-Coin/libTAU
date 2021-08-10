@@ -57,10 +57,10 @@ namespace libTAU {
             virtual bool delete_message(const aux::bytes& hash) = 0;
 
             // get encode of the latest message hash list by key pair<my public key, peer public key>
-            virtual aux::bytes get_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) = 0;
+            virtual std::string get_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) = 0;
 
             // save encode of the latest message hash list with key pair<my public key, peer public key>
-            virtual bool save_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key, const aux::bytes& encode) = 0;
+            virtual bool save_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key, const std::string& encode) = 0;
 
             // delete encode of the latest message hash list by key pair<my public key, peer public key>
             virtual bool delete_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) = 0;

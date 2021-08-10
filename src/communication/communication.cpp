@@ -67,7 +67,7 @@ namespace libTAU {
                 log("INFO: friend size: %zu", m_friends.size());
                 for (auto const & peer: m_friends) {
                     log("INFO: friend: %s", aux::toHex(peer).c_str());
-                    aux::bytes encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(my_pk, peer));
+                    std::string encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(my_pk, peer));
 
                     if (!encode.empty()) {
                         message_hash_list hashList(encode);
@@ -352,7 +352,7 @@ namespace libTAU {
                 message_hash_list messageHashList(hash_list);
                 log("INFO: Save message hash list %s", messageHashList.to_string().c_str());
                 m_message_db->save_latest_message_hash_list_encode(std::make_pair(public_key, peer),
-                                                                   messageHashList.rlp());
+                                                                   messageHashList.encode());
             }
         }
 

@@ -39,7 +39,7 @@
 
 namespace libTAU { namespace aux {
 // CryptoPP defines byte in the global namespace, so must we.
-//using byte = int8_t;
+//using byte = uint8_t;
 
 #define DEV_IGNORE_EXCEPTIONS(X) try { X; } catch (...) {}
 

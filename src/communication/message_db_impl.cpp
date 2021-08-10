@@ -156,7 +156,7 @@ namespace libTAU {
             return status.ok();
         }
 
-        aux::bytes message_db_impl::get_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) {
+        std::string message_db_impl::get_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) {
             std::string sKey;
             sKey.insert(sKey.end(), key.first.begin(), key.first.end());
             sKey.insert(sKey.end(), key.second.begin(), key.second.end());
@@ -164,20 +164,20 @@ namespace libTAU {
 
             std::string value;
             leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), sKey, &value);
-            aux::bytes buffer;
-            buffer.insert(buffer.end(), value.begin(), value.end());
-            return buffer;
+//            aux::bytes buffer;
+//            buffer.insert(buffer.end(), value.begin(), value.end());
+            return value;
         }
 
-        bool message_db_impl::save_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key, const aux::bytes& encode) {
+        bool message_db_impl::save_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key, const std::string& encode) {
             std::string sKey;
             sKey.insert(sKey.end(), key.first.begin(), key.first.end());
             sKey.insert(sKey.end(), key.second.begin(), key.second.end());
             sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
 
-            std::string value(encode.begin(), encode.end());
+//            std::string value(encode.begin(), encode.end());
 
-            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), sKey, value);
+            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), sKey, encode);
             return status.ok();
         }
 
