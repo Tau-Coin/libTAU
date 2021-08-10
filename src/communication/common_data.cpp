@@ -65,7 +65,7 @@ std::string libTAU::aux::escaped(std::string const& _s, bool _all)
 bytes libTAU::aux::fromHex(std::string const& _s, WhenError _throw)
 {
 	unsigned s = (_s.size() >= 2 && _s[0] == '0' && _s[1] == 'x') ? 2 : 0;
-	std::vector<uint8_t> ret;
+	bytes ret;
 	ret.reserve((_s.size() - s + 1) / 2);
 
 	if (_s.size() % 2)
@@ -83,7 +83,7 @@ bytes libTAU::aux::fromHex(std::string const& _s, WhenError _throw)
 		int h = fromHexChar(_s[i]);
 		int l = fromHexChar(_s[i + 1]);
 		if (h != -1 && l != -1)
-			ret.push_back((ibyte)(h * 16 + l));
+			ret.push_back((byte)(h * 16 + l));
 		else if (_throw == WhenError::Throw)
 			BOOST_THROW_EXCEPTION(BadHexCharacter());
 		else
@@ -94,7 +94,7 @@ bytes libTAU::aux::fromHex(std::string const& _s, WhenError _throw)
 
 bytes libTAU::aux::asNibbles(bytesConstRef const& _s)
 {
-	std::vector<uint8_t> ret;
+	bytes ret;
 	ret.reserve(_s.size() * 2);
 	for (auto i: _s)
 	{

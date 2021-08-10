@@ -35,10 +35,11 @@
 #pragma warning(pop)
 #pragma GCC diagnostic pop
 #include "libTAU/aux_/vector_ref.h"
+#include "libTAU/aux_/mmap.hpp"
 
 namespace libTAU { namespace aux {
 // CryptoPP defines byte in the global namespace, so must we.
-using ibyte = uint8_t;
+//using byte = int8_t;
 
 #define DEV_IGNORE_EXCEPTIONS(X) try { X; } catch (...) {}
 
@@ -49,9 +50,9 @@ using namespace boost::multiprecision::literals;
 extern std::string const EmptyString;
 
 // Binary data types.
-using bytes = std::vector<ibyte>;
-using bytesRef = vector_ref<ibyte>;
-using bytesConstRef = vector_ref<ibyte const>;
+using bytes = std::vector<byte>;
+using bytesRef = vector_ref<byte>;
+using bytesConstRef = vector_ref<byte const>;
 
 template <class T>
 class secure_vector
@@ -92,7 +93,7 @@ private:
     std::vector<T> m_data;
 };
 
-using bytesSec = secure_vector<ibyte>;
+using bytesSec = secure_vector<byte>;
 
 // Numeric types.
 using bigint = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>>;
