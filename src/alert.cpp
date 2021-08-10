@@ -1616,7 +1616,7 @@ namespace {
     }
 
     communication_new_message_alert::communication_new_message_alert(aux::stack_allocator&
-            , entry e)
+            , communication::message e)
             : msg(std::move(e))
     {}
 

@@ -415,7 +415,7 @@ namespace libTAU {
                 // 通知用户新的message
                 if (post_alert) {
                     log("DEBUG: Post new message:%s", msg.to_string().c_str());
-                    m_ses.alerts().emplace_alert<communication_new_message_alert>(msg.get_entry());
+                    m_ses.alerts().emplace_alert<communication_new_message_alert>(msg);
                 }
 
                 // save message in db
