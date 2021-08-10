@@ -507,10 +507,8 @@ namespace {
 
 	std::vector<char> session_handle::get_friend_info(std::array<char, 32> pubkey)
 	{
-		std::vector<unsigned char> unsigned_info;
-		sync_call(&session_impl::get_friend_info, pubkey, &unsigned_info); 
 		std::vector<char> info;
-		std::copy(unsigned_info.begin(), unsigned_info.end(), std::inserter(info, info.begin()));
+		sync_call(&session_impl::get_friend_info, pubkey, &info); 
 		return info;
 	}
 
@@ -521,12 +519,7 @@ namespace {
 
 	bool session_handle::update_friend_info(std::array<char, 32> pubkey, std::vector<char> friend_info)
 	{
-		std::vector<unsigned char> info;
-		for(auto iter = friend_info.begin(); iter != friend_info.end(); iter++)
-		{
-			info.push_back(static_cast<std::uint8_t>(*iter));
-		}
-		return sync_call_ret<bool>(&session_impl::update_friend_info, pubkey, info);
+		return sync_call_ret<bool>(&session_impl::update_friend_info, pubkey, friend_info);
 	}
 
 	void session_handle::set_active_friends(std::vector<std::array<char, 32>> active_friends)
@@ -535,7 +528,7 @@ namespace {
 
 		for (auto f = active_friends.begin(); f != active_friends.end(); f++)
 		{
-			friends.push_back(std::vector<aux::ibyte>((*f).begin(), (*f).end()));
+			friends.push_back(std::vector<char>((*f).begin(), (*f).end()));
 		}
 
 		sync_call(&session_impl::set_active_friends, friends);	
@@ -543,12 +536,7 @@ namespace {
 
 	bool session_handle::add_new_message(std::vector<char> peer, communication::message msg)
 	{
-		std::vector<unsigned char> pubkey;
-		for(auto iter = peer.begin(); iter != peer.end(); iter++)
-		{
-			pubkey.push_back(static_cast<std::uint8_t>(*iter));
-		}
-		return sync_call_ret<bool>(&session_impl::add_new_message, pubkey, msg);
+		return sync_call_ret<bool>(&session_impl::add_new_message, peer, msg);
 	}
 
 	void session_handle::set_ip_filter(ip_filter f)

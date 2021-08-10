@@ -3454,7 +3454,7 @@ namespace {
 
 	bool session_impl::add_new_friend(std::array<char, 32>& pubkey)
 	{
-		return m_communication->add_new_friend(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
+		return m_communication->add_new_friend(std::vector<char>(pubkey.begin(), pubkey.end()));
 	}
 
 	bool session_impl::delete_friend(std::array<char, 32>& pubkey)
@@ -3465,18 +3465,18 @@ namespace {
         libTAU::aux::to_hex(pk_in, 32, pk_out);
 		session_log("Session Delete Friend: %s", pk_out);
 		*/
-		return m_communication->delete_friend(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
+		return m_communication->delete_friend(std::vector<char>(pubkey.begin(), pubkey.end()));
 
 	}
 
-	void session_impl::get_friend_info(std::array<char, 32>& pubkey, std::vector<unsigned char>* info)
+	void session_impl::get_friend_info(std::array<char, 32>& pubkey, std::vector<char>* info)
 	{
-		*info = m_communication->get_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()));
+		*info = m_communication->get_friend_info(std::vector<char>(pubkey.begin(), pubkey.end()));
 	}
 
 	bool session_impl::update_friend_info(std::array<char, 32>& pubkey, aux::bytes friend_info)
 	{
-		return m_communication->update_friend_info(std::vector<aux::ibyte>(pubkey.begin(), pubkey.end()), friend_info);
+		return m_communication->update_friend_info(std::vector<char>(pubkey.begin(), pubkey.end()), friend_info);
 	}
 
 	void session_impl::unset_chatting_friend()
@@ -3493,7 +3493,7 @@ namespace {
         libTAU::aux::to_hex(pk_in, 32, pk_out);
 		session_log("Session Set Chatting Friend: %s", pk_out);
 		*/
-		m_communication->set_chatting_friend(std::vector<aux::ibyte>(chatting_friend.begin(), chatting_friend.end()));
+		m_communication->set_chatting_friend(std::vector<char>(chatting_friend.begin(), chatting_friend.end()));
 	}
 
 	void session_impl::set_active_friends(std::vector<aux::bytes> active_friends)
