@@ -115,6 +115,9 @@ namespace libTAU {
             void set_active_friends(std::vector<aux::bytes> active_friends);
 
             // add a new message
+            bool add_new_message(const message& msg, bool post_alert = false);
+
+            // add a new message
             bool add_new_message(const aux::bytes& peer, const message& msg, bool post_alert = false);
 
             // reset when account changed

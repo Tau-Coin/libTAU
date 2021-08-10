@@ -209,6 +209,10 @@ namespace libTAU {
             m_active_friends = std::move(active_friends);
         }
 
+        bool communication::add_new_message(const message &msg, bool post_alert) {
+            return add_new_message(msg.receiver(), msg, post_alert);
+        }
+
         bool communication::add_new_message(const aux::bytes& peer, const message& msg, bool post_alert) {
             if (msg.empty()) {
                 log("ERROR: Message is empty.");
