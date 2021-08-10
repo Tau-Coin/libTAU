@@ -1419,7 +1419,7 @@ TORRENT_VERSION_NAMESPACE_3
         std::string message() const override;
 
         // message found from peers.
-        communication::message msg;
+        libTAU::communication::message msg;
     };
 
     // this alert is posted when message hash is confirmed by peers.

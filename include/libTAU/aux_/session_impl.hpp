@@ -700,7 +700,7 @@ namespace aux {
 			void set_chatting_friend(std::array<char, 32> chatting_friend);
             void unset_chatting_friend();
             void set_active_friends(std::vector<aux::bytes> active_friends);
-            bool add_new_message(const aux::bytes& peer, const communication::message& msg);
+            bool add_new_message(const communication::message& msg);
 
 		private:
 
