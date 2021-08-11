@@ -87,7 +87,7 @@ namespace libTAU {
                 m_sender = aux::bytes(sender.begin(), sender.end());
             }
             // receiver
-            if (auto* i = const_cast<entry *>(e.find_key("s")))
+            if (auto* i = const_cast<entry *>(e.find_key("r")))
             {
                 auto receiver = i->string();
                 m_receiver = aux::bytes(receiver.begin(), receiver.end());
