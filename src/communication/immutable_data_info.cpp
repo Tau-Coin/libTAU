@@ -83,7 +83,7 @@ namespace libTAU::communication {
                         address addr = make_address_v4(b);
 
                         // port
-                        if (auto* p = const_cast<entry *>(e.find_key("p")))
+                        if (auto* p = const_cast<entry *>(n.find_key("p")))
                         {
                             u_int16_t port = p->integer();
 
@@ -97,7 +97,7 @@ namespace libTAU::communication {
                         address addr = make_address_v6(b);
 
                         // port
-                        if (auto* p = const_cast<entry *>(e.find_key("p")))
+                        if (auto* p = const_cast<entry *>(n.find_key("p")))
                         {
                             u_int16_t port = p->integer();
 
