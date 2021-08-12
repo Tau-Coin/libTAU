@@ -25,8 +25,6 @@ namespace libTAU::communication {
         e["d"] = entry(std::string(m_device_id.begin(), m_device_id.end()));
         // hash prefix bytes
         e["h"] = entry(std::string(m_hash_prefix_bytes.begin(), m_hash_prefix_bytes.end()));
-        // timestamp
-        e["t"] = entry(m_timestamp);
         // payload
         e["v"] = m_payload.get_entry();
 
@@ -58,11 +56,6 @@ namespace libTAU::communication {
             std::string hash_prefix_array = i->string();
             m_hash_prefix_bytes = aux::bytes(hash_prefix_array.begin(), hash_prefix_array.end());
         }
-        // timestamp
-        if (auto* i = const_cast<entry *>(e.find_key("t")))
-        {
-            m_timestamp = i->integer();
-        }
         // payload
         if (auto* i = const_cast<entry *>(e.find_key("v")))
         {
@@ -77,8 +70,8 @@ namespace libTAU::communication {
     }
 
     std::ostream &operator<<(std::ostream &os, const new_msg_signal &signal) {
-        os << "m_device_id: " << aux::toHex(signal.m_device_id) << " m_hash_prefix_bytes: " << aux::toHex(signal.m_hash_prefix_bytes)
-           << " m_timestamp: " << signal.m_timestamp << " m_payload: " << signal.m_payload;
+        os << "m_device_id: " << aux::toHex(signal.m_device_id) << " m_hash_prefix_bytes: "
+            << aux::toHex(signal.m_hash_prefix_bytes) << " m_payload: " << signal.m_payload;
         return os;
     }
 }

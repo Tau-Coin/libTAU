@@ -47,11 +47,11 @@ namespace libTAU {
 //            mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, aux::bytes mPayload)
 //                    : m_timestamp(mTimestamp), m_type(mType), m_payload(std::move(mPayload)) {}
 
-            mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, entry mPayload)
+            mutable_data_wrapper(std::int64_t mTimestamp, mutable_data_type mType, entry mPayload)
                     : m_timestamp(mTimestamp), m_type(mType), m_payload(std::move(mPayload)) {}
 
             // @returns timestamp
-            uint32_t timestamp() const { return m_timestamp; }
+            std::int64_t timestamp() const { return m_timestamp; }
 
             // @returns type
             mutable_data_type type() const { return m_type; }
@@ -81,7 +81,7 @@ namespace libTAU {
             void populate(const entry& e);
 
             // mutable data timestamp
-            uint32_t m_timestamp;
+            std::int64_t m_timestamp;
 
             // mutable data type
             mutable_data_type m_type;

@@ -25,8 +25,6 @@ namespace libTAU { namespace communication {
             e["d"] = entry(std::string(m_device_id.begin(), m_device_id.end()));
             // hash prefix bytes
             e["h"] = entry(std::string(m_hash_prefix_bytes.begin(), m_hash_prefix_bytes.end()));
-            // timestamp
-            e["t"] = entry(m_timestamp);
             // friend info
             e["f"] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
             // payload
@@ -52,11 +50,6 @@ namespace libTAU { namespace communication {
             {
                 std::string hash_prefix_array = i->string();
                 m_hash_prefix_bytes = aux::bytes(hash_prefix_array.begin(), hash_prefix_array.end());
-            }
-            // timestamp
-            if (auto* i = const_cast<entry *>(e.find_key("t")))
-            {
-                m_timestamp = i->integer();
             }
             // friend info
             if (auto* i = const_cast<entry *>(e.find_key("f")))
@@ -87,8 +80,8 @@ namespace libTAU { namespace communication {
 
         std::ostream &operator<<(std::ostream &os, const online_signal &signal) {
             os << "m_device_id: " << aux::toHex(signal.m_device_id) << " m_hash_prefix_bytes: "
-               << aux::toHex(signal.m_hash_prefix_bytes) << " m_timestamp: " << signal.m_timestamp << " m_friend_info: "
-               << aux::toHex(signal.m_friend_info) << " m_payload: " << signal.m_payload;
+               << aux::toHex(signal.m_hash_prefix_bytes) << " m_friend_info: " << aux::toHex(signal.m_friend_info)
+               << " m_payload: " << signal.m_payload;
             return os;
         }
 }}

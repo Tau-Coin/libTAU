@@ -15,7 +15,6 @@ see LICENSE file.
 // communication模块主要负责朋友或者区块链群组之间消息的沟通，
 // 同时作为time server，通过统计网络中位数时间，为其它模块提供时间基准
 
-#include <ctime>
 #include <functional>
 #include <utility>
 #include <vector>
@@ -23,6 +22,7 @@ see LICENSE file.
 #include <list>
 #include <unordered_set>
 
+#include "libTAU/time.hpp"
 #include "libTAU/aux_/deadline_timer.hpp"
 #include "libTAU/aux_/alert_manager.hpp" // for alert_manager
 #include "libTAU/aux_/session_interface.hpp"
@@ -103,7 +103,7 @@ namespace libTAU {
             aux::bytes get_friend_info(const aux::bytes& pubkey);
 
             // save friend info
-            bool update_friend_info(const aux::bytes& pubkey, aux::bytes friend_info);
+            bool update_friend_info(const aux::bytes& pubkey, const aux::bytes& friend_info);
 
             // set chatting friends
             void set_chatting_friend(aux::bytes chatting_friend);
@@ -226,17 +226,17 @@ namespace libTAU {
             // all friends
             std::vector<aux::bytes> m_friends;
 
-            // chatting friend
-            std::pair<aux::bytes, time_t> m_chatting_friend = std::make_pair(aux::bytes(), 0);
+            // chatting friend(time:s)
+            std::pair<aux::bytes, std::int64_t> m_chatting_friend = std::make_pair(aux::bytes(), 0);
 
             // active friends
             std::vector<aux::bytes> m_active_friends;
 
-            // friend last seen time(map:key->peer, value->last seen signal time)
-            std::map<aux::bytes, time_t> m_last_seen;
+            // friend last seen time(map:key->peer, value->last seen signal time(ms))
+            std::map<aux::bytes, std::int64_t> m_last_seen;
 
-            // online/new message signal time(map:key1->peer, key2->device id, value->signal time)
-            std::map<aux::bytes, std::map<aux::bytes, time_t>> m_latest_signal_time;
+            // online/new message signal time(map:key1->peer, key2->device id, value->signal time(ms))
+            std::map<aux::bytes, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
 
             // message list(map:key->Y public key, value->message list)
             std::map<aux::bytes, std::list<message>> m_message_list_map;

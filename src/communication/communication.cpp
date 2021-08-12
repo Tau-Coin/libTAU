@@ -184,17 +184,17 @@ namespace libTAU {
             return m_message_db->get_friend_info(std::make_pair(my_pk, pubkey));
         }
 
-        bool communication::update_friend_info(const aux::bytes& pubkey, aux::bytes friend_info) {
+        bool communication::update_friend_info(const aux::bytes& pubkey, const aux::bytes& friend_info) {
             log("INFO: Update peer[%s] friend info[%s]", aux::toHex(pubkey).c_str(), aux::toHex(friend_info).c_str());
             const auto &pk = m_ses.pubkey();
             aux::bytes my_pk;
             my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
-            return m_message_db->save_friend_info(std::make_pair(my_pk, pubkey), std::move(friend_info));
+            return m_message_db->save_friend_info(std::make_pair(my_pk, pubkey), friend_info);
         }
 
         void communication::set_chatting_friend(aux::bytes chatting_friend) {
             log("INFO: Set chatting friend:%s", aux::toHex(chatting_friend).c_str());
-            m_chatting_friend = std::make_pair(std::move(chatting_friend), time(nullptr));
+            m_chatting_friend = std::make_pair(std::move(chatting_friend), total_seconds(clock_type::now()));
         }
 
         void communication::unset_chatting_friend() {
@@ -259,11 +259,11 @@ namespace libTAU {
             if (!m_friends.empty())
             {
                 // 产生随机数
-                srand((unsigned)time(nullptr));
+                srand(total_microseconds(clock_type::now()));
                 auto index = rand() % 10;
 
                 // 检查chatting friend设置时间，如果超过30分钟，则重置
-                time_t current_time = time(nullptr);
+                std::int64_t current_time = total_seconds(clock_type::now());
                 log("INFO: Current time:%ld, chatting time:%ld, diff:%ld", current_time, m_chatting_friend.second,
                     current_time - m_chatting_friend.second);
                 if (current_time - m_chatting_friend.second > communication_max_chatting_time) {
@@ -275,12 +275,12 @@ namespace libTAU {
                     peer = m_chatting_friend.first;
                 } else {
                     // 以上一次产生的随机数和时间的和作为种子，产生新的随机数，避免时钟太快，产生的随机数一样的情况
-                    srand((unsigned)time(nullptr) + index);
+                    srand(total_microseconds(clock_type::now()));
                     index = rand() % 10;
 
                     // active friends有70%的概率选中
                     if (!m_active_friends.empty() && index < 7) {
-                        srand((unsigned)time(nullptr) + index);
+                        srand(total_microseconds(clock_type::now()));
                         index = rand() % m_active_friends.size();
                         peer = m_active_friends[index];
                     } else {
@@ -302,7 +302,7 @@ namespace libTAU {
 
                         // 在剩余的朋友中随机挑选一个
                         if (!other_friends.empty()) {
-                            srand((unsigned)time(nullptr) + index);
+                            srand(total_microseconds(clock_type::now()));
                             index = rand() % other_friends.size();
                             peer = other_friends[index];
                         }
@@ -621,10 +621,8 @@ namespace libTAU {
             aux::bytes public_key;
             public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
 
-            time_t now_time = time(nullptr);
-
             // 随机挑选一个朋友发送其信息
-            srand(now_time);
+            srand(total_milliseconds(clock_type::now()));
             auto index = rand() % m_friends.size();
             auto peer = m_friends[index];
             log("INFO: Take friend %s", aux::toHex(peer).c_str());
@@ -643,7 +641,7 @@ namespace libTAU {
             auto missing_messages = m_missing_messages[public_key];
             auto size = missing_messages.size();
             if (size > 0) {
-                srand((unsigned)time(nullptr));
+                srand(total_microseconds(clock_type::now()));
                 index = rand() % size;
 
                 auto it = missing_messages.begin();
@@ -675,15 +673,13 @@ namespace libTAU {
                 log("INFO: Missing messages is empty.");
             }
 
-            online_signal onlineSignal(m_device_id, hash_prefix_bytes, now_time, friend_info, payload);
+            online_signal onlineSignal(m_device_id, hash_prefix_bytes, friend_info, payload);
             log("INFO: Make online signal:%s", onlineSignal.to_string().c_str());
 
             return onlineSignal;
         }
 
         new_msg_signal communication::make_new_message_signal(const aux::bytes& peer) {
-            time_t now_time = time(nullptr);
-
             // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
             aux::bytes hash_prefix_bytes;
             auto message_list = m_message_list_map[peer];
@@ -700,7 +696,7 @@ namespace libTAU {
             auto missing_messages = m_missing_messages[peer];
             auto size = missing_messages.size();
             if (size > 0) {
-                srand((unsigned)time(nullptr));
+                srand(total_milliseconds(clock_type::now()));
                 auto index = rand() % size;
 
                 auto it = missing_messages.begin();
@@ -732,7 +728,7 @@ namespace libTAU {
                 log("INFO: Peer[%s] has no missing messages", aux::toHex(peer).c_str());
             }
 
-            new_msg_signal newMsgSignal(m_device_id, hash_prefix_bytes, now_time, payload);
+            new_msg_signal newMsgSignal(m_device_id, hash_prefix_bytes, payload);
             log("INFO: Make new msg signal:%s", newMsgSignal.to_string().c_str());
 
             return newMsgSignal;
@@ -776,11 +772,11 @@ namespace libTAU {
                 mutable_data_wrapper data(i.value());
                 log("INFO: Mutable data wrapper:[%s]", data.to_string().c_str());
 
-                auto now_time = time(nullptr);
+                auto now_time = total_milliseconds(clock_type::now());
                 // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
                 if ((data.timestamp() + communication_data_accepted_time < now_time) ||
                     (data.timestamp() - communication_data_accepted_time > now_time)) {
-                    log("INFO: Mutable data wrapper timestamp mismatch!");
+                    log("INFO: Mutable data wrapper timestamp is out of range!");
                     return;
                 }
 
@@ -806,9 +802,10 @@ namespace libTAU {
                         auto device_map = m_latest_signal_time[peer];
 
                         // 检查相应设备信号的时间戳，只处理最新的数据
-                        if (onlineSignal.timestamp() > device_map[device_id]) {
+                        if (data.timestamp() > device_map[device_id]) {
                             // update the latest signal time
-                            device_map[device_id] = onlineSignal.timestamp();
+                            device_map[device_id] = data.timestamp();
+                            m_latest_signal_time[peer] = device_map;
 
                             if (!onlineSignal.device_id().empty() && onlineSignal.device_id() != m_device_id) {
                                 // 通知用户新的device id
@@ -840,7 +837,7 @@ namespace libTAU {
                                                    missing_messages, confirmation_roots);
 
                                 if (!confirmation_roots.empty()) {
-                                    m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, onlineSignal.timestamp());
+                                    m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, data.timestamp());
                                     log("INFO: Confirmation roots:%zu", confirmation_roots.size());
                                 }
 
@@ -861,9 +858,10 @@ namespace libTAU {
                         auto device_id = newMsgSignal.device_id();
                         auto device_map = m_latest_signal_time[peer];
                         // 检查相应设备信号的时间戳，只处理最新的数据
-                        if (newMsgSignal.timestamp() > device_map[device_id]) {
+                        if (data.timestamp() > device_map[device_id]) {
                             // update the latest signal time
-                            device_map[device_id] = newMsgSignal.timestamp();
+                            device_map[device_id] = data.timestamp();
+                            m_latest_signal_time[peer] = device_map;
 
                             // get immutable message
                             const immutable_data_info& payload = newMsgSignal.payload();
@@ -882,7 +880,7 @@ namespace libTAU {
                                                missing_messages, confirmation_roots);
 
                             if (!confirmation_roots.empty()) {
-                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, newMsgSignal.timestamp());
+                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, data.timestamp());
                                 log("INFO: Confirmation roots:%zu", confirmation_roots.size());
                             }
 
@@ -990,13 +988,13 @@ namespace libTAU {
             if (peer == public_key) {
                 // publish online signal on XX channel
                 online_signal onlineSignal = make_online_signal();
-                mutable_data_wrapper wrapper(time(nullptr), ONLINE_SIGNAL, onlineSignal.get_entry());
+                mutable_data_wrapper wrapper(total_milliseconds(clock_type::now()), ONLINE_SIGNAL, onlineSignal.get_entry());
                 log("INFO: Publish online signal:%s", wrapper.to_string().c_str());
                 data = wrapper.get_entry();
             } else {
                 // publish new message signal on XY channel
                 new_msg_signal newMsgSignal = make_new_message_signal(peer);
-                mutable_data_wrapper wrapper(time(nullptr), NEW_MSG_SIGNAL, newMsgSignal.get_entry());
+                mutable_data_wrapper wrapper(total_milliseconds(clock_type::now()), NEW_MSG_SIGNAL, newMsgSignal.get_entry());
                 log("INFO: Publish new message signal:%s", wrapper.to_string().c_str());
                 data = wrapper.get_entry();
             }

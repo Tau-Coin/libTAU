@@ -36,20 +36,16 @@ namespace libTAU {
 //            explicit online_signal(aux::bytes const& _rlp): online_signal(&_rlp) {}
 
             // construct online signal
-            online_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp,
+            online_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes,
                           aux::bytes mFriendInfo, immutable_data_info mPayload) :
                           m_device_id(std::move(mDeviceId)), m_hash_prefix_bytes(std::move(mHashPrefixBytes)),
-                          m_timestamp(mTimestamp), m_friend_info(std::move(mFriendInfo)),
-                          m_payload(std::move(mPayload)) {}
+                          m_friend_info(std::move(mFriendInfo)), m_payload(std::move(mPayload)) {}
 
             // @returns device id
             aux::bytes device_id() const { return m_device_id; }
 
             // @returns hash prefix bytes
             aux::bytes hash_prefix_bytes() const { return m_hash_prefix_bytes; }
-
-            // @returns timestamp
-            uint32_t timestamp() const { return m_timestamp; }
 
             // @returns friend info bytes
             aux::bytes friend_info() const { return m_friend_info; }
@@ -83,9 +79,6 @@ namespace libTAU {
 
             // bytes consist of first byte of ordered messages hash
             aux::bytes m_hash_prefix_bytes;
-
-            // online signal timestamp
-            uint32_t m_timestamp;
 
             // friend info payload, used to exchange friends on multi-device
             aux::bytes m_friend_info;

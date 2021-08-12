@@ -38,18 +38,15 @@ namespace libTAU {
 //            explicit new_msg_signal(aux::bytes const& _rlp): new_msg_signal(&_rlp) {}
 
             // construct new msg signal
-            new_msg_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, uint32_t mTimestamp,
+            new_msg_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes,
                            immutable_data_info mPayload) : m_device_id(std::move(mDeviceId)),
-                           m_hash_prefix_bytes(std::move(mHashPrefixBytes)), m_timestamp(mTimestamp), m_payload(std::move(mPayload)) {}
+                           m_hash_prefix_bytes(std::move(mHashPrefixBytes)), m_payload(std::move(mPayload)) {}
 
             // @returns device id
             aux::bytes device_id() const { return m_device_id; }
 
             // @returns hash prefix bytes
             aux::bytes hash_prefix_bytes() const { return m_hash_prefix_bytes; }
-
-            // @returns timestamp
-            uint32_t timestamp() const { return m_timestamp; }
 
             // payload: immutable data info, including hash, end point
             const immutable_data_info &payload() const { return m_payload; }
@@ -80,9 +77,6 @@ namespace libTAU {
 
             // bytes consist of first byte of ordered messages hash
             aux::bytes m_hash_prefix_bytes;
-
-            // new message signal timestamp
-            uint32_t m_timestamp;
 
             // payload: immutable data info, including hash, end point
             immutable_data_info m_payload;
