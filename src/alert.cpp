@@ -1633,7 +1633,7 @@ namespace {
     }
 
     communication_confirmation_root_alert::communication_confirmation_root_alert(aux::stack_allocator&
-            , aux::bytes p, std::vector<sha256_hash> s, uint32_t t)
+            , aux::bytes p, std::vector<sha256_hash> s, std::int64_t t)
             : peer(std::move(p)), confirmation_roots(std::move(s)), time(t)
     {}
 
@@ -1643,14 +1643,14 @@ namespace {
         return {};
 #else
         char msg[1050];
-        std::snprintf(msg, sizeof(msg), "peer[%s] confirmation root size %zu, time:%d", aux::toHex(peer).c_str()
+        std::snprintf(msg, sizeof(msg), "peer[%s] confirmation root size %zu, time:%ld", aux::toHex(peer).c_str()
                 , confirmation_roots.size(), time);
         return msg;
 #endif
     }
 
     communication_syncing_message_alert::communication_syncing_message_alert(aux::stack_allocator&
-            , aux::bytes p, sha256_hash s, uint32_t t)
+            , aux::bytes p, sha256_hash s, std::int64_t t)
             : peer(std::move(p)), syncing_msg_hash(std::move(s)), time(t)
     {}
 
@@ -1660,7 +1660,7 @@ namespace {
         return {};
 #else
         char msg[1050];
-        std::snprintf(msg, sizeof(msg), "peer[%s] sync message hash %s, time:%d", aux::toHex(peer).c_str()
+        std::snprintf(msg, sizeof(msg), "peer[%s] sync message hash %s, time:%ld", aux::toHex(peer).c_str()
                 , aux::toHex(syncing_msg_hash.to_string()).c_str(), time);
 
         return msg;

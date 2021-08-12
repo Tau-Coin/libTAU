@@ -1426,7 +1426,7 @@ TORRENT_VERSION_NAMESPACE_3
     struct TORRENT_EXPORT communication_confirmation_root_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, aux::bytes p, std::vector<sha256_hash> s, uint32_t t);
+        TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, aux::bytes p, std::vector<sha256_hash> s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_confirmation_root_alert, 39, alert_priority::critical)
 
@@ -1441,14 +1441,14 @@ TORRENT_VERSION_NAMESPACE_3
         std::vector<sha256_hash> confirmation_roots;
 
         // confirmed time
-        uint32_t time;
+        std::int64_t time;
     };
 
     // this alert is posted when a message is syncing.
     struct TORRENT_EXPORT communication_syncing_message_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, aux::bytes p, sha256_hash s, uint32_t t);
+        TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, aux::bytes p, sha256_hash s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_syncing_message_alert, 40, alert_priority::critical)
 
@@ -1463,7 +1463,7 @@ TORRENT_VERSION_NAMESPACE_3
         sha256_hash syncing_msg_hash;
 
         // syncing msg time
-        uint32_t time;
+        std::int64_t time;
     };
 
     // this alert is posted when friend info found in new mutable data.

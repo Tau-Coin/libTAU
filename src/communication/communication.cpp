@@ -194,7 +194,7 @@ namespace libTAU {
 
         void communication::set_chatting_friend(aux::bytes chatting_friend) {
             log("INFO: Set chatting friend:%s", aux::toHex(chatting_friend).c_str());
-            m_chatting_friend = std::make_pair(std::move(chatting_friend), total_seconds(clock_type::now()));
+            m_chatting_friend = std::make_pair(std::move(chatting_friend), total_seconds(clock_type::now().time_since_epoch()));
         }
 
         void communication::unset_chatting_friend() {
@@ -259,11 +259,11 @@ namespace libTAU {
             if (!m_friends.empty())
             {
                 // 产生随机数
-                srand(total_microseconds(clock_type::now()));
+                srand(total_microseconds(clock_type::now().time_since_epoch()));
                 auto index = rand() % 10;
 
                 // 检查chatting friend设置时间，如果超过30分钟，则重置
-                std::int64_t current_time = total_seconds(clock_type::now());
+                std::int64_t current_time = total_seconds(clock_type::now().time_since_epoch());
                 log("INFO: Current time:%ld, chatting time:%ld, diff:%ld", current_time, m_chatting_friend.second,
                     current_time - m_chatting_friend.second);
                 if (current_time - m_chatting_friend.second > communication_max_chatting_time) {
@@ -275,12 +275,12 @@ namespace libTAU {
                     peer = m_chatting_friend.first;
                 } else {
                     // 以上一次产生的随机数和时间的和作为种子，产生新的随机数，避免时钟太快，产生的随机数一样的情况
-                    srand(total_microseconds(clock_type::now()));
+                    srand(total_microseconds(clock_type::now().time_since_epoch()));
                     index = rand() % 10;
 
                     // active friends有70%的概率选中
                     if (!m_active_friends.empty() && index < 7) {
-                        srand(total_microseconds(clock_type::now()));
+                        srand(total_microseconds(clock_type::now().time_since_epoch()));
                         index = rand() % m_active_friends.size();
                         peer = m_active_friends[index];
                     } else {
@@ -302,7 +302,7 @@ namespace libTAU {
 
                         // 在剩余的朋友中随机挑选一个
                         if (!other_friends.empty()) {
-                            srand(total_microseconds(clock_type::now()));
+                            srand(total_microseconds(clock_type::now().time_since_epoch()));
                             index = rand() % other_friends.size();
                             peer = other_friends[index];
                         }
@@ -622,7 +622,7 @@ namespace libTAU {
             public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
 
             // 随机挑选一个朋友发送其信息
-            srand(total_milliseconds(clock_type::now()));
+            srand(total_milliseconds(clock_type::now().time_since_epoch()));
             auto index = rand() % m_friends.size();
             auto peer = m_friends[index];
             log("INFO: Take friend %s", aux::toHex(peer).c_str());
@@ -641,7 +641,7 @@ namespace libTAU {
             auto missing_messages = m_missing_messages[public_key];
             auto size = missing_messages.size();
             if (size > 0) {
-                srand(total_microseconds(clock_type::now()));
+                srand(total_microseconds(clock_type::now().time_since_epoch()));
                 index = rand() % size;
 
                 auto it = missing_messages.begin();
@@ -655,7 +655,8 @@ namespace libTAU {
 
                     if (!missing_message.empty()) {
                         // post syncing message hash
-                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>(public_key, missing_message.sha256(),time(nullptr));
+                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
+                                (public_key, missing_message.sha256(), total_milliseconds(clock_type::now().time_since_epoch()));
 
                         std::vector<dht::node_entry> entries;
                         m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
@@ -696,7 +697,7 @@ namespace libTAU {
             auto missing_messages = m_missing_messages[peer];
             auto size = missing_messages.size();
             if (size > 0) {
-                srand(total_milliseconds(clock_type::now()));
+                srand(total_milliseconds(clock_type::now().time_since_epoch()));
                 auto index = rand() % size;
 
                 auto it = missing_messages.begin();
@@ -710,7 +711,8 @@ namespace libTAU {
 
                     if (!missing_message.empty()) {
                         // post syncing message hash
-                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, missing_message.sha256(),time(nullptr));
+                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
+                                (peer, missing_message.sha256(), total_milliseconds(clock_type::now().time_since_epoch()));
 
                         std::vector<dht::node_entry> entries;
                         m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
@@ -772,7 +774,7 @@ namespace libTAU {
                 mutable_data_wrapper data(i.value());
                 log("INFO: Mutable data wrapper:[%s]", data.to_string().c_str());
 
-                auto now_time = total_milliseconds(clock_type::now());
+                auto now_time = total_milliseconds(clock_type::now().time_since_epoch());
                 // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
                 if ((data.timestamp() + communication_data_accepted_time < now_time) ||
                     (data.timestamp() - communication_data_accepted_time > now_time)) {
@@ -790,7 +792,7 @@ namespace libTAU {
                     m_last_seen[peer] = data.timestamp();
                     // 通知用户新的last seen time
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, data.timestamp());
-                    log("INFO: Last seen peer[%s], time[%d]", aux::toHex(peer).c_str(), data.timestamp());
+                    log("INFO: Last seen peer[%s], time[%ld]", aux::toHex(peer).c_str(), data.timestamp());
                 }
 
                 switch (data.type()) {
@@ -988,13 +990,13 @@ namespace libTAU {
             if (peer == public_key) {
                 // publish online signal on XX channel
                 online_signal onlineSignal = make_online_signal();
-                mutable_data_wrapper wrapper(total_milliseconds(clock_type::now()), ONLINE_SIGNAL, onlineSignal.get_entry());
+                mutable_data_wrapper wrapper(total_milliseconds(clock_type::now().time_since_epoch()), ONLINE_SIGNAL, onlineSignal.get_entry());
                 log("INFO: Publish online signal:%s", wrapper.to_string().c_str());
                 data = wrapper.get_entry();
             } else {
                 // publish new message signal on XY channel
                 new_msg_signal newMsgSignal = make_new_message_signal(peer);
-                mutable_data_wrapper wrapper(total_milliseconds(clock_type::now()), NEW_MSG_SIGNAL, newMsgSignal.get_entry());
+                mutable_data_wrapper wrapper(total_milliseconds(clock_type::now().time_since_epoch()), NEW_MSG_SIGNAL, newMsgSignal.get_entry());
                 log("INFO: Publish new message signal:%s", wrapper.to_string().c_str());
                 data = wrapper.get_entry();
             }
