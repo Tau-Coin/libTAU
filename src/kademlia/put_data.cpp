@@ -99,7 +99,7 @@ bool put_data::invoke(observer_ptr o)
 	if (m_data.is_mutable())
 	{
 		a["k"] = m_data.pk().bytes;
-		a["seq"] = m_data.seq().value;
+		a["ts"] = m_data.ts().value;
 		a["sig"] = m_data.sig().bytes;
 		if (!m_data.salt().empty())
 		{

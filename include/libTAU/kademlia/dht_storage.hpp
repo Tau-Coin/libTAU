@@ -86,18 +86,18 @@ namespace dht {
 			, span<char const> buf
 			, address const& addr) = 0;
 
-		// This function retrieves the sequence number of a mutable item.
+		// This function retrieves the timestamp of a mutable item.
 		//
 		// returns true if the item is found and the data is returned
-		// inside the out parameter seq.
-		virtual bool get_mutable_item_seq(sha256_hash const& target
-			, sequence_number& seq) const = 0;
+		// inside the out parameter ts.
+		virtual bool get_mutable_item_timestamp(sha256_hash const& target
+			, timestamp& ts) const = 0;
 
 		// This function retrieves the mutable stored in the DHT.
 		//
 		// For implementers:
-		// The item sequence should be stored in the key item["seq"].
-		// if force_fill is true or (0 <= seq and seq < item["seq"])
+		// The item timestamp should be stored in the key item["ts"].
+		// if force_fill is true or (0 <= ts and ts < item["ts"])
 		// the following keys should be filled
 		// item["v"] - with the value no encoded.
 		// item["sig"] - with a string representation of the signature.
@@ -106,21 +106,21 @@ namespace dht {
 		// returns true if the item is found and the data is returned
 		// inside the (entry) out parameter item.
 		virtual bool get_mutable_item(sha256_hash const& target
-			, sequence_number seq, bool force_fill
+			, timestamp ts, bool force_fill
 			, entry& item) const = 0;
 
 		// Store the item's data. This layer is only for storage.
 		// The authentication of the item is performed by the upper layer.
 		//
 		// For implementers:
-		// The sequence number should be checked if the item is already
+		// The timestamp should be checked if the item is already
 		// present. The implementation should consider the value of
 		// settings_pack::dht_max_dht_items.
 		//
 		virtual void put_mutable_item(sha256_hash const& target
 			, span<char const> buf
 			, signature const& sig
-			, sequence_number seq
+			, timestamp ts
 			, public_key const& pk
 			, span<char const> salt
 			, address const& addr) = 0;

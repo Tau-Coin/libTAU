@@ -795,7 +795,7 @@ void node::incoming_request(msg const& m, entry& e)
 		static key_desc_t const msg_desc[] = {
 			{"token", bdecode_node::string_t, 0, 0},
 			{"v", bdecode_node::none_t, 0, 0},
-			{"seq", bdecode_node::int_t, 0, key_desc_t::optional},
+			{"ts", bdecode_node::int_t, 0, key_desc_t::optional},
 			// public key
 			{"k", bdecode_node::string_t, public_key::len, key_desc_t::optional},
 			{"sig", bdecode_node::string_t, signature::len, key_desc_t::optional},
@@ -875,19 +875,19 @@ void node::incoming_request(msg const& m, entry& e)
 		else
 		{
 			// mutable put, we must verify the signature
-			sequence_number const seq(msg_keys[2].int_value());
+			timestamp const ts(msg_keys[2].int_value());
 			public_key const pk(pub_key);
 			signature const sig(sign);
 
-			if (seq < sequence_number(0))
+			if (ts < timestamp(0))
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
-				incoming_error(e, "invalid (negative) sequence number");
+				incoming_error(e, "invalid (negative) timestamp");
 				return;
 			}
 
 			// msg_keys[4] is the signature, msg_keys[3] is the public key
-			if (!verify_mutable_item(buf, salt, seq, pk, sig))
+			if (!verify_mutable_item(buf, salt, ts, pk, sig))
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid signature", 206);
@@ -896,34 +896,34 @@ void node::incoming_request(msg const& m, entry& e)
 
 			TORRENT_ASSERT(signature::len == msg_keys[4].string_length());
 
-			sequence_number item_seq;
-			if (!m_storage.get_mutable_item_seq(target, item_seq))
+			timestamp item_ts;
+			if (!m_storage.get_mutable_item_timestamp(target, item_ts))
 			{
-				m_storage.put_mutable_item(target, buf, sig, seq, pk, salt
+				m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
 					, m.addr.address());
 			}
 			else
 			{
 				// this is the "cas" field in the put message
-				// if it was specified, we MUST make sure the current sequence
-				// number matches the expected value before replacing it
+				// if it was specified, we MUST make sure the current timestamp
+				// matches the expected value before replacing it
 				// this is critical for avoiding race conditions when multiple
 				// writers are accessing the same slot
-				if (msg_keys[5] && item_seq.value != msg_keys[5].int_value())
+				if (msg_keys[5] && item_ts.value != msg_keys[5].int_value())
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "CAS mismatch", 301);
 					return;
 				}
 
-				if (item_seq > seq)
+				if (item_ts > ts)
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
-					incoming_error(e, "old sequence number", 302);
+					incoming_error(e, "old timestamp", 302);
 					return;
 				}
 
-				m_storage.put_mutable_item(target, buf, sig, seq, pk, salt
+				m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
 					, m.addr.address());
 			}
 
@@ -936,7 +936,7 @@ void node::incoming_request(msg const& m, entry& e)
 	else if (query == "get")
 	{
 		static key_desc_t const msg_desc[] = {
-			{"seq", bdecode_node::int_t, 0, key_desc_t::optional},
+			{"ts", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"target", bdecode_node::string_t, 32, 0},
 			{"mutable", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
@@ -969,20 +969,20 @@ void node::incoming_request(msg const& m, entry& e)
 			write_nodes_entries(target, msg_keys[3], reply);
 		}
 
-		// if the get has a sequence number it must be for a mutable item
+		// if the get has a timestamp it must be for a mutable item
 		// so don't bother searching the immutable table
 		if (!msg_keys[0])
 		{
 			if (!m_storage.get_immutable_item(target, reply)) // ok, check for a mutable one
 			{
-				m_storage.get_mutable_item(target, sequence_number(0)
+				m_storage.get_mutable_item(target, timestamp(0)
 					, true, reply);
 			}
 		}
 		else
 		{
 			m_storage.get_mutable_item(target
-				, sequence_number(msg_keys[0].int_value()), false
+				, timestamp(msg_keys[0].int_value()), false
 				, reply);
 		}
 	}

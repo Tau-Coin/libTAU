@@ -31,7 +31,7 @@ TORRENT_EXTRA_EXPORT sha256_hash item_target_id(span<char const> salt
 TORRENT_EXTRA_EXPORT bool verify_mutable_item(
 	span<char const> v
 	, span<char const> salt
-	, sequence_number seq
+	, timestamp ts
 	, public_key const& pk
 	, signature const& sig);
 
@@ -39,7 +39,7 @@ TORRENT_EXTRA_EXPORT bool verify_mutable_item(
 // out of this header and into one with other public functions.
 
 // given a byte range ``v`` and an optional byte range ``salt``, a
-// sequence number, public key ``pk`` (must be 32 bytes) and a secret key
+// timestamp, public key ``pk`` (must be 32 bytes) and a secret key
 // ``sk`` (must be 64 bytes), this function produces a signature which
 // is written into a 64 byte buffer pointed to by ``sig``. The caller
 // is responsible for allocating the destination buffer that's passed in
@@ -47,7 +47,7 @@ TORRENT_EXTRA_EXPORT bool verify_mutable_item(
 TORRENT_EXPORT signature sign_mutable_item(
 	span<char const> v
 	, span<char const> salt
-	, sequence_number seq
+	, timestamp ts
 	, public_key const& pk
 	, secret_key const& sk);
 
@@ -59,23 +59,23 @@ public:
 	explicit item(entry v);
 	item(entry v
 		, span<char const> salt
-		, sequence_number seq
+		, timestamp ts
 		, public_key const& pk
 		, secret_key const& sk);
 	explicit item(bdecode_node const& v);
 
 	void assign(entry v);
 	void assign(entry v, span<char const> salt
-		, sequence_number seq
+		, timestamp ts
 		, public_key const& pk
 		, secret_key const& sk);
 	void assign(bdecode_node const& v);
 	bool assign(bdecode_node const& v, span<char const> salt
-		, sequence_number seq
+		, timestamp ts
 		, public_key const& pk
 		, signature const& sig);
 	void assign(entry v, span<char const> salt
-		, sequence_number seq
+		, timestamp ts
 		, public_key const& pk
 		, signature const& sig);
 
@@ -89,7 +89,7 @@ public:
 	{ return m_pk; }
 	signature const& sig() const
 	{ return m_sig; }
-	sequence_number seq() const { return m_seq; }
+	timestamp ts() const { return m_timestamp; }
 	std::string const& salt() const { return m_salt; }
 
 private:
@@ -97,7 +97,7 @@ private:
 	std::string m_salt;
 	public_key m_pk;
 	signature m_sig;
-	sequence_number m_seq{0};
+	timestamp m_timestamp{0};
 	bool m_mutable = false;
 };
 

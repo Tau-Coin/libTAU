@@ -57,7 +57,7 @@ namespace {
 	struct dht_mutable_item : dht_immutable_item
 	{
 		signature sig{};
-		sequence_number seq{};
+		timestamp ts{};
 		public_key key{};
 		std::string salt;
 	};
@@ -190,26 +190,26 @@ namespace {
 			touch_item(i->second, addr);
 		}
 
-		bool get_mutable_item_seq(sha256_hash const& target
-			, sequence_number& seq) const override
+		bool get_mutable_item_timestamp(sha256_hash const& target
+			, timestamp& ts) const override
 		{
 			auto const i = m_mutable_table.find(target);
 			if (i == m_mutable_table.end()) return false;
 
-			seq = i->second.seq;
+			ts = i->second.ts;
 			return true;
 		}
 
 		bool get_mutable_item(sha256_hash const& target
-			, sequence_number const seq, bool const force_fill
+			, timestamp const ts, bool const force_fill
 			, entry& item) const override
 		{
 			auto const i = m_mutable_table.find(target);
 			if (i == m_mutable_table.end()) return false;
 
 			dht_mutable_item const& f = i->second;
-			item["seq"] = f.seq.value;
-			if (force_fill || (sequence_number(0) <= seq && seq < f.seq))
+			item["ts"] = f.ts.value;
+			if (force_fill || (timestamp(0) <= ts && ts < f.ts))
 			{
 				error_code ec;
 				item["v"] = bdecode({f.value.get(), f.size}, ec);
@@ -222,7 +222,7 @@ namespace {
 		void put_mutable_item(sha256_hash const& target
 			, span<char const> buf
 			, signature const& sig
-			, sequence_number const seq
+			, timestamp const ts
 			, public_key const& pk
 			, span<char const> salt
 			, address const& addr) override
@@ -244,7 +244,7 @@ namespace {
 				}
 				dht_mutable_item to_add;
 				set_value(to_add, buf);
-				to_add.seq = seq;
+				to_add.ts = ts;
 				to_add.salt = {salt.begin(), salt.end()};
 				to_add.sig = sig;
 				to_add.key = pk;
@@ -258,10 +258,10 @@ namespace {
 				// this is the case where we already have an item in this slot
 				dht_mutable_item& item = i->second;
 
-				if (item.seq <= seq)
+				if (item.ts <= ts)
 				{
 					set_value(item, buf);
-					item.seq = seq;
+					item.ts = ts;
 					item.sig = sig;
 				}
 			}

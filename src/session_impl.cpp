@@ -3717,7 +3717,7 @@ namespace {
 	{
 		TORRENT_ASSERT(i.is_mutable());
 		m_alerts.emplace_alert<dht_mutable_item_alert>(i.pk().bytes
-			, i.sig().bytes, i.seq().value
+			, i.sig().bytes, i.ts().value
 			, i.salt(), i.value(), authoritative);
 	}
 
@@ -3746,10 +3746,10 @@ namespace {
 			{
 				dht::signature const sig = i.sig();
 				dht::public_key const pk = i.pk();
-				dht::sequence_number const seq = i.seq();
+				dht::timestamp const ts = i.ts();
 				std::string salt = i.salt();
 				alerts.emplace_alert<dht_put_alert>(pk.bytes, sig.bytes
-					, std::move(salt), seq.value, num);
+					, std::move(salt), ts.value, num);
 			}
 		}
 
@@ -3760,10 +3760,10 @@ namespace {
 			entry value = i.value();
 			dht::signature sig = i.sig();
 			dht::public_key pk = i.pk();
-			dht::sequence_number seq = i.seq();
+			dht::timestamp ts = i.ts();
 			std::string salt = i.salt();
-			cb(value, sig.bytes, seq.value, salt);
-			i.assign(std::move(value), salt, seq, pk, sig);
+			cb(value, sig.bytes, ts.value, salt);
+			i.assign(std::move(value), salt, ts, pk, sig);
 		}
 
 	} // anonymous namespace

@@ -23,7 +23,7 @@ namespace libTAU { namespace dht {
 
 void get_item::got_data(bdecode_node const& v,
 	public_key const& pk,
-	sequence_number const seq,
+	timestamp const ts,
 	signature const& sig)
 {
 	// we received data!
@@ -52,7 +52,7 @@ void get_item::got_data(bdecode_node const& v,
 	}
 
 	// immutable data should have been handled before this line, only mutable
-	// data can reach here, which means pk, sig and seq must be valid.
+	// data can reach here, which means pk, sig and timestamp must be valid.
 
 	std::string const salt_copy(m_data.salt());
 	sha256_hash const incoming_target = item_target_id(salt_copy, pk);
@@ -60,10 +60,10 @@ void get_item::got_data(bdecode_node const& v,
 
 	// this is mutable data. If it passes the signature
 	// check, remember it. Just keep the version with
-	// the highest sequence number.
-	if (m_data.empty() || m_data.seq() < seq)
+	// the highest timestamp.
+	if (m_data.empty() || m_data.ts() < ts)
 	{
-		if (!m_data.assign(v, salt_copy, seq, pk, sig))
+		if (!m_data.assign(v, salt_copy, ts, pk, sig))
 			return;
 
 		// for get_item, we should call callback when we get data,
@@ -77,7 +77,7 @@ void get_item::got_data(bdecode_node const& v,
 
 	// call data callback anyway.
 	item mutable_data(pk, salt_copy);
-	if (mutable_data.assign(v, salt_copy, seq, pk, sig))
+	if (mutable_data.assign(v, salt_copy, ts, pk, sig))
 	{
 		if (!mutable_data.empty())
 		{
@@ -132,7 +132,7 @@ bool get_item::invoke(observer_ptr o)
 
 	e["q"] = "get";
 	a["target"] = target().to_string();
-	a["mutable"] = m_data.is_mutable() ? 1 : 0;
+	a["mutable"] = m_immutable ? 0 : 1;
 
 	m_node.stats_counters().inc_stats_counter(counters::dht_get_out);
 
@@ -148,7 +148,7 @@ void get_item::done()
 	{
 		// for mutable data, now we have authoritative data since
 		// we've heard from everyone, to be sure we got the
-		// latest version of the data (i.e. highest sequence number)
+		// latest version of the data (i.e. highest timestamp)
 		m_data_callback(m_data, true);
 
 #if TORRENT_USE_ASSERTS
@@ -166,7 +166,7 @@ void get_item_observer::reply(msg const& m)
 {
 	public_key pk{};
 	signature sig{};
-	sequence_number seq{0};
+	timestamp ts{0};
 
 	bdecode_node const r = m.message.dict_find_dict("r");
 	if (!r)
@@ -187,10 +187,10 @@ void get_item_observer::reply(msg const& m)
 	if (s && s.string_length() == signature::len)
 		std::memcpy(sig.bytes.data(), s.string_ptr(), signature::len);
 
-	bdecode_node const q = r.dict_find_int("seq");
+	bdecode_node const q = r.dict_find_int("ts");
 	if (q)
 	{
-		seq = sequence_number(q.int_value());
+		ts = timestamp(q.int_value());
 	}
 	else if (k && s)
 	{
@@ -201,7 +201,7 @@ void get_item_observer::reply(msg const& m)
 	bdecode_node v = r.dict_find("v");
 	if (v)
 	{
-		static_cast<get_item*>(algorithm())->got_data(v, pk, seq, sig);
+		static_cast<get_item*>(algorithm())->got_data(v, pk, ts, sig);
 	}
 
 	find_data_observer::reply(m);

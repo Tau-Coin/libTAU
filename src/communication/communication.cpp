@@ -920,7 +920,7 @@ namespace libTAU {
             }
 
             void put_mutable_data(entry& e, std::array<char, 64>& sig
-                    , std::int64_t& seq
+                    , std::int64_t& ts
                     , std::string const& salt
                     , std::array<char, 32> const& pk
                     , std::array<char, 64> const& sk
@@ -933,10 +933,10 @@ namespace libTAU {
                 // bencode要发布的mutable data
                 bencode(std::back_inserter(buf), e);
                 dht::signature sign;
-                // 递增seq
-                ++seq;
-                // 对编码完成之后的数据(data + salt + seq)进行签名
-                sign = sign_mutable_item(buf, salt, dht::sequence_number(seq)
+                // get unix timestamp
+                ts = libTAU::aux::utcTime();
+                // 对编码完成之后的数据(data + salt + ts)进行签名
+                sign = sign_mutable_item(buf, salt, dht::timestamp(ts)
                         , dht::public_key(pk.data())
                         , dht::secret_key(sk.data()));
                 sig = sign.bytes;
@@ -953,12 +953,12 @@ namespace libTAU {
                 entry value = i.value();
                 dht::signature sig = i.sig();
                 dht::public_key pk = i.pk();
-                dht::sequence_number seq = i.seq();
+                dht::timestamp ts = i.ts();
                 std::string salt = i.salt();
                 // 提取item信息，交给cb处理
-                cb(value, sig.bytes, seq.value, salt);
+                cb(value, sig.bytes, ts.value, salt);
                 // 使用新生成的item信息替换旧的item
-                i.assign(std::move(value), salt, seq, pk, sig);
+                i.assign(std::move(value), salt, ts, pk, sig);
             }
         } // anonymous namespace
 

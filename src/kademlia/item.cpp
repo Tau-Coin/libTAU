@@ -28,7 +28,7 @@ namespace libTAU { namespace dht {
 namespace {
 
 	int canonical_string(span<char const> v
-		, sequence_number const seq
+		, timestamp const ts
 		, span<char const> salt
 		, span<char> out)
 	{
@@ -49,7 +49,7 @@ namespace {
 			ptr += std::min(salt.size(), left);
 			left = out.size() - (ptr - out.data());
 		}
-		ptr += std::snprintf(ptr, static_cast<std::size_t>(left), "3:seqi%" PRId64 "e1:v", seq.value);
+		ptr += std::snprintf(ptr, static_cast<std::size_t>(left), "3:tsi%" PRId64 "e1:v", ts.value);
 		left = out.size() - (ptr - out.data());
 		std::copy(v.begin(), v.begin() + std::min(v.size(), left), ptr);
 		ptr += std::min(v.size(), left);
@@ -101,18 +101,18 @@ sha256_hash item_target_id(span<char const> salt
 bool verify_mutable_item(
 	span<char const> v
 	, span<char const> salt
-	, sequence_number const seq
+	, timestamp const ts
 	, public_key const& pk
 	, signature const& sig)
 {
 	char str[1200];
-	int len = canonical_string(v, seq, salt, str);
+	int len = canonical_string(v, ts, salt, str);
 
 	return ed25519_verify(sig, {str, len}, pk);
 }
 
 // given the bencoded buffer ``v``, the salt (which is optional and may have
-// a length of zero to be omitted), sequence number ``seq``, public key (32
+// a length of zero to be omitted), timestamp ``ts``, public key (32
 // bytes ed25519 key) ``pk`` and a secret/private key ``sk`` (64 bytes ed25519
 // key) a signature ``sig`` is produced. The ``sig`` pointer must point to
 // at least 64 bytes of available space. This space is where the signature is
@@ -120,12 +120,12 @@ bool verify_mutable_item(
 signature sign_mutable_item(
 	span<char const> v
 	, span<char const> salt
-	, sequence_number const seq
+	, timestamp const ts
 	, public_key const& pk
 	, secret_key const& sk)
 {
 	char str[1200];
-	int const len = canonical_string(v, seq, salt, str);
+	int const len = canonical_string(v, ts, salt, str);
 
 	return ed25519_sign({str, len}, pk, sk);
 }
@@ -147,9 +147,9 @@ item::item(bdecode_node const& v)
 }
 
 item::item(entry v, span<char const> salt
-	, sequence_number const seq, public_key const& pk, secret_key const& sk)
+	, timestamp const ts, public_key const& pk, secret_key const& sk)
 {
-	assign(std::move(v), salt, seq, pk, sk);
+	assign(std::move(v), salt, ts, pk, sk);
 }
 
 void item::assign(entry v)
@@ -159,16 +159,16 @@ void item::assign(entry v)
 }
 
 void item::assign(entry v, span<char const> salt
-	, sequence_number const seq, public_key const& pk, secret_key const& sk)
+	, timestamp const ts, public_key const& pk, secret_key const& sk)
 {
 	std::array<char, 1000> buffer;
 	int const bsize = bencode(buffer.begin(), v);
 	TORRENT_ASSERT(bsize <= 1000);
 	m_sig = sign_mutable_item(span<char const>(buffer).first(bsize)
-		, salt, seq, pk, sk);
+		, salt, ts, pk, sk);
 	m_salt.assign(salt.data(), static_cast<std::size_t>(salt.size()));
 	m_pk = pk;
-	m_seq = seq;
+	m_timestamp = ts;
 	m_mutable = true;
 	m_value = std::move(v);
 }
@@ -180,10 +180,10 @@ void item::assign(bdecode_node const& v)
 }
 
 bool item::assign(bdecode_node const& v, span<char const> salt
-	, sequence_number const seq, public_key const& pk, signature const& sig)
+	, timestamp const ts, public_key const& pk, signature const& sig)
 {
 	TORRENT_ASSERT(v.data_section().size() <= 1000);
-	if (!verify_mutable_item(v.data_section(), salt, seq, pk, sig))
+	if (!verify_mutable_item(v.data_section(), salt, ts, pk, sig))
 		return false;
 	m_pk = pk;
 	m_sig = sig;
@@ -191,7 +191,7 @@ bool item::assign(bdecode_node const& v, span<char const> salt
 		m_salt.assign(salt.data(), static_cast<std::size_t>(salt.size()));
 	else
 		m_salt.clear();
-	m_seq = seq;
+	m_timestamp = ts;
 	m_mutable = true;
 
 	m_value = v;
@@ -199,14 +199,14 @@ bool item::assign(bdecode_node const& v, span<char const> salt
 }
 
 void item::assign(entry v, span<char const> salt
-	, sequence_number const seq
+	, timestamp const ts
 	, public_key const& pk, signature const& sig)
 {
 
 	m_pk = pk;
 	m_sig = sig;
 	m_salt.assign(salt.data(), static_cast<std::size_t>(salt.size()));
-	m_seq = seq;
+	m_timestamp = ts;
 	m_mutable = true;
 	m_value = std::move(v);
 }

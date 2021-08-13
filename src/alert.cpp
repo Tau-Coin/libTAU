@@ -767,11 +767,11 @@ namespace {
 	dht_mutable_item_alert::dht_mutable_item_alert(aux::stack_allocator&
 		, std::array<char, 32> const& k
 		, std::array<char, 64> const& sig
-		, std::int64_t sequence
+		, std::int64_t timestamp
 		, string_view s
 		, entry i
 		, bool a)
-		: key(k), signature(sig), seq(sequence), salt(s), item(std::move(i)), authoritative(a)
+		: key(k), signature(sig), ts(timestamp), salt(s), item(std::move(i)), authoritative(a)
 	{}
 
 	std::string dht_mutable_item_alert::message() const
@@ -780,10 +780,10 @@ namespace {
 		return {};
 #else
 		char msg[1050];
-		std::snprintf(msg, sizeof(msg), "DHT mutable item (key=%s salt=%s seq=%" PRId64 " %s) [ %s ]"
+		std::snprintf(msg, sizeof(msg), "DHT mutable item (key=%s salt=%s timestamp=%" PRId64 " %s) [ %s ]"
 			, aux::to_hex(key).c_str()
 			, salt.c_str()
-			, seq
+			, ts
 			, authoritative ? "auth" : "non-auth"
 			, item.to_string().c_str());
 		return msg;
@@ -794,7 +794,7 @@ namespace {
 		: target(t)
 		, public_key()
 		, signature()
-		, seq(0)
+		, ts(0)
 		, num_success(n)
 	{}
 
@@ -802,13 +802,13 @@ namespace {
 		, std::array<char, 32> const& key
 		, std::array<char, 64> const& sig
 		, std::string s
-		, std::int64_t sequence_number
+		, std::int64_t timestamp
 		, int n)
 		: target(nullptr)
 		, public_key(key)
 		, signature(sig)
 		, salt(std::move(s))
-		, seq(sequence_number)
+		, ts(timestamp)
 		, num_success(n)
 	{}
 
@@ -820,12 +820,12 @@ namespace {
 		char msg[1050];
 		if (target.is_all_zeros())
 		{
-			std::snprintf(msg, sizeof(msg), "DHT put complete (success=%d key=%s sig=%s salt=%s seq=%" PRId64 ")"
+			std::snprintf(msg, sizeof(msg), "DHT put complete (success=%d key=%s sig=%s salt=%s timestamp=%" PRId64 ")"
 				, num_success
 				, aux::to_hex(public_key).c_str()
 				, aux::to_hex(signature).c_str()
 				, salt.c_str()
-				, seq);
+				, ts);
 			return msg;
 		}
 

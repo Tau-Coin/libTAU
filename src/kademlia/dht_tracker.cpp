@@ -20,7 +20,9 @@ see LICENSE file.
 #include <libTAU/kademlia/msg.hpp>
 #include <libTAU/kademlia/dht_observer.hpp>
 #include <libTAU/kademlia/dht_settings.hpp>
+#include <libTAU/kademlia/item.hpp>
 #include <libTAU/kademlia/node_id.hpp>
+#include <libTAU/kademlia/types.hpp>
 
 #include <libTAU/bencode.hpp>
 #include <libTAU/version.hpp>
@@ -348,7 +350,7 @@ namespace libTAU::dht {
 		TORRENT_ASSERT(it.is_mutable());
 		if (authoritative) --ctx->active_traversals;
 		authoritative = authoritative && ctx->active_traversals == 0;
-		if ((ctx->it.empty() && !it.empty()) || (ctx->it.seq() < it.seq()))
+		if ((ctx->it.empty() && !it.empty()) || (ctx->it.ts() < it.ts()))
 		{
 			ctx->it = it;
 			f(it, authoritative);
@@ -396,6 +398,22 @@ namespace libTAU::dht {
 	void dht_tracker::get_item(sha256_hash const& target
 		, std::function<void(item const&)> cb)
 	{
+		item i;
+		// firstly get immutable item from local dht storage.
+		bool const found = get_local_immutable_item(target, i);
+		if (found)
+		{
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_log->should_log(dht_logger::tracker))
+			{
+				m_log->log(dht_logger::tracker, "immutable item found locally for [ hash: %s ]"
+					, aux::to_hex(target).c_str());
+			}
+#endif
+			cb(i);
+			return;
+		}
+
 		auto ctx = std::make_shared<get_immutable_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
 			n.second.dht.get_item(target, std::bind(&get_immutable_item_callback, _1, ctx, cb));
@@ -405,6 +423,22 @@ namespace libTAU::dht {
 		, std::vector<node_entry> const& eps
 		, std::function<void(item const&)> cb)
 	{
+		item i;
+		// firstly get immutable item from local dht storage.
+		bool const found = get_local_immutable_item(target, i);
+		if (found)
+		{
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_log->should_log(dht_logger::tracker))
+			{
+				m_log->log(dht_logger::tracker, "immutable item found locally for [ hash: %s ]"
+					, aux::to_hex(target).c_str());
+			}
+#endif
+			cb(i);
+			return;
+		}
+
 		// directly get item from specified endpoints
 		auto ctx = std::make_shared<get_immutable_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
@@ -420,6 +454,25 @@ namespace libTAU::dht {
 		, std::function<void(item const&, bool)> cb
 		, std::string salt)
 	{
+		item i;
+		// firstly get mutable item from local dht storage.
+		bool const found = get_local_mutable_item(key, i, salt);
+		if (found)
+		{
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_log->should_log(dht_logger::tracker))
+			{
+				char hex_key[65];
+				char hex_salt[129]; // 64*2 + 1
+				aux::to_hex(key.bytes, hex_key);
+				aux::to_hex(salt, hex_salt);
+				m_log->log(dht_logger::tracker, "immutable item found locally for [ key: %s, salt: %s ]"
+					, hex_key, hex_salt);
+			}
+#endif
+			cb(i, false);
+		}
+
 		auto ctx = std::make_shared<get_mutable_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
 			n.second.dht.get_item(key, salt, std::bind(&get_mutable_item_callback, _1, _2, ctx, cb));
@@ -471,6 +524,87 @@ namespace libTAU::dht {
 	{
 		for (auto& n : m_nodes)
 			n.second.dht.find_live_nodes(id, l, count);
+	}
+
+	bool dht_tracker::get_local_immutable_item(sha256_hash const& target, item& i)
+	{
+		// get immutable item from dht storage
+		entry e;
+		bool const exist = m_storage.get_immutable_item(target, e);
+		if (!exist)
+		{
+			return false;
+		}
+
+		// In fact, 'e' 'v' memory points to dht_storage.
+		// Here we want ourself memory.
+		std::array<char, 1000> buffer;
+		int const bsize = bencode(buffer.begin(), e);
+		TORRENT_ASSERT(bsize <= 1000);
+		error_code errc;
+		auto n = bdecode(span<char const>(buffer).first(bsize), errc);
+
+		bdecode_node v = n.dict_find_string("v");
+		if (v)
+		{
+			i.assign(v);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool dht_tracker::get_local_mutable_item(public_key const& key, item& i
+		, std::string salt)
+	{
+		// get immutable item from dht storage
+		entry e;
+		sha256_hash const& target = item_target_id(salt, key);
+		bool const exist = m_storage.get_mutable_item(target, timestamp(0), true, e);
+		if (!exist)
+		{
+			return false;
+		}
+
+		// In fact, 'e' 'v' memory points to dht_storage.
+		// Here we want ourself memory.
+		std::array<char, 1000> buffer;
+		int const bsize = bencode(buffer.begin(), e);
+		TORRENT_ASSERT(bsize <= 1000);
+		error_code errc;
+		auto n = bdecode(span<char const>(buffer).first(bsize), errc);
+
+		public_key pk{};
+		signature sig{};
+		timestamp ts{0};
+
+		bdecode_node const k = n.dict_find_string("k");
+		if (k && k.string_length() == public_key::len)
+		{
+			std::memcpy(pk.bytes.data(), k.string_ptr(), public_key::len);
+		}
+
+		bdecode_node const s = n.dict_find_string("sig");
+		if (s && s.string_length() == signature::len)
+		{
+			std::memcpy(sig.bytes.data(), s.string_ptr(), signature::len);
+		}
+
+		bdecode_node const q = n.dict_find_int("ts");
+		if (q)
+		{
+			ts = timestamp(q.int_value());
+		}
+
+		bdecode_node v = n.dict_find("v");
+		if (k && s && q && v)
+		{
+			return i.assign(v, salt, ts, pk, sig);
+		}
+
+		return false;
 	}
 
 	void dht_tracker::incoming_error(error_code const& ec, udp::endpoint const& ep)

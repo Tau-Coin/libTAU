@@ -786,7 +786,7 @@ TORRENT_VERSION_NAMESPACE_3
 		// internal
 		TORRENT_UNEXPORT dht_mutable_item_alert(aux::stack_allocator& alloc
 			, std::array<char, 32> const& k, std::array<char, 64> const& sig
-			, std::int64_t sequence, string_view s, entry i, bool a);
+			, std::int64_t timestamp, string_view s, entry i, bool a);
 
 		TORRENT_DEFINE_ALERT_PRIO(dht_mutable_item_alert, 20, alert_priority::critical)
 
@@ -797,14 +797,14 @@ TORRENT_VERSION_NAMESPACE_3
 		std::array<char, 32> key;
 
 		// the signature of the data. This is not the signature of the
-		// plain encoded form of the item, but it includes the sequence number
+		// plain encoded form of the item, but it includes the timestamp
 		// and possibly the hash as well. See the dht_store document for more
 		// information. This is primarily useful for echoing back in a store
 		// request.
 		std::array<char, 64> signature;
 
-		// the sequence number of this item
-		std::int64_t seq;
+		// the timestamp of this item
+		std::int64_t ts;
 
 		// the salt, if any, used to lookup and store this item. If no
 		// salt was used, this is an empty string
@@ -826,7 +826,7 @@ TORRENT_VERSION_NAMESPACE_3
 		TORRENT_UNEXPORT dht_put_alert(aux::stack_allocator& alloc, std::array<char, 32> const& key
 			, std::array<char, 64> const& sig
 			, std::string s
-			, std::int64_t sequence_number
+			, std::int64_t timestamp
 			, int n);
 
 		TORRENT_DEFINE_ALERT(dht_put_alert, 21)
@@ -839,11 +839,11 @@ TORRENT_VERSION_NAMESPACE_3
 		sha256_hash target;
 
 		// if a mutable item was stored, these are the public key, signature,
-		// salt and sequence number the item was stored under.
+		// salt and timestamp the item was stored under.
 		std::array<char, 32> public_key;
 		std::array<char, 64> signature;
 		std::string salt;
-		std::int64_t seq;
+		std::int64_t ts;
 
 		// DHT put operation usually writes item to k nodes, maybe the node
 		// is stale so no response, or the node doesn't support 'put', or the

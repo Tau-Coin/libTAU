@@ -130,6 +130,15 @@ namespace libTAU::dht {
 			, std::vector<node_entry>& l
 			, int count = 0);
 
+		// get immutable item from local dht storage.
+		// returns true if the item is found.
+		bool get_local_immutable_item(sha256_hash const& target, item& i);
+
+		// get mutable item from local dht storage.
+		// returns true if the item is found.
+		bool get_local_mutable_item(public_key const& key, item& i
+			, std::string salt = std::string());
+
 #if TORRENT_ABI_VERSION == 1
 #include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
 		void dht_status(session_status& s);

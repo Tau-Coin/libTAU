@@ -71,6 +71,25 @@ namespace dht {
 		std::int64_t value;
 	};
 
+	struct timestamp
+	{
+		timestamp() : value(0) {}
+		explicit timestamp(std::int64_t v) : value(v) {}
+		timestamp(timestamp const& sqn) = default;
+		bool operator<(timestamp rhs) const
+		{ return value < rhs.value; }
+		bool operator>(timestamp rhs) const
+		{ return value > rhs.value; }
+		timestamp& operator=(timestamp rhs) &
+		{ value = rhs.value; return *this; }
+		bool operator<=(timestamp rhs) const
+		{ return value <= rhs.value; }
+		bool operator==(timestamp const& rhs) const
+		{ return value == rhs.value; }
+
+		std::int64_t value;
+	};
+
 } // namespace dht
 } // namespace libTAU
 

@@ -414,7 +414,7 @@ namespace {
 		async_call(&session_impl::dht_get_mutable_item, key, salt);
 	}
 
-	// TODO: 3 expose the sequence_number, public_key, secret_key and signature
+	// TODO: 3 expose the timestamp, public_key, secret_key and signature
 	// types to the client
 	sha256_hash session_handle::dht_put_item(entry data)
 	{

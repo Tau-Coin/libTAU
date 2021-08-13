@@ -28,7 +28,7 @@ public:
 
 	void got_data(bdecode_node const& v,
 		public_key const& pk,
-		sequence_number seq,
+		timestamp ts,
 		signature const& sig);
 
 	// for immutable items
