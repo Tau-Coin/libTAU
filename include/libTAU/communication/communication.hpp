@@ -58,8 +58,8 @@ namespace libTAU {
         // max chatting time(30min)
         constexpr int communication_max_chatting_time = 30 * 60;
 
-        // data accepted time(6h)
-        constexpr int communication_data_accepted_time = 6 * 60 * 60;
+        // data accepted time(6h)(ms)
+        constexpr std::int64_t communication_data_accepted_time = 6 * 60 * 60 * 1000;
 
 //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
         // This is the basic logging and debug interface offered by the communication.
