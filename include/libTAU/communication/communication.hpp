@@ -41,6 +41,8 @@ namespace libTAU {
 
     namespace communication {
 
+        using system_clock = std::chrono::system_clock;
+
         // default refresh time of main task(50ms)
         constexpr int communication_default_refresh_time = 50;
 
