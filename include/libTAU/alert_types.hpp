@@ -1518,7 +1518,7 @@ TORRENT_VERSION_NAMESPACE_3
     struct TORRENT_EXPORT communication_last_seen_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_last_seen_alert(aux::stack_allocator& alloc, aux::bytes p, uint32_t t);
+        TORRENT_UNEXPORT communication_last_seen_alert(aux::stack_allocator& alloc, aux::bytes p, int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_last_seen_alert, 43, alert_priority::critical)
 
@@ -1530,7 +1530,7 @@ TORRENT_VERSION_NAMESPACE_3
         aux::bytes peer;
 
         // last seen time
-        uint32_t last_seen;
+        int64_t last_seen;
     };
 
 TORRENT_VERSION_NAMESPACE_3_END

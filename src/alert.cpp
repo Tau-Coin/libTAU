@@ -1715,7 +1715,7 @@ namespace {
     }
 
     communication_last_seen_alert::communication_last_seen_alert(aux::stack_allocator&
-            , aux::bytes p, uint32_t t)
+            , aux::bytes p, int64_t t)
             : peer(std::move(p)), last_seen(t)
     {}
 
