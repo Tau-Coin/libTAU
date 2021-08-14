@@ -466,7 +466,7 @@ namespace libTAU::dht {
 				char hex_salt[129]; // 64*2 + 1
 				aux::to_hex(key.bytes, hex_key);
 				aux::to_hex(salt, hex_salt);
-				m_log->log(dht_logger::tracker, "immutable item found locally for [ key: %s, salt: %s ]"
+				m_log->log(dht_logger::tracker, "mutable item found locally for [ key: %s, salt: %s ]"
 					, hex_key, hex_salt);
 			}
 #endif
@@ -559,7 +559,7 @@ namespace libTAU::dht {
 	bool dht_tracker::get_local_mutable_item(public_key const& key, item& i
 		, std::string salt)
 	{
-		// get immutable item from dht storage
+		// get mutable item from dht storage
 		entry e;
 		sha256_hash const& target = item_target_id(salt, key);
 		bool const exist = m_storage.get_mutable_item(target, timestamp(0), true, e);
