@@ -38,6 +38,7 @@ see LICENSE file.
 #include "libTAU/socket_type.hpp"
 #include "libTAU/aux_/ip_helpers.hpp" // for is_v4
 #include "libTAU/aux_/common.h"
+#include "libTAU/aux_/common_data.h"
 #include "libTAU/communication/message.hpp"
 
 #if TORRENT_ABI_VERSION == 1
@@ -1725,7 +1726,7 @@ namespace {
         return {};
 #else
         char msg[1050];
-        std::snprintf(msg, sizeof(msg), "peer[%s] last seen time %d", aux::toHex(peer).c_str(), last_seen);
+        std::snprintf(msg, sizeof(msg), "peer[%s] last seen time %ld", aux::toHex(peer).c_str(), last_seen);
         return msg;
 #endif
     }

@@ -12,7 +12,7 @@ see LICENSE file.
 
 #include <ostream>
 #include "libTAU/aux_/common.h"
-#include "libTAU/aux_/rlp.h"
+#include "libTAU/aux_/common_data.h"
 #include "libTAU/aux_/export.hpp"
 #include "libTAU/entry.hpp"
 #include "libTAU/bencode.hpp"
@@ -27,22 +27,10 @@ namespace libTAU::communication {
         // @param Construct with bencode
         explicit message_hash_list(std::string encode);
 
-//        // @param _rlp rlp encode
-//        explicit message_hash_list(aux::bytesConstRef _rlp);
-//
-//        // @param _rlp rlp encode
-//        explicit message_hash_list(aux::bytes const& _rlp): message_hash_list(&_rlp) {}
-
         explicit message_hash_list(std::vector<aux::bytes> message_hash_list);
 
         // @returns all message hash in this container
         std::vector<aux::bytes> hash_list() const { return m_message_hash_list; }
-
-//        // Serialises this message hash list to an RLPStream
-//        void streamRLP(aux::RLPStream& _s) const;
-//
-//        // @returns the RLP serialisation of this message hash list
-//        aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
 
         // @returns the bencode
         std::string encode();
@@ -55,9 +43,6 @@ namespace libTAU::communication {
     private:
         // populate hash list data from entry
         void populate(const entry& e);
-
-//        // Construct message hash list object from rlp serialisation
-//        void populate(aux::RLP const& hash_list);
 
         // message hash list
         std::vector<aux::bytes> m_message_hash_list;

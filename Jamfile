@@ -943,7 +943,6 @@ KADEMLIA_SOURCES =
 	;
 
 COMMUNICATION_SOURECS =
-	rlp
 	fixed_hash
 	common_data
 	common

@@ -10,11 +10,6 @@ see LICENSE file.
 
 namespace libTAU { namespace communication {
 
-//        online_signal::online_signal(aux::bytesConstRef _rlp) {
-//            aux::RLP const rlp(_rlp);
-//            populate(rlp);
-//        }
-
         online_signal::online_signal(const entry &e) {
             populate(e);
         }
@@ -32,11 +27,6 @@ namespace libTAU { namespace communication {
 
             return e;
         }
-
-//        void online_signal::streamRLP(aux::RLPStream &_s) const {
-//            _s.appendList(5);
-//            _s << m_device_id << m_hash_prefix_bytes << m_timestamp << m_friend_info <<  m_payload.rlp();
-//        }
 
         void online_signal::populate(const entry &e) {
             // device id
@@ -63,14 +53,6 @@ namespace libTAU { namespace communication {
                 m_payload = immutable_data_info(*i);
             }
         }
-
-//        void online_signal::populate(const aux::RLP &_online_signal) {
-//            m_device_id = _online_signal[0].toBytes();
-//            m_hash_prefix_bytes = _online_signal[1].toBytes();
-//            m_timestamp = _online_signal[2].toInt<uint32_t>();
-//            m_friend_info = _online_signal[3].toBytes();
-//            m_payload = immutable_data_info(_online_signal[4].toBytes());
-//        }
 
         std::string online_signal::to_string() const {
             std::ostringstream os;

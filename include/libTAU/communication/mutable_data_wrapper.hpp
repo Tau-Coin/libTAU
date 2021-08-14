@@ -9,14 +9,12 @@ see LICENSE file.
 #ifndef LIBTAU_MUTABLE_DATA_WRAPPER_HPP
 #define LIBTAU_MUTABLE_DATA_WRAPPER_HPP
 
-
-#include <libTAU/aux_/common.h>
-#include <libTAU/aux_/rlp.h>
-
 #include <utility>
 #include <ostream>
 #include "libTAU/aux_/export.hpp"
 #include "libTAU/entry.hpp"
+#include "libTAU/aux_/common.h"
+#include "libTAU/aux_/common_data.h"
 
 
 namespace libTAU {
@@ -34,18 +32,8 @@ namespace libTAU {
         class TORRENT_EXPORT mutable_data_wrapper {
 
         public:
-
-            // @param _rlp rlp encode
-//            explicit mutable_data_wrapper(aux::bytesConstRef _rlp);
-
             // @param Construct with entry
             explicit mutable_data_wrapper(const entry& e);
-
-            // @param _rlp rlp encode
-//            explicit mutable_data_wrapper(aux::bytes const& _rlp): mutable_data_wrapper(&_rlp) {}
-
-//            mutable_data_wrapper(uint32_t mTimestamp, mutable_data_type mType, aux::bytes mPayload)
-//                    : m_timestamp(mTimestamp), m_type(mType), m_payload(std::move(mPayload)) {}
 
             mutable_data_wrapper(std::int64_t mTimestamp, mutable_data_type mType, entry mPayload)
                     : m_timestamp(mTimestamp), m_type(mType), m_payload(std::move(mPayload)) {}
@@ -59,12 +47,6 @@ namespace libTAU {
             // @returns payload
             entry payload() const { return m_payload; }
 
-            // Serialises this mutable data wrapper to an RLPStream
-//            void streamRLP(aux::RLPStream& _s) const;
-
-            // @returns the RLP serialisation of this mutable data wrapper
-//            aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
-
             // @returns the corresponding entry
             entry get_entry() const;
 
@@ -74,9 +56,6 @@ namespace libTAU {
             friend std::ostream &operator<<(std::ostream &os, const mutable_data_wrapper &wrapper);
 
         private:
-            // Construct mutable data wrapper object from rlp serialisation
-//            void populate(aux::RLP const& _mutable_data_wrapper);
-
             // populate wrapper data from entry
             void populate(const entry& e);
 
@@ -87,7 +66,6 @@ namespace libTAU {
             mutable_data_type m_type;
 
             // payload
-//            aux::bytes m_payload;
             entry m_payload;
         };
     }

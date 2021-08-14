@@ -18,25 +18,9 @@ namespace libTAU {
             populate(e);
         }
 
-//        message_hash_list::message_hash_list(aux::bytesConstRef _rlp) {
-//            if (!_rlp.empty()) {
-//                aux::RLP const rlp(_rlp);
-//                populate(rlp);
-//            }
-//        }
-
         message_hash_list::message_hash_list(std::vector<aux::bytes> message_hash_list) {
             m_message_hash_list = std::move(message_hash_list);
         }
-
-//        void message_hash_list::streamRLP(aux::RLPStream &_s) const {
-//            if (!m_message_hash_list.empty()) {
-//                _s.appendList(m_message_hash_list.size());
-//                for (auto const &hash: m_message_hash_list) {
-//                    _s << hash;
-//                }
-//            }
-//        }
 
         std::string message_hash_list::encode() {
             entry::list_type l;
@@ -59,12 +43,6 @@ namespace libTAU {
                 m_message_hash_list.emplace_back(hash.begin(), hash.end());
             }
         }
-
-//        void message_hash_list::populate(const aux::RLP &hash_list) {
-//            for (auto const& hash: hash_list) {
-//                m_message_hash_list.push_back(hash.toBytes());
-//            }
-//        }
 
         std::string message_hash_list::to_string() const {
             std::ostringstream os;

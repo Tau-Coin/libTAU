@@ -15,7 +15,7 @@ see LICENSE file.
 #include <libTAU/kademlia/node_entry.hpp>
 #include <libTAU/entry.hpp>
 #include <libTAU/aux_/common.h>
-#include <libTAU/aux_/rlp.h>
+#include "libTAU/aux_/common_data.h"
 #include "libTAU/sha1_hash.hpp"
 #include "libTAU/entry.hpp"
 
@@ -25,14 +25,8 @@ namespace libTAU::communication {
     public:
         immutable_data_info() = default;
 
-        // @param _rlp rlp encode ref
-//        explicit immutable_data_info(aux::bytesConstRef _rlp);
-
         // @param Construct with entry
         explicit immutable_data_info(const entry& e);
-
-        // @param _rlp rlp encode
-//        explicit immutable_data_info(aux::bytes const& _rlp): immutable_data_info(&_rlp) {}
 
         // construct online signal
         immutable_data_info(sha256_hash target, std::vector<dht::node_entry> entries) :
@@ -44,12 +38,6 @@ namespace libTAU::communication {
         // @returns entries
         const std::vector<dht::node_entry> &entries() const { return m_entries; }
 
-        // Serialises this online signal to an RLPStream
-//        void streamRLP(aux::RLPStream& _s) const;
-
-        // @returns the RLP serialisation of this message
-//        aux::bytes rlp() const { aux::RLPStream s; streamRLP(s); return s.out(); }
-
         // @returns the corresponding entry
         entry get_entry() const;
 
@@ -59,9 +47,6 @@ namespace libTAU::communication {
         friend std::ostream &operator<<(std::ostream &os, const immutable_data_info &info);
 
     private:
-        // Construct immutable data info object from rlp serialisation
-//        void populate(aux::RLP const& encode);
-
         // populate immutable data info from entry
         void populate(const entry& e);
 

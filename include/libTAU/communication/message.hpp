@@ -10,12 +10,12 @@ see LICENSE file.
 #define LIBTAU_MESSAGE_HPP
 
 #include <boost/multiprecision/cpp_int.hpp>
+#include <ostream>
 #include <utility>
 #include "libTAU/sha1_hash.hpp"
 #include "libTAU/hasher.hpp"
 #include <libTAU/aux_/common.h>
-#include <libTAU/aux_/rlp.h>
-#include <ostream>
+#include "libTAU/aux_/common_data.h"
 #include "libTAU/entry.hpp"
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
@@ -90,7 +90,6 @@ namespace libTAU {
             }
 
             friend std::ostream &operator<<(std::ostream &os, const message &message);
-
 
         private:
             // populate message data from entry

@@ -11,7 +11,7 @@ see LICENSE file.
 
 #include <ostream>
 #include "libTAU/aux_/common.h"
-#include "libTAU/aux_/rlp.h"
+#include "libTAU/aux_/common_data.h"
 #include "libTAU/aux_/export.hpp"
 #include "libTAU/communication/message.hpp"
 
