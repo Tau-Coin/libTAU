@@ -125,6 +125,9 @@ namespace libTAU {
             // reset when account changed
             void account_changed();
 
+            // get current time
+            std::int64_t get_current_time();
+
         private:
             // initialize member variables
             bool init();

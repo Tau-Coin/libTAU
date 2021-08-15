@@ -118,6 +118,10 @@ namespace libTAU {
             }
         }
 
+        std::int64_t communication::get_current_time() {
+            return total_milliseconds(system_clock::now().time_since_epoch());
+        }
+
         void communication::set_loop_time_interval(int milliseconds) {
             log("INFO: Set loop time:%d(ms)", milliseconds);
             m_refresh_time = milliseconds;
