@@ -28,10 +28,25 @@ namespace libTAU {
             explicit online_signal(const entry& e);
 
             // construct online signal
+            online_signal(int64_t mTimestamp, aux::bytes mDeviceId, aux::bytes mHashPrefixBytes, immutable_data_info mPayload) :
+                    m_timestamp(mTimestamp), m_device_id(std::move(mDeviceId)),
+                    m_hash_prefix_bytes(std::move(mHashPrefixBytes)), m_payload(std::move(mPayload)) {}
+
+            // construct online signal
+            online_signal(int64_t mTimestamp, aux::bytes mDeviceId, aux::bytes mHashPrefixBytes,
+                          immutable_data_info mPayload, aux::bytes mFriendInfo) :
+                          m_timestamp(mTimestamp), m_device_id(std::move(mDeviceId)),
+                          m_hash_prefix_bytes(std::move(mHashPrefixBytes)), m_payload(std::move(mPayload)),
+                          m_friend_info(std::move(mFriendInfo)) {}
+
+            // construct online signal
             online_signal(aux::bytes mDeviceId, aux::bytes mHashPrefixBytes,
                           aux::bytes mFriendInfo, immutable_data_info mPayload) :
                           m_device_id(std::move(mDeviceId)), m_hash_prefix_bytes(std::move(mHashPrefixBytes)),
                           m_friend_info(std::move(mFriendInfo)), m_payload(std::move(mPayload)) {}
+
+            // @returns timestamp
+            int64_t timestamp() const { return m_timestamp; }
 
             // @returns device id
             aux::bytes device_id() const { return m_device_id; }
@@ -57,17 +72,20 @@ namespace libTAU {
             // populate online signal data from entry
             void populate(const entry& e);
 
+            // online signal timestamp
+            std::int64_t m_timestamp;
+
             // device id
             aux::bytes m_device_id;
 
             // bytes consist of first byte of ordered messages hash
             aux::bytes m_hash_prefix_bytes;
 
-            // friend info payload, used to exchange friends on multi-device
-            aux::bytes m_friend_info;
-
             // payload: immutable data info, including hash, end point
             immutable_data_info m_payload;
+
+            // friend info payload, used to exchange friends on multi-device
+            aux::bytes m_friend_info;
         };
     }
 }

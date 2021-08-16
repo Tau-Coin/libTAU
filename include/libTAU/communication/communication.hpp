@@ -172,6 +172,9 @@ namespace libTAU {
             // make new message signal on XY channel
             new_msg_signal make_new_message_signal(const aux::bytes& peer);
 
+            // make online signal
+            online_signal make_signal(const aux::bytes& peer);
+
             // validate message, check if message is oversize( >1000 bytes)
             bool validate_message(const message& msg);
 
