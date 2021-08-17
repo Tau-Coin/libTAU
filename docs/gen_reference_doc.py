@@ -134,10 +134,7 @@ category_mapping = {
     'operations.hpp': 'Alerts',
     'alert_dispatcher.hpp': 'Alerts',
     'online_signal.hpp': 'Communication',
-    'new_msg_signal.hpp': 'Communication',
-    'mutable_data_wrapper.hpp': 'Communication',
     'message.hpp': 'Communication',
-    'message_container.hpp': 'Communication',
 }
 
 category_fun_mapping = {

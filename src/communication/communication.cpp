@@ -38,7 +38,6 @@ namespace libTAU {
 
         bool communication::stop()
         {
-//            m_refresh_timer.cancel();
             m_stop = true;
 
             clear();
@@ -597,148 +596,6 @@ namespace libTAU {
             return salt;
         }
 
-        std::string communication::make_sender_salt(aux::bytes peer) {
-            dht::public_key *pubkey = m_ses.pubkey();
-            std::string salt;
-
-            // sender channel salt由我和对方的public key各取前4个字节，拼接而成
-            salt.insert(salt.end(), pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length);
-            salt.insert(salt.end(), peer.begin(), peer.begin() + communication_short_address_length);
-
-            return salt;
-        }
-
-        std::string communication::make_receiver_salt(aux::bytes peer) {
-            dht::public_key *pubkey = m_ses.pubkey();
-            std::string salt;
-
-            // receiver channel salt由对方和我的public key各取前4个字节，拼接而成
-            salt.insert(salt.end(), peer.begin(), peer.begin() + communication_short_address_length);
-            salt.insert(salt.end(), pubkey->bytes.begin(), pubkey->bytes.begin() + communication_short_address_length);
-
-            return salt;
-        }
-
-        online_signal communication::make_online_signal() {
-            dht::public_key * pk = m_ses.pubkey();
-            aux::bytes public_key;
-            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
-
-            // 随机挑选一个朋友发送其信息
-            srand(total_milliseconds(system_clock::now().time_since_epoch()));
-            auto index = rand() % m_friends.size();
-            auto peer = m_friends[index];
-            log("INFO: Take friend %s", aux::toHex(peer).c_str());
-            aux::bytes friend_info = m_message_db->get_friend_info(std::make_pair(public_key, peer));
-
-            // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
-            aux::bytes hash_prefix_bytes;
-            auto message_list = m_message_list_map[public_key];
-            if (!message_list.empty()) {
-                for (const auto & msg: message_list) {
-                    hash_prefix_bytes.push_back(msg.sha256()[0]);
-                }
-            }
-
-            immutable_data_info payload;
-            auto missing_messages = m_missing_messages[public_key];
-            auto size = missing_messages.size();
-            if (size > 0) {
-                srand(total_microseconds(system_clock::now().time_since_epoch()));
-                index = rand() % size;
-
-                auto it = missing_messages.begin();
-                for (size_t i = 0; i < index; i++) {
-                    ++it;
-                }
-
-                if (it != missing_messages.end()) {
-                    message missing_message = *it;
-                    m_missing_messages[public_key].erase(missing_message);
-
-                    if (!missing_message.empty()) {
-                        // post syncing message hash
-                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
-                                (public_key, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
-
-                        std::vector<dht::node_entry> entries;
-                        m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-//                        auto msg_encode = missing_message.rlp();
-                        log("INFO: Put immutable message target[%s], entries[%zu]",
-                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
-                        dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
-
-                        payload = immutable_data_info(missing_message.sha256(), entries);
-                    } else {
-                        log("INFO: Missing message is empty.");
-                    }
-                }
-            } else {
-                log("INFO: Missing messages is empty.");
-            }
-
-            online_signal onlineSignal(m_device_id, hash_prefix_bytes, friend_info, payload);
-            log("INFO: Make online signal:%s", onlineSignal.to_string().c_str());
-
-            return onlineSignal;
-        }
-
-        new_msg_signal communication::make_new_message_signal(const aux::bytes& peer) {
-            // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
-            aux::bytes hash_prefix_bytes;
-            auto message_list = m_message_list_map[peer];
-            if (!message_list.empty()) {
-                for (const auto & msg: message_list) {
-                    log("DEBUG: Message[%s]", msg.to_string().c_str());
-                    hash_prefix_bytes.push_back(msg.sha256()[0]);
-                }
-            } else {
-                log("INFO: Message list from peer[%s] is empty.", aux::toHex(peer).c_str());
-            }
-
-            immutable_data_info payload;
-            auto missing_messages = m_missing_messages[peer];
-            auto size = missing_messages.size();
-            if (size > 0) {
-                srand(total_milliseconds(system_clock::now().time_since_epoch()));
-                auto index = rand() % size;
-
-                auto it = missing_messages.begin();
-                for (size_t i = 0; i < index; i++) {
-                    ++it;
-                }
-
-                if (it != missing_messages.end()) {
-                    message missing_message = *it;
-                    m_missing_messages[peer].erase(missing_message);
-
-                    if (!missing_message.empty()) {
-                        // post syncing message hash
-                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
-                                (peer, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
-
-                        std::vector<dht::node_entry> entries;
-                        m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-//                        auto msg_encode = missing_message.rlp();
-                        log("INFO: Put immutable message target[%s], entries[%zu]",
-                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
-                        dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
-
-                        payload = immutable_data_info(missing_message.sha256(), entries);
-                    } else {
-                        log("INFO: Missing message is empty.");
-                    }
-                }
-            } else {
-                log("INFO: Peer[%s] has no missing messages", aux::toHex(peer).c_str());
-            }
-
-            new_msg_signal newMsgSignal(m_device_id, hash_prefix_bytes, payload);
-            log("INFO: Make new msg signal:%s", newMsgSignal.to_string().c_str());
-
-            return newMsgSignal;
-        }
-
         online_signal communication::make_signal(const aux::bytes& peer) {
             // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
             aux::bytes hash_prefix_bytes;
@@ -1008,23 +865,6 @@ namespace libTAU {
             // salt is y pubkey when publish signal
             auto salt = make_salt(peer);
             online_signal onlineSignal = make_signal(peer);
-
-//            aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
-//
-//            // check if peer is myself
-//            if (peer == public_key) {
-//                // publish online signal on XX channel
-//                online_signal onlineSignal = make_online_signal();
-//                mutable_data_wrapper wrapper(total_milliseconds(system_clock::now().time_since_epoch()), ONLINE_SIGNAL, onlineSignal.get_entry());
-//                log("INFO: Publish online signal:%s", wrapper.to_string().c_str());
-//                data = wrapper.get_entry();
-//            } else {
-//                // publish new message signal on XY channel
-//                new_msg_signal newMsgSignal = make_new_message_signal(peer);
-//                mutable_data_wrapper wrapper(total_milliseconds(system_clock::now().time_since_epoch()), NEW_MSG_SIGNAL, newMsgSignal.get_entry());
-//                log("INFO: Publish new message signal:%s", wrapper.to_string().c_str());
-//                data = wrapper.get_entry();
-//            }
 
             log("INFO: Publish online signal: peer[%s], salt[%s], online signal[%s]", aux::toHex(pk->bytes).c_str(),
                 aux::toHex(salt).c_str(), onlineSignal.to_string().c_str());

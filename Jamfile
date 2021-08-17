@@ -947,13 +947,10 @@ COMMUNICATION_SOURECS =
 	common_data
 	common
 	online_signal
-	new_msg_signal
-	mutable_data_wrapper
 	message
 	message_db_impl
 	communication
 	message_hash_list
-	message_container
 	immutable_data_info
 	;
 

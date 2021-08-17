@@ -30,7 +30,6 @@ see LICENSE file.
 #include "libTAU/communication/message_db_impl.hpp"
 #include "libTAU/communication/message_db_interface.hpp"
 #include "libTAU/communication/online_signal.hpp"
-#include "libTAU/communication/new_msg_signal.hpp"
 
 namespace libTAU {
 
@@ -159,18 +158,6 @@ namespace libTAU {
 
             // make a salt on mutable channel
             static std::string make_salt(aux::bytes peer);
-
-            // make a salt on sender channel
-            std::string make_sender_salt(aux::bytes peer);
-
-            // make a salt on receiver channel
-            std::string make_receiver_salt(aux::bytes peer);
-
-            // make online signal on XX channel
-            online_signal make_online_signal();
-
-            // make new message signal on XY channel
-            new_msg_signal make_new_message_signal(const aux::bytes& peer);
 
             // make online signal
             online_signal make_signal(const aux::bytes& peer);
