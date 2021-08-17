@@ -655,11 +655,13 @@ namespace libTAU::dht {
 			}
 		}
 
+		/*
 		if (!m_blocker.incoming(ep.address(), clock_type::now(), m_log))
 		{
 			m_counters.inc_stats_counter(counters::dht_messages_in_dropped);
 			return true;
 		}
+		 */
 
 		TORRENT_ASSERT(buf_size > 0);
 
