@@ -558,8 +558,8 @@ namespace libTAU {
                         j--;
                     } else if (1 == operations[i][j]) {
                         // 如果是插入操作，则将target对应的插入消息加入列表
-                        // 如果缺最后一个，并且此时双方满载，则判定为被挤出去的
-                        if (targetLength != j || targetLength != communication_max_message_list_size ||
+                        // 注意由于消息是按照时间戳从小到大排列，如果缺第一个，并且此时双方满载，则判定为被挤出去而产生的差异，并非真的缺少
+                        if (1 != j || targetLength != communication_max_message_list_size ||
                             sourceLength != communication_max_message_list_size) {
                             missing_messages.push_back(messages[j - 1]);
 
