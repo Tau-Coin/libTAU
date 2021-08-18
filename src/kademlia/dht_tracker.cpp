@@ -398,19 +398,10 @@ namespace libTAU::dht {
 	void dht_tracker::get_item(sha256_hash const& target
 		, std::function<void(item const&)> cb)
 	{
-		item i;
 		// firstly get immutable item from local dht storage.
-		bool const found = get_local_immutable_item(target, i);
+		bool const found = get_local_immutable_item(target, cb);
 		if (found)
 		{
-#ifndef TORRENT_DISABLE_LOGGING
-			if (m_log->should_log(dht_logger::tracker))
-			{
-				m_log->log(dht_logger::tracker, "immutable item found locally for [ hash: %s ]"
-					, aux::to_hex(target).c_str());
-			}
-#endif
-			cb(i);
 			return;
 		}
 
@@ -423,19 +414,10 @@ namespace libTAU::dht {
 		, std::vector<node_entry> const& eps
 		, std::function<void(item const&)> cb)
 	{
-		item i;
 		// firstly get immutable item from local dht storage.
-		bool const found = get_local_immutable_item(target, i);
+		bool const found = get_local_immutable_item(target, cb);
 		if (found)
 		{
-#ifndef TORRENT_DISABLE_LOGGING
-			if (m_log->should_log(dht_logger::tracker))
-			{
-				m_log->log(dht_logger::tracker, "immutable item found locally for [ hash: %s ]"
-					, aux::to_hex(target).c_str());
-			}
-#endif
-			cb(i);
 			return;
 		}
 
@@ -454,23 +436,11 @@ namespace libTAU::dht {
 		, std::function<void(item const&, bool)> cb
 		, std::string salt)
 	{
-		item i;
 		// firstly get mutable item from local dht storage.
-		bool const found = get_local_mutable_item(key, i, salt);
+		bool const found = get_local_mutable_item(key, cb, salt);
 		if (found)
 		{
-#ifndef TORRENT_DISABLE_LOGGING
-			if (m_log->should_log(dht_logger::tracker))
-			{
-				char hex_key[65];
-				char hex_salt[129]; // 64*2 + 1
-				aux::to_hex(key.bytes, hex_key);
-				aux::to_hex(salt, hex_salt);
-				m_log->log(dht_logger::tracker, "mutable item found locally for [ key: %s, salt: %s ]"
-					, hex_key, hex_salt);
-			}
-#endif
-			cb(i, false);
+			// ignore result
 		}
 
 		auto ctx = std::make_shared<get_mutable_item_ctx>(int(m_nodes.size()));
@@ -526,7 +496,8 @@ namespace libTAU::dht {
 			n.second.dht.find_live_nodes(id, l, count);
 	}
 
-	bool dht_tracker::get_local_immutable_item(sha256_hash const& target, item& i)
+	bool dht_tracker::get_local_immutable_item(sha256_hash const& target
+		, std::function<void(item const&)> cb)
 	{
 		// get immutable item from dht storage
 		entry e;
@@ -536,6 +507,15 @@ namespace libTAU::dht {
 			return false;
 		}
 
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_log->should_log(dht_logger::tracker))
+		{
+			m_log->log(dht_logger::tracker, "immutable item found locally for [ hash: %s, item: %s ]"
+				, aux::to_hex(target).c_str()
+				, e.to_string(true).c_str());
+		}
+#endif
+
 		// In fact, 'e' 'v' memory points to dht_storage.
 		// Here we want ourself memory.
 		std::array<char, 1000> buffer;
@@ -544,10 +524,12 @@ namespace libTAU::dht {
 		error_code errc;
 		auto n = bdecode(span<char const>(buffer).first(bsize), errc);
 
-		bdecode_node v = n.dict_find_string("v");
+		bdecode_node v = n.dict_find("v");
+		item i;
 		if (v)
 		{
 			i.assign(v);
+			cb(i);
 			return true;
 		}
 		else
@@ -556,7 +538,8 @@ namespace libTAU::dht {
 		}
 	}
 
-	bool dht_tracker::get_local_mutable_item(public_key const& key, item& i
+	bool dht_tracker::get_local_mutable_item(public_key const& key
+		, std::function<void(item const&, bool)> cb
 		, std::string salt)
 	{
 		// get mutable item from dht storage
@@ -567,6 +550,18 @@ namespace libTAU::dht {
 		{
 			return false;
 		}
+
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_log->should_log(dht_logger::tracker))
+		{
+			char hex_key[65];
+			char hex_salt[129]; // 64*2 + 1
+			aux::to_hex(key.bytes, hex_key);
+			aux::to_hex(salt, hex_salt);
+			m_log->log(dht_logger::tracker, "mutable item found locally for [ key: %s, salt: %s, item: %s ]"
+				, hex_key, hex_salt, e.to_string(true).c_str());
+		}
+#endif
 
 		// In fact, 'e' 'v' memory points to dht_storage.
 		// Here we want ourself memory.
@@ -599,9 +594,17 @@ namespace libTAU::dht {
 		}
 
 		bdecode_node v = n.dict_find("v");
+		item i;
 		if (k && s && q && v)
 		{
-			return i.assign(v, salt, ts, pk, sig);
+			bool ok = i.assign(v, salt, ts, pk, sig);
+			if (ok)
+			{
+				cb(i, false);
+				return true;
+			}
+
+			return false;
 		}
 
 		return false;
@@ -655,11 +658,13 @@ namespace libTAU::dht {
 			}
 		}
 
+		/*
 		if (!m_blocker.incoming(ep.address(), clock_type::now(), m_log))
 		{
 			m_counters.inc_stats_counter(counters::dht_messages_in_dropped);
 			return true;
 		}
+		 */
 
 		TORRENT_ASSERT(buf_size > 0);
 
