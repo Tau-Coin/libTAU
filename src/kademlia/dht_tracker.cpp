@@ -524,7 +524,7 @@ namespace libTAU::dht {
 		error_code errc;
 		auto n = bdecode(span<char const>(buffer).first(bsize), errc);
 
-		bdecode_node v = n.dict_find_string("v");
+		bdecode_node v = n.dict_find("v");
 		item i;
 		if (v)
 		{
