@@ -132,11 +132,13 @@ namespace libTAU::dht {
 
 		// get immutable item from local dht storage.
 		// returns true if the item is found.
-		bool get_local_immutable_item(sha256_hash const& target, item& i);
+		bool get_local_immutable_item(sha256_hash const& target
+			, std::function<void(item const&)> cb);
 
 		// get mutable item from local dht storage.
 		// returns true if the item is found.
-		bool get_local_mutable_item(public_key const& key, item& i
+		bool get_local_mutable_item(public_key const& key
+			, std::function<void(item const&, bool)> cb
 			, std::string salt = std::string());
 
 #if TORRENT_ABI_VERSION == 1
