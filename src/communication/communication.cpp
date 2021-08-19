@@ -343,7 +343,7 @@ namespace libTAU {
                 for (const auto & msg: message_list) {
                     std::string h = msg.sha256().to_string();
                     aux::bytes hash(h.begin(), h.end());
-                    log("INFO: Push message hash %s into hash list", aux::toHex(hash).c_str());
+//                    log("INFO: Push message hash %s into hash list", aux::toHex(hash).c_str());
                     hash_list.push_back(hash);
                 }
 
@@ -495,7 +495,7 @@ namespace libTAU {
                 // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
                 if (source == target) {
                     for (auto const &msg: messages) {
-                        log("INFO: Confirm message hash[%s]", aux::toHex(msg.sha256().to_string()).c_str());
+//                        log("INFO: Confirm message hash[%s]", aux::toHex(msg.sha256().to_string()).c_str());
                         confirmation_roots.push_back(msg.sha256());
                     }
                     return;
@@ -551,7 +551,7 @@ namespace libTAU {
                         if (source[i - 1] != target[j - 1]) {
                             missing_messages.push_back(messages[j - 1]);
                         } else {
-                            log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
+//                            log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
                             confirmation_roots.push_back(messages[j - 1].sha256());
                         }
                         i--;
@@ -581,7 +581,7 @@ namespace libTAU {
                 // 找到距离为0可能仍然不够，可能有前缀相同的情况，这时dist[i][j]很多为0的情况，
                 // 因此，需要把剩余的加入confirmation root集合即可
                 for(; j > 0; j--) {
-                    log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
+//                    log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
                     confirmation_roots.push_back(messages[j - 1].sha256());
                 }
 
@@ -602,7 +602,7 @@ namespace libTAU {
             auto message_list = m_message_list_map[peer];
             if (!message_list.empty()) {
                 for (const auto & msg: message_list) {
-                    log("DEBUG: Message[%s]", msg.to_string().c_str());
+//                    log("DEBUG: Message[%s]", msg.to_string().c_str());
                     hash_prefix_bytes.push_back(msg.sha256()[0]);
                 }
             } else {
