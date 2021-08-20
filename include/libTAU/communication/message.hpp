@@ -51,13 +51,13 @@ namespace libTAU {
             const aux::bytes &payload() const { return m_payload; }
 
             // @returns the corresponding entry
-            entry get_entry() const;
+            const entry &get_entry() const { return m_entry; };
 
             // @returns the message bencode
-            std::string encode() const { return m_encode; }
+            const std::string &encode() const { return m_encode; }
 
             // @returns the SHA256 hash of the RLP serialisation of this message
-            sha256_hash sha256() const { return m_hash; }
+            const sha256_hash &sha256() const { return m_hash; }
 
             // @returns a pretty-printed string representation of message structure
             std::string to_string() const;
@@ -117,13 +117,13 @@ namespace libTAU {
             sha256_hash m_hash;
         };
 
-        struct message_hasher
-        {
-            size_t operator()(const message &m) const noexcept
-            {
-                return std::hash<sha256_hash>{}(m.sha256());
-            }
-        };
+//        struct message_hasher
+//        {
+//            size_t operator()(const message &m) const noexcept
+//            {
+//                return std::hash<sha256_hash>{}(m.sha256());
+//            }
+//        };
     }
 }
 

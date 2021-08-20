@@ -1609,7 +1609,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        char msg[1050];
+        char msg[256];
         std::snprintf(msg, sizeof(msg), "device id %s"
                 , aux::toHex(device_id).c_str());
         return msg;
@@ -1626,9 +1626,9 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        char buffer[1050];
-        std::snprintf(buffer, sizeof(buffer), "message encode: %s"
-                , msg.to_string().c_str());
+        char buffer[256];
+        std::snprintf(buffer, sizeof(buffer), "new message hash: %s"
+                , aux::toHex(msg.sha256().to_string()).c_str());
         return buffer;
 #endif
     }
@@ -1643,7 +1643,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        char msg[1050];
+        char msg[256];
         std::snprintf(msg, sizeof(msg), "peer[%s] confirmation root size %zu, time:%ld", aux::toHex(peer).c_str()
                 , confirmation_roots.size(), time);
         return msg;
@@ -1660,7 +1660,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        char msg[1050];
+        char msg[256];
         std::snprintf(msg, sizeof(msg), "peer[%s] sync message hash %s, time:%ld", aux::toHex(peer).c_str()
                 , aux::toHex(syncing_msg_hash.to_string()).c_str(), time);
 
@@ -1725,7 +1725,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        char msg[1050];
+        char msg[256];
         std::snprintf(msg, sizeof(msg), "peer[%s] last seen time %ld", aux::toHex(peer).c_str(), last_seen);
         return msg;
 #endif

@@ -40,10 +40,6 @@ namespace libTAU {
             m_hash = dht::item_target_id(m_encode);
         }
 
-        entry message::get_entry() const {
-            return m_entry;
-        }
-
         void message::populate(const entry &e) {
             // timestamp
             if (auto* i = const_cast<entry *>(e.find_key("t")))
