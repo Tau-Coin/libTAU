@@ -233,6 +233,9 @@ namespace libTAU {
             // online/new message signal time(map:key1->peer, key2->device id, value->signal time(ms))
             std::map<aux::bytes, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
 
+            // online/new message signal time(map:key1->peer, key2->device id, value->hash prefix array)
+            std::map<aux::bytes, std::map<aux::bytes, aux::bytes>> m_latest_hash_prefix_array;
+
             // message list(map:key->Y public key, value->message list)
             std::map<aux::bytes, std::list<message>> m_message_list_map;
 

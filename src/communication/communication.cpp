@@ -99,6 +99,7 @@ namespace libTAU {
             m_active_friends.clear();
             m_last_seen.clear();
             m_latest_signal_time.clear();
+            m_latest_hash_prefix_array.clear();
             m_missing_messages.clear();
         }
 
@@ -718,8 +719,8 @@ namespace libTAU {
                     return;
                 }
 
-                // record latest timestamp
-                if (onlineSignal.timestamp() > m_last_seen[peer]) {
+                // record latest timestamp(update once per second)
+                if (onlineSignal.timestamp() / 1000 > m_last_seen[peer] / 1000) {
                     m_last_seen[peer] = onlineSignal.timestamp();
                     // 通知用户新的last seen time
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, onlineSignal.timestamp());
@@ -727,13 +728,13 @@ namespace libTAU {
                 }
 
                 auto device_id = onlineSignal.device_id();
-                auto device_map = m_latest_signal_time[peer];
+                auto device_time_map = m_latest_signal_time[peer];
 
                 // 检查相应设备信号的时间戳，只处理最新的数据
-                if (onlineSignal.timestamp() > device_map[device_id]) {
+                if (onlineSignal.timestamp() > device_time_map[device_id]) {
                     // update the latest signal time
-                    device_map[device_id] = onlineSignal.timestamp();
-                    m_latest_signal_time[peer] = device_map;
+                    device_time_map[device_id] = onlineSignal.timestamp();
+                    m_latest_signal_time[peer] = device_time_map;
 
                     // if signal is from multi-device, post new device id alert and friend info alert
                     if (peer == public_key && onlineSignal.device_id() != m_device_id) {
@@ -761,23 +762,32 @@ namespace libTAU {
                         }
 
                         // find out missing messages and confirmation root
-                        std::vector<message> missing_messages;
-                        std::vector<sha256_hash> confirmation_roots;
-                        auto message_list = m_message_list_map[peer];
-                        std::vector<message> messages(message_list.begin(), message_list.end());
-                        log("INFO: Messages size:%zu", messages.size());
-                        find_best_solution(messages, onlineSignal.hash_prefix_bytes(),
-                                           missing_messages, confirmation_roots);
+                        auto device_array_map = m_latest_hash_prefix_array[peer];
+                        if (onlineSignal.hash_prefix_bytes() != device_array_map[device_id]) {
+                            // update the latest hash prefix array
+                            device_array_map[device_id] = onlineSignal.hash_prefix_bytes();
+                            m_latest_hash_prefix_array[peer] = device_array_map;
 
-                        if (!confirmation_roots.empty()) {
-                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer, confirmation_roots, onlineSignal.timestamp());
-                            log("INFO: Confirmation roots:%zu", confirmation_roots.size());
-                        }
+                            std::vector<message> missing_messages;
+                            std::vector<sha256_hash> confirmation_roots;
+                            auto message_list = m_message_list_map[peer];
+                            std::vector<message> messages(message_list.begin(), message_list.end());
+                            log("INFO: Messages size:%zu", messages.size());
+                            find_best_solution(messages, onlineSignal.hash_prefix_bytes(),
+                                               missing_messages, confirmation_roots);
 
-                        log("INFO: Found missing message size %zu", missing_messages.size());
+                            if (!confirmation_roots.empty()) {
+                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+                                                                                                    confirmation_roots,
+                                                                                                    onlineSignal.timestamp());
+                                log("INFO: Confirmation roots:%zu", confirmation_roots.size());
+                            }
 
-                        if (m_missing_messages[peer].size() < communication_max_message_list_size) {
-                            m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
+                            log("INFO: Found missing message size %zu", missing_messages.size());
+
+                            if (m_missing_messages[peer].size() < communication_max_message_list_size) {
+                                m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
+                            }
                         }
                     }
                 }
