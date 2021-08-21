@@ -720,7 +720,7 @@ namespace libTAU {
                 }
 
                 // record latest timestamp(update once per second)
-                if (onlineSignal.timestamp() / 1000 > m_last_seen[peer] / 1000) {
+                if (onlineSignal.timestamp() / 10000 > m_last_seen[peer] / 10000) {
                     m_last_seen[peer] = onlineSignal.timestamp();
                     // 通知用户新的last seen time
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, onlineSignal.timestamp());
