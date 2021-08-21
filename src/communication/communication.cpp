@@ -786,9 +786,11 @@ namespace libTAU {
 
                         log("INFO: Found missing message size %zu", missing_messages.size());
 
-                        if (m_missing_messages[peer].size() < communication_max_message_list_size) {
+//                        if (m_missing_messages[peer].size() < communication_max_message_list_size) {
+                            // Only the data of the latest window is processed
+                            m_missing_messages[peer].clear();
                             m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
-                        }
+//                        }
                     }
                 }
             }
