@@ -727,21 +727,20 @@ namespace libTAU {
                     log("INFO: Last seen peer[%s], time[%ld]", aux::toHex(peer).c_str(), onlineSignal.timestamp());
                 }
 
-                auto device_id = onlineSignal.device_id();
-                auto device_time_map = m_latest_signal_time[peer];
+                auto &device_id = onlineSignal.device_id();
+                auto &device_time_map = m_latest_signal_time[peer];
 
                 // 检查相应设备信号的时间戳，只处理最新的数据
-                if (onlineSignal.timestamp() > device_time_map[device_id]) {
+                if (!device_id.empty() && onlineSignal.timestamp() > device_time_map[device_id]) {
                     // update the latest signal time
                     device_time_map[device_id] = onlineSignal.timestamp();
-                    m_latest_signal_time[peer] = device_time_map;
+//                    m_latest_signal_time[peer] = device_time_map;
 
                     // if signal is from multi-device, post new device id alert and friend info alert
-                    if (peer == public_key && onlineSignal.device_id() != m_device_id) {
+                    if (peer == public_key && device_id != m_device_id) {
                         // 通知用户新的device id
-                        m_ses.alerts().emplace_alert<communication_new_device_id_alert>(
-                                onlineSignal.device_id());
-                        log("INFO: Found new device id: %s", aux::toHex(onlineSignal.device_id()).c_str());
+                        m_ses.alerts().emplace_alert<communication_new_device_id_alert>(device_id);
+                        log("INFO: Found new device id: %s", aux::toHex(device_id).c_str());
 
                         // if data is from multi-device
                         if (!onlineSignal.friend_info().empty()) {
@@ -753,7 +752,7 @@ namespace libTAU {
                     }
 
                     // if signal is from multi-device or peer Y, sync immutable data and calc LevenshteinDistance
-                    if (onlineSignal.device_id() != m_device_id || peer != public_key) {
+                    if (device_id != m_device_id || peer != public_key) {
                         // get immutable message
                         const immutable_data_info& payload = onlineSignal.payload();
                         log("INFO: Payload:%s", payload.to_string().c_str());
@@ -770,11 +769,11 @@ namespace libTAU {
                         find_best_solution(messages, onlineSignal.hash_prefix_bytes(),
                                            missing_messages, confirmation_roots);
 
-                        auto device_array_map = m_latest_hash_prefix_array[peer];
+                        auto &device_array_map = m_latest_hash_prefix_array[peer];
                         if (onlineSignal.hash_prefix_bytes() != device_array_map[device_id]) {
                             // update the latest hash prefix array
                             device_array_map[device_id] = onlineSignal.hash_prefix_bytes();
-                            m_latest_hash_prefix_array[peer] = device_array_map;
+//                            m_latest_hash_prefix_array[peer] = device_array_map;
 
                             if (!confirmation_roots.empty()) {
                                 m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,

@@ -43,13 +43,13 @@ namespace libTAU {
             int64_t timestamp() const { return m_timestamp; }
 
             // @returns device id
-            aux::bytes device_id() const { return m_device_id; }
+            const aux::bytes &device_id() const { return m_device_id; }
 
             // @returns hash prefix bytes
-            aux::bytes hash_prefix_bytes() const { return m_hash_prefix_bytes; }
+            const aux::bytes &hash_prefix_bytes() const { return m_hash_prefix_bytes; }
 
             // @returns friend info bytes
-            aux::bytes friend_info() const { return m_friend_info; }
+            const aux::bytes &friend_info() const { return m_friend_info; }
 
             // payload: immutable data info, including hash, end point
             const immutable_data_info &payload() const { return m_payload; }
