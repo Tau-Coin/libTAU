@@ -518,9 +518,9 @@ namespace libTAU::dht {
 
 		// In fact, 'e' 'v' memory points to dht_storage.
 		// Here we want ourself memory.
-		std::array<char, 1200> buffer;
+		std::array<char, 1500> buffer;
 		int const bsize = bencode(buffer.begin(), e);
-		TORRENT_ASSERT(bsize <= 1200);
+		TORRENT_ASSERT(bsize <= 1500);
 		error_code errc;
 		auto n = bdecode(span<char const>(buffer).first(bsize), errc);
 
@@ -565,9 +565,9 @@ namespace libTAU::dht {
 
 		// In fact, 'e' 'v' memory points to dht_storage.
 		// Here we want ourself memory.
-		std::array<char, 1200> buffer;
+		std::array<char, 1500> buffer;
 		int const bsize = bencode(buffer.begin(), e);
-		TORRENT_ASSERT(bsize <= 1200);
+		TORRENT_ASSERT(bsize <= 1500);
 		error_code errc;
 		auto n = bdecode(span<char const>(buffer).first(bsize), errc);
 
