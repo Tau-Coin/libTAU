@@ -24,7 +24,7 @@ namespace libTAU {
             m_hash = dht::item_target_id(m_encode);
         }
 
-        message::message(uint32_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver, aux::bytes mPayload) :
+        message::message(std::int64_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver, aux::bytes mPayload) :
         m_timestamp(mTimestamp), m_sender(std::move(mSender)),
         m_receiver(std::move(mReceiver)), m_payload(std::move(mPayload)) {
             // timestamp

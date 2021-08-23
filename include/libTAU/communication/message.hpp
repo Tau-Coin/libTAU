@@ -35,11 +35,11 @@ namespace libTAU {
             // @param Construct with bencode
             explicit message(std::string encode): message(bdecode(encode)) {}
 
-            message(uint32_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver,
+            message(std::int64_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver,
                     aux::bytes mPayload);
 
             // @returns message timestamp
-            uint32_t timestamp() const { return m_timestamp; }
+            std::int64_t timestamp() const { return m_timestamp; }
 
             // @returns sender
             const aux::bytes &sender() const { return m_sender; }
@@ -96,7 +96,7 @@ namespace libTAU {
             void populate(const entry& e);
 
             // message timestamp
-            uint32_t m_timestamp{};
+            std::int64_t m_timestamp{};
 
             // message sender
             aux::bytes m_sender;
