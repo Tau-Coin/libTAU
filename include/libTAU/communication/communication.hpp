@@ -42,7 +42,7 @@ namespace libTAU {
 
         using system_clock = std::chrono::system_clock;
 
-        // default refresh time of main task(50ms)
+        // default refresh time of main task(50ms)(ms)
         constexpr int communication_default_refresh_time = 50;
 
         // max message list size(used in Levenshtein Distance)
@@ -54,8 +54,8 @@ namespace libTAU {
         // salt length (first 16 bytes of public key)
         constexpr int communication_salt_length = 16;
 
-        // max chatting time(30min)
-        constexpr int communication_max_chatting_time = 30 * 60;
+        // max chatting friend time(5s)
+        constexpr std::int64_t communication_max_chatting_time = 5;
 
         // data accepted time(6h)(ms)
         constexpr std::int64_t communication_data_accepted_time = 6 * 60 * 60 * 1000;
