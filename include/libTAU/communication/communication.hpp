@@ -46,7 +46,7 @@ namespace libTAU {
         constexpr int communication_default_refresh_time = 50;
 
         // max message list size(used in Levenshtein Distance)
-        constexpr int communication_max_message_list_size = 50;
+        constexpr int communication_max_message_list_size = 10;
 
         // short address(public key) length
         constexpr int communication_short_address_length = 4;
