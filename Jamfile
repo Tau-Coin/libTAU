@@ -797,6 +797,8 @@ SOURCES =
 	chained_buffer
 	choker
 	close_reason
+	common
+    common_data
 	cpuid
 	crc32c
 	create_torrent
@@ -943,9 +945,6 @@ KADEMLIA_SOURCES =
 	;
 
 COMMUNICATION_SOURECS =
-	fixed_hash
-	common_data
-	common
 	online_signal
 	message
 	message_db_impl

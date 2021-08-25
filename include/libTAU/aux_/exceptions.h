@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "libTAU/aux_/fixed_hash.h"
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/exception/errinfo_api_function.hpp>
 #include <boost/exception/errinfo_nested_exception.hpp>
@@ -69,14 +68,9 @@ using errinfo_min = boost::error_info<struct tag_min, bigint>;
 using errinfo_max = boost::error_info<struct tag_max, bigint>;
 using RequirementError = boost::tuple<errinfo_required, errinfo_got>;
 using RequirementErrorComment = boost::tuple<errinfo_required, errinfo_got, errinfo_comment>;
-using errinfo_hash256 = boost::error_info<struct tag_hash, h256>;
-using errinfo_required_h256 = boost::error_info<struct tag_required_h256, h256>;
-using errinfo_got_h256 = boost::error_info<struct tag_get_h256, h256>;
-using Hash256RequirementError = boost::tuple<errinfo_required_h256, errinfo_got_h256>;
 using errinfo_extraData = boost::error_info<struct tag_extraData, bytes>;
 using errinfo_externalFunction = boost::errinfo_api_function;
 using errinfo_interface = boost::error_info<struct tag_interface, std::string>;
 using errinfo_path = boost::error_info<struct tag_path, std::string>;
-using errinfo_nodeID = boost::error_info<struct tag_nodeID, h512>;
 using errinfo_nestedException = boost::errinfo_nested_exception;
 } }
