@@ -35,10 +35,8 @@ namespace libTAU::blockchain {
         explicit transaction(std::string encode): transaction(bdecode(encode)) {}
 
         transaction(tx_version mVersion, int64_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver,
-                    int64_t mAmount, int64_t mFee, aux::bytes mPayload, aux::bytes mSignature) :
-                    m_version(mVersion), m_timestamp(mTimestamp), m_sender(std::move(mSender)),
-                    m_receiver(std::move(mReceiver)), m_amount(mAmount), m_fee(mFee), m_payload(std::move(mPayload)),
-                    m_signature(std::move(mSignature)) {}
+                    int64_t mNonce, int64_t mAmount, int64_t mFee, aux::bytes mPayload,
+                    aux::bytes mSignature);
 
         tx_version version() const { return m_version; }
 
@@ -48,6 +46,8 @@ namespace libTAU::blockchain {
 
         const aux::bytes &receiver() const { return m_receiver; }
 
+        int64_t nonce() const { return m_nonce; }
+
         int64_t amount() const { return m_amount; }
 
         int64_t fee() const { return m_fee; }
@@ -55,6 +55,8 @@ namespace libTAU::blockchain {
         const aux::bytes &payload() const { return m_payload; }
 
         const aux::bytes &signature() const { return m_signature; }
+
+        entry get_entry() const;
 
     private:
 
@@ -73,6 +75,9 @@ namespace libTAU::blockchain {
         // receiver
         aux::bytes m_receiver;
 
+        // nonce
+        std::int64_t m_nonce;
+
         // amount
         std::int64_t m_amount;
 
@@ -84,6 +89,15 @@ namespace libTAU::blockchain {
 
         // signature
         aux::bytes m_signature;
+
+        // message entry
+        entry m_entry;
+
+        // encode
+        std::string m_encode;
+
+        // sha256 hash
+        sha256_hash m_hash;
     };
 }
 
