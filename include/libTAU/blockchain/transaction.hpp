@@ -17,6 +17,7 @@ see LICENSE file.
 #include "libTAU/entry.hpp"
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
+#include "libTAU/kademlia/types.hpp"
 
 namespace libTAU::blockchain {
     enum tx_version {
@@ -34,17 +35,16 @@ namespace libTAU::blockchain {
         // @param Construct with bencode
         explicit transaction(std::string encode): transaction(bdecode(encode)) {}
 
-        transaction(tx_version mVersion, int64_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver,
-                    int64_t mNonce, int64_t mAmount, int64_t mFee, aux::bytes mPayload,
-                    aux::bytes mSignature);
+        transaction(tx_version mVersion, int64_t mTimestamp, dht::public_key mSender, dht::public_key mReceiver,
+                    int64_t mNonce, int64_t mAmount, int64_t mFee, aux::bytes mPayload, dht::signature mSignature);
 
         tx_version version() const { return m_version; }
 
         int64_t timestamp() const { return m_timestamp; }
 
-        const aux::bytes &sender() const { return m_sender; }
+        const dht::public_key &sender() const { return m_sender; }
 
-        const aux::bytes &receiver() const { return m_receiver; }
+        const dht::public_key &receiver() const { return m_receiver; }
 
         int64_t nonce() const { return m_nonce; }
 
@@ -54,11 +54,24 @@ namespace libTAU::blockchain {
 
         const aux::bytes &payload() const { return m_payload; }
 
-        const aux::bytes &signature() const { return m_signature; }
+        const dht::signature &signature() const { return m_signature; }
 
         entry get_entry() const;
 
+        std::string get_encode() const;
+
+        // @returns the SHA256 hash of this message
+        const sha256_hash &sha256();
+
+        void sign(dht::public_key const& pk, dht::secret_key const& sk);
+
+        bool verify_signature() const ;
+
     private:
+
+        std::string get_encode_without_signature() const;
+
+        entry get_entry_without_signature() const;
 
         // populate transaction data from entry
         void populate(const entry& e);
@@ -70,10 +83,10 @@ namespace libTAU::blockchain {
         std::int64_t m_timestamp;
 
         // sender
-        aux::bytes m_sender;
+        dht::public_key m_sender;
 
         // receiver
-        aux::bytes m_receiver;
+        dht::public_key m_receiver;
 
         // nonce
         std::int64_t m_nonce;
@@ -88,13 +101,7 @@ namespace libTAU::blockchain {
         aux::bytes m_payload;
 
         // signature
-        aux::bytes m_signature;
-
-        // message entry
-        entry m_entry;
-
-        // encode
-        std::string m_encode;
+        dht::signature m_signature;
 
         // sha256 hash
         sha256_hash m_hash;

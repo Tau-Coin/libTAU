@@ -37,15 +37,15 @@ namespace libTAU::blockchain {
 
         block(block_version mVersion, aux::bytes mChainId, int64_t mTimestamp, int64_t mBlockNumber,
               aux::bytes mPreviousBlockRoot, int64_t mBaseTarget, int64_t mCumulativeDifficulty,
-              aux::bytes mGenerationSignature, transaction mTx, aux::bytes mMiner,
+              aux::bytes mGenerationSignature, transaction mTx, dht::public_key mMiner,
               int64_t mMinerBalance, int64_t mMinerNonce, int64_t mSenderBalance, int64_t mSenderNonce,
-              int64_t mReceiverBalance, int64_t mReceiverNonce, aux::bytes mSignature) :
+              int64_t mReceiverBalance, int64_t mReceiverNonce, dht::signature mSignature) :
               m_version(mVersion), m_chain_id(std::move(mChainId)), m_timestamp(mTimestamp), m_block_number(mBlockNumber),
               m_previous_block_root(std::move(mPreviousBlockRoot)), m_base_target(mBaseTarget),
               m_cumulative_difficulty(mCumulativeDifficulty), m_generation_signature(std::move(mGenerationSignature)),
-              m_tx(std::move(mTx)), m_miner(std::move(mMiner)), m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce),
+              m_tx(std::move(mTx)), m_miner(mMiner), m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce),
               m_sender_balance(mSenderBalance), m_sender_nonce(mSenderNonce), m_receiver_balance(mReceiverBalance),
-              m_receiver_nonce(mReceiverNonce), m_signature(std::move(mSignature)) {}
+              m_receiver_nonce(mReceiverNonce), m_signature(mSignature) {}
 
         block_version version() const { return m_version; }
 
@@ -65,7 +65,7 @@ namespace libTAU::blockchain {
 
         const transaction &tx() const { return m_tx; }
 
-        const aux::bytes &miner() const { return m_miner; }
+        const dht::public_key &miner() const { return m_miner; }
 
         int64_t miner_balance() const { return m_miner_balance; }
 
@@ -79,9 +79,24 @@ namespace libTAU::blockchain {
 
         int64_t receiver_nonce() const { return m_receiver_nonce; }
 
-        const aux::bytes &signature() const { return m_signature; }
+        const dht::signature &signature() const { return m_signature; }
+
+        entry get_entry() const;
+
+        std::string get_encode() const;
+
+        // @returns the SHA256 hash of this message
+        const sha256_hash &sha256();
+
+        void sign(dht::public_key const& pk, dht::secret_key const& sk);
+
+        bool verify_signature() const ;
 
     private:
+
+        std::string get_encode_without_signature() const;
+
+        entry get_entry_without_signature() const;
 
         // populate block data from entry
         void populate(const entry& e);
@@ -93,19 +108,19 @@ namespace libTAU::blockchain {
         aux::bytes m_chain_id;
 
         // timestamp
-        std::int64_t m_timestamp;
+        std::int64_t m_timestamp{};
 
         // block number
-        std::int64_t m_block_number;
+        std::int64_t m_block_number{};
 
         // previous block root
         aux::bytes m_previous_block_root;
 
         // base target
-        std::int64_t m_base_target;
+        std::int64_t m_base_target{};
 
         // cumulative difficulty
-        std::int64_t m_cumulative_difficulty;
+        std::int64_t m_cumulative_difficulty{};
 
         // generation signature
         aux::bytes m_generation_signature;
@@ -114,28 +129,31 @@ namespace libTAU::blockchain {
         transaction m_tx;
 
         // miner
-        aux::bytes m_miner;
+        dht::public_key m_miner{};
 
         // miner balance
-        std::int64_t m_miner_balance;
+        std::int64_t m_miner_balance{};
 
         // miner nonce
-        std::int64_t m_miner_nonce;
+        std::int64_t m_miner_nonce{};
 
         // sender balance
-        std::int64_t m_sender_balance;
+        std::int64_t m_sender_balance{};
 
         // sender nonce
-        std::int64_t m_sender_nonce;
+        std::int64_t m_sender_nonce{};
 
         // receiver balance
-        std::int64_t m_receiver_balance;
+        std::int64_t m_receiver_balance{};
 
         // receiver nonce
-        std::int64_t m_receiver_nonce;
+        std::int64_t m_receiver_nonce{};
 
         // signature
-        aux::bytes m_signature;
+        dht::signature m_signature{};
+
+        // sha256 hash
+        sha256_hash m_hash;
     };
 }
 

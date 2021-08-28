@@ -7,7 +7,8 @@ see LICENSE file.
 */
 
 #include "libTAU/blockchain/transaction.hpp"
-
+#include "libTAU/kademlia/item.hpp"
+#include "libTAU/kademlia/ed25519.hpp"
 #include <utility>
 
 namespace libTAU::blockchain {
@@ -15,16 +16,15 @@ namespace libTAU::blockchain {
         populate(e);
     }
 
-    transaction::transaction(tx_version mVersion, int64_t mTimestamp, aux::bytes mSender,
-                             aux::bytes mReceiver, int64_t mNonce, int64_t mAmount, int64_t mFee,
-                             aux::bytes mPayload, aux::bytes mSignature) : m_version(mVersion),
-                             m_timestamp(mTimestamp), m_sender(std::move(mSender)), m_receiver(std::move(mReceiver)),
-                             m_nonce(mNonce), m_amount(mAmount), m_fee(mFee), m_payload(std::move(mPayload)),
-                             m_signature(std::move(mSignature)) {
+    transaction::transaction(tx_version mVersion, int64_t mTimestamp, dht::public_key mSender,
+                             dht::public_key mReceiver, int64_t mNonce, int64_t mAmount, int64_t mFee,
+                             aux::bytes mPayload, dht::signature mSignature) : m_version(mVersion),
+                             m_timestamp(mTimestamp), m_sender(mSender), m_receiver(mReceiver), m_nonce(mNonce),
+                             m_amount(mAmount), m_fee(mFee), m_payload(std::move(mPayload)), m_signature(mSignature) {
 
     }
 
-    entry transaction::get_entry() const {
+    entry transaction::get_entry_without_signature() const {
         entry e(entry::dictionary_t);
 
         // version
@@ -32,9 +32,9 @@ namespace libTAU::blockchain {
         // timestamp
         e["t"] = entry(m_timestamp);
         // sender
-        e["s"] = entry(std::string(m_sender.begin(), m_sender.end()));
+        e["s"] = entry(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
         // receiver
-        e["r"] = entry(std::string(m_receiver.begin(), m_receiver.end()));
+        e["r"] = entry(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
         // nonce
         e["n"] = entry(m_nonce);
         // amount
@@ -44,9 +44,50 @@ namespace libTAU::blockchain {
         // payload
         e["p"] = entry(std::string(m_payload.begin(), m_payload.end()));
         // signature
-        e["sig"] = entry(std::string(m_signature.begin(), m_signature.end()));
+        e["sig"] = entry(std::string(m_signature.bytes.begin(), m_signature.bytes.end()));
 
         return e;
+    }
+
+    entry transaction::get_entry() const {
+        entry e = get_entry_without_signature();
+        // signature
+        e["sig"] = entry(std::string(m_signature.bytes.begin(), m_signature.bytes.end()));
+
+        return e;
+    }
+
+    std::string transaction::get_encode_without_signature() const {
+        std::string encode;
+        auto e = get_entry_without_signature();
+        bencode(std::back_inserter(encode), e);
+
+        return encode;
+    }
+
+    std::string transaction::get_encode() const {
+        std::string encode;
+        auto e = get_entry();
+        bencode(std::back_inserter(encode), e);
+
+        return encode;
+    }
+
+    const sha256_hash &transaction::sha256() {
+        if (m_hash.is_all_zeros()) {
+            auto encode = get_encode();
+            m_hash = dht::item_target_id(encode);
+        }
+
+        return m_hash;
+    }
+
+    void transaction::sign(const dht::public_key &pk, const dht::secret_key &sk) {
+        m_signature = ed25519_sign(get_encode_without_signature(), pk, sk);
+    }
+
+    bool transaction::verify_signature() const {
+        return ed25519_verify(m_signature, get_encode_without_signature(), m_sender);
     }
 
     void transaction::populate(const entry &e) {
@@ -64,13 +105,13 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("s")))
         {
             auto sender = i->string();
-            m_sender = aux::bytes(sender.begin(), sender.end());
+            m_sender = dht::public_key(sender.data());
         }
         // receiver
         if (auto* i = const_cast<entry *>(e.find_key("r")))
         {
             auto receiver = i->string();
-            m_receiver = aux::bytes(receiver.begin(), receiver.end());
+            m_receiver = dht::public_key(receiver.data());
         }
         // nonce
         if (auto* i = const_cast<entry *>(e.find_key("n")))
@@ -97,7 +138,7 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("sig")))
         {
             auto signature = i->string();
-            m_signature = aux::bytes(signature.begin(), signature.end());
+            m_signature = dht::signature(signature.data());
         }
     }
 }

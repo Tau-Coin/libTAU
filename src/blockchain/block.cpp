@@ -6,12 +6,93 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
+#include "libTAU/kademlia/item.hpp"
+#include "libTAU/kademlia/ed25519.hpp"
 #include "libTAU/blockchain/block.hpp"
 
 namespace libTAU::blockchain {
     block::block(entry e) {
         populate(e);
     }
+
+    entry block::get_entry() const {
+        auto e = get_entry_without_signature();
+        // signature
+        e["sig"] = entry(std::string(m_signature.bytes.begin(), m_signature.bytes.end()));
+
+        return e;
+    }
+
+    std::string block::get_encode() const {
+        std::string encode;
+        auto e = get_entry();
+        bencode(std::back_inserter(encode), e);
+
+        return encode;
+    }
+
+    const sha256_hash &block::sha256() {
+        if (m_hash.is_all_zeros()) {
+            auto encode = get_encode();
+            m_hash = dht::item_target_id(encode);
+        }
+
+        return m_hash;
+    }
+
+    void block::sign(const dht::public_key &pk, const dht::secret_key &sk) {
+        m_signature = ed25519_sign(get_encode_without_signature(), pk, sk);
+    }
+
+    bool block::verify_signature() const {
+        return ed25519_verify(m_signature, get_encode_without_signature(), m_miner);
+    }
+
+    std::string block::get_encode_without_signature() const {
+        std::string encode;
+        auto e = get_entry_without_signature();
+        bencode(std::back_inserter(encode), e);
+
+        return encode;
+    }
+
+    entry block::get_entry_without_signature() const {
+        entry e(entry::dictionary_t);
+
+        // version
+        e["v"] = entry(m_version);
+        // chain id
+        e["i"] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // timestamp
+        e["t"] = entry(m_timestamp);
+        // block number
+        e["n"] = entry(m_block_number);
+        // previous block root
+        e["h"] = entry(std::string(m_previous_block_root.begin(), m_previous_block_root.end()));
+        // base target
+        e["b"] = entry(m_base_target);
+        // cumulative difficulty
+        e["d"] = entry(m_cumulative_difficulty);
+        // tx
+        e["tx"] = m_tx.get_entry();
+        // miner
+        e["m"] = entry(std::string(m_miner.bytes.begin(), m_miner.bytes.end()));
+        // miner balance
+        e["mb"] = entry(m_miner_balance);
+        // miner nonce
+        e["mn"] = entry(m_miner_nonce);
+        // sender balance
+        e["sb"] = entry(m_sender_balance);
+        // sender nonce
+        e["sn"] = entry(m_sender_nonce);
+        // receiver balance
+        e["rb"] = entry(m_receiver_balance);
+        // receiver nonce
+        e["rn"] = entry(m_receiver_nonce);
+
+        return e;
+    }
+
 
     void block::populate(const entry &e) {
         // version
@@ -20,7 +101,7 @@ namespace libTAU::blockchain {
             m_version = static_cast<block_version>(i->integer());
         }
         // chain id
-        if (auto* i = const_cast<entry *>(e.find_key("c")))
+        if (auto* i = const_cast<entry *>(e.find_key("i")))
         {
             auto chain_id = i->string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
@@ -60,7 +141,7 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("m")))
         {
             auto miner = i->string();
-            m_miner = aux::bytes(miner.begin(), miner.end());
+            m_miner = dht::public_key(miner.data());
         }
         // miner balance
         if (auto* i = const_cast<entry *>(e.find_key("mb")))
@@ -96,7 +177,7 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("sig")))
         {
             auto signature = i->string();
-            m_signature = aux::bytes(signature.begin(), signature.end());
+            m_signature = dht::signature(signature.data());
         }
     }
 }

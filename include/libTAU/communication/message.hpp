@@ -56,7 +56,7 @@ namespace libTAU {
             // @returns the message bencode
             const std::string &encode() const { return m_encode; }
 
-            // @returns the SHA256 hash of the RLP serialisation of this message
+            // @returns the SHA256 hash of this message
             const sha256_hash &sha256() const { return m_hash; }
 
             // @returns a pretty-printed string representation of message structure
