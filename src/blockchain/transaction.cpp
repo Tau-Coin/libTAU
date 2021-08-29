@@ -16,14 +16,6 @@ namespace libTAU::blockchain {
         populate(e);
     }
 
-    transaction::transaction(tx_version mVersion, int64_t mTimestamp, dht::public_key mSender,
-                             dht::public_key mReceiver, int64_t mNonce, int64_t mAmount, int64_t mFee,
-                             aux::bytes mPayload, dht::signature mSignature) : m_version(mVersion),
-                             m_timestamp(mTimestamp), m_sender(mSender), m_receiver(mReceiver), m_nonce(mNonce),
-                             m_amount(mAmount), m_fee(mFee), m_payload(std::move(mPayload)), m_signature(mSignature) {
-
-    }
-
     entry transaction::get_entry_without_signature() const {
         entry e(entry::dictionary_t);
 
@@ -43,8 +35,6 @@ namespace libTAU::blockchain {
         e["f"] = entry(m_fee);
         // payload
         e["p"] = entry(std::string(m_payload.begin(), m_payload.end()));
-        // signature
-        e["sig"] = entry(std::string(m_signature.bytes.begin(), m_signature.bytes.end()));
 
         return e;
     }

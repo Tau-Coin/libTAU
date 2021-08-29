@@ -37,15 +37,14 @@ namespace libTAU::blockchain {
 
         block(block_version mVersion, aux::bytes mChainId, int64_t mTimestamp, int64_t mBlockNumber,
               aux::bytes mPreviousBlockRoot, int64_t mBaseTarget, int64_t mCumulativeDifficulty,
-              aux::bytes mGenerationSignature, transaction mTx, dht::public_key mMiner,
+              aux::bytes mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
               int64_t mMinerBalance, int64_t mMinerNonce, int64_t mSenderBalance, int64_t mSenderNonce,
-              int64_t mReceiverBalance, int64_t mReceiverNonce, dht::signature mSignature) :
-              m_version(mVersion), m_chain_id(std::move(mChainId)), m_timestamp(mTimestamp), m_block_number(mBlockNumber),
-              m_previous_block_root(std::move(mPreviousBlockRoot)), m_base_target(mBaseTarget),
-              m_cumulative_difficulty(mCumulativeDifficulty), m_generation_signature(std::move(mGenerationSignature)),
-              m_tx(std::move(mTx)), m_miner(mMiner), m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce),
-              m_sender_balance(mSenderBalance), m_sender_nonce(mSenderNonce), m_receiver_balance(mReceiverBalance),
-              m_receiver_nonce(mReceiverNonce), m_signature(mSignature) {}
+              int64_t mReceiverBalance, int64_t mReceiverNonce) : m_version(mVersion), m_chain_id(std::move(mChainId)),
+              m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_root(std::move(mPreviousBlockRoot)),
+              m_base_target(mBaseTarget), m_cumulative_difficulty(mCumulativeDifficulty),
+              m_generation_signature(std::move(mGenerationSignature)), m_tx(std::move(mTx)), m_miner(mMiner),
+              m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce), m_sender_balance(mSenderBalance),
+              m_sender_nonce(mSenderNonce), m_receiver_balance(mReceiverBalance), m_receiver_nonce(mReceiverNonce) {}
 
         block_version version() const { return m_version; }
 

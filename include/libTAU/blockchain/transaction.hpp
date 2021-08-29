@@ -35,8 +35,11 @@ namespace libTAU::blockchain {
         // @param Construct with bencode
         explicit transaction(std::string encode): transaction(bdecode(encode)) {}
 
-        transaction(tx_version mVersion, int64_t mTimestamp, dht::public_key mSender, dht::public_key mReceiver,
-                    int64_t mNonce, int64_t mAmount, int64_t mFee, aux::bytes mPayload, dht::signature mSignature);
+        transaction(tx_version mVersion, int64_t mTimestamp, const dht::public_key &mSender,
+                    const dht::public_key &mReceiver, int64_t mNonce, int64_t mAmount, int64_t mFee,
+                    aux::bytes mPayload) : m_version(mVersion), m_timestamp(mTimestamp), m_sender(mSender),
+                    m_receiver(mReceiver), m_nonce(mNonce), m_amount(mAmount),
+                    m_fee(mFee), m_payload(std::move(mPayload)) {}
 
         tx_version version() const { return m_version; }
 
