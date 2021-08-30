@@ -12,7 +12,7 @@ see LICENSE file.
 #include <utility>
 
 namespace libTAU::blockchain {
-    transaction::transaction(entry e) {
+    transaction::transaction(const entry& e) {
         populate(e);
     }
 

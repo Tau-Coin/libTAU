@@ -101,7 +101,7 @@ namespace libTAU::blockchain {
         void populate(const entry& e);
 
         // block version
-        block_version m_version;
+        block_version m_version = block_version1;
 
         // chain id
         aux::bytes m_chain_id;

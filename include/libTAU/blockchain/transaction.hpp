@@ -25,12 +25,12 @@ namespace libTAU::blockchain {
         tx_unknown_version,
     };
 
-    class transaction {
+    class TORRENT_EXPORT transaction {
     public:
         transaction() = default;
 
         // @param Construct with entry
-        explicit transaction(entry e);
+        explicit transaction(const entry& e);
 
         // @param Construct with bencode
         explicit transaction(std::string encode): transaction(bdecode(encode)) {}
@@ -68,7 +68,7 @@ namespace libTAU::blockchain {
 
         void sign(dht::public_key const& pk, dht::secret_key const& sk);
 
-        bool verify_signature() const ;
+        bool verify_signature() const;
 
     private:
 
@@ -80,31 +80,31 @@ namespace libTAU::blockchain {
         void populate(const entry& e);
 
         // version
-        tx_version m_version;
+        tx_version m_version = tx_version1;
 
         // timestamp
-        std::int64_t m_timestamp;
+        std::int64_t m_timestamp{};
 
         // sender
-        dht::public_key m_sender;
+        dht::public_key m_sender{};
 
         // receiver
-        dht::public_key m_receiver;
+        dht::public_key m_receiver{};
 
         // nonce
-        std::int64_t m_nonce;
+        std::int64_t m_nonce{};
 
         // amount
-        std::int64_t m_amount;
+        std::int64_t m_amount{};
 
         // fee
-        std::int64_t m_fee;
+        std::int64_t m_fee{};
 
         // payload
         aux::bytes m_payload;
 
         // signature
-        dht::signature m_signature;
+        dht::signature m_signature{};
 
         // sha256 hash
         sha256_hash m_hash;
