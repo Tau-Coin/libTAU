@@ -70,6 +70,9 @@ struct TORRENT_EXTRA_EXPORT traversal_algorithm
 	// Make sure this method must be called before start method.
 	void set_direct_endpoints(std::vector<node_entry> const& eps);
 
+	// Discard corresponding responses and rpc manager don't store these requests.
+	void set_discard_response(bool discard_response);
+
 #ifndef TORRENT_DISABLE_LOGGING
 	std::uint32_t id() const { return m_id; }
 #endif
@@ -109,6 +112,10 @@ protected:
 	// will communicate with the specified nodes instead of depth traversal.
 	// The default value "false" means getting or putting mutable items.
 	bool m_direct_invoking = false;
+
+	// This flag indicates traversal algorithm directly invokes all requests
+	// and discard corresponding responses.
+	bool m_discard_response = false;
 
 	int num_sorted_results() const { return m_sorted_results; }
 

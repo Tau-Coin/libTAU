@@ -414,7 +414,7 @@ void rpc_manager::add_our_id(entry& e)
 }
 
 bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
-	, observer_ptr o)
+	, observer_ptr o, bool discard_response)
 {
 	INVARIANT_CHECK;
 
@@ -454,7 +454,10 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 
 	if (m_sock_man->send_packet(m_sock, e, target_addr))
 	{
-		m_transactions.emplace(tid, o);
+		if (!discard_response)
+		{
+			m_transactions.emplace(tid, o);
+		}
 #if TORRENT_USE_ASSERTS
 		o->m_was_sent = true;
 #endif

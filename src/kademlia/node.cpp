@@ -279,8 +279,11 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			 */
 
 			entry e;
-			incoming_request(m, e);
-			m_sock_man->send_packet(m_sock, e, m.addr);
+			bool need_response = incoming_request(m, e);
+			if (need_response)
+			{
+				m_sock_man->send_packet(m_sock, e, m.addr);
+			}
 			break;
 		}
 		case 'e':
@@ -453,6 +456,7 @@ void node::put_item(sha256_hash const& target
 	auto ta = std::make_shared<dht::put_data>(*this, std::bind(f, _2));
 	ta->set_data(std::move(i));
 	ta->set_direct_endpoints(eps);
+	ta->set_discard_response(true);
 	ta->start();
 }
 
@@ -683,8 +687,10 @@ entry write_nodes_entry(std::vector<node_entry> const& nodes)
 }
 
 // build response
-void node::incoming_request(msg const& m, entry& e)
+bool node::incoming_request(msg const& m, entry& e)
 {
+	bool need_response = true;
+
 	e = entry(entry::dictionary_t);
 	e["y"] = "r";
 	e["t"] = m.message.dict_find_string_value("t");
@@ -701,7 +707,7 @@ void node::incoming_request(msg const& m, entry& e)
 	if (!verify_message(m.message, top_desc, top_level, error_string))
 	{
 		incoming_error(e, error_string);
-		return;
+		return need_response;
 	}
 
 	e["ip"] = aux::endpoint_to_bytes(m.addr);
@@ -722,7 +728,7 @@ void node::incoming_request(msg const& m, entry& e)
 	string_view const query = top_level[0].string_value();
 
 	if (m_observer && m_observer->on_dht_request(query, m, e))
-		return;
+		return need_response;
 
 	if (query == "ping")
 	{
@@ -744,7 +750,7 @@ void node::incoming_request(msg const& m, entry& e)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_get_peers);
 			incoming_error(e, error_string);
-			return;
+			return need_response;
 		}
 
 		sha256_hash const info_hash(msg_keys[0].string_ptr());
@@ -782,7 +788,7 @@ void node::incoming_request(msg const& m, entry& e)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_find_node);
 			incoming_error(e, error_string);
-			return;
+			return need_response;
 		}
 
 		m_counters.inc_stats_counter(counters::dht_find_node_in);
@@ -816,7 +822,7 @@ void node::incoming_request(msg const& m, entry& e)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, error_string);
-			return;
+			return need_response;
 		}
 
 		m_counters.inc_stats_counter(counters::dht_put_in);
@@ -838,7 +844,7 @@ void node::incoming_request(msg const& m, entry& e)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "message too big", 205);
-			return;
+			return need_response;
 		}
 
 		span<char const> salt;
@@ -848,7 +854,7 @@ void node::incoming_request(msg const& m, entry& e)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "salt too big", 207);
-			return;
+			return need_response;
 		}
 
 		sha256_hash const target = pub_key
@@ -867,12 +873,13 @@ void node::incoming_request(msg const& m, entry& e)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "invalid token");
-			return;
+			return need_response;
 		}
 
 		if (!mutable_put)
 		{
 			m_storage.put_immutable_item(target, buf, m.addr.address());
+			need_response = false;
 		}
 		else
 		{
@@ -885,7 +892,7 @@ void node::incoming_request(msg const& m, entry& e)
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid (negative) timestamp");
-				return;
+				return need_response;
 			}
 
 			// msg_keys[4] is the signature, msg_keys[3] is the public key
@@ -893,7 +900,7 @@ void node::incoming_request(msg const& m, entry& e)
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid signature", 206);
-				return;
+				return need_response;
 			}
 
 			TORRENT_ASSERT(signature::len == msg_keys[4].string_length());
@@ -915,14 +922,14 @@ void node::incoming_request(msg const& m, entry& e)
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "CAS mismatch", 301);
-					return;
+					return need_response;
 				}
 
 				if (item_ts > ts)
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "old timestamp", 302);
-					return;
+					return need_response;
 				}
 
 				m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
@@ -952,7 +959,7 @@ void node::incoming_request(msg const& m, entry& e)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_get);
 			incoming_error(e, error_string);
-			return;
+			return need_response;
 		}
 
 		m_counters.inc_stats_counter(counters::dht_get_in);
@@ -1000,7 +1007,7 @@ void node::incoming_request(msg const& m, entry& e)
 			if (!target_ent || target_ent.string_length() != 32)
 			{
 				incoming_error(e, "unknown message");
-				return;
+				return need_response;
 			}
 		}
 
@@ -1008,6 +1015,8 @@ void node::incoming_request(msg const& m, entry& e)
 		// always return nodes as well as peers
 		write_nodes_entries(target, arg_ent.dict_find_list("want"), reply);
 	}
+
+	return need_response;
 }
 
 // TODO: limit number of entries in the result
