@@ -109,7 +109,7 @@ bool put_data::invoke(observer_ptr o)
 
 	m_node.stats_counters().inc_stats_counter(counters::dht_put_out);
 
-	return m_node.m_rpc.invoke(e, o->target_ep(), o);
+	return m_node.m_rpc.invoke(e, o->target_ep(), o, m_discard_response);
 }
 
 observer_ptr put_data::new_observer(udp::endpoint const& ep

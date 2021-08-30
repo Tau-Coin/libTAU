@@ -67,7 +67,7 @@ public:
 	time_duration tick();
 
 	bool invoke(entry& e, udp::endpoint const& target
-		, observer_ptr o);
+		, observer_ptr o, bool discard_response = false);
 
 	void add_our_id(entry& e);
 

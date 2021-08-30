@@ -256,6 +256,11 @@ void traversal_algorithm::set_direct_endpoints(std::vector<node_entry> const& ep
 	m_direct_invoking = true;
 }
 
+void traversal_algorithm::set_discard_response(bool discard_response)
+{
+	m_discard_response = discard_response;
+}
+
 void traversal_algorithm::start()
 {
 	// in case the routing table is empty, use the
@@ -458,6 +463,27 @@ void traversal_algorithm::done()
 bool traversal_algorithm::add_requests()
 {
 	if (m_done) return true;
+
+	// Once invoke all requests if discarding response and invoking directly.
+	if (m_discard_response && m_direct_invoking)
+	{
+		for (auto i = m_results.begin(), end(m_results.end()); i != end; ++i)
+		{
+			observer* o = i->get();
+			o->flags |= observer::flag_queried;
+			if (invoke(*i))
+			{
+				TORRENT_ASSERT(m_invoke_count < std::numeric_limits<std::int8_t>::max());
+				++m_invoke_count;
+			}
+			else
+			{
+				o->flags |= observer::flag_failed;
+			}
+		}
+
+		return true;
+	}
 
 	int results_target = m_node.m_table.bucket_size();
 
