@@ -21,9 +21,13 @@ namespace libTAU::blockchain {
 
         bool init() override;
 
-        account get_account(aux::bytes chain_id, aux::bytes pubKey) override;
+        account get_account(aux::bytes chain_id, dht::public_key pubKey) override;
 
-        account get_account_without_verification(aux::bytes chain_id, aux::bytes pubKey) override;
+        account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) override;
+
+        bool is_block_exist(aux::bytes chain_id, sha256_hash hash) override;
+
+        block get_block_by_hash(aux::bytes chain_id, sha256_hash hash) override;
 
         bool save_block(block b, bool main_chain) override;
 

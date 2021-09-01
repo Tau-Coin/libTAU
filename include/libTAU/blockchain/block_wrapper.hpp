@@ -28,36 +28,30 @@ namespace libTAU::blockchain {
         // @param Construct with bencode
         explicit block_wrapper(std::string encode): block_wrapper(bdecode(encode)) {}
 
-        block_wrapper(block mBlock, int64_t mMinerLastChangeBlockNumber, int64_t mSenderLastChangeBlockNumber,
-                      int64_t mReceiverLastChangeBlockNumber) : m_block(std::move(mBlock)), m_miner_last_change_block_number(
-                mMinerLastChangeBlockNumber), m_sender_last_change_block_number(mSenderLastChangeBlockNumber),
-                m_receiver_last_change_block_number(mReceiverLastChangeBlockNumber) {}
-
-        const block &get_block() const { return m_block; }
-
-        int64_t miner_last_change_block_number() const { return m_miner_last_change_block_number; }
-
-        int64_t sender_last_change_block_number() const { return m_sender_last_change_block_number; }
-
-        int64_t receiver_last_change_block_number() const { return m_receiver_last_change_block_number; }
+        const sha256_hash &block_hash() const { return m_block_hash; }
 
         entry get_entry() const;
 
         std::string get_encode() const;
+
+        // @returns the SHA256 hash of this block
+        const sha256_hash &sha256();
 
     private:
 
         // populate block wrapper data from entry
         void populate(const entry& e);
 
-        // block
-        block m_block;
+        // block hash
+        sha256_hash m_block_hash;
 
-        std::int64_t m_miner_last_change_block_number{};
+        sha256_hash m_miner_last_change_block_hash;
 
-        std::int64_t m_sender_last_change_block_number{};
+        sha256_hash m_sender_last_change_block_hash;
 
-        std::int64_t m_receiver_last_change_block_number{};
+        sha256_hash m_receiver_last_change_block_hash;
+
+        sha256_hash m_hash;
     };
 }
 
