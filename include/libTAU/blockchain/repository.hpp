@@ -13,6 +13,9 @@ see LICENSE file.
 #include "libTAU/blockchain/block.hpp"
 
 namespace libTAU::blockchain {
+
+    // public key --> block hash --> state
+    //
     struct TORRENT_EXPORT repository {
 
         // init db
@@ -22,7 +25,7 @@ namespace libTAU::blockchain {
          * check if account exist
          * @return true if account exist, false otherwise
          */
-        virtual bool is_exist(aux::bytes chain_id, dht::public_key pubKey) = 0;
+        virtual bool is_account_exist(aux::bytes chain_id, dht::public_key pubKey) = 0;
 
         virtual account get_account(aux::bytes chain_id, dht::public_key pubKey) = 0;
 
@@ -32,11 +35,13 @@ namespace libTAU::blockchain {
          * check if block exist
          * @return true if block exist, false otherwise
          */
-        virtual bool is_block_exist(aux::bytes chain_id, sha256_hash hash) = 0;
+        virtual bool is_block_exist(sha256_hash hash) = 0;
 
-        virtual block get_block_by_hash(aux::bytes chain_id, sha256_hash hash) = 0;
+        virtual block get_block_by_hash(sha256_hash hash) = 0;
 
         virtual bool save_block(block b, bool main_chain) = 0;
+
+        virtual bool delete_block(sha256_hash hash) = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP

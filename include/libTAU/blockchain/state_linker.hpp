@@ -6,27 +6,29 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#ifndef LIBTAU_BLOCK_WRAPPER_HPP
-#define LIBTAU_BLOCK_WRAPPER_HPP
+#ifndef LIBTAU_STATE_LINKER_HPP
+#define LIBTAU_STATE_LINKER_HPP
 
 
 #include <utility>
-
+#include "libTAU/kademlia/item.hpp"
 #include "libTAU/blockchain/block.hpp"
 
 
 namespace libTAU::blockchain {
-    class TORRENT_EXPORT block_wrapper {
+    class TORRENT_EXPORT state_linker {
 
     public:
 
-        block_wrapper() = default;
+        state_linker() = default;
 
         // @param Construct with entry
-        explicit block_wrapper(entry e);
+        explicit state_linker(const entry& e);
 
         // @param Construct with bencode
-        explicit block_wrapper(std::string encode): block_wrapper(bdecode(encode)) {}
+        explicit state_linker(std::string encode): state_linker(bdecode(encode)) {}
+
+        bool empty() { return m_block_hash.is_all_zeros(); }
 
         const sha256_hash &block_hash() const { return m_block_hash; }
 
@@ -34,12 +36,9 @@ namespace libTAU::blockchain {
 
         std::string get_encode() const;
 
-        // @returns the SHA256 hash of this block
-        const sha256_hash &sha256();
-
     private:
 
-        // populate block wrapper data from entry
+        // populate state linker data from entry
         void populate(const entry& e);
 
         // block hash
@@ -50,9 +49,7 @@ namespace libTAU::blockchain {
         sha256_hash m_sender_last_change_block_hash;
 
         sha256_hash m_receiver_last_change_block_hash;
-
-        sha256_hash m_hash;
     };
 }
 
-#endif //LIBTAU_BLOCK_WRAPPER_HPP
+#endif //LIBTAU_STATE_LINKER_HPP

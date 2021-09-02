@@ -21,15 +21,35 @@ namespace libTAU::blockchain {
 
         bool init() override;
 
+        bool is_account_exist(aux::bytes chain_id, dht::public_key pubKey) override;
+
         account get_account(aux::bytes chain_id, dht::public_key pubKey) override;
 
         account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) override;
 
-        bool is_block_exist(aux::bytes chain_id, sha256_hash hash) override;
+        sha256_hash get_account_block_hash(aux::bytes chain_id, dht::public_key pubKey);
 
-        block get_block_by_hash(aux::bytes chain_id, sha256_hash hash) override;
+        bool save_account_block_hash(aux::bytes chain_id, dht::public_key pubKey, sha256_hash hash);
+
+        account find_state_from_block(dht::public_key pubKey, block b);
+
+        state_linker get_state_linker(sha256_hash block_hash);
+
+        bool save_state_linker(state_linker stateLinker);
+
+        bool is_block_exist(sha256_hash hash) override;
+
+        block get_block_by_hash(sha256_hash hash) override;
+
+        bool save_block(block b);
 
         bool save_block(block b, bool main_chain) override;
+
+        bool rollback_block(block b);
+
+        bool populate_state_from_block(block b);
+
+        bool delete_block(sha256_hash hash) override;
 
     private:
         // sqlite3 instance

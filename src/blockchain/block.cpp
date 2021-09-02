@@ -11,7 +11,7 @@ see LICENSE file.
 #include "libTAU/blockchain/block.hpp"
 
 namespace libTAU::blockchain {
-    block::block(entry e) {
+    block::block(const entry& e) {
         populate(e);
     }
 
