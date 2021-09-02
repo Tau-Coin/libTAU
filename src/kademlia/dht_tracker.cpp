@@ -632,15 +632,16 @@ namespace libTAU::dht {
 		, udp::endpoint const& ep, span<char const> const buf)
 	{
 		int const buf_size = int(buf.size());
-		if (buf_size <= 20
-			|| buf.front() != 'd'
-			|| buf.back() != 'e') return false;
 
 		m_counters.inc_stats_counter(counters::dht_bytes_in, buf_size);
 		// account for IP and UDP overhead
 		m_counters.inc_stats_counter(counters::recv_ip_overhead_bytes
 			, aux::is_v6(ep) ? 48 : 28);
 		m_counters.inc_stats_counter(counters::dht_messages_in);
+
+		if (buf_size <= 20
+			|| buf.front() != 'd'
+			|| buf.back() != 'e') return false;
 
 		if (m_settings.get_bool(settings_pack::dht_ignore_dark_internet) && aux::is_v4(ep))
 		{
