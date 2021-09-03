@@ -16,7 +16,6 @@ see LICENSE file.
 #include <functional>
 
 #include "libTAU/aux_/peer_connection.hpp"
-#include "libTAU/aux_/web_peer_connection.hpp"
 #include "libTAU/aux_/peer_list.hpp"
 #include "libTAU/socket.hpp"
 #include "libTAU/aux_/socket_type.hpp"

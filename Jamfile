@@ -835,8 +835,6 @@ SOURCES =
 	peer_connection
 	platform_util
 	bt_peer_connection
-	web_connection_base
-	web_peer_connection
 	peer_connection_handle
 	i2p_stream
 	instantiate_connection
@@ -913,8 +911,6 @@ SOURCES =
 	ssl
 	rtc_signaling
 	rtc_stream
-	websocket_stream
-	websocket_tracker_connection
 
 # -- extensions --
 	ut_pex
