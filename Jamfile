@@ -871,7 +871,6 @@ SOURCES =
 	torrent_status
 	time
 	tracker_manager
-	http_tracker_connection
 	udp_tracker_connection
 	timestamp_history
 	udp_socket
@@ -909,8 +908,6 @@ SOURCES =
 	posix_part_file
 	posix_storage
 	ssl
-	rtc_signaling
-	rtc_stream
 
 # -- extensions --
 	ut_pex

@@ -5145,56 +5145,6 @@ bool is_downloading_state(int const st)
 		set_error(ec, torrent_status::error_file_none);
 	}
 
-#if TORRENT_USE_RTC
-	void torrent::generate_rtc_offers(int const count
-		, std::function<void(error_code const&, std::vector<aux::rtc_offer>)> handler)
-	{
-		// rtc_signaling is created lazily
-		if (!m_rtc_signaling)
-		{
-			TORRENT_ASSERT(count > 0);
-			m_rtc_signaling = std::make_shared<aux::rtc_signaling>(m_ses.get_context()
-				, this
-				, std::bind(&torrent::on_rtc_stream, this, _1));
-		}
-
-		m_rtc_signaling->generate_offers(count, std::move(handler));
-	}
-
-	void torrent::on_rtc_offer(aux::rtc_offer const& offer)
-	{
-		TORRENT_ASSERT(m_rtc_signaling);
-		if(m_rtc_signaling) m_rtc_signaling->process_offer(offer);
-	}
-
-	void torrent::on_rtc_answer(aux::rtc_answer const& answer)
-	{
-		TORRENT_ASSERT(m_rtc_signaling);
-		if(m_rtc_signaling) m_rtc_signaling->process_answer(answer);
-	}
-
-	void torrent::on_rtc_stream(aux::rtc_stream_init stream_init)
-	{
-		aux::socket_type s(aux::rtc_stream(m_ses.get_context(), stream_init));
-
-		error_code ec;
-		auto endpoint = s.remote_endpoint(ec);
-		if(ec)
-		{
-			// This can happen if the peer immediately disconnects
-#ifndef TORRENT_DISABLE_LOGGING
-			debug_log("failed to get RTC stream remote endpoint: %s", ec.message().c_str());
-#endif
-			return;
-		}
-
-		need_peer_list();
-		torrent_state st = get_peer_list_state();
-		if(torrent_peer* peerinfo = m_peer_list->add_rtc_peer(endpoint, peer_source_flags_t{}, {}, &st))
-			create_peer_connection(peerinfo, std::move(s), std::move(endpoint));
-	}
-#endif
-
 	void torrent::remove_connection(peer_connection const* p)
 	{
 		TORRENT_ASSERT(m_iterating_connections == 0);
