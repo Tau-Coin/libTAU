@@ -25,7 +25,24 @@ namespace dht {
 		{ std::copy(b, b + len, bytes.begin()); }
 		bool operator==(public_key const& rhs) const
 		{ return bytes == rhs.bytes; }
-		static constexpr int len = 32;
+
+        bool operator<(const public_key &rhs) const {
+            return bytes < rhs.bytes;
+        }
+
+        bool operator>(const public_key &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const public_key &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const public_key &rhs) const {
+            return !(*this < rhs);
+        }
+
+        static constexpr int len = 32;
 		std::array<char, len> bytes;
 	};
 

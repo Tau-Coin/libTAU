@@ -21,6 +21,12 @@ namespace libTAU::blockchain {
         // init db
         virtual bool init() = 0;
 
+        virtual bool create_user_state_db(aux::bytes chain_id) = 0;
+
+        virtual bool delete_user_state_db(aux::bytes chain_id) = 0;
+
+        virtual std::set<dht::public_key> get_all_peers(aux::bytes chain_id) = 0;
+
         /**
          * check if account exist
          * @return true if account exist, false otherwise
@@ -41,7 +47,21 @@ namespace libTAU::blockchain {
 
         virtual bool save_block(block b, bool main_chain) = 0;
 
+        virtual bool rollback_block(block b) = 0;
+
         virtual bool delete_block(sha256_hash hash) = 0;
+
+        virtual sha256_hash get_best_tip_block_hash(aux::bytes chain_id) = 0;
+
+        virtual bool set_best_tip_block_hash(aux::bytes chain_id, sha256_hash hash) = 0;
+
+        virtual bool delete_best_tip_block_hash(aux::bytes chain_id) = 0;
+
+        virtual sha256_hash get_best_tail_block_hash(aux::bytes chain_id) = 0;
+
+        virtual bool set_best_tail_block_hash(aux::bytes chain_id, sha256_hash hash) = 0;
+
+        virtual bool delete_best_tail_block_hash(aux::bytes chain_id) = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP

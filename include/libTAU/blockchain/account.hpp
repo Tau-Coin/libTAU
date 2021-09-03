@@ -16,6 +16,8 @@ namespace libTAU::blockchain {
     public:
         account(int64_t mBalance, int64_t mNonce) : m_balance(mBalance), m_nonce(mNonce) {}
 
+        bool empty() const { return m_balance == 0 && m_nonce == 0; }
+
         int64_t balance() const { return m_balance; }
 
         int64_t nonce() const { return m_nonce; }

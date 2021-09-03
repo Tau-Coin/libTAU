@@ -11,6 +11,7 @@ see LICENSE file.
 
 
 #include <utility>
+#include <map>
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/blockchain/block.hpp"
 
@@ -28,9 +29,19 @@ namespace libTAU::blockchain {
         // @param Construct with bencode
         explicit state_linker(std::string encode): state_linker(bdecode(encode)) {}
 
-        bool empty() { return m_block_hash.is_all_zeros(); }
+        state_linker(const sha256_hash &mBlockHash,
+                     std::map<dht::public_key, sha256_hash> mLastChangeBlockHashMap) : m_block_hash(mBlockHash),
+                     m_last_change_block_hash_map(std::move(mLastChangeBlockHashMap)) {}
+
+        const std::map<dht::public_key, sha256_hash> &get_last_change_block_hash_map() const { return m_last_change_block_hash_map; }
+
+        void set_last_change_block_hash_map(const std::map<dht::public_key, sha256_hash> &mLastChangeBlockHashMap) { m_last_change_block_hash_map = mLastChangeBlockHashMap; }
+
+        void insert(dht::public_key pubKey, sha256_hash last_change_block_hash) { m_last_change_block_hash_map[pubKey] = last_change_block_hash; };
 
         const sha256_hash &block_hash() const { return m_block_hash; }
+
+        bool empty() { return m_block_hash.is_all_zeros(); }
 
         entry get_entry() const;
 
@@ -44,11 +55,8 @@ namespace libTAU::blockchain {
         // block hash
         sha256_hash m_block_hash;
 
-        sha256_hash m_miner_last_change_block_hash;
-
-        sha256_hash m_sender_last_change_block_hash;
-
-        sha256_hash m_receiver_last_change_block_hash;
+        // last change block hash map
+        std::map<dht::public_key, sha256_hash> m_last_change_block_hash_map;
     };
 }
 

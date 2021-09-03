@@ -18,12 +18,14 @@ namespace libTAU::blockchain {
 
         // block hash
         e["h"] = entry(m_block_hash.to_string());
-        // miner last change block hash
-        e["m"] = entry(m_miner_last_change_block_hash.to_string());
-        // sender last change block hash
-        e["s"] = entry(m_sender_last_change_block_hash.to_string());
-        // receiver last change block hash
-        e["r"] = entry(m_receiver_last_change_block_hash.to_string());
+
+        // last change map
+        entry m(entry::dictionary_t);
+        for (auto const& item: m_last_change_block_hash_map) {
+            std::string key(item.first.bytes.begin(), item.first.bytes.end());
+            m[key] = entry(item.second.to_string());
+        }
+        e["m"] = m;
 
         return e;
     }
@@ -42,20 +44,13 @@ namespace libTAU::blockchain {
         {
             m_block_hash = sha256_hash(i->string().data());
         }
-        // miner last change block hash
+        // last change map
         if (auto* i = const_cast<entry *>(e.find_key("m")))
         {
-            m_miner_last_change_block_hash = sha256_hash(i->string().data());
-        }
-        // sender last change block hash
-        if (auto* i = const_cast<entry *>(e.find_key("s")))
-        {
-            m_sender_last_change_block_hash = sha256_hash(i->string().data());
-        }
-        // receiver last change block hash
-        if (auto* i = const_cast<entry *>(e.find_key("r")))
-        {
-            m_receiver_last_change_block_hash = sha256_hash(i->string().data());
+            auto & dic = i->dict();
+            for (auto const& item: dic) {
+                m_last_change_block_hash_map[dht::public_key(item.first.data())] = sha256_hash(item.second.string().data());
+            }
         }
     }
 
