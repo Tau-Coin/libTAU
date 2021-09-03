@@ -6,15 +6,14 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libTAU/blockchain/block_wrapper.hpp"
-#include "libTAU/kademlia/item.hpp"
+#include "libTAU/blockchain/state_linker.hpp"
 
 namespace libTAU::blockchain {
-    block_wrapper::block_wrapper(entry e) {
+    state_linker::state_linker(const entry& e) {
         populate(e);
     }
 
-    entry block_wrapper::get_entry() const {
+    entry state_linker::get_entry() const {
         entry e(entry::dictionary_t);
 
         // block hash
@@ -29,7 +28,7 @@ namespace libTAU::blockchain {
         return e;
     }
 
-    std::string block_wrapper::get_encode() const {
+    std::string state_linker::get_encode() const {
         std::string encode;
         auto e = get_entry();
         bencode(std::back_inserter(encode), e);
@@ -37,16 +36,7 @@ namespace libTAU::blockchain {
         return encode;
     }
 
-    const sha256_hash &block_wrapper::sha256() {
-        if (m_hash.is_all_zeros()) {
-            auto encode = get_encode();
-            m_hash = dht::item_target_id(encode);
-        }
-
-        return m_hash;
-    }
-
-    void block_wrapper::populate(const entry &e) {
+    void state_linker::populate(const entry &e) {
         // block hash
         if (auto* i = const_cast<entry *>(e.find_key("h")))
         {

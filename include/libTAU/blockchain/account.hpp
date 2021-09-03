@@ -14,8 +14,6 @@ see LICENSE file.
 namespace libTAU::blockchain {
     class account {
     public:
-        account() = default;
-
         account(int64_t mBalance, int64_t mNonce) : m_balance(mBalance), m_nonce(mNonce) {}
 
         int64_t balance() const { return m_balance; }

@@ -30,7 +30,7 @@ namespace libTAU::blockchain {
         block() = default;
 
         // @param Construct with entry
-        explicit block(entry e);
+        explicit block(const entry& e);
 
         // @param Construct with bencode
         explicit block(std::string encode): block(bdecode(encode)) {}
@@ -79,6 +79,8 @@ namespace libTAU::blockchain {
         int64_t receiver_nonce() const { return m_receiver_nonce; }
 
         const dht::signature &signature() const { return m_signature; }
+
+        bool empty() { return sha256().is_all_zeros(); }
 
         entry get_entry() const;
 

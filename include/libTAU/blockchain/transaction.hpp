@@ -59,6 +59,8 @@ namespace libTAU::blockchain {
 
         const dht::signature &signature() const { return m_signature; }
 
+        bool empty() { return sha256().is_all_zeros(); }
+
         entry get_entry() const;
 
         std::string get_encode() const;
