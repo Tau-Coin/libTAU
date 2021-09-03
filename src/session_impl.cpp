@@ -100,7 +100,6 @@ see LICENSE file.
 #include <libTAU/kademlia/observer.hpp>
 #include <libTAU/kademlia/item.hpp>
 
-#include "libTAU/aux_/http_tracker_connection.hpp"
 #include "libTAU/aux_/udp_tracker_connection.hpp"
 
 #endif // TORRENT_DISABLE_LOGGING

@@ -17,7 +17,6 @@ see LICENSE file.
 #include "libTAU/aux_/rtc_stream.hpp"
 #include "libTAU/aux_/utp_stream.hpp"
 #include "libTAU/config.hpp"
-#include "libTAU/aux_/http_stream.hpp"
 #include "libTAU/i2p_stream.hpp"
 #include "libTAU/io_context.hpp"
 #include "libTAU/socket.hpp"
@@ -35,7 +34,6 @@ namespace libTAU::aux {
 	using socket_type = polymorphic_socket<
 		tcp::socket
 		, socks5_stream
-		, http_stream
 		, utp_stream
 #if TORRENT_USE_I2P
 		, i2p_stream
@@ -46,7 +44,6 @@ namespace libTAU::aux {
 #if TORRENT_USE_SSL
 		, ssl_stream<tcp::socket>
 		, ssl_stream<socks5_stream>
-		, ssl_stream<http_stream>
 		, ssl_stream<utp_stream>
 #endif
 	>;

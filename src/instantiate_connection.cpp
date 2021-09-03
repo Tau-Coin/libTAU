@@ -72,30 +72,6 @@ namespace libTAU::aux {
 				return socket_type(tcp::socket(ios));
 			}
 		}
-		else if (ps.type == settings_pack::http
-			|| ps.type == settings_pack::http_pw)
-		{
-#if TORRENT_USE_SSL
-			if (ssl_context)
-			{
-				ssl_stream<http_stream> s(ios, *static_cast<ssl::context*>(ssl_context));
-				http_stream* str = &s.next_layer();
-				str->set_proxy(ps.hostname, ps.port);
-				if (ps.type == settings_pack::http_pw)
-					str->set_username(ps.username, ps.password);
-				return socket_type(std::move(s));
-			}
-			else
-#endif
-			{
-				http_stream s(ios);
-				s.set_proxy(ps.hostname, ps.port);
-				if (ps.type == settings_pack::http_pw)
-					s.set_username(ps.username, ps.password);
-				return socket_type(std::move(s));
-			}
-
-		}
 		else if (ps.type == settings_pack::socks5
 			|| ps.type == settings_pack::socks5_pw
 			|| ps.type == settings_pack::socks4)

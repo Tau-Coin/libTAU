@@ -15,16 +15,11 @@ see LICENSE file.
 #include "libTAU/aux_/io.hpp"
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/aux_/session_settings.hpp"
-#include "libTAU/aux_/http_tracker_connection.hpp"
 #include "libTAU/performance_counters.hpp"
 #include "libTAU/aux_/socket_io.hpp"
 #include "libTAU/aux_/ssl.hpp"
 #include "libTAU/aux_/tracker_manager.hpp"
 #include "libTAU/aux_/udp_tracker_connection.hpp"
-
-#if TORRENT_USE_RTC
-#include "libTAU/aux_/websocket_tracker_connection.hpp"
-#endif
 
 using namespace std::placeholders;
 
@@ -205,48 +200,11 @@ namespace libTAU::aux {
 		m_stats_counters.inc_stats_counter(counters::recv_tracker_bytes, bytes);
 	}
 
-	void tracker_manager::remove_request(aux::http_tracker_connection const* c)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		auto const i = std::find_if(m_http_conns.begin(), m_http_conns.end()
-			, [c] (std::shared_ptr<aux::http_tracker_connection> const& ptr) { return ptr.get() == c; });
-		if (i != m_http_conns.end())
-		{
-			m_http_conns.erase(i);
-			if (!m_queued.empty())
-			{
-				auto conn = std::move(m_queued.front());
-				m_queued.pop_front();
-				m_http_conns.push_back(std::move(conn));
-				m_http_conns.back()->start();
-				m_stats_counters.set_value(counters::num_queued_tracker_announces, std::int64_t(m_queued.size()));
-			}
-			return;
-		}
-
-		auto const j = std::find_if(m_queued.begin(), m_queued.end()
-			, [c] (std::shared_ptr<aux::http_tracker_connection> const& ptr) { return ptr.get() == c; });
-		if (j != m_queued.end())
-		{
-			m_queued.erase(j);
-			m_stats_counters.set_value(counters::num_queued_tracker_announces, std::int64_t(m_queued.size()));
-		}
-	}
-
 	void tracker_manager::remove_request(aux::udp_tracker_connection const* c)
 	{
 		TORRENT_ASSERT(is_single_thread());
 		m_udp_conns.erase(c->transaction_id());
 	}
-
-#if TORRENT_USE_RTC
-	void tracker_manager::remove_request(aux::websocket_tracker_connection const* c)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		tracker_request const& req = c->tracker_req();
-		m_websocket_conns.erase(req.url);
-	}
-#endif
 
 	void tracker_manager::update_transaction_id(
 		std::shared_ptr<aux::udp_tracker_connection> c
@@ -275,70 +233,13 @@ namespace libTAU::aux {
 
 		std::string const protocol = req.url.substr(0, req.url.find(':'));
 
-#if TORRENT_USE_SSL
-		if (protocol == "http" || protocol == "https")
-#else
-		if (protocol == "http")
-#endif
-		{
-			auto con = std::make_shared<aux::http_tracker_connection>(ios, *this, std::move(req), c);
-			if (m_http_conns.size() < std::size_t(sett.get_int(settings_pack::max_concurrent_http_announces)))
-			{
-				m_http_conns.push_back(std::move(con));
-				m_http_conns.back()->start();
-			}
-			else
-			{
-				m_queued.push_back(std::move(con));
-				m_stats_counters.set_value(counters::num_queued_tracker_announces, std::int64_t(m_queued.size()));
-			}
-			return;
-		}
-		else if (protocol == "udp")
+		if (protocol == "udp")
 		{
 			auto con = std::make_shared<aux::udp_tracker_connection>(ios, *this, std::move(req), c);
 			m_udp_conns[con->transaction_id()] = con;
 			con->start();
 			return;
         }
-#if TORRENT_USE_RTC
-        else if (protocol == "ws" || protocol == "wss")
-        {
-			std::shared_ptr<request_callback> cb = c.lock();
-			if (!cb) return;
-
-			// TODO: introduce a setting for max_offers
-			const int max_offers = 10;
-			req.num_want = std::min(req.num_want, max_offers);
-			if (req.num_want == 0)
-			{
-				// when we're shutting down, we don't really want to
-				// re-establish the persistent websocket connection just to
-				// announce "stopped", and advertize 0 offers. It may hang
-				// shutdown.
-				post(ios, std::bind(&request_callback::tracker_request_error, cb, std::move(req)
-					, errors::torrent_aborted, operation_t::connect
-					, "", seconds32(0)));
-			}
-			cb->generate_rtc_offers(req.num_want
-				, [this, &ios, req = std::move(req), c](error_code const& ec
-					, std::vector<aux::rtc_offer> offers) mutable
-			{
-				if (!ec) req.offers = std::move(offers);
-
-				auto it = m_websocket_conns.find(req.url);
-				if (it != m_websocket_conns.end() && it->second->is_started()) {
-					it->second->queue_request(std::move(req), c);
-				} else {
-					auto con = std::make_shared<aux::websocket_tracker_connection>(
-							ios, *this, std::move(req), c);
-					con->start();
-					m_websocket_conns[req.url] = con;
-				}
-			});
-			return;
-        }
-#endif
 		// we need to post the error to avoid deadlock
 		else if (auto r = c.lock())
 			post(ios, std::bind(&request_callback::tracker_request_error, r, std::move(req)
@@ -459,35 +360,8 @@ namespace libTAU::aux {
 		TORRENT_ASSERT(all || is_single_thread());
 		// removes all connections except 'event=stopped'-requests
 
-		std::vector<std::shared_ptr<aux::http_tracker_connection>> close_http_connections;
 		std::vector<std::shared_ptr<aux::udp_tracker_connection>> close_udp_connections;
 
-		for (auto const& c : m_queued)
-		{
-			tracker_request const& req = c->tracker_req();
-			if (req.event == event_t::stopped && !all)
-				continue;
-
-			close_http_connections.push_back(c);
-
-#ifndef TORRENT_DISABLE_LOGGING
-			std::shared_ptr<request_callback> rc = c->requester();
-			if (rc) rc->debug_log("aborting: %s", req.url.c_str());
-#endif
-		}
-		for (auto const& c : m_http_conns)
-		{
-			tracker_request const& req = c->tracker_req();
-			if (req.event == event_t::stopped && !all)
-				continue;
-
-			close_http_connections.push_back(c);
-
-#ifndef TORRENT_DISABLE_LOGGING
-			std::shared_ptr<request_callback> rc = c->requester();
-			if (rc) rc->debug_log("aborting: %s", req.url.c_str());
-#endif
-		}
 		for (auto const& p : m_udp_conns)
 		{
 			auto const& c = p.second;
@@ -503,49 +377,20 @@ namespace libTAU::aux {
 #endif
 		}
 
-#if TORRENT_USE_RTC
-		std::vector<std::shared_ptr<aux::websocket_tracker_connection>> close_websocket_connections;
-		for (auto const& p : m_websocket_conns)
-		{
-			auto const& c = p.second;
-			close_websocket_connections.push_back(c);
-
-#ifndef TORRENT_DISABLE_LOGGING
-			std::shared_ptr<request_callback> rc = c->requester();
-			if (rc) rc->debug_log("aborting: %s", c->tracker_req().url.c_str());
-#endif
-		}
-#endif
-
-		for (auto const& c : close_http_connections)
-			c->close();
-
 		for (auto const& c : close_udp_connections)
 			c->close();
 
-#if TORRENT_USE_RTC
-		for (auto const& c : close_websocket_connections)
-			c->close();
-#endif
 	}
 
 	bool tracker_manager::empty() const
 	{
 		TORRENT_ASSERT(is_single_thread());
-		return m_http_conns.empty() && m_udp_conns.empty()
-#if TORRENT_USE_RTC
-			&& m_websocket_conns.empty()
-#endif
-			;
+		return m_udp_conns.empty() ;
 	}
 
 	int tracker_manager::num_requests() const
 	{
 		TORRENT_ASSERT(is_single_thread());
-		return int(m_http_conns.size() + m_udp_conns.size()
-#if TORRENT_USE_RTC
-			+ m_websocket_conns.size()
-#endif
-			);
+		return int(m_udp_conns.size());
 	}
 }

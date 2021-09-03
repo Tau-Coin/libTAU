@@ -65,11 +65,7 @@ namespace libTAU::aux {
 	struct session_logger;
 	struct session_settings;
 	struct resolver_interface;
-	class http_tracker_connection;
 	class udp_tracker_connection;
-#if TORRENT_USE_RTC
-	struct websocket_tracker_connection;
-#endif
 
 using tracker_request_flags_t = flags::bitfield_flag<std::uint8_t, struct tracker_request_flags_tag>;
 
@@ -336,11 +332,8 @@ using tracker_request_flags_t = flags::bitfield_flag<std::uint8_t, struct tracke
 		void abort_all_requests(bool all = false);
 		void stop();
 
-		void remove_request(aux::http_tracker_connection const* c);
 		void remove_request(aux::udp_tracker_connection const* c);
-#if TORRENT_USE_RTC
-		void remove_request(aux::websocket_tracker_connection const* c);
-#endif
+
 		bool empty() const;
 		int num_requests() const;
 
@@ -377,14 +370,6 @@ using tracker_request_flags_t = flags::bitfield_flag<std::uint8_t, struct tracke
 		// These must use shared_ptr to avoid a dangling reference
 		// if a connection is erased while a timeout event is in the queue
 		std::unordered_map<std::uint32_t, std::shared_ptr<aux::udp_tracker_connection>> m_udp_conns;
-
-		std::vector<std::shared_ptr<aux::http_tracker_connection>> m_http_conns;
-		std::deque<std::shared_ptr<aux::http_tracker_connection>> m_queued;
-
-#if TORRENT_USE_RTC
-		// websocket connections by URL
-		std::unordered_map<std::string, std::shared_ptr<aux::websocket_tracker_connection>> m_websocket_conns;
-#endif
 
 		send_fun_t m_send_fun;
 		send_fun_hostname_t m_send_fun_hostname;
