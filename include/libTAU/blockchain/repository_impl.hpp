@@ -73,6 +73,14 @@ namespace libTAU::blockchain {
 
         bool delete_best_tail_block_hash(aux::bytes chain_id) override;
 
+        repository *start_tracking() override;
+
+        void flush() override;
+
+        void commit() override;
+
+        void rollback() override;
+
     private:
         // sqlite3 instance
         sqlite3 *m_sqlite;

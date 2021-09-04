@@ -51,9 +51,10 @@ namespace libTAU::blockchain {
     account repository_impl::get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) {
         std::int64_t balance;
         std::int64_t nonce;
+        std::int64_t height;
 
         sqlite3_stmt * stmt;
-        std::string sql = "SELECT BALANCE,NONCE FROM ";
+        std::string sql = "SELECT BALANCE,NONCE,HEIGHT FROM ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
         sql.append(" WHERE PUBKEY=");
         sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
@@ -63,12 +64,13 @@ namespace libTAU::blockchain {
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
                 balance = sqlite3_column_int64(stmt, 0);
                 nonce = sqlite3_column_int64(stmt, 1);
+                height = sqlite3_column_int64(stmt, 2);
             }
         }
 
         sqlite3_finalize(stmt);
 
-        return account(balance, nonce);
+        return account(balance, nonce, height);
     }
 
     std::set<dht::public_key> repository_impl::get_all_peers(aux::bytes chain_id) {
@@ -151,7 +153,7 @@ namespace libTAU::blockchain {
             }
         }
 
-        return account(0, 0);
+        return account(0, 0, 0);
     }
 
     account repository_impl::get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) {
@@ -205,14 +207,14 @@ namespace libTAU::blockchain {
 
     account repository_impl::find_state_from_block(dht::public_key pubKey, block b) {
         if (pubKey == b.miner()) {
-            return account(b.miner_balance(), b.miner_nonce());
+            return account(b.miner_balance(), b.miner_nonce(), b.block_number());
         } else if (pubKey == b.tx().sender()) {
-            return account(b.sender_balance(), b.sender_nonce());
+            return account(b.sender_balance(), b.sender_nonce(), b.block_number());
         } else if (pubKey == b.tx().receiver()) {
-            return account(b.receiver_balance(), b.receiver_nonce());
+            return account(b.receiver_balance(), b.receiver_nonce(), b.block_number());
         }
 
-        return account(0, 0);
+        return account(0, 0, 0);
     }
 
     state_linker repository_impl::get_state_linker(sha256_hash block_hash) {
@@ -397,5 +399,21 @@ namespace libTAU::blockchain {
 
         leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
         return status.ok();
+    }
+
+    repository *repository_impl::start_tracking() {
+        return nullptr;
+    }
+
+    void repository_impl::flush() {
+
+    }
+
+    void repository_impl::commit() {
+
+    }
+
+    void repository_impl::rollback() {
+
     }
 }

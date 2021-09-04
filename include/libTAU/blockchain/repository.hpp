@@ -14,8 +14,7 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    // public key --> block hash --> state
-    //
+
     struct TORRENT_EXPORT repository {
 
         // init db
@@ -62,6 +61,29 @@ namespace libTAU::blockchain {
         virtual bool set_best_tail_block_hash(aux::bytes chain_id, sha256_hash hash) = 0;
 
         virtual bool delete_best_tail_block_hash(aux::bytes chain_id) = 0;
+
+        /**
+         * Save a snapshot and start tracking future changes
+         *
+         * @return the tracker repository
+         */
+        virtual repository* start_tracking() = 0;
+
+//        void updateBatch(Map<ByteArrayWrapper, AccountState> accountStates);
+
+        virtual void flush() = 0;
+
+        /**
+         * Store all the temporary changes made
+         * to the repository in the actual database
+         */
+        virtual void commit() = 0;
+
+        /**
+         * Undo all the changes made so far
+         * to a snapshot of the repository
+         */
+        virtual void rollback() = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP
