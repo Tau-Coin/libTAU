@@ -6,20 +6,18 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#ifndef LIBTAU_REPOSITORY_IMPL_HPP
-#define LIBTAU_REPOSITORY_IMPL_HPP
+#ifndef LIBTAU_REPOSITORY_TRACK_HPP
+#define LIBTAU_REPOSITORY_TRACK_HPP
 
-
-#include <sqlite3.h>
-#include <leveldb/db.h>
-#include <leveldb/write_batch.h>
+#include <utility>
+#include <map>
 #include "libTAU/blockchain/repository.hpp"
-#include "libTAU/blockchain/repository_track.hpp"
 
 namespace libTAU::blockchain {
-    struct repository_impl final : repository {
 
-        repository_impl(sqlite3 *mSqlite, leveldb::DB *mLeveldb) : m_sqlite(mSqlite), m_leveldb(mLeveldb) {}
+    struct repository_track final : repository {
+
+        repository_track(repository *mRepository) : m_repository(mRepository) {}
 
         bool init() override;
 
@@ -87,15 +85,10 @@ namespace libTAU::blockchain {
 
     private:
 
-        // sqlite3 instance
-        sqlite3 *m_sqlite;
+        repository *m_repository;
 
-        // leveldb instance
-        leveldb::DB* m_leveldb;
-
-        // leveldb write batch
-        leveldb::WriteBatch m_write_batch;
+        std::map<std::string, std::string> m_cache;
     };
 }
 
-#endif //LIBTAU_REPOSITORY_IMPL_HPP
+#endif //LIBTAU_REPOSITORY_TRACK_HPP

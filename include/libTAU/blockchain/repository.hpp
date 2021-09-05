@@ -9,13 +9,20 @@ see LICENSE file.
 #ifndef LIBTAU_REPOSITORY_HPP
 #define LIBTAU_REPOSITORY_HPP
 
+
+#include <map>
 #include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/state_linker.hpp"
 
 namespace libTAU::blockchain {
 
 
     struct TORRENT_EXPORT repository {
+
+        const std::string key_suffix_state_linker = "linker";
+        const std::string key_suffix_best_tip_block_hash = "tip";
+        const std::string key_suffix_best_tail_block_hash = "tail";
 
         // init db
         virtual bool init() = 0;
@@ -69,7 +76,7 @@ namespace libTAU::blockchain {
          */
         virtual repository* start_tracking() = 0;
 
-//        void updateBatch(Map<ByteArrayWrapper, AccountState> accountStates);
+        virtual void update_batch(std::map<std::string, std::string> cache) = 0;
 
         virtual void flush() = 0;
 
@@ -84,6 +91,24 @@ namespace libTAU::blockchain {
          * to a snapshot of the repository
          */
         virtual void rollback() = 0;
+
+        virtual account get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) = 0;
+
+        virtual bool update_user_state_db(block b) = 0;
+
+        virtual bool update_user_state_db(aux::bytes chain_id, dht::public_key pubKey, std::int64_t balance, std::int64_t nonce, std::int64_t height) = 0;
+
+        virtual sha256_hash get_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) = 0;
+
+        virtual bool save_account_block_hash(aux::bytes chain_id, dht::public_key pubKey, sha256_hash hash) = 0;
+
+        virtual account find_state_from_block(dht::public_key pubKey, block b) = 0;
+
+        virtual state_linker get_state_linker(sha256_hash block_hash) = 0;
+
+        virtual bool save_state_linker(state_linker stateLinker) = 0;
+
+        virtual bool save_block(block b) = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP

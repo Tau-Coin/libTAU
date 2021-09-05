@@ -11,10 +11,6 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    const std::string key_suffix_state_linker = "linker";
-    const std::string key_suffix_best_tip_block_hash = "tip";
-    const std::string key_suffix_best_tail_block_hash = "tail";
-
     bool repository_impl::init() {
         return true;
     }
@@ -133,11 +129,11 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::is_account_exist(aux::bytes chain_id, dht::public_key pubKey) {
-        std::string sKey;
-        sKey.insert(sKey.end(), chain_id.begin(), chain_id.end());
-        sKey.insert(sKey.end(), pubKey.bytes.begin(), pubKey.bytes.end());
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
         std::string value;
-        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), sKey, &value);
+        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
 
         return status.ok();
     }
@@ -335,7 +331,7 @@ namespace libTAU::blockchain {
             save_account_block_hash(chain_id, item.first, item.second);
         }
 
-        return false;
+        return true;
     }
 
     bool repository_impl::delete_block(sha256_hash hash) {
@@ -402,17 +398,26 @@ namespace libTAU::blockchain {
     }
 
     repository *repository_impl::start_tracking() {
-        return nullptr;
+        return new repository_track(this);
+    }
+
+    void repository_impl::update_batch(std::map<std::string, std::string> cache) {
+        for (auto const& item: cache) {
+            m_write_batch.Put(item.first, item.second);
+        }
     }
 
     void repository_impl::flush() {
-
+        m_leveldb->Write(leveldb::WriteOptions(), &m_write_batch);
+        m_write_batch.Clear();
     }
 
+    // unsupported
     void repository_impl::commit() {
 
     }
 
+    // unsupported
     void repository_impl::rollback() {
 
     }
