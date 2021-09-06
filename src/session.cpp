@@ -264,14 +264,6 @@ namespace {
 			, flags);
 		*static_cast<session_handle*>(this) = session_handle(m_impl);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : params.extensions)
-		{
-			ext->load_state(params.ext_state);
-			m_impl->add_ses_extension(std::move(ext));
-		}
-#endif
-
 		m_impl->set_dht_state(std::move(params.dht_state));
 
 		TORRENT_ASSERT(params.dht_storage_constructor);

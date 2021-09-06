@@ -887,11 +887,6 @@ SOURCES =
 	posix_part_file
 	posix_storage
 	ssl
-
-# -- extensions --
-	ut_pex
-	ut_metadata
-	smart_ban
 	;
 
 KADEMLIA_SOURCES =

@@ -359,23 +359,6 @@ namespace aux {
 					, m_abort_handler_storage, *this));
 			}
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-			using ext_function_t
-				= std::function<std::shared_ptr<torrent_plugin>(torrent_handle const&, client_data_t)>;
-
-			struct session_plugin_wrapper : plugin
-			{
-				explicit session_plugin_wrapper(ext_function_t f) : m_f(std::move(f)) {}
-
-				std::shared_ptr<torrent_plugin> new_torrent(torrent_handle const& t, client_data_t const user) override
-				{ return m_f(t, user); }
-				ext_function_t m_f;
-			};
-
-			void add_extension(std::function<std::shared_ptr<torrent_plugin>(
-				torrent_handle const&, client_data_t)> ext);
-			void add_ses_extension(std::shared_ptr<plugin> ext);
-#endif
 #if TORRENT_USE_ASSERTS
 			bool is_single_thread() const override { return single_threaded::is_single_thread(); }
 #endif
@@ -1055,11 +1038,6 @@ namespace aux {
 #ifndef TORRENT_DISABLE_LOGGING
 			bool should_log() const override;
 			void session_log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
-#endif
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-			// this is a list to allow extensions to potentially remove themselves.
-			std::array<std::vector<std::shared_ptr<plugin>>, 4> m_ses_extensions;
 #endif
 
 			// this is true whenever we have posted a deferred-disk job

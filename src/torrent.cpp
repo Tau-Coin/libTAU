@@ -651,53 +651,11 @@ bool is_downloading_state(int const st)
 #ifndef TORRENT_DISABLE_SHARE_MODE
 	void torrent::send_share_mode()
 	{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto* const pc : m_connections)
-		{
-			TORRENT_INCREMENT(m_iterating_connections);
-			if (pc->type() != connection_type::bittorrent) continue;
-			auto* p = static_cast<bt_peer_connection*>(pc);
-			p->write_share_mode();
-		}
-#endif
 	}
 #endif // TORRENT_DISABLE_SHARE_MODE
 
 	void torrent::send_upload_only()
 	{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-
-#ifndef TORRENT_DISABLE_SHARE_MODE
-		if (share_mode()) return;
-#endif
-#ifndef TORRENT_DISABLE_SUPERSEEDING
-		if (super_seeding()) return;
-#endif
-
-		// if we send upload-only, the other end is very likely to disconnect
-		// us, at least if it's a seed. If we don't want to close redundant
-		// connections, don't sent upload-only
-		if (!settings().get_bool(settings_pack::close_redundant_connections)) return;
-
-		// if we're super seeding, we don't want to make peers
-		// think that we only have a single piece and is upload
-		// only, since they might disconnect immediately when
-		// they have downloaded a single piece, although we'll
-		// make another piece available
-		bool const upload_only_enabled = is_upload_only()
-#ifndef TORRENT_DISABLE_SUPERSEEDING
-			&& !super_seeding()
-#endif
-			;
-
-		for (auto* p : m_connections)
-		{
-			TORRENT_INCREMENT(m_iterating_connections);
-
-			p->send_not_interested();
-			p->send_upload_only(upload_only_enabled);
-		}
-#endif // TORRENT_DISABLE_EXTENSIONS
 	}
 
 #ifndef TORRENT_DISABLE_SHARE_MODE
@@ -1189,43 +1147,6 @@ bool is_downloading_state(int const st)
 		return "";
 	}
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-
-	void torrent::add_extension(std::shared_ptr<torrent_plugin> ext)
-	{
-		m_extensions.push_back(ext);
-	}
-
-	void torrent::remove_extension(std::shared_ptr<torrent_plugin> ext)
-	{
-		auto const i = std::find(m_extensions.begin(), m_extensions.end(), ext);
-		if (i == m_extensions.end()) return;
-		m_extensions.erase(i);
-	}
-
-	void torrent::add_extension_fun(std::function<std::shared_ptr<torrent_plugin>(torrent_handle const&, client_data_t)> const& ext
-		, client_data_t userdata)
-	{
-		std::shared_ptr<torrent_plugin> tp(ext(get_handle(), userdata));
-		if (!tp) return;
-
-		add_extension(tp);
-
-		for (auto* p : m_connections)
-		{
-			TORRENT_INCREMENT(m_iterating_connections);
-			std::shared_ptr<peer_plugin> pp(tp->new_connection(peer_connection_handle(p->self())));
-			if (pp) p->add_extension(std::move(pp));
-		}
-
-		// if files are checked for this torrent, call the extension
-		// to let it initialize itself
-		if (m_connections_initialized)
-			tp->on_files_checked();
-	}
-
-#endif
-
 #ifdef TORRENT_SSL_PEERS
 	bool torrent::verify_peer_cert(bool const preverified, ssl::verify_context& ctx)
 	{
@@ -1700,18 +1621,7 @@ bool is_downloading_state(int const st)
 
 	bt_peer_connection* torrent::find_introducer(tcp::endpoint const& ep) const
 	{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto* pe : m_connections)
-		{
-			TORRENT_INCREMENT(m_iterating_connections);
-			if (pe->type() != connection_type::bittorrent) continue;
-			auto* p = static_cast<bt_peer_connection*>(pe);
-			if (!p->supports_holepunch()) continue;
-			if (p->was_introduced_by(ep)) return p;
-		}
-#else
 		TORRENT_UNUSED(ep);
-#endif
 		return nullptr;
 	}
 
@@ -3296,13 +3206,6 @@ bool is_downloading_state(int const st)
 			else p->fill_send_buffer();
 		}
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_extensions)
-		{
-			ext->on_piece_pass(index);
-		}
-#endif
-
 		// since this piece just passed, we might have
 		// become uninterested in some peers where this
 		// was the last piece we were interested in
@@ -3613,13 +3516,6 @@ bool is_downloading_state(int const st)
 			add_failed_bytes(m_torrent_file->piece_size(index));
 		else
 			add_failed_bytes(static_cast<int>(blocks.size()) * default_block_size);
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_extensions)
-		{
-			ext->on_piece_failed(index);
-		}
-#endif
 
 		std::vector<torrent_peer*> const downloaders = m_picker->get_downloaders(index);
 
@@ -6030,14 +5926,6 @@ bool is_downloading_state(int const st)
 			}
 		}
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_extensions)
-		{
-			std::shared_ptr<peer_plugin> pp(ext->new_connection(
-					peer_connection_handle(p->self())));
-			if (pp) p->add_extension(pp);
-		}
-#endif
 		torrent_state st = get_peer_list_state();
 		need_peer_list();
 		if (!m_peer_list->new_connection(*p, m_ses.session_time(), &st))
@@ -6582,13 +6470,6 @@ bool is_downloading_state(int const st)
 		}
 
 		INVARIANT_CHECK;
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_extensions)
-		{
-			ext->on_files_checked();
-		}
-#endif
 
 		bool const notify_initialized = !m_connections_initialized;
 		m_connections_initialized = true;
@@ -7432,13 +7313,6 @@ bool is_downloading_state(int const st)
 			m_inactivity_timer.cancel();
 		}
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_extensions)
-		{
-			if (ext->on_pause()) return;
-		}
-#endif
-
 		m_connect_boost_counter
 			= static_cast<std::uint8_t>(settings().get_int(settings_pack::torrent_connect_boost));
 		m_inactive = false;
@@ -7663,13 +7537,6 @@ bool is_downloading_state(int const st)
 			update_want_tick();
 			return;
 		}
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_extensions)
-		{
-			if (ext->on_resume()) return;
-		}
-#endif
 
 		m_started = aux::time_now32();
 		if (is_seed()) m_became_seed = m_started;
@@ -7963,15 +7830,6 @@ bool is_downloading_state(int const st)
 		INVARIANT_CHECK;
 
 		auto self = shared_from_this();
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& ext : m_extensions)
-		{
-			ext->tick();
-		}
-
-		if (m_abort) return;
-#endif
 
 		// if we're in upload only mode and we're auto-managed
 		// leave upload mode every 10 minutes hoping that the error
@@ -8965,25 +8823,16 @@ bool is_downloading_state(int const st)
 			&& m_ip_filter
 			&& m_ip_filter->access(adr.address()) & ip_filter::blocked)
 		{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-			notify_extension_add_peer(adr, source, torrent_plugin::filtered);
-#endif
 			return nullptr;
 		}
 
 		if (m_ses.get_port_filter().access(adr.port()) & port_filter::blocked)
 		{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-			notify_extension_add_peer(adr, source, torrent_plugin::filtered);
-#endif
 			return nullptr;
 		}
 
 		if (settings().get_bool(settings_pack::no_connect_privileged_ports) && adr.port() < 1024)
 		{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-			notify_extension_add_peer(adr, source, torrent_plugin::filtered);
-#endif
 			return nullptr;
 		}
 
@@ -8998,18 +8847,6 @@ bool is_downloading_state(int const st)
 		if (p)
 		{
 			state_updated();
-#ifndef TORRENT_DISABLE_EXTENSIONS
-			notify_extension_add_peer(adr, source
-				, st.first_time_seen
-					? torrent_plugin::first_time
-					: add_peer_flags_t{});
-#endif
-		}
-		else
-		{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-			notify_extension_add_peer(adr, source, torrent_plugin::filtered);
-#endif
 		}
 		update_want_peers();
 		state_updated();
@@ -9377,24 +9214,7 @@ bool is_downloading_state(int const st)
 
 		state_updated();
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_extensions)
-		{
-			ext->on_state(state());
-		}
-#endif
 	}
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	void torrent::notify_extension_add_peer(tcp::endpoint const& ip
-		, peer_source_flags_t const src, add_peer_flags_t const flags)
-	{
-		for (auto& ext : m_extensions)
-		{
-			ext->on_add_peer(ip, src, flags);
-		}
-	}
-#endif
 
 	void torrent::state_updated()
 	{

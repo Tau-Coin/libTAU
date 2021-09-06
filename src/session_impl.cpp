@@ -574,13 +574,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		{
 			e["dht state"] = dht::save_dht_state(m_dht->state());
 		}
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& ext : m_ses_extensions[plugins_all_idx])
-		{
-			ext->save_state(*eptr);
-		}
-#endif
 	}
 
 	void session_impl::load_state(bdecode_node const* e
@@ -690,12 +683,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		if (need_update_proxy) update_proxy();
 #endif
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_ses_extensions[plugins_all_idx])
-		{
-			ext->load_state(*e);
-		}
-#endif
 	}
 #endif
 
@@ -717,18 +704,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		if (m_dht && (flags & session::save_dht_state))
 			ret.dht_state = m_dht->state();
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		if (flags & session::save_extension_state)
-		{
-			for (auto const& ext : m_ses_extensions[plugins_all_idx])
-			{
-				auto state = ext->save_state();
-				for (auto& v : state)
-					ret.ext_state[std::move(v.first)] = std::move(v.second);
-			}
-		}
-#endif
-
 		if ((flags & session::save_ip_filter) && m_ip_filter)
 		{
 			ret.ip_filter = *m_ip_filter;
@@ -740,39 +715,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	{
 		return proxy_settings(m_settings);
 	}
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-
-	void session_impl::add_extension(ext_function_t ext)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		TORRENT_ASSERT(ext);
-
-		add_ses_extension(std::make_shared<session_plugin_wrapper>(ext));
-	}
-
-	void session_impl::add_ses_extension(std::shared_ptr<plugin> ext)
-	{
-		// this is called during startup of the session, from the thread creating
-		// it, not its own thread
-//		TORRENT_ASSERT(is_single_thread());
-		TORRENT_ASSERT_VAL(ext, ext);
-
-		feature_flags_t const features = ext->implemented_features();
-
-		m_ses_extensions[plugins_all_idx].push_back(ext);
-
-		if (features & plugin::tick_feature)
-			m_ses_extensions[plugins_tick_idx].push_back(ext);
-		if (features & plugin::dht_request_feature)
-			m_ses_extensions[plugins_dht_request_idx].push_back(ext);
-		if (features & plugin::alert_feature)
-			m_alerts.add_extension(ext);
-		session_handle h(shared_from_this());
-		ext->added(h);
-	}
-
-#endif // TORRENT_DISABLE_EXTENSIONS
 
 	void session_impl::abort() noexcept
 	{
@@ -786,13 +728,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		// at this point we cannot call the notify function anymore, since the
 		// session will become invalid.
 		m_alerts.set_notify_function({});
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_ses_extensions[plugins_all_idx])
-		{
-			ext->abort();
-		}
-#endif
 
 		// this will cancel requests that are not critical for shutting down
 		// cleanly. i.e. essentially tracker hostname lookups that we're not
@@ -2528,13 +2463,6 @@ namespace {
 
 		int const tick_interval_ms = aux::numeric_cast<int>(total_milliseconds(now - m_last_second_tick));
 		m_last_second_tick = now;
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& ext : m_ses_extensions[plugins_tick_idx])
-		{
-			ext->on_tick();
-		}
-#endif
 
 		// don't do any of the following while we're shutting down
 		if (m_abort) return;
@@ -4350,18 +4278,9 @@ namespace {
 	bool session_impl::on_dht_request(string_view query
 		, dht::msg const& request, entry& response)
 	{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& ext : m_ses_extensions[plugins_dht_request_idx])
-		{
-			if (ext->on_dht_request(query
-				, request.addr, request.message, response))
-				return true;
-		}
-#else
 		TORRENT_UNUSED(query);
 		TORRENT_UNUSED(request);
 		TORRENT_UNUSED(response);
-#endif
 		return false;
 	}
 

@@ -14,11 +14,6 @@ see LICENSE file.
 #include "libTAU/aux_/alert_manager.hpp"
 #include "libTAU/alert_types.hpp"
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-#include "libTAU/extensions.hpp"
-#include <memory> // for shared_ptr
-#endif
-
 namespace libTAU {
 namespace aux {
 
@@ -59,12 +54,7 @@ namespace aux {
 			m_condition.notify_all();
 		}
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto& e : m_ses_extensions)
-			e->on_alert(a);
-#else
 		TORRENT_UNUSED(a);
-#endif
 	}
 
 	void alert_manager::set_notify_function(std::function<void()> const& fun)
@@ -76,13 +66,6 @@ namespace aux {
 			if (m_notify) m_notify();
 		}
 	}
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	void alert_manager::add_extension(std::shared_ptr<plugin> ext)
-	{
-		m_ses_extensions.push_back(ext);
-	}
-#endif
 
 	void alert_manager::get_all(std::vector<alert*>& alerts)
 	{

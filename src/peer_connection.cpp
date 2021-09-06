@@ -529,22 +529,6 @@ namespace {
 	catch (std::exception const&) {}
 #endif
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	void peer_connection::add_extension(std::shared_ptr<peer_plugin> ext)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		m_extensions.push_back(ext);
-	}
-
-	peer_plugin const* peer_connection::find_plugin(string_view type)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		auto p = std::find_if(m_extensions.begin(), m_extensions.end()
-			, [&](std::shared_ptr<peer_plugin> const& e) { return e->type() == type; });
-		return p != m_extensions.end() ? p->get() : nullptr;
-	}
-#endif
-
 	void peer_connection::send_allowed_set()
 	{
 		TORRENT_ASSERT(is_single_thread());
@@ -820,10 +804,6 @@ namespace {
 			m_connecting = false;
 		}
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		m_extensions.clear();
-#endif
-
 #ifndef TORRENT_DISABLE_LOGGING
 		peer_log(peer_log_alert::info, "CONNECTION CLOSED");
 #endif
@@ -1084,15 +1064,6 @@ namespace {
 	{
 		TORRENT_ASSERT(is_single_thread());
 		m_statistics.sent_bytes(bytes_payload, bytes_protocol);
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		if (bytes_payload)
-		{
-			for (auto const& e : m_extensions)
-			{
-				e->sent_payload(bytes_payload);
-			}
-		}
-#endif
 		if (bytes_payload > 0) m_last_sent_payload.set(m_connect, clock_type::now());
 		if (m_ignore_stats) return;
 		auto t = m_torrent.lock();
@@ -1143,14 +1114,7 @@ namespace {
 		// seeds yet, and we might have just become one
 //		INVARIANT_CHECK;
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			e->on_piece_pass(index);
-		}
-#else
 		TORRENT_UNUSED(index);
-#endif
 	}
 
 	// single_peer is true if the entire piece was received by a single
@@ -1160,15 +1124,7 @@ namespace {
 		TORRENT_ASSERT(is_single_thread());
 		INVARIANT_CHECK;
 		TORRENT_UNUSED(single_peer);
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			e->on_piece_failed(index);
-		}
-#else
 		TORRENT_UNUSED(index);
-#endif
 		return true;
 	}
 
@@ -1237,12 +1193,6 @@ namespace {
 		TORRENT_ASSERT(is_single_thread());
 		INVARIANT_CHECK;
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_choke()) return;
-		}
-#endif
 		if (is_disconnecting()) return;
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -1314,13 +1264,6 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
 		peer_log(peer_log_alert::incoming_message, "REJECT_PIECE", "piece: %d s: %x l: %x"
 			, static_cast<int>(r.piece), r.start, r.length);
-#endif
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_reject(r)) return;
-		}
 #endif
 
 		if (is_disconnecting()) return;
@@ -1428,13 +1371,6 @@ namespace {
 		auto t = m_torrent.lock();
 		if (!t) return;
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_suggest(index)) return;
-		}
-#endif
-
 		if (is_disconnecting()) return;
 		if (index < piece_index_t(0))
 		{
@@ -1489,13 +1425,6 @@ namespace {
 		auto t = m_torrent.lock();
 		TORRENT_ASSERT(t);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_unchoke()) return;
-		}
-#endif
-
 #ifndef TORRENT_DISABLE_LOGGING
 		peer_log(peer_log_alert::incoming_message, "UNCHOKE");
 #endif
@@ -1525,13 +1454,6 @@ namespace {
 
 		auto t = m_torrent.lock();
 		TORRENT_ASSERT(t);
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_interested()) return;
-		}
-#endif
 
 #ifndef TORRENT_DISABLE_LOGGING
 		peer_log(peer_log_alert::incoming_message, "INTERESTED");
@@ -1611,13 +1533,6 @@ namespace {
 		TORRENT_ASSERT(is_single_thread());
 		INVARIANT_CHECK;
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_not_interested()) return;
-		}
-#endif
-
 #ifndef TORRENT_DISABLE_LOGGING
 		peer_log(peer_log_alert::incoming_message, "NOT_INTERESTED");
 #endif
@@ -1670,13 +1585,6 @@ namespace {
 
 		auto t = m_torrent.lock();
 		TORRENT_ASSERT(t);
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_have(index)) return;
-		}
-#endif
 
 		if (is_disconnecting()) return;
 
@@ -1855,13 +1763,6 @@ namespace {
 			return;
 		}
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_dont_have(index)) return;
-		}
-#endif
-
 		if (is_disconnecting()) return;
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -1918,13 +1819,6 @@ namespace {
 
 		auto t = m_torrent.lock();
 		TORRENT_ASSERT(t);
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_bitfield(bits)) return;
-		}
-#endif
 
 		if (is_disconnecting()) return;
 
@@ -2087,14 +1981,7 @@ namespace {
 	bool peer_connection::can_disconnect(error_code const& ec) const
 	{
 		TORRENT_ASSERT(is_single_thread());
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (!e->can_disconnect(ec)) return false;
-		}
-#else
 		TORRENT_UNUSED(ec);
-#endif
 		return true;
 	}
 
@@ -2154,14 +2041,6 @@ namespace {
 		// probably omitted, which is the same as 'have_none'
 		if (!m_bitfield_received) incoming_have_none();
 		if (is_disconnecting()) return;
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_request(r)) return;
-		}
-		if (is_disconnecting()) return;
-#endif
 
 		if (!t->valid_metadata())
 		{
@@ -2496,19 +2375,6 @@ namespace {
 
 		update_desired_queue_size();
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_piece(p, {data, p.length}))
-			{
-#if TORRENT_USE_ASSERTS
-				TORRENT_ASSERT(m_received_in_piece == p.length);
-				m_received_in_piece = 0;
-#endif
-				return;
-			}
-		}
-#endif
 		if (is_disconnecting()) return;
 
 #if TORRENT_USE_INVARIANT_CHECKS
@@ -2936,12 +2802,6 @@ namespace {
 		TORRENT_ASSERT(is_single_thread());
 		INVARIANT_CHECK;
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_cancel(r)) return;
-		}
-#endif
 		if (is_disconnecting()) return;
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -3013,12 +2873,6 @@ namespace {
 		peer_log(peer_log_alert::incoming_message, "HAVE_ALL");
 #endif
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_have_all()) return;
-		}
-#endif
 		if (is_disconnecting()) return;
 
 		if (m_bitfield_received)
@@ -3086,12 +2940,6 @@ namespace {
 		auto t = m_torrent.lock();
 		TORRENT_ASSERT(t);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_have_none()) return;
-		}
-#endif
 		if (is_disconnecting()) return;
 
 		if (m_bitfield_received)
@@ -3133,12 +2981,6 @@ namespace {
 			, static_cast<int>(index));
 #endif
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_allowed_fast(index)) return;
-		}
-#endif
 		if (is_disconnecting()) return;
 
 		if (index < piece_index_t(0))
@@ -3780,20 +3622,8 @@ namespace {
 			// the verification will fail for coalesced blocks
 			TORRENT_ASSERT(verify_piece(r) || m_request_large_blocks);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-			bool handled = false;
-			for (auto const& e : m_extensions)
-			{
-				handled = e->write_request(r);
-				if (handled) break;
-			}
-			if (is_disconnecting()) return;
-			if (!handled)
-#endif
-			{
-				write_request(r);
-				m_last_request.set(m_connect, aux::time_now());
-			}
+			write_request(r);
+			m_last_request.set(m_connect, aux::time_now());
 
 #ifndef TORRENT_DISABLE_LOGGING
 			if (should_log(peer_log_alert::outgoing_message))
@@ -3882,20 +3712,6 @@ namespace {
 
 		if (m_holepunch_mode)
 			fast_reconnect(true);
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		if ((!is_utp(m_socket)
-				|| !m_settings.get_bool(settings_pack::enable_outgoing_tcp))
-			&& m_peer_info
-			&& m_peer_info->supports_holepunch
-			&& !m_holepunch_mode)
-		{
-			// see if we can try a holepunch
-			aux::bt_peer_connection* p = t->find_introducer(remote());
-			if (p)
-				p->write_holepunch_msg(aux::bt_peer_connection::hp_message::rendezvous, remote());
-		}
-#endif
 
 		disconnect(e, operation_t::connect, failure);
 	}
@@ -4079,13 +3895,6 @@ namespace {
 
 		torrent_handle handle;
 		if (t) handle = t->get_handle();
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			e->on_disconnect(ec);
-		}
-#endif
 
 		m_disconnecting = true;
 
@@ -4501,14 +4310,6 @@ namespace {
 
 		on_tick();
 		if (is_disconnecting()) return;
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			e->tick();
-		}
-		if (is_disconnecting()) return;
-#endif
 
 		// if the peer hasn't said a thing for a certain
 		// time, it is considered to have timed out
@@ -5753,13 +5554,6 @@ namespace {
 					, m_settings.get_int(settings_pack::peer_tos), err.message().c_str());
 			}
 #endif
-		}
-#endif
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& ext : m_extensions)
-		{
-			ext->on_connected();
 		}
 #endif
 
