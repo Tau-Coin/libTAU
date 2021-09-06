@@ -17,7 +17,7 @@ namespace libTAU::blockchain {
 
     struct repository_track final : repository {
 
-        repository_track(repository *mRepository) : m_repository(mRepository) {}
+        explicit repository_track(repository *mRepository) : m_repository(mRepository) {}
 
         bool init() override;
 

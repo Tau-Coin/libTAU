@@ -167,7 +167,8 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::delete_block(sha256_hash hash) {
-        return m_repository->delete_block(hash);
+        m_cache[hash.to_string()] = std::string ();
+        return true;
     }
 
     sha256_hash repository_track::get_best_tip_block_hash(aux::bytes chain_id) {
@@ -194,7 +195,12 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::delete_best_tip_block_hash(aux::bytes chain_id) {
-        return m_repository->delete_best_tip_block_hash(chain_id);
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
+        m_cache[key] = std::string ();
+
+        return true;
     }
 
     sha256_hash repository_track::get_best_tail_block_hash(aux::bytes chain_id) {
@@ -221,7 +227,12 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::delete_best_tail_block_hash(aux::bytes chain_id) {
-        return m_repository->delete_best_tip_block_hash(chain_id);
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
+        m_cache[key] = std::string ();
+
+        return true;
     }
 
     repository *repository_track::start_tracking() {
@@ -238,7 +249,8 @@ namespace libTAU::blockchain {
     }
 
     void repository_track::commit() {
-
+        m_repository->update_batch(m_cache);
+        m_cache.clear();
     }
 
     void repository_track::rollback() {

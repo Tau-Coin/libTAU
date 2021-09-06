@@ -403,7 +403,11 @@ namespace libTAU::blockchain {
 
     void repository_impl::update_batch(std::map<std::string, std::string> cache) {
         for (auto const& item: cache) {
-            m_write_batch.Put(item.first, item.second);
+            if (item.second.empty()) {
+                m_write_batch.Delete(item.first);
+            } else {
+                m_write_batch.Put(item.first, item.second);
+            }
         }
     }
 
