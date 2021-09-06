@@ -562,10 +562,6 @@ TORRENT_VERSION_NAMESPACE_3
 		seconds active_duration;
 		seconds finished_duration;
 		seconds seeding_duration;
-
-		// reflects several of the torrent's flags. For more
-		// information, see ``torrent_handle::flags()``.
-		torrent_flags_t flags{};
 	};
 
 TORRENT_VERSION_NAMESPACE_3_END

@@ -39,7 +39,6 @@ see LICENSE file.
 #include "libTAU/units.hpp"
 #include "libTAU/aux_/vector.hpp"
 #include "libTAU/storage_defs.hpp"
-#include "libTAU/torrent_flags.hpp"
 #include "libTAU/torrent_info.hpp"
 #include "libTAU/peer_info.hpp" // for peer_source_flags_t
 #include "libTAU/download_priority.hpp"
@@ -578,24 +577,6 @@ namespace aux {
 		//
 		void pause(pause_flags_t flags = {}) const;
 		void resume() const;
-
-		// sets and gets the torrent state flags. See torrent_flags_t.
-		// The ``set_flags`` overload that take a mask will affect all
-		// flags part of the mask, and set their values to what the
-		// ``flags`` argument is set to. This allows clearing and
-		// setting flags in a single function call.
-		// The ``set_flags`` overload that just takes flags, sets all
-		// the specified flags and leave any other flags unchanged.
-		// ``unset_flags`` clears the specified flags, while leaving
-		// any other flags unchanged.
-		//
-		// The `seed_mode` flag is special, it can only be cleared once the
-		// torrent has been added, and it can only be set as part of the
-		// add_torrent_params flags, when adding the torrent.
-		torrent_flags_t flags() const;
-		void set_flags(torrent_flags_t flags, torrent_flags_t mask) const;
-		void set_flags(torrent_flags_t flags) const;
-		void unset_flags(torrent_flags_t flags) const;
 
 		// Instructs libTAU to flush all the disk caches for this torrent and
 		// close all file handles. This is done asynchronously and you will be

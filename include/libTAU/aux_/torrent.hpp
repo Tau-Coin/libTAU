@@ -410,9 +410,6 @@ namespace libTAU::aux {
 		// before disconnecting
 		bool graceful_pause() const { return m_graceful_pause_mode; }
 
-		torrent_flags_t flags() const;
-		void set_flags(torrent_flags_t flags, torrent_flags_t mask);
-
 		void set_upload_mode(bool b);
 		bool upload_mode() const { return m_upload_mode || m_graceful_pause_mode; }
 		bool is_upload_only() const { return is_finished() || upload_mode(); }
