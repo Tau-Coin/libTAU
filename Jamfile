@@ -779,7 +779,6 @@ SOURCES =
 	bitfield
 	bloom_filter
 	chained_buffer
-	choker
 	close_reason
 	common
     common_data
