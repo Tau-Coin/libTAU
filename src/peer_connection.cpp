@@ -44,7 +44,6 @@ see LICENSE file.
 #include "libTAU/aux_/alloca.hpp"
 #include "libTAU/disk_interface.hpp"
 #include "libTAU/aux_/bandwidth_manager.hpp"
-#include "libTAU/aux_/request_blocks.hpp" // for request_a_block
 #include "libTAU/performance_counters.hpp" // for counters
 #include "libTAU/aux_/alert_manager.hpp" // for alert_manager
 #include "libTAU/ip_filter.hpp"
@@ -1346,12 +1345,6 @@ namespace {
 		check_graceful_pause();
 		if (is_disconnecting()) return;
 
-		if (m_request_queue.empty() && m_download_queue.size() < 2)
-		{
-			if (aux::request_a_block(*t, *this))
-				m_counters.inc_stats_counter(counters::reject_piece_picks);
-		}
-
 		send_block_requests();
 	}
 
@@ -1434,13 +1427,6 @@ namespace {
 		m_peer_choked = false;
 		m_last_unchoked.set(m_connect, aux::time_now());
 		if (is_disconnecting()) return;
-
-		if (is_interesting())
-		{
-			if (request_a_block(*t, *this))
-				m_counters.inc_stats_counter(counters::unchoke_piece_picks);
-			send_block_requests();
-		}
 	}
 
 	// -----------------------------
@@ -2488,10 +2474,6 @@ namespace {
 			// timeout period until we time out. So, reset the timer.
 			if (!m_download_queue.empty())
 				m_requested.set(m_connect, now);
-
-			if (request_a_block(*t, *this))
-				m_counters.inc_stats_counter(counters::incoming_redundant_piece_picks);
-			send_block_requests();
 			return;
 		}
 
@@ -2655,8 +2637,6 @@ namespace {
 
 		if (is_disconnecting()) return;
 
-		if (request_a_block(*t, *this))
-			m_counters.inc_stats_counter(counters::incoming_piece_picks);
 		send_block_requests();
 	}
 
@@ -4290,8 +4270,6 @@ namespace {
 			// we should try to pick another block to see
 			// if we can pick a busy one
 			m_last_request.set(m_connect, now);
-			if (request_a_block(*t, *this))
-				m_counters.inc_stats_counter(counters::end_game_piece_picks);
 			if (m_disconnecting) return;
 			send_block_requests();
 		}
@@ -4471,8 +4449,6 @@ namespace {
 			// picking the same block again, stalling the
 			// same piece indefinitely.
 			m_desired_queue_size = 2;
-			if (request_a_block(*t, *this))
-				m_counters.inc_stats_counter(counters::snubbed_piece_picks);
 
 			// the block we just picked (potentially)
 			// hasn't been put in m_download_queue yet.

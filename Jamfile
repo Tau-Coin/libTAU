@@ -867,7 +867,6 @@ SOURCES =
 	peer_class_set
 	part_file
 	stat_cache
-	request_blocks
 	session_stats
 	performance_counters
 	resolver

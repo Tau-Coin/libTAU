@@ -74,7 +74,6 @@ see LICENSE file.
 #include "libTAU/peer_class.hpp" // for peer_class
 #include "libTAU/aux_/socket_io.hpp" // for read_*_endpoint
 #include "libTAU/ip_filter.hpp"
-#include "libTAU/aux_/request_blocks.hpp"
 #include "libTAU/performance_counters.hpp" // for counters
 #include "libTAU/aux_/resolver_interface.hpp"
 #include "libTAU/aux_/alloca.hpp"
@@ -853,8 +852,6 @@ bool is_downloading_state(int const st)
 			p->update_interest();
 			if (!m_abort)
 			{
-				if (request_a_block(*this, *p))
-					inc_stats_counter(counters::hash_fail_piece_picks);
 				p->send_block_requests();
 			}
 		}
@@ -3670,8 +3667,6 @@ bool is_downloading_state(int const st)
 			&& c.allowed_fast().empty())
 			return;
 
-		if (request_a_block(*this, c))
-			inc_stats_counter(counters::interesting_piece_picks);
 		c.send_block_requests();
 	}
 
@@ -6493,14 +6488,6 @@ bool is_downloading_state(int const st)
 #ifndef TORRENT_DISABLE_LOGGING
 			pc->peer_log(peer_log_alert::info, "ON_FILES_CHECKED");
 #endif
-			if (pc->is_interesting() && !pc->has_peer_choked())
-			{
-				if (request_a_block(*this, *pc))
-				{
-					inc_stats_counter(counters::unchoke_piece_picks);
-					pc->send_block_requests();
-				}
-			}
 		}
 
 		start_announcing();
