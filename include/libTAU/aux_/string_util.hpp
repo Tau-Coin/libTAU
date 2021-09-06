@@ -120,11 +120,6 @@ namespace libTAU::aux {
 	// removes whitespaces at the beginning of the string, in-place
 	TORRENT_EXTRA_EXPORT void ltrim(std::string& s);
 
-#if TORRENT_USE_I2P
-
-	TORRENT_EXTRA_EXPORT bool is_i2p_url(std::string const& url);
-
-#endif
 }
 
 #endif

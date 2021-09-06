@@ -480,9 +480,6 @@ namespace {
 		if (has_peer_choked()) p.flags |= peer_info::remote_choked;
 		if (support_extensions()) p.flags |= peer_info::supports_extensions;
 		if (is_outgoing()) p.flags |= peer_info::local_connection;
-#if TORRENT_USE_I2P
-		if (is_i2p(get_socket())) p.flags |= peer_info::i2p_socket;
-#endif
 		if (is_utp(get_socket())) p.flags |= peer_info::utp_socket;
 		if (is_ssl(get_socket())) p.flags |= peer_info::ssl_socket;
 
@@ -2419,10 +2416,7 @@ namespace {
 		std::string remote_address;
 		std::back_insert_iterator<std::string> out(remote_address);
 		aux::write_address(remote().address(), out);
-#if TORRENT_USE_I2P
-		if (!is_i2p(get_socket()))
-#endif
-			handshake["yourip"] = remote_address;
+		handshake["yourip"] = remote_address;
 		handshake["reqq"] = m_settings.get_int(settings_pack::max_allowed_in_request_queue);
 
 		m["upload_only"] = upload_only_msg;

@@ -220,13 +220,6 @@ namespace {
 	{
 		TORRENT_ASSERT(is_single_thread());
 		int ret = m_settings.get_int(settings_pack::peer_timeout);
-#if TORRENT_USE_I2P
-		if (m_peer_info && m_peer_info->is_i2p_addr)
-		{
-			// quadruple the timeout for i2p peers
-			ret *= 4;
-		}
-#endif
 		return ret;
 	}
 
@@ -4530,11 +4523,6 @@ namespace {
 			if (is_ssl(m_socket))
 				connect_timeout += 10;
 
-#if TORRENT_USE_I2P
-			if (is_i2p(m_socket))
-				connect_timeout += 20;
-#endif
-
 			if (d > seconds(connect_timeout)
 				&& can_disconnect(errors::timed_out))
 			{
@@ -4572,9 +4560,6 @@ namespace {
 
 		// do not stall waiting for a handshake
 		int timeout = m_settings.get_int (settings_pack::handshake_timeout);
-#if TORRENT_USE_I2P
-		timeout *= is_i2p(m_socket) ? 4 : 1;
-#endif
 		if (reading_socket
 			&& !m_connecting
 			&& in_handshake()
@@ -5738,12 +5723,7 @@ namespace {
 			return;
 		}
 
-		if (m_remote == m_socket.local_endpoint(ec)
-#if TORRENT_USE_RTC
-			// WebRTC connections are independant from the socket (their endpoints are not reliable anyway)
-			&& !is_rtc(m_socket)
-#endif
-		)
+		if (m_remote == m_socket.local_endpoint(ec))
 		{
 			disconnect(errors::self_connection, operation_t::bittorrent, failure);
 			return;

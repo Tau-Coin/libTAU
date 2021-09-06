@@ -47,16 +47,6 @@ namespace libTAU::aux {
 				return socket_type(std::move(s));
 			}
 		}
-#if TORRENT_USE_I2P
-		else if (ps.type == settings_pack::i2p_proxy)
-		{
-			// it doesn't make any sense to try ssl over i2p
-			TORRENT_ASSERT(ssl_context == nullptr);
-			i2p_stream s(ios);
-			s.set_proxy(ps.hostname, ps.port);
-			return socket_type(std::move(s));
-		}
-#endif
 		else if (ps.type == settings_pack::none
 			|| (peer_connection && !ps.proxy_peer_connections)
 			|| (tracker_connection && !ps.proxy_tracker_connections))

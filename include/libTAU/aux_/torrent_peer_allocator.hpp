@@ -60,12 +60,7 @@ namespace libTAU::aux {
 
 		aux::pool m_ipv4_peer_pool{sizeof(ipv4_peer), 500};
 		aux::pool m_ipv6_peer_pool{sizeof(ipv6_peer), 500};
-#if TORRENT_USE_I2P
-		aux::pool m_i2p_peer_pool{sizeof(i2p_peer), 500};
-#endif
-#if TORRENT_USE_RTC
-		aux::pool m_rtc_peer_pool{sizeof(rtc_peer), 500};
-#endif
+
 		// the total number of bytes allocated (cumulative)
 		std::uint64_t m_total_bytes = 0;
 		// the total number of allocations (cumulative)

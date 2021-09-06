@@ -133,12 +133,6 @@ namespace libTAU::aux {
 		, pe_support(false)
 #endif
 		, is_v6_addr(false)
-#if TORRENT_USE_I2P
-		, is_i2p_addr(false)
-#endif
-#if TORRENT_USE_RTC
-		, is_rtc_addr(false)
-#endif
 		, on_parole(false)
 		, banned(false)
 		, supports_utp(true) // assume peers support utp
@@ -163,9 +157,6 @@ namespace libTAU::aux {
 	std::string torrent_peer::to_string() const
 	{
 		TORRENT_ASSERT(in_use);
-#if TORRENT_USE_I2P
-		if (is_i2p_addr) return std::string(dest());
-#endif
 		return address().to_string();
 	}
 #endif
@@ -204,43 +195,10 @@ namespace libTAU::aux {
 		, addr(ep.address().to_v4())
 	{
 		is_v6_addr = false;
-#if TORRENT_USE_I2P
-		is_i2p_addr = false;
-#endif
-#if TORRENT_USE_RTC
-		is_rtc_addr = false;
-#endif
 	}
 
 	ipv4_peer::ipv4_peer(ipv4_peer const&) = default;
 	ipv4_peer& ipv4_peer::operator=(ipv4_peer const& p) & = default;
-
-#if TORRENT_USE_I2P
-	i2p_peer::i2p_peer(string_view dest, bool connectable_
-		, peer_source_flags_t const src)
-		: torrent_peer(0, connectable_, src)
-		, destination(dest)
-	{
-		is_v6_addr = false;
-		is_i2p_addr = true;
-#if TORRENT_USE_RTC
-        is_rtc_addr = false;
-#endif
-	}
-#endif // TORRENT_USE_I2P
-
-#if TORRENT_USE_RTC
-	rtc_peer::rtc_peer(tcp::endpoint const& ep, peer_source_flags_t src)
-		: torrent_peer(0, false, src)
-		, endpoint(ep)
-	{
-		is_v6_addr = false;
-#if TORRENT_USE_I2P
-		is_i2p_addr = false;
-#endif
-		is_rtc_addr = true;
-	}
-#endif // TORRENT_USE_RTC
 
 	ipv6_peer::ipv6_peer(tcp::endpoint const& ep, bool c
 		, peer_source_flags_t const src)
@@ -248,25 +206,9 @@ namespace libTAU::aux {
 		, addr(ep.address().to_v6().to_bytes())
 	{
 		is_v6_addr = true;
-#if TORRENT_USE_I2P
-		is_i2p_addr = false;
-#endif
-#if TORRENT_USE_RTC
-		is_rtc_addr = false;
-#endif
 	}
 
 	ipv6_peer::ipv6_peer(ipv6_peer const&) = default;
-
-#if TORRENT_USE_I2P
-	string_view torrent_peer::dest() const
-	{
-		if (is_i2p_addr)
-			return *static_cast<i2p_peer const*>(this)->destination;
-		else
-			return "";
-	}
-#endif
 
 	libTAU::address torrent_peer::address() const
 	{
@@ -274,15 +216,7 @@ namespace libTAU::aux {
 			return libTAU::address_v6(
 				static_cast<ipv6_peer const*>(this)->addr);
 		else
-#if TORRENT_USE_I2P
-		if (is_i2p_addr) return {};
-		else
-#endif
-#if TORRENT_USE_RTC
-		if (is_rtc_addr) return static_cast<rtc_peer const*>(this)->endpoint.address();
-		else
-#endif
-		return static_cast<ipv4_peer const*>(this)->addr;
+			return static_cast<ipv4_peer const*>(this)->addr;
 	}
 
 }

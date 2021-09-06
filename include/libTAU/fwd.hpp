@@ -90,9 +90,6 @@ struct bitfield;
 // include/libTAU/client_data.hpp
 struct client_data_t;
 
-// include/libTAU/create_torrent.hpp
-struct create_torrent;
-
 // include/libTAU/disk_buffer_holder.hpp
 struct buffer_allocator_interface;
 struct disk_buffer_holder;

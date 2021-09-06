@@ -1611,9 +1611,6 @@ namespace {
 					e.tier = std::uint8_t(j);
 					e.fail_limit = 0;
 					e.source = announce_entry::source_torrent;
-#if TORRENT_USE_I2P
-					if (aux::is_i2p_url(e.url)) m_flags |= i2p;
-#endif
 					m_urls.push_back(e);
 				}
 			}
@@ -1634,9 +1631,6 @@ namespace {
 			e.fail_limit = 0;
 			e.source = announce_entry::source_torrent;
 			aux::ltrim(e.url);
-#if TORRENT_USE_I2P
-			if (aux::is_i2p_url(e.url)) m_flags |= i2p;
-#endif
 			if (!e.url.empty()) m_urls.push_back(e);
 		}
 

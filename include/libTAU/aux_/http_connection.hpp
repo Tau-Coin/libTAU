@@ -24,7 +24,6 @@ see LICENSE file.
 #include "libTAU/aux_/http_parser.hpp"
 #include "libTAU/aux_/deadline_timer.hpp"
 #include "libTAU/assert.hpp"
-#include "libTAU/i2p_stream.hpp"
 #include "libTAU/aux_/socket_type.hpp"
 #include "libTAU/aux_/vector.hpp"
 #include "libTAU/aux_/resolver_interface.hpp"
@@ -81,21 +80,13 @@ struct TORRENT_EXTRA_EXPORT http_connection
 		, int prio = 0, aux::proxy_settings const* ps = nullptr, int handle_redirects = 5
 		, std::string const& user_agent = std::string()
 		, std::optional<address> const& bind_addr = std::optional<address>()
-		, aux::resolver_flags resolve_flags = aux::resolver_flags{}, std::string const& auth_ = std::string()
-#if TORRENT_USE_I2P
-		, i2p_connection* i2p_conn = nullptr
-#endif
-		);
+		, aux::resolver_flags resolve_flags = aux::resolver_flags{}, std::string const& auth_ = std::string());
 
 	void start(std::string const& hostname, int port
 		, time_duration timeout, int prio = 0, aux::proxy_settings const* ps = nullptr
 		, bool ssl = false, int handle_redirect = 5
 		, std::optional<address> const& bind_addr = std::optional<address>()
-		, aux::resolver_flags resolve_flags = aux::resolver_flags{}
-#if TORRENT_USE_I2P
-		, i2p_connection* i2p_conn = nullptr
-#endif
-		);
+		, aux::resolver_flags resolve_flags = aux::resolver_flags{});
 
 	void close(bool force = false);
 
@@ -106,12 +97,6 @@ struct TORRENT_EXTRA_EXPORT http_connection
 	std::string const& url() const { return m_url; }
 
 private:
-
-#if TORRENT_USE_I2P
-	void connect_i2p_tracker(char const* destination);
-	void on_i2p_resolve(error_code const& e
-		, char const* destination);
-#endif
 	void on_resolve(error_code const& e
 		, std::vector<address> const& addresses);
 	void connect();
@@ -143,9 +128,6 @@ private:
 	ssl::context* m_ssl_ctx;
 #endif
 
-#if TORRENT_USE_I2P
-	i2p_connection* m_i2p_conn;
-#endif
 	aux::resolver_interface& m_resolver;
 
 	aux::http_parser m_parser;

@@ -65,8 +65,6 @@ see LICENSE file.
 // set this to 1 to disable all floating point operations
 // (disables some float-dependent APIs)
 #define TORRENT_NO_FPU 1
-#define TORRENT_USE_I2P 0
-#define TORRENT_USE_RTC 0
 
 // ==== Darwin/BSD ===
 #elif (defined __APPLE__ && defined __MACH__) || defined __FreeBSD__ || defined __NetBSD__ \
@@ -455,14 +453,6 @@ see LICENSE file.
 #endif
 #endif
 
-#ifndef TORRENT_USE_I2P
-#define TORRENT_USE_I2P 1
-#endif
-
-#ifndef TORRENT_USE_RTC
-#define TORRENT_USE_RTC 1
-#endif
-
 #ifndef TORRENT_HAS_SYMLINK
 #define TORRENT_HAS_SYMLINK 0
 #endif
@@ -581,8 +571,8 @@ see LICENSE file.
 #error compiling with TORRENT_SSL_PEERS requires TORRENT_USE_OPENSSL or TORRENT_USE_GNUTLS
 #endif
 
-#if TORRENT_USE_RTC && !TORRENT_USE_SSL
-#error compiling with TORRENT_USE_RTC requires TORRENT_USE_OPENSSL or TORRENT_USE_GNUTLS
+#if !TORRENT_USE_SSL
+#error compiling with requires TORRENT_USE_OPENSSL or TORRENT_USE_GNUTLS
 #endif
 
 #include "libTAU/aux_/export.hpp"

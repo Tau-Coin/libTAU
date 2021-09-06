@@ -370,18 +370,4 @@ namespace libTAU::aux {
 		while (!s.empty() && is_space(s.front()))
 			s.erase(s.begin());
 	}
-
-#if TORRENT_USE_I2P
-
-	bool is_i2p_url(std::string const& url)
-	{
-		using std::ignore;
-		std::string hostname;
-		error_code ec;
-		std::tie(ignore, ignore, hostname, ignore, ignore)
-			= parse_url_components(url, ec);
-		return string_ends_with(hostname, ".i2p");
-	}
-
-#endif
 }
