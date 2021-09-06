@@ -88,18 +88,6 @@ namespace libTAU::aux {
 		peer_list(peer_list const&) = delete;
 		peer_list& operator=(peer_list const&) = delete;
 
-#if TORRENT_USE_I2P
-		torrent_peer* add_i2p_peer(string_view destination
-			, peer_source_flags_t src, pex_flags_t flags
-			, torrent_state* state);
-#endif
-
-#if TORRENT_USE_RTC
-        torrent_peer* add_rtc_peer(tcp::endpoint const& remote
-            , peer_source_flags_t src, pex_flags_t flags
-            , torrent_state* state);
-#endif
-
 		// this is called once for every torrent_peer we get from
 		// the tracker, pex, lsd or dht.
 		torrent_peer* add_peer(tcp::endpoint const& remote
@@ -153,10 +141,6 @@ namespace libTAU::aux {
 
 		std::pair<iterator, iterator> find_peers(address const& a)
 		{
-#if TORRENT_USE_I2P
-			if (a == address())
-				return std::pair<iterator, iterator>(m_peers.end(), m_peers.end());
-#endif
 			return std::equal_range(
 				m_peers.begin(), m_peers.end(), a, peer_address_compare());
 		}

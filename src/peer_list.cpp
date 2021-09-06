@@ -483,11 +483,6 @@ namespace libTAU::aux {
 			|| int(p.failcount) >= m_max_failcount)
 			return false;
 
-#if TORRENT_USE_RTC
-		// unsolicited connections over RTC  is not possible
-		if (p.is_rtc_addr) return false;
-#endif
-
 		return true;
 	}
 
@@ -836,9 +831,6 @@ namespace libTAU::aux {
 #if TORRENT_USE_ASSERTS
 		else
 		{
-#if TORRENT_USE_I2P
-			if(!p->is_i2p_addr)
-#endif
 			{
 				std::pair<iterator, iterator> range = find_peers(p->address());
 				TORRENT_ASSERT(std::distance(range.first, range.second) == 1);
@@ -912,15 +904,6 @@ namespace libTAU::aux {
 
 			// since some peers were removed, we need to
 			// update the iterator to make it valid again
-#if TORRENT_USE_I2P
-			if (p->is_i2p_addr)
-			{
-				iter = std::lower_bound(
-					m_peers.begin(), m_peers.end()
-					, p->dest(), peer_address_compare());
-			}
-			else
-#endif
 			iter = std::lower_bound(
 				m_peers.begin(), m_peers.end()
 				, p->address(), peer_address_compare());
@@ -951,15 +934,6 @@ namespace libTAU::aux {
 		, pex_flags_t const flags, tcp::endpoint const& remote)
 	{
 		TORRENT_ASSERT(is_single_thread());
-
-#if TORRENT_USE_RTC
-		if (p->is_rtc_addr)
-		{
-			// This method must not be used for rtc peers
-			TORRENT_ASSERT_FAIL();
-			return;
-		}
-#endif
 
 		bool const was_conn_cand = is_connect_candidate(*p);
 
@@ -1006,80 +980,6 @@ namespace libTAU::aux {
 			if (m_num_connect_candidates < 0) m_num_connect_candidates = 0;
 		}
 	}
-
-#if TORRENT_USE_I2P
-	torrent_peer* peer_list::add_i2p_peer(string_view const destination
-		, peer_source_flags_t const src, pex_flags_t const flags
-		, torrent_state* state)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		INVARIANT_CHECK;
-
-		auto iter = std::lower_bound(m_peers.begin(), m_peers.end()
-			, destination, peer_address_compare());
-
-		if (iter != m_peers.end() && (*iter)->dest() == destination)
-		{
-			update_peer(*iter, src, flags, tcp::endpoint());
-			return *iter;
-		}
-
-		// we don't have any info about this peer.
-		// add a new entry
-		torrent_peer* p = m_peer_allocator.allocate_peer_entry(
-			torrent_peer_allocator_interface::i2p_peer_type);
-		if (p == nullptr) return nullptr;
-		p = new (p) i2p_peer(destination, true, src);
-
-		if (!insert_peer(p, iter, flags, state))
-		{
-			m_peer_allocator.free_peer_entry(p);
-			return nullptr;
-		}
-		return p;
-	}
-#endif // TORRENT_USE_I2P
-
-#if TORRENT_USE_RTC
-	torrent_peer* peer_list::add_rtc_peer(tcp::endpoint const& remote
-		, peer_source_flags_t const src, pex_flags_t const flags
-		, torrent_state* state)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		INVARIANT_CHECK;
-
-		iterator const iter = std::lower_bound(m_peers.begin(), m_peers.end()
-				, remote.address(), peer_address_compare());
-
-		if (!state->allow_multiple_connections_per_ip
-				&& iter != m_peers.end() && (*iter)->address() == remote.address())
-		{
-			// the peer exists
-			torrent_peer* p = *iter;
-			if (!p->is_rtc_addr)
-				return nullptr; // prefer the non-rtc peer
-
-			if (p->connection)
-				return nullptr; // the peer is already connected
-
-			// update and return it
-			p->port = remote.port();
-			return p;
-		}
-
-		torrent_peer* p = m_peer_allocator.allocate_peer_entry(
-				torrent_peer_allocator_interface::rtc_peer_type);
-		if (p == nullptr) return nullptr;
-		p = new (p) rtc_peer(remote, src);
-
-		if (!insert_peer(p, iter, flags, state))
-		{
-			m_peer_allocator.free_peer_entry(p);
-			return nullptr;
-		}
-		return p;
-    }
-#endif // TORRENT_USE_RTC
 
 	// if this returns non-nullptr, the torrent need to post status update
 	torrent_peer* peer_list::add_peer(tcp::endpoint const& remote
@@ -1193,9 +1093,6 @@ namespace libTAU::aux {
 		TORRENT_ASSERT(!p->banned);
 		TORRENT_ASSERT(!p->connection);
 		TORRENT_ASSERT(p->connectable);
-#if TORRENT_USE_RTC
-		TORRENT_ASSERT(!p->is_rtc_addr);
-#endif
 
 		// this should hold because find_connect_candidates should have done this
 		TORRENT_ASSERT(bool(m_finished) == state->is_finished);

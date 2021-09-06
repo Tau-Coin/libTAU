@@ -28,7 +28,6 @@ see LICENSE file.
 #include "libTAU/aux_/debug.hpp"
 #include "libTAU/time.hpp"
 #include "libTAU/io_context.hpp"
-#include "libTAU/i2p_stream.hpp"
 #include "libTAU/aux_/ip_helpers.hpp"
 #include "libTAU/aux_/ssl.hpp"
 
@@ -58,9 +57,6 @@ http_connection::http_connection(io_context& ios
 #if TORRENT_USE_SSL
 	, m_ssl_ctx(ssl_ctx)
 #endif
-#if TORRENT_USE_I2P
-	, m_i2p_conn(nullptr)
-#endif
 	, m_resolver(resolver)
 	, m_handler(std::move(handler))
 	, m_connect_handler(std::move(ch))
@@ -88,9 +84,6 @@ http_connection::~http_connection() = default;
 void http_connection::get(std::string const& url, time_duration timeout, int prio
 	, aux::proxy_settings const* ps, int handle_redirects, std::string const& user_agent
 	, std::optional<address> const& bind_addr, aux::resolver_flags const resolve_flags, std::string const& auth_
-#if TORRENT_USE_I2P
-	, i2p_connection* i2p_conn
-#endif
 	)
 {
 	m_user_agent = user_agent;
@@ -189,9 +182,6 @@ void http_connection::get(std::string const& url, time_duration timeout, int pri
 	m_url = url;
 	start(hostname, port, timeout, prio
 		, ps, ssl, handle_redirects, bind_addr, m_resolve_flags
-#if TORRENT_USE_I2P
-		, i2p_conn
-#endif
 		);
 }
 
@@ -200,9 +190,6 @@ void http_connection::start(std::string const& hostname, int port
 	, int handle_redirects
 	, std::optional<address> const& bind_addr
 	, aux::resolver_flags const resolve_flags
-#if TORRENT_USE_I2P
-	, i2p_connection* i2p_conn
-#endif
 	)
 {
 	TORRENT_ASSERT(prio >= 0 && prio < 3);
@@ -245,32 +232,6 @@ void http_connection::start(std::string const& hostname, int port
 		if (m_sock && m_sock->is_open()) m_sock->close(err);
 
 		aux::proxy_settings const* proxy = ps;
-
-#if TORRENT_USE_I2P
-		bool is_i2p = false;
-		char const* top_domain = strrchr(hostname.c_str(), '.');
-		aux::proxy_settings i2p_proxy;
-		if (top_domain && top_domain == ".i2p"_sv && i2p_conn)
-		{
-			// this is an i2p name, we need to use the sam connection
-			// to do the name lookup
-			is_i2p = true;
-			m_i2p_conn = i2p_conn;
-			// quadruple the timeout for i2p destinations
-			// because i2p is sloooooow
-			m_completion_timeout *= 4;
-
-			if (i2p_conn->proxy().type != settings_pack::i2p_proxy)
-			{
-				post(m_ios, std::bind(&http_connection::callback
-					, me, error_code(errors::no_i2p_router), span<char>{}));
-				return;
-			}
-
-			i2p_proxy = i2p_conn->proxy();
-			proxy = &i2p_proxy;
-		}
-#endif
 
 		// in this case, the upper layer is assumed to have taken
 		// care of the proxying already. Don't instantiate the socket
@@ -322,20 +283,6 @@ void http_connection::start(std::string const& hostname, int port
 		m_endpoints.clear();
 		m_next_ep = 0;
 
-#if TORRENT_USE_I2P
-		if (is_i2p)
-		{
-			if (hostname.length() < 516) // Base64 encoded  destination with optional .i2p
-			{
-				ADD_OUTSTANDING_ASYNC("http_connection::on_i2p_resolve");
-				i2p_conn->async_name_lookup(hostname.c_str(), std::bind(&http_connection::on_i2p_resolve
-					, me, _1, _2));
-			}
-			else
-				connect_i2p_tracker(hostname.c_str());
-		}
-		else
-#endif
 		m_hostname = hostname;
 		if (ps && ps->proxy_hostnames
 			&& (ps->type == settings_pack::socks5
@@ -428,35 +375,6 @@ void http_connection::close(bool force)
 	m_handler = nullptr;
 	m_abort = true;
 }
-
-#if TORRENT_USE_I2P
-void http_connection::connect_i2p_tracker(char const* destination)
-{
-	TORRENT_ASSERT(std::get_if<i2p_stream>(&*m_sock));
-#if TORRENT_USE_SSL
-	TORRENT_ASSERT(m_ssl == false);
-#endif
-	std::get<i2p_stream>(*m_sock).set_destination(destination);
-	std::get<i2p_stream>(*m_sock).set_command(i2p_stream::cmd_connect);
-	std::get<i2p_stream>(*m_sock).set_session_id(m_i2p_conn->session_id());
-	ADD_OUTSTANDING_ASYNC("http_connection::on_connect");
-	TORRENT_ASSERT(!m_connecting);
-	m_connecting = true;
-	m_sock->async_connect(tcp::endpoint(), std::bind(&http_connection::on_connect
-		, shared_from_this(), _1));
-}
-
-void http_connection::on_i2p_resolve(error_code const& e, char const* destination)
-{
-	COMPLETE_ASYNC("http_connection::on_i2p_resolve");
-	if (e)
-	{
-		callback(e);
-		return;
-	}
-	connect_i2p_tracker(destination);
-}
-#endif
 
 void http_connection::on_resolve(error_code const& e
 	, std::vector<address> const& addresses)
@@ -740,11 +658,7 @@ void http_connection::on_read(error_code const& e
 
 				std::string url = aux::resolve_redirect_location(m_url, location);
 				get(url, m_completion_timeout, m_priority, &m_proxy, m_redirects - 1
-					, m_user_agent, m_bind_addr, m_resolve_flags, m_auth
-#if TORRENT_USE_I2P
-					, m_i2p_conn
-#endif
-					);
+					, m_user_agent, m_bind_addr, m_resolve_flags, m_auth);
 				return;
 			}
 

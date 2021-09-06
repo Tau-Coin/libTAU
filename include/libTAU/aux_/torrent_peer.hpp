@@ -163,13 +163,6 @@ namespace libTAU::aux {
 		// this is true if the v6 union member in addr is
 		// the one to use, false if it's the v4 one
 		bool is_v6_addr:1;
-#if TORRENT_USE_I2P
-		// set if the i2p_destination is in use in the addr union
-		bool is_i2p_addr:1;
-#endif
-#if TORRENT_USE_RTC
-		bool is_rtc_addr:1;
-#endif
 
 		// if this is true, the torrent_peer has previously
 		// participated in a piece that failed the piece
@@ -210,32 +203,6 @@ namespace libTAU::aux {
 		address_v4 addr;
 	};
 
-#if TORRENT_USE_I2P
-	struct TORRENT_EXTRA_EXPORT i2p_peer : torrent_peer
-	{
-		i2p_peer(string_view dest, bool connectable, peer_source_flags_t src);
-		i2p_peer(i2p_peer const&) = delete;
-		i2p_peer& operator=(i2p_peer const&) = delete;
-		i2p_peer(i2p_peer&&) = default;
-		i2p_peer& operator=(i2p_peer&&) & = default;
-
-		aux::string_ptr destination;
-	};
-#endif
-
-#if TORRENT_USE_RTC
-	struct TORRENT_EXTRA_EXPORT rtc_peer : torrent_peer
-	{
-		rtc_peer(tcp::endpoint const& ep, peer_source_flags_t src);
-		rtc_peer(rtc_peer const&) = delete;
-		rtc_peer& operator=(rtc_peer const&) = delete;
-		rtc_peer(rtc_peer&&) = default;
-		rtc_peer& operator=(rtc_peer&&) & = default;
-
-		tcp::endpoint endpoint;
-	};
-#endif
-
 	struct TORRENT_EXTRA_EXPORT ipv6_peer : torrent_peer
 	{
 		ipv6_peer(tcp::endpoint const& ep, bool connectable, peer_source_flags_t src);
@@ -256,24 +223,8 @@ namespace libTAU::aux {
 			return lhs < rhs->address();
 		}
 
-#if TORRENT_USE_I2P
-		bool operator()(torrent_peer const* lhs, string_view rhs) const
-		{
-			return lhs->dest().compare(rhs) < 0;
-		}
-
-		bool operator()(string_view lhs, torrent_peer const* rhs) const
-		{
-			return lhs.compare(rhs->dest()) < 0;
-		}
-#endif
-
 		bool operator()(torrent_peer const* lhs, torrent_peer const* rhs) const
 		{
-#if TORRENT_USE_I2P
-			if (rhs->is_i2p_addr == lhs->is_i2p_addr)
-				return lhs->dest().compare(rhs->dest()) < 0;
-#endif
 			return lhs->address() < rhs->address();
 		}
 	};

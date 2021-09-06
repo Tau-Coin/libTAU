@@ -46,16 +46,9 @@ see LICENSE file.
 #include "libTAU/aux_/ssl.hpp"
 #include "libTAU/tracker_event.hpp" // for event_t enum
 
-#if TORRENT_USE_RTC
-#include "libTAU/aux_/rtc_signaling.hpp"
-#endif
-
 namespace libTAU {
 
 	struct counters;
-#if TORRENT_USE_I2P
-	class i2p_connection;
-#endif
 }
 
 namespace libTAU::aux {
@@ -115,12 +108,6 @@ using tracker_request_flags_t = flags::bitfield_flag<std::uint8_t, struct tracke
 
 #if TORRENT_USE_SSL
 		ssl::context* ssl_ctx = nullptr;
-#endif
-#if TORRENT_USE_I2P
-		i2p_connection* i2pconn = nullptr;
-#endif
-#if TORRENT_USE_RTC
-		std::vector<aux::rtc_offer> offers;
 #endif
 	};
 
@@ -195,12 +182,6 @@ using tracker_request_flags_t = flags::bitfield_flag<std::uint8_t, struct tracke
 			, operation_t op
 			, const std::string& msg
 			, seconds32 retry_interval) = 0;
-#if TORRENT_USE_RTC
-		virtual void generate_rtc_offers(int count
-			, std::function<void(error_code const&, std::vector<aux::rtc_offer>)> handler) = 0;
-		virtual void on_rtc_offer(aux::rtc_offer const&) = 0;
-		virtual void on_rtc_answer(aux::rtc_answer const&) = 0;
-#endif
 #ifndef TORRENT_DISABLE_LOGGING
 		virtual bool should_log() const = 0;
 		virtual void debug_log(const char* fmt, ...) const noexcept TORRENT_FORMAT(2,3) = 0;

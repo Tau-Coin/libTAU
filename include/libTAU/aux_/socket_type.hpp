@@ -14,10 +14,8 @@ see LICENSE file.
 
 #include "libTAU/assert.hpp"
 #include "libTAU/aux_/polymorphic_socket.hpp"
-#include "libTAU/aux_/rtc_stream.hpp"
 #include "libTAU/aux_/utp_stream.hpp"
 #include "libTAU/config.hpp"
-#include "libTAU/i2p_stream.hpp"
 #include "libTAU/io_context.hpp"
 #include "libTAU/socket.hpp"
 #include "libTAU/socket_type.hpp"
@@ -35,12 +33,6 @@ namespace libTAU::aux {
 		tcp::socket
 		, socks5_stream
 		, utp_stream
-#if TORRENT_USE_I2P
-		, i2p_stream
-#endif
-#if TORRENT_USE_RTC
-		, rtc_stream
-#endif
 #if TORRENT_USE_SSL
 		, ssl_stream<tcp::socket>
 		, ssl_stream<socks5_stream>
@@ -61,16 +53,6 @@ namespace libTAU::aux {
 	// this is only relevant for uTP connections
 	void set_close_reason(socket_type& s, close_reason_t code);
 	close_reason_t get_close_reason(socket_type const& s);
-
-#if TORRENT_USE_I2P
-	// returns true if this is an i2p socket
-	bool is_i2p(socket_type const& s);
-#endif
-
-#if TORRENT_USE_RTC
-	// returns true if this is a WebRTC socket
-	bool is_rtc(socket_type const& s);
-#endif
 
 	// assuming the socket_type s is an ssl socket, make sure it
 	// verifies the hostname in its SSL handshake

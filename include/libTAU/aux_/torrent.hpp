@@ -71,11 +71,6 @@ see LICENSE file.
 #include "libTAU/extensions.hpp" // for add_peer_flags_t
 #include "libTAU/aux_/ssl.hpp"
 
-#if TORRENT_USE_RTC
-    #include "libTAU/aux_/rtc_signaling.hpp"
-    #include "libTAU/aux_/rtc_stream.hpp"
-#endif
-
 // define as 0 to disable. 1 enables debug output of the pieces and requested
 // blocks. 2 also enables trace output of the time critical piece picking
 // logic
@@ -713,13 +708,6 @@ namespace libTAU::aux {
 
 		void update_auto_sequential();
 	private:
-#if TORRENT_USE_RTC
-		void generate_rtc_offers(int count
-			, std::function<void(error_code const&, std::vector<aux::rtc_offer>)> handler) override;
-		void on_rtc_offer(aux::rtc_offer const& offer) override;
-		void on_rtc_answer(aux::rtc_answer const& answer) override;
-		void on_rtc_stream(aux::rtc_stream_init stream_init);
-#endif
 		void remove_connection(peer_connection const* p);
 	public:
 // --------------------------------------------
@@ -895,11 +883,6 @@ namespace libTAU::aux {
 		// the download. It will post an event, disconnect
 		// all seeds and let the tracker know we're finished.
 		void completed();
-
-#if TORRENT_USE_I2P
-		void on_i2p_resolve(error_code const& ec, char const* dest);
-		bool is_i2p() const { return m_torrent_file && m_torrent_file->is_i2p(); }
-#endif
 
 		// this is the asio callback that is called when a name
 		// lookup for a PEER is completed.
@@ -1755,10 +1738,6 @@ namespace libTAU::aux {
 		// this is set to true while we're looping over m_connections. We may not
 		// mutate the list while doing this
 		mutable int m_iterating_connections = 0;
-#endif
-
-#if TORRENT_USE_RTC
-		std::shared_ptr<aux::rtc_signaling> m_rtc_signaling;
 #endif
 	};
 }

@@ -3106,29 +3106,6 @@ bool is_downloading_state(int const st)
 	}
 #endif
 
-#if TORRENT_USE_I2P
-	void torrent::on_i2p_resolve(error_code const& ec, char const* dest) try
-	{
-		TORRENT_ASSERT(is_single_thread());
-
-		INVARIANT_CHECK;
-
-		COMPLETE_ASYNC("torrent::on_i2p_resolve");
-#ifndef TORRENT_DISABLE_LOGGING
-		if (ec && should_log())
-			debug_log("i2p_resolve error: %s", ec.message().c_str());
-#endif
-		if (ec || m_abort || m_ses.is_aborted()) return;
-
-		need_peer_list();
-		torrent_state st = get_peer_list_state();
-		if (m_peer_list->add_i2p_peer(dest, peer_info::tracker, {}, &st))
-			state_updated();
-		peers_erased(st.erased);
-	}
-	catch (...) { handle_exception(); }
-#endif
-
 	void torrent::on_peer_name_lookup(error_code const& e
 		, std::vector<address> const& host_list, int const port
 		, protocol_version const v) try
@@ -5800,9 +5777,6 @@ bool is_downloading_state(int const st)
 		{
 			for (auto* p : *m_peer_list)
 			{
-#if TORRENT_USE_I2P
-				if (p->is_i2p_addr) continue;
-#endif
 				if (p->banned)
 				{
 					ret.banned_peers.push_back(p->ip());
@@ -9163,15 +9137,6 @@ bool is_downloading_state(int const st)
 #endif
 			return nullptr;
 		}
-
-#if TORRENT_USE_I2P
-		// if this is an i2p torrent, and we don't allow mixed mode
-		// no regular peers should ever be added!
-		if (!settings().get_bool(settings_pack::allow_i2p_mixed) && is_i2p())
-		{
-			return nullptr;
-		}
-#endif
 
 		if (settings().get_bool(settings_pack::no_connect_privileged_ports) && adr.port() < 1024)
 		{

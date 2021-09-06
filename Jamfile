@@ -249,18 +249,10 @@ rule linking ( properties * )
 	if <link>shared in $(properties)
 	{
 		result += <library>/try_signal//try_signal/<link>static/<fpic>on ;
-		if <webtorrent>on in $(properties)
-		{
-			result += <library>/libdatachannel//libdatachannel/<link>static/<fpic>on ;
-		}
 	}
 	else
 	{
 		result += <library>/try_signal//try_signal/<link>static ;
-		if <webtorrent>on in $(properties)
-		{
-			result += <library>/libdatachannel//libdatachannel/<link>static ;
-		}
 	}
 
 	return $(result) ;
@@ -601,14 +593,6 @@ feature.compose <streaming>off : <define>TORRENT_DISABLE_STREAMING ;
 feature super-seeding : on off : composite propagated ;
 feature.compose <super-seeding>off : <define>TORRENT_DISABLE_SUPERSEEDING ;
 
-feature i2p : on off : composite propagated ;
-feature.compose <i2p>on : <define>TORRENT_USE_I2P=1 ;
-feature.compose <i2p>off : <define>TORRENT_USE_I2P=0 ;
-
-feature webtorrent : off on : composite propagated ;
-feature.compose <webtorrent>on : <define>TORRENT_USE_RTC=1 ;
-feature.compose <webtorrent>off : <define>TORRENT_USE_RTC=0 ;
-
 feature asserts : off on production system : composite propagated ;
 feature.compose <asserts>on : <define>TORRENT_USE_ASSERTS=1 ;
 feature.compose <asserts>production : <define>TORRENT_USE_ASSERTS=1 <define>TORRENT_PRODUCTION_ASSERTS=1 ;
@@ -836,7 +820,6 @@ SOURCES =
 	platform_util
 	bt_peer_connection
 	peer_connection_handle
-	i2p_stream
 	instantiate_connection
 	natpmp
 	packet_buffer

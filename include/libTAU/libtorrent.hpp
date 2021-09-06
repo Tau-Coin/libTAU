@@ -33,7 +33,6 @@
 #include "libTAU/gzip.hpp"
 #include "libTAU/hasher.hpp"
 #include "libTAU/hex.hpp"
-#include "libTAU/i2p_stream.hpp"
 #include "libTAU/identify_client.hpp"
 #include "libTAU/index_range.hpp"
 #include "libTAU/info_hash.hpp"
