@@ -785,7 +785,6 @@ SOURCES =
     common_data
 	cpuid
 	crc32c
-	create_torrent
 	directory
 	disk_buffer_holder
 	disk_buffer_pool

@@ -13,7 +13,6 @@
 #include "libTAU/client_data.hpp"
 #include "libTAU/close_reason.hpp"
 #include "libTAU/config.hpp"
-#include "libTAU/create_torrent.hpp"
 #include "libTAU/disabled_disk_io.hpp"
 #include "libTAU/disk_buffer_holder.hpp"
 #include "libTAU/disk_interface.hpp"
