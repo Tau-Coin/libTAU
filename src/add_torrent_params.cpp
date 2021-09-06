@@ -38,8 +38,7 @@ namespace aux {
 	// information about which pieces we have.
 	bool contains_resume_data(add_torrent_params const& atp)
 	{
-		return !atp.have_pieces.empty()
-			|| (atp.flags & torrent_flags::seed_mode);
+		return !atp.have_pieces.empty();
 	}
 }
 

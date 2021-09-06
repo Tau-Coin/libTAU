@@ -26,7 +26,6 @@ see LICENSE file.
 #include "libTAU/bitfield.hpp"
 #include "libTAU/error_code.hpp"
 #include "libTAU/units.hpp"
-#include "libTAU/torrent_flags.hpp"
 #include "libTAU/info_hash.hpp"
 #include "libTAU/download_priority.hpp"
 #include "libTAU/client_data.hpp"
@@ -72,38 +71,6 @@ TORRENT_VERSION_NAMESPACE_3
 		add_torrent_params& operator=(add_torrent_params&&) & noexcept;
 		add_torrent_params(add_torrent_params const&);
 		add_torrent_params& operator=(add_torrent_params const&) &;
-
-		// These are all deprecated. use torrent_flags_t instead (in
-		// libTAU/torrent_flags.hpp)
-#if TORRENT_ABI_VERSION == 1
-
-		using flags_t = torrent_flags_t;
-
-#define DECL_FLAG(name) \
-		TORRENT_DEPRECATED static inline constexpr torrent_flags_t flag_##name = torrent_flags::name
-
-			DECL_FLAG(seed_mode);
-			DECL_FLAG(upload_mode);
-			DECL_FLAG(share_mode);
-			DECL_FLAG(apply_ip_filter);
-			DECL_FLAG(paused);
-			DECL_FLAG(auto_managed);
-			DECL_FLAG(duplicate_is_error);
-			DECL_FLAG(update_subscribe);
-			DECL_FLAG(super_seeding);
-			DECL_FLAG(sequential_download);
-			DECL_FLAG(pinned);
-			DECL_FLAG(stop_when_ready);
-			DECL_FLAG(override_trackers);
-			DECL_FLAG(override_web_seeds);
-			DECL_FLAG(need_save_resume);
-			DECL_FLAG(override_resume_data);
-			DECL_FLAG(merge_resume_trackers);
-			DECL_FLAG(use_resume_save_path);
-			DECL_FLAG(merge_resume_http_seeds);
-			DECL_FLAG(default_flags);
-#undef DECL_FLAG
-#endif // TORRENT_ABI_VERSION
 
 #include "libTAU/aux_/disable_warnings_pop.hpp"
 
@@ -176,16 +143,6 @@ TORRENT_VERSION_NAMESPACE_3
 		// optional argument. If a tracker returns a tracker ID, that ID is used
 		// instead of this.
 		std::string trackerid;
-
-		// flags controlling aspects of this torrent and how it's added. See
-		// torrent_flags_t for details.
-		//
-		// .. note::
-		// 	The ``flags`` field is initialized with default flags by the
-		// 	constructor. In order to preserve default behavior when clearing or
-		// 	setting other flags, make sure to bitwise OR or in a flag or bitwise
-		// 	AND the inverse of a flag to clear it.
-		torrent_flags_t flags = torrent_flags::default_flags;
 
 #if TORRENT_ABI_VERSION < 3
 		// backwards compatible v1 hash, or truncated v2

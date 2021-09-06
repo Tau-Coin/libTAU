@@ -827,8 +827,6 @@ SOURCES =
 	proxy_base
 	puff
 	random
-	read_resume_data
-	write_resume_data
 	receive_buffer
 	resolve_links
 	session
@@ -863,7 +861,6 @@ SOURCES =
 	file_view_pool
 	lsd
 	enum_net
-	magnet_uri
 	parse_url
 	xml_parse
 	version

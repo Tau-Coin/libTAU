@@ -28,7 +28,6 @@ see LICENSE file.
 #include "libTAU/aux_/throw.hpp"
 #include "libTAU/aux_/invariant_check.hpp"
 #include "libTAU/announce_entry.hpp"
-#include "libTAU/write_resume_data.hpp"
 #include "libTAU/pex_flags.hpp"
 #include "libTAU/aux_/ip_helpers.hpp" // for is_v6
 
@@ -648,14 +647,6 @@ namespace libTAU {
 		holder[cursor++] = r;
 		cursor = cursor % holder.end_index();
 		return *r;
-	}
-
-	entry torrent_handle::write_resume_data() const
-	{
-		add_torrent_params params;
-		auto retr = std::ref(params);
-		sync_call(&aux::torrent::write_resume_data, resume_data_flags_t{}, retr);
-		return libTAU::write_resume_data(params);
 	}
 
 	std::string torrent_handle::save_path() const

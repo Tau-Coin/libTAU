@@ -69,7 +69,6 @@ see LICENSE file.
 #include "libTAU/natpmp.hpp"
 #include "libTAU/aux_/instantiate_connection.hpp"
 #include "libTAU/aux_/random.hpp"
-#include "libTAU/magnet_uri.hpp"
 #include "libTAU/aux_/session_settings.hpp"
 #include "libTAU/error.hpp"
 #include "libTAU/aux_/platform_util.hpp"

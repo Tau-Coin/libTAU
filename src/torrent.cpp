@@ -144,17 +144,13 @@ bool is_downloading_state(int const st)
 		, add_torrent_params const& p, bool const session_paused)
 		: m_ses(ses)
 		, m_complete(0xffffff)
-		, m_upload_mode(p.flags)
 		, m_connections_initialized(false)
 		, m_abort(false)
-		, m_paused(p.flags)
 		, m_session_paused(session_paused)
 #ifndef TORRENT_DISABLE_SHARE_MODE
-		, m_share_mode(p.flags)
 #endif
 		, m_have_all(false)
 		, m_graceful_pause_mode(false)
-		, m_state_subscription(p.flags)
 		, m_max_connections(0xffffff)
 		, m_state(torrent_status::checking_resume_data)
 	{}
@@ -177,38 +173,24 @@ bool is_downloading_state(int const st)
 		, m_error_file(torrent_status::error_file_none)
 		, m_sequence_number(-1)
 		, m_peer_id(aux::generate_peer_id(settings()))
-		, m_announce_to_trackers(!(p.flags))
-		, m_announce_to_lsd(!(p.flags))
 		, m_has_incoming(false)
 		, m_files_checked(false)
 		, m_storage_mode(p.storage_mode)
 		, m_announcing(false)
 		, m_added(false)
-		, m_sequential_download(p.flags)
 		, m_auto_sequential(false)
 		, m_seed_mode(false)
-#ifndef TORRENT_DISABLE_SUPERSEEDING
-		, m_super_seeding(p.flags)
-#endif
-		, m_stop_when_ready(p.flags)
-		, m_need_save_resume_data(p.flags)
-		, m_enable_dht(!bool(p.flags))
-		, m_enable_lsd(!bool(p.flags))
 		, m_max_uploads((1 << 24) - 1)
 		, m_num_uploads(0)
-		, m_enable_pex(!bool(p.flags))
-		, m_apply_ip_filter(p.flags)
 		, m_pending_active_change(false)
 		, m_v2_piece_layers_validated(false)
 		, m_connect_boost_counter(static_cast<std::uint8_t>(settings().get_int(settings_pack::torrent_connect_boost)))
 		, m_incomplete(0xffffff)
-		, m_announce_to_dht(!(p.flags))
 		, m_ssl_torrent(false)
 		, m_deleted(false)
 		, m_last_download(seconds32(p.last_download))
 		, m_last_upload(seconds32(p.last_upload))
 		, m_userdata(p.userdata)
-		, m_auto_managed(p.flags)
 		, m_current_gauge_state(static_cast<std::uint32_t>(no_gauge_state))
 		, m_moving_storage(false)
 		, m_inactive(false)
@@ -241,11 +223,6 @@ bool is_downloading_state(int const st)
 		// if override web seed flag is set, don't load any web seeds from the
 		// torrent file.
 		std::vector<web_seed_t> ws;
-		if (!(p.flags))
-		{
-			for (auto const& e : m_torrent_file->web_seeds())
-				ws.emplace_back(e);
-		}
 
 		// add web seeds from add_torrent_params
 		bool const multi_file = m_torrent_file->is_valid()
@@ -266,14 +243,6 @@ bool is_downloading_state(int const st)
 		for (auto& w : ws) m_web_seeds.emplace_back(std::move(w));
 
 		// --- TRACKERS ---
-
-		// if override trackers flag is set, don't load trackers from torrent file
-		if (!(p.flags))
-		{
-			m_trackers.clear();
-			for (auto const& ae : m_torrent_file->trackers())
-				m_trackers.emplace_back(ae);
-		}
 
 		int tier = 0;
 		auto tier_iter = p.tracker_tiers.begin();
@@ -312,8 +281,7 @@ bool is_downloading_state(int const st)
 			// so assume the seed mode flag is not intended and don't enable it in
 			// that case. Also, if the resume data says we're missing a piece, we
 			// can't be in seed-mode.
-			m_seed_mode = (p.flags)
-				&& std::find(p.file_priorities.begin(), p.file_priorities.end(), dont_download) == p.file_priorities.end()
+			m_seed_mode =  std::find(p.file_priorities.begin(), p.file_priorities.end(), dont_download) == p.file_priorities.end()
 				&& std::find(p.piece_priorities.begin(), p.piece_priorities.end(), dont_download) == p.piece_priorities.end()
 				&& std::find(p.have_pieces.begin(), p.have_pieces.end(), false) == p.have_pieces.end();
 
@@ -526,43 +494,6 @@ bool is_downloading_state(int const st)
 			}
 #endif
 		}
-
-#ifndef TORRENT_DISABLE_LOGGING
-		if (should_log())
-		{
-			debug_log("creating torrent: %s max-uploads: %d max-connections: %d "
-				"upload-limit: %d download-limit: %d flags: %s%s%s%s%s%s%s%s%s%s%s "
-				"save-path: %s"
-				, torrent_file().name().c_str()
-				, int(m_max_uploads)
-				, int(m_max_connections)
-				, upload_limit()
-				, download_limit()
-				, m_seed_mode ? "seed-mode " : ""
-				, m_upload_mode ? "upload-mode " : ""
-#ifndef TORRENT_DISABLE_SHARE_MODE
-				, m_share_mode ? "share-mode " : ""
-#else
-				, ""
-#endif
-				, m_apply_ip_filter ? "apply-ip-filter " : ""
-				, m_paused ? "paused " : ""
-				, m_auto_managed ? "auto-managed " : ""
-				, m_state_subscription ? "update-subscribe " : ""
-#ifndef TORRENT_DISABLE_SUPERSEEDING
-				, m_super_seeding ? "super-seeding " : ""
-#else
-				, ""
-#endif
-				, m_sequential_download ? "sequential-download " : ""
-				, (m_add_torrent_params && m_add_torrent_params->flags)
-					? "override-trackers "  : ""
-				, (m_add_torrent_params && m_add_torrent_params->flags)
-					? "override-web-seeds " : ""
-				, m_save_path.c_str()
-				);
-		}
-#endif
 
 		update_gauge();
 
@@ -1742,7 +1673,7 @@ bool is_downloading_state(int const st)
 		m_outstanding_check_files = true;
 #endif
 
-		if (!m_add_torrent_params || !(m_add_torrent_params->flags))
+		if (!m_add_torrent_params)
 		{
 			m_ses.disk_thread().async_check_files(
 				m_storage, m_add_torrent_params ? m_add_torrent_params.get() : nullptr
@@ -4215,7 +4146,6 @@ bool is_downloading_state(int const st)
 		time_critical_piece p;
 		p.first_requested = min_time();
 		p.last_requested = min_time();
-		p.flags = flags;
 		p.deadline = deadline;
 		p.peers = 0;
 		p.piece = piece;

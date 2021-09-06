@@ -25,7 +25,6 @@ see LICENSE file.
 #include "libTAU/aux_/invariant_check.hpp"
 #include "libTAU/aux_/escape_string.hpp" // maybe_url_encode
 #include "libTAU/aux_/throw.hpp"
-#include "libTAU/magnet_uri.hpp"
 #include "libTAU/announce_entry.hpp"
 #include "libTAU/hex.hpp" // to_hex
 #include "libTAU/aux_/numeric_cast.hpp"
@@ -1534,20 +1533,6 @@ namespace {
 		bdecode_node const info = torrent_file.dict_find_dict("info");
 		if (!info)
 		{
-			bdecode_node const uri = torrent_file.dict_find_string("magnet-uri");
-			if (uri)
-			{
-				auto const p = parse_magnet_uri(uri.string_value(), ec);
-				if (ec) return false;
-
-				m_info_hash = p.info_hashes;
-				m_urls.reserve(m_urls.size() + p.trackers.size());
-				for (auto const& url : p.trackers)
-					m_urls.emplace_back(url);
-
-				return true;
-			}
-
 			ec = errors::torrent_missing_info;
 			return false;
 		}
