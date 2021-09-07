@@ -1581,6 +1581,11 @@ namespace {
 						&& !(s->flags & listen_socket_t::local_network))
 					{
 						m_dht->new_socket(m_listen_sockets.back());
+
+						for (auto const& n : m_dht_router_nodes)
+						{
+							m_dht->add_router_node(n);
+						}
 					}
 
 					TORRENT_ASSERT(bool(s->flags & listen_socket_t::accept_incoming) == bool(s->sock));
