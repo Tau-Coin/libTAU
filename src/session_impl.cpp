@@ -34,7 +34,6 @@ see LICENSE file.
 
 #include "libTAU/aux_/disable_warnings_push.hpp"
 #include <filesystem>
-#include <boost/filesystem.hpp>
 #include <boost/asio/ts/internet.hpp>
 #include <boost/asio/ts/executor.hpp>
 #include "libTAU/aux_/disable_warnings_pop.hpp"
@@ -2867,7 +2866,7 @@ namespace {
     void session_impl::update_db_dir()
     {    
 		/*
-        std::string home_dir = boost::filesystem::path(getenv("HOME")).string();
+        std::string home_dir = std::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
 		*/
