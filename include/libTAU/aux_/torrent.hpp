@@ -349,15 +349,6 @@ namespace libTAU::aux {
 		// has incremented.
 		int current_stats_state() const;
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		void add_extension(std::shared_ptr<torrent_plugin>);
-		void remove_extension(std::shared_ptr<torrent_plugin>);
-		void add_extension_fun(std::function<std::shared_ptr<torrent_plugin>(torrent_handle const&, client_data_t)> const& ext
-			, client_data_t userdata);
-		void notify_extension_add_peer(tcp::endpoint const& ip
-			, peer_source_flags_t src, add_peer_flags_t flags);
-#endif
-
 		peer_connection* find_lowest_ranking_peer() const;
 
 #if TORRENT_USE_ASSERTS
@@ -409,9 +400,6 @@ namespace libTAU::aux {
 		// TODO: make graceful pause also finish all sending blocks
 		// before disconnecting
 		bool graceful_pause() const { return m_graceful_pause_mode; }
-
-		torrent_flags_t flags() const;
-		void set_flags(torrent_flags_t flags, torrent_flags_t mask);
 
 		void set_upload_mode(bool b);
 		bool upload_mode() const { return m_upload_mode || m_graceful_pause_mode; }
@@ -1284,10 +1272,6 @@ namespace libTAU::aux {
 		// invalidated as entries are added and removed from this list, hence the
 		// std::list
 		std::list<web_seed_t> m_web_seeds;
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		std::list<std::shared_ptr<torrent_plugin>> m_extensions;
-#endif
 
 		// used for tracker announces
 		deadline_timer m_tracker_timer;

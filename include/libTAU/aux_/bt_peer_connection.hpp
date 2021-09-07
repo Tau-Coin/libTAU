@@ -39,28 +39,6 @@ see LICENSE file.
 
 namespace libTAU::aux {
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	struct TORRENT_EXTRA_EXPORT ut_pex_peer_store
-	{
-		// stores all peers this peer is connected to. These lists
-		// are updated with each pex message and are limited in size
-		// to protect against malicious clients. These lists are also
-		// used for looking up which peer a peer that supports holepunch
-		// came from.
-		// these are vectors to save memory and keep the items close
-		// together for performance. Inserting and removing is relatively
-		// cheap since the lists' size is limited
-		using peers4_t = std::vector<std::pair<address_v4::bytes_type, std::uint16_t>>;
-		peers4_t m_peers;
-		using peers6_t = std::vector<std::pair<address_v6::bytes_type, std::uint16_t>>;
-		peers6_t m_peers6;
-
-		bool was_introduced_by(tcp::endpoint const& ep);
-
-		virtual ~ut_pex_peer_store() {}
-	};
-#endif
-
 	struct TORRENT_EXTRA_EXPORT bt_peer_connection
 		: peer_connection
 	{
@@ -171,13 +149,6 @@ namespace libTAU::aux {
 		bool packet_finished() const { return m_recv_buffer.packet_finished(); }
 
 		bool supports_holepunch() const { return m_holepunch_id != 0; }
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		void set_ut_pex(std::weak_ptr<ut_pex_peer_store> ut_pex)
-		{ m_ut_pex = std::move(ut_pex); }
-		bool was_introduced_by(tcp::endpoint const& ep) const
-		{ auto p = m_ut_pex.lock(); return p && p->was_introduced_by(ep); }
-#endif
-
 		bool support_extensions() const { return m_supports_extensions; }
 
 		// the message handlers are called
@@ -481,10 +452,6 @@ namespace libTAU::aux {
 		// the message ID for share mode message
 		// 0 if not supported
 		std::uint8_t m_share_mode_id = 0;
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		std::weak_ptr<ut_pex_peer_store> m_ut_pex;
-#endif
 
 		std::array<char, 8> m_reserved_bits;
 	};

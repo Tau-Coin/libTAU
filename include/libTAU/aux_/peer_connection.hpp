@@ -59,12 +59,7 @@ see LICENSE file.
 #include <cstdint>
 
 namespace libTAU {
-
 	struct disk_interface;
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	struct peer_plugin;
-#endif
 }
 
 namespace libTAU::aux {
@@ -309,11 +304,6 @@ namespace libTAU::aux {
 		{ m_exceeded_limit = false; }
 
 		void send_allowed_set();
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		void add_extension(std::shared_ptr<peer_plugin>);
-		peer_plugin const* find_plugin(string_view type);
-#endif
 
 		// this function is called once the torrent associated
 		// with this peer connection has retrieved the meta-
@@ -840,12 +830,6 @@ namespace libTAU::aux {
 
 		// io service
 		io_context& m_ios;
-
-	protected:
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		std::list<std::shared_ptr<peer_plugin>> m_extensions;
-#endif
-	private:
 
 		// the average time between incoming pieces. Or, if there is no
 		// outstanding request, the time since the piece was requested. It

@@ -26,12 +26,6 @@ see LICENSE file.
 #include <atomic>
 #include <bitset>
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-#include "libTAU/extensions.hpp"
-#include <memory> // for shared_ptr
-#include <list>
-#endif
-
 namespace libTAU {
 namespace aux {
 
@@ -100,10 +94,6 @@ namespace aux {
 
 		void set_notify_function(std::function<void()> const& fun);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		void add_extension(std::shared_ptr<plugin> ext);
-#endif
-
 	private:
 
 		void maybe_notify(alert* a);
@@ -147,9 +137,6 @@ namespace aux {
 		// such as strings, to go with the alerts.
 		aux::array<aux::stack_allocator, 2> m_allocations;
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		std::list<std::shared_ptr<plugin>> m_ses_extensions;
-#endif
 	};
 }
 }

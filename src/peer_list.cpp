@@ -108,13 +108,7 @@ namespace {
 			return rhs->maybe_upload_only;
 		}
 
-		int const lhs_rank = aux::source_rank(lhs->peer_source());
-		int const rhs_rank = aux::source_rank(rhs->peer_source());
-		if (lhs_rank != rhs_rank) return lhs_rank > rhs_rank;
-
-		std::uint32_t const lhs_peer_rank = lhs->rank(external, external_port);
-		std::uint32_t const rhs_peer_rank = rhs->rank(external, external_port);
-		return lhs_peer_rank > rhs_peer_rank;
+		return false;
 	}
 
 } // anonymous namespace

@@ -540,8 +540,7 @@ std::int64_t get_filesize(stat_cache& stat, file_index_t const file_index
 #endif // TORRENT_DISABLE_MUTABLE_TORRENTS
 
 		bool const seed = (rd.have_pieces.size() >= fs.num_pieces()
-			&& rd.have_pieces.all_set())
-			|| (rd.flags & torrent_flags::seed_mode);
+			&& rd.have_pieces.all_set());
 
 		if (seed)
 		{
@@ -553,8 +552,7 @@ std::int64_t get_filesize(stat_cache& stat, file_index_t const file_index
 				// expected location, but is likely to be in a partfile. Just exempt it
 				// from checking
 				if (file_index < file_priority.end_index()
-					&& file_priority[file_index] == dont_download
-					&& !(rd.flags & torrent_flags::seed_mode))
+					&& file_priority[file_index] == dont_download)
 					continue;
 
 				std::int64_t const size = get_filesize(stat, file_index, fs

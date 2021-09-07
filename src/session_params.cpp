@@ -11,9 +11,6 @@ see LICENSE file.
 
 #include "libTAU/session_params.hpp"
 #include "libTAU/aux_/session_impl.hpp"
-#include "libTAU/extensions/ut_pex.hpp"
-#include "libTAU/extensions/ut_metadata.hpp"
-#include "libTAU/extensions/smart_ban.hpp"
 
 namespace libTAU {
 
@@ -22,18 +19,8 @@ namespace {
 std::vector<std::shared_ptr<plugin>> default_plugins(
 	bool empty = false)
 {
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	if (empty) return {};
-	using wrapper = aux::session_impl::session_plugin_wrapper;
-	return {
-		std::make_shared<wrapper>(create_ut_pex_plugin),
-		std::make_shared<wrapper>(create_ut_metadata_plugin),
-		std::make_shared<wrapper>(create_smart_ban_plugin)
-	};
-#else
 	TORRENT_UNUSED(empty);
 	return {};
-#endif
 }
 
 } // anonymous namespace
@@ -113,22 +100,6 @@ session_params read_session_params(bdecode_node const& e, save_state_flags_t con
 		}
 	}
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	if (flags & session::save_extension_state)
-	{
-		auto ext = e.dict_find_dict("extensions");
-		if (ext)
-		{
-			for (int i = 0; i < ext.dict_size(); ++i)
-			{
-				auto const [key, val] = ext.dict_at(i);
-				if (val.type() != bdecode_node::string_t) continue;
-				params.ext_state[std::string(key)] = std::string(val.string_value());
-			}
-		}
-	}
-#endif
-
 	if (flags & session_handle::save_ip_filter)
 	{
 		auto const v4 = e.dict_find_list("ip_filter4");
@@ -203,14 +174,6 @@ entry write_session_params(session_params const& sp, save_state_flags_t const fl
 	{
 		save_settings_to_dict(sp.settings, e["settings"].dict());
 	}
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	if (flags & session::save_extension_state)
-	{
-		auto& ext = e["extensions"].dict();
-		for (auto const& val : sp.ext_state) ext[val.first] = val.second;
-	}
-#endif
 
 	if (flags & session_handle::save_ip_filter)
 	{

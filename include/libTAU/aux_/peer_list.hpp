@@ -20,7 +20,6 @@ see LICENSE file.
 
 #include "libTAU/fwd.hpp"
 #include "libTAU/aux_/string_util.hpp" // for allocate_string_copy
-#include "libTAU/aux_/request_blocks.hpp" // for source_rank
 
 #include "libTAU/aux_/torrent_peer.hpp"
 #include "libTAU/socket.hpp"

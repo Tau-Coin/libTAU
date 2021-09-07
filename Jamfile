@@ -779,7 +779,6 @@ SOURCES =
 	bitfield
 	bloom_filter
 	chained_buffer
-	choker
 	close_reason
 	common
     common_data
@@ -827,8 +826,6 @@ SOURCES =
 	proxy_base
 	puff
 	random
-	read_resume_data
-	write_resume_data
 	receive_buffer
 	resolve_links
 	session
@@ -863,7 +860,6 @@ SOURCES =
 	file_view_pool
 	lsd
 	enum_net
-	magnet_uri
 	parse_url
 	xml_parse
 	version
@@ -871,7 +867,6 @@ SOURCES =
 	peer_class_set
 	part_file
 	stat_cache
-	request_blocks
 	session_stats
 	performance_counters
 	resolver
@@ -890,11 +885,6 @@ SOURCES =
 	posix_part_file
 	posix_storage
 	ssl
-
-# -- extensions --
-	ut_pex
-	ut_metadata
-	smart_ban
 	;
 
 KADEMLIA_SOURCES =

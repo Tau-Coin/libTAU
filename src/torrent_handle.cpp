@@ -28,8 +28,6 @@ see LICENSE file.
 #include "libTAU/aux_/throw.hpp"
 #include "libTAU/aux_/invariant_check.hpp"
 #include "libTAU/announce_entry.hpp"
-#include "libTAU/write_resume_data.hpp"
-#include "libTAU/torrent_flags.hpp"
 #include "libTAU/pex_flags.hpp"
 #include "libTAU/aux_/ip_helpers.hpp" // for is_v6
 
@@ -220,27 +218,6 @@ namespace libTAU {
 	void torrent_handle::pause(pause_flags_t const flags) const
 	{
 		return;
-	}
-
-	torrent_flags_t torrent_handle::flags() const
-	{
-		return sync_call_ret<torrent_flags_t>(torrent_flags_t{}, &aux::torrent::flags);
-	}
-
-	void torrent_handle::set_flags(torrent_flags_t const flags
-		, torrent_flags_t const mask) const
-	{
-		return;
-	}
-
-	void torrent_handle::set_flags(torrent_flags_t const flags) const
-	{
-		sync_call(&aux::torrent::set_flags, torrent_flags::all, flags);
-	}
-
-	void torrent_handle::unset_flags(torrent_flags_t const flags) const
-	{
-		sync_call(&aux::torrent::set_flags, torrent_flags_t{}, flags);
 	}
 
 #if TORRENT_ABI_VERSION == 1
@@ -670,14 +647,6 @@ namespace libTAU {
 		holder[cursor++] = r;
 		cursor = cursor % holder.end_index();
 		return *r;
-	}
-
-	entry torrent_handle::write_resume_data() const
-	{
-		add_torrent_params params;
-		auto retr = std::ref(params);
-		sync_call(&aux::torrent::write_resume_data, resume_data_flags_t{}, retr);
-		return libTAU::write_resume_data(params);
 	}
 
 	std::string torrent_handle::save_path() const

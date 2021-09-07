@@ -127,24 +127,6 @@ namespace {
 } // anonymous namespace
 #endif
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	bool ut_pex_peer_store::was_introduced_by(tcp::endpoint const &ep)
-	{
-		if (aux::is_v4(ep))
-		{
-			peers4_t::value_type const v(ep.address().to_v4().to_bytes(), ep.port());
-			auto const i = std::lower_bound(m_peers.begin(), m_peers.end(), v);
-			return i != m_peers.end() && *i == v;
-		}
-		else
-		{
-			peers6_t::value_type const v(ep.address().to_v6().to_bytes(), ep.port());
-			auto const i = std::lower_bound(m_peers6.begin(), m_peers6.end(), v);
-			return i != m_peers6.end() && *i == v;
-		}
-	}
-#endif // TORRENT_DISABLE_EXTENSIONS
-
 	bt_peer_connection::bt_peer_connection(peer_connection_args& pack)
 		: peer_connection(pack)
 		, m_supports_extensions(false)
@@ -358,12 +340,6 @@ namespace {
 	template<class F, typename... Args>
 	void bt_peer_connection::extension_notify(F message, Args... args)
 	{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			(*e.*message)(args...);
-		}
-#endif
 	}
 
 	void bt_peer_connection::write_have_all()
@@ -376,9 +352,6 @@ namespace {
 #endif
 		send_message(msg_have_all, counters::num_outgoing_have_all);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_have_all);
-#endif
 	}
 
 	void bt_peer_connection::write_have_none()
@@ -390,9 +363,6 @@ namespace {
 #endif
 		send_message(msg_have_none, counters::num_outgoing_have_none);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_have_none);
-#endif
 	}
 
 	void bt_peer_connection::write_reject_request(peer_request const& r)
@@ -412,9 +382,6 @@ namespace {
 		send_message(msg_reject_request, counters::num_outgoing_reject
 			, static_cast<int>(r.piece), r.start, r.length);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_reject_request, r);
-#endif
 	}
 
 	void bt_peer_connection::write_allow_fast(piece_index_t const piece)
@@ -433,9 +400,6 @@ namespace {
 		send_message(msg_allowed_fast, counters::num_outgoing_allowed_fast
 			, static_cast<int>(piece));
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_allow_fast, piece);
-#endif
 	}
 
 	void bt_peer_connection::write_suggest(piece_index_t const piece)
@@ -465,9 +429,6 @@ namespace {
 		send_message(msg_suggest_piece, counters::num_outgoing_suggest
 			, static_cast<int>(piece));
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_suggest, piece);
-#endif
 	}
 
 	void bt_peer_connection::get_specific_peer_info(peer_info& p) const
@@ -1939,15 +1900,6 @@ namespace {
 				, "msg: %d size: %d", extended_id, m_recv_buffer.packet_size());
 #endif
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto const& e : m_extensions)
-		{
-			if (e->on_extended(m_recv_buffer.packet_size() - 2, extended_id
-				, recv_buffer))
-				return;
-		}
-#endif
-
 		disconnect(errors::invalid_message, operation_t::bittorrent, peer_error);
 	}
 
@@ -1982,20 +1934,6 @@ namespace {
 			peer_log(peer_log_alert::incoming_message, "EXTENDED_HANDSHAKE"
 				, "%s", print_entry(root, true).c_str());
 		}
-#endif
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		for (auto i = m_extensions.begin();
-			!m_extensions.empty() && i != m_extensions.end();)
-		{
-			// a false return value means that the extension
-			// isn't supported by the other end. So, it is removed.
-			if (!(*i)->on_extension_handshake(root))
-				i = m_extensions.erase(i);
-			else
-				++i;
-		}
-		if (is_disconnecting()) return;
 #endif
 
 		// upload_only
@@ -2133,14 +2071,6 @@ namespace {
 			case msg_hash_reject: on_hash_reject(received); break;
 			default:
 			{
-#ifndef TORRENT_DISABLE_EXTENSIONS
-				for (auto const& e : m_extensions)
-				{
-					if (e->on_unknown_message(m_recv_buffer.packet_size(), packet_type
-						, recv_buffer.subspan(1)))
-						return m_recv_buffer.packet_finished();
-				}
-#endif
 				received_bytes(0, received);
 				disconnect(errors::invalid_message, operation_t::bittorrent, peer_error);
 				return m_recv_buffer.packet_finished();
@@ -2241,9 +2171,6 @@ namespace {
 
 		if (!m_supports_fast) incoming_reject_request(r);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_cancel, r);
-#endif
 	}
 
 	void bt_peer_connection::write_request(peer_request const& r)
@@ -2253,9 +2180,6 @@ namespace {
 		send_message(msg_request, counters::num_outgoing_request
 			, static_cast<int>(r.piece), r.start, r.length);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_request, r);
-#endif
 	}
 
 	void bt_peer_connection::write_bitfield()
@@ -2459,15 +2383,6 @@ namespace {
 			handshake["share_mode"] = 1;
 #endif
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		// loop backwards, to make the first extension be the last
-		// to fill in the handshake (i.e. give the first extensions priority)
-		for (auto const& e : m_extensions)
-		{
-			e->add_handshake(handshake);
-		}
-#endif
-
 #ifndef NDEBUG
 		// make sure there are not conflicting extensions
 		std::set<int> ext;
@@ -2513,9 +2428,6 @@ namespace {
 		if (is_choked()) return;
 		send_message(msg_choke, counters::num_outgoing_choke);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_choke);
-#endif
 	}
 
 	void bt_peer_connection::write_unchoke()
@@ -2524,9 +2436,6 @@ namespace {
 
 		send_message(msg_unchoke, counters::num_outgoing_unchoke);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_unchoke);
-#endif
 	}
 
 	void bt_peer_connection::write_interested()
@@ -2535,9 +2444,6 @@ namespace {
 
 		send_message(msg_interested, counters::num_outgoing_interested);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_interested);
-#endif
 	}
 
 	void bt_peer_connection::write_not_interested()
@@ -2546,9 +2452,6 @@ namespace {
 
 		send_message(msg_not_interested, counters::num_outgoing_not_interested);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_not_interested);
-#endif
 	}
 
 	void bt_peer_connection::write_have(piece_index_t const index)
@@ -2565,9 +2468,6 @@ namespace {
 		send_message(msg_have, counters::num_outgoing_have
 			, static_cast<int>(index));
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_have, index);
-#endif
 	}
 
 	void bt_peer_connection::write_dont_have(piece_index_t const index)
@@ -2634,9 +2534,6 @@ namespace {
 
 		stats_counters().inc_stats_counter(counters::num_outgoing_piece);
 
-#ifndef TORRENT_DISABLE_EXTENSIONS
-		extension_notify(&peer_plugin::sent_piece, r);
-#endif
 	}
 
 	// --------------------------
@@ -3445,22 +3342,6 @@ namespace {
 				disconnect(errors::self_connection, operation_t::bittorrent);
 				return;
 			}
-
-#ifndef TORRENT_DISABLE_EXTENSIONS
-			for (auto i = m_extensions.begin()
-				, end(m_extensions.end()); i != end;)
-			{
-				if (!(*i)->on_handshake(m_reserved_bits))
-				{
-					i = m_extensions.erase(i);
-				}
-				else
-				{
-					++i;
-				}
-			}
-			if (is_disconnecting()) return;
-#endif
 
 			if (m_supports_extensions) write_extensions();
 

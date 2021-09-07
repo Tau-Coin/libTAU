@@ -27,25 +27,13 @@ connection_type peer_connection_handle::type() const
 
 void peer_connection_handle::add_extension(std::shared_ptr<peer_plugin> ext)
 {
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	std::shared_ptr<aux::peer_connection> pc = native_handle();
-	TORRENT_ASSERT(pc);
-	pc->add_extension(std::move(ext));
-#else
 	TORRENT_UNUSED(ext);
-#endif
 }
 
 peer_plugin const* peer_connection_handle::find_plugin(string_view type) const
 {
-#ifndef TORRENT_DISABLE_EXTENSIONS
-	std::shared_ptr<aux::peer_connection> pc = native_handle();
-	TORRENT_ASSERT(pc);
-	return pc->find_plugin(type);
-#else
 	TORRENT_UNUSED(type);
 	return nullptr;
-#endif
 }
 
 bool peer_connection_handle::is_seed() const
