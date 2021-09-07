@@ -51,15 +51,15 @@ namespace libTAU::blockchain {
         return account(0, 0, 0);
     }
 
-    account repository_track::get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) {
-        auto s = get_account(chain_id, pubKey);
-
-        if (s.empty()) {
-            return get_account_from_user_db(chain_id, pubKey);
-        }
-
-        return s;
-    }
+//    account repository_track::get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) {
+//        auto s = get_account(chain_id, pubKey);
+//
+//        if (s.empty()) {
+//            return get_account_from_user_db(chain_id, pubKey);
+//        }
+//
+//        return s;
+//    }
 
     bool repository_track::is_block_exist(sha256_hash hash) {
         if (m_cache.find(hash.to_string()) != m_cache.end()) {
@@ -257,17 +257,24 @@ namespace libTAU::blockchain {
         m_cache.clear();
     }
 
-    account repository_track::get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) {
-        return m_repository->get_account_from_user_db(chain_id, pubKey);
-    }
+//    account repository_track::get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) {
+//        return m_repository->get_account_from_user_db(chain_id, pubKey);
+//    }
 
     bool repository_track::update_user_state_db(block b) {
-        return m_repository->update_user_state_db(b);
+        update_user_state_db(b.chain_id(), b.miner());
+
+        auto tx = b.tx();
+        if (!tx.empty()) {
+            update_user_state_db(b.chain_id(), tx.sender());
+            update_user_state_db(b.chain_id(), tx.receiver());
+        }
+
+        return true;
     }
 
-    bool repository_track::update_user_state_db(aux::bytes chain_id, dht::public_key pubKey, std::int64_t balance,
-                                                std::int64_t nonce, std::int64_t height) {
-        return m_repository->update_user_state_db(chain_id, pubKey, balance, nonce, height);
+    bool repository_track::update_user_state_db(aux::bytes chain_id, dht::public_key pubKey) {
+        return m_repository->update_user_state_db(chain_id, pubKey);
     }
 
     sha256_hash repository_track::get_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) {

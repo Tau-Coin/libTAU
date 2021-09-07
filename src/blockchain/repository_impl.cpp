@@ -18,7 +18,7 @@ namespace libTAU::blockchain {
     bool repository_impl::create_user_state_db(aux::bytes chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
-        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL, BALANCE INTEGER, NONCE INTEGER, HEIGHT INTEGER);");
+        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -44,30 +44,30 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    account repository_impl::get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) {
-        std::int64_t balance;
-        std::int64_t nonce;
-        std::int64_t height;
-
-        sqlite3_stmt * stmt;
-        std::string sql = "SELECT BALANCE,NONCE,HEIGHT FROM ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
-        sql.append(" WHERE PUBKEY=");
-        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
-
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok == SQLITE_OK) {
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                balance = sqlite3_column_int64(stmt, 0);
-                nonce = sqlite3_column_int64(stmt, 1);
-                height = sqlite3_column_int64(stmt, 2);
-            }
-        }
-
-        sqlite3_finalize(stmt);
-
-        return account(balance, nonce, height);
-    }
+//    account repository_impl::get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) {
+//        std::int64_t balance;
+//        std::int64_t nonce;
+//        std::int64_t height;
+//
+//        sqlite3_stmt * stmt;
+//        std::string sql = "SELECT BALANCE,NONCE,HEIGHT FROM ";
+//        sql.append(std::string(chain_id.begin(), chain_id.end()));
+//        sql.append(" WHERE PUBKEY=");
+//        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
+//
+//        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+//        if (ok == SQLITE_OK) {
+//            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+//                balance = sqlite3_column_int64(stmt, 0);
+//                nonce = sqlite3_column_int64(stmt, 1);
+//                height = sqlite3_column_int64(stmt, 2);
+//            }
+//        }
+//
+//        sqlite3_finalize(stmt);
+//
+//        return account(balance, nonce, height);
+//    }
 
     std::set<dht::public_key> repository_impl::get_all_peers(aux::bytes chain_id) {
         std::set<dht::public_key> peers;
@@ -93,32 +93,31 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::update_user_state_db(block b) {
-        update_user_state_db(b.chain_id(), b.miner(), b.miner_balance(), b.miner_nonce(), b.block_number());
+        update_user_state_db(b.chain_id(), b.miner());
 
         auto tx = b.tx();
         if (!tx.empty()) {
-            update_user_state_db(b.chain_id(), tx.sender(), b.sender_balance(), b.sender_nonce(), b.block_number());
-            update_user_state_db(b.chain_id(), tx.receiver(), b.receiver_balance(), b.receiver_nonce(), b.block_number());
+            update_user_state_db(b.chain_id(), tx.sender());
+            update_user_state_db(b.chain_id(), tx.receiver());
         }
 
         return true;
     }
 
-    bool repository_impl::update_user_state_db(aux::bytes chain_id, dht::public_key pubKey, std::int64_t balance,
-                                               std::int64_t nonce, std::int64_t height) {
+    bool repository_impl::update_user_state_db(aux::bytes chain_id, dht::public_key pubKey) {
         sqlite3_stmt * stmt;
         std::string sql = "INSERT INTO ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
-        sql.append(" VALUES(?,?,?,?)");
+        sql.append(" VALUES(?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
             return false;
         }
         std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
         sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
-        sqlite3_bind_int64(stmt, 2, balance);
-        sqlite3_bind_int64(stmt, 3, nonce);
-        sqlite3_bind_int64(stmt, 4, height);
+//        sqlite3_bind_int64(stmt, 2, balance);
+//        sqlite3_bind_int64(stmt, 3, nonce);
+//        sqlite3_bind_int64(stmt, 4, height);
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
             return false;
@@ -152,15 +151,15 @@ namespace libTAU::blockchain {
         return account(0, 0, 0);
     }
 
-    account repository_impl::get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) {
-        auto s = get_account(chain_id, pubKey);
-
-        if (s.empty()) {
-            return get_account_from_user_db(chain_id, pubKey);
-        }
-
-        return s;
-    }
+//    account repository_impl::get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) {
+//        auto s = get_account(chain_id, pubKey);
+//
+//        if (s.empty()) {
+//            return get_account_from_user_db(chain_id, pubKey);
+//        }
+//
+//        return s;
+//    }
 
     sha256_hash repository_impl::get_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) {
         std::string key;

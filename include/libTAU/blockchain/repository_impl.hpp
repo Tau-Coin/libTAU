@@ -33,7 +33,7 @@ namespace libTAU::blockchain {
 
         account get_account(aux::bytes chain_id, dht::public_key pubKey) override;
 
-        account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) override;
+//        account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) override;
 
         bool is_block_exist(sha256_hash hash) override;
 
@@ -67,11 +67,11 @@ namespace libTAU::blockchain {
 
         void rollback() override;
 
-        account get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) override;
+//        account get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) override;
 
         bool update_user_state_db(block b) override;
 
-        bool update_user_state_db(aux::bytes chain_id, dht::public_key pubKey, std::int64_t balance, std::int64_t nonce, std::int64_t height) override;
+        bool update_user_state_db(aux::bytes chain_id, dht::public_key pubKey) override;
 
         sha256_hash get_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) override;
 
