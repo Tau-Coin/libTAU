@@ -61,7 +61,6 @@ see LICENSE file.
 #include "libTAU/aux_/debug.hpp"
 #include "libTAU/piece_block.hpp"
 #include "libTAU/disk_interface.hpp"
-#include "libTAU/aux_/file_progress.hpp"
 #include "libTAU/aux_/suggest_piece.hpp"
 #include "libTAU/units.hpp"
 #include "libTAU/aux_/vector.hpp"
@@ -529,12 +528,6 @@ namespace libTAU::aux {
 		bool delete_files(remove_flags_t options);
 		void peers_erased(std::vector<torrent_peer*> const& peers);
 
-#if TORRENT_ABI_VERSION == 1
-#if !TORRENT_NO_FPU
-		void file_progress_float(aux::vector<float, file_index_t>& fp);
-#endif
-#endif // TORRENT_ABI_VERSION
-
 		void piece_availability(aux::vector<int, piece_index_t>& avail) const;
 
 		void set_piece_priority(piece_index_t index, download_priority_t priority);
@@ -566,8 +559,6 @@ namespace libTAU::aux {
 		// this torrent changed state, if the user is subscribing to
 		// it, add it to the m_state_updates list in session_impl
 		void state_updated();
-
-		void file_progress(aux::vector<std::int64_t, file_index_t>& fp, file_progress_flags_t flags);
 
 #if TORRENT_ABI_VERSION == 1
 		void use_interface(std::string net_interface);
@@ -1288,9 +1279,6 @@ namespace libTAU::aux {
 		// this dictionary. Once the outstanding update comes back, all of these
 		// are applied in one batch
 		std::map<file_index_t, download_priority_t> m_deferred_file_priorities;
-
-		// this object is used to track download progress of individual files
-		aux::file_progress m_file_progress;
 
 		// a queue of the most recent low-availability pieces we accessed on disk.
 		// These are good candidates for suggesting other peers to request from

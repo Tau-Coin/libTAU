@@ -871,7 +871,6 @@ SOURCES =
 	resolver
 	session_settings
 	proxy_settings
-	file_progress
 	ffs
 	add_torrent_params
 	peer_info

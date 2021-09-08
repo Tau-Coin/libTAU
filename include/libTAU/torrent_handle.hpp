@@ -68,7 +68,6 @@ namespace aux {
 	using resume_data_flags_t = flags::bitfield_flag<std::uint8_t, struct resume_data_flags_tag>;
 	using reannounce_flags_t = flags::bitfield_flag<std::uint8_t, struct reannounce_flags_tag>;
 	using queue_position_t = aux::strong_typedef<int, struct queue_position_tag>;
-	using file_progress_flags_t = flags::bitfield_flag<std::uint8_t, struct file_progress_flags_tag>;
 
 	// holds the state of a block in a piece. Who we requested
 	// it from and how far along we are at downloading it.
@@ -402,46 +401,9 @@ namespace aux {
 		TORRENT_DEPRECATED
 		void set_priority(int prio) const;
 
-#if !TORRENT_NO_FPU
-		// fills the specified vector with the download progress [0, 1]
-		// of each file in the torrent. The files are ordered as in
-		// the torrent_info.
-		TORRENT_DEPRECATED
-		void file_progress(std::vector<float>& progress) const;
-#endif
-
 		TORRENT_DEPRECATED
 		void file_status(std::vector<open_file_state>& status) const;
 #endif
-
-#if TORRENT_ABI_VERSION <= 2
-		using file_progress_flags_t = libTAU::file_progress_flags_t;
-#endif
-		// only calculate file progress at piece granularity. This makes
-		// the file_progress() call cheaper and also only takes bytes that
-		// have passed the hash check into account, so progress cannot
-		// regress in this mode.
-		static constexpr file_progress_flags_t piece_granularity = 0_bit;
-
-		// This function fills in the supplied vector, or returns a vector, with
-		// the number of bytes downloaded of each file in this torrent. The
-		// progress values are ordered the same as the files in the
-		// torrent_info.
-		//
-		// This operation is not very cheap. Its complexity is *O(n + mj)*.
-		// Where *n* is the number of files, *m* is the number of currently
-		// downloading pieces and *j* is the number of blocks in a piece.
-		//
-		// The ``flags`` parameter can be used to specify the granularity of the
-		// file progress. If left at the default value of 0, the progress will be
-		// as accurate as possible, but also more expensive to calculate. If
-		// ``torrent_handle::piece_granularity`` is specified, the progress will
-		// be specified in piece granularity. i.e. only pieces that have been
-		// fully downloaded and passed the hash check count. When specifying
-		// piece granularity, the operation is a lot cheaper, since libTAU
-		// already keeps track of this internally and no calculation is required.
-		void file_progress(std::vector<std::int64_t>& progress, file_progress_flags_t flags = {}) const;
-		std::vector<std::int64_t> file_progress(file_progress_flags_t flags = {}) const;
 
 		// This function returns a vector with status about files
 		// that are open for this torrent. Any file that is not open

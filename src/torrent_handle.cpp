@@ -353,19 +353,6 @@ namespace libTAU {
 	}
 #endif
 
-	void torrent_handle::file_progress(std::vector<std::int64_t>& progress, file_progress_flags_t flags) const
-	{
-		auto& arg = static_cast<aux::vector<std::int64_t, file_index_t>&>(progress);
-		sync_call(&aux::torrent::file_progress, std::ref(arg), flags);
-	}
-
-	std::vector<std::int64_t> torrent_handle::file_progress(file_progress_flags_t flags) const
-	{
-		aux::vector<std::int64_t, file_index_t> ret;
-		sync_call(&aux::torrent::file_progress, std::ref(ret), flags);
-		return std::move(ret);
-	}
-
 	torrent_status torrent_handle::status(status_flags_t const flags) const
 	{
 		torrent_status st;
@@ -501,13 +488,6 @@ namespace libTAU {
 	{
 		sync_call(&aux::torrent::use_interface, std::string(net_interface));
 	}
-
-#if !TORRENT_NO_FPU
-	void torrent_handle::file_progress(std::vector<float>& progress) const
-	{
-		sync_call(&aux::torrent::file_progress_float, std::ref(static_cast<aux::vector<float, file_index_t>&>(progress)));
-	}
-#endif
 
 	bool torrent_handle::is_seed() const
 	{ return sync_call_ret<bool>(false, &aux::torrent::is_seed); }
