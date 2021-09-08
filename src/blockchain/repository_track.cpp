@@ -26,6 +26,10 @@ namespace libTAU::blockchain {
         return m_repository->get_all_peers(chain_id);
     }
 
+    bool repository_track::delete_peer(aux::bytes chain_id, dht::public_key pubKey) {
+        return m_repository->delete_peer(chain_id, pubKey);
+    }
+
     bool repository_track::is_account_exist(aux::bytes chain_id, dht::public_key pubKey) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
@@ -82,6 +86,8 @@ namespace libTAU::blockchain {
     bool repository_track::save_block(block b, bool main_chain) {
         if (!save_block(b))
             return false;
+
+        m_main_chain_blocks.push_back(b);
 
         if (main_chain) {
             auto& chain_id = b.chain_id();
@@ -146,8 +152,6 @@ namespace libTAU::blockchain {
             state_linker stateLinker(b.sha256(), last_change_block_hash_map);
             if (!save_state_linker(stateLinker))
                 return false;
-        } else {
-            update_user_state_db(b);
         }
 
         return true;
@@ -239,8 +243,9 @@ namespace libTAU::blockchain {
         return new repository_track(this);
     }
 
-    void repository_track::update_batch(std::map<std::string, std::string> cache) {
+    void repository_track::update_batch(std::map<std::string, std::string> cache, std::vector<block> main_chain_blocks) {
         m_cache.insert(cache.begin(), cache.end());
+        m_main_chain_blocks.insert(m_main_chain_blocks.end(), main_chain_blocks.begin(), main_chain_blocks.end());
     }
 
     // unsupported
@@ -249,8 +254,9 @@ namespace libTAU::blockchain {
     }
 
     void repository_track::commit() {
-        m_repository->update_batch(m_cache);
+        m_repository->update_batch(m_cache, m_main_chain_blocks);
         m_cache.clear();
+        m_main_chain_blocks.clear();
     }
 
     void repository_track::rollback() {

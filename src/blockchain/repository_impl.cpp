@@ -18,7 +18,7 @@ namespace libTAU::blockchain {
     bool repository_impl::create_user_state_db(aux::bytes chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
-        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
+        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL, HEIGHT INTEGER);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -90,6 +90,22 @@ namespace libTAU::blockchain {
         sqlite3_finalize(stmt);
 
         return peers;
+    }
+
+    bool repository_impl::delete_peer(aux::bytes chain_id, dht::public_key pubKey) {
+        std::string sql = "DELETE FROM ";
+        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(" WHERE PUBKEY=");
+        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     bool repository_impl::update_user_state_db(block b) {
@@ -313,7 +329,7 @@ namespace libTAU::blockchain {
             state_linker stateLinker(b.sha256(), last_change_block_hash_map);
             if (!save_state_linker(stateLinker))
                 return false;
-        } else {
+
             update_user_state_db(b);
         }
 
@@ -400,7 +416,7 @@ namespace libTAU::blockchain {
         return new repository_track(this);
     }
 
-    void repository_impl::update_batch(std::map<std::string, std::string> cache) {
+    void repository_impl::update_batch(std::map<std::string, std::string> cache, std::vector<block> main_chain_blocks) {
         for (auto const& item: cache) {
             if (item.second.empty()) {
                 m_write_batch.Delete(item.first);
@@ -411,8 +427,12 @@ namespace libTAU::blockchain {
     }
 
     void repository_impl::flush() {
+        for (auto const& b: m_main_chain_blocks) {
+            update_user_state_db(b);
+        }
         m_leveldb->Write(leveldb::WriteOptions(), &m_write_batch);
         m_write_batch.Clear();
+        m_main_chain_blocks.clear();
     }
 
     // unsupported
