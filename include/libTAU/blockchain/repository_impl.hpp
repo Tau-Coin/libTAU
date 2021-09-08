@@ -29,6 +29,8 @@ namespace libTAU::blockchain {
 
         std::set<dht::public_key> get_all_peers(aux::bytes chain_id) override;
 
+        bool delete_peer(aux::bytes chain_id, dht::public_key pubKey) override;
+
         bool is_account_exist(aux::bytes chain_id, dht::public_key pubKey) override;
 
         account get_account(aux::bytes chain_id, dht::public_key pubKey) override;
@@ -59,7 +61,7 @@ namespace libTAU::blockchain {
 
         repository *start_tracking() override;
 
-        void update_batch(std::map<std::string, std::string> cache) override;
+        void update_batch(std::map<std::string, std::string> cache, std::vector<block> main_chain_blocks) override;
 
         void flush() override;
 
@@ -95,6 +97,8 @@ namespace libTAU::blockchain {
 
         // leveldb write batch
         leveldb::WriteBatch m_write_batch;
+
+        std::vector<block> m_main_chain_blocks;
     };
 }
 

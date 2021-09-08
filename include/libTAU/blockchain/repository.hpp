@@ -33,6 +33,8 @@ namespace libTAU::blockchain {
 
         virtual std::set<dht::public_key> get_all_peers(aux::bytes chain_id) = 0;
 
+        virtual bool delete_peer(aux::bytes chain_id, dht::public_key pubKey) = 0;
+
         /**
          * check if account exist
          * @return true if account exist, false otherwise
@@ -76,7 +78,7 @@ namespace libTAU::blockchain {
          */
         virtual repository* start_tracking() = 0;
 
-        virtual void update_batch(std::map<std::string, std::string> cache) = 0;
+        virtual void update_batch(std::map<std::string, std::string> cache, std::vector<block> main_chain_blocks) = 0;
 
         virtual void flush() = 0;
 
