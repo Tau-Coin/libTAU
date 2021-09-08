@@ -49,7 +49,6 @@ see LICENSE file.
 #include "libTAU/ip_filter.hpp"
 #include "libTAU/kademlia/node_id.hpp"
 #include "libTAU/close_reason.hpp"
-#include "libTAU/aux_/has_block.hpp"
 #include "libTAU/aux_/time.hpp"
 #include "libTAU/aux_/buffer.hpp"
 #include "libTAU/aux_/array.hpp"
@@ -2413,231 +2412,7 @@ namespace {
 		piece_block block_finished(p.piece, p.start / t->block_size());
 		TORRENT_ASSERT(verify_piece(p));
 
-		auto const b = std::find_if(m_download_queue.begin()
-			, m_download_queue.end(), aux::has_block(block_finished));
-
-		if (b == m_download_queue.end())
-		{
-#ifndef TORRENT_DISABLE_LOGGING
-			peer_log(peer_log_alert::info, "INVALID_REQUEST", "The block we just got was not in the request queue");
-#endif
-#if TORRENT_USE_ASSERTS
-			TORRENT_ASSERT_VAL(m_received_in_piece == p.length, m_received_in_piece);
-			m_received_in_piece = 0;
-#endif
-			t->add_redundant_bytes(p.length, aux::waste_reason::piece_unknown);
-
-			// the bytes of the piece we just completed have been deducted from
-			// m_outstanding_bytes as we received it, in incoming_piece_fragment.
-			// however, it now turns out the piece we received wasn't in the
-			// download queue, so we still have the same number of pieces in the
-			// download queue, which is why we need to add the bytes back.
-			m_outstanding_bytes += p.length;
-#if TORRENT_USE_INVARIANT_CHECKS
-			check_invariant();
-#endif
-			return;
-		}
-
-#if TORRENT_USE_ASSERTS
-		TORRENT_ASSERT_VAL(m_received_in_piece == p.length, m_received_in_piece);
-		m_received_in_piece = 0;
-#endif
-		// if the block we got is already finished, then ignore it
-		if (picker.is_downloaded(block_finished))
-		{
-			aux::waste_reason const reason
-				= (b->timed_out) ? aux::waste_reason::piece_timed_out
-				: (b->not_wanted) ? aux::waste_reason::piece_cancelled
-				: (b->busy) ? aux::waste_reason::piece_end_game
-				: aux::waste_reason::piece_unknown;
-
-			t->add_redundant_bytes(p.length, reason);
-
-			m_download_queue.erase(b);
-			if (m_download_queue.empty())
-				m_counters.inc_stats_counter(counters::num_peers_down_requests, -1);
-
-			if (m_disconnecting) return;
-
-			m_request_time.add_sample(int(total_milliseconds(now - m_requested.get(m_connect))));
-#ifndef TORRENT_DISABLE_LOGGING
-			if (should_log(peer_log_alert::info))
-			{
-				peer_log(peer_log_alert::info, "REQUEST_TIME", "%d +- %d ms"
-					, m_request_time.mean(), m_request_time.avg_deviation());
-			}
-#endif
-
-			// we completed an incoming block, and there are still outstanding
-			// requests. The next block we expect to receive now has another
-			// timeout period until we time out. So, reset the timer.
-			if (!m_download_queue.empty())
-				m_requested.set(m_connect, now);
-			return;
-		}
-
-		// we received a request within the timeout, make sure this peer is
-		// not snubbed anymore
-		if (total_seconds(now - m_requested.get(m_connect)) < request_timeout()
-			&& m_snubbed)
-		{
-			m_snubbed = false;
-		}
-
-#ifndef TORRENT_DISABLE_LOGGING
-		peer_log(peer_log_alert::info, "FILE_ASYNC_WRITE", "piece: %d s: %x l: %x"
-			, static_cast<int>(p.piece), p.start, p.length);
-#endif
-		m_download_queue.erase(b);
-		if (m_download_queue.empty())
-			m_counters.inc_stats_counter(counters::num_peers_down_requests, -1);
-
-		if (t->is_deleted()) return;
-
-		bool const exceeded = m_disk_thread.async_write(t->storage(), p, data, self()
-			, [conn = self(), p, t] (storage_error const& e)
-			{ conn->wrap(&peer_connection::on_disk_write_complete, e, p, t); });
-		m_ses.deferred_submit_jobs();
-
-		// every peer is entitled to have two disk blocks allocated at any given
-		// time, regardless of whether the cache size is exceeded or not. If this
-		// was not the case, when the cache size setting is very small, most peers
-		// would be blocked most of the time, because the disk cache would
-		// continuously be in exceeded state. Only rarely would it actually drop
-		// down to 0 and unblock all peers.
-		if (exceeded && m_outstanding_writing_bytes > 0)
-		{
-			if (!(m_channel_state[download_channel] & peer_info::bw_disk))
-				m_counters.inc_stats_counter(counters::num_peers_down_disk);
-			m_channel_state[download_channel] |= peer_info::bw_disk;
-#ifndef TORRENT_DISABLE_LOGGING
-			peer_log(peer_log_alert::info, "DISK", "exceeded disk buffer watermark");
-#endif
-		}
-
-		std::int64_t const write_queue_size = m_counters.inc_stats_counter(
-			counters::queued_write_bytes, p.length);
-		m_outstanding_writing_bytes += p.length;
-
-		std::int64_t const max_queue_size = m_settings.get_int(
-			settings_pack::max_queued_disk_bytes);
-
-		m_request_time.add_sample(int(total_milliseconds(now - m_requested.get(m_connect))));
-#ifndef TORRENT_DISABLE_LOGGING
-		if (should_log(peer_log_alert::info))
-		{
-			peer_log(peer_log_alert::info, "REQUEST_TIME", "%d +- %d ms"
-				, m_request_time.mean(), m_request_time.avg_deviation());
-		}
-#endif
-
-		// we completed an incoming block, and there are still outstanding
-		// requests. The next block we expect to receive now has another
-		// timeout period until we time out. So, reset the timer.
-		if (!m_download_queue.empty())
-			m_requested.set(m_connect, now);
-
-		bool const was_finished = picker.is_piece_finished(p.piece);
-		// did we request this block from any other peers?
-		bool const multi = picker.num_peers(block_finished) > 1;
-//		std::fprintf(stderr, "peer_connection mark_as_writing peer: %p piece: %d block: %d\n"
-//			, peer_info_struct(), block_finished.piece_index, block_finished.block_index);
-		picker.mark_as_writing(block_finished, peer_info_struct());
-
-		// this is for a future per-block request feature
-#if 0
-		if (t->info_hashes().has_v2())
-		{
-			t->picker().started_hash_job(p.piece);
-			m_disk_thread.async_hash2(t->storage(), p.piece, p.start, {}
-				, [conn = self(), p](piece_index_t, sha256_hash const& h, storage_error const& e)
-			{
-				conn->wrap(&peer_connection::on_hash2_complete, e, p, h);
-			});
-			m_ses.deferred_submit_jobs();
-		}
-#endif
-
-		TORRENT_ASSERT(picker.num_peers(block_finished) == 0);
-		// if we requested this block from other peers, cancel it now
-		if (multi) t->cancel_block(block_finished);
-
-#ifndef TORRENT_DISABLE_PREDICTIVE_PIECES
-		if (m_settings.get_int(settings_pack::predictive_piece_announce))
-		{
-			piece_index_t const piece = block_finished.piece_index;
-			piece_picker::downloading_piece st;
-			t->picker().piece_info(piece, st);
-
-			int const num_blocks = t->picker().blocks_in_piece(piece);
-			if (st.requested > 0 && st.writing + st.finished + st.requested == num_blocks)
-			{
-				std::vector<aux::torrent_peer*> const d = t->picker().get_downloaders(piece);
-				if (d.size() == 1)
-				{
-					// only make predictions if all remaining
-					// blocks are requested from the same peer
-					aux::torrent_peer* const peer = d[0];
-					if (peer->connection)
-					{
-						// we have a connection. now, what is the current
-						// download rate from this peer, and how many blocks
-						// do we have left to download?
-						std::int64_t const rate = peer->connection->statistics().download_payload_rate();
-						std::int64_t const bytes_left = std::int64_t(st.requested) * t->block_size();
-
-						// calculate the eta for the piece
-						time_duration const eta = rate > 0
-							? milliseconds((bytes_left * 1000) / rate)
-							: milliseconds(0);
-
-						// the configured threshold for predictive piece announce
-						time_duration const threshold = milliseconds(
-							m_settings.get_int(settings_pack::predictive_piece_announce));
-
-						if (rate > 1000 && eta < threshold)
-						{
-							// we predict we will complete this piece very soon.
-							t->predicted_have_piece(piece, eta);
-						}
-					}
-				}
-			}
-		}
-#endif // TORRENT_DISABLE_PREDICTIVE_PIECES
-
-		TORRENT_ASSERT(picker.num_peers(block_finished) == 0);
-
-#if TORRENT_USE_INVARIANT_CHECKS \
-	&& defined TORRENT_EXPENSIVE_INVARIANT_CHECKS
-		t->check_invariant();
-#endif
-
-#if TORRENT_USE_ASSERTS
-		piece_picker::downloading_piece pi;
-		picker.piece_info(p.piece, pi);
-		int num_blocks = picker.blocks_in_piece(p.piece);
-		TORRENT_ASSERT(pi.writing + pi.finished + pi.requested <= num_blocks);
-		TORRENT_ASSERT(picker.is_piece_finished(p.piece) == (pi.writing + pi.finished == num_blocks));
-#endif
-
-		// did we just finish the piece?
-		// this means all blocks are either written
-		// to disk or are in the disk write cache
-		if (picker.is_piece_finished(p.piece) && !was_finished)
-		{
-#if TORRENT_USE_INVARIANT_CHECKS
-			check_postcondition post_checker2_(t, false);
-#endif
-			t->verify_piece(p.piece);
-		}
-
-		check_graceful_pause();
-
-		if (is_disconnecting()) return;
-
-		send_block_requests();
+		return;
 	}
 
 	void peer_connection::check_graceful_pause()
@@ -3036,24 +2811,6 @@ namespace {
 
 	bool peer_connection::make_time_critical(piece_block const& block)
 	{
-		TORRENT_ASSERT(is_single_thread());
-		auto const rit = std::find_if(m_request_queue.begin()
-			, m_request_queue.end(), aux::has_block(block));
-		if (rit == m_request_queue.end()) return false;
-#if TORRENT_USE_ASSERTS
-		auto t = m_torrent.lock();
-		TORRENT_ASSERT(t);
-		TORRENT_ASSERT(t->has_picker());
-		TORRENT_ASSERT(t->picker().is_requested(block));
-#endif
-		// ignore it if it's already time critical
-		if (rit - m_request_queue.begin() < int(m_queued_time_critical)) return false;
-		pending_block b = *rit;
-		m_request_queue.erase(rit);
-		m_request_queue.insert(m_request_queue.begin() + int(m_queued_time_critical), b);
-
-		if (m_queued_time_critical < std::numeric_limits<decltype(m_queued_time_critical)>::max())
-			++m_queued_time_critical;
 		return true;
 	}
 
@@ -3075,8 +2832,6 @@ namespace {
 		TORRENT_ASSERT(block.block_index < t->torrent_file().piece_size(block.piece_index));
 		TORRENT_ASSERT(!t->picker().is_requested(block) || (t->picker().num_peers(block) > 0));
 		TORRENT_ASSERT(!t->have_piece(block.piece_index));
-		TORRENT_ASSERT(std::find_if(m_download_queue.begin(), m_download_queue.end()
-			, aux::has_block(block)) == m_download_queue.end());
 		TORRENT_ASSERT(std::find(m_request_queue.begin(), m_request_queue.end()
 			, block) == m_request_queue.end());
 
@@ -3213,70 +2968,7 @@ namespace {
 
 	void peer_connection::cancel_request(piece_block const& block, bool const force)
 	{
-		TORRENT_ASSERT(is_single_thread());
-		INVARIANT_CHECK;
-
-		auto t = m_torrent.lock();
-		// this peer might be disconnecting
-		if (!t) return;
-
-		TORRENT_ASSERT(t->valid_metadata());
-
-		TORRENT_ASSERT(block.block_index != piece_block::invalid.block_index);
-		TORRENT_ASSERT(block.piece_index != piece_block::invalid.piece_index);
-		TORRENT_ASSERT(block.piece_index < t->torrent_file().end_piece());
-		TORRENT_ASSERT(block.block_index < t->torrent_file().piece_size(block.piece_index));
-
-		// if all the peers that requested this block has been
-		// cancelled, then just ignore the cancel.
-		if (!t->picker().is_requested(block)) return;
-
-		auto const it = std::find_if(m_download_queue.begin(), m_download_queue.end()
-			, aux::has_block(block));
-		if (it == m_download_queue.end())
-		{
-			auto const rit = std::find_if(m_request_queue.begin()
-				, m_request_queue.end(), aux::has_block(block));
-
-			// when a multi block is received, it is cancelled
-			// from all peers, so if this one hasn't requested
-			// the block, just ignore to cancel it.
-			if (rit == m_request_queue.end()) return;
-
-			if (rit - m_request_queue.begin() < m_queued_time_critical)
-				--m_queued_time_critical;
-
-			t->picker().abort_download(block, peer_info_struct());
-			m_request_queue.erase(rit);
-			// since we found it in the request queue, it means it hasn't been
-			// sent yet, so we don't have to send a cancel.
-			return;
-		}
-
-		int const block_offset = block.block_index * t->block_size();
-		int const block_size
-			= std::min(t->torrent_file().piece_size(block.piece_index) - block_offset,
-			t->block_size());
-		TORRENT_ASSERT(block_size > 0);
-		TORRENT_ASSERT(block_size <= t->block_size());
-
-		it->not_wanted = true;
-
-		if (force) t->picker().abort_download(block, peer_info_struct());
-
-		if (m_outstanding_bytes < block_size) return;
-
-		peer_request r;
-		r.piece = block.piece_index;
-		r.start = block_offset;
-		r.length = block_size;
-
-#ifndef TORRENT_DISABLE_LOGGING
-			peer_log(peer_log_alert::outgoing_message, "CANCEL"
-				, "piece: %d s: %d l: %d b: %d"
-				, static_cast<int>(block.piece_index), block_offset, block_size, block.block_index);
-#endif
-		write_cancel(r);
+		return;
 	}
 
 	bool peer_connection::send_choke()
