@@ -61,9 +61,9 @@ namespace libTAU::blockchain {
 
         void update_batch(std::map<std::string, std::string> cache, std::vector<block> main_chain_blocks) override;
 
-        void flush() override;
+        bool flush() override;
 
-        void commit() override;
+        bool commit() override;
 
         void rollback() override;
 

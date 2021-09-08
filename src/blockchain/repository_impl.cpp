@@ -15,10 +15,11 @@ namespace libTAU::blockchain {
         return true;
     }
 
+
     bool repository_impl::create_user_state_db(aux::bytes chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
-        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL, HEIGHT INTEGER);");
+        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -424,20 +425,28 @@ namespace libTAU::blockchain {
                 m_write_batch.Put(item.first, item.second);
             }
         }
+
+        m_main_chain_blocks.insert(m_main_chain_blocks.end(), main_chain_blocks.begin(), main_chain_blocks.end());
     }
 
-    void repository_impl::flush() {
+    bool repository_impl::flush() {
         for (auto const& b: m_main_chain_blocks) {
             update_user_state_db(b);
         }
-        m_leveldb->Write(leveldb::WriteOptions(), &m_write_batch);
+        leveldb::Status status = m_leveldb->Write(leveldb::WriteOptions(), &m_write_batch);
+        if (!status.ok()) {
+            return false;
+        }
+
         m_write_batch.Clear();
         m_main_chain_blocks.clear();
+
+        return true;
     }
 
     // unsupported
-    void repository_impl::commit() {
-
+    bool repository_impl::commit() {
+        return false;
     }
 
     // unsupported

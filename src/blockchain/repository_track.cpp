@@ -15,11 +15,11 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::create_user_state_db(aux::bytes chain_id) {
-        return m_repository->create_user_state_db(chain_id);
+        return false;
     }
 
     bool repository_track::delete_user_state_db(aux::bytes chain_id) {
-        return m_repository->delete_user_state_db(chain_id);
+        return false;
     }
 
     std::set<dht::public_key> repository_track::get_all_peers(aux::bytes chain_id) {
@@ -27,7 +27,7 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::delete_peer(aux::bytes chain_id, dht::public_key pubKey) {
-        return m_repository->delete_peer(chain_id, pubKey);
+        return false;
     }
 
     bool repository_track::is_account_exist(aux::bytes chain_id, dht::public_key pubKey) {
@@ -249,14 +249,16 @@ namespace libTAU::blockchain {
     }
 
     // unsupported
-    void repository_track::flush() {
-
+    bool repository_track::flush() {
+        return false;
     }
 
-    void repository_track::commit() {
+    bool repository_track::commit() {
         m_repository->update_batch(m_cache, m_main_chain_blocks);
         m_cache.clear();
         m_main_chain_blocks.clear();
+
+        return true;
     }
 
     void repository_track::rollback() {

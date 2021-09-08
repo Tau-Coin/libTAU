@@ -80,13 +80,13 @@ namespace libTAU::blockchain {
 
         virtual void update_batch(std::map<std::string, std::string> cache, std::vector<block> main_chain_blocks) = 0;
 
-        virtual void flush() = 0;
+        virtual bool flush() = 0;
 
         /**
          * Store all the temporary changes made
          * to the repository in the actual database
          */
-        virtual void commit() = 0;
+        virtual bool commit() = 0;
 
         /**
          * Undo all the changes made so far
