@@ -228,26 +228,10 @@ TORRENT_VERSION_NAMESPACE_3
 		// ``alert_feature`` in the return value from implemented_features().
 		virtual void on_alert(alert const*) {}
 
-		// return true if the add_torrent_params should be added
-		virtual bool on_unknown_torrent(info_hash_t const& /* info_hash */
-			, peer_connection_handle const& /* pc */, add_torrent_params& /* p */)
-		{ return false; }
-
 		// called once per second.
 		// If your plugin expects this to be called, make sure to include the flag
 		// ``tick_feature`` in the return value from implemented_features().
 		virtual void on_tick() {}
-
-		// called when choosing peers to optimistically unchoke. The return value
-		// indicates the peer's priority for unchoking. Lower return values
-		// correspond to higher priority. Priorities above 2^63-1 are reserved.
-		// If your plugin has no priority to assign a peer it should return 2^64-1.
-		// If your plugin expects this to be called, make sure to include the flag
-		// ``optimistic_unchoke_feature`` in the return value from implemented_features().
-		// If multiple plugins implement this function the lowest return value
-		// (i.e. the highest priority) is used.
-		virtual uint64_t get_unchoke_priority(peer_connection_handle const& /* peer */)
-		{ return (std::numeric_limits<uint64_t>::max)(); }
 
 #if TORRENT_ABI_VERSION <= 2
 		// called when saving settings state
@@ -278,24 +262,6 @@ TORRENT_VERSION_NAMESPACE_3_END
 #if TORRENT_ABI_VERSION == 1
 		using flags_t = libTAU::add_peer_flags_t;
 #endif
-
-		// This function is called each time a new peer is connected to the torrent. You
-		// may choose to ignore this by just returning a default constructed
-		// ``shared_ptr`` (in which case you don't need to override this member
-		// function).
-		//
-		// If you need an extension to the peer connection (which most plugins do) you
-		// are supposed to return an instance of your peer_plugin class. Which in
-		// turn will have its hook functions called on event specific to that peer.
-		//
-		// The ``peer_connection_handle`` will be valid as long as the ``shared_ptr``
-		// is being held by the torrent object. So, it is generally a good idea to not
-		// keep a ``shared_ptr`` to your own peer_plugin. If you want to keep references
-		// to it, use ``weak_ptr``.
-		//
-		// If this function throws an exception, the connection will be closed.
-		virtual std::shared_ptr<peer_plugin> new_connection(peer_connection_handle const&)
-		{ return std::shared_ptr<peer_plugin>(); }
 
 		// These hooks are called when a piece passes the hash check or fails the hash
 		// check, respectively. The ``index`` is the piece index that was downloaded.

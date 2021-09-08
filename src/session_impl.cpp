@@ -48,7 +48,6 @@ see LICENSE file.
 #include "libTAU/fingerprint.hpp"
 #include "libTAU/alert_types.hpp"
 #include "libTAU/aux_/invariant_check.hpp"
-#include "libTAU/peer_connection_handle.hpp"
 #include "libTAU/ip_filter.hpp"
 #include "libTAU/socket.hpp"
 #include "libTAU/aux_/session_impl.hpp"

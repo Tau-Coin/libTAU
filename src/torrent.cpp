@@ -58,7 +58,6 @@ see LICENSE file.
 #include "libTAU/entry.hpp"
 #include "libTAU/aux_/peer.hpp"
 #include "libTAU/aux_/peer_connection.hpp"
-#include "libTAU/peer_connection_handle.hpp"
 #include "libTAU/peer_id.hpp"
 #include "libTAU/identify_client.hpp"
 #include "libTAU/alert_types.hpp"

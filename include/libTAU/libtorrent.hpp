@@ -65,7 +65,6 @@
 #include "libTAU/operations.hpp"
 #include "libTAU/peer_class.hpp"
 #include "libTAU/peer_class_type_filter.hpp"
-#include "libTAU/peer_connection_handle.hpp"
 #include "libTAU/peer_connection_interface.hpp"
 #include "libTAU/peer_id.hpp"
 #include "libTAU/peer_info.hpp"

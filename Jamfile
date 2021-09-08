@@ -54,7 +54,6 @@ else
 alias shipped_boost_json : : <define>BOOST_JSON_HEADER_ONLY : : <include>./deps/json/include <define>BOOST_JSON_HEADER_ONLY ;
 
 use-project /try_signal : ./deps/try_signal ;
-use-project /libdatachannel : ./deps/libdatachannel ;
 
 rule linking ( properties * )
 {
@@ -802,7 +801,6 @@ SOURCES =
 	fingerprint
 	gzip
 	hasher
-	hash_picker
 	hex
 	http_connection
 	http_parser
@@ -816,11 +814,9 @@ SOURCES =
 	merkle_tree
 	peer_connection
 	platform_util
-	peer_connection_handle
 	instantiate_connection
 	natpmp
 	packet_buffer
-	piece_picker
 	peer_list
 	proxy_base
 	puff

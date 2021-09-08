@@ -154,10 +154,6 @@ struct peer_class_info;
 // include/libTAU/peer_class_type_filter.hpp
 struct peer_class_type_filter;
 
-// include/libTAU/peer_connection_handle.hpp
-struct peer_connection_handle;
-struct bt_peer_connection_handle;
-
 // include/libTAU/peer_info.hpp
 TORRENT_VERSION_NAMESPACE_2
 struct peer_info;
