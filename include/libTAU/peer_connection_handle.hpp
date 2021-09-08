@@ -22,8 +22,6 @@ see LICENSE file.
 
 namespace libTAU {
 
-namespace aux { struct bt_peer_connection; }
-
 // the peer_connection_handle class provides a handle to the internal peer
 // connection object, to be used by plugins. This is a low level interface that
 // may not be stable across libTAU versions
@@ -109,27 +107,6 @@ private:
 		return a.owner_before(b);
 	}
 };
-
-// The bt_peer_connection_handle provides a handle to the internal bittorrent
-// peer connection object to plugins. It's low level and may not be a stable API
-// across libTAU versions.
-struct TORRENT_EXPORT bt_peer_connection_handle : peer_connection_handle
-{
-	explicit bt_peer_connection_handle(peer_connection_handle pc)
-		: peer_connection_handle(std::move(pc))
-	{}
-
-	bool packet_finished() const;
-	bool support_extensions() const;
-
-	bool supports_encryption() const;
-
-	void switch_send_crypto(std::shared_ptr<crypto_plugin> crypto);
-	void switch_recv_crypto(std::shared_ptr<crypto_plugin> crypto);
-
-	std::shared_ptr<aux::bt_peer_connection> native_handle() const;
-};
-
 } // namespace libTAU
 
 #endif // TORRENT_PEER_CONNECTION_HANDLE_HPP_INCLUDED

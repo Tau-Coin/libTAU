@@ -39,7 +39,6 @@ see LICENSE file.
 #include "libTAU/assert.hpp"
 #include "libTAU/aux_/torrent.hpp"
 #include "libTAU/peer_info.hpp"
-#include "libTAU/aux_/bt_peer_connection.hpp"
 #include "libTAU/error.hpp"
 #include "libTAU/aux_/alloca.hpp"
 #include "libTAU/disk_interface.hpp"
@@ -3524,17 +3523,6 @@ namespace {
 
 			if (m_outgoing) m_counters.inc_stats_counter(counters::error_outgoing_peers);
 			else m_counters.inc_stats_counter(counters::error_incoming_peers);
-
-#if !defined TORRENT_DISABLE_ENCRYPTION
-			if (type() == connection_type::bittorrent && op != operation_t::connect)
-			{
-				auto* bt = static_cast<aux::bt_peer_connection*>(this);
-				if (bt->supports_encryption()) m_counters.inc_stats_counter(
-					counters::error_encrypted_peers);
-				if (bt->rc4_encrypted() && bt->supports_encryption())
-					m_counters.inc_stats_counter(counters::error_rc4_peers);
-			}
-#endif // TORRENT_DISABLE_ENCRYPTION
 		}
 
 		std::shared_ptr<peer_connection> me(self());

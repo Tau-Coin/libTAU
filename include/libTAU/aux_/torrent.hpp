@@ -80,7 +80,6 @@ namespace libTAU::aux {
 
 	struct tracker_request;
 	class http_parser;
-	struct bt_peer_connection;
 
 	using web_seed_flag_t = flags::bitfield_flag<std::uint8_t, struct web_seed_flag_tag>;
 
@@ -364,14 +363,6 @@ namespace libTAU::aux {
 		void load_merkle_trees(aux::vector<std::vector<sha256_hash>, file_index_t> t
 			, aux::vector<std::vector<bool>, file_index_t> mask);
 
-		// find the peer that introduced us to the given endpoint. This is
-		// used when trying to holepunch. We need the introducer so that we
-		// can send a rendezvous connect message
-		bt_peer_connection* find_introducer(tcp::endpoint const& ep) const;
-
-		// if we're connected to a peer at ep, return its peer connection
-		// only count BitTorrent peers
-		bt_peer_connection* find_peer(tcp::endpoint const& ep) const;
 		peer_connection* find_peer(peer_id const& pid);
 
 		// checks to see if this peer id is used in one of our own outgoing

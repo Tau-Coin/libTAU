@@ -58,7 +58,6 @@ see LICENSE file.
 #include "libTAU/entry.hpp"
 #include "libTAU/aux_/peer.hpp"
 #include "libTAU/aux_/peer_connection.hpp"
-#include "libTAU/aux_/bt_peer_connection.hpp"
 #include "libTAU/peer_connection_handle.hpp"
 #include "libTAU/peer_id.hpp"
 #include "libTAU/identify_client.hpp"
@@ -1613,23 +1612,6 @@ bool is_downloading_state(int const st)
 		maybe_done_flushing();
 
 		m_torrent_initialized = true;
-	}
-
-	bt_peer_connection* torrent::find_introducer(tcp::endpoint const& ep) const
-	{
-		TORRENT_UNUSED(ep);
-		return nullptr;
-	}
-
-	bt_peer_connection* torrent::find_peer(tcp::endpoint const& ep) const
-	{
-		for (auto* p : m_connections)
-		{
-			TORRENT_INCREMENT(m_iterating_connections);
-			if (p->type() != connection_type::bittorrent) continue;
-			if (p->remote() == ep) return static_cast<bt_peer_connection*>(p);
-		}
-		return nullptr;
 	}
 
 	peer_connection* torrent::find_peer(peer_id const& pid)
@@ -5304,15 +5286,6 @@ bool is_downloading_state(int const st)
 	void torrent::hashes_rejected(hash_request const& req)
 	{
 		if (!m_hash_picker) return;
-		m_hash_picker->hashes_rejected(req);
-		// we need to poke all of the v2 peers in case there are no other
-		// outstanding hash requests
-		for (auto* peer : m_connections)
-		{
-			if (peer->type() != connection_type::bittorrent) continue;
-			auto* const btpeer = static_cast<bt_peer_connection*>(peer);
-			btpeer->maybe_send_hash_request();
-		}
 	}
 
 	void torrent::verify_block_hashes(piece_index_t index)

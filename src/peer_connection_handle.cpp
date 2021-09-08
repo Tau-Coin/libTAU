@@ -10,7 +10,6 @@ see LICENSE file.
 */
 
 #include "libTAU/peer_connection_handle.hpp"
-#include "libTAU/aux_/bt_peer_connection.hpp"
 
 #ifndef TORRENT_DISABLE_LOGGING
 #include <cstdarg> // for va_start, va_end
@@ -118,8 +117,7 @@ torrent_handle peer_connection_handle::associated_torrent() const
 	std::shared_ptr<aux::peer_connection> pc = native_handle();
 	if (!pc) return torrent_handle();
 	auto t = pc->associated_torrent().lock();
-	if (!t) return torrent_handle();
-	return t->get_handle();
+	return torrent_handle();
 }
 
 tcp::endpoint const& peer_connection_handle::remote() const
@@ -264,59 +262,6 @@ time_point peer_connection_handle::time_of_last_unchoke() const
 	std::shared_ptr<aux::peer_connection> pc = native_handle();
 	TORRENT_ASSERT(pc);
 	return pc->time_of_last_unchoke();
-}
-
-bool bt_peer_connection_handle::packet_finished() const
-{
-	std::shared_ptr<aux::bt_peer_connection> pc = native_handle();
-	TORRENT_ASSERT(pc);
-	return pc->packet_finished();
-}
-
-bool bt_peer_connection_handle::support_extensions() const
-{
-	std::shared_ptr<aux::bt_peer_connection> pc = native_handle();
-	TORRENT_ASSERT(pc);
-	return pc->support_extensions();
-}
-
-bool bt_peer_connection_handle::supports_encryption() const
-{
-#if !defined TORRENT_DISABLE_ENCRYPTION
-	std::shared_ptr<aux::bt_peer_connection> pc = native_handle();
-	TORRENT_ASSERT(pc);
-	return pc->supports_encryption();
-#else
-	return false;
-#endif
-}
-
-void bt_peer_connection_handle::switch_send_crypto(std::shared_ptr<crypto_plugin> crypto)
-{
-#if !defined TORRENT_DISABLE_ENCRYPTION
-	std::shared_ptr<aux::bt_peer_connection> pc = native_handle();
-	TORRENT_ASSERT(pc);
-	pc->switch_send_crypto(std::move(crypto));
-#else
-	TORRENT_UNUSED(crypto);
-#endif
-}
-
-void bt_peer_connection_handle::switch_recv_crypto(std::shared_ptr<crypto_plugin> crypto)
-{
-#if !defined TORRENT_DISABLE_ENCRYPTION
-	std::shared_ptr<aux::bt_peer_connection> pc = native_handle();
-	TORRENT_ASSERT(pc);
-	pc->switch_recv_crypto(std::move(crypto));
-#else
-	TORRENT_UNUSED(crypto);
-#endif
-}
-
-std::shared_ptr<aux::bt_peer_connection> bt_peer_connection_handle::native_handle() const
-{
-	return std::static_pointer_cast<aux::bt_peer_connection>(
-		peer_connection_handle::native_handle());
 }
 
 } // namespace libTAU
