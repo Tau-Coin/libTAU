@@ -77,7 +77,6 @@ see LICENSE file.
 #include "libTAU/aux_/resolver_interface.hpp"
 #include "libTAU/aux_/alloca.hpp"
 #include "libTAU/aux_/resolve_links.hpp"
-#include "libTAU/aux_/file_progress.hpp"
 #include "libTAU/aux_/alert_manager.hpp"
 #include "libTAU/disk_interface.hpp"
 #include "libTAU/aux_/ip_helpers.hpp" // for is_ip_address
@@ -947,10 +946,6 @@ bool is_downloading_state(int const st)
 			, m_torrent_file->num_pieces());
 
 		if (m_have_all) pp->we_have_all();
-
-		// initialize the file progress too
-		if (m_file_progress.empty())
-			m_file_progress.init(*pp, m_torrent_file->files());
 
 		m_picker = std::move(pp);
 
@@ -1884,9 +1879,6 @@ bool is_downloading_state(int const st)
 			int const blocks_in_last_piece = ((m_torrent_file->total_size() % m_torrent_file->piece_length())
 				+ block_size() - 1) / block_size();
 			m_picker->resize(blocks_per_piece, blocks_in_last_piece, m_torrent_file->num_pieces());
-
-			m_file_progress.clear();
-			m_file_progress.init(picker(), m_torrent_file->files());
 		}
 
 		// assume that we don't have anything
@@ -6324,7 +6316,6 @@ bool is_downloading_state(int const st)
 			{
 				m_picker.reset();
 				m_hash_picker.reset();
-				m_file_progress.clear();
 			}
 			m_have_all = true;
 		}
@@ -6602,7 +6593,6 @@ bool is_downloading_state(int const st)
 
 		// the piece picker and the file progress states are supposed to be
 		// created in sync
-		TORRENT_ASSERT(has_picker() == !m_file_progress.empty());
 		TORRENT_ASSERT(current_stats_state() == int(m_current_gauge_state + counters::num_checking_torrents)
 			|| m_current_gauge_state == no_gauge_state);
 
@@ -8771,159 +8761,6 @@ bool is_downloading_state(int const st)
 #if TORRENT_USE_INVARIANT_CHECKS
 		m_picker->check_peers();
 #endif
-	}
-
-#if TORRENT_ABI_VERSION == 1
-#if !TORRENT_NO_FPU
-	void torrent::file_progress_float(aux::vector<float, file_index_t>& fp)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		if (!valid_metadata())
-		{
-			fp.clear();
-			return;
-		}
-
-		fp.resize(m_torrent_file->num_files(), 1.f);
-		if (is_seed()) return;
-
-		aux::vector<std::int64_t, file_index_t> progress;
-		file_progress(progress, {});
-		file_storage const& fs = m_torrent_file->files();
-		for (auto const i : fs.file_range())
-		{
-			std::int64_t file_size = m_torrent_file->files().file_size(i);
-			if (file_size == 0) fp[i] = 1.f;
-			else fp[i] = float(progress[i]) / float(file_size);
-		}
-	}
-#endif
-#endif // TORRENT_ABI_VERSION
-
-	void torrent::file_progress(aux::vector<std::int64_t, file_index_t>& fp, file_progress_flags_t const flags)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		if (!valid_metadata())
-		{
-			fp.clear();
-			return;
-		}
-
-		// if we're a seed, we don't have an m_file_progress anyway
-		// since we don't need one. We know we have all files
-		// just fill in the full file sizes as a shortcut
-		if (is_seed())
-		{
-			fp.resize(m_torrent_file->num_files());
-			file_storage const& fs = m_torrent_file->files();
-			for (auto const i : fs.file_range())
-				fp[i] = fs.file_size(i);
-			return;
-		}
-
-		if (num_have() == 0 || m_file_progress.empty())
-		{
-			// if we don't have any pieces, just return zeroes
-			fp.clear();
-			fp.resize(m_torrent_file->num_files(), 0);
-		}
-		else
-		{
-			m_file_progress.export_progress(fp);
-		}
-
-		if (flags & torrent_handle::piece_granularity)
-			return;
-
-		TORRENT_ASSERT(has_picker());
-
-		std::vector<piece_picker::downloading_piece> q = m_picker->get_download_queue();
-
-		file_storage const& fs = m_torrent_file->files();
-		for (auto const& dp : q)
-		{
-			std::int64_t offset = std::int64_t(static_cast<int>(dp.index))
-				* m_torrent_file->piece_length();
-			file_index_t file = fs.file_index_at_offset(offset);
-			int idx = -1;
-			for (auto const& info : m_picker->blocks_for_piece(dp))
-			{
-				++idx;
-				TORRENT_ASSERT(file < fs.end_file());
-				TORRENT_ASSERT(offset == std::int64_t(static_cast<int>(dp.index))
-					* m_torrent_file->piece_length()
-					+ idx * block_size());
-				TORRENT_ASSERT(offset < m_torrent_file->total_size());
-				while (offset >= fs.file_offset(file) + fs.file_size(file))
-				{
-					++file;
-				}
-				TORRENT_ASSERT(file < fs.end_file());
-
-				std::int64_t block = block_size();
-
-				if (info.state == piece_picker::block_info::state_none)
-				{
-					offset += block;
-					continue;
-				}
-
-				if (info.state == piece_picker::block_info::state_requested)
-				{
-					block = 0;
-					torrent_peer* p = info.peer;
-					if (p != nullptr && p->connection)
-					{
-						auto* peer = static_cast<peer_connection*>(p->connection);
-						auto pbp = peer->downloading_piece_progress();
-						if (pbp.piece_index == dp.index && pbp.block_index == idx)
-							block = pbp.bytes_downloaded;
-						TORRENT_ASSERT(block <= block_size());
-					}
-
-					if (block == 0)
-					{
-						offset += block_size();
-						continue;
-					}
-				}
-
-				if (offset + block > fs.file_offset(file) + fs.file_size(file))
-				{
-					std::int64_t left_over = block_size() - block;
-					// split the block on multiple files
-					while (block > 0)
-					{
-						TORRENT_ASSERT(offset <= fs.file_offset(file) + fs.file_size(file));
-						std::int64_t const slice = std::min(fs.file_offset(file) + fs.file_size(file) - offset
-							, block);
-						fp[file] += slice;
-						offset += slice;
-						block -= slice;
-						TORRENT_ASSERT(offset <= fs.file_offset(file) + fs.file_size(file));
-						if (offset == fs.file_offset(file) + fs.file_size(file))
-						{
-							++file;
-							if (file == fs.end_file())
-							{
-								offset += block;
-								break;
-							}
-						}
-					}
-					offset += left_over;
-					TORRENT_ASSERT(offset == std::int64_t(static_cast<int>(dp.index))
-						* m_torrent_file->piece_length()
-						+ (idx + 1) * block_size());
-				}
-				else
-				{
-					fp[file] += block;
-					offset += block_size();
-				}
-				TORRENT_ASSERT(file <= fs.end_file());
-			}
-		}
 	}
 
 	void torrent::new_external_ip()
