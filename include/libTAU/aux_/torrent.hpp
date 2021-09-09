@@ -111,93 +111,6 @@ namespace libTAU::aux {
 	};
 #endif // TORRENT_DISABLE_STREAMING
 
-	// this is the internal representation of web seeds
-	struct web_seed_t : web_seed_entry
-	{
-		explicit web_seed_t(web_seed_entry const& wse);
-		web_seed_t(std::string const& url_
-			, std::string const& auth_ = std::string()
-			, web_seed_entry::headers_t const& extra_headers_ = web_seed_entry::headers_t());
-
-		// if this is > now, we can't reconnect yet
-		time_point32 retry = aux::time_now32();
-
-		// if the hostname of the web seed has been resolved,
-		// these are its IP addresses
-		std::vector<tcp::endpoint> endpoints;
-
-		// this is initialized to true, but if we discover the
-		// server not to support it, it's set to false, and we
-		// make larger requests.
-		bool supports_keepalive = true;
-
-		// this indicates whether or not we're resolving the
-		// hostname of this URL
-		bool resolving = false;
-
-		// if the user wanted to remove this while
-		// we were resolving it. In this case, we set
-		// the removed flag to true, to make the resolver
-		// callback remove it
-		bool removed = false;
-
-		// this indicates whether this web seed has any files. A server that only
-		// redirects to other servers for instance, may not have any files and
-		// once we've seen all redirects, there's no point in connecting to it
-		// again.
-		bool interesting = true;
-
-		// if this is true, this URL was created by a redirect and should not be
-		// saved in the resume data
-		bool ephemeral = false;
-
-		// this is set to true when this web seed was created from a redirect
-		// from a global IP, and SSRF mitigation is enabled. It prevents this
-		// web seed from resolving to any local network IPs.
-		bool no_local_ips = false;
-
-		// if the web server doesn't support keepalive or a block request was
-		// interrupted, the block received so far is kept here for the next
-		// connection to pick up
-		peer_request restart_request = { piece_index_t(-1), -1, -1};
-		std::vector<char> restart_piece;
-
-		// this maps file index to a URL it has been redirected to. If an entry is
-		// missing, it means it has not been redirected and the full path should
-		// be constructed normally based on the filename. All redirections are
-		// relative to the web seed hostname root.
-		std::map<file_index_t, std::string> redirects;
-
-		// if this bitfield is non-empty, it represents the files this web server
-		// has.
-		typed_bitfield<file_index_t> have_files;
-#if defined __GNUC__ && defined _GLIBCXX_DEBUG
-		// this works around a bug in libstdc++'s checked iterators
-		// http://stackoverflow.com/questions/22915325/avoiding-self-assignment-in-stdshuffle
-		web_seed_t& operator=(web_seed_t&& rhs) noexcept
-		{
-			if (&rhs == this) return *this;
-
-			web_seed_entry::operator=(std::move(rhs));
-			retry = std::move(rhs.retry);
-			endpoints = std::move(rhs.endpoints);
-			supports_keepalive = std::move(rhs.supports_keepalive);
-			resolving = std::move(rhs.resolving);
-			removed = std::move(rhs.removed);
-			ephemeral = std::move(rhs.ephemeral);
-			no_local_ips = std::move(rhs.no_local_ips);
-			restart_request = std::move(rhs.restart_request);
-			restart_piece = std::move(rhs.restart_piece);
-			redirects = std::move(rhs.redirects);
-			have_files = std::move(rhs.have_files);
-			return *this;
-		}
-
-		web_seed_t& operator=(web_seed_t const&) = default;
-		web_seed_t(web_seed_t const&) = default;
-#endif
-	};
-
 	struct TORRENT_EXTRA_EXPORT torrent_hot_members
 	{
 		torrent_hot_members(aux::session_interface& ses
@@ -365,7 +278,6 @@ namespace libTAU::aux {
 
 		int seed_rank(aux::session_settings const& s) const;
 
-		void add_piece(piece_index_t piece, char const* data, add_piece_flags_t flags);
 		void on_disk_write_complete(storage_error const& error
 			, peer_request const& p);
 
@@ -495,12 +407,8 @@ namespace libTAU::aux {
 
 		void piece_availability(aux::vector<int, piece_index_t>& avail) const;
 
-		void set_piece_priority(piece_index_t index, download_priority_t priority);
-		download_priority_t piece_priority(piece_index_t index) const;
-
 		void prioritize_pieces(aux::vector<download_priority_t, piece_index_t> const& pieces);
 		void prioritize_piece_list(std::vector<std::pair<piece_index_t, download_priority_t>> const& pieces);
-		void piece_priorities(aux::vector<download_priority_t, piece_index_t>*) const;
 
 		void set_file_priority(file_index_t index, download_priority_t priority);
 		download_priority_t file_priority(file_index_t index) const;
@@ -516,9 +424,6 @@ namespace libTAU::aux {
 		void clear_time_critical();
 #endif // TORRENT_DISABLE_STREAMING
 
-		void update_piece_priorities(
-			aux::vector<download_priority_t, file_index_t> const& file_prios);
-
 		void status(torrent_status* st, status_flags_t flags);
 
 		// this torrent changed state, if the user is subscribing to
@@ -529,7 +434,6 @@ namespace libTAU::aux {
 		void use_interface(std::string net_interface);
 #endif
 
-		void connect_to_url_seed(std::list<web_seed_t>::iterator);
 		bool connect_to_peer(torrent_peer*, bool ignore_limit = false);
 
 		int priority() const;
@@ -557,15 +461,6 @@ namespace libTAU::aux {
 
 		static inline constexpr web_seed_flag_t ephemeral = 0_bit;
 		static inline constexpr web_seed_flag_t no_local_ips = 1_bit;
-
-		// add_web_seed won't add duplicates. If we have already added an entry
-		// with this URL, we'll get back the existing entry
-		web_seed_t* add_web_seed(std::string const& url
-			, std::string const& auth = std::string()
-			, web_seed_t::headers_t const& extra_headers = web_seed_entry::headers_t()
-			, web_seed_flag_t flags = {});
-
-		void remove_web_seed(std::string const& url);
 
 		std::set<std::string> web_seeds() const;
 
@@ -740,21 +635,6 @@ namespace libTAU::aux {
 			, int port
 			, protocol_version);
 
-		// this is the asio callback that is called when a name
-		// lookup for a WEB SEED is completed.
-		void on_name_lookup(error_code const&
-			, std::vector<address> const&
-			, int port
-			, std::list<web_seed_t>::iterator);
-
-		void connect_web_seed(std::list<web_seed_t>::iterator web, tcp::endpoint a);
-
-		// this is the asio callback that is called when a name
-		// lookup for a proxy for a web seed is completed.
-		void on_proxy_name_lookup(error_code const& e
-			, std::vector<address> const& addrs
-			, std::list<web_seed_t>::iterator web, int port);
-
 		// re-evaluates whether this torrent should be considered inactive or not
 		void on_inactivity_tick(error_code const& ec);
 
@@ -765,7 +645,6 @@ namespace libTAU::aux {
 
 		// remove a web seed, or schedule it for removal in case there
 		// are outstanding operations on it
-		void remove_web_seed_iter(std::list<web_seed_t>::iterator web);
 
 		// this is called when the torrent has finished. i.e.
 		// all the pieces we have not filtered have been downloaded.
@@ -1066,7 +945,6 @@ namespace libTAU::aux {
 		// removed from the set. It's important that iterators are not
 		// invalidated as entries are added and removed from this list, hence the
 		// std::list
-		std::list<web_seed_t> m_web_seeds;
 
 		// used for tracker announces
 		deadline_timer m_tracker_timer;

@@ -1353,21 +1353,12 @@ bool is_downloading_state(int const st)
 	{
 	}
 
-	void torrent::set_piece_priority(piece_index_t const index
-		, download_priority_t const priority)
-	{
-	}
-
 	void torrent::prioritize_piece_list(std::vector<std::pair<piece_index_t
 		, download_priority_t>> const& pieces)
 	{
 	}
 
 	void torrent::prioritize_pieces(aux::vector<download_priority_t, piece_index_t> const& pieces)
-	{
-	}
-
-	void torrent::piece_priorities(aux::vector<download_priority_t, piece_index_t>* pieces) const
 	{
 	}
 
@@ -1412,11 +1403,6 @@ bool is_downloading_state(int const st)
 	}
 
 	void torrent::file_priorities(aux::vector<download_priority_t, file_index_t>* files) const
-	{
-	}
-
-	void torrent::update_piece_priorities(
-		aux::vector<download_priority_t, file_index_t> const& file_prios)
 	{
 	}
 
@@ -1525,94 +1511,6 @@ bool is_downloading_state(int const st)
 
 	void torrent::on_remove_peers() noexcept
 	{
-	}
-
-	void torrent::remove_web_seed_iter(std::list<web_seed_t>::iterator web)
-	{
-	}
-
-	void torrent::connect_to_url_seed(std::list<web_seed_t>::iterator web)
-	{
-	}
-
-	void torrent::on_proxy_name_lookup(error_code const& e
-		, std::vector<address> const& addrs
-		, std::list<web_seed_t>::iterator web, int port) try
-	{
-		TORRENT_ASSERT(is_single_thread());
-
-		INVARIANT_CHECK;
-
-		TORRENT_ASSERT(web->resolving);
-#ifndef TORRENT_DISABLE_LOGGING
-		debug_log("completed resolve proxy hostname for: %s", web->url.c_str());
-		if (e && should_log())
-			debug_log("proxy name lookup error: %s", e.message().c_str());
-#endif
-		web->resolving = false;
-
-		if (web->removed)
-		{
-#ifndef TORRENT_DISABLE_LOGGING
-			debug_log("removed web seed");
-#endif
-			remove_web_seed_iter(web);
-			return;
-		}
-
-		if (m_abort) return;
-		if (m_ses.is_aborted()) return;
-
-		if (e || addrs.empty())
-		{
-			// the name lookup failed for the http host. Don't try
-			// this host again
-			remove_web_seed_iter(web);
-			return;
-		}
-
-		tcp::endpoint a(addrs[0], std::uint16_t(port));
-
-		std::string hostname;
-		error_code ec;
-		std::string protocol;
-		std::tie(protocol, std::ignore, hostname, port, std::ignore)
-			= parse_url_components(web->url, ec);
-		if (port == -1) port = protocol == "http" ? 80 : 443;
-
-		if (ec)
-		{
-			remove_web_seed_iter(web);
-			return;
-		}
-
-		if (m_ip_filter && m_ip_filter->access(a.address()) & ip_filter::blocked)
-		{
-			return;
-		}
-
-	}
-	catch (...) { handle_exception(); }
-
-	void torrent::on_name_lookup(error_code const& e
-		, std::vector<address> const& addrs
-		, int const port
-		, std::list<web_seed_t>::iterator web) try
-	{
-	}
-	catch (...) { handle_exception(); }
-
-	void torrent::connect_web_seed(std::list<web_seed_t>::iterator web, tcp::endpoint a)
-	{
-		INVARIANT_CHECK;
-
-		TORRENT_ASSERT(is_single_thread());
-		if (m_abort) return;
-
-		if (m_ip_filter && m_ip_filter->access(a.address()) & ip_filter::blocked)
-		{
-			return;
-		}
 	}
 
 	void torrent::verify_block_hashes(piece_index_t index)
@@ -2391,26 +2289,6 @@ bool is_downloading_state(int const st)
 	}
 #endif
 
-	// add or remove a url that will be attempted for
-	// finding the file(s) in this torrent.
-	web_seed_t* torrent::add_web_seed(std::string const& url
-		, std::string const& auth
-		, web_seed_entry::headers_t const& extra_headers
-		, web_seed_flag_t const flags)
-	{
-		web_seed_t ent(url, auth, extra_headers);
-		ent.ephemeral = bool(flags & ephemeral);
-		ent.no_local_ips = bool(flags & no_local_ips);
-
-		// don't add duplicates
-		auto const it = std::find(m_web_seeds.begin(), m_web_seeds.end(), ent);
-		if (it != m_web_seeds.end()) return &*it;
-		m_web_seeds.emplace_back(std::move(ent));
-		set_need_save_resume();
-		update_want_tick();
-		return &m_web_seeds.back();
-	}
-
 	void torrent::set_session_paused(bool const b)
 	{
 		if (m_session_paused == b) return;
@@ -2826,18 +2704,6 @@ bool is_downloading_state(int const st)
 		TORRENT_ASSERT(is_single_thread());
 		std::set<std::string> ret;
 		return ret;
-	}
-
-	void torrent::remove_web_seed(std::string const& url)
-	{
-		auto const i = std::find_if(m_web_seeds.begin(), m_web_seeds.end()
-			, [&] (web_seed_t const& w) { return w.url == url; });
-
-		if (i != m_web_seeds.end())
-		{
-			remove_web_seed_iter(i);
-			set_need_save_resume();
-		}
 	}
 
 	bool torrent::try_connect_peer()

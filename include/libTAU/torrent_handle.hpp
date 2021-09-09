@@ -950,11 +950,8 @@ namespace aux {
 		// It's possible to cancel the effect of *file* priorities by setting the
 		// priorities for the affected pieces. Care has to be taken when mixing
 		// usage of file- and piece priorities.
-		void piece_priority(piece_index_t index, download_priority_t priority) const;
-		download_priority_t piece_priority(piece_index_t index) const;
 		void prioritize_pieces(std::vector<download_priority_t> const& pieces) const;
 		void prioritize_pieces(std::vector<std::pair<piece_index_t, download_priority_t>> const& pieces) const;
-		std::vector<download_priority_t> get_piece_priorities() const;
 
 #if TORRENT_ABI_VERSION == 1
 		TORRENT_DEPRECATED
@@ -962,7 +959,6 @@ namespace aux {
 		TORRENT_DEPRECATED
 		void prioritize_pieces(std::vector<std::pair<piece_index_t, int>> const& pieces) const;
 		TORRENT_DEPRECATED
-		std::vector<int> piece_priorities() const;
 #endif
 
 		// ``index`` must be in the range [0, number_of_files).

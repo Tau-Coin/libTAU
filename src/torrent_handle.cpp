@@ -348,16 +348,6 @@ namespace libTAU {
 		sync_call(&aux::torrent::piece_availability, availr);
 	}
 
-	void torrent_handle::piece_priority(piece_index_t index, download_priority_t priority) const
-	{
-		sync_call(&aux::torrent::set_piece_priority, index, priority);
-	}
-
-	download_priority_t torrent_handle::piece_priority(piece_index_t index) const
-	{
-		return sync_call_ret<download_priority_t>(dont_download, &aux::torrent::piece_priority, index);
-	}
-
 	void torrent_handle::prioritize_pieces(std::vector<download_priority_t> const& pieces) const
 	{
 		sync_call(&aux::torrent::prioritize_pieces
@@ -368,14 +358,6 @@ namespace libTAU {
 		, download_priority_t>> const& pieces) const
 	{
 		sync_call(&aux::torrent::prioritize_piece_list, pieces);
-	}
-
-	std::vector<download_priority_t> torrent_handle::get_piece_priorities() const
-	{
-		aux::vector<download_priority_t, piece_index_t> ret;
-		auto* const retp = &ret;
-		sync_call(&aux::torrent::piece_priorities, retp);
-		return std::move(ret);
 	}
 
 #if TORRENT_ABI_VERSION == 1
@@ -396,17 +378,6 @@ namespace libTAU {
 		sync_call(&aux::torrent::prioritize_piece_list, std::move(p));
 	}
 
-	std::vector<int> torrent_handle::piece_priorities() const
-	{
-		aux::vector<download_priority_t, piece_index_t> prio;
-		auto* const retp = &prio;
-		sync_call(&aux::torrent::piece_priorities, retp);
-		std::vector<int> ret;
-		ret.reserve(prio.size());
-		for (auto p : prio)
-			ret.push_back(int(static_cast<std::uint8_t>(p)));
-		return ret;
-	}
 #endif
 
 	void torrent_handle::file_priority(file_index_t index, download_priority_t priority) const
@@ -509,19 +480,16 @@ namespace libTAU {
 
 	void torrent_handle::add_url_seed(std::string const& url) const
 	{
-		sync_call(&aux::torrent::add_web_seed, url
-			, std::string(), web_seed_entry::headers_t(), aux::web_seed_flag_t{});
 	}
 
 	void torrent_handle::remove_url_seed(std::string const& url) const
 	{
-		sync_call(&aux::torrent::remove_web_seed, url);
 	}
 
 	std::set<std::string> torrent_handle::url_seeds() const
 	{
 		static const std::set<std::string> empty;
-		return sync_call_ret<std::set<std::string>>(empty, &aux::torrent::web_seeds);
+		return empty;
 	}
 
 #if TORRENT_ABI_VERSION < 4
@@ -543,7 +511,6 @@ namespace libTAU {
 
 	void torrent_handle::add_piece(piece_index_t piece, char const* data, add_piece_flags_t const flags) const
 	{
-		sync_call(&aux::torrent::add_piece, piece, data, flags);
 	}
 
 	void torrent_handle::read_piece(piece_index_t piece) const
