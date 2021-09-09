@@ -129,15 +129,6 @@ TORRENT_VERSION_NAMESPACE_3
 		// any.
 		std::vector<download_priority_t> file_priorities;
 
-		// torrent extension construction functions can be added to this vector
-		// to have them be added immediately when the torrent is constructed.
-		// This may be desired over the torrent_handle::add_extension() in order
-		// to avoid race conditions. For instance it may be important to have the
-		// plugin catch events that happen very early on after the torrent is
-		// created.
-		std::vector<std::function<std::shared_ptr<torrent_plugin>(torrent_handle const&, client_data_t)>>
-			extensions;
-
 		// the default tracker id to be used when announcing to trackers. By
 		// default this is empty, and no tracker ID is used, since this is an
 		// optional argument. If a tracker returns a tracker ID, that ID is used

@@ -23,14 +23,12 @@ see LICENSE file.
 
 #include "libTAU/config.hpp"
 #include "libTAU/alert.hpp"
-#include "libTAU/torrent_handle.hpp"
 #include "libTAU/socket.hpp"
 #include "libTAU/assert.hpp"
 #include "libTAU/identify_client.hpp"
 #include "libTAU/address.hpp"
 #include "libTAU/aux_/stat.hpp"
 #include "libTAU/add_torrent_params.hpp"
-#include "libTAU/torrent_status.hpp"
 #include "libTAU/entry.hpp"
 #include "libTAU/peer_request.hpp"
 #include "libTAU/performance_counters.hpp"
@@ -104,67 +102,6 @@ namespace libTAU {
 	};
 
 TORRENT_VERSION_NAMESPACE_3
-
-	// This is a base class for alerts that are associated with a
-	// specific torrent. It contains a handle to the torrent.
-	//
-	// Note that by the time the client receives a torrent_alert, its
-	// ``handle`` member may be invalid.
-	struct TORRENT_EXPORT torrent_alert : alert
-	{
-		// internal
-		TORRENT_UNEXPORT torrent_alert(aux::stack_allocator& alloc, torrent_handle const& h);
-		TORRENT_UNEXPORT torrent_alert(torrent_alert&&) noexcept = default;
-
-#if TORRENT_ABI_VERSION == 1
-		TORRENT_DEPRECATED static int const alert_type = 0;
-#endif
-
-		// returns the message associated with this alert
-		std::string message() const override;
-
-		// The torrent_handle pointing to the torrent this
-		// alert is associated with.
-		torrent_handle handle;
-
-		char const* torrent_name() const;
-
-	protected:
-		std::reference_wrapper<aux::stack_allocator const> m_alloc;
-	private:
-		aux::allocation_slot m_name_idx;
-#if TORRENT_ABI_VERSION == 1
-	public:
-		TORRENT_DEPRECATED std::string name;
-#endif
-	};
-
-	// The peer alert is a base class for alerts that refer to a specific peer. It includes all
-	// the information to identify the peer. i.e. ``ip`` and ``peer-id``.
-	struct TORRENT_EXPORT peer_alert : torrent_alert
-	{
-		// internal
-		TORRENT_UNEXPORT peer_alert(aux::stack_allocator& alloc, torrent_handle const& h,
-			tcp::endpoint const& i, peer_id const& pi);
-		TORRENT_UNEXPORT peer_alert(peer_alert&& rhs) noexcept = default;
-
-#if TORRENT_ABI_VERSION == 1
-		TORRENT_DEPRECATED static int const alert_type = 1;
-#endif
-
-		std::string message() const override;
-
-		// The peer's IP address and port.
-		aux::noexcept_movable<tcp::endpoint> endpoint;
-
-		// the peer ID, if known.
-		peer_id pid;
-
-#if TORRENT_ABI_VERSION == 1
-		// The peer's IP address and port.
-		TORRENT_DEPRECATED aux::noexcept_movable<tcp::endpoint> ip;
-#endif
-	};
 
 #define TORRENT_DEFINE_ALERT_IMPL(name, seq, prio) \
 	name(name&&) noexcept = default; \
@@ -529,58 +466,6 @@ TORRENT_VERSION_NAMESPACE_3
 
 #if TORRENT_ABI_VERSION <= 2
 #include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-
-	// This alert is posted approximately once every second, and it contains
-	// byte counters of most statistics that's tracked for torrents. Each active
-	// torrent posts these alerts regularly.
-	// This alert has been superseded by calling ``post_torrent_updates()``
-	// regularly on the session object. This alert will be removed
-	struct TORRENT_DEPRECATED_EXPORT stats_alert final : torrent_alert
-	{
-		// internal
-		TORRENT_UNEXPORT stats_alert(aux::stack_allocator& alloc, torrent_handle const& h, int interval
-			, aux::stat const& s);
-
-		TORRENT_DEFINE_ALERT(stats_alert, 11)
-
-		static inline constexpr alert_category_t static_category = alert_category::stats;
-		std::string message() const override;
-
-		enum stats_channel
-		{
-			upload_payload,
-			upload_protocol,
-			download_payload,
-			download_protocol,
-			upload_ip_protocol,
-#if TORRENT_ABI_VERSION == 1
-			upload_dht_protocol TORRENT_DEPRECATED_ENUM,
-			upload_tracker_protocol TORRENT_DEPRECATED_ENUM,
-#else
-			deprecated1,
-			deprecated2,
-#endif
-			download_ip_protocol,
-#if TORRENT_ABI_VERSION == 1
-			download_dht_protocol TORRENT_DEPRECATED_ENUM,
-			download_tracker_protocol TORRENT_DEPRECATED_ENUM,
-#else
-			deprecated3,
-			deprecated4,
-#endif
-			num_channels
-		};
-
-		// an array of samples. The enum describes what each sample is a
-		// measurement of. All of these are raw, and not smoothing is performed.
-		std::array<int, num_channels> const transferred;
-
-		// the number of milliseconds during which these stats were collected.
-		// This is typically just above 1000, but if CPU is limited, it may be
-		// higher than that.
-		int const interval;
-	};
-
 #include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #endif // TORRENT_ABI_VERSION
@@ -639,30 +524,6 @@ TORRENT_VERSION_NAMESPACE_3
 		// is the IP address and port the connection came from.
 		TORRENT_DEPRECATED aux::noexcept_movable<tcp::endpoint> ip;
 #endif
-	};
-
-	// This alert is only posted when requested by the user, by calling
-	// session::post_torrent_updates() on the session. It contains the torrent
-	// status of all torrents that changed since last time this message was
-	// posted. Its category is ``alert_category::status``, but it's not subject to
-	// filtering, since it's only manually posted anyway.
-	struct TORRENT_EXPORT state_update_alert final : alert
-	{
-		// internal
-		TORRENT_UNEXPORT state_update_alert(aux::stack_allocator& alloc
-			, std::vector<torrent_status> st);
-
-		TORRENT_DEFINE_ALERT_PRIO(state_update_alert, 15, alert_priority::high)
-
-		static inline constexpr alert_category_t static_category = alert_category::status;
-		std::string message() const override;
-
-		// contains the torrent status of all torrents that changed since last
-		// time this message was posted. Note that you can map a torrent status
-		// to a specific torrent via its ``handle`` member. The receiving end is
-		// suggested to have all torrents sorted by the torrent_handle or hashed
-		// by it, for efficient updates.
-		std::vector<torrent_status> status;
 	};
 
 	struct TORRENT_EXPORT session_stop_over_alert final : alert
@@ -907,53 +768,6 @@ TORRENT_VERSION_NAMESPACE_3
 
 	private:
 		std::reference_wrapper<aux::stack_allocator const> m_alloc;
-		aux::allocation_slot m_str_idx;
-	};
-
-	// This alert is posted by events specific to a peer. It's meant to be used
-	// for trouble shooting and debugging. It's not enabled by the default alert
-	// mask and is enabled by the ``alert_category::peer_log`` bit. By
-	// default it is disabled as a build configuration.
-	struct TORRENT_EXPORT peer_log_alert final : peer_alert
-	{
-		// describes whether this log refers to in-flow or out-flow of the
-		// peer. The exception is ``info`` which is neither incoming or outgoing.
-		enum direction_t
-		{
-			incoming_message,
-			outgoing_message,
-			incoming,
-			outgoing,
-			info
-		};
-
-		// internal
-		TORRENT_UNEXPORT peer_log_alert(aux::stack_allocator& alloc, torrent_handle const& h
-			, tcp::endpoint const& i, peer_id const& pi
-			, peer_log_alert::direction_t dir
-			, char const* event, char const* fmt, va_list v);
-
-		TORRENT_DEFINE_ALERT(peer_log_alert, 24)
-
-		static inline constexpr alert_category_t static_category = alert_category::peer_log;
-		std::string message() const override;
-
-		// string literal indicating the kind of event. For messages, this is the
-		// message name.
-		char const* event_type;
-
-		direction_t direction;
-
-		// returns the log message
-		char const* log_message() const;
-
-#if TORRENT_ABI_VERSION == 1
-		// returns the log message
-		TORRENT_DEPRECATED
-		char const* msg() const;
-#endif
-
-	private:
 		aux::allocation_slot m_str_idx;
 	};
 

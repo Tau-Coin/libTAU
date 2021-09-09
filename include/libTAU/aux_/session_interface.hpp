@@ -206,7 +206,6 @@ namespace libTAU::aux {
 
 		virtual libTAU::aux::utp_socket_manager* utp_socket_manager() = 0;
 		virtual void inc_boost_connections() = 0;
-		virtual std::vector<block_info>& block_info_storage() = 0;
 
 #ifdef TORRENT_SSL_PEERS
 		virtual libTAU::aux::utp_socket_manager* ssl_utp_socket_manager() = 0;

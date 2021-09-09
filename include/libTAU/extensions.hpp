@@ -16,7 +16,6 @@ see LICENSE file.
 #include "libTAU/units.hpp"
 #include "libTAU/flags.hpp"
 #include "libTAU/peer_info.hpp" // for peer_source_flags_t
-#include "libTAU/torrent_status.hpp" // for torrent_status::state_t
 
 // OVERVIEW
 //
@@ -201,12 +200,6 @@ TORRENT_VERSION_NAMESPACE_3
 		// for the new torrent. The client_data_t is the userdata pointer as
 		// passed in via add_torrent_params.
 		//
-		// If the plugin returns a torrent_plugin instance, it will be added
-		// to the new torrent. Otherwise, return an empty shared_ptr to a
-		// torrent_plugin (the default).
-		virtual std::shared_ptr<torrent_plugin> new_torrent(torrent_handle const&, client_data_t)
-		{ return std::shared_ptr<torrent_plugin>(); }
-
 		// called when plugin is added to a session
 		virtual void added(session_handle const&) {}
 
@@ -294,11 +287,6 @@ TORRENT_VERSION_NAMESPACE_3_END
 		// i.e. This function is always called when the torrent is in a state where it
 		// can start downloading.
 		virtual void on_files_checked() {}
-
-		// called when the torrent changes state
-		// the state is one of torrent_status::state_t
-		// enum members
-		virtual void on_state(torrent_status::state_t) {}
 
 		// this is the first time we see this peer
 		static inline constexpr add_peer_flags_t first_time = 1_bit;

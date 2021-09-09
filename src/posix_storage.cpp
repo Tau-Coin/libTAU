@@ -16,7 +16,6 @@ see LICENSE file.
 #include "libTAU/aux_/path.hpp" // for bufs_size
 #include "libTAU/aux_/open_mode.hpp"
 #include "libTAU/aux_/file_pointer.hpp"
-#include "libTAU/torrent_status.hpp"
 
 #if TORRENT_HAS_SYMLINK
 #include <unistd.h> // for symlink()
@@ -133,7 +132,6 @@ namespace aux {
 		if (m_part_file) m_part_file->flush_metadata(ec.ec);
 		if (ec)
 		{
-			ec.file(torrent_status::error_file_partfile);
 			ec.operation = operation_t::partfile_write;
 		}
 	}

@@ -18,7 +18,6 @@ see LICENSE file.
 #include "libTAU/session.hpp" // for session::delete_files
 #include "libTAU/aux_/stat_cache.hpp"
 #include "libTAU/add_torrent_params.hpp"
-#include "libTAU/torrent_status.hpp"
 #include "libTAU/error_code.hpp"
 
 #include <set>
@@ -304,7 +303,6 @@ namespace libTAU { namespace aux {
 			if (e)
 			{
 				ec.ec = e;
-				ec.file(torrent_status::error_file_partfile);
 				ec.operation = operation_t::partfile_move;
 			}
 		}

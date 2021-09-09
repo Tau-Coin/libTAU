@@ -99,8 +99,6 @@ TORRENT_VERSION_NAMESPACE_3_END
 	struct natpmp;
 	struct lsd;
 	struct alert;
-	struct torrent_handle;
-	struct peer_connection;
 
 namespace dht {
 
@@ -623,8 +621,6 @@ namespace aux {
 			bool verify_bound_address(address const& addr, bool utp
 				, error_code& ec) override;
 
-			std::vector<block_info>& block_info_storage() override { return m_block_info_storage; }
-
 			libTAU::aux::utp_socket_manager* utp_socket_manager() override
 			{ return &m_utp_socket_manager; }
 #ifdef TORRENT_SSL_PEERS
@@ -708,11 +704,6 @@ namespace aux {
 			// torrents and the disk cache (implicitly by holding references to the
 			// torrents) depend on this outliving them.
 			torrent_peer_allocator m_peer_allocator;
-
-			// this vector is used to store the block_info
-			// objects pointed to by partial_piece_info returned
-			// by torrent::get_download_queue.
-			std::vector<block_info> m_block_info_storage;
 
 			io_context& m_io_context;
 

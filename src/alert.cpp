@@ -52,74 +52,6 @@ namespace libTAU {
 	alert::~alert() = default;
 	time_point alert::timestamp() const { return m_timestamp; }
 
-	torrent_alert::torrent_alert(aux::stack_allocator& alloc
-		, torrent_handle const& h)
-		: handle(h)
-		, m_alloc(alloc)
-	{
-		auto t = h.native_handle();
-		if (t)
-		{
-			std::string name_str = t->name();
-			if (!name_str.empty())
-			{
-				m_name_idx = alloc.copy_string(name_str);
-			}
-			else
-			{
-				if (t->info_hash().has_v2())
-					m_name_idx = alloc.copy_string(aux::to_hex(t->info_hash().v2));
-				else
-					m_name_idx = alloc.copy_string(aux::to_hex(t->info_hash().v1));
-			}
-		}
-		else
-		{
-			m_name_idx = alloc.copy_string("");
-		}
-
-#if TORRENT_ABI_VERSION == 1
-		name = m_alloc.get().ptr(m_name_idx);
-#endif
-	}
-
-	char const* torrent_alert::torrent_name() const
-	{
-		return m_alloc.get().ptr(m_name_idx);
-	}
-
-	std::string torrent_alert::message() const
-	{
-#ifdef TORRENT_DISABLE_ALERT_MSG
-		return {};
-#else
-		if (!handle.is_valid()) return " - ";
-		return torrent_name();
-#endif
-	}
-
-	peer_alert::peer_alert(aux::stack_allocator& alloc
-		, torrent_handle const& h
-		, tcp::endpoint const& i
-		, peer_id const& pi)
-		: torrent_alert(alloc, h)
-		, endpoint(i)
-		, pid(pi)
-#if TORRENT_ABI_VERSION == 1
-		, ip(i)
-#endif
-	{}
-
-	std::string peer_alert::message() const
-	{
-#ifdef TORRENT_DISABLE_ALERT_MSG
-		return {};
-#else
-		return torrent_alert::message() + " peer [ " + print_endpoint(endpoint)
-			+ " client: " + aux::identify_client_impl(pid) + " ]";
-#endif
-	}
-
 namespace {
 
 #ifndef TORRENT_DISABLE_ALERT_MSG
@@ -529,42 +461,6 @@ namespace {
 			return arr;
 		}
 	}
-
-	stats_alert::stats_alert(aux::stack_allocator& alloc
-		, torrent_handle const& h, int in, aux::stat const& s)
-		: torrent_alert(alloc, h)
-		, transferred(stat_to_array(s))
-		, interval(in)
-	{}
-
-	std::string stats_alert::message() const
-	{
-#ifdef TORRENT_DISABLE_ALERT_MSG
-		return {};
-#else
-		char msg[200];
-		std::snprintf(msg, sizeof(msg), "%s: [%d] %d %d %d %d %d %d"
-#if TORRENT_ABI_VERSION == 1
-			" %d %d %d %d"
-#endif
-			, torrent_alert::message().c_str()
-			, interval
-			, transferred[0]
-			, transferred[1]
-			, transferred[2]
-			, transferred[3]
-			, transferred[4]
-			, transferred[5]
-#if TORRENT_ABI_VERSION == 1
-			, transferred[6]
-			, transferred[7]
-			, transferred[8]
-			, transferred[9]
-#endif
-			);
-		return msg;
-#endif
-	}
 #endif // TORRENT_ABI_VERSION
 
 
@@ -613,22 +509,6 @@ namespace {
 		char msg[600];
 		std::snprintf(msg, sizeof(msg), "incoming connection from %s (%s)"
 			, print_endpoint(endpoint).c_str(), socket_type_name(socket_type));
-		return msg;
-#endif
-	}
-
-	state_update_alert::state_update_alert(aux::stack_allocator&
-		, std::vector<torrent_status> st)
-		: status(std::move(st))
-	{}
-
-	std::string state_update_alert::message() const
-	{
-#ifdef TORRENT_DISABLE_ALERT_MSG
-		return {};
-#else
-		char msg[600];
-		std::snprintf(msg, sizeof(msg), "state updates for %d torrents", int(status.size()));
 		return msg;
 #endif
 	}
@@ -895,41 +775,6 @@ namespace {
 		return {};
 #else
 		return log_message();
-#endif
-	}
-
-	peer_log_alert::peer_log_alert(aux::stack_allocator& alloc
-		, torrent_handle const& h
-		, tcp::endpoint const& i, peer_id const& pi
-		, peer_log_alert::direction_t dir
-		, char const* event, char const* fmt, va_list v)
-		: peer_alert(alloc, h, i, pi)
-		, event_type(event)
-		, direction(dir)
-		, m_str_idx(alloc.format_string(fmt, v))
-	{}
-
-	char const* peer_log_alert::log_message() const
-	{
-		return m_alloc.get().ptr(m_str_idx);
-	}
-
-#if TORRENT_ABI_VERSION == 1
-	char const* peer_log_alert::msg() const
-	{
-		return log_message();
-	}
-#endif
-
-	std::string peer_log_alert::message() const
-	{
-#ifdef TORRENT_DISABLE_ALERT_MSG
-		return {};
-#else
-		static char const* const mode[] =
-		{ "<==", "==>", "<<<", ">>>", "***" };
-		return peer_alert::message() + " [" + print_endpoint(endpoint) + "] "
-			+ mode[direction] + " " + event_type + " [ " + log_message() + " ]";
 #endif
 	}
 
@@ -1461,7 +1306,6 @@ namespace {
 		"dht_announce", "dht_get_peers", "stats",
 		"dht_bootstrap", "session_start_over",
 		"incoming_connection",
-		"state_update",
 #if TORRENT_ABI_VERSION == 1
 		"mmap_cache",
 #else

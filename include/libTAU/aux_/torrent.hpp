@@ -36,7 +36,6 @@ see LICENSE file.
 #include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include "libTAU/fwd.hpp"
-#include "libTAU/torrent_handle.hpp"
 #include "libTAU/entry.hpp"
 #include "libTAU/torrent_info.hpp"
 #include "libTAU/socket.hpp"
@@ -96,7 +95,6 @@ namespace libTAU::aux {
 		// by what time we want this piece
 		time_point deadline;
 		// 1 = send alert with piece data when available
-		deadline_flags_t flags;
 		// how many peers it's been requested from
 		int peers;
 		// the piece index
@@ -307,10 +305,6 @@ namespace libTAU::aux {
 
 		void new_external_ip();
 
-		torrent_status::state_t state() const
-		{ return torrent_status::state_t(m_state); }
-		void set_state(torrent_status::state_t s);
-
 		aux::session_settings const& settings() const;
 		aux::session_interface& session() { return m_ses; }
 
@@ -341,8 +335,6 @@ namespace libTAU::aux {
 		stat statistics() const { return m_stat; }
 		std::optional<std::int64_t> bytes_left() const;
 
-		void bytes_done(torrent_status& st, status_flags_t) const;
-
 		void sent_bytes(int bytes_payload, int bytes_protocol);
 		void received_bytes(int bytes_payload, int bytes_protocol);
 		void trancieve_ip_packet(int bytes, bool ipv6);
@@ -364,11 +356,9 @@ namespace libTAU::aux {
 		error_code error() const { return m_error; }
 
 		void flush_cache();
-		void pause(pause_flags_t flags = {});
 		void resume();
 
 		void set_session_paused(bool b);
-		void set_paused(bool b, pause_flags_t flags = torrent_handle::clear_disk_cache);
 		void set_announce_to_dht(bool b) { m_announce_to_dht = b; }
 		void set_announce_to_trackers(bool b) { m_announce_to_trackers = b; }
 		void set_announce_to_lsd(bool b) { m_announce_to_lsd = b; }
@@ -377,7 +367,6 @@ namespace libTAU::aux {
 
 		time_point32 started() const { return m_started; }
 		void step_session_time(int seconds);
-		void do_pause(pause_flags_t flags = torrent_handle::clear_disk_cache, bool was_paused = false);
 		void do_resume();
 
 		seconds32 finished_time() const;
@@ -388,7 +377,6 @@ namespace libTAU::aux {
 		bool is_paused() const;
 		bool is_torrent_paused() const { return m_paused; }
 		void force_recheck();
-		void save_resume_data(resume_data_flags_t flags);
 
 		bool need_save_resume_data() const { return m_need_save_resume_data; }
 
@@ -402,7 +390,6 @@ namespace libTAU::aux {
 
 		bool should_check_files() const;
 
-		bool delete_files(remove_flags_t options);
 		void peers_erased(std::vector<torrent_peer*> const& peers);
 
 		void piece_availability(aux::vector<int, piece_index_t>& avail) const;
@@ -419,12 +406,9 @@ namespace libTAU::aux {
 
 #ifndef TORRENT_DISABLE_STREAMING
 		void cancel_non_critical();
-		void set_piece_deadline(piece_index_t piece, int t, deadline_flags_t flags);
 		void reset_piece_deadline(piece_index_t piece);
 		void clear_time_critical();
 #endif // TORRENT_DISABLE_STREAMING
-
-		void status(torrent_status* st, status_flags_t flags);
 
 		// this torrent changed state, if the user is subscribing to
 		// it, add it to the m_state_updates list in session_impl
@@ -484,15 +468,12 @@ namespace libTAU::aux {
 
 		bool try_connect_peer();
 		bool ban_peer(torrent_peer* tp);
-		void update_peer_port(int port, torrent_peer* p, peer_source_flags_t src);
 		void set_seed(torrent_peer* p, bool s);
 		void clear_failcount(torrent_peer* p);
 
 		// the number of peers that belong to this torrent
 		int num_seeds() const;
 		int num_downloaders() const;
-
-		void get_download_queue(std::vector<partial_piece_info>* queue) const;
 
 		void update_auto_sequential();
 	public:
@@ -536,7 +517,6 @@ namespace libTAU::aux {
 		void do_connect_boost();
 
 		// forcefully sets next_announce to the current time
-		void force_tracker_request(time_point, int tracker_idx, reannounce_flags_t flags);
 		void scrape_tracker(int idx, bool user_triggered);
 		void announce_with_tracker(event_t e = event_t::none);
 
@@ -725,10 +705,6 @@ namespace libTAU::aux {
 		// entry in the list)
 		bool add_tracker(lt::announce_entry const& url);
 
-		torrent_handle get_handle();
-
-		void write_resume_data(resume_data_flags_t const flags, add_torrent_params& ret) const;
-
 		void seen_complete() { m_last_seen_complete = ::time(nullptr); }
 		int time_since_complete() const { return int(::time(nullptr) - m_last_seen_complete); }
 		time_t last_seen_complete() const { return m_last_seen_complete; }
@@ -752,9 +728,6 @@ namespace libTAU::aux {
 
 // --------------------------------------------
 		// RESOURCE MANAGEMENT
-
-		// flags are defined in storage.hpp
-		void move_storage(std::string const& save_path, move_flags_t flags);
 
 		// renames the file with the given index to the new name
 		// the name may include a directory path
@@ -859,8 +832,6 @@ namespace libTAU::aux {
 			return m_suggest_pieces.get_pieces(p, bits, n);
 		}
 		void add_suggest_piece(piece_index_t index);
-
-		client_data_t get_userdata() const { return m_userdata; }
 
 		static constexpr int no_gauge_state = 0xf;
 
@@ -1328,9 +1299,6 @@ namespace libTAU::aux {
 		// the timestamp of the last byte uploaded from this torrent specified in
 		// seconds since epoch.
 		time_point32 m_last_upload{seconds32(0)};
-
-		// user data as passed in by add_torrent_params
-		client_data_t m_userdata;
 
 // ----
 

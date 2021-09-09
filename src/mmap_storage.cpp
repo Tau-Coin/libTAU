@@ -194,7 +194,6 @@ namespace libTAU::aux {
 		if (m_part_file) m_part_file->flush_metadata(ec.ec);
 		if (ec)
 		{
-			ec.file(torrent_status::error_file_partfile);
 			ec.operation = operation_t::partfile_write;
 		}
 	}
@@ -366,7 +365,6 @@ namespace libTAU::aux {
 
 		if (ec)
 		{
-			ec.file(torrent_status::error_file_partfile);
 			ec.operation = operation_t::file_stat;
 			return false;
 		}

@@ -28,8 +28,6 @@ struct alert;
 // include/libTAU/alert_types.hpp
 struct dht_routing_bucket;
 TORRENT_VERSION_NAMESPACE_3
-struct torrent_alert;
-struct peer_alert;
 struct udp_error_alert;
 struct external_ip_alert;
 struct listen_failed_alert;
@@ -42,7 +40,6 @@ struct dht_get_peers_alert;
 struct dht_bootstrap_alert;
 struct session_start_over_alert;
 struct incoming_connection_alert;
-struct state_update_alert;
 struct session_stats_alert;
 struct dht_error_alert;
 struct session_stop_over_alert;
@@ -51,7 +48,6 @@ struct dht_mutable_item_alert;
 struct dht_put_alert;
 struct dht_outgoing_get_peers_alert;
 struct log_alert;
-struct peer_log_alert;
 struct dht_lookup;
 struct dht_stats_alert;
 struct dht_log_alert;
@@ -187,21 +183,11 @@ struct settings_pack;
 // include/libTAU/storage_defs.hpp
 struct storage_params;
 
-// include/libTAU/torrent_handle.hpp
-struct block_info;
-struct partial_piece_info;
-struct torrent_handle;
-
 // include/libTAU/torrent_info.hpp
 struct web_seed_entry;
 struct load_torrent_limits;
 TORRENT_VERSION_NAMESPACE_3
 class torrent_info;
-TORRENT_VERSION_NAMESPACE_3_END
-
-// include/libTAU/torrent_status.hpp
-TORRENT_VERSION_NAMESPACE_3
-struct torrent_status;
 TORRENT_VERSION_NAMESPACE_3_END
 
 #if TORRENT_ABI_VERSION <= 2
