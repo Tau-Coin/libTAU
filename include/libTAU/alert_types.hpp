@@ -36,7 +36,6 @@ see LICENSE file.
 #include "libTAU/performance_counters.hpp"
 #include "libTAU/operations.hpp" // for operation_t enum
 #include "libTAU/close_reason.hpp"
-#include "libTAU/piece_block.hpp"
 #include "libTAU/aux_/escape_string.hpp" // for convert_from_native
 #include "libTAU/string_view.hpp"
 #include "libTAU/aux_/stack_allocator.hpp"
@@ -1170,53 +1169,6 @@ TORRENT_VERSION_NAMESPACE_3
 	public:
 		TORRENT_DEPRECATED aux::noexcept_movable<udp::endpoint> addr;
 #endif
-	};
-
-	// hidden
-	using picker_flags_t = flags::bitfield_flag<std::uint32_t, struct picker_flags_tag>;
-
-	// this is posted when one or more blocks are picked by the piece picker,
-	// assuming the verbose piece picker logging is enabled (see
-	// alert_category::picker_log).
-	struct TORRENT_EXPORT picker_log_alert final : peer_alert
-	{
-		// internal
-		TORRENT_UNEXPORT picker_log_alert(aux::stack_allocator& alloc, torrent_handle const& h
-			, tcp::endpoint const& ep, peer_id const& peer_id, picker_flags_t flags
-			, span<piece_block const> blocks);
-
-		TORRENT_DEFINE_ALERT(picker_log_alert, 30)
-
-		static inline constexpr alert_category_t static_category = alert_category::picker_log;
-		std::string message() const override;
-
-		static inline constexpr picker_flags_t partial_ratio = 0_bit;
-		static inline constexpr picker_flags_t prioritize_partials = 1_bit;
-		static inline constexpr picker_flags_t rarest_first_partials = 2_bit;
-		static inline constexpr picker_flags_t rarest_first = 3_bit;
-		static inline constexpr picker_flags_t reverse_rarest_first = 4_bit;
-		static inline constexpr picker_flags_t suggested_pieces = 5_bit;
-		static inline constexpr picker_flags_t prio_sequential_pieces = 6_bit;
-		static inline constexpr picker_flags_t sequential_pieces = 7_bit;
-		static inline constexpr picker_flags_t reverse_pieces = 8_bit;
-		static inline constexpr picker_flags_t time_critical = 9_bit;
-		static inline constexpr picker_flags_t random_pieces = 10_bit;
-		static inline constexpr picker_flags_t prefer_contiguous = 11_bit;
-		static inline constexpr picker_flags_t reverse_sequential = 12_bit;
-		static inline constexpr picker_flags_t backup1 = 13_bit;
-		static inline constexpr picker_flags_t backup2 = 14_bit;
-		static inline constexpr picker_flags_t end_game = 15_bit;
-		static inline constexpr picker_flags_t extent_affinity = 16_bit;
-
-		// this is a bitmask of which features were enabled for this particular
-		// pick. The bits are defined in the picker_flags_t enum.
-		picker_flags_t picker_flags;
-
-		std::vector<piece_block> blocks() const;
-
-	private:
-		aux::allocation_slot m_array_idx;
-		int const m_num_blocks;
 	};
 
 	// this alert is posted when the session encounters a serious error,

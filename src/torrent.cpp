@@ -462,11 +462,6 @@ bool is_downloading_state(int const st)
 	{
 	}
 
-	void torrent::need_peer_list()
-	{
-		if (m_peer_list) return;
-	}
-
 	void torrent::handle_exception()
 	{
 		try
@@ -508,11 +503,6 @@ bool is_downloading_state(int const st)
 		}
 	}
 
-	void torrent::on_piece_fail_sync(piece_index_t, piece_block) try
-	{
-	}
-	catch (...) { handle_exception(); }
-
 	void torrent::on_disk_read_complete(disk_buffer_holder buffer
 		, storage_error const& se
 		, peer_request const&  r, std::shared_ptr<read_piece_struct> rp) try
@@ -526,8 +516,6 @@ bool is_downloading_state(int const st)
 
 	void torrent::clear_peers()
 	{
-		disconnect_all(error_code(), operation_t::unknown);
-		if (m_peer_list) m_peer_list->clear();
 	}
 
 	void torrent::set_sequential_range(piece_index_t first_piece, piece_index_t last_piece)
@@ -543,21 +531,6 @@ bool is_downloading_state(int const st)
 	{
 	}
 	catch (...) { handle_exception(); }
-
-	peer_request torrent::to_req(piece_block const& p) const
-	{
-		int block_offset = p.block_index * block_size();
-		int block = std::min(torrent_file().piece_size(
-			p.piece_index) - block_offset, block_size());
-		TORRENT_ASSERT(block > 0);
-		TORRENT_ASSERT(block <= block_size());
-
-		peer_request r;
-		r.piece = p.piece_index;
-		r.start = block_offset;
-		r.length = block;
-		return r;
-	}
 
 	std::string torrent::name() const
 	{
@@ -1264,15 +1237,6 @@ bool is_downloading_state(int const st)
 	// destructing everything.
 	void torrent::panic()
 	{
-		m_storage.reset();
-		// if there are any other peers allocated still, we need to clear them
-		// now. They can't be cleared later because the allocator will already
-		// have been destructed
-		if (m_peer_list) m_peer_list->clear();
-		m_outgoing_pids.clear();
-		m_num_uploads = 0;
-		m_num_connecting = 0;
-		m_num_connecting_seeds = 0;
 	}
 
 #ifndef TORRENT_DISABLE_SUPERSEEDING
@@ -1489,10 +1453,6 @@ bool is_downloading_state(int const st)
 	{
 	}
 
-	void torrent::cancel_block(piece_block block)
-	{
-	}
-
 #ifdef TORRENT_SSL_PEERS
 	// certificate is a filename to a .pem file which is our
 	// certificate. The certificate must be signed by the root
@@ -1706,12 +1666,6 @@ bool is_downloading_state(int const st)
 	void torrent::write_resume_data(resume_data_flags_t const flags, add_torrent_params& ret) const
 	{
 	}
-
-#if TORRENT_ABI_VERSION == 1
-	void torrent::get_full_peer_list(std::vector<peer_list_entry>* v) const
-	{
-	}
-#endif
 
 	void torrent::get_download_queue(std::vector<partial_piece_info>* queue) const
 	{
@@ -2323,13 +2277,6 @@ bool is_downloading_state(int const st)
 	// currently representable by the session_time)
 	void torrent::step_session_time(int const seconds)
 	{
-		if (!m_peer_list) return;
-		for (auto* pe : *m_peer_list)
-		{
-			pe->last_optimistically_unchoked
-				= clamped_subtract_u16(pe->last_optimistically_unchoked, seconds);
-			pe->last_connected = clamped_subtract_u16(pe->last_connected, seconds);
-		}
 	}
 
 	// the higher seed rank, the more important to seed
@@ -2893,22 +2840,6 @@ bool is_downloading_state(int const st)
 		}
 	}
 
-	torrent_state torrent::get_peer_list_state()
-	{
-		torrent_state ret;
-		ret.is_finished = is_finished();
-		ret.allow_multiple_connections_per_ip = settings().get_bool(settings_pack::allow_multiple_connections_per_ip);
-		ret.max_peerlist_size = is_paused()
-			? settings().get_int(settings_pack::max_paused_peerlist_size)
-			: settings().get_int(settings_pack::max_peerlist_size);
-		ret.min_reconnect_time = settings().get_int(settings_pack::min_reconnect_time);
-
-		ret.ip = m_ses.external_address();
-		ret.port = m_ses.listen_port();
-		ret.max_failcount = settings().get_int(settings_pack::max_failcount);
-		return ret;
-	}
-
 	bool torrent::try_connect_peer()
 	{
 		return true;
@@ -2916,57 +2847,20 @@ bool is_downloading_state(int const st)
 
 	bool torrent::ban_peer(torrent_peer* tp)
 	{
-		if (!settings().get_bool(settings_pack::ban_web_seeds) && tp->web_seed)
-			return false;
-
-		need_peer_list();
-		if (!m_peer_list->ban_peer(tp)) return false;
-		update_want_peers();
-
-		inc_stats_counter(counters::num_banned_peers);
 		return true;
 	}
 
 	void torrent::set_seed(torrent_peer* p, bool const s)
 	{
-		if (bool(p->seed) == s) return;
-		if (s)
-		{
-			TORRENT_ASSERT(m_num_seeds < 0xffff);
-			++m_num_seeds;
-		}
-		else
-		{
-			TORRENT_ASSERT(m_num_seeds > 0);
-			--m_num_seeds;
-		}
-
-		need_peer_list();
-		m_peer_list->set_seed(p, s);
-		update_auto_sequential();
 	}
 
 	void torrent::clear_failcount(torrent_peer* p)
 	{
-		need_peer_list();
-		m_peer_list->set_failcount(p, 0);
-		update_want_peers();
-	}
-
-	std::pair<peer_list::iterator, peer_list::iterator> torrent::find_peers(address const& a)
-	{
-		need_peer_list();
-		return m_peer_list->find_peers(a);
 	}
 
 	void torrent::update_peer_port(int const port, torrent_peer* p
 		, peer_source_flags_t const src)
 	{
-		need_peer_list();
-		torrent_state st = get_peer_list_state();
-		m_peer_list->update_peer_port(port, p, src, &st);
-		peers_erased(st.erased);
-		update_want_peers();
 	}
 
 	// verify piece is used when checking resume data or when the user
@@ -2985,27 +2879,10 @@ bool is_downloading_state(int const st)
 
 	void torrent::ip_filter_updated()
 	{
-		if (!m_apply_ip_filter) return;
-		if (!m_peer_list) return;
-		if (!m_ip_filter) return;
-
-		torrent_state st = get_peer_list_state();
-		std::vector<address> banned;
-		m_peer_list->apply_ip_filter(*m_ip_filter, &st, banned);
-
-		peers_erased(st.erased);
 	}
 
 	void torrent::port_filter_updated()
 	{
-		if (!m_apply_ip_filter) return;
-		if (!m_peer_list) return;
-
-		torrent_state st = get_peer_list_state();
-		std::vector<address> banned;
-		m_peer_list->apply_port_filter(m_ses.get_port_filter(), &st, banned);
-
-		peers_erased(st.erased);
 	}
 
 	// this is called when torrent_peers are removed from the peer_list
@@ -3017,7 +2894,6 @@ bool is_downloading_state(int const st)
 
 	void torrent::new_external_ip()
 	{
-		if (m_peer_list) m_peer_list->clear_peer_prio();
 	}
 
 	void torrent::stop_when_ready(bool const b)

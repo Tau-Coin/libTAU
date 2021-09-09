@@ -41,7 +41,6 @@ see LICENSE file.
 #include "libTAU/torrent_info.hpp"
 #include "libTAU/socket.hpp"
 #include "libTAU/address.hpp"
-#include "libTAU/aux_/peer_list.hpp"
 #include "libTAU/aux_/tracker_manager.hpp"
 #include "libTAU/aux_/stat.hpp"
 #include "libTAU/alert.hpp"
@@ -276,8 +275,6 @@ namespace libTAU::aux {
 
 		// the state of this torrent (queued, checking, downloading, etc.)
 		std::uint32_t m_state:3;
-
-		std::unique_ptr<aux::peer_list> m_peer_list;
 	};
 
 	// a torrent is a class that holds information
@@ -578,10 +575,6 @@ namespace libTAU::aux {
 		void trigger_unchoke() noexcept;
 		void trigger_optimistic_unchoke() noexcept;
 
-		// cancel requests to this block from any peer we're
-		// connected to on this torrent
-		void cancel_block(piece_block block);
-
 		bool want_tick() const;
 		void update_want_tick();
 		void update_state_list();
@@ -595,21 +588,15 @@ namespace libTAU::aux {
 		void update_gauge();
 
 		bool try_connect_peer();
-		torrent_peer* add_peer(tcp::endpoint const& adr
-			, peer_source_flags_t source, pex_flags_t flags = {});
 		bool ban_peer(torrent_peer* tp);
 		void update_peer_port(int port, torrent_peer* p, peer_source_flags_t src);
 		void set_seed(torrent_peer* p, bool s);
 		void clear_failcount(torrent_peer* p);
-		std::pair<aux::peer_list::iterator, aux::peer_list::iterator> find_peers(address const& a);
 
 		// the number of peers that belong to this torrent
 		int num_seeds() const;
 		int num_downloaders() const;
 
-#if TORRENT_ABI_VERSION == 1
-		void get_full_peer_list(std::vector<peer_list_entry>* v) const;
-#endif
 		void get_download_queue(std::vector<partial_piece_info>* queue) const;
 
 		void update_auto_sequential();
@@ -733,8 +720,6 @@ namespace libTAU::aux {
 				? (std::min)(m_torrent_file->piece_length(), default_block_size)
 				: default_block_size;
 		}
-		peer_request to_req(piece_block const& p) const;
-
 		void disconnect_all(error_code const& ec, operation_t op);
 		int disconnect_peers(int num, error_code const& ec);
 
@@ -814,9 +799,6 @@ namespace libTAU::aux {
 		// i.e. resetting the piece
 		void on_piece_sync(piece_index_t piece, std::vector<int> const& blocks);
 
-		// this is the handler for write failure piece synchronization
-		void on_piece_fail_sync(piece_index_t piece, piece_block b);
-
 		void add_redundant_bytes(int b, waste_reason reason);
 		void add_failed_bytes(int b);
 
@@ -834,13 +816,7 @@ namespace libTAU::aux {
 
 		void update_max_failcount()
 		{
-			if (!m_peer_list) return;
-			torrent_state st = get_peer_list_state();
-			m_peer_list->set_max_failcount(&st);
 		}
-		int num_known_peers() const { return m_peer_list ? m_peer_list->num_peers() : 0; }
-		int num_connect_candidates() const { return m_peer_list ? m_peer_list->num_connect_candidates() : 0; }
-
 		void clear_peers();
 
 		bool has_storage() const { return bool(m_storage); }
@@ -971,8 +947,6 @@ namespace libTAU::aux {
 
 		void inc_num_connecting(torrent_peer* pp)
 		{
-			++m_num_connecting;
-			if (pp->seed) ++m_num_connecting_seeds;
 		}
 		void dec_num_connecting(torrent_peer* pp)
 		{
@@ -1023,11 +997,6 @@ namespace libTAU::aux {
 
 		void inc_stats_counter(int c, int value = 1);
 
-		// initialize the torrent_state structure passed to peer_list
-		// member functions. Don't forget to also call peers_erased()
-		// on the erased member after the peer_list call
-		torrent_state get_peer_list_state();
-
 		void construct_storage();
 		void update_list(torrent_list_index_t list, bool in);
 
@@ -1069,8 +1038,6 @@ namespace libTAU::aux {
 		void remove_time_critical_pieces(aux::vector<download_priority_t, piece_index_t> const& priority);
 		void request_time_critical_pieces();
 #endif // TORRENT_DISABLE_STREAMING
-
-		void need_peer_list();
 
 		std::shared_ptr<const ip_filter> m_ip_filter;
 

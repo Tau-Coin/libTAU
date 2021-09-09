@@ -40,7 +40,6 @@ see LICENSE file.
 #include "libTAU/peer_id.hpp"
 #include "libTAU/aux_/debug.hpp"
 #include "libTAU/aux_/tracker_manager.hpp"
-#include "libTAU/aux_/piece_block_progress.hpp"
 #include "libTAU/ip_filter.hpp"
 #include "libTAU/aux_/ip_notifier.hpp"
 #include "libTAU/session_status.hpp"

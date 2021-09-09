@@ -626,7 +626,6 @@ namespace libTAU {
 	void torrent_handle::connect_peer(tcp::endpoint const& adr
 		, peer_source_flags_t const source, pex_flags_t const flags) const
 	{
-		sync_call(&aux::torrent::add_peer, adr, source, flags);
 	}
 
 	void torrent_handle::clear_peers()

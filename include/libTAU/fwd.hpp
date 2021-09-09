@@ -165,9 +165,6 @@ struct peer_request;
 // include/libTAU/performance_counters.hpp
 struct counters;
 
-// include/libTAU/piece_block.hpp
-struct piece_block;
-
 // include/libTAU/session.hpp
 struct session_proxy;
 struct session;

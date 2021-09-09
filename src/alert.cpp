@@ -32,7 +32,6 @@ see LICENSE file.
 #include "libTAU/aux_/torrent.hpp"
 #include "libTAU/performance_counters.hpp"
 #include "libTAU/aux_/stack_allocator.hpp"
-#include "libTAU/piece_block.hpp"
 #include "libTAU/hex.hpp" // to_hex
 #include "libTAU/session_stats.hpp"
 #include "libTAU/socket_type.hpp"
@@ -1220,80 +1219,6 @@ namespace {
 		bdecode(start, end, ret, ec);
 		TORRENT_ASSERT(!ec);
 		return ret;
-	}
-
-	picker_log_alert::picker_log_alert(aux::stack_allocator& alloc, torrent_handle const& h
-		, tcp::endpoint const& ep, peer_id const& peer_id, picker_flags_t const flags
-		, span<piece_block const> blocks)
-		: peer_alert(alloc, h, ep, peer_id)
-		, picker_flags(flags)
-		, m_array_idx(alloc.copy_buffer({reinterpret_cast<char const*>(blocks.data())
-			, blocks.size() * int(sizeof(piece_block))}))
-		, m_num_blocks(int(blocks.size()))
-	{}
-
-	std::vector<piece_block> picker_log_alert::blocks() const
-	{
-		// we need to copy this array to make sure the structures are properly
-		// aligned, not just to have a nice API
-		auto const num_blocks = aux::numeric_cast<std::size_t>(m_num_blocks);
-		std::vector<piece_block> ret(num_blocks);
-
-		char const* start = m_alloc.get().ptr(m_array_idx);
-		std::memcpy(ret.data(), start, num_blocks * sizeof(piece_block));
-
-		return ret;
-	}
-
-	std::string picker_log_alert::message() const
-	{
-#ifdef TORRENT_DISABLE_ALERT_MSG
-		return {};
-#else
-		static char const* const flag_names[] =
-		{
-			"partial_ratio ",
-			"prioritize_partials ",
-			"rarest_first_partials ",
-			"rarest_first ",
-			"reverse_rarest_first ",
-			"suggested_pieces ",
-			"prio_sequential_pieces ",
-			"sequential_pieces ",
-			"reverse_pieces ",
-			"time_critical ",
-			"random_pieces ",
-			"prefer_contiguous ",
-			"reverse_sequential ",
-			"backup1 ",
-			"backup2 ",
-			"end_game ",
-			"extent_affinity ",
-		};
-
-		std::string ret = peer_alert::message();
-
-		auto flags = static_cast<std::uint32_t>(picker_flags);
-		int idx = 0;
-		ret += " picker_log [ ";
-		for (; flags != 0; flags >>= 1, ++idx)
-		{
-			if ((flags & 1) == 0) continue;
-			ret += flag_names[idx];
-		}
-		ret += "] ";
-
-		std::vector<piece_block> b = blocks();
-
-		for (auto const& p : b)
-		{
-			char buf[50];
-			std::snprintf(buf, sizeof(buf), "(%d,%d) "
-				, static_cast<int>(p.piece_index), p.block_index);
-			ret += buf;
-		}
-		return ret;
-#endif
 	}
 
 	session_error_alert::session_error_alert(aux::stack_allocator& alloc

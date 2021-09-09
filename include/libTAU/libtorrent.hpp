@@ -71,7 +71,6 @@
 #include "libTAU/peer_request.hpp"
 #include "libTAU/performance_counters.hpp"
 #include "libTAU/pex_flags.hpp"
-#include "libTAU/piece_block.hpp"
 #include "libTAU/portmap.hpp"
 #include "libTAU/posix_disk_io.hpp"
 #include "libTAU/session.hpp"
