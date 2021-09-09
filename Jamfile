@@ -820,7 +820,6 @@ SOURCES =
 	puff
 	random
 	receive_buffer
-	resolve_links
 	session
 	session_params
 	session_handle
@@ -836,7 +835,6 @@ SOURCES =
 	stat
 	storage_utils
 	torrent
-	torrent_info
 	time
 	tracker_manager
 	udp_tracker_connection

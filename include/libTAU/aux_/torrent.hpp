@@ -37,7 +37,6 @@ see LICENSE file.
 
 #include "libTAU/fwd.hpp"
 #include "libTAU/entry.hpp"
-#include "libTAU/torrent_info.hpp"
 #include "libTAU/socket.hpp"
 #include "libTAU/address.hpp"
 #include "libTAU/aux_/tracker_manager.hpp"
@@ -115,10 +114,6 @@ namespace libTAU::aux {
 			, add_torrent_params const& p, bool session_paused);
 
 	protected:
-
-		// TODO: make this a raw pointer. perhaps keep the shared_ptr
-		// around further down the object to maintain an owner
-		std::shared_ptr<torrent_info> m_torrent_file;
 
 		// a back reference to the session
 		// this torrent belongs to.
@@ -280,18 +275,9 @@ namespace libTAU::aux {
 			, peer_request const& p);
 
 		void set_progress_ppm(int p) { m_progress_ppm = std::uint32_t(p); }
-		struct read_piece_struct
-		{
-			boost::shared_array<char> piece_data;
-			int blocks_left;
-			bool fail;
-			error_code error;
-		};
 		void read_piece(piece_index_t);
 		void set_sequential_range(piece_index_t first_piece, piece_index_t last_piece);
 		void set_sequential_range(piece_index_t first_piece);
-		void on_disk_read_complete(disk_buffer_holder, storage_error const&
-			, peer_request const&, std::shared_ptr<read_piece_struct>);
 
 		storage_mode_t storage_mode() const;
 
@@ -566,9 +552,6 @@ namespace libTAU::aux {
 
 		int num_have() const
 		{
-			// pretend we have every piece when in seed mode
-			if (m_seed_mode) return m_torrent_file->num_pieces();
-			if (m_have_all) return m_torrent_file->num_pieces();
 			return 0;
 		}
 
@@ -577,15 +560,12 @@ namespace libTAU::aux {
 		// flushed to disk yet
 		int num_passed() const
 		{
-			if (m_have_all) return m_torrent_file->num_pieces();
 			return 0;
 		}
 
 		int block_size() const
 		{
-			return valid_metadata()
-				? (std::min)(m_torrent_file->piece_length(), default_block_size)
-				: default_block_size;
+			return 0;
 		}
 		void disconnect_all(error_code const& ec, operation_t op);
 		int disconnect_peers(int num, error_code const& ec);
@@ -673,14 +653,7 @@ namespace libTAU::aux {
 		bool has_storage() const { return bool(m_storage); }
 		storage_index_t storage() const { return m_storage; }
 
-		torrent_info const& torrent_file() const
-		{ return *m_torrent_file; }
-
 		void verify_block_hashes(piece_index_t index);
-
-		std::shared_ptr<const torrent_info> get_torrent_file() const;
-
-		std::shared_ptr<torrent_info> get_torrent_copy_with_hashes() const;
 
 		std::vector<std::vector<sha256_hash>> get_piece_layers() const;
 
@@ -731,7 +704,7 @@ namespace libTAU::aux {
 		bool ready_for_connections() const
 		{ return m_connections_initialized; }
 		bool valid_metadata() const
-		{ return m_torrent_file->is_valid(); }
+		{ return false; }
 		bool are_files_checked() const
 		{ return m_files_checked; }
 
@@ -753,7 +726,7 @@ namespace libTAU::aux {
 		void leave_seed_mode(seed_mode_t checking);
 
 		bool all_verified() const
-		{ return int(m_num_verified) == m_torrent_file->num_pieces(); }
+		{ return false; }
 		bool verifying_piece(piece_index_t const piece) const
 		{ return m_verifying.get_bit(piece); }
 		void verifying(piece_index_t const piece)
@@ -961,9 +934,6 @@ namespace libTAU::aux {
 		// separate class (to use as memeber here instead)
 		std::vector<piece_index_t> m_predictive_pieces;
 #endif
-
-		// v2 merkle tree for each file
-		aux::vector<aux::merkle_tree, file_index_t> m_merkle_trees;
 
 		// the performance counters of this session
 		counters& m_stats_counters;

@@ -78,10 +78,6 @@ TORRENT_VERSION_NAMESPACE_3
 		// for forward binary compatibility.
 		int version = LIBTAU_VERSION_NUM;
 
-		// torrent_info object with the torrent to add. Unless the
-		// info_hash is set, this is required to be initialized.
-		std::shared_ptr<torrent_info> ti;
-
 		// If the torrent doesn't have a tracker, but relies on the DHT to find
 		// peers, the ``trackers`` can specify tracker URLs for the torrent.
 		std::vector<std::string> trackers;

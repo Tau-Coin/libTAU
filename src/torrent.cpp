@@ -50,7 +50,6 @@ see LICENSE file.
 #endif // TORRENT_SSL_PEERS
 
 #include "libTAU/announce_entry.hpp"
-#include "libTAU/torrent_info.hpp"
 #include "libTAU/aux_/parse_url.hpp"
 #include "libTAU/bencode.hpp"
 #include "libTAU/hasher.hpp"
@@ -72,7 +71,6 @@ see LICENSE file.
 #include "libTAU/performance_counters.hpp" // for counters
 #include "libTAU/aux_/resolver_interface.hpp"
 #include "libTAU/aux_/alloca.hpp"
-#include "libTAU/aux_/resolve_links.hpp"
 #include "libTAU/aux_/alert_manager.hpp"
 #include "libTAU/disk_interface.hpp"
 #include "libTAU/aux_/ip_helpers.hpp" // for is_ip_address
@@ -167,24 +165,6 @@ bool is_downloading_state(int const st)
 		aux::vector<std::vector<sha256_hash>, file_index_t> trees_import
 		, aux::vector<std::vector<bool>, file_index_t> mask)
 	{
-		auto const& fs = m_torrent_file->orig_files();
-
-		for (file_index_t i{0}; i < fs.end_file(); ++i)
-		{
-			if (fs.pad_file_at(i) || fs.file_size(i) == 0)
-				continue;
-
-			if (i >= trees_import.end_index()) break;
-			if (i < mask.end_index() && !mask[i].empty())
-			{
-				mask[i].resize(m_merkle_trees[i].size(), false);
-				m_merkle_trees[i].load_sparse_tree(trees_import[i], mask[i]);
-			}
-			else
-			{
-				m_merkle_trees[i].load_tree(trees_import[i]);
-			}
-		}
 	}
 
 	void torrent::inc_stats_counter(int c, int value)
@@ -257,22 +237,7 @@ bool is_downloading_state(int const st)
 #ifndef TORRENT_DISABLE_DHT
 	bool torrent::should_announce_dht() const
 	{
-		TORRENT_ASSERT(is_single_thread());
-		if (!m_enable_dht) return false;
-		if (!m_ses.announce_dht()) return false;
-
-		if (!m_ses.dht()) return false;
-		if (m_torrent_file->is_valid() && !m_files_checked) return false;
-		if (!m_announce_to_dht) return false;
-		if (m_paused) return false;
-
-		// don't announce private torrents
-		if (m_torrent_file->is_valid() && m_torrent_file->priv()) return false;
-		if (m_trackers.empty()) return true;
-		if (!settings().get_bool(settings_pack::use_dht_as_fallback)) return true;
-
-		return std::none_of(m_trackers.begin(), m_trackers.end()
-			, [](aux::announce_entry const& tr) { return bool(tr.verified); });
+		return false;
 	}
 
 #endif
@@ -316,22 +281,6 @@ bool is_downloading_state(int const st)
 #ifndef TORRENT_DISABLE_SHARE_MODE
 	void torrent::set_share_mode(bool s)
 	{
-		if (s == m_share_mode) return;
-
-		m_share_mode = s;
-		set_need_save_resume();
-#ifndef TORRENT_DISABLE_LOGGING
-		debug_log("*** set-share-mode: %d", s);
-#endif
-		if (m_share_mode)
-		{
-			std::size_t const num_files = valid_metadata()
-				? std::size_t(m_torrent_file->num_files())
-				: m_file_priority.size();
-			// in share mode, all pieces have their priorities initialized to
-			// dont_download
-			prioritize_files(aux::vector<download_priority_t, file_index_t>(num_files, dont_download));
-		}
 	}
 #endif // TORRENT_DISABLE_SHARE_MODE
 
@@ -342,14 +291,6 @@ bool is_downloading_state(int const st)
 	void torrent::handle_exception()
 	{
 	}
-
-	void torrent::on_disk_read_complete(disk_buffer_holder buffer
-		, storage_error const& se
-		, peer_request const&  r, std::shared_ptr<read_piece_struct> rp) try
-	{
-
-	}
-	catch (...) { handle_exception(); }
 
 	storage_mode_t torrent::storage_mode() const
 	{ return storage_mode_t(m_storage_mode); }
@@ -374,165 +315,13 @@ bool is_downloading_state(int const st)
 
 	std::string torrent::name() const
 	{
-		if (valid_metadata()) return m_torrent_file->name();
-		if (m_name) return *m_name;
 		return "";
 	}
 
 #ifdef TORRENT_SSL_PEERS
 	bool torrent::verify_peer_cert(bool const preverified, ssl::verify_context& ctx)
 	{
-		// if the cert wasn't signed by the correct CA, fail the verification
-		if (!preverified) return false;
-
-		std::string expected = m_torrent_file->name();
-#ifndef TORRENT_DISABLE_LOGGING
-		std::string names;
-		bool match = false;
-#endif
-
-#ifdef TORRENT_USE_OPENSSL
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#pragma clang diagnostic ignored "-Wused-but-marked-unused"
-#pragma clang diagnostic ignored "-Wold-style-cast"
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-		// we're only interested in checking the certificate at the end of the chain.
-		// any certificate that isn't the leaf (i.e. the one presented by the peer)
-		// should be accepted automatically, given preverified is true. The leaf certificate
-		// need to be verified to make sure its DN matches the info-hash
-		int depth = X509_STORE_CTX_get_error_depth(ctx.native_handle());
-		if (depth > 0) return true;
-
-		X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-
-		// Go through the alternate names in the certificate looking for matching DNS entries
-		auto* gens = static_cast<GENERAL_NAMES*>(
-			X509_get_ext_d2i(cert, NID_subject_alt_name, nullptr, nullptr));
-
-		for (int i = 0; i < sk_GENERAL_NAME_num(gens); ++i)
-		{
-			GENERAL_NAME* gen = sk_GENERAL_NAME_value(gens, i);
-			if (gen->type != GEN_DNS) continue;
-			ASN1_IA5STRING* domain = gen->d.dNSName;
-			if (domain->type != V_ASN1_IA5STRING || !domain->data || !domain->length) continue;
-			auto const* torrent_name = reinterpret_cast<char const*>(domain->data);
-			auto const name_length = aux::numeric_cast<std::size_t>(domain->length);
-
-#ifndef TORRENT_DISABLE_LOGGING
-			if (i > 1) names += " | n: ";
-			names.append(torrent_name, name_length);
-#endif
-			if (std::strncmp(torrent_name, "*", name_length) == 0
-				|| std::strncmp(torrent_name, expected.c_str(), name_length) == 0)
-			{
-#ifndef TORRENT_DISABLE_LOGGING
-				match = true;
-				// if we're logging, keep looping over all names,
-				// for completeness of the log
-				continue;
-#else
-				return true;
-#endif
-			}
-		}
-
-		// no match in the alternate names, so try the common names. We should only
-		// use the "most specific" common name, which is the last one in the list.
-		X509_NAME* name = X509_get_subject_name(cert);
-		int i = -1;
-		ASN1_STRING* common_name = nullptr;
-		while ((i = X509_NAME_get_index_by_NID(name, NID_commonName, i)) >= 0)
-		{
-			X509_NAME_ENTRY* name_entry = X509_NAME_get_entry(name, i);
-			common_name = X509_NAME_ENTRY_get_data(name_entry);
-		}
-		if (common_name && common_name->data && common_name->length)
-		{
-			auto const* torrent_name = reinterpret_cast<char const*>(common_name->data);
-			auto const name_length = aux::numeric_cast<std::size_t>(common_name->length);
-
-#ifndef TORRENT_DISABLE_LOGGING
-			if (!names.empty()) names += " | n: ";
-			names.append(torrent_name, name_length);
-#endif
-			if (std::strncmp(torrent_name, "*", name_length) == 0
-				|| std::strncmp(torrent_name, expected.c_str(), name_length) == 0)
-			{
-#ifdef TORRENT_DISABLE_LOGGING
-				return true;
-#else
-				match = true;
-#endif
-
-			}
-		}
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-#elif defined TORRENT_USE_GNUTLS
-		gnutls_x509_crt_t cert = ctx.native_handle();
-
-		// We don't use gnutls_x509_crt_check_hostname()
-		// as it doesn't handle wildcards the way we need here
-
-		char buf[256];
-		unsigned int seq = 0;
-		while(true) {
-			size_t len = sizeof(buf);
-			int ret = gnutls_x509_crt_get_subject_alt_name(cert, seq, buf, &len, nullptr);
-			if(ret == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE) break;
-			if(ret == GNUTLS_E_SUCCESS)
-			{
-#ifndef TORRENT_DISABLE_LOGGING
-				if (!names.empty()) names += " | n: ";
-				names.append(buf, len);
-#endif
-				if (std::strncmp(buf, "*", len) == 0
-					|| std::strncmp(buf, expected.c_str(), len) == 0)
-				{
-#ifndef TORRENT_DISABLE_LOGGING
-					match = true;
-					continue;
-#else
-					return true;
-#endif
-				}
-			}
-			++seq;
-		}
-
-		// no match in the alternate names, so try the common name
-		size_t len = sizeof(buf);
-		int ret = gnutls_x509_crt_get_dn_by_oid(cert, GNUTLS_OID_X520_COMMON_NAME, 0, 0, buf, &len);
-		if(ret == GNUTLS_E_SUCCESS)
-		{
-#ifndef TORRENT_DISABLE_LOGGING
-			if (!names.empty()) names += " | n: ";
-			names.append(buf, len);
-#endif
-			if (std::strncmp(buf, "*", len) == 0
-				|| std::strncmp(buf, expected.c_str(), len) == 0)
-			{
-#ifdef TORRENT_DISABLE_LOGGING
-				return true;
-#else
-				match = true;
-#endif
-			}
-		}
-#endif // TORRENT_USE_GNUTLS
-
-#ifndef TORRENT_DISABLE_LOGGING
-		debug_log("<== incoming SSL CONNECTION [ n: %s | match: %s ]"
-			, names.c_str(), match?"yes":"no");
-		return match;
-#else
 		return false;
-#endif
 	}
 
 	void torrent::init_ssl(string_view cert)
@@ -911,14 +700,6 @@ bool is_downloading_state(int const st)
 		, file_index_t const file_idx
 		, storage_error const& error) try
 	{
-		TORRENT_ASSERT(is_single_thread());
-
-		if (!error)
-		{
-			m_torrent_file->rename_file(file_idx, filename);
-
-			set_need_save_resume();
-		}
 	}
 	catch (...) { handle_exception(); }
 
@@ -995,27 +776,6 @@ bool is_downloading_state(int const st)
 
 	void torrent::prioritize_pieces(aux::vector<download_priority_t, piece_index_t> const& pieces)
 	{
-	}
-
-	namespace
-	{
-		aux::vector<download_priority_t, file_index_t> fix_priorities(
-			aux::vector<download_priority_t, file_index_t> input
-			, file_storage const* fs)
-		{
-			if (fs) input.resize(fs->num_files(), default_priority);
-
-			for (file_index_t i : input.range())
-			{
-				// initialize pad files to priority 0
-				if (input[i] > dont_download && fs && fs->pad_file_at(i))
-					input[i] = dont_download;
-				else if (input[i] > top_priority)
-					input[i] = top_priority;
-			}
-
-			return input;
-		}
 	}
 
 	void torrent::on_file_priority(storage_error const& err
@@ -1150,40 +910,9 @@ bool is_downloading_state(int const st)
 	{
 	}
 
-	std::shared_ptr<const torrent_info> torrent::get_torrent_file() const
-	{
-		if (!m_torrent_file->is_valid()) return {};
-		return m_torrent_file;
-	}
-
-	std::shared_ptr<torrent_info> torrent::get_torrent_copy_with_hashes() const
-	{
-		if (!m_torrent_file->is_valid()) return {};
-		auto ret = std::make_shared<torrent_info>(*m_torrent_file);
-
-		if (ret->v2())
-		{
-			aux::vector<aux::vector<char>, file_index_t> v2_hashes;
-			for (auto const& tree : m_merkle_trees)
-			{
-				auto const& layer = tree.get_piece_layer();
-				std::vector<char> out_layer;
-				out_layer.reserve(layer.size() * sha256_hash::size());
-				for (auto const& h : layer)
-					out_layer.insert(out_layer.end(), h.data(), h.data() + sha256_hash::size());
-				v2_hashes.emplace_back(std::move(out_layer));
-			}
-			ret->set_piece_layers(std::move(v2_hashes));
-		}
-
-		return ret;
-	}
-
 	std::vector<std::vector<sha256_hash>> torrent::get_piece_layers() const
 	{
 		std::vector<std::vector<sha256_hash>> ret;
-		for (auto const& tree : m_merkle_trees)
-			ret.emplace_back(tree.get_piece_layer());
 		return ret;
 	}
 

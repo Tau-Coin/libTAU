@@ -89,7 +89,6 @@
 #include "libTAU/storage_defs.hpp"
 #include "libTAU/string_view.hpp"
 #include "libTAU/time.hpp"
-#include "libTAU/torrent_info.hpp"
 #include "libTAU/tracker_event.hpp"
 #include "libTAU/units.hpp"
 #include "libTAU/upnp.hpp"

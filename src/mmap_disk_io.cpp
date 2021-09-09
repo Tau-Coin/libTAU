@@ -21,7 +21,6 @@ see LICENSE file.
 #include "libTAU/aux_/throw.hpp"
 #include "libTAU/error_code.hpp"
 #include "libTAU/error.hpp"
-#include "libTAU/torrent_info.hpp"
 #include "libTAU/aux_/disk_buffer_pool.hpp"
 #include "libTAU/aux_/disk_io_job.hpp"
 #include "libTAU/performance_counters.hpp"

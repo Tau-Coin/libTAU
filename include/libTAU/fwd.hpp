@@ -183,13 +183,6 @@ struct settings_pack;
 // include/libTAU/storage_defs.hpp
 struct storage_params;
 
-// include/libTAU/torrent_info.hpp
-struct web_seed_entry;
-struct load_torrent_limits;
-TORRENT_VERSION_NAMESPACE_3
-class torrent_info;
-TORRENT_VERSION_NAMESPACE_3_END
-
 #if TORRENT_ABI_VERSION <= 2
 
 // include/libTAU/alert_types.hpp
