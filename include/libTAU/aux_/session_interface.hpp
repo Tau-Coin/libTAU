@@ -56,8 +56,6 @@ namespace aux {
 	struct resolver_interface;
 	struct alert_manager;
 	struct torrent;
-	struct torrent_peer;
-	struct torrent_peer_allocator_interface;
 	struct external_ip;
 }
 

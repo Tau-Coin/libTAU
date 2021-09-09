@@ -837,8 +837,6 @@ SOURCES =
 	storage_utils
 	torrent
 	torrent_info
-	torrent_peer
-	torrent_peer_allocator
 	time
 	tracker_manager
 	udp_tracker_connection

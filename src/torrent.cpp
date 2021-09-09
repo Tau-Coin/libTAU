@@ -1217,11 +1217,6 @@ bool is_downloading_state(int const st)
 	};
 #endif
 
-	bool torrent::connect_to_peer(torrent_peer* peerinfo, bool const ignore_limit)
-	{
-		return true;
-	}
-
 	void torrent::initialize_merkle_trees()
 	{
 	}
@@ -1792,19 +1787,6 @@ bool is_downloading_state(int const st)
 		return true;
 	}
 
-	bool torrent::ban_peer(torrent_peer* tp)
-	{
-		return true;
-	}
-
-	void torrent::set_seed(torrent_peer* p, bool const s)
-	{
-	}
-
-	void torrent::clear_failcount(torrent_peer* p)
-	{
-	}
-
 	// verify piece is used when checking resume data or when the user
 	// adds a piece
 	void torrent::verify_piece(piece_index_t const piece)
@@ -1824,13 +1806,6 @@ bool is_downloading_state(int const st)
 	}
 
 	void torrent::port_filter_updated()
-	{
-	}
-
-	// this is called when torrent_peers are removed from the peer_list
-	// (peer-list). It removes any references we may have to those torrent_peers,
-	// so we don't leave then dangling
-	void torrent::peers_erased(std::vector<torrent_peer*> const& peers)
 	{
 	}
 

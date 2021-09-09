@@ -390,8 +390,6 @@ namespace libTAU::aux {
 
 		bool should_check_files() const;
 
-		void peers_erased(std::vector<torrent_peer*> const& peers);
-
 		void piece_availability(aux::vector<int, piece_index_t>& avail) const;
 
 		void prioritize_pieces(aux::vector<download_priority_t, piece_index_t> const& pieces);
@@ -417,8 +415,6 @@ namespace libTAU::aux {
 #if TORRENT_ABI_VERSION == 1
 		void use_interface(std::string net_interface);
 #endif
-
-		bool connect_to_peer(torrent_peer*, bool ignore_limit = false);
 
 		int priority() const;
 #if TORRENT_ABI_VERSION == 1
@@ -467,10 +463,6 @@ namespace libTAU::aux {
 		void update_gauge();
 
 		bool try_connect_peer();
-		bool ban_peer(torrent_peer* tp);
-		void set_seed(torrent_peer* p, bool s);
-		void clear_failcount(torrent_peer* p);
-
 		// the number of peers that belong to this torrent
 		int num_seeds() const;
 		int num_downloaders() const;
@@ -795,13 +787,6 @@ namespace libTAU::aux {
 		{
 			TORRENT_ASSERT(m_links[aux::session_interface::torrent_state_updates].in_list());
 			m_links[aux::session_interface::torrent_state_updates].clear();
-		}
-
-		void inc_num_connecting(torrent_peer* pp)
-		{
-		}
-		void dec_num_connecting(torrent_peer* pp)
-		{
 		}
 
 		bool is_ssl_torrent() const { return m_ssl_torrent; }

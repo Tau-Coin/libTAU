@@ -20,12 +20,9 @@ see LICENSE file.
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/aux_/session_udp_sockets.hpp"
 #include "libTAU/aux_/socket_type.hpp"
-#include "libTAU/aux_/torrent_peer.hpp"
-#include "libTAU/aux_/torrent_peer_allocator.hpp"
 #include "libTAU/performance_counters.hpp" // for counters
 #include "libTAU/aux_/allocating_handler.hpp"
 #include "libTAU/aux_/time.hpp"
-#include "libTAU/aux_/torrent_list.hpp"
 #include "libTAU/aux_/common.h"
 #include "libTAU/session_params.hpp" // for disk_io_constructor_type
 
@@ -699,11 +696,6 @@ namespace aux {
 				, ip_source_t source_type, address const& source);
 
 			counters m_stats_counters;
-
-			// this is a pool allocator for torrent_peer objects
-			// torrents and the disk cache (implicitly by holding references to the
-			// torrents) depend on this outliving them.
-			torrent_peer_allocator m_peer_allocator;
 
 			io_context& m_io_context;
 
