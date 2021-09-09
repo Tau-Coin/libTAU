@@ -45,8 +45,6 @@ see LICENSE file.
 #include "libTAU/aux_/tracker_manager.hpp"
 #include "libTAU/aux_/stat.hpp"
 #include "libTAU/alert.hpp"
-#include "libTAU/aux_/piece_picker.hpp"
-#include "libTAU/aux_/hash_picker.hpp"
 #include "libTAU/config.hpp"
 #include "libTAU/aux_/bandwidth_limit.hpp"
 #include "libTAU/aux_/bandwidth_queue_entry.hpp"
@@ -59,7 +57,6 @@ see LICENSE file.
 #include "libTAU/aux_/link.hpp"
 #include "libTAU/aux_/vector_utils.hpp"
 #include "libTAU/aux_/debug.hpp"
-#include "libTAU/piece_block.hpp"
 #include "libTAU/disk_interface.hpp"
 #include "libTAU/aux_/suggest_piece.hpp"
 #include "libTAU/units.hpp"
@@ -89,8 +86,6 @@ namespace libTAU::aux {
 		, piece_end_game, piece_closing
 		, max
 	};
-
-	TORRENT_EXTRA_EXPORT std::int64_t calc_bytes(file_storage const& fs, piece_count const& pc);
 
 #ifndef TORRENT_DISABLE_STREAMING
 	struct time_critical_piece
@@ -131,12 +126,6 @@ namespace libTAU::aux {
 		// if the hostname of the web seed has been resolved,
 		// these are its IP addresses
 		std::vector<tcp::endpoint> endpoints;
-
-		// this is the peer_info field used for the
-		// connection, just to count hash failures
-		// it's also used to hold the peer_connection
-		// pointer, when the web seed is connected
-		ipv4_peer peer_info{tcp::endpoint(), true, {}};
 
 		// this is initialized to true, but if we discover the
 		// server not to support it, it's set to false, and we
@@ -193,7 +182,6 @@ namespace libTAU::aux {
 			web_seed_entry::operator=(std::move(rhs));
 			retry = std::move(rhs.retry);
 			endpoints = std::move(rhs.endpoints);
-			peer_info = std::move(rhs.peer_info);
 			supports_keepalive = std::move(rhs.supports_keepalive);
 			resolving = std::move(rhs.resolving);
 			removed = std::move(rhs.removed);
@@ -217,16 +205,6 @@ namespace libTAU::aux {
 			, add_torrent_params const& p, bool session_paused);
 
 	protected:
-		// the piece picker. This is allocated lazily. When we don't
-		// have anything in the torrent (for instance, if it hasn't
-		// been started yet) or if we have everything, there is no
-		// picker. It's allocated on-demand the first time we need
-		// it in torrent::need_picker(). In order to tell the
-		// difference between having everything and nothing in
-		// the case there is no piece picker, see m_have_all.
-		std::unique_ptr<piece_picker> m_picker;
-
-		std::unique_ptr<hash_picker> m_hash_picker;
 
 		// TODO: make this a raw pointer. perhaps keep the shared_ptr
 		// around further down the object to maintain an owner
@@ -241,7 +219,6 @@ namespace libTAU::aux {
 		// implementation on Darwin uses significantly less memory to
 		// represent a vector than a set, and this set is typically
 		// relatively small, and it's cheap to copy pointers.
-		aux::vector<peer_connection*> m_connections;
 
 		// the scrape data from the tracker response, this
 		// is optional and may be 0xffffff
@@ -347,11 +324,7 @@ namespace libTAU::aux {
 		// has incremented.
 		int current_stats_state() const;
 
-		peer_connection* find_lowest_ranking_peer() const;
-
 #if TORRENT_USE_ASSERTS
-		bool has_peer(peer_connection const* p) const
-		{ return sorted_find(m_connections, p) != m_connections.end(); }
 		bool is_single_thread() const { return single_threaded::is_single_thread(); }
 #endif
 
@@ -361,8 +334,6 @@ namespace libTAU::aux {
 
 		void load_merkle_trees(aux::vector<std::vector<sha256_hash>, file_index_t> t
 			, aux::vector<std::vector<bool>, file_index_t> mask);
-
-		peer_connection* find_peer(peer_id const& pid);
 
 		// checks to see if this peer id is used in one of our own outgoing
 		// connections.
@@ -477,9 +448,6 @@ namespace libTAU::aux {
 		void handle_exception();
 
 		enum class disk_class { none, write };
-		void handle_disk_error(string_view job_name
-			, storage_error const& error, peer_connection* c = nullptr
-			, disk_class rw = disk_class::none);
 		void clear_error();
 
 		void set_error(error_code const& ec, file_index_t file);
@@ -566,7 +534,6 @@ namespace libTAU::aux {
 
 		void connect_to_url_seed(std::list<web_seed_t>::iterator);
 		bool connect_to_peer(torrent_peer*, bool ignore_limit = false);
-		bool create_peer_connection(torrent_peer* peerinfo, aux::socket_type socket, tcp::endpoint endpoint);
 
 		int priority() const;
 #if TORRENT_ABI_VERSION == 1
@@ -602,34 +569,14 @@ namespace libTAU::aux {
 			, web_seed_flag_t flags = {});
 
 		void remove_web_seed(std::string const& url);
-		void disconnect_web_seed(peer_connection* p);
-
-		void retry_web_seed(peer_connection* p, std::optional<seconds32> retry = std::nullopt);
-
-		void remove_web_seed_conn(peer_connection* p, error_code const& ec
-			, operation_t op, disconnect_severity_t error = peer_connection_interface::normal);
 
 		std::set<std::string> web_seeds() const;
 
 		bool free_upload_slots() const
 		{ return m_num_uploads < m_max_uploads; }
 
-		bool choke_peer(peer_connection& c);
-		bool unchoke_peer(peer_connection& c, bool optimistic = false);
-
 		void trigger_unchoke() noexcept;
 		void trigger_optimistic_unchoke() noexcept;
-
-		// used by peer_connection to attach itself to a torrent
-		// since incoming connections don't know what torrent
-		// they're a part of until they have received an info_hash.
-		// false means attach failed
-		bool attach_peer(peer_connection* p);
-
-		// this will remove the peer and make sure all
-		// the pieces it had have their reference counter
-		// decreased in the piece_picker
-		void remove_peer(std::shared_ptr<peer_connection> p) noexcept;
 
 		// cancel requests to this block from any peer we're
 		// connected to on this torrent
@@ -657,28 +604,15 @@ namespace libTAU::aux {
 		std::pair<aux::peer_list::iterator, aux::peer_list::iterator> find_peers(address const& a);
 
 		// the number of peers that belong to this torrent
-		int num_peers() const { return int(m_connections.size() - m_peers_to_disconnect.size()); }
 		int num_seeds() const;
 		int num_downloaders() const;
-
-		using peer_iterator = std::vector<peer_connection*>::iterator;
-		using const_peer_iterator = std::vector<peer_connection*>::const_iterator;
-
-		const_peer_iterator begin() const { return m_connections.begin(); }
-		const_peer_iterator end() const { return m_connections.end(); }
-
-		peer_iterator begin() { return m_connections.begin(); }
-		peer_iterator end() { return m_connections.end(); }
 
 #if TORRENT_ABI_VERSION == 1
 		void get_full_peer_list(std::vector<peer_list_entry>* v) const;
 #endif
-		void get_peer_info(std::vector<peer_info>* v);
 		void get_download_queue(std::vector<partial_piece_info>* queue) const;
 
 		void update_auto_sequential();
-	private:
-		void remove_connection(peer_connection const* p);
 	public:
 // --------------------------------------------
 		// TRACKER MANAGEMENT
@@ -754,32 +688,6 @@ namespace libTAU::aux {
 		piece_index_t get_piece_to_super_seed(typed_bitfield<piece_index_t> const&);
 #endif
 
-		// returns true if we have downloaded the given piece
-		bool have_piece(piece_index_t index) const
-		{
-			if (!valid_metadata()) return false;
-			if (!has_picker()) return m_have_all;
-			return m_picker->have_piece(index);
-		}
-
-		// returns true if we have downloaded the given piece
-		bool user_have_piece(piece_index_t index) const
-		{
-			if (!valid_metadata()) return false;
-			if (index < piece_index_t{0} || index >= m_torrent_file->end_piece()) return false;
-			if (!has_picker()) return m_have_all;
-			return m_picker->have_piece(index);
-		}
-
-		// returns true if we have downloaded the given piece
-		bool has_piece_passed(piece_index_t index) const
-		{
-			if (!valid_metadata()) return false;
-			if (index < piece_index_t(0) || index >= torrent_file().end_piece()) return false;
-			if (!has_picker()) return m_have_all;
-			return m_picker->has_piece_passed(index);
-		}
-
 #ifndef TORRENT_DISABLE_PREDICTIVE_PIECES
 		// a predictive piece is a piece that we might
 		// not have yet, but still announced to peers, anticipating that
@@ -806,7 +714,6 @@ namespace libTAU::aux {
 		{
 			// pretend we have every piece when in seed mode
 			if (m_seed_mode) return m_torrent_file->num_pieces();
-			if (has_picker()) return m_picker->have().num_pieces;
 			if (m_have_all) return m_torrent_file->num_pieces();
 			return 0;
 		}
@@ -816,22 +723,9 @@ namespace libTAU::aux {
 		// flushed to disk yet
 		int num_passed() const
 		{
-			if (has_picker()) return m_picker->num_passed();
 			if (m_have_all) return m_torrent_file->num_pieces();
 			return 0;
 		}
-
-		// when we get a have message, this is called for that piece
-		void peer_has(piece_index_t index, peer_connection const* peer);
-
-		// when we get a bitfield message, this is called for that piece
-		void peer_has(typed_bitfield<piece_index_t> const& bits, peer_connection const* peer);
-
-		void peer_has_all(peer_connection const* peer);
-
-		void peer_lost(piece_index_t index, peer_connection const* peer);
-		void peer_lost(typed_bitfield<piece_index_t> const& bits
-			, peer_connection const* peer);
 
 		int block_size() const
 		{
@@ -904,10 +798,6 @@ namespace libTAU::aux {
 			, piece_index_t piece
 			, sha1_hash const& piece_hash, storage_error const& error);
 
-		// this is called whenever a peer in this swarm becomes interesting
-		// it is responsible for issuing a block request, if appropriate
-		void peer_is_interesting(peer_connection& c);
-
 		// piece_passed is called when a piece passes the hash check
 		// this will tell all peers that we just got his piece
 		// and also let the piece picker know that we have this piece
@@ -941,38 +831,6 @@ namespace libTAU::aux {
 
 		std::string save_path() const;
 		aux::alert_manager& alerts() const;
-		piece_picker& picker()
-		{
-			TORRENT_ASSERT(m_picker.get());
-			return *m_picker;
-		}
-		piece_picker const& picker() const
-		{
-			TORRENT_ASSERT(m_picker.get());
-			return *m_picker;
-		}
-		void need_picker();
-		bool has_picker() const
-		{
-			return m_picker.get() != nullptr;
-		}
-
-		hash_picker& get_hash_picker()
-		{
-			TORRENT_ASSERT(m_hash_picker.get());
-			return *m_hash_picker;
-		}
-		hash_picker const& get_hash_picker() const
-		{
-			TORRENT_ASSERT(m_hash_picker.get());
-			return *m_hash_picker;
-		}
-
-		void need_hash_picker(aux::vector<std::vector<bool>, file_index_t> verified = {});
-		bool has_hash_picker() const
-		{
-			return m_hash_picker.get() != nullptr;
-		}
 
 		void update_max_failcount()
 		{
@@ -991,10 +849,6 @@ namespace libTAU::aux {
 		torrent_info const& torrent_file() const
 		{ return *m_torrent_file; }
 
-		hash_request pick_hashes(peer_connection* peer);
-		std::vector<sha256_hash> get_hashes(hash_request const& req) const;
-		bool add_hashes(hash_request const& req, span<sha256_hash> hashes);
-		void hashes_rejected(hash_request const& req);
 		void verify_block_hashes(piece_index_t index);
 
 		std::shared_ptr<const torrent_info> get_torrent_file() const;
@@ -1122,14 +976,6 @@ namespace libTAU::aux {
 		}
 		void dec_num_connecting(torrent_peer* pp)
 		{
-			TORRENT_ASSERT(m_num_connecting > 0);
-			--m_num_connecting;
-			if (pp->seed)
-			{
-				TORRENT_ASSERT(m_num_connecting_seeds > 0);
-				--m_num_connecting_seeds;
-			}
-			TORRENT_ASSERT(m_num_connecting <= int(m_connections.size()));
 		}
 
 		bool is_ssl_torrent() const { return m_ssl_torrent; }
@@ -1421,7 +1267,6 @@ namespace libTAU::aux {
 		queue_position_t m_sequence_number;
 
 		// used to post a message to defer disconnecting peers
-		std::vector<std::shared_ptr<peer_connection>> m_peers_to_disconnect;
 		aux::deferred_handler m_deferred_disconnect;
 		aux::handler_storage<aux::deferred_handler_max_size, aux::defer_handler> m_deferred_handler_storage;
 

@@ -77,15 +77,6 @@ namespace libTAU {
 		std::exception_ptr ex;
 		dispatch(ses.get_context(), [=,&done,&ses,&ex] ()
 		{
-#ifndef BOOST_NO_EXCEPTIONS
-			try {
-#endif
-				(t.get()->*f)(a...);
-#ifndef BOOST_NO_EXCEPTIONS
-			} catch (...) {
-				ex = std::current_exception();
-			}
-#endif
 			std::unique_lock<std::mutex> l(ses.mut);
 			done = true;
 			ses.cond.notify_all();
@@ -113,15 +104,6 @@ namespace libTAU {
 		std::exception_ptr ex;
 		dispatch(ses.get_context(), [=,&r,&done,&ses,&ex] ()
 		{
-#ifndef BOOST_NO_EXCEPTIONS
-			try {
-#endif
-				r = (t.get()->*f)(a...);
-#ifndef BOOST_NO_EXCEPTIONS
-			} catch (...) {
-				ex = std::current_exception();
-			}
-#endif
 			std::unique_lock<std::mutex> l(ses.mut);
 			done = true;
 			ses.cond.notify_all();
@@ -571,7 +553,7 @@ namespace libTAU {
 
 	bool torrent_handle::have_piece(piece_index_t piece) const
 	{
-		return sync_call_ret<bool>(false, &aux::torrent::user_have_piece, piece);
+		return true;
 	}
 
 	void torrent_handle::set_sequential_range(piece_index_t const first_piece, piece_index_t const last_piece) const
@@ -719,8 +701,6 @@ namespace libTAU {
 
 	void torrent_handle::get_peer_info(std::vector<peer_info>& v) const
 	{
-		auto* vp = &v;
-		sync_call(&aux::torrent::get_peer_info, vp);
 	}
 
 	void torrent_handle::get_download_queue(std::vector<partial_piece_info>& queue) const

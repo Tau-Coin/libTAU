@@ -13,7 +13,6 @@ see LICENSE file.
 #include "libTAU/aux_/torrent_peer.hpp"
 #include "libTAU/assert.hpp"
 #include "libTAU/aux_/string_util.hpp"
-#include "libTAU/aux_/peer_connection.hpp"
 #include "libTAU/aux_/crc32c.hpp"
 #include "libTAU/aux_/ip_voter.hpp"
 #include "libTAU/aux_/io_bytes.hpp" // for write_uint16
@@ -163,30 +162,12 @@ namespace libTAU::aux {
 
 	std::int64_t torrent_peer::total_download() const
 	{
-		TORRENT_ASSERT(in_use);
-		if (connection != nullptr)
-		{
-			TORRENT_ASSERT(prev_amount_download == 0);
-			return connection->statistics().total_payload_download();
-		}
-		else
-		{
-			return std::int64_t(prev_amount_download) * 1024;
-		}
+		return 1024;
 	}
 
 	std::int64_t torrent_peer::total_upload() const
 	{
-		TORRENT_ASSERT(in_use);
-		if (connection != nullptr)
-		{
-			TORRENT_ASSERT(prev_amount_upload == 0);
-			return connection->statistics().total_payload_upload();
-		}
-		else
-		{
-			return std::int64_t(prev_amount_upload) * 1024;
-		}
+		return 1024;
 	}
 
 	ipv4_peer::ipv4_peer(tcp::endpoint const& ep, bool c

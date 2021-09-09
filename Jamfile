@@ -812,12 +812,10 @@ SOURCES =
 	listen_socket_handle
 	merkle
 	merkle_tree
-	peer_connection
 	platform_util
 	instantiate_connection
 	natpmp
 	packet_buffer
-	peer_list
 	proxy_base
 	puff
 	random
