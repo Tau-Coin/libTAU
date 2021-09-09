@@ -308,7 +308,7 @@ namespace libTAU::blockchain {
                         return false;
                 }
 
-                auto &receiver = tx.sender();
+                auto &receiver = tx.receiver();
                 sha256_hash receiver_block_hash = get_account_block_hash(chain_id, receiver);
                 block receiver_block = get_block_by_hash(receiver_block_hash);
                 if (b.block_number() > receiver_block.block_number()) {
@@ -337,6 +337,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    // validate peer
     bool repository_impl::rollback_block(block b) {
         if (b.empty())
             return false;
