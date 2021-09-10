@@ -861,8 +861,6 @@ SOURCES =
 	stack_allocator
 	generate_peer_id
 	mmap
-	posix_part_file
-	posix_storage
 	ssl
 	;
 
