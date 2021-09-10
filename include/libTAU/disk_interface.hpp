@@ -223,32 +223,6 @@ namespace file_open_mode {
 		virtual void async_release_files(storage_index_t storage
 			, std::function<void()> handler = std::function<void()>()) = 0;
 
-		// this is called when torrents are added to validate their resume data
-		// against the files on disk. This function is expected to do a few things:
-		//
-		// if ``links`` is non-empty, it contains a string for each file in the
-		// torrent. The string being a path to an existing identical file. The
-		// default behavior is to create hard links of those files into the
-		// storage of the new torrent (specified by ``storage``). An empty
-		// string indicates that there is no known identical file. This is part
-		// of the "mutable torrent" feature, where files can be reused from
-		// other torrents.
-		//
-		// The ``resume_data`` points the resume data passed in by the client.
-		//
-		// If the ``resume_data->flags`` field has the seed_mode flag set, all
-		// files/pieces are expected to be on disk already. This should be
-		// verified. Not just the existence of the file, but also that it has
-		// the correct size.
-		//
-		// Any file with a piece set in the ``resume_data->have_pieces`` bitmask
-		// should exist on disk, this should be verified. Pad files and files
-		// with zero priority may be skipped.
-		virtual void async_check_files(storage_index_t storage
-			, add_torrent_params const* resume_data
-			, aux::vector<std::string, file_index_t> links
-			, std::function<void(status_t, storage_error const&)> handler) = 0;
-
 		// This is called when a torrent is stopped. It gives the disk I/O
 		// object an opportunity to flush any data to disk that's currently kept
 		// cached. This function should at least do the same thing as

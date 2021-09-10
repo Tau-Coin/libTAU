@@ -66,15 +66,6 @@ namespace aux {
 	delete_files(file_storage const& fs, std::string const& save_path
 		, std::string const& part_file_name, remove_flags_t options, storage_error& ec);
 
-	TORRENT_EXTRA_EXPORT bool
-	verify_resume_data(add_torrent_params const& rd
-		, aux::vector<std::string, file_index_t> const& links
-		, file_storage const& fs
-		, aux::vector<download_priority_t, file_index_t> const& file_priority
-		, stat_cache& stat
-		, std::string const& save_path
-		, storage_error& ec);
-
 	// given the save_path, stat all files on file_storage until one exists. If a
 	// file exists, return true, otherwise return false.
 	TORRENT_EXTRA_EXPORT bool has_any_file(

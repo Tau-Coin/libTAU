@@ -17,11 +17,6 @@ see LICENSE file.
 
 namespace libTAU {
 
-// include/libTAU/add_torrent_params.hpp
-TORRENT_VERSION_NAMESPACE_3
-struct add_torrent_params;
-TORRENT_VERSION_NAMESPACE_3_END
-
 // include/libTAU/alert.hpp
 struct alert;
 

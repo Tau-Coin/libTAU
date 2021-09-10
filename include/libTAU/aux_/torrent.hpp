@@ -110,8 +110,7 @@ namespace libTAU::aux {
 
 	struct TORRENT_EXTRA_EXPORT torrent_hot_members
 	{
-		torrent_hot_members(aux::session_interface& ses
-			, add_torrent_params const& p, bool session_paused);
+		torrent_hot_members(aux::session_interface& ses, bool session_paused);
 
 	protected:
 
@@ -193,10 +192,8 @@ namespace libTAU::aux {
 		, peer_class_set
 		, std::enable_shared_from_this<torrent>
 	{
-		// add_torrent_params may contain large merkle trees that are best
 		// moved. Deleting the const& overload ensures that it's always moved in.
-		torrent(aux::session_interface& ses, bool session_paused, add_torrent_params&& p);
-		torrent(aux::session_interface&, bool, add_torrent_params const& p) = delete;
+		torrent(aux::session_interface& ses, bool session_paused);
 		~torrent() override;
 
 		// This may be called from multiple threads
@@ -950,11 +947,6 @@ namespace libTAU::aux {
 
 		// set if there's an error on this torrent
 		error_code m_error;
-
-		// used if there is any resume data. Some of the information from the
-		// add_torrent_params struct are needed later in the torrent object's life
-		// cycle, and not in the constructor. So we need to save if away here
-		std::unique_ptr<add_torrent_params> m_add_torrent_params;
 
 		// if the torrent is started without metadata, it may
 		// still be given a name until the metadata is received

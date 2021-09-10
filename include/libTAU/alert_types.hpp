@@ -28,7 +28,6 @@ see LICENSE file.
 #include "libTAU/identify_client.hpp"
 #include "libTAU/address.hpp"
 #include "libTAU/aux_/stat.hpp"
-#include "libTAU/add_torrent_params.hpp"
 #include "libTAU/entry.hpp"
 #include "libTAU/peer_request.hpp"
 #include "libTAU/performance_counters.hpp"

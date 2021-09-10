@@ -856,7 +856,6 @@ SOURCES =
 	session_settings
 	proxy_settings
 	ffs
-	add_torrent_params
 	peer_info
 	stack_allocator
 	generate_peer_id

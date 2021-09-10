@@ -102,7 +102,7 @@ bool is_downloading_state(int const st)
 } // anonymous namespace
 
 	torrent_hot_members::torrent_hot_members(aux::session_interface& ses
-		, add_torrent_params const& p, bool const session_paused)
+		, bool const session_paused)
 		: m_ses(ses)
 		, m_complete(0xffffff)
 		, m_connections_initialized(false)
@@ -115,26 +115,16 @@ bool is_downloading_state(int const st)
 		, m_max_connections(0xffffff)
 	{}
 
-	torrent::torrent(
-		aux::session_interface& ses
-		, bool const session_paused
-		, add_torrent_params&& p)
-		: torrent_hot_members(ses, p, session_paused)
-		, m_total_uploaded(p.total_uploaded)
-		, m_total_downloaded(p.total_downloaded)
+	torrent::torrent( aux::session_interface& ses
+		, bool const session_paused)
+		: torrent_hot_members(ses, session_paused)
 		, m_tracker_timer(ses.get_context())
 		, m_inactivity_timer(ses.get_context())
-		, m_trackerid(p.trackerid)
-		, m_save_path(complete(p.save_path))
 		, m_stats_counters(ses.stats_counters())
-		, m_added_time(p.added_time ? p.added_time : std::time(nullptr))
-		, m_completed_time(p.completed_time)
-		, m_info_hash(p.info_hashes)
 		, m_sequence_number(-1)
 		, m_peer_id(aux::generate_peer_id(settings()))
 		, m_has_incoming(false)
 		, m_files_checked(false)
-		, m_storage_mode(p.storage_mode)
 		, m_announcing(false)
 		, m_added(false)
 		, m_auto_sequential(false)
@@ -147,8 +137,6 @@ bool is_downloading_state(int const st)
 		, m_incomplete(0xffffff)
 		, m_ssl_torrent(false)
 		, m_deleted(false)
-		, m_last_download(seconds32(p.last_download))
-		, m_last_upload(seconds32(p.last_upload))
 		, m_current_gauge_state(static_cast<std::uint32_t>(no_gauge_state))
 		, m_moving_storage(false)
 		, m_inactive(false)
