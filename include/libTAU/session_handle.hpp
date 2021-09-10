@@ -41,7 +41,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libTAU/config.hpp"
 #include "libTAU/fwd.hpp"
 #include "libTAU/entry.hpp"
-#include "libTAU/add_torrent_params.hpp"
 #include "libTAU/alert.hpp" // alert_category::error
 #include "libTAU/peer_class.hpp"
 #include "libTAU/peer_class_type_filter.hpp"

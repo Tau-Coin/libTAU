@@ -20,12 +20,9 @@ see LICENSE file.
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/aux_/session_udp_sockets.hpp"
 #include "libTAU/aux_/socket_type.hpp"
-#include "libTAU/aux_/torrent_peer.hpp"
-#include "libTAU/aux_/torrent_peer_allocator.hpp"
 #include "libTAU/performance_counters.hpp" // for counters
 #include "libTAU/aux_/allocating_handler.hpp"
 #include "libTAU/aux_/time.hpp"
-#include "libTAU/aux_/torrent_list.hpp"
 #include "libTAU/aux_/common.h"
 #include "libTAU/session_params.hpp" // for disk_io_constructor_type
 
@@ -43,7 +40,18 @@ see LICENSE file.
 #include "libTAU/ip_filter.hpp"
 #include "libTAU/aux_/ip_notifier.hpp"
 #include "libTAU/session_status.hpp"
-#include "libTAU/add_torrent_params.hpp"
+#include "libTAU/storage_defs.hpp"
+#include "libTAU/sha1_hash.hpp"
+#include "libTAU/version.hpp"
+#include "libTAU/socket.hpp" // for tcp::endpoint
+#include "libTAU/bitfield.hpp"
+#include "libTAU/error_code.hpp"
+#include "libTAU/units.hpp"
+#include "libTAU/info_hash.hpp"
+#include "libTAU/download_priority.hpp"
+#include "libTAU/client_data.hpp"
+#include "libTAU/aux_/noexcept_movable.hpp"
+#include "libTAU/fwd.hpp"
 #include "libTAU/aux_/stat.hpp"
 #include "libTAU/aux_/bandwidth_manager.hpp"
 #include "libTAU/aux_/udp_socket.hpp"
@@ -99,8 +107,6 @@ TORRENT_VERSION_NAMESPACE_3_END
 	struct natpmp;
 	struct lsd;
 	struct alert;
-	struct torrent_handle;
-	struct peer_connection;
 
 namespace dht {
 
@@ -341,7 +347,7 @@ namespace aux {
 #endif
 			using connection_map = std::set<std::shared_ptr<peer_connection>>;
 
-			session_impl(io_context&, settings_pack const&, disk_io_constructor_type, session_flags_t);
+			session_impl(io_context&, settings_pack const&, session_flags_t);
 			~session_impl() override;
 
 			session_impl(session_impl const&) = delete;
@@ -548,7 +554,6 @@ namespace aux {
 			}
 
 			alert_manager& alerts() override { return m_alerts; }
-			disk_interface& disk_thread() override { return *m_disk_thread; }
 
 			void abort() noexcept;
 			void abort_stage2() noexcept;
@@ -622,8 +627,6 @@ namespace aux {
 			bool verify_incoming_interface(address const& addr);
 			bool verify_bound_address(address const& addr, bool utp
 				, error_code& ec) override;
-
-			std::vector<block_info>& block_info_storage() override { return m_block_info_storage; }
 
 			libTAU::aux::utp_socket_manager* utp_socket_manager() override
 			{ return &m_utp_socket_manager; }
@@ -704,16 +707,6 @@ namespace aux {
 
 			counters m_stats_counters;
 
-			// this is a pool allocator for torrent_peer objects
-			// torrents and the disk cache (implicitly by holding references to the
-			// torrents) depend on this outliving them.
-			torrent_peer_allocator m_peer_allocator;
-
-			// this vector is used to store the block_info
-			// objects pointed to by partial_piece_info returned
-			// by torrent::get_download_queue.
-			std::vector<block_info> m_block_info_storage;
-
 			io_context& m_io_context;
 
 #if TORRENT_USE_SSL
@@ -742,16 +735,6 @@ namespace aux {
 			// it means we need to request new alerts from the main thread.
 			mutable int m_alert_pointer_pos = 0;
 #endif
-
-			// handles disk io requests asynchronously
-			// peers have pointers into the disk buffer
-			// pool, and must be destructed before this
-			// object. The disk thread relies on the file
-			// pool object, and must be destructed before
-			// m_files. The disk io thread posts completion
-			// events to the io service, and needs to be
-			// constructed after it.
-			std::unique_ptr<disk_interface> m_disk_thread;
 
 			// the peer class that all peers belong to by default
 			peer_class_t m_global_class{0};

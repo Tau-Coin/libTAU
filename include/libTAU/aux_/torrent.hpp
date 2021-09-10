@@ -36,9 +36,7 @@ see LICENSE file.
 #include "libTAU/aux_/disable_warnings_pop.hpp"
 
 #include "libTAU/fwd.hpp"
-#include "libTAU/torrent_handle.hpp"
 #include "libTAU/entry.hpp"
-#include "libTAU/torrent_info.hpp"
 #include "libTAU/socket.hpp"
 #include "libTAU/address.hpp"
 #include "libTAU/aux_/tracker_manager.hpp"
@@ -96,7 +94,6 @@ namespace libTAU::aux {
 		// by what time we want this piece
 		time_point deadline;
 		// 1 = send alert with piece data when available
-		deadline_flags_t flags;
 		// how many peers it's been requested from
 		int peers;
 		// the piece index
@@ -111,103 +108,11 @@ namespace libTAU::aux {
 	};
 #endif // TORRENT_DISABLE_STREAMING
 
-	// this is the internal representation of web seeds
-	struct web_seed_t : web_seed_entry
-	{
-		explicit web_seed_t(web_seed_entry const& wse);
-		web_seed_t(std::string const& url_
-			, std::string const& auth_ = std::string()
-			, web_seed_entry::headers_t const& extra_headers_ = web_seed_entry::headers_t());
-
-		// if this is > now, we can't reconnect yet
-		time_point32 retry = aux::time_now32();
-
-		// if the hostname of the web seed has been resolved,
-		// these are its IP addresses
-		std::vector<tcp::endpoint> endpoints;
-
-		// this is initialized to true, but if we discover the
-		// server not to support it, it's set to false, and we
-		// make larger requests.
-		bool supports_keepalive = true;
-
-		// this indicates whether or not we're resolving the
-		// hostname of this URL
-		bool resolving = false;
-
-		// if the user wanted to remove this while
-		// we were resolving it. In this case, we set
-		// the removed flag to true, to make the resolver
-		// callback remove it
-		bool removed = false;
-
-		// this indicates whether this web seed has any files. A server that only
-		// redirects to other servers for instance, may not have any files and
-		// once we've seen all redirects, there's no point in connecting to it
-		// again.
-		bool interesting = true;
-
-		// if this is true, this URL was created by a redirect and should not be
-		// saved in the resume data
-		bool ephemeral = false;
-
-		// this is set to true when this web seed was created from a redirect
-		// from a global IP, and SSRF mitigation is enabled. It prevents this
-		// web seed from resolving to any local network IPs.
-		bool no_local_ips = false;
-
-		// if the web server doesn't support keepalive or a block request was
-		// interrupted, the block received so far is kept here for the next
-		// connection to pick up
-		peer_request restart_request = { piece_index_t(-1), -1, -1};
-		std::vector<char> restart_piece;
-
-		// this maps file index to a URL it has been redirected to. If an entry is
-		// missing, it means it has not been redirected and the full path should
-		// be constructed normally based on the filename. All redirections are
-		// relative to the web seed hostname root.
-		std::map<file_index_t, std::string> redirects;
-
-		// if this bitfield is non-empty, it represents the files this web server
-		// has.
-		typed_bitfield<file_index_t> have_files;
-#if defined __GNUC__ && defined _GLIBCXX_DEBUG
-		// this works around a bug in libstdc++'s checked iterators
-		// http://stackoverflow.com/questions/22915325/avoiding-self-assignment-in-stdshuffle
-		web_seed_t& operator=(web_seed_t&& rhs) noexcept
-		{
-			if (&rhs == this) return *this;
-
-			web_seed_entry::operator=(std::move(rhs));
-			retry = std::move(rhs.retry);
-			endpoints = std::move(rhs.endpoints);
-			supports_keepalive = std::move(rhs.supports_keepalive);
-			resolving = std::move(rhs.resolving);
-			removed = std::move(rhs.removed);
-			ephemeral = std::move(rhs.ephemeral);
-			no_local_ips = std::move(rhs.no_local_ips);
-			restart_request = std::move(rhs.restart_request);
-			restart_piece = std::move(rhs.restart_piece);
-			redirects = std::move(rhs.redirects);
-			have_files = std::move(rhs.have_files);
-			return *this;
-		}
-
-		web_seed_t& operator=(web_seed_t const&) = default;
-		web_seed_t(web_seed_t const&) = default;
-#endif
-	};
-
 	struct TORRENT_EXTRA_EXPORT torrent_hot_members
 	{
-		torrent_hot_members(aux::session_interface& ses
-			, add_torrent_params const& p, bool session_paused);
+		torrent_hot_members(aux::session_interface& ses, bool session_paused);
 
 	protected:
-
-		// TODO: make this a raw pointer. perhaps keep the shared_ptr
-		// around further down the object to maintain an owner
-		std::shared_ptr<torrent_info> m_torrent_file;
 
 		// a back reference to the session
 		// this torrent belongs to.
@@ -287,10 +192,8 @@ namespace libTAU::aux {
 		, peer_class_set
 		, std::enable_shared_from_this<torrent>
 	{
-		// add_torrent_params may contain large merkle trees that are best
 		// moved. Deleting the const& overload ensures that it's always moved in.
-		torrent(aux::session_interface& ses, bool session_paused, add_torrent_params&& p);
-		torrent(aux::session_interface&, bool, add_torrent_params const& p) = delete;
+		torrent(aux::session_interface& ses, bool session_paused);
 		~torrent() override;
 
 		// This may be called from multiple threads
@@ -365,23 +268,13 @@ namespace libTAU::aux {
 
 		int seed_rank(aux::session_settings const& s) const;
 
-		void add_piece(piece_index_t piece, char const* data, add_piece_flags_t flags);
 		void on_disk_write_complete(storage_error const& error
 			, peer_request const& p);
 
 		void set_progress_ppm(int p) { m_progress_ppm = std::uint32_t(p); }
-		struct read_piece_struct
-		{
-			boost::shared_array<char> piece_data;
-			int blocks_left;
-			bool fail;
-			error_code error;
-		};
 		void read_piece(piece_index_t);
 		void set_sequential_range(piece_index_t first_piece, piece_index_t last_piece);
 		void set_sequential_range(piece_index_t first_piece);
-		void on_disk_read_complete(disk_buffer_holder, storage_error const&
-			, peer_request const&, std::shared_ptr<read_piece_struct>);
 
 		storage_mode_t storage_mode() const;
 
@@ -394,10 +287,6 @@ namespace libTAU::aux {
 		void panic();
 
 		void new_external_ip();
-
-		torrent_status::state_t state() const
-		{ return torrent_status::state_t(m_state); }
-		void set_state(torrent_status::state_t s);
 
 		aux::session_settings const& settings() const;
 		aux::session_interface& session() { return m_ses; }
@@ -429,8 +318,6 @@ namespace libTAU::aux {
 		stat statistics() const { return m_stat; }
 		std::optional<std::int64_t> bytes_left() const;
 
-		void bytes_done(torrent_status& st, status_flags_t) const;
-
 		void sent_bytes(int bytes_payload, int bytes_protocol);
 		void received_bytes(int bytes_payload, int bytes_protocol);
 		void trancieve_ip_packet(int bytes, bool ipv6);
@@ -452,11 +339,9 @@ namespace libTAU::aux {
 		error_code error() const { return m_error; }
 
 		void flush_cache();
-		void pause(pause_flags_t flags = {});
 		void resume();
 
 		void set_session_paused(bool b);
-		void set_paused(bool b, pause_flags_t flags = torrent_handle::clear_disk_cache);
 		void set_announce_to_dht(bool b) { m_announce_to_dht = b; }
 		void set_announce_to_trackers(bool b) { m_announce_to_trackers = b; }
 		void set_announce_to_lsd(bool b) { m_announce_to_lsd = b; }
@@ -465,7 +350,6 @@ namespace libTAU::aux {
 
 		time_point32 started() const { return m_started; }
 		void step_session_time(int seconds);
-		void do_pause(pause_flags_t flags = torrent_handle::clear_disk_cache, bool was_paused = false);
 		void do_resume();
 
 		seconds32 finished_time() const;
@@ -476,7 +360,6 @@ namespace libTAU::aux {
 		bool is_paused() const;
 		bool is_torrent_paused() const { return m_paused; }
 		void force_recheck();
-		void save_resume_data(resume_data_flags_t flags);
 
 		bool need_save_resume_data() const { return m_need_save_resume_data; }
 
@@ -490,17 +373,10 @@ namespace libTAU::aux {
 
 		bool should_check_files() const;
 
-		bool delete_files(remove_flags_t options);
-		void peers_erased(std::vector<torrent_peer*> const& peers);
-
 		void piece_availability(aux::vector<int, piece_index_t>& avail) const;
-
-		void set_piece_priority(piece_index_t index, download_priority_t priority);
-		download_priority_t piece_priority(piece_index_t index) const;
 
 		void prioritize_pieces(aux::vector<download_priority_t, piece_index_t> const& pieces);
 		void prioritize_piece_list(std::vector<std::pair<piece_index_t, download_priority_t>> const& pieces);
-		void piece_priorities(aux::vector<download_priority_t, piece_index_t>*) const;
 
 		void set_file_priority(file_index_t index, download_priority_t priority);
 		download_priority_t file_priority(file_index_t index) const;
@@ -511,15 +387,9 @@ namespace libTAU::aux {
 
 #ifndef TORRENT_DISABLE_STREAMING
 		void cancel_non_critical();
-		void set_piece_deadline(piece_index_t piece, int t, deadline_flags_t flags);
 		void reset_piece_deadline(piece_index_t piece);
 		void clear_time_critical();
 #endif // TORRENT_DISABLE_STREAMING
-
-		void update_piece_priorities(
-			aux::vector<download_priority_t, file_index_t> const& file_prios);
-
-		void status(torrent_status* st, status_flags_t flags);
 
 		// this torrent changed state, if the user is subscribing to
 		// it, add it to the m_state_updates list in session_impl
@@ -528,9 +398,6 @@ namespace libTAU::aux {
 #if TORRENT_ABI_VERSION == 1
 		void use_interface(std::string net_interface);
 #endif
-
-		void connect_to_url_seed(std::list<web_seed_t>::iterator);
-		bool connect_to_peer(torrent_peer*, bool ignore_limit = false);
 
 		int priority() const;
 #if TORRENT_ABI_VERSION == 1
@@ -558,15 +425,6 @@ namespace libTAU::aux {
 		static inline constexpr web_seed_flag_t ephemeral = 0_bit;
 		static inline constexpr web_seed_flag_t no_local_ips = 1_bit;
 
-		// add_web_seed won't add duplicates. If we have already added an entry
-		// with this URL, we'll get back the existing entry
-		web_seed_t* add_web_seed(std::string const& url
-			, std::string const& auth = std::string()
-			, web_seed_t::headers_t const& extra_headers = web_seed_entry::headers_t()
-			, web_seed_flag_t flags = {});
-
-		void remove_web_seed(std::string const& url);
-
 		std::set<std::string> web_seeds() const;
 
 		bool free_upload_slots() const
@@ -588,16 +446,9 @@ namespace libTAU::aux {
 		void update_gauge();
 
 		bool try_connect_peer();
-		bool ban_peer(torrent_peer* tp);
-		void update_peer_port(int port, torrent_peer* p, peer_source_flags_t src);
-		void set_seed(torrent_peer* p, bool s);
-		void clear_failcount(torrent_peer* p);
-
 		// the number of peers that belong to this torrent
 		int num_seeds() const;
 		int num_downloaders() const;
-
-		void get_download_queue(std::vector<partial_piece_info>* queue) const;
 
 		void update_auto_sequential();
 	public:
@@ -641,7 +492,6 @@ namespace libTAU::aux {
 		void do_connect_boost();
 
 		// forcefully sets next_announce to the current time
-		void force_tracker_request(time_point, int tracker_idx, reannounce_flags_t flags);
 		void scrape_tracker(int idx, bool user_triggered);
 		void announce_with_tracker(event_t e = event_t::none);
 
@@ -699,9 +549,6 @@ namespace libTAU::aux {
 
 		int num_have() const
 		{
-			// pretend we have every piece when in seed mode
-			if (m_seed_mode) return m_torrent_file->num_pieces();
-			if (m_have_all) return m_torrent_file->num_pieces();
 			return 0;
 		}
 
@@ -710,15 +557,12 @@ namespace libTAU::aux {
 		// flushed to disk yet
 		int num_passed() const
 		{
-			if (m_have_all) return m_torrent_file->num_pieces();
 			return 0;
 		}
 
 		int block_size() const
 		{
-			return valid_metadata()
-				? (std::min)(m_torrent_file->piece_length(), default_block_size)
-				: default_block_size;
+			return 0;
 		}
 		void disconnect_all(error_code const& ec, operation_t op);
 		int disconnect_peers(int num, error_code const& ec);
@@ -740,21 +584,6 @@ namespace libTAU::aux {
 			, int port
 			, protocol_version);
 
-		// this is the asio callback that is called when a name
-		// lookup for a WEB SEED is completed.
-		void on_name_lookup(error_code const&
-			, std::vector<address> const&
-			, int port
-			, std::list<web_seed_t>::iterator);
-
-		void connect_web_seed(std::list<web_seed_t>::iterator web, tcp::endpoint a);
-
-		// this is the asio callback that is called when a name
-		// lookup for a proxy for a web seed is completed.
-		void on_proxy_name_lookup(error_code const& e
-			, std::vector<address> const& addrs
-			, std::list<web_seed_t>::iterator web, int port);
-
 		// re-evaluates whether this torrent should be considered inactive or not
 		void on_inactivity_tick(error_code const& ec);
 
@@ -765,7 +594,6 @@ namespace libTAU::aux {
 
 		// remove a web seed, or schedule it for removal in case there
 		// are outstanding operations on it
-		void remove_web_seed_iter(std::list<web_seed_t>::iterator web);
 
 		// this is called when the torrent has finished. i.e.
 		// all the pieces we have not filtered have been downloaded.
@@ -822,14 +650,7 @@ namespace libTAU::aux {
 		bool has_storage() const { return bool(m_storage); }
 		storage_index_t storage() const { return m_storage; }
 
-		torrent_info const& torrent_file() const
-		{ return *m_torrent_file; }
-
 		void verify_block_hashes(piece_index_t index);
-
-		std::shared_ptr<const torrent_info> get_torrent_file() const;
-
-		std::shared_ptr<torrent_info> get_torrent_copy_with_hashes() const;
 
 		std::vector<std::vector<sha256_hash>> get_piece_layers() const;
 
@@ -845,10 +666,6 @@ namespace libTAU::aux {
 		// in the tracker list (in which case the source was added to the
 		// entry in the list)
 		bool add_tracker(lt::announce_entry const& url);
-
-		torrent_handle get_handle();
-
-		void write_resume_data(resume_data_flags_t const flags, add_torrent_params& ret) const;
 
 		void seen_complete() { m_last_seen_complete = ::time(nullptr); }
 		int time_since_complete() const { return int(::time(nullptr) - m_last_seen_complete); }
@@ -874,9 +691,6 @@ namespace libTAU::aux {
 // --------------------------------------------
 		// RESOURCE MANAGEMENT
 
-		// flags are defined in storage.hpp
-		void move_storage(std::string const& save_path, move_flags_t flags);
-
 		// renames the file with the given index to the new name
 		// the name may include a directory path
 		// posts alert to indicate success or failure
@@ -887,7 +701,7 @@ namespace libTAU::aux {
 		bool ready_for_connections() const
 		{ return m_connections_initialized; }
 		bool valid_metadata() const
-		{ return m_torrent_file->is_valid(); }
+		{ return false; }
 		bool are_files_checked() const
 		{ return m_files_checked; }
 
@@ -909,7 +723,7 @@ namespace libTAU::aux {
 		void leave_seed_mode(seed_mode_t checking);
 
 		bool all_verified() const
-		{ return int(m_num_verified) == m_torrent_file->num_pieces(); }
+		{ return false; }
 		bool verifying_piece(piece_index_t const piece) const
 		{ return m_verifying.get_bit(piece); }
 		void verifying(piece_index_t const piece)
@@ -945,13 +759,6 @@ namespace libTAU::aux {
 			m_links[aux::session_interface::torrent_state_updates].clear();
 		}
 
-		void inc_num_connecting(torrent_peer* pp)
-		{
-		}
-		void dec_num_connecting(torrent_peer* pp)
-		{
-		}
-
 		bool is_ssl_torrent() const { return m_ssl_torrent; }
 #ifdef TORRENT_SSL_PEERS
 		void set_ssl_cert(std::string const& certificate
@@ -980,8 +787,6 @@ namespace libTAU::aux {
 			return m_suggest_pieces.get_pieces(p, bits, n);
 		}
 		void add_suggest_piece(piece_index_t index);
-
-		client_data_t get_userdata() const { return m_userdata; }
 
 		static constexpr int no_gauge_state = 0xf;
 
@@ -1066,7 +871,6 @@ namespace libTAU::aux {
 		// removed from the set. It's important that iterators are not
 		// invalidated as entries are added and removed from this list, hence the
 		// std::list
-		std::list<web_seed_t> m_web_seeds;
 
 		// used for tracker announces
 		deadline_timer m_tracker_timer;
@@ -1128,9 +932,6 @@ namespace libTAU::aux {
 		std::vector<piece_index_t> m_predictive_pieces;
 #endif
 
-		// v2 merkle tree for each file
-		aux::vector<aux::merkle_tree, file_index_t> m_merkle_trees;
-
 		// the performance counters of this session
 		counters& m_stats_counters;
 
@@ -1146,11 +947,6 @@ namespace libTAU::aux {
 
 		// set if there's an error on this torrent
 		error_code m_error;
-
-		// used if there is any resume data. Some of the information from the
-		// add_torrent_params struct are needed later in the torrent object's life
-		// cycle, and not in the constructor. So we need to save if away here
-		std::unique_ptr<add_torrent_params> m_add_torrent_params;
 
 		// if the torrent is started without metadata, it may
 		// still be given a name until the metadata is received
@@ -1450,9 +1246,6 @@ namespace libTAU::aux {
 		// the timestamp of the last byte uploaded from this torrent specified in
 		// seconds since epoch.
 		time_point32 m_last_upload{seconds32(0)};
-
-		// user data as passed in by add_torrent_params
-		client_data_t m_userdata;
 
 // ----
 

@@ -56,8 +56,6 @@ namespace aux {
 	struct resolver_interface;
 	struct alert_manager;
 	struct torrent;
-	struct torrent_peer;
-	struct torrent_peer_allocator_interface;
 	struct external_ip;
 }
 
@@ -123,8 +121,6 @@ namespace libTAU::aux {
 			, address const& ip
 			, ip_source_t source_type, address const& source) = 0;
 		virtual aux::external_ip external_address() const = 0;
-
-		virtual disk_interface& disk_thread() = 0;
 
 		virtual alert_manager& alerts() = 0;
 
@@ -206,7 +202,6 @@ namespace libTAU::aux {
 
 		virtual libTAU::aux::utp_socket_manager* utp_socket_manager() = 0;
 		virtual void inc_boost_connections() = 0;
-		virtual std::vector<block_info>& block_info_storage() = 0;
 
 #ifdef TORRENT_SSL_PEERS
 		virtual libTAU::aux::utp_socket_manager* ssl_utp_socket_manager() = 0;
