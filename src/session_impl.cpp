@@ -401,7 +401,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	}
 
 	session_impl::session_impl(io_context& ioc, settings_pack const& pack
-		, disk_io_constructor_type disk_io_constructor
 		, session_flags_t const flags)
 		: m_settings(pack)
 		, m_io_context(ioc)
@@ -413,8 +412,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 #endif // TORRENT_USE_SSL
 		, m_alerts(m_settings.get_int(settings_pack::alert_queue_size)
 			, alert_category_t{static_cast<unsigned int>(m_settings.get_int(settings_pack::alert_mask))})
-		, m_disk_thread((disk_io_constructor ? disk_io_constructor : default_disk_io_constructor)
-			(m_io_context, m_settings, m_stats_counters))
 		, m_host_resolver(m_io_context)
 		, m_work(make_work_guard(m_io_context))
 		, m_created(clock_type::now())
@@ -805,11 +802,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
 	void session_impl::abort_stage2() noexcept
 	{
-		// it's OK to detach the threads here. The disk_io_thread
-		// has an internal counter and won't release the network
-		// thread until they're all dead (via m_work).
-		m_disk_thread->abort(false);
-
 		// now it's OK for the network thread to exit
 		m_work.reset();
 	}
@@ -920,7 +912,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	{
 		TORRENT_ASSERT(m_deferred_submit_disk_jobs);
 		m_deferred_submit_disk_jobs = false;
-		m_disk_thread->submit_jobs();
 	}
 
 	// session_impl is responsible for deleting 'pack'
@@ -994,7 +985,6 @@ namespace {
 #endif
 
 		apply_pack(&pack, m_settings, this);
-		m_disk_thread->settings_updated();
 
 		if (!reopen_listen_port)
 		{
@@ -2535,7 +2525,6 @@ namespace {
 			m_posted_stats_header = true;
 			m_alerts.emplace_alert<session_stats_header_alert>();
 		}
-		m_disk_thread->update_stats_counters(m_stats_counters);
 
 		if (m_dht)
 			m_dht->update_stats_counters(m_stats_counters);

@@ -122,8 +122,6 @@ namespace libTAU::aux {
 			, ip_source_t source_type, address const& source) = 0;
 		virtual aux::external_ip external_address() const = 0;
 
-		virtual disk_interface& disk_thread() = 0;
-
 		virtual alert_manager& alerts() = 0;
 
 		virtual io_context& get_context() = 0;

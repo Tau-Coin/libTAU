@@ -78,7 +78,6 @@ see LICENSE file.
 #include "libTAU/hex.hpp" // to_hex
 #include "libTAU/aux_/range.hpp"
 #include "libTAU/aux_/merkle.hpp"
-#include "libTAU/mmap_disk_io.hpp" // for hasher_thread_divisor
 #include "libTAU/aux_/numeric_cast.hpp"
 #include "libTAU/aux_/path.hpp"
 #include "libTAU/aux_/generate_peer_id.hpp"

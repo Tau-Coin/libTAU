@@ -17,7 +17,6 @@ see LICENSE file.
 #include "libTAU/aux_/session_call.hpp"
 #include "libTAU/extensions.hpp" // for add_peer_flags_t
 #include "libTAU/disk_interface.hpp"
-#include "libTAU/mmap_disk_io.hpp"
 #include "libTAU/posix_disk_io.hpp"
 
 namespace libTAU {
@@ -260,7 +259,6 @@ namespace {
 		// TODO: start() should just use flags out of the session_params object,
 		m_impl = std::make_shared<aux::session_impl>(std::ref(*ios)
 			, std::move(params.settings)
-			, std::move(params.disk_io_constructor)
 			, flags);
 		*static_cast<session_handle*>(this) = session_handle(m_impl);
 
@@ -470,21 +468,4 @@ namespace {
 			m_thread->join();
 		}
 	}
-
-	TORRENT_EXPORT std::unique_ptr<disk_interface> default_disk_io_constructor(
-		io_context& ios, settings_interface const& sett, counters& cnt)
-	{
-#if TORRENT_HAVE_MMAP || TORRENT_HAVE_MAP_VIEW_OF_FILE
-		// TODO: In C++17. use if constexpr instead
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-		if (sizeof(void*) == 8)
-			return mmap_disk_io_constructor(ios, sett, cnt);
-		else
-			return posix_disk_io_constructor(ios, sett, cnt);
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#else
-		return posix_disk_io_constructor(ios, sett, cnt);
-#endif
-	}
-
 }

@@ -336,7 +336,7 @@ namespace aux {
 #endif
 			using connection_map = std::set<std::shared_ptr<peer_connection>>;
 
-			session_impl(io_context&, settings_pack const&, disk_io_constructor_type, session_flags_t);
+			session_impl(io_context&, settings_pack const&, session_flags_t);
 			~session_impl() override;
 
 			session_impl(session_impl const&) = delete;
@@ -543,7 +543,6 @@ namespace aux {
 			}
 
 			alert_manager& alerts() override { return m_alerts; }
-			disk_interface& disk_thread() override { return *m_disk_thread; }
 
 			void abort() noexcept;
 			void abort_stage2() noexcept;
@@ -725,16 +724,6 @@ namespace aux {
 			// it means we need to request new alerts from the main thread.
 			mutable int m_alert_pointer_pos = 0;
 #endif
-
-			// handles disk io requests asynchronously
-			// peers have pointers into the disk buffer
-			// pool, and must be destructed before this
-			// object. The disk thread relies on the file
-			// pool object, and must be destructed before
-			// m_files. The disk io thread posts completion
-			// events to the io service, and needs to be
-			// constructed after it.
-			std::unique_ptr<disk_interface> m_disk_thread;
 
 			// the peer class that all peers belong to by default
 			peer_class_t m_global_class{0};

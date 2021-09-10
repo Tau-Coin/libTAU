@@ -77,12 +77,6 @@ namespace aux {
 	struct counters;
 	struct settings_interface;
 
-	// the constructor function for the default storage. On systems that support
-	// memory mapped files (and a 64 bit address space) the memory mapped storage
-	// will be constructed, otherwise the portable posix storage.
-	TORRENT_EXPORT std::unique_ptr<disk_interface> default_disk_io_constructor(
-		io_context& ios, settings_interface const&, counters& cnt);
-
 	// this is a holder for the internal session implementation object. Once the
 	// session destruction is explicitly initiated, this holder is used to
 	// synchronize the completion of the shutdown. The lifetime of this object
