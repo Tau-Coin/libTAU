@@ -790,7 +790,6 @@ SOURCES =
 	file_storage
 	escape_string
 	string_util
-	file
 	path
 	fingerprint
 	gzip
@@ -838,7 +837,6 @@ SOURCES =
 	utf8
 	utp_socket_manager
 	utp_stream
-	file_view_pool
 	lsd
 	enum_net
 	parse_url
@@ -846,7 +844,6 @@ SOURCES =
 	version
 	peer_class
 	peer_class_set
-	part_file
 	stat_cache
 	session_stats
 	performance_counters
