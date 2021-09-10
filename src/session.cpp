@@ -17,7 +17,6 @@ see LICENSE file.
 #include "libTAU/aux_/session_call.hpp"
 #include "libTAU/extensions.hpp" // for add_peer_flags_t
 #include "libTAU/disk_interface.hpp"
-#include "libTAU/posix_disk_io.hpp"
 
 namespace libTAU {
 
