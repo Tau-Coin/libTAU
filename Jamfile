@@ -785,8 +785,6 @@ SOURCES =
 	crc32c
 	directory
 	disk_buffer_holder
-	disk_buffer_pool
-	disk_io_thread_pool
 	entry
 	error_code
 	file_storage
