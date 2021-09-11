@@ -55,6 +55,10 @@ namespace libTAU::blockchain {
 
         virtual bool save_block(block b, bool main_chain) = 0;
 
+        virtual bool connect_tip_block(block b) = 0;
+
+        virtual bool connect_tail_block(block b) = 0;
+
         virtual bool rollback_block(block b) = 0;
 
         virtual bool delete_block(sha256_hash hash) = 0;

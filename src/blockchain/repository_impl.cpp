@@ -337,6 +337,76 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    bool repository_impl::connect_tip_block(block b) {
+        // save block
+        if (!save_block(b))
+            return false;
+
+        state_linker stateLinker(b.sha256());
+        auto& chain_id = b.chain_id();
+
+        auto& pubKey = b.miner();
+        sha256_hash block_hash = get_account_block_hash(chain_id, pubKey);
+        if (!block_hash.is_all_zeros()) {
+            block blk = get_block_by_hash(block_hash);
+            auto linker = get_state_linker(block_hash);
+            if (blk.empty() || linker.empty()) {
+                return false;
+            }
+
+            stateLinker.update_previous_change_block_hash(pubKey, block_hash);
+            stateLinker.update_last_change_block_hash(pubKey, linker.get_peer_last_change_block_hash(pubKey));
+        }
+        // save state
+        if (!save_account_block_hash(chain_id, pubKey, b.sha256()))
+            return false;
+
+        auto tx = b.tx();
+        if (!tx.empty()) {
+            auto& pubKey = tx.sender();
+            block_hash = get_account_block_hash(chain_id, pubKey);
+            if (!block_hash.is_all_zeros()) {
+                block blk = get_block_by_hash(block_hash);
+                auto linker = get_state_linker(block_hash);
+                if (blk.empty() || linker.empty()) {
+                    return false;
+                }
+
+                stateLinker.update_previous_change_block_hash(pubKey, block_hash);
+                stateLinker.update_last_change_block_hash(pubKey, linker.get_peer_last_change_block_hash(pubKey));
+            }
+            // save state
+            if (!save_account_block_hash(chain_id, pubKey, b.sha256()))
+                return false;
+
+            auto& pubKey = tx.sender();
+            block_hash = get_account_block_hash(chain_id, pubKey);
+            if (!block_hash.is_all_zeros()) {
+                block blk = get_block_by_hash(block_hash);
+                auto linker = get_state_linker(block_hash);
+                if (blk.empty() || linker.empty()) {
+                    return false;
+                }
+
+                stateLinker.update_previous_change_block_hash(pubKey, block_hash);
+                stateLinker.update_last_change_block_hash(pubKey, linker.get_peer_last_change_block_hash(pubKey));
+            }
+            // save state
+            if (!save_account_block_hash(chain_id, pubKey, b.sha256()))
+                return false;
+        }
+
+        if (!save_state_linker(stateLinker))
+            return false;
+
+        return true;
+
+    }
+
+    bool repository_impl::connect_tail_block(block b) {
+        return false;
+    }
+
     // validate peer
     bool repository_impl::rollback_block(block b) {
         if (b.empty())

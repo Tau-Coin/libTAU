@@ -43,6 +43,10 @@ namespace libTAU::blockchain {
 
         bool save_block(block b, bool main_chain) override;
 
+        bool connect_tip_block(block b) override;
+
+        bool connect_tail_block(block b) override;
+
         bool rollback_block(block b) override;
 
         bool delete_block(sha256_hash hash) override;

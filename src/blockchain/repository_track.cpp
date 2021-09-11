@@ -157,6 +157,14 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    bool repository_track::connect_tip_block(block b) {
+        return false;
+    }
+
+    bool repository_track::connect_tail_block(block b) {
+        return false;
+    }
+
     bool repository_track::rollback_block(block b) {
         if (b.empty())
             return false;
