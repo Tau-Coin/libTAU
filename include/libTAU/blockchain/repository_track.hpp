@@ -39,7 +39,11 @@ namespace libTAU::blockchain {
 
         block get_block_by_hash(sha256_hash hash) override;
 
-        bool save_block(block b, bool main_chain) override;
+//        bool save_block(block b, bool main_chain) override;
+
+        bool get_state_linker_info_from_account(aux::bytes chain_id, const dht::public_key& pubKey, state_linker& stateLinker) override;
+
+        bool update_last_change_block_hash(aux::bytes chain_id, const dht::public_key& pubKey, sha256_hash last_block_hash) override;
 
         bool connect_tip_block(block b) override;
 
