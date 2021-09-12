@@ -509,10 +509,6 @@ TORRENT_VERSION_NAMESPACE_4
 		int file_num_blocks(file_index_t index) const;
 		index_range<piece_index_t::diff_type> file_piece_range(file_index_t) const;
 
-		// index of first piece node in the merkle tree
-		int file_first_piece_node(file_index_t index) const;
-		int file_first_block_node(file_index_t index) const;
-
 		// returns the crc32 hash of file_path(index)
 		std::uint32_t file_path_hash(file_index_t index, std::string const& save_path) const;
 

@@ -777,7 +777,6 @@ SOURCES =
 	bdecode
 	bitfield
 	bloom_filter
-	chained_buffer
 	close_reason
 	common
     common_data
@@ -803,8 +802,6 @@ SOURCES =
 	ip_notifier
 	ip_voter
 	listen_socket_handle
-	merkle
-	merkle_tree
 	platform_util
 	instantiate_connection
 	natpmp
