@@ -827,7 +827,6 @@ SOURCES =
 	socks5_stream
 	stat
 	storage_utils
-	torrent
 	time
 	tracker_manager
 	udp_tracker_connection

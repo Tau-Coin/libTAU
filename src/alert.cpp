@@ -29,7 +29,6 @@ see LICENSE file.
 #include "libTAU/alert_types.hpp"
 #include "libTAU/aux_/socket_io.hpp"
 #include "libTAU/error_code.hpp"
-#include "libTAU/aux_/torrent.hpp"
 #include "libTAU/performance_counters.hpp"
 #include "libTAU/aux_/stack_allocator.hpp"
 #include "libTAU/hex.hpp" // to_hex
@@ -1295,11 +1294,6 @@ namespace {
 	char const* alert_name(int const alert_type)
 	{
 		static std::array<char const*, num_alert_types> const names = {{
-#if TORRENT_ABI_VERSION == 1
-		"torrent", "peer",
-#else
-		"", "",
-#endif
 		"udp_error", "external_ip", "listen_failed",
 		"listen_succeeded", "portmap_error", "portmap",
 		"portmap_log",
