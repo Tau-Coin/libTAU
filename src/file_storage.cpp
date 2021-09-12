@@ -16,7 +16,6 @@ see LICENSE file.
 #include "libTAU/aux_/path.hpp"
 #include "libTAU/aux_/numeric_cast.hpp"
 #include "libTAU/disk_interface.hpp" // for default_block_size
-#include "libTAU/aux_/merkle.hpp"
 #include "libTAU/aux_/throw.hpp"
 
 #include "libTAU/aux_/disable_warnings_push.hpp"
@@ -1124,22 +1123,6 @@ namespace {
 		TORRENT_ASSERT(f.pad_file == false);
 		TORRENT_ASSERT((static_cast<std::int64_t>(f.offset) % m_piece_length) == 0);
 		return int((f.size + default_block_size - 1) / default_block_size);
-	}
-
-	int file_storage::file_first_piece_node(file_index_t index) const
-	{
-		TORRENT_ASSERT_PRECOND(index >= file_index_t(0) && index < end_file());
-		TORRENT_ASSERT_PRECOND(m_piece_length > 0);
-		int const piece_layer_size = merkle_num_leafs(file_num_pieces(index));
-		return merkle_num_nodes(piece_layer_size) - piece_layer_size;
-	}
-
-	int file_storage::file_first_block_node(file_index_t index) const
-	{
-		TORRENT_ASSERT_PRECOND(index >= file_index_t(0) && index < end_file());
-		TORRENT_ASSERT_PRECOND(m_piece_length > 0);
-		int const leaf_layer_size = merkle_num_leafs(file_num_blocks(index));
-		return merkle_num_nodes(leaf_layer_size) - leaf_layer_size;
 	}
 
 	file_flags_t file_storage::file_flags(file_index_t const index) const
