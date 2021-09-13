@@ -48,7 +48,6 @@ namespace aux {
 	struct tracker_request;
 	struct request_callback;
 	struct peer_connection;
-	struct utp_socket_manager;
 	struct bandwidth_channel;
 	struct bandwidth_manager;
 	struct resolver_interface;
@@ -198,12 +197,8 @@ namespace libTAU::aux {
 
 		static constexpr std::size_t num_torrent_lists = 8;
 
-		virtual libTAU::aux::utp_socket_manager* utp_socket_manager() = 0;
 		virtual void inc_boost_connections() = 0;
 
-#ifdef TORRENT_SSL_PEERS
-		virtual libTAU::aux::utp_socket_manager* ssl_utp_socket_manager() = 0;
-#endif
 #if TORRENT_USE_SSL
 		virtual ssl::context* ssl_ctx() = 0 ;
 #endif

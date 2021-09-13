@@ -58,7 +58,6 @@ see LICENSE file.
 #include "libTAU/aux_/deadline_timer.hpp"
 #include "libTAU/aux_/socket_io.hpp" // for print_address
 #include "libTAU/address.hpp"
-#include "libTAU/aux_/utp_socket_manager.hpp"
 #include "libTAU/aux_/bloom_filter.hpp"
 #include "libTAU/peer_class.hpp"
 #include "libTAU/peer_class_type_filter.hpp"
@@ -626,13 +625,6 @@ namespace aux {
 			bool verify_bound_address(address const& addr, bool utp
 				, error_code& ec) override;
 
-			libTAU::aux::utp_socket_manager* utp_socket_manager() override
-			{ return &m_utp_socket_manager; }
-#ifdef TORRENT_SSL_PEERS
-			libTAU::aux::utp_socket_manager* ssl_utp_socket_manager() override
-			{ return &m_ssl_utp_socket_manager; }
-#endif
-
 			void inc_boost_connections() override
 			{
 				++m_boost_connections;
@@ -881,8 +873,6 @@ namespace aux {
 			int m_peak_up_rate = 0;
 #endif
 
-			void on_tick(error_code const& e);
-
 			time_point m_created;
 			std::uint16_t session_time() const override
 			{
@@ -973,18 +963,9 @@ namespace aux {
 				send_udp_packet(sock.get_ptr(), ep, p, ec, flags);
 			}
 
-			void on_udp_writeable(std::weak_ptr<session_udp_socket> s, error_code const& ec);
-
 			void on_udp_packet(std::weak_ptr<session_udp_socket> s
 				, std::weak_ptr<listen_socket_t> ls
 				, transport ssl, error_code const& ec);
-
-			libTAU::aux::utp_socket_manager m_utp_socket_manager;
-
-#ifdef TORRENT_SSL_PEERS
-			// used for uTP connections over SSL
-			libTAU::aux::utp_socket_manager m_ssl_utp_socket_manager;
-#endif
 
 			// the number of torrent connection boosts
 			// connections that have been made this second
