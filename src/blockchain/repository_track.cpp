@@ -387,4 +387,17 @@ namespace libTAU::blockchain {
         m_cache[b.sha256().to_string()] = b.get_encode();
         return true;
     }
+
+    bool repository_track::save_non_main_chain_block(block b) {
+        return false;
+    }
+
+    index_key_info repository_track::get_index_info(aux::bytes chain_id, std::int64_t block_number) {
+        return index_key_info();
+    }
+
+    bool
+    repository_track::save_index_info(aux::bytes chain_id, std::int64_t block_number, index_key_info indexKeyInfo) {
+        return false;
+    }
 }

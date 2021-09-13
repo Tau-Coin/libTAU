@@ -93,6 +93,12 @@ namespace libTAU::blockchain {
 
         bool save_block(block b) override;
 
+        bool save_non_main_chain_block(block b) override;
+
+        index_key_info get_index_info(aux::bytes chain_id, std::int64_t block_number) override;
+
+        bool save_index_info(aux::bytes chain_id, std::int64_t block_number, index_key_info indexKeyInfo) override;
+
     private:
 
         repository *m_repository;

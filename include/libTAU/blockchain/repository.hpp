@@ -11,6 +11,7 @@ see LICENSE file.
 
 
 #include <map>
+#include "libTAU/blockchain/index_key_info.hpp"
 #include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
 #include "libTAU/blockchain/state_linker.hpp"
@@ -20,6 +21,7 @@ namespace libTAU::blockchain {
 
     struct TORRENT_EXPORT repository {
 
+        const std::string key_separator = "_";
         const std::string key_suffix_state_linker = "linker";
         const std::string key_suffix_best_tip_block_hash = "tip";
         const std::string key_suffix_best_tail_block_hash = "tail";
@@ -119,6 +121,12 @@ namespace libTAU::blockchain {
         virtual bool save_state_linker(state_linker stateLinker) = 0;
 
         virtual bool save_block(block b) = 0;
+
+        virtual bool save_non_main_chain_block(block b) = 0;
+
+        virtual index_key_info get_index_info(aux::bytes chain_id, std::int64_t block_number) = 0;
+
+        virtual bool save_index_info(aux::bytes chain_id, std::int64_t block_number, index_key_info indexKeyInfo) = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP

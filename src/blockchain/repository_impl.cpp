@@ -267,6 +267,48 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
+    bool repository_impl::save_non_main_chain_block(block b) {
+        // save block
+        if (!save_block(b))
+            return false;
+
+        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+
+
+        return false;
+    }
+
+    index_key_info repository_impl::get_index_info(aux::bytes chain_id, std::int64_t block_number) {
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_separator.begin(), key_separator.end());
+        std::string str_num = std::to_string(block_number);
+        key.insert(key.end(), str_num.begin(), str_num.end());
+
+        std::string value;
+        m_leveldb->Get(leveldb::ReadOptions(), key, &value);
+
+        if (value.empty()) {
+            return index_key_info(value);
+        }
+
+        return index_key_info();
+    }
+
+    bool repository_impl::save_index_info(aux::bytes chain_id, std::int64_t block_number, index_key_info indexKeyInfo) {
+        if (indexKeyInfo.empty())
+            return false;
+
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_separator.begin(), key_separator.end());
+        std::string str_num = std::to_string(block_number);
+        key.insert(key.end(), str_num.begin(), str_num.end());
+
+        leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, indexKeyInfo.get_encode());
+        return status.ok();
+    }
+
     bool repository_impl::get_state_linker_info_from_account(aux::bytes chain_id, const dht::public_key &pubKey, state_linker &stateLinker) {
         sha256_hash block_hash = get_account_block_hash(chain_id, pubKey);
         if (!block_hash.is_all_zeros()) {
