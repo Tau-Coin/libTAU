@@ -38,7 +38,6 @@ see LICENSE file.
 #include "libTAU/aux_/stack_allocator.hpp"
 #include "libTAU/aux_/noexcept_movable.hpp"
 #include "libTAU/portmap.hpp" // for portmap_transport
-#include "libTAU/tracker_event.hpp" // for event_t enum
 #include "libTAU/socket_type.hpp"
 #include "libTAU/client_data.hpp"
 #include "libTAU/aux_/deprecated.hpp"

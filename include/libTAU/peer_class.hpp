@@ -62,7 +62,6 @@ namespace libTAU {
 		// either. Priorities start at 1 (0 is not a valid priority) and may not
 		// exceed 255.
 		int upload_priority;
-		int download_priority;
 	};
 
 	struct TORRENT_EXTRA_EXPORT peer_class

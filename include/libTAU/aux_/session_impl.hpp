@@ -47,7 +47,6 @@ see LICENSE file.
 #include "libTAU/error_code.hpp"
 #include "libTAU/units.hpp"
 #include "libTAU/info_hash.hpp"
-#include "libTAU/download_priority.hpp"
 #include "libTAU/client_data.hpp"
 #include "libTAU/aux_/noexcept_movable.hpp"
 #include "libTAU/fwd.hpp"
