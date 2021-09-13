@@ -73,7 +73,6 @@ namespace aux {
 	struct session_impl;
 }
 
-	struct disk_interface;
 	struct counters;
 	struct settings_interface;
 

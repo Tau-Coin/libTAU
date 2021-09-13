@@ -36,11 +36,7 @@ TORRENT_VERSION_NAMESPACE_3
 struct plugin;
 TORRENT_VERSION_NAMESPACE_3_END
 
-struct disk_interface;
 struct counters;
-
-using disk_io_constructor_type = std::function<std::unique_ptr<disk_interface>(
-	io_context&, settings_interface const&, counters&)>;
 
 TORRENT_VERSION_NAMESPACE_3
 
@@ -86,10 +82,6 @@ struct TORRENT_EXPORT session_params
 
 	// function object to construct the storage object for DHT items.
 	dht::dht_storage_constructor_type dht_storage_constructor;
-
-	// function object to create the disk I/O subsystem. Defaults to
-	// default_disk_io_constructor.
-	disk_io_constructor_type disk_io_constructor;
 
 	// this container can be used by extensions/plugins to store settings. It's
 	// primarily here to make it convenient to save and restore state across

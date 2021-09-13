@@ -417,19 +417,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		, m_created(clock_type::now())
 		, m_last_tick(m_created)
 		, m_last_second_tick(m_created - milliseconds(900))
-		, m_utp_socket_manager(
-			std::bind(&session_impl::send_udp_packet, this, _1, _2, _3, _4, _5)
-			, [this](socket_type s) { this->incoming_connection(std::move(s)); }
-			, m_io_context
-			, m_settings, m_stats_counters, nullptr)
-#ifdef TORRENT_SSL_PEERS
-		, m_ssl_utp_socket_manager(
-			std::bind(&session_impl::send_udp_packet, this, _1, _2, _3, _4, _5)
-			, std::bind(&session_impl::on_incoming_utp_ssl, this, _1)
-			, m_io_context
-			, m_settings, m_stats_counters
-			, &m_peer_ssl_ctx)
-#endif
 		, m_timer(m_io_context)
 		, m_paused(flags & session::paused)
 	{
@@ -532,7 +519,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		async_inc_threads();
 		add_outstanding_async("session_impl::on_tick");
 #endif
-		post(m_io_context, [this]{ wrap(&session_impl::on_tick, error_code()); });
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log(" done starting session");
@@ -1764,8 +1750,6 @@ namespace {
 		{
 			s->write_blocked = true;
 			ADD_OUTSTANDING_ASYNC("session_impl::on_udp_writeable");
-			s->sock.async_write(std::bind(&session_impl::on_udp_writeable
-				, this, s, _1));
 		}
 	}
 
@@ -1792,37 +1776,8 @@ namespace {
 		{
 			s->write_blocked = true;
 			ADD_OUTSTANDING_ASYNC("session_impl::on_udp_writeable");
-			s->sock.async_write(std::bind(&session_impl::on_udp_writeable
-				, this, s, _1));
 		}
 	}
-
-	void session_impl::on_udp_writeable(std::weak_ptr<session_udp_socket> sock, error_code const& ec)
-	{
-		COMPLETE_ASYNC("session_impl::on_udp_writeable");
-		if (ec) return;
-
-		auto s = sock.lock();
-		if (!s) return;
-
-		s->write_blocked = false;
-
-#ifdef TORRENT_SSL_PEERS
-		auto i = std::find_if(
-			m_listen_sockets.begin(), m_listen_sockets.end()
-			, [&s] (std::shared_ptr<listen_socket_t> const& ls) { return ls->udp_sock == s; });
-#endif
-
-		// notify the utp socket manager it can start sending on the socket again
-		struct utp_socket_manager& mgr =
-#ifdef TORRENT_SSL_PEERS
-			(i != m_listen_sockets.end() && (*i)->ssl == transport::ssl) ? m_ssl_utp_socket_manager :
-#endif
-			m_utp_socket_manager;
-
-		mgr.writable();
-	}
-
 
 	void session_impl::on_udp_packet(std::weak_ptr<session_udp_socket> socket
 		, std::weak_ptr<listen_socket_t> ls, transport const ssl, error_code const& ec)
@@ -1858,12 +1813,6 @@ namespace {
 		std::shared_ptr<session_udp_socket> s = socket.lock();
 		if (!s) return;
 
-		struct utp_socket_manager& mgr =
-#ifdef TORRENT_SSL_PEERS
-			ssl == transport::ssl ? m_ssl_utp_socket_manager :
-#endif
-			m_utp_socket_manager;
-
 		for (;;)
 		{
 			aux::array<udp_socket::packet, 50> p;
@@ -1884,20 +1833,15 @@ namespace {
 
 				span<char const> const buf = packet.data;
 
-				// give the uTP socket manager first dibs on the packet. Presumably
-				// the majority of packets are uTP packets.
-				if (!mgr.incoming_packet(ls, packet.from, buf))
+				// if it wasn't a uTP packet, try the other users of the UDP
+				// socket
+				auto listen_socket = ls.lock();
+				if (m_dht && buf.size() > 20
+					&& buf.front() == 'd'
+					&& buf.back() == 'e'
+					&& listen_socket)
 				{
-					// if it wasn't a uTP packet, try the other users of the UDP
-					// socket
-					auto listen_socket = ls.lock();
-					if (m_dht && buf.size() > 20
-						&& buf.front() == 'd'
-						&& buf.back() == 'e'
-						&& listen_socket)
-					{
-						m_dht->incoming_packet(listen_socket, packet.from, buf);
-					}
+					m_dht->incoming_packet(listen_socket, packet.from, buf);
 				}
 			}
 
@@ -1946,16 +1890,12 @@ namespace {
 #endif
 					&& err != boost::asio::error::message_size)
 				{
-					// fatal errors. Don't try to read from this socket again
-					mgr.socket_drained();
 					return;
 				}
 				// non-fatal UDP errors get here, we should re-issue the read.
 				continue;
 			}
 		}
-
-		mgr.socket_drained();
 
 		ADD_OUTSTANDING_ASYNC("session_impl::on_udp_packet");
 		s->sock.async_read(make_handler([this, socket, ls, ssl](error_code const& e)
@@ -2385,87 +2325,6 @@ namespace {
 			, overhead);
 
 		m_stat.received_synack(ipv6);
-	}
-
-	void session_impl::on_tick(error_code const& e)
-	{
-		COMPLETE_ASYNC("session_impl::on_tick");
-		m_stats_counters.inc_stats_counter(counters::on_tick_counter);
-
-		TORRENT_ASSERT(is_single_thread());
-
-		time_point const now = aux::time_now();
-
-		// we have to keep ticking the utp socket manager
-		// until they're all closed
-		// we also have to keep updating the aux time while
-		// there are outstanding announces
-		if (m_abort)
-		{
-			if (m_utp_socket_manager.num_sockets() == 0
-#ifdef TORRENT_SSL_PEERS
-				&& m_ssl_utp_socket_manager.num_sockets() == 0
-#endif
-				&& m_undead_peers.empty())
-			{
-				// this is where shutdown completes. We won't issue another
-				// on_tick()
-				return;
-			}
-#if defined TORRENT_ASIO_DEBUGGING
-			std::fprintf(stderr, "uTP sockets: %d ssl-uTP sockets: %d undead-peers left: %d\n"
-				, m_utp_socket_manager.num_sockets()
-#ifdef TORRENT_SSL_PEERS
-				, m_ssl_utp_socket_manager.num_sockets()
-#else
-				, 0
-#endif
-				, int(m_undead_peers.size()));
-#endif
-		}
-
-		if (e && e != boost::asio::error::operation_aborted)
-		{
-#ifndef TORRENT_DISABLE_LOGGING
-			if (should_log())
-				session_log("*** TICK TIMER FAILED %s", e.message().c_str());
-#endif
-			std::abort();
-		}
-
-		ADD_OUTSTANDING_ASYNC("session_impl::on_tick");
-		milliseconds const tick_interval(m_abort ? 100 : m_settings.get_int(settings_pack::tick_interval));
-		m_timer.expires_at(now + tick_interval);
-		m_timer.async_wait(aux::make_handler([this](error_code const& err)
-		{ wrap(&session_impl::on_tick, err); }, m_tick_handler_storage, *this));
-
-		m_last_tick = now;
-
-		m_utp_socket_manager.tick(now);
-#ifdef TORRENT_SSL_PEERS
-		m_ssl_utp_socket_manager.tick(now);
-#endif
-
-		// only tick the following once per second
-		if (now - m_last_second_tick < seconds(1)) return;
-
-		m_utp_socket_manager.decay();
-#ifdef TORRENT_SSL_PEERS
-		m_ssl_utp_socket_manager.decay();
-#endif
-
-		int const tick_interval_ms = aux::numeric_cast<int>(total_milliseconds(now - m_last_second_tick));
-		m_last_second_tick = now;
-
-		// don't do any of the following while we're shutting down
-		if (m_abort) return;
-
-#if TORRENT_ABI_VERSION == 1
-		m_peak_up_rate = std::max(m_stat.upload_rate(), m_peak_up_rate);
-#endif
-
-		m_stat.second_tick(tick_interval_ms);
-
 	}
 
 	void session_impl::received_buffer(int s)

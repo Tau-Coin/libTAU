@@ -18,7 +18,6 @@ see LICENSE file.
 #include "libTAU/config.hpp"
 #include "libTAU/string_view.hpp"
 #include "libTAU/span.hpp"
-#include "libTAU/aux_/storage_utils.hpp" // for iovec_t
 
 #include "libTAU/aux_/disable_warnings_push.hpp"
 
@@ -52,6 +51,8 @@ see LICENSE file.
 #include "libTAU/time.hpp"
 
 namespace libTAU {
+
+	using iovec_t = span<char>;
 
 	struct file_status
 	{

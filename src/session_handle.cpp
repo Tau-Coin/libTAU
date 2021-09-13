@@ -80,9 +80,6 @@ namespace libTAU {
 #endif
 	constexpr session_flags_t session_handle::paused;
 
-	constexpr remove_flags_t session_handle::delete_files;
-	constexpr remove_flags_t session_handle::delete_partfile;
-
 	constexpr reopen_network_flags_t session_handle::reopen_map_ports;
 
 	template <typename Fun, typename... Args>

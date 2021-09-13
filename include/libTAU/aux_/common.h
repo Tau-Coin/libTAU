@@ -35,9 +35,12 @@
 #pragma warning(pop)
 #pragma GCC diagnostic pop
 #include "libTAU/aux_/vector_ref.h"
-#include "libTAU/aux_/mmap.hpp"
 
-namespace libTAU { namespace aux {
+namespace libTAU { 
+
+using byte = char;
+
+namespace aux {
 // CryptoPP defines byte in the global namespace, so must we.
 //using byte = uint8_t;
 
