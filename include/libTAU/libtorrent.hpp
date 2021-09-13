@@ -82,7 +82,6 @@
 #include "libTAU/socket_type.hpp"
 #include "libTAU/socks5_stream.hpp"
 #include "libTAU/span.hpp"
-#include "libTAU/storage_defs.hpp"
 #include "libTAU/string_view.hpp"
 #include "libTAU/time.hpp"
 #include "libTAU/tracker_event.hpp"

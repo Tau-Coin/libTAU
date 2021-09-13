@@ -40,7 +40,6 @@ see LICENSE file.
 #include "libTAU/ip_filter.hpp"
 #include "libTAU/aux_/ip_notifier.hpp"
 #include "libTAU/session_status.hpp"
-#include "libTAU/storage_defs.hpp"
 #include "libTAU/sha1_hash.hpp"
 #include "libTAU/version.hpp"
 #include "libTAU/socket.hpp" // for tcp::endpoint
