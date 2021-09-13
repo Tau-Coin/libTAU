@@ -85,14 +85,6 @@ struct client_data_t;
 struct buffer_allocator_interface;
 struct disk_buffer_holder;
 
-// include/libTAU/disk_interface.hpp
-struct open_file_state;
-struct disk_interface;
-struct storage_holder;
-
-// include/libTAU/disk_observer.hpp
-struct disk_observer;
-
 // include/libTAU/entry.hpp
 struct entry;
 
@@ -106,12 +98,6 @@ TORRENT_VERSION_NAMESPACE_3_END
 struct torrent_plugin;
 struct peer_plugin;
 struct crypto_plugin;
-
-// include/libTAU/file_storage.hpp
-struct file_slice;
-TORRENT_VERSION_NAMESPACE_4
-class file_storage;
-TORRENT_VERSION_NAMESPACE_4_END
 
 // include/libTAU/hasher.hpp
 TORRENT_CRYPTO_NAMESPACE
@@ -175,9 +161,6 @@ struct stats_metric;
 struct settings_interface;
 struct settings_pack;
 
-// include/libTAU/storage_defs.hpp
-struct storage_params;
-
 #if TORRENT_ABI_VERSION <= 2
 
 // include/libTAU/alert_types.hpp
@@ -185,9 +168,6 @@ TORRENT_VERSION_NAMESPACE_3
 struct stats_alert;
 struct anonymous_mode_alert;
 TORRENT_VERSION_NAMESPACE_3_END
-
-// include/libTAU/file_storage.hpp
-struct file_entry;
 
 // include/libTAU/fingerprint.hpp
 struct fingerprint;

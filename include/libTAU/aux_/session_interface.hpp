@@ -41,8 +41,6 @@ see LICENSE file.
 namespace libTAU {
 
 	struct peer_class_pool;
-	struct disk_observer;
-	struct disk_interface;
 	struct counters;
 
 namespace aux {

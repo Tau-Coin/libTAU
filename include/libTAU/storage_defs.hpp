@@ -76,29 +76,6 @@ namespace libTAU {
 		dont_replace TORRENT_DEPRECATED_ENUM
 	};
 #endif
-
-	// a parameter pack used to construct the storage for a torrent, used in
-	// disk_interface
-	struct TORRENT_EXPORT storage_params
-	{
-		storage_params(file_storage const& f, file_storage const* mf
-			, std::string const& sp, storage_mode_t const sm
-			, aux::vector<download_priority_t, file_index_t> const& prio
-			, sha1_hash const& ih)
-			: files(f)
-			, mapped_files(mf)
-			, path(sp)
-			, mode(sm)
-			, priorities(prio)
-			, info_hash(ih)
-		{}
-		file_storage const& files;
-		file_storage const* mapped_files = nullptr; // optional
-		std::string const& path;
-		storage_mode_t mode{storage_mode_sparse};
-		aux::vector<download_priority_t, file_index_t> const& priorities;
-		sha1_hash info_hash;
-	};
 }
 
 #endif

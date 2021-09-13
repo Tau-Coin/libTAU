@@ -786,7 +786,6 @@ SOURCES =
 	disk_buffer_holder
 	entry
 	error_code
-	file_storage
 	escape_string
 	string_util
 	path
@@ -823,7 +822,6 @@ SOURCES =
 	socket_type
 	socks5_stream
 	stat
-	storage_utils
 	time
 	tracker_manager
 	udp_tracker_connection
@@ -840,7 +838,6 @@ SOURCES =
 	version
 	peer_class
 	peer_class_set
-	stat_cache
 	session_stats
 	performance_counters
 	resolver
@@ -850,7 +847,6 @@ SOURCES =
 	peer_info
 	stack_allocator
 	generate_peer_id
-	mmap
 	ssl
 	;
 

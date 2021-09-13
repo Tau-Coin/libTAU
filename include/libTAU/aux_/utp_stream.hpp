@@ -23,7 +23,6 @@ see LICENSE file.
 #include "libTAU/aux_/sliding_average.hpp"
 #include "libTAU/address.hpp"
 #include "libTAU/aux_/invariant_check.hpp"
-#include "libTAU/aux_/storage_utils.hpp" // for iovec_t
 
 #include <functional>
 
@@ -34,6 +33,8 @@ see LICENSE file.
 #endif
 
 namespace libTAU::aux {
+
+	using iovec_t = span<char>;
 
 #ifndef TORRENT_UTP_LOG_ENABLE
 	#define TORRENT_UTP_LOG 0

@@ -23,7 +23,6 @@ see LICENSE file.
 #include "libTAU/aux_/invariant_check.hpp"
 #include "libTAU/performance_counters.hpp"
 #include "libTAU/io_context.hpp"
-#include "libTAU/aux_/storage_utils.hpp" // for iovec_t
 #include <cstdint>
 #include <limits>
 
