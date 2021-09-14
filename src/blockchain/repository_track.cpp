@@ -127,6 +127,10 @@ namespace libTAU::blockchain {
         if (!save_block(b))
             return false;
 
+        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+        indexKeyInfo.set_main_chain_block_hash(b.sha256());
+        indexKeyInfo.add_associated_peer(b.miner());
+
         state_linker stateLinker(b.sha256());
         auto& chain_id = b.chain_id();
 
@@ -149,9 +153,15 @@ namespace libTAU::blockchain {
             // save state
             if (!save_account_block_hash(chain_id, tx.receiver(), b.sha256()))
                 return false;
+
+            indexKeyInfo.add_associated_peer(tx.sender());
+            indexKeyInfo.add_associated_peer(tx.receiver());
         }
 
         if (!save_state_linker(stateLinker))
+            return false;
+
+        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
             return false;
 
         return true;
@@ -164,6 +174,10 @@ namespace libTAU::blockchain {
         if (!save_block(b))
             return false;
 
+        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+        indexKeyInfo.set_main_chain_block_hash(b.sha256());
+        indexKeyInfo.add_associated_peer(b.miner());
+
         auto& chain_id = b.chain_id();
         if (!update_last_change_block_hash(chain_id, b.miner(), b.sha256()))
             return false;
@@ -173,10 +187,16 @@ namespace libTAU::blockchain {
                 return false;
             if (!update_last_change_block_hash(chain_id, tx.receiver(), b.sha256()))
                 return false;
+
+            indexKeyInfo.add_associated_peer(tx.sender());
+            indexKeyInfo.add_associated_peer(tx.receiver());
         }
 
         state_linker stateLinker(b.sha256());
         if (!save_state_linker(stateLinker))
+            return false;
+
+        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
             return false;
 
         return true;
@@ -201,6 +221,13 @@ namespace libTAU::blockchain {
             if (!save_state_linker(linker))
                 return false;
         }
+
+        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
+        indexKeyInfo.clear_main_chain_block_hash();
+        indexKeyInfo.clear_associated_peers();
+        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
+            return false;
 
         return true;
     }
@@ -344,6 +371,15 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    bool repository_track::delete_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) {
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
+
+        m_cache[key] = std::string ();
+        return true;
+    }
+
     account repository_track::find_state_from_block(dht::public_key pubKey, block b) {
         if (pubKey == b.miner()) {
             return account(b.miner_balance(), b.miner_nonce(), b.block_number());
@@ -380,6 +416,15 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    bool repository_track::delete_state_linker(sha256_hash block_hash) {
+        std::string key;
+        key.insert(key.end(), block_hash.begin(), block_hash.end());
+        key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
+
+        m_cache[key] = std::string ();
+        return true;
+    }
+
     bool repository_track::save_block(block b) {
         if (b.empty())
             return false;
@@ -389,15 +434,92 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::save_non_main_chain_block(block b) {
-        return false;
+        // save block
+        if (!save_block(b))
+            return false;
+
+        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
+        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
+            return false;
+
+        return true;
+    }
+
+    bool repository_track::delete_index_info(aux::bytes chain_id, std::int64_t block_number) {
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_separator.begin(), key_separator.end());
+        std::string str_num = std::to_string(block_number);
+        key.insert(key.end(), str_num.begin(), str_num.end());
+
+        m_cache[key] = std::string ();
+
+        return true;
     }
 
     index_key_info repository_track::get_index_info(aux::bytes chain_id, std::int64_t block_number) {
-        return index_key_info();
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_separator.begin(), key_separator.end());
+        std::string str_num = std::to_string(block_number);
+        key.insert(key.end(), str_num.begin(), str_num.end());
+
+        auto it = m_cache.find(key);
+        if (it != m_cache.end()) {
+            std::string value = it->second;
+            return index_key_info(value);
+        } else {
+            return m_repository->get_index_info(chain_id, block_number);
+        }
     }
 
-    bool
-    repository_track::save_index_info(aux::bytes chain_id, std::int64_t block_number, index_key_info indexKeyInfo) {
-        return false;
+    bool repository_track::save_index_info(aux::bytes chain_id, std::int64_t block_number, index_key_info indexKeyInfo) {
+        if (indexKeyInfo.empty())
+            return false;
+
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_separator.begin(), key_separator.end());
+        std::string str_num = std::to_string(block_number);
+        key.insert(key.end(), str_num.begin(), str_num.end());
+
+        m_cache[key] = indexKeyInfo.get_encode();
+
+        return true;
     }
+
+    bool repository_track::delete_outdated_data_by_height(aux::bytes chain_id, std::int64_t block_number) {
+        index_key_info indexKeyInfo = get_index_info(chain_id, block_number);
+        auto& main_chain_block_hash = indexKeyInfo.main_chain_block_hash();
+        if (!main_chain_block_hash.is_all_zeros()) {
+            if (!delete_block(main_chain_block_hash))
+                return false;
+            if (!delete_state_linker(main_chain_block_hash))
+                return false;
+        }
+
+        auto& non_main_chain_block_hash_set = indexKeyInfo.non_main_chain_block_hash_set();
+        for (auto const& hash: non_main_chain_block_hash_set) {
+            if (!delete_block(hash))
+                return false;
+            if (!delete_state_linker(hash))
+                return false;
+        }
+
+        auto& associated_peers = indexKeyInfo.associated_peers();
+        for (auto const& peer: associated_peers) {
+            auto s = get_account(chain_id, peer);
+            if (!s.empty() && s.block_number() <= block_number) {
+                if (!delete_account_block_hash(chain_id, peer))
+                    return false;
+            }
+        }
+
+        if (!delete_index_info(chain_id, block_number))
+            return false;
+
+        return true;
+    }
+
 }

@@ -114,19 +114,27 @@ namespace libTAU::blockchain {
 
         virtual bool save_account_block_hash(aux::bytes chain_id, dht::public_key pubKey, sha256_hash hash) = 0;
 
+        virtual bool delete_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) = 0;
+
         virtual account find_state_from_block(dht::public_key pubKey, block b) = 0;
 
         virtual state_linker get_state_linker(sha256_hash block_hash) = 0;
 
         virtual bool save_state_linker(state_linker stateLinker) = 0;
 
+        virtual bool delete_state_linker(sha256_hash block_hash) = 0;
+
         virtual bool save_block(block b) = 0;
 
         virtual bool save_non_main_chain_block(block b) = 0;
 
+        virtual bool delete_index_info(aux::bytes chain_id, std::int64_t block_number) = 0;
+
         virtual index_key_info get_index_info(aux::bytes chain_id, std::int64_t block_number) = 0;
 
         virtual bool save_index_info(aux::bytes chain_id, std::int64_t block_number, index_key_info indexKeyInfo) = 0;
+
+        virtual bool delete_outdated_data_by_height(aux::bytes chain_id, std::int64_t block_number) = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP

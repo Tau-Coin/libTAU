@@ -47,17 +47,21 @@ namespace libTAU::blockchain {
 
         void set_main_chain_block_hash(const sha256_hash &mMainChainBlockHash) { m_main_chain_block_hash = mMainChainBlockHash; }
 
-        const std::set<sha256_hash> &non_main_chain_block_hash_set() const {
-            return m_non_main_chain_block_hash_set;
-        }
+        const std::set<sha256_hash> &non_main_chain_block_hash_set() const { return m_non_main_chain_block_hash_set; }
 
-        void set_non_main_chain_block_hash_set(const std::set<sha256_hash> &mNonMainChainBlockHashSet) {
-            m_non_main_chain_block_hash_set = mNonMainChainBlockHashSet;
-        }
+        void set_non_main_chain_block_hash_set(const std::set<sha256_hash> &mNonMainChainBlockHashSet) { m_non_main_chain_block_hash_set = mNonMainChainBlockHashSet; }
 
         const std::set<dht::public_key> &associated_peers() const { return m_associated_peers; }
 
         void set_associated_peers(const std::set<dht::public_key> &mAssociatedPeers) { m_associated_peers = mAssociatedPeers; }
+
+        void clear_main_chain_block_hash() { m_main_chain_block_hash.clear(); }
+
+        void clear_associated_peers() { m_associated_peers.clear(); }
+
+        void add_non_main_chain_block_hash(sha256_hash hash) { m_non_main_chain_block_hash_set.insert(hash); }
+
+        void add_associated_peer(dht::public_key peer) { m_associated_peers.insert(peer); }
 
         bool empty() { return m_main_chain_block_hash.is_all_zeros() && m_non_main_chain_block_hash_set.empty(); }
 
