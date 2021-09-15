@@ -9,7 +9,7 @@ see LICENSE file.
 #ifndef LIBTAU_PROOF_OF_TRANSACTION_HPP
 #define LIBTAU_PROOF_OF_TRANSACTION_HPP
 
-
+#include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/block.hpp"
 
 namespace libTAU::blockchain {
@@ -34,7 +34,7 @@ namespace libTAU::blockchain {
 
         static std::int64_t calculate_mining_time_interval(std::int64_t hit, std::int64_t baseTarget, std::int64_t power);
 
-        static bool verifyHit(std::int64_t hit, std::int64_t baseTarget, std::int64_t power, std::int64_t timeInterval);
+        static bool verify_hit(std::int64_t hit, std::int64_t baseTarget, std::int64_t power, std::int64_t timeInterval);
 
     };
 }
