@@ -57,9 +57,11 @@ namespace libTAU::blockchain {
 
 //        virtual bool save_block(block b, bool main_chain) = 0;
 
-        virtual bool get_state_linker_info_from_account(aux::bytes chain_id, const dht::public_key& pubKey, state_linker& stateLinker) = 0;
+        virtual bool forward_update_last_change_block_hash(aux::bytes chain_id, const dht::public_key& pubKey,
+                                                           state_linker& stateLinker, sha256_hash current_block_hash) = 0;
 
-        virtual bool update_last_change_block_hash(aux::bytes chain_id, const dht::public_key& pubKey, sha256_hash last_block_hash) = 0;
+        virtual bool backward_update_last_change_block_hash(aux::bytes chain_id, const dht::public_key& pubKey,
+                                                            state_linker& stateLinker, sha256_hash current_block_hash) = 0;
 
         virtual bool connect_tip_block(block b) = 0;
 
