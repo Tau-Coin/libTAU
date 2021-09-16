@@ -20,10 +20,12 @@ namespace libTAU::blockchain {
     constexpr int DEFAULT_MIN_BLOCK_TIME = 60;
     constexpr int DEFAULT_MAX_BLOCK_TIME = 540;
 
-    // 0x010000000000000000
-    constexpr std::int64_t DiffAdjustNumerator = 0x01;
-    constexpr std::int64_t DiffAdjustNumeratorHalf = 0x0100000000;
-    constexpr std::int64_t DiffAdjustNumeratorCoe = 0x800000000000000; //2^59
+    // 2^64 = 0x010000000000000000
+    constexpr aux::bigint DiffAdjustNumerator = aux::bigint(1) << 64;
+    // 2^32 = 0x0100000000
+    constexpr aux::bigint DiffAdjustNumeratorHalf = aux::bigint(1) << 32;
+    // 2^59 = 0x800000000000000
+    constexpr aux::bigint DiffAdjustNumeratorCoe = aux::bigint(1) << 59;
 
 }
 
