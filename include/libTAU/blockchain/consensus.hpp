@@ -6,18 +6,18 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#ifndef LIBTAU_PROOF_OF_TRANSACTION_HPP
-#define LIBTAU_PROOF_OF_TRANSACTION_HPP
+#ifndef LIBTAU_CONSENSUS_HPP
+#define LIBTAU_CONSENSUS_HPP
 
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/block.hpp"
 
 namespace libTAU::blockchain {
-    struct proof_of_transaction {
+    struct consensus {
 
         static std::int64_t calculate_required_base_target(block previousBlock, block ancestor3);
 
-        static aux::bytes calculate_generation_signature(aux::bytes preGenerationSignature, aux::bytes pubkey);
+        static aux::bytes calculate_generation_signature(sha256_hash preGenerationSignature, const dht::public_key& pubkey);
 
         /**
          * get miner target value
@@ -25,7 +25,7 @@ namespace libTAU::blockchain {
          */
         static std::int64_t calculate_miner_target_value(std::int64_t baseTarget, std::int64_t power, std::int64_t time);
 
-        static std::int64_t calculate_random_hit(aux::bytes generationSignature);
+        static std::int64_t calculate_random_hit(sha256_hash generationSignature);
 
         /**
          * calculate cumulative difficulty: last cumulative difficulty + DiffAdjustNumerator / base target
@@ -39,4 +39,4 @@ namespace libTAU::blockchain {
     };
 }
 
-#endif //LIBTAU_PROOF_OF_TRANSACTION_HPP
+#endif //LIBTAU_CONSENSUS_HPP
