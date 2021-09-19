@@ -15,14 +15,12 @@ namespace libTAU::blockchain {
         return 0;
     }
 
-    aux::bytes consensus::calculate_generation_signature(sha256_hash preGenerationSignature, const dht::public_key& pubkey) {
+    sha256_hash consensus::calculate_generation_signature(sha256_hash preGenerationSignature, const dht::public_key& pubkey) {
         std::string data;
         data.insert(data.end(), preGenerationSignature.begin(), preGenerationSignature.end());
         data.insert(data.end(), pubkey.bytes.begin(), pubkey.bytes.end());
 
-        sha256_hash hash = dht::item_target_id(data);
-
-        return libTAU::aux::bytes(hash.begin(), hash.end());
+        return dht::item_target_id(data);
     }
 
     std::int64_t consensus::calculate_miner_target_value(std::int64_t baseTarget, std::int64_t power, std::int64_t time) {

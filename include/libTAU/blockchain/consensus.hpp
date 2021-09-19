@@ -9,6 +9,7 @@ see LICENSE file.
 #ifndef LIBTAU_CONSENSUS_HPP
 #define LIBTAU_CONSENSUS_HPP
 
+#include "libTAU/sha1_hash.hpp"
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/block.hpp"
 
@@ -17,7 +18,7 @@ namespace libTAU::blockchain {
 
         static std::int64_t calculate_required_base_target(block previousBlock, block ancestor3);
 
-        static aux::bytes calculate_generation_signature(sha256_hash preGenerationSignature, const dht::public_key& pubkey);
+        static sha256_hash calculate_generation_signature(sha256_hash preGenerationSignature, const dht::public_key& pubkey);
 
         /**
          * get miner target value
