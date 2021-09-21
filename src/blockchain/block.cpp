@@ -67,8 +67,8 @@ namespace libTAU::blockchain {
         e["t"] = entry(m_timestamp);
         // block number
         e["n"] = entry(m_block_number);
-        // previous block root
-        e["h"] = entry(m_previous_block_root.to_string());
+        // previous block hash
+        e["h"] = entry(m_previous_block_hash.to_string());
         // base target
         e["b"] = entry(m_base_target);
         // cumulative difficulty
@@ -116,11 +116,11 @@ namespace libTAU::blockchain {
         {
             m_block_number = i->integer();
         }
-        // previous block root
+        // previous block hash
         if (auto* i = const_cast<entry *>(e.find_key("h")))
         {
-            auto previous_block_root = i->string();
-            m_previous_block_root = sha256_hash(previous_block_root.data());
+            auto previous_block_hash = i->string();
+            m_previous_block_hash = sha256_hash(previous_block_hash.data());
         }
         // base target
         if (auto* i = const_cast<entry *>(e.find_key("b")))

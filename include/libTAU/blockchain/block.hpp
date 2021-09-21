@@ -36,11 +36,11 @@ namespace libTAU::blockchain {
         explicit block(std::string encode): block(bdecode(encode)) {}
 
         block(block_version mVersion, aux::bytes mChainId, int64_t mTimestamp, int64_t mBlockNumber,
-                sha256_hash mPreviousBlockRoot, int64_t mBaseTarget, int64_t mCumulativeDifficulty,
+                sha256_hash mPreviousBlockHash, int64_t mBaseTarget, int64_t mCumulativeDifficulty,
               aux::bytes mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
               int64_t mMinerBalance, int64_t mMinerNonce, int64_t mSenderBalance, int64_t mSenderNonce,
               int64_t mReceiverBalance, int64_t mReceiverNonce) : m_version(mVersion), m_chain_id(std::move(mChainId)),
-              m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_root(std::move(mPreviousBlockRoot)),
+              m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_hash(std::move(mPreviousBlockHash)),
               m_base_target(mBaseTarget), m_cumulative_difficulty(mCumulativeDifficulty),
               m_generation_signature(std::move(mGenerationSignature)), m_tx(std::move(mTx)), m_miner(mMiner),
               m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce), m_sender_balance(mSenderBalance),
@@ -54,7 +54,7 @@ namespace libTAU::blockchain {
 
         int64_t block_number() const { return m_block_number; }
 
-        const sha256_hash &previous_block_root() const { return m_previous_block_root; }
+        const sha256_hash &previous_block_hash() const { return m_previous_block_hash; }
 
         int64_t base_target() const { return m_base_target; }
 
@@ -114,8 +114,8 @@ namespace libTAU::blockchain {
         // block number
         std::int64_t m_block_number{};
 
-        // previous block root
-        sha256_hash m_previous_block_root;
+        // previous block hash
+        sha256_hash m_previous_block_hash;
 
         // base target
         std::int64_t m_base_target{};
