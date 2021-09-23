@@ -73,6 +73,8 @@ namespace libTAU::blockchain {
         e["b"] = entry(m_base_target);
         // cumulative difficulty
         e["d"] = entry(m_cumulative_difficulty);
+        // generation signature
+        e["g"] = entry(m_generation_signature.to_string());
         // tx
         e["tx"] = m_tx.get_entry();
         // miner
@@ -131,6 +133,12 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("d")))
         {
             m_cumulative_difficulty = i->integer();
+        }
+        // generation signature
+        if (auto* i = const_cast<entry *>(e.find_key("g")))
+        {
+            auto generation_signature = i->string();
+            m_generation_signature = sha256_hash(generation_signature.data());
         }
         // transaction
         if (auto* i = const_cast<entry *>(e.find_key("tx")))

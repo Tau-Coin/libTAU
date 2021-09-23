@@ -37,7 +37,7 @@ namespace libTAU::blockchain {
 
         block(block_version mVersion, aux::bytes mChainId, int64_t mTimestamp, int64_t mBlockNumber,
                 sha256_hash mPreviousBlockHash, int64_t mBaseTarget, int64_t mCumulativeDifficulty,
-              aux::bytes mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
+                sha256_hash mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
               int64_t mMinerBalance, int64_t mMinerNonce, int64_t mSenderBalance, int64_t mSenderNonce,
               int64_t mReceiverBalance, int64_t mReceiverNonce) : m_version(mVersion), m_chain_id(std::move(mChainId)),
               m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_hash(std::move(mPreviousBlockHash)),
@@ -60,7 +60,7 @@ namespace libTAU::blockchain {
 
         int64_t cumulative_difficulty() const { return m_cumulative_difficulty; }
 
-        const aux::bytes &generation_signature() const { return m_generation_signature; }
+        const sha256_hash &generation_signature() const { return m_generation_signature; }
 
         const transaction &tx() const { return m_tx; }
 
@@ -124,7 +124,7 @@ namespace libTAU::blockchain {
         std::int64_t m_cumulative_difficulty{};
 
         // generation signature
-        aux::bytes m_generation_signature;
+        sha256_hash m_generation_signature;
 
         // tx
         transaction m_tx;
