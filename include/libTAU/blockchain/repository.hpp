@@ -19,6 +19,9 @@ see LICENSE file.
 namespace libTAU::blockchain {
 
 
+    // repository: 存储账户、区块、状态链接器以及相应高度的索引数据，每个账户的状态是一个通过状态链接器链接起来的一个链式结构。
+    // 每个账户会指向一个block hash，通过block hash可以到区块里面查找到对应该账户的状态，同时，通过block hash也能获得对应
+    // 的状态链接器，状态链接器通过previous change指针，可以完整回溯该账户的变化历史。
     struct TORRENT_EXPORT repository {
 
         const std::string key_separator = "_";

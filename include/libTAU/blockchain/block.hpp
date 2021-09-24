@@ -40,9 +40,9 @@ namespace libTAU::blockchain {
                 sha256_hash mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
               int64_t mMinerBalance, int64_t mMinerNonce, int64_t mSenderBalance, int64_t mSenderNonce,
               int64_t mReceiverBalance, int64_t mReceiverNonce) : m_version(mVersion), m_chain_id(std::move(mChainId)),
-              m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_hash(std::move(mPreviousBlockHash)),
+              m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash),
               m_base_target(mBaseTarget), m_cumulative_difficulty(mCumulativeDifficulty),
-              m_generation_signature(std::move(mGenerationSignature)), m_tx(std::move(mTx)), m_miner(mMiner),
+              m_generation_signature(mGenerationSignature), m_tx(std::move(mTx)), m_miner(mMiner),
               m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce), m_sender_balance(mSenderBalance),
               m_sender_nonce(mSenderNonce), m_receiver_balance(mReceiverBalance), m_receiver_nonce(mReceiverNonce) {}
 

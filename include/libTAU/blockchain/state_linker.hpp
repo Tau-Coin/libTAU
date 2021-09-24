@@ -17,6 +17,10 @@ see LICENSE file.
 
 
 namespace libTAU::blockchain {
+
+    // 状态链接器：每个区块都会对应一个状态链接器，状态链接器通过previous change指针，可以完整回溯该账户的变化历史，
+    // 同时，由于需要支持边同步边挖矿，新同步的区块涉及的账户的状态存在难以被其前一个链接器的previous change链接的情况，
+    // 该账户指向区块的最新的状态连接器需要记录区块链尾部最新同步的状态，以便能让该账户状态在回滚时能正确地链接上
     class TORRENT_EXPORT state_linker {
 
     public:
