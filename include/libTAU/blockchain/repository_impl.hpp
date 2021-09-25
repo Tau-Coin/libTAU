@@ -23,55 +23,55 @@ namespace libTAU::blockchain {
 
         bool init() override;
 
-        bool create_user_state_db(aux::bytes chain_id) override;
+        bool create_user_state_db(const aux::bytes &chain_id) override;
 
-        bool delete_user_state_db(aux::bytes chain_id) override;
+        bool delete_user_state_db(const aux::bytes &chain_id) override;
 
-        std::set<dht::public_key> get_all_peers(aux::bytes chain_id) override;
+        std::set<dht::public_key> get_all_peers(const aux::bytes &chain_id) override;
 
-        bool delete_peer(aux::bytes chain_id, dht::public_key pubKey) override;
+        bool delete_peer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
-        bool is_account_exist(aux::bytes chain_id, dht::public_key pubKey) override;
+        bool is_account_exist(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
-        account get_account(aux::bytes chain_id, dht::public_key pubKey) override;
+        account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
 //        account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) override;
 
-        bool is_block_exist(sha256_hash hash) override;
+        bool is_block_exist(const sha256_hash &hash) override;
 
-        block get_block_by_hash(sha256_hash hash) override;
+        block get_block_by_hash(const sha256_hash &hash) override;
 
 //        bool save_block(block b, bool main_chain) override;
 
-        bool forward_update_last_change_block_hash(aux::bytes chain_id, const dht::public_key& pubKey,
-                                                   state_linker& stateLinker, sha256_hash current_block_hash) override;
+        bool forward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key& pubKey,
+                                                   state_linker& stateLinker, const sha256_hash &current_block_hash) override;
 
-        bool backward_update_last_change_block_hash(aux::bytes chain_id, const dht::public_key& pubKey,
-                                                    state_linker& stateLinker, sha256_hash current_block_hash) override;
+        bool backward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key& pubKey,
+                                                    state_linker& stateLinker, const sha256_hash &current_block_hash) override;
 
-        bool connect_tip_block(block b) override;
+        bool connect_tip_block(const block &b) override;
 
-        bool connect_tail_block(block b) override;
+        bool connect_tail_block(const block &b) override;
 
-        bool rollback_block(block b) override;
+        bool rollback_block(const block &b) override;
 
-        bool delete_block(sha256_hash hash) override;
+        bool delete_block(const sha256_hash &hash) override;
 
-        sha256_hash get_best_tip_block_hash(aux::bytes chain_id) override;
+        sha256_hash get_best_tip_block_hash(const aux::bytes &chain_id) override;
 
-        bool set_best_tip_block_hash(aux::bytes chain_id, sha256_hash hash) override;
+        bool set_best_tip_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
 
-        bool delete_best_tip_block_hash(aux::bytes chain_id) override;
+        bool delete_best_tip_block_hash(const aux::bytes &chain_id) override;
 
-        sha256_hash get_best_tail_block_hash(aux::bytes chain_id) override;
+        sha256_hash get_best_tail_block_hash(const aux::bytes &chain_id) override;
 
-        bool set_best_tail_block_hash(aux::bytes chain_id, sha256_hash hash) override;
+        bool set_best_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
 
-        bool delete_best_tail_block_hash(aux::bytes chain_id) override;
+        bool delete_best_tail_block_hash(const aux::bytes &chain_id) override;
 
         repository *start_tracking() override;
 
-        void update_batch(std::map<std::string, std::string> cache, std::vector<block> main_chain_blocks) override;
+        void update_batch(const std::map<string, string> &cache, const std::vector<block> &main_chain_blocks) override;
 
         bool flush() override;
 
@@ -81,13 +81,13 @@ namespace libTAU::blockchain {
 
 //        account get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) override;
 
-        bool update_user_state_db(block b) override;
+        bool update_user_state_db(const block &b) override;
 
-        bool update_user_state_db(aux::bytes chain_id, dht::public_key pubKey) override;
+        bool update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
-        sha256_hash get_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) override;
+        sha256_hash get_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
-        bool save_account_block_hash(aux::bytes chain_id, dht::public_key pubKey, sha256_hash hash) override;
+        bool save_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey, const sha256_hash &hash) override;
 
         bool delete_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) override;
 

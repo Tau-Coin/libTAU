@@ -16,7 +16,7 @@ namespace libTAU::blockchain {
     }
 
 
-    bool repository_impl::create_user_state_db(aux::bytes chain_id) {
+    bool repository_impl::create_user_state_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
         sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
@@ -31,7 +31,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::delete_user_state_db(aux::bytes chain_id) {
+    bool repository_impl::delete_user_state_db(const aux::bytes &chain_id) {
         std::string sql = "DROP TABLE ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
 
@@ -70,7 +70,7 @@ namespace libTAU::blockchain {
 //        return account(balance, nonce, height);
 //    }
 
-    std::set<dht::public_key> repository_impl::get_all_peers(aux::bytes chain_id) {
+    std::set<dht::public_key> repository_impl::get_all_peers(const aux::bytes &chain_id) {
         std::set<dht::public_key> peers;
 
         sqlite3_stmt * stmt;
@@ -93,7 +93,7 @@ namespace libTAU::blockchain {
         return peers;
     }
 
-    bool repository_impl::delete_peer(aux::bytes chain_id, dht::public_key pubKey) {
+    bool repository_impl::delete_peer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string sql = "DELETE FROM ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
         sql.append(" WHERE PUBKEY=");
@@ -109,7 +109,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::update_user_state_db(block b) {
+    bool repository_impl::update_user_state_db(const block &b) {
         update_user_state_db(b.chain_id(), b.miner());
 
         auto tx = b.tx();
@@ -121,7 +121,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::update_user_state_db(aux::bytes chain_id, dht::public_key pubKey) {
+    bool repository_impl::update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         sqlite3_stmt * stmt;
         std::string sql = "INSERT INTO ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
@@ -144,7 +144,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::is_account_exist(aux::bytes chain_id, dht::public_key pubKey) {
+    bool repository_impl::is_account_exist(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
@@ -155,7 +155,7 @@ namespace libTAU::blockchain {
     }
 
     // check block number
-    account repository_impl::get_account(aux::bytes chain_id, dht::public_key pubKey) {
+    account repository_impl::get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         sha256_hash block_hash = get_account_block_hash(chain_id, pubKey);
 
         if (!block_hash.is_all_zeros()) {
@@ -178,7 +178,7 @@ namespace libTAU::blockchain {
 //        return s;
 //    }
 
-    sha256_hash repository_impl::get_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) {
+    sha256_hash repository_impl::get_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
@@ -189,7 +189,7 @@ namespace libTAU::blockchain {
         return sha256_hash(value.data());
     }
 
-    bool repository_impl::save_account_block_hash(aux::bytes chain_id, dht::public_key pubKey, sha256_hash hash) {
+    bool repository_impl::save_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey, const sha256_hash &hash) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
@@ -208,14 +208,14 @@ namespace libTAU::blockchain {
         return status.ok();
     }
 
-    bool repository_impl::is_block_exist(sha256_hash hash) {
+    bool repository_impl::is_block_exist(const sha256_hash &hash) {
         std::string value;
         leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
 
         return status.ok();
     }
 
-    block repository_impl::get_block_by_hash(sha256_hash hash) {
+    block repository_impl::get_block_by_hash(const sha256_hash &hash) {
         std::string value;
         m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
 
@@ -340,8 +340,8 @@ namespace libTAU::blockchain {
         return status.ok();
     }
 
-    bool repository_impl::forward_update_last_change_block_hash(aux::bytes chain_id, const dht::public_key &pubKey,
-                                                                state_linker &stateLinker, sha256_hash current_block_hash) {
+    bool repository_impl::forward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey,
+                                                                state_linker &stateLinker, const sha256_hash &current_block_hash) {
         sha256_hash block_hash = get_account_block_hash(chain_id, pubKey);
         if (!block_hash.is_all_zeros()) {
             auto linker = get_state_linker(block_hash);
@@ -359,8 +359,8 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::backward_update_last_change_block_hash(aux::bytes chain_id, const dht::public_key &pubKey,
-                                                                 state_linker& stateLinker, sha256_hash current_block_hash) {
+    bool repository_impl::backward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey,
+                                                                 state_linker& stateLinker, const sha256_hash &current_block_hash) {
         sha256_hash block_hash = get_account_block_hash(chain_id, pubKey);
         if (!block_hash.is_all_zeros()) {
             auto linker = get_state_linker(block_hash);
@@ -394,7 +394,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::connect_tip_block(block b) {
+    bool repository_impl::connect_tip_block(const block &b) {
         // save block
         if (!save_block(b))
             return false;
@@ -439,7 +439,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::connect_tail_block(block b) {
+    bool repository_impl::connect_tail_block(const block &b) {
         // save block
         if (!save_block(b))
             return false;
@@ -474,7 +474,7 @@ namespace libTAU::blockchain {
     }
 
     // validate peer
-    bool repository_impl::rollback_block(block b) {
+    bool repository_impl::rollback_block(const block &b) {
         if (b.empty())
             return false;
 
@@ -504,7 +504,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::delete_block(sha256_hash hash) {
+    bool repository_impl::delete_block(const sha256_hash &hash) {
         leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), hash.to_string());
         return status.ok();
     }
@@ -542,7 +542,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    sha256_hash repository_impl::get_best_tip_block_hash(aux::bytes chain_id) {
+    sha256_hash repository_impl::get_best_tip_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
@@ -553,7 +553,7 @@ namespace libTAU::blockchain {
         return sha256_hash(value.data());
     }
 
-    bool repository_impl::set_best_tip_block_hash(aux::bytes chain_id, sha256_hash hash) {
+    bool repository_impl::set_best_tip_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
@@ -562,7 +562,7 @@ namespace libTAU::blockchain {
         return status.ok();
     }
 
-    bool repository_impl::delete_best_tip_block_hash(aux::bytes chain_id) {
+    bool repository_impl::delete_best_tip_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
@@ -571,7 +571,7 @@ namespace libTAU::blockchain {
         return status.ok();
     }
 
-    sha256_hash repository_impl::get_best_tail_block_hash(aux::bytes chain_id) {
+    sha256_hash repository_impl::get_best_tail_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
@@ -582,7 +582,7 @@ namespace libTAU::blockchain {
         return sha256_hash(value.data());
     }
 
-    bool repository_impl::set_best_tail_block_hash(aux::bytes chain_id, sha256_hash hash) {
+    bool repository_impl::set_best_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
@@ -591,7 +591,7 @@ namespace libTAU::blockchain {
         return status.ok();
     }
 
-    bool repository_impl::delete_best_tail_block_hash(aux::bytes chain_id) {
+    bool repository_impl::delete_best_tail_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
@@ -604,7 +604,7 @@ namespace libTAU::blockchain {
         return new repository_track(this);
     }
 
-    void repository_impl::update_batch(std::map<std::string, std::string> cache, std::vector<block> main_chain_blocks) {
+    void repository_impl::update_batch(const std::map<string, string> &cache, const std::vector<block> &main_chain_blocks) {
         for (auto const& item: cache) {
             if (item.second.empty()) {
                 m_write_batch.Delete(item.first);
