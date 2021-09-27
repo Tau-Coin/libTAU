@@ -89,27 +89,27 @@ namespace libTAU::blockchain {
 
         bool save_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey, const sha256_hash &hash) override;
 
-        bool delete_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) override;
+        bool delete_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
-        account find_state_from_block(dht::public_key pubKey, block b) override;
+        account find_state_from_block(const dht::public_key &pubKey, const block &b) override;
 
-        state_linker get_state_linker(sha256_hash block_hash) override;
+        state_linker get_state_linker(const sha256_hash &block_hash) override;
 
-        bool save_state_linker(state_linker stateLinker) override;
+        bool save_state_linker(const state_linker &stateLinker) override;
 
-        bool delete_state_linker(sha256_hash block_hash) override;
+        bool delete_state_linker(const sha256_hash &block_hash) override;
 
-        bool save_block(block b) override;
+        bool save_block(const block &b) override;
 
-        bool save_non_main_chain_block(block b) override;
+        bool save_non_main_chain_block(const block &b) override;
 
-        bool delete_index_info(aux::bytes chain_id, std::int64_t block_number) override;
+        bool delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) override;
 
-        index_key_info get_index_info(aux::bytes chain_id, std::int64_t block_number) override;
+        index_key_info get_index_info(const aux::bytes &chain_id, std::int64_t block_number) override;
 
-        bool save_index_info(aux::bytes chain_id, std::int64_t block_number, index_key_info indexKeyInfo) override;
+        bool save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) override;
 
-        bool delete_outdated_data_by_height(aux::bytes chain_id, std::int64_t block_number) override;
+        bool delete_outdated_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) override;
 
     private:
 

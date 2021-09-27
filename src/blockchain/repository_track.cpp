@@ -391,7 +391,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::delete_account_block_hash(aux::bytes chain_id, dht::public_key pubKey) {
+    bool repository_track::delete_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
@@ -400,7 +400,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    account repository_track::find_state_from_block(dht::public_key pubKey, block b) {
+    account repository_track::find_state_from_block(const dht::public_key &pubKey, const block &b) {
         if (pubKey == b.miner()) {
             return account(b.miner_balance(), b.miner_nonce(), b.block_number());
         } else if (pubKey == b.tx().sender()) {
@@ -412,7 +412,7 @@ namespace libTAU::blockchain {
         return account(0, 0, 0);
     }
 
-    state_linker repository_track::get_state_linker(sha256_hash block_hash) {
+    state_linker repository_track::get_state_linker(const sha256_hash &block_hash) {
         std::string key;
         key.insert(key.end(), block_hash.begin(), block_hash.end());
         key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
@@ -426,7 +426,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    bool repository_track::save_state_linker(state_linker stateLinker) {
+    bool repository_track::save_state_linker(const state_linker &stateLinker) {
         std::string key;
         auto& block_hash = stateLinker.block_hash();
         key.insert(key.end(), block_hash.begin(), block_hash.end());
@@ -436,7 +436,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::delete_state_linker(sha256_hash block_hash) {
+    bool repository_track::delete_state_linker(const sha256_hash &block_hash) {
         std::string key;
         key.insert(key.end(), block_hash.begin(), block_hash.end());
         key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
@@ -445,7 +445,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::save_block(block b) {
+    bool repository_track::save_block(const block &b) {
         if (b.empty())
             return false;
 
@@ -453,7 +453,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::save_non_main_chain_block(block b) {
+    bool repository_track::save_non_main_chain_block(const block &b) {
         // save block
         if (!save_block(b))
             return false;
@@ -466,7 +466,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::delete_index_info(aux::bytes chain_id, std::int64_t block_number) {
+    bool repository_track::delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), key_separator.begin(), key_separator.end());
@@ -478,7 +478,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    index_key_info repository_track::get_index_info(aux::bytes chain_id, std::int64_t block_number) {
+    index_key_info repository_track::get_index_info(const aux::bytes &chain_id, std::int64_t block_number) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), key_separator.begin(), key_separator.end());
@@ -494,7 +494,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    bool repository_track::save_index_info(aux::bytes chain_id, std::int64_t block_number, index_key_info indexKeyInfo) {
+    bool repository_track::save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) {
         if (indexKeyInfo.empty())
             return false;
 
@@ -509,7 +509,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::delete_outdated_data_by_height(aux::bytes chain_id, std::int64_t block_number) {
+    bool repository_track::delete_outdated_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) {
         index_key_info indexKeyInfo = get_index_info(chain_id, block_number);
         auto& main_chain_block_hash = indexKeyInfo.main_chain_block_hash();
         if (!main_chain_block_hash.is_all_zeros()) {
