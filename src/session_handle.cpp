@@ -269,12 +269,10 @@ namespace libTAU {
 		async_call(&session_impl::add_dht_node_name, node);
 	}
 
-#if TORRENT_ABI_VERSION == 1
 	void session_handle::add_dht_router(std::pair<std::string, int> const& node)
 	{
 		async_call(&session_impl::add_dht_router, node);
 	}
-#endif // TORRENT_ABI_VERSION
 
 	void session_handle::dht_get_item(sha256_hash const& target)
 	{
@@ -310,18 +308,6 @@ namespace libTAU {
 	{
 		async_call(&session_impl::dht_live_nodes, nid);
 	}
-
-#if TORRENT_ABI_VERSION == 1
-	entry session_handle::dht_state() const
-	{
-		return sync_call_ret<entry>(&session_impl::dht_state);
-	}
-
-	void session_handle::start_dht(entry const& startup_state)
-	{
-		async_call(&session_impl::start_dht_deprecated, startup_state);
-	}
-#endif // TORRENT_ABI_VERSION
 
 #if TORRENT_ABI_VERSION == 1
 	void session_handle::load_state(entry const& ses_state
@@ -779,7 +765,6 @@ namespace libTAU {
 		s->alerts().set_notify_function(fun);
 	}
 
-#if TORRENT_ABI_VERSION == 1
 	size_t session_handle::set_alert_queue_size_limit(size_t queue_size_limit_)
 	{
 		return sync_call_ret<size_t>(&session_impl::set_alert_queue_size_limit, queue_size_limit_);
@@ -824,7 +809,6 @@ namespace libTAU {
 		p.set_bool(settings_pack::enable_natpmp, false);
 		apply_settings(std::move(p));
 	}
-#endif // TORRENT_ABI_VERSION
 
 	std::vector<port_mapping_t> session_handle::add_port_mapping(portmap_protocol const t
 		, int external_port, int local_port)

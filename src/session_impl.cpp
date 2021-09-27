@@ -3906,13 +3906,11 @@ namespace {
 		return m_alerts.wait_for_alert(max_wait);
 	}
 
-#if TORRENT_ABI_VERSION == 1
 	std::size_t session_impl::set_alert_queue_size_limit(std::size_t queue_size_limit_)
 	{
 		m_settings.set_int(settings_pack::alert_queue_size, int(queue_size_limit_));
 		return std::size_t(m_alerts.set_alert_queue_size_limit(int(queue_size_limit_)));
 	}
-#endif
 
 	void session_impl::start_ip_notifier()
 	{

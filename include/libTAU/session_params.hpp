@@ -32,13 +32,8 @@ see LICENSE file.
 
 namespace libTAU {
 
-TORRENT_VERSION_NAMESPACE_3
 struct plugin;
-TORRENT_VERSION_NAMESPACE_3_END
-
 struct counters;
-
-TORRENT_VERSION_NAMESPACE_3
 
 // The session_params is a parameters pack for configuring the session
 // before it's started.
@@ -103,8 +98,6 @@ struct TORRENT_EXPORT session_params
 
 #endif
 };
-
-TORRENT_VERSION_NAMESPACE_3_END
 
 // These functions serialize and de-serialize a ``session_params`` object to and
 // from bencoded form. The session_params object is used to initialize a new

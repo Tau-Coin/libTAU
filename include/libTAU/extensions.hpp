@@ -157,8 +157,6 @@ namespace libTAU {
 	// indicating which callbacks this plugin is interested in
 	using feature_flags_t = flags::bitfield_flag<std::uint8_t, struct feature_flags_tag>;
 
-TORRENT_VERSION_NAMESPACE_3
-
 	// this is the base class for a session plugin. One primary feature
 	// is that it is notified of all torrents that are added to the session,
 	// and can add its own torrent_plugins.
@@ -239,8 +237,6 @@ TORRENT_VERSION_NAMESPACE_3
 		// called on startup while loading settings state from the session_params
 		virtual void load_state(std::map<std::string, std::string> const&) {}
 	};
-
-TORRENT_VERSION_NAMESPACE_3_END
 
 	using add_peer_flags_t = flags::bitfield_flag<std::uint8_t, struct add_peer_flags_tag>;
 

@@ -25,8 +25,6 @@ std::vector<std::shared_ptr<plugin>> default_plugins(
 
 } // anonymous namespace
 
-TORRENT_VERSION_NAMESPACE_3
-
 session_params::session_params(settings_pack&& sp)
 	: session_params(std::move(sp), default_plugins())
 {}
@@ -60,8 +58,6 @@ session_params::~session_params() = default;
 
 session_params& session_params::operator=(session_params const&) & = default;
 session_params& session_params::operator=(session_params&&) & = default;
-
-TORRENT_VERSION_NAMESPACE_3_END
 
 session_params read_session_params(bdecode_node const& e, save_state_flags_t const flags)
 {

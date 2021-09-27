@@ -269,9 +269,6 @@ namespace libTAU {
 		// the routing table.
 		void add_dht_node(std::pair<std::string, int> const& node);
 
-#if TORRENT_ABI_VERSION == 1
-		// deprecated, use settings_pack::dht_bootstrap_nodes instead
-		//
 		// ``add_dht_router`` adds the given endpoint to a list of DHT router
 		// nodes. If a search is ever made while the routing table is empty,
 		// those nodes will be used as backups. Nodes in the router node list
@@ -281,9 +278,7 @@ namespace libTAU {
 		//
 		// An example routing node that you could typically add is
 		// ``router.bittorrent.com``.
-		TORRENT_DEPRECATED
 		void add_dht_router(std::pair<std::string, int> const& node);
-#endif
 
 		// query the DHT for an immutable item at the ``target`` hash.
 		// the result is posted as a dht_immutable_item_alert.
@@ -354,15 +349,7 @@ namespace libTAU {
 		// posted, regardless of the alert mask.
 		void dht_live_nodes(sha256_hash const& nid);
 
-#if TORRENT_ABI_VERSION == 1
-		// deprecated in 0.15
 		// use save_state and load_state instead
-		TORRENT_DEPRECATED
-		entry dht_state() const;
-		TORRENT_DEPRECATED
-		void start_dht(entry const& startup_state);
-#endif
-
 		void add_extension(std::shared_ptr<plugin> ext);
 
 #if TORRENT_ABI_VERSION == 1
@@ -790,9 +777,7 @@ namespace libTAU {
 		alert* wait_for_alert(time_duration max_wait);
 		void set_alert_notify(std::function<void()> const& fun);
 
-#if TORRENT_ABI_VERSION == 1
 		// use the setting instead
-		TORRENT_DEPRECATED
 		size_t set_alert_queue_size_limit(size_t queue_size_limit_);
 
 		// Changes the mask of which alerts to receive. By default only errors
@@ -802,9 +787,7 @@ namespace libTAU {
 		// ``get_alert_mask()`` returns the current mask;
 		//
 		// See category_t enum for options.
-		TORRENT_DEPRECATED
 		void set_alert_mask(std::uint32_t m);
-		TORRENT_DEPRECATED
 		std::uint32_t get_alert_mask() const;
 
 		// Starts and stops the UPnP service. When started, the listen port and
@@ -817,9 +800,7 @@ namespace libTAU {
 		// until ``stop_upnp()`` is called. See upnp-and-nat-pmp_.
 		//
 		// deprecated. use settings_pack::enable_upnp instead
-		TORRENT_DEPRECATED
 		void start_upnp();
-		TORRENT_DEPRECATED
 		void stop_upnp();
 
 		// Starts and stops the NAT-PMP service. When started, the listen port
@@ -832,11 +813,8 @@ namespace libTAU {
 		// valid until ``stop_natpmp()`` is called. See upnp-and-nat-pmp_.
 		//
 		// deprecated. use settings_pack::enable_natpmp instead
-		TORRENT_DEPRECATED
 		void start_natpmp();
-		TORRENT_DEPRECATED
 		void stop_natpmp();
-#endif
 
 		// protocols used by add_port_mapping()
 		static constexpr portmap_protocol udp = portmap_protocol::udp;

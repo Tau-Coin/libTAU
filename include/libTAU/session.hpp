@@ -29,10 +29,8 @@ see LICENSE file.
 
 namespace libTAU {
 
-TORRENT_VERSION_NAMESPACE_3
 	struct plugin;
 	struct session_params;
-TORRENT_VERSION_NAMESPACE_3_END
 
 	// The default values of the session settings are set for a regular
 	// bittorrent client running on a desktop system. There are functions that

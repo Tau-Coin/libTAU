@@ -22,7 +22,6 @@ struct alert;
 
 // include/libTAU/alert_types.hpp
 struct dht_routing_bucket;
-TORRENT_VERSION_NAMESPACE_3
 struct udp_error_alert;
 struct external_ip_alert;
 struct listen_failed_alert;
@@ -63,7 +62,6 @@ struct communication_syncing_message_alert;
 struct communication_friend_info_alert;
 struct communication_log_alert;
 struct communication_last_seen_alert;
-TORRENT_VERSION_NAMESPACE_3_END
 
 // include/libTAU/announce_entry.hpp
 TORRENT_VERSION_NAMESPACE_2
@@ -92,9 +90,7 @@ struct entry;
 struct storage_error;
 
 // include/libTAU/extensions.hpp
-TORRENT_VERSION_NAMESPACE_3
 struct plugin;
-TORRENT_VERSION_NAMESPACE_3_END
 struct torrent_plugin;
 struct peer_plugin;
 struct crypto_plugin;
@@ -150,9 +146,7 @@ struct session;
 struct session_handle;
 
 // include/libTAU/session_params.hpp
-TORRENT_VERSION_NAMESPACE_3
 struct session_params;
-TORRENT_VERSION_NAMESPACE_3_END
 
 // include/libTAU/session_stats.hpp
 struct stats_metric;
@@ -164,10 +158,8 @@ struct settings_pack;
 #if TORRENT_ABI_VERSION <= 2
 
 // include/libTAU/alert_types.hpp
-TORRENT_VERSION_NAMESPACE_3
 struct stats_alert;
 struct anonymous_mode_alert;
-TORRENT_VERSION_NAMESPACE_3_END
 
 // include/libTAU/fingerprint.hpp
 struct fingerprint;
