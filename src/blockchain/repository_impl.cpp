@@ -604,7 +604,7 @@ namespace libTAU::blockchain {
         return new repository_track(this);
     }
 
-    void repository_impl::update_batch(const std::map<string, string> &cache, const std::vector<block> &main_chain_blocks) {
+    void repository_impl::update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &main_chain_blocks) {
         for (auto const& item: cache) {
             if (item.second.empty()) {
                 m_write_batch.Delete(item.first);

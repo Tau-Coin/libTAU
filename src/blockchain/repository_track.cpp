@@ -325,7 +325,7 @@ namespace libTAU::blockchain {
         return new repository_track(this);
     }
 
-    void repository_track::update_batch(const std::map<string, string> &cache, const std::vector<block> &main_chain_blocks) {
+    void repository_track::update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &main_chain_blocks) {
         m_cache.insert(cache.begin(), cache.end());
         m_main_chain_blocks.insert(m_main_chain_blocks.end(), main_chain_blocks.begin(), main_chain_blocks.end());
     }

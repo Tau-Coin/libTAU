@@ -41,6 +41,8 @@ namespace libTAU::blockchain {
                      m_block_hash(mBlockHash), m_previous_change_block_hash_map(std::move(mPreviousChangeBlockHashMap)),
                      m_last_change_block_hash_map(std::move(mLastChangeBlockHashMap)) {}
 
+        const std::map<dht::public_key, sha256_hash> &get_next_change_block_hash_map() const { return m_next_change_block_hash_map; }
+
         const std::map<dht::public_key, sha256_hash> &get_previous_change_block_hash_map() const { return m_previous_change_block_hash_map; }
 
         const std::map<dht::public_key, sha256_hash> &get_last_change_block_hash_map() const { return m_last_change_block_hash_map; }
@@ -49,9 +51,13 @@ namespace libTAU::blockchain {
 
         void set_previous_change_block_hash_map(const std::map<dht::public_key, sha256_hash> &mPreviousChangeBlockHashMap) { m_previous_change_block_hash_map = mPreviousChangeBlockHashMap; }
 
+        void update_next_change_block_hash(dht::public_key pubKey, sha256_hash next_change_block_hash) { m_next_change_block_hash_map[pubKey] = next_change_block_hash; }
+
         void update_previous_change_block_hash(dht::public_key pubKey, sha256_hash previous_change_block_hash) { m_previous_change_block_hash_map[pubKey] = previous_change_block_hash; }
 
         void update_last_change_block_hash(dht::public_key pubKey, sha256_hash last_change_block_hash) { m_last_change_block_hash_map[pubKey] = last_change_block_hash; }
+
+        sha256_hash get_peer_next_change_block_hash(const dht::public_key& pubKey) { return m_next_change_block_hash_map[pubKey]; }
 
         sha256_hash get_peer_previous_change_block_hash(const dht::public_key& pubKey) { return m_previous_change_block_hash_map[pubKey]; }
 
@@ -72,6 +78,9 @@ namespace libTAU::blockchain {
 
         // block hash
         sha256_hash m_block_hash;
+
+        // next change block hash map
+        std::map<dht::public_key, sha256_hash> m_next_change_block_hash_map;
 
         // previous change block hash map
         std::map<dht::public_key, sha256_hash> m_previous_change_block_hash_map;
