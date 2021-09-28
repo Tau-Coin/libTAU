@@ -17,8 +17,6 @@ see LICENSE file.
 
 namespace libTAU {
 
-TORRENT_CRYPTO_NAMESPACE
-
 	hasher::hasher()
 	{
 #ifdef TORRENT_USE_LIBGCRYPT
@@ -250,7 +248,5 @@ TORRENT_CRYPTO_NAMESPACE
 		gcry_md_close(m_context);
 #endif
 	}
-
-TORRENT_CRYPTO_NAMESPACE_END
 
 }

@@ -96,10 +96,7 @@ see LICENSE file.
 
 namespace libTAU {
 
-TORRENT_VERSION_NAMESPACE_3
 	struct plugin;
-TORRENT_VERSION_NAMESPACE_3_END
-
 	struct upnp;
 	struct natpmp;
 	struct lsd;
@@ -485,10 +482,11 @@ namespace aux {
 			void pop_alerts(std::vector<alert*>* alerts);
 			alert* wait_for_alert(time_duration max_wait);
 
+			std::size_t set_alert_queue_size_limit(std::size_t queue_size_limit_);
+
 #if TORRENT_ABI_VERSION == 1
 			TORRENT_DEPRECATED void pop_alerts();
 			TORRENT_DEPRECATED alert const* pop_alert();
-			TORRENT_DEPRECATED std::size_t set_alert_queue_size_limit(std::size_t queue_size_limit_);
 			TORRENT_DEPRECATED int upload_rate_limit_depr() const;
 			TORRENT_DEPRECATED int download_rate_limit_depr() const;
 			TORRENT_DEPRECATED int local_upload_rate_limit() const;

@@ -99,7 +99,6 @@ namespace libTAU {
 		int last_active;
 	};
 
-TORRENT_VERSION_NAMESPACE_3
 
 #define TORRENT_DEFINE_ALERT_IMPL(name, seq, prio) \
 	name(name&&) noexcept = default; \
@@ -1296,8 +1295,6 @@ TORRENT_VERSION_NAMESPACE_3
         // last seen time
         int64_t last_seen;
     };
-
-TORRENT_VERSION_NAMESPACE_3_END
 
 #undef TORRENT_DEFINE_ALERT_IMPL
 #undef TORRENT_DEFINE_ALERT

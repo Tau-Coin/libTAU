@@ -2712,13 +2712,13 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
-		/*
         std::string home_dir = std::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		*/
+		/*
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+		*/
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 		
 
@@ -3906,13 +3906,11 @@ namespace {
 		return m_alerts.wait_for_alert(max_wait);
 	}
 
-#if TORRENT_ABI_VERSION == 1
 	std::size_t session_impl::set_alert_queue_size_limit(std::size_t queue_size_limit_)
 	{
 		m_settings.set_int(settings_pack::alert_queue_size, int(queue_size_limit_));
 		return std::size_t(m_alerts.set_alert_queue_size_limit(int(queue_size_limit_)));
 	}
-#endif
 
 	void session_impl::start_ip_notifier()
 	{
