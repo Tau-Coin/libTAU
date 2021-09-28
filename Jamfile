@@ -653,6 +653,9 @@ feature.compose <sqldatabase>sqldb : <define>TORRENT_ABI_VERSION=3 ;
 feature crypto : openssl : composite propagated ;
 feature.compose <crypto>openssl
 	: <define>TORRENT_USE_OPENSSL
+	<define>TORRENT_USE_LIBCRYPTO
+	<define>TORRENT_SSL_PEERS
+	<define>OPENSSL_NO_SSL2
 	<openssl-include>$(OPENSSL_ROOT)/include
 	<openssl-lib>$(OPENSSL_ROOT)/lib
 	;

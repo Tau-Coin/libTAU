@@ -50,7 +50,6 @@ extern "C" {
 #include "libTAU/aux_/disable_warnings_pop.hpp"
 
 namespace libTAU {
-TORRENT_CRYPTO_NAMESPACE
 
 	// this is a SHA-1 hash class.
 	//
@@ -156,7 +155,6 @@ TORRENT_CRYPTO_NAMESPACE
 #endif
 	};
 
-TORRENT_CRYPTO_NAMESPACE_END
 }
 
 #endif // TORRENT_HASHER_HPP_INCLUDED

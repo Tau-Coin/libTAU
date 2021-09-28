@@ -96,10 +96,8 @@ struct peer_plugin;
 struct crypto_plugin;
 
 // include/libTAU/hasher.hpp
-TORRENT_CRYPTO_NAMESPACE
 class hasher;
 class hasher256;
-TORRENT_CRYPTO_NAMESPACE_END
 
 // include/libTAU/info_hash.hpp
 struct info_hash_t;
