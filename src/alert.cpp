@@ -1296,24 +1296,15 @@ namespace {
 		static std::array<char const*, num_alert_types> const names = {{
 		"udp_error", "external_ip", "listen_failed",
 		"listen_succeeded", "portmap_error", "portmap",
-		"portmap_log",
-		"dht_announce", "dht_get_peers", "stats",
-		"dht_bootstrap", "session_start_over",
-		"incoming_connection",
-#if TORRENT_ABI_VERSION == 1
-		"mmap_cache",
-#else
-		"",
-#endif
-		"session_stats",
-		"dht_error", "dht_immutable_item", "dht_mutable_item",
-		"dht_put", "dht_outgoing_get_peers", "log",
-		"peer_log", "dht_stats", "dht_log",
-		"dht_pkt", "dht_get_peers_reply", "dht_direct_response",
-		"session_error", "dht_live_nodes",
-		"session_stats_header", "dht_sample_infohashes",
-		"alerts_dropped", "socks5",
-		"communication_new_device_id", "communication_new_message",
+		"portmap_log", "dht_announce", "dht_get_peers", 
+		"dht_bootstrap", "session_start_over", "incoming_connection",
+		"session_stop_over", "session_stats", "dht_error", 
+		"dht_immutable_item", "dht_mutable_item", "dht_put", 
+		"dht_outgoing_get_peers", "log", "dht_stats", 
+		"dht_log", "dht_pkt", "dht_get_peers_reply", 
+		"dht_direct_response", "session_error", "dht_live_nodes",
+		"session_stats_header", "dht_sample_infohashes", "alerts_dropped", 
+		"socks5", "communication_new_device_id", "communication_new_message",
 		"communication_confirmation_root", "communication_syncing_message",
 		"communication_friend_info", "communication_log",
 		"communication_last_seen"

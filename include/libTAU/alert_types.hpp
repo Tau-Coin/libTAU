@@ -126,7 +126,7 @@ namespace libTAU {
 			, operation_t op
 			, error_code const& ec);
 
-		TORRENT_DEFINE_ALERT(udp_error_alert, 2)
+		TORRENT_DEFINE_ALERT(udp_error_alert, 0)
 
 		static inline constexpr alert_category_t static_category = alert_category::error;
 		std::string message() const override;
@@ -150,7 +150,7 @@ namespace libTAU {
 		// internal
 		TORRENT_UNEXPORT external_ip_alert(aux::stack_allocator& alloc, address const& ip);
 
-		TORRENT_DEFINE_ALERT(external_ip_alert, 3)
+		TORRENT_DEFINE_ALERT(external_ip_alert, 1)
 
 		static inline constexpr alert_category_t static_category = alert_category::status;
 		std::string message() const override;
@@ -201,7 +201,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT listen_failed_alert(aux::stack_allocator& alloc, string_view iface
 			, operation_t op, error_code const& ec, lt::socket_type_t t);
 
-		TORRENT_DEFINE_ALERT_PRIO(listen_failed_alert, 4, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(listen_failed_alert, 2, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::status | alert_category::error;
 		std::string message() const override;
@@ -283,7 +283,7 @@ namespace libTAU {
 			, udp::endpoint const& ep
 			, lt::socket_type_t t);
 
-		TORRENT_DEFINE_ALERT_PRIO(listen_succeeded_alert, 5, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(listen_succeeded_alert, 3, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::status;
 		std::string message() const override;
@@ -320,7 +320,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT portmap_error_alert(aux::stack_allocator& alloc, port_mapping_t i
 			, portmap_transport t, error_code const& e, address const& local);
 
-		TORRENT_DEFINE_ALERT(portmap_error_alert, 6)
+		TORRENT_DEFINE_ALERT(portmap_error_alert, 4)
 
 		static inline constexpr alert_category_t static_category = alert_category::port_mapping
 			| alert_category::error;
@@ -356,7 +356,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT portmap_alert(aux::stack_allocator& alloc, port_mapping_t i, int port
 			, portmap_transport t, portmap_protocol protocol, address const& local);
 
-		TORRENT_DEFINE_ALERT(portmap_alert, 7)
+		TORRENT_DEFINE_ALERT(portmap_alert, 5)
 
 		static inline constexpr alert_category_t static_category = alert_category::port_mapping;
 		std::string message() const override;
@@ -402,7 +402,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT portmap_log_alert(aux::stack_allocator& alloc, portmap_transport t
 			, const char* m, address const& local);
 
-		TORRENT_DEFINE_ALERT(portmap_log_alert, 8)
+		TORRENT_DEFINE_ALERT(portmap_log_alert, 6)
 
 		static inline constexpr alert_category_t static_category = alert_category::port_mapping_log;
 		std::string message() const override;
@@ -436,7 +436,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT dht_announce_alert(aux::stack_allocator& alloc, address const& i, int p
 			, sha256_hash const& ih);
 
-		TORRENT_DEFINE_ALERT(dht_announce_alert, 9)
+		TORRENT_DEFINE_ALERT(dht_announce_alert, 7)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -453,7 +453,7 @@ namespace libTAU {
 		// internal
 		TORRENT_UNEXPORT dht_get_peers_alert(aux::stack_allocator& alloc, sha256_hash const& ih);
 
-		TORRENT_DEFINE_ALERT(dht_get_peers_alert, 10)
+		TORRENT_DEFINE_ALERT(dht_get_peers_alert, 8)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -473,7 +473,7 @@ namespace libTAU {
 		// internal
 		explicit TORRENT_UNEXPORT dht_bootstrap_alert(aux::stack_allocator& alloc);
 
-		TORRENT_DEFINE_ALERT(dht_bootstrap_alert, 12)
+		TORRENT_DEFINE_ALERT(dht_bootstrap_alert, 9)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -485,7 +485,7 @@ namespace libTAU {
 		// internal
 		TORRENT_UNEXPORT session_start_over_alert(aux::stack_allocator& alloc, bool over);
 
-		TORRENT_DEFINE_ALERT_PRIO(session_start_over_alert, 13, alert_priority::high)
+		TORRENT_DEFINE_ALERT_PRIO(session_start_over_alert, 10, alert_priority::high)
 
 		static inline constexpr alert_category_t static_category = alert_category::status;
 		std::string message() const override;
@@ -506,7 +506,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT incoming_connection_alert(aux::stack_allocator& alloc
 			, socket_type_t t, tcp::endpoint const& i);
 
-		TORRENT_DEFINE_ALERT(incoming_connection_alert, 14)
+		TORRENT_DEFINE_ALERT(incoming_connection_alert, 11)
 
 		static inline constexpr alert_category_t static_category = alert_category::peer;
 		std::string message() const override;
@@ -526,7 +526,7 @@ namespace libTAU {
 	struct TORRENT_EXPORT session_stop_over_alert final : alert
 	{
 		session_stop_over_alert(aux::stack_allocator& alloc , bool over);
-		TORRENT_DEFINE_ALERT(session_stop_over_alert, 16)
+		TORRENT_DEFINE_ALERT(session_stop_over_alert, 12)
 
 		static inline constexpr alert_category_t static_category = alert_category::status;
 
@@ -554,7 +554,7 @@ namespace libTAU {
 #include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
 #endif
 
-		TORRENT_DEFINE_ALERT_PRIO(session_stats_alert, 17, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(session_stats_alert, 13, alert_priority::critical)
 
 #if TORRENT_ABI_VERSION == 1
 #include "libTAU/aux_/disable_warnings_pop.hpp"
@@ -591,7 +591,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT dht_error_alert(aux::stack_allocator& alloc, operation_t op
 			, error_code const& ec);
 
-		TORRENT_DEFINE_ALERT(dht_error_alert, 18)
+		TORRENT_DEFINE_ALERT(dht_error_alert, 14)
 
 		static inline constexpr alert_category_t static_category = alert_category::error | alert_category::dht;
 		std::string message() const override;
@@ -622,7 +622,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT dht_immutable_item_alert(aux::stack_allocator& alloc, sha256_hash const& t
 			, entry i);
 
-		TORRENT_DEFINE_ALERT_PRIO(dht_immutable_item_alert, 19, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(dht_immutable_item_alert, 15, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 
@@ -645,7 +645,7 @@ namespace libTAU {
 			, std::array<char, 32> const& k, std::array<char, 64> const& sig
 			, std::int64_t timestamp, string_view s, entry i, bool a);
 
-		TORRENT_DEFINE_ALERT_PRIO(dht_mutable_item_alert, 20, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(dht_mutable_item_alert, 16, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -686,7 +686,7 @@ namespace libTAU {
 			, std::int64_t timestamp
 			, int n);
 
-		TORRENT_DEFINE_ALERT(dht_put_alert, 21)
+		TORRENT_DEFINE_ALERT(dht_put_alert, 17)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -718,7 +718,7 @@ namespace libTAU {
 			, sha256_hash const& ih, sha256_hash const& obfih
 			, udp::endpoint ep);
 
-		TORRENT_DEFINE_ALERT(dht_outgoing_get_peers_alert, 22)
+		TORRENT_DEFINE_ALERT(dht_outgoing_get_peers_alert, 18)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -749,7 +749,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT log_alert(aux::stack_allocator& alloc, char const* log);
 		TORRENT_UNEXPORT log_alert(aux::stack_allocator& alloc, char const* fmt, va_list v);
 
-		TORRENT_DEFINE_ALERT(log_alert, 23)
+		TORRENT_DEFINE_ALERT(log_alert, 19)
 
 		static inline constexpr alert_category_t static_category = alert_category::session_log;
 		std::string message() const override;
@@ -825,7 +825,7 @@ namespace libTAU {
 			, std::vector<dht_lookup> requests
 			, sha256_hash id, udp::endpoint ep);
 
-		TORRENT_DEFINE_ALERT(dht_stats_alert, 25)
+		TORRENT_DEFINE_ALERT(dht_stats_alert, 20)
 
 		static inline constexpr alert_category_t static_category = {};
 		std::string message() const override;
@@ -862,7 +862,7 @@ namespace libTAU {
 			, dht_module_t m, char const* fmt, va_list v);
 
 		static inline constexpr alert_category_t static_category = alert_category::dht_log;
-		TORRENT_DEFINE_ALERT(dht_log_alert, 26)
+		TORRENT_DEFINE_ALERT(dht_log_alert, 21)
 
 		std::string message() const override;
 
@@ -890,7 +890,7 @@ namespace libTAU {
 			, dht_pkt_alert::direction_t d, udp::endpoint const& ep);
 
 		static inline constexpr alert_category_t static_category = alert_category::dht_log;
-		TORRENT_DEFINE_ALERT(dht_pkt_alert, 27)
+		TORRENT_DEFINE_ALERT(dht_pkt_alert, 22)
 
 		std::string message() const override;
 
@@ -927,7 +927,7 @@ namespace libTAU {
 			, std::vector<tcp::endpoint> const& peers);
 
 		static inline constexpr alert_category_t static_category = alert_category::dht_operation;
-		TORRENT_DEFINE_ALERT(dht_get_peers_reply_alert, 28)
+		TORRENT_DEFINE_ALERT(dht_get_peers_reply_alert, 23)
 
 		std::string message() const override;
 
@@ -962,7 +962,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT dht_direct_response_alert(aux::stack_allocator& alloc, client_data_t userdata
 			, udp::endpoint const& addr);
 
-		TORRENT_DEFINE_ALERT_PRIO(dht_direct_response_alert, 29, alert_priority::critical)
+		TORRENT_DEFINE_ALERT_PRIO(dht_direct_response_alert, 24, alert_priority::critical)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -990,7 +990,7 @@ namespace libTAU {
 		TORRENT_UNEXPORT session_error_alert(aux::stack_allocator& alloc, error_code err
 			, string_view error_str);
 
-		TORRENT_DEFINE_ALERT(session_error_alert, 31)
+		TORRENT_DEFINE_ALERT(session_error_alert, 25)
 
 		static inline constexpr alert_category_t static_category = alert_category::error;
 		std::string message() const override;
@@ -1013,7 +1013,7 @@ namespace libTAU {
 			, sha256_hash const& nid
 			, std::vector<std::pair<sha256_hash, udp::endpoint>> const& nodes);
 
-		TORRENT_DEFINE_ALERT(dht_live_nodes_alert, 32)
+		TORRENT_DEFINE_ALERT(dht_live_nodes_alert, 26)
 
 		static inline constexpr alert_category_t static_category = alert_category::dht;
 		std::string message() const override;
@@ -1046,7 +1046,7 @@ namespace libTAU {
 	{
 		// internal
 		explicit TORRENT_UNEXPORT session_stats_header_alert(aux::stack_allocator& alloc);
-		TORRENT_DEFINE_ALERT(session_stats_header_alert, 33)
+		TORRENT_DEFINE_ALERT(session_stats_header_alert, 27)
 
 		static inline constexpr alert_category_t static_category = {};
 		std::string message() const override;
@@ -1066,7 +1066,7 @@ namespace libTAU {
 			, std::vector<std::pair<sha256_hash, udp::endpoint>> const& nodes);
 
 		static inline constexpr alert_category_t static_category = alert_category::dht_operation;
-		TORRENT_DEFINE_ALERT(dht_sample_infohashes_alert, 34)
+		TORRENT_DEFINE_ALERT(dht_sample_infohashes_alert, 28)
 
 		std::string message() const override;
 
@@ -1119,7 +1119,7 @@ namespace libTAU {
 		// internal
 		explicit TORRENT_UNEXPORT alerts_dropped_alert(aux::stack_allocator& alloc
 			, std::bitset<abi_alert_count> const&);
-		TORRENT_DEFINE_ALERT_PRIO(alerts_dropped_alert, 35, alert_priority::meta)
+		TORRENT_DEFINE_ALERT_PRIO(alerts_dropped_alert, 29, alert_priority::meta)
 
 		static inline constexpr alert_category_t static_category = alert_category::error;
 		std::string message() const override;
@@ -1138,7 +1138,7 @@ namespace libTAU {
 		// internal
 		explicit socks5_alert(aux::stack_allocator& alloc
 			, tcp::endpoint const& ep, operation_t operation, error_code const& ec);
-		TORRENT_DEFINE_ALERT(socks5_alert, 36)
+		TORRENT_DEFINE_ALERT(socks5_alert, 30)
 
 		static inline constexpr alert_category_t static_category = alert_category::error;
 		std::string message() const override;
@@ -1159,7 +1159,7 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT communication_new_device_id_alert(aux::stack_allocator& alloc, aux::bytes t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_new_device_id_alert, 37, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_new_device_id_alert, 31, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1175,7 +1175,7 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT communication_new_message_alert(aux::stack_allocator& alloc, communication::message e);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_new_message_alert, 38, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_new_message_alert, 32, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1191,7 +1191,7 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, aux::bytes p, std::vector<sha256_hash> s, std::int64_t t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_confirmation_root_alert, 39, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_confirmation_root_alert, 33, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1213,7 +1213,7 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, aux::bytes p, sha256_hash s, std::int64_t t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_syncing_message_alert, 40, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_syncing_message_alert, 34, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1235,7 +1235,7 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT communication_friend_info_alert(aux::stack_allocator& alloc, aux::bytes p, aux::bytes t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_friend_info_alert, 41, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_friend_info_alert, 35, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1258,7 +1258,7 @@ namespace libTAU {
         TORRENT_UNEXPORT communication_log_alert(aux::stack_allocator& alloc, char const* log);
         TORRENT_UNEXPORT communication_log_alert(aux::stack_allocator& alloc, char const* fmt, va_list v);
 
-        TORRENT_DEFINE_ALERT(communication_log_alert, 42)
+        TORRENT_DEFINE_ALERT(communication_log_alert, 36)
 
         static inline constexpr alert_category_t static_category = alert_category::communication_log;
         std::string message() const override;
@@ -1283,7 +1283,7 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT communication_last_seen_alert(aux::stack_allocator& alloc, aux::bytes p, int64_t t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_last_seen_alert, 43, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_last_seen_alert, 37, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
