@@ -1818,6 +1818,7 @@ namespace {
 		m_encrypted_udp_packet.insert(0
 			, m_account_manager->pub_key().bytes.data(), 32);
 
+/*
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
@@ -1826,6 +1827,7 @@ namespace {
 				, aux::to_hex(m_raw_send_udp_packet).c_str());
 		}
 #endif
+*/
 
 		// send to udp socket
 		send_udp_packet_listen(sock, ep, m_encrypted_udp_packet, ec, flags);
@@ -1842,6 +1844,7 @@ namespace {
 		std::string keystr;
 		keystr.insert(0, key.data(), 32);
 
+/*
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
@@ -1850,17 +1853,20 @@ namespace {
 				, aux::to_hex(pk).c_str());
 		}
 #endif
+*/
 
 		bool ret;
 		time_point const start = clock_type::now();
 		ret = aes_encrypt(in, out, keystr, err_str);
 		time_point const end = clock_type::now();
+/*
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
 			session_log("encrypt time cost:%" PRId64 "us", total_microseconds(end - start));
 		}
 #endif
+*/
 
 		return ret;
 	}
@@ -1875,6 +1881,7 @@ namespace {
 		std::array<char, 32> key = m_account_manager->key_exchange(dht_pk);
 		std::string keystr;
 		keystr.insert(0, key.data(), 32);
+/*
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
@@ -1883,17 +1890,20 @@ namespace {
 				, aux::to_hex(pk).c_str());
 		}
 #endif
+*/
 
 		bool ret;
 		time_point const start = clock_type::now();
 		ret = aes_decrypt(in, out, keystr, err_str);
 		time_point const end = clock_type::now();
+/*
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
 			session_log("decrypt time cost:%" PRId64 "us", total_microseconds(end - start));
 		}
 #endif
+*/
 
 		return ret;
 	}
@@ -1961,6 +1971,7 @@ namespace {
 						, buf.size() - 32);
 					m_decrypted_udp_packet.clear();
 
+/*
 #ifndef TORRENT_DISABLE_LOGGING
 					if (should_log())
 					{
@@ -1970,6 +1981,7 @@ namespace {
 							, aux::to_hex(m_raw_recv_udp_packet).c_str());
 					}
 #endif
+*/
 
 					std::string err_str;
 					bool result = decrypt_udp_packet(m_raw_recv_udp_packet
