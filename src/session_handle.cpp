@@ -224,11 +224,6 @@ namespace libTAU {
 		async_call(&session_impl::set_load_function, fun);
 	}
 
-	session_status session_handle::status() const
-	{
-		return sync_call_ret<session_status>(&session_impl::status);
-	}
-
 	void session_handle::start_dht()
 	{
 		settings_pack p;
@@ -262,16 +257,6 @@ namespace libTAU {
 	void session_handle::set_dht_storage(dht::dht_storage_constructor_type sc)
 	{
 		async_call(&session_impl::set_dht_storage, sc);
-	}
-
-	void session_handle::add_dht_node(std::pair<std::string, int> const& node)
-	{
-		async_call(&session_impl::add_dht_node_name, node);
-	}
-
-	void session_handle::add_dht_router(std::pair<std::string, int> const& node)
-	{
-		async_call(&session_impl::add_dht_router, node);
 	}
 
 	void session_handle::dht_get_item(sha256_hash const& target)
@@ -618,11 +603,6 @@ namespace libTAU {
 	{
 		settings_pack sett = get_settings();
 		return proxy_settings(sett);
-	}
-
-	int session_handle::num_uploads() const
-	{
-		return sync_call_ret<int>(&session_impl::num_uploads);
 	}
 
 	int session_handle::num_connections() const

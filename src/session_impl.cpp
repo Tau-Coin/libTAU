@@ -31,6 +31,7 @@ see LICENSE file.
 #include <functional>
 #include <type_traits>
 #include <numeric> // for accumulate
+#include <tuple>
 
 #include "libTAU/aux_/disable_warnings_push.hpp"
 #include <filesystem>
@@ -50,6 +51,8 @@ see LICENSE file.
 #include "libTAU/aux_/invariant_check.hpp"
 #include "libTAU/ip_filter.hpp"
 #include "libTAU/socket.hpp"
+#include "libTAU/account_manager.hpp"
+#include "libTAU/crypto.hpp"
 #include "libTAU/aux_/session_impl.hpp"
 
 #include "libTAU/aux_/common.h"
@@ -58,6 +61,7 @@ see LICENSE file.
 #include "libTAU/kademlia/dht_tracker.hpp"
 #include "libTAU/kademlia/types.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
+#include "libTAU/kademlia/node_id.hpp"
 
 #include "libTAU/communication/message.hpp"
 #include "libTAU/communication/communication.hpp"
@@ -1779,6 +1783,121 @@ namespace {
 		}
 	}
 
+	void session_impl::send_udp_packet_listen_encryption(aux::listen_socket_handle const& sock
+		, udp::endpoint const& ep
+		, sha256_hash const& pk
+		, span<char const> p
+		, error_code& ec
+		, udp_send_flags_t const flags)
+	{
+		m_raw_send_udp_packet.clear();
+		m_encrypted_udp_packet.clear();
+
+		m_raw_send_udp_packet.insert(0, p.data(), p.size());
+
+		std::string err_str;
+		bool result = encrypt_udp_packet(pk
+			, m_raw_send_udp_packet
+			, m_encrypted_udp_packet
+			, err_str);
+
+		if (!result)
+		{
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("UDP encryption error: %s", err_str.c_str());
+			}
+#endif
+			// set error_code
+			ec = errors::encrypt_udp_packet;
+			return;
+		}
+		
+		// attach self public key to the header of udp packet
+		m_encrypted_udp_packet.insert(0
+			, m_account_manager->pub_key().bytes.data(), 32);
+
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log())
+		{
+			session_log("send UDP encryption packet: %s, raw: %s"
+				, aux::to_hex(m_encrypted_udp_packet).c_str()
+				, aux::to_hex(m_raw_send_udp_packet).c_str());
+		}
+#endif
+
+		// send to udp socket
+		send_udp_packet_listen(sock, ep, m_encrypted_udp_packet, ec, flags);
+	}
+
+	bool session_impl::encrypt_udp_packet(sha256_hash const& pk
+		, const std::string& in
+		, std::string& out
+		, std::string& err_str)
+	{
+		// generate serect key
+		dht::public_key dht_pk(pk.data());
+		std::array<char, 32> key = m_account_manager->key_exchange(dht_pk);
+		std::string keystr;
+		keystr.insert(0, key.data(), 32);
+
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log())
+		{
+			session_log("encrypt exchange key: %s for id: %s"
+				, aux::to_hex(keystr).c_str()
+				, aux::to_hex(pk).c_str());
+		}
+#endif
+
+		bool ret;
+		time_point const start = clock_type::now();
+		ret = aes_encrypt(in, out, keystr, err_str);
+		time_point const end = clock_type::now();
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log())
+		{
+			session_log("encrypt time cost:%" PRId64 "us", total_microseconds(end - start));
+		}
+#endif
+
+		return ret;
+	}
+
+	bool session_impl::decrypt_udp_packet(const std::string& in
+		, sha256_hash const& pk
+		, std::string& out
+		, std::string& err_str)
+	{
+		// generate secret key
+		dht::public_key dht_pk(pk.data());
+		std::array<char, 32> key = m_account_manager->key_exchange(dht_pk);
+		std::string keystr;
+		keystr.insert(0, key.data(), 32);
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log())
+		{
+			session_log("decrypt exchange key: %s for id: %s"
+				, aux::to_hex(keystr).c_str()
+				, aux::to_hex(pk).c_str());
+		}
+#endif
+
+		bool ret;
+		time_point const start = clock_type::now();
+		ret = aes_decrypt(in, out, keystr, err_str);
+		time_point const end = clock_type::now();
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log())
+		{
+			session_log("decrypt time cost:%" PRId64 "us", total_microseconds(end - start));
+		}
+#endif
+
+		return ret;
+	}
+
 	void session_impl::on_udp_packet(std::weak_ptr<session_udp_socket> socket
 		, std::weak_ptr<listen_socket_t> ls, transport const ssl, error_code const& ec)
 	{
@@ -1833,15 +1952,50 @@ namespace {
 
 				span<char const> const buf = packet.data;
 
-				// if it wasn't a uTP packet, try the other users of the UDP
-				// socket
-				auto listen_socket = ls.lock();
-				if (m_dht && buf.size() > 20
-					&& buf.front() == 'd'
-					&& buf.back() == 'e'
-					&& listen_socket)
+				if (buf.size() >= 64) // 32 public key bytes and encrypted data
 				{
-					m_dht->incoming_packet(listen_socket, packet.from, buf);
+					sha256_hash pk(buf);
+					m_raw_recv_udp_packet.clear();
+					m_raw_recv_udp_packet.insert(0
+						, buf.subspan(32).data()
+						, buf.size() - 32);
+					m_decrypted_udp_packet.clear();
+
+#ifndef TORRENT_DISABLE_LOGGING
+					if (should_log())
+					{
+						session_log("recevied UDP decryption packet, raw: %s, id:%s, payload:%s"
+							, aux::to_hex(buf).c_str()
+							, aux::to_hex(pk).c_str()
+							, aux::to_hex(m_raw_recv_udp_packet).c_str());
+					}
+#endif
+
+					std::string err_str;
+					bool result = decrypt_udp_packet(m_raw_recv_udp_packet
+						, pk
+						, m_decrypted_udp_packet
+						, err_str);
+					if (!result)
+					{
+#ifndef TORRENT_DISABLE_LOGGING
+						if (should_log())
+						{
+							session_log("UDP decryption error: %s", err_str.c_str());
+						}
+#endif
+						continue;
+					}
+
+					auto listen_socket = ls.lock();
+					if (m_dht && m_decrypted_udp_packet.size() > 20
+						&& listen_socket)
+					{
+						m_dht->incoming_packet(listen_socket
+							, packet.from
+							, m_decrypted_udp_packet
+							, pk);
+					}
 				}
 			}
 
@@ -2339,13 +2493,6 @@ namespace {
 		m_stats_counters.inc_stats_counter(counters::socket_send_size3 + index);
 	}
 
-	void session_impl::add_dht_node(udp::endpoint const& n)
-	{
-		TORRENT_ASSERT(is_single_thread());
-		if (m_dht) m_dht->add_node(n);
-		else m_dht_nodes.push_back(n);
-	}
-
 	bool session_impl::has_dht() const
 	{
 		return m_dht != nullptr;
@@ -2795,8 +2942,14 @@ namespace {
 			s = m_kvdb->Put(leveldb::WriteOptions(), nodes_key, nodes_from_settings);
 			nodes_list = nodes_from_settings;
 		}
-		std::vector<std::pair<std::string, int>> nodes;
-		parse_comma_separated_string_port(nodes_list, nodes);
+
+		if (nodes_list.empty())
+		{
+			nodes_list = nodes_from_settings;
+		}
+
+		std::vector<std::tuple<std::string, int, std::string>> nodes;
+		parse_comma_separated_string_port_key(nodes_list, nodes);
 
 		TORRENT_ASSERT(nodes.empty());
 
@@ -2824,6 +2977,15 @@ namespace {
 		//1. update key pair
 		m_keypair = dht::ed25519_create_keypair(seed);
 
+		if (m_account_manager)
+		{
+			m_account_manager->update_key(hexseed);
+		}
+		else
+		{
+			m_account_manager
+				= std::make_shared<aux::account_manager>(hexseed);
+		}
 	}
 
 	void session_impl::new_account_seed(std::array<char, 32>& seed) {
@@ -3005,96 +3167,6 @@ namespace {
 		}
 	}
 
-#if TORRENT_ABI_VERSION == 1
-	session_status session_impl::status() const
-	{
-		TORRENT_ASSERT(is_single_thread());
-
-		session_status s;
-
-		s.num_peers = int(m_stats_counters[counters::num_peers_connected]);
-
-		s.total_redundant_bytes = m_stats_counters[counters::recv_redundant_bytes];
-		s.total_failed_bytes = m_stats_counters[counters::recv_failed_bytes];
-
-		s.up_bandwidth_queue = int(m_stats_counters[counters::limiter_up_queue]);
-		s.down_bandwidth_queue = int(m_stats_counters[counters::limiter_down_queue]);
-
-		s.up_bandwidth_bytes_queue = int(m_stats_counters[counters::limiter_up_bytes]);
-		s.down_bandwidth_bytes_queue = int(m_stats_counters[counters::limiter_down_bytes]);
-
-		s.disk_write_queue = int(m_stats_counters[counters::num_peers_down_disk]);
-		s.disk_read_queue = int(m_stats_counters[counters::num_peers_up_disk]);
-
-		s.has_incoming_connections = m_stats_counters[counters::has_incoming_connections] != 0;
-
-		// total
-		s.download_rate = m_stat.download_rate();
-		s.total_upload = m_stat.total_upload();
-		s.upload_rate = m_stat.upload_rate();
-		s.total_download = m_stat.total_download();
-
-		// payload
-		s.payload_download_rate = m_stat.transfer_rate(stat::download_payload);
-		s.total_payload_download = m_stat.total_transfer(stat::download_payload);
-		s.payload_upload_rate = m_stat.transfer_rate(stat::upload_payload);
-		s.total_payload_upload = m_stat.total_transfer(stat::upload_payload);
-
-		// IP-overhead
-		s.ip_overhead_download_rate = m_stat.transfer_rate(stat::download_ip_protocol);
-		s.total_ip_overhead_download = m_stats_counters[counters::recv_ip_overhead_bytes];
-		s.ip_overhead_upload_rate = m_stat.transfer_rate(stat::upload_ip_protocol);
-		s.total_ip_overhead_upload = m_stats_counters[counters::sent_ip_overhead_bytes];
-
-		// tracker
-		s.total_tracker_download = m_stats_counters[counters::recv_tracker_bytes];
-		s.total_tracker_upload = m_stats_counters[counters::sent_tracker_bytes];
-
-		// dht
-		s.total_dht_download = m_stats_counters[counters::dht_bytes_in];
-		s.total_dht_upload = m_stats_counters[counters::dht_bytes_out];
-
-		// deprecated
-		s.tracker_download_rate = 0;
-		s.tracker_upload_rate = 0;
-		s.dht_download_rate = 0;
-		s.dht_upload_rate = 0;
-
-		if (m_dht)
-		{
-			m_dht->dht_status(s);
-		}
-		else
-		{
-			s.dht_nodes = 0;
-			s.dht_node_cache = 0;
-			s.dht_global_nodes = 0;
-			s.dht_total_allocations = 0;
-		}
-
-		s.utp_stats.packet_loss = std::uint64_t(m_stats_counters[counters::utp_packet_loss]);
-		s.utp_stats.timeout = std::uint64_t(m_stats_counters[counters::utp_timeout]);
-		s.utp_stats.packets_in = std::uint64_t(m_stats_counters[counters::utp_packets_in]);
-		s.utp_stats.packets_out = std::uint64_t(m_stats_counters[counters::utp_packets_out]);
-		s.utp_stats.fast_retransmit = std::uint64_t(m_stats_counters[counters::utp_fast_retransmit]);
-		s.utp_stats.packet_resend = std::uint64_t(m_stats_counters[counters::utp_packet_resend]);
-		s.utp_stats.samples_above_target = std::uint64_t(m_stats_counters[counters::utp_samples_above_target]);
-		s.utp_stats.samples_below_target = std::uint64_t(m_stats_counters[counters::utp_samples_below_target]);
-		s.utp_stats.payload_pkts_in = std::uint64_t(m_stats_counters[counters::utp_payload_pkts_in]);
-		s.utp_stats.payload_pkts_out = std::uint64_t(m_stats_counters[counters::utp_payload_pkts_out]);
-		s.utp_stats.invalid_pkts_in = std::uint64_t(m_stats_counters[counters::utp_invalid_pkts_in]);
-		s.utp_stats.redundant_pkts_in = std::uint64_t(m_stats_counters[counters::utp_redundant_pkts_in]);
-
-		s.utp_stats.num_idle = int(m_stats_counters[counters::num_utp_idle]);
-		s.utp_stats.num_syn_sent = int(m_stats_counters[counters::num_utp_syn_sent]);
-		s.utp_stats.num_connected = int(m_stats_counters[counters::num_utp_connected]);
-		s.utp_stats.num_fin_sent = int(m_stats_counters[counters::num_utp_fin_sent]);
-		s.utp_stats.num_close_wait = int(m_stats_counters[counters::num_utp_close_wait]);
-
-		return s;
-	}
-#endif // TORRENT_ABI_VERSION
-
 	void session_impl::start_communication()
 	{
 
@@ -3154,10 +3226,11 @@ namespace {
 			, m_io_context
 			, [this](aux::listen_socket_handle const& sock
 				, udp::endpoint const& ep
+				, sha256_hash const& pk
 				, span<char const> p
 				, error_code& ec
 				, udp_send_flags_t const flags)
-				{ send_udp_packet_listen(sock, ep, p, ec, flags); }
+				{ send_udp_packet_listen_encryption(sock, ep, pk, p, ec, flags); }
 			, m_settings
 			, m_stats_counters
 			, *m_dht_storage
@@ -3392,35 +3465,7 @@ namespace {
 	}
 #endif
 
-	void session_impl::add_dht_node_name(std::pair<std::string, int> const& node)
-	{
-		ADD_OUTSTANDING_ASYNC("session_impl::on_dht_name_lookup");
-		m_host_resolver.async_resolve(node.first, resolver::abort_on_shutdown
-			, std::bind(&session_impl::on_dht_name_lookup
-				, this, _1, _2, node.second));
-	}
-
-	void session_impl::on_dht_name_lookup(error_code const& e
-		, std::vector<address> const& addresses, int port)
-	{
-		COMPLETE_ASYNC("session_impl::on_dht_name_lookup");
-
-		if (e)
-		{
-			if (m_alerts.should_post<dht_error_alert>())
-				m_alerts.emplace_alert<dht_error_alert>(
-					operation_t::hostname_lookup, e);
-			return;
-		}
-
-		for (auto const& addr : addresses)
-		{
-			udp::endpoint ep(addr, std::uint16_t(port));
-			add_dht_node(ep);
-		}
-	}
-
-	void session_impl::add_dht_router(std::pair<std::string, int> const& node)
+	void session_impl::add_dht_router(std::tuple<std::string, int, std::string> const& node)
 	{
 		ADD_OUTSTANDING_ASYNC("session_impl::on_dht_router_name_lookup");
 		++m_outstanding_router_lookups;
@@ -3428,13 +3473,13 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("add_dht_router lookups: %d" , m_outstanding_router_lookups);
 #endif
-		m_host_resolver.async_resolve(node.first, resolver::abort_on_shutdown
+		m_host_resolver.async_resolve(std::get<0>(node), resolver::abort_on_shutdown
 			, std::bind(&session_impl::on_dht_router_name_lookup
-				, this, _1, _2, node.second));
+				, this, _1, _2, std::get<1>(node), std::get<2>(node)));
 	}
 
 	void session_impl::on_dht_router_name_lookup(error_code const& e
-		, std::vector<address> const& addresses, int port)
+		, std::vector<address> const& addresses, int port, std::string pubkey)
 	{
 		COMPLETE_ASYNC("session_impl::on_dht_router_name_lookup");
 		--m_outstanding_router_lookups;
@@ -3462,8 +3507,31 @@ namespace {
 		{
 			// router nodes should be added before the DHT is started (and bootstrapped)
 			udp::endpoint ep(addr, std::uint16_t(port));
-			if (m_dht) m_dht->add_router_node(ep);
-			m_dht_router_nodes.push_back(ep);
+			sha256_hash nid;
+
+			if (pubkey.size() == 64)
+			{
+				span<char const> hexseed(pubkey.c_str(), 64);
+				aux::from_hex(hexseed, nid.data());
+			}
+			else
+			{
+				nid = dht::generate_random_id();
+			}
+
+			dht::node_entry ne(nid, ep);
+
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("add router node: %s, %s"
+					, aux::to_hex(nid).c_str()
+					, aux::print_endpoint(ep).c_str());
+			}
+#endif
+
+			if (m_dht) m_dht->add_router_node(ne);
+			m_dht_router_nodes.push_back(ne);
 		}
 
 		if (m_outstanding_router_lookups == 0)

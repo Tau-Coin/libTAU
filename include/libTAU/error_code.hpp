@@ -456,6 +456,9 @@ namespace errors {
 		// a file in the v2 metadata has the pad attribute set
 		torrent_invalid_pad_file,
 
+		encrypt_udp_packet,
+		decrypt_udp_packet,
+
 		// the number of error codes
 		error_code_max
 	};

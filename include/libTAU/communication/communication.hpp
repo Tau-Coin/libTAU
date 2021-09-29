@@ -43,7 +43,7 @@ namespace libTAU {
         using system_clock = std::chrono::system_clock;
 
         // default refresh time of main task(50ms)(ms)
-        constexpr int communication_default_refresh_time = 50;
+        constexpr int communication_default_refresh_time = 50000;
 
         // max message list size(used in Levenshtein Distance)
         constexpr int communication_max_message_list_size = 10;

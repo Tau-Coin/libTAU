@@ -17,6 +17,7 @@ see LICENSE file.
 #include <libTAU/socket.hpp>
 #include <libTAU/entry.hpp>
 
+#include <libTAU/kademlia/node_entry.hpp>
 #include <libTAU/kademlia/node_id.hpp>
 
 #include <vector>
@@ -42,9 +43,9 @@ namespace dht {
 		node_ids_t nids;
 
 		// the bootstrap nodes saved from the buckets node
-		std::vector<udp::endpoint> nodes;
+		std::vector<node_entry> nodes;
 		// the bootstrap nodes saved from the IPv6 buckets node
-		std::vector<udp::endpoint> nodes6;
+		std::vector<node_entry> nodes6;
 
 		void clear();
 	};

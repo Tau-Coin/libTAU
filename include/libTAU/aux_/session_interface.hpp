@@ -132,7 +132,6 @@ namespace libTAU::aux {
 		virtual time_point session_start_time() const = 0;
 
 		virtual bool is_aborted() const = 0;
-		virtual int num_uploads() const = 0;
 		virtual void trigger_optimistic_unchoke() noexcept = 0;
 		virtual void trigger_unchoke() noexcept = 0;
 
@@ -204,7 +203,6 @@ namespace libTAU::aux {
 #endif
 
 		virtual bool announce_dht() const = 0;
-		virtual void add_dht_node(udp::endpoint const& n) = 0;
 		virtual bool has_dht() const = 0;
 		virtual int external_udp_port(address const& local_address) const = 0;
 		virtual dht::dht_tracker* dht() = 0;

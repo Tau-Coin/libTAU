@@ -452,7 +452,7 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 	}
 #endif
 
-	if (m_sock_man->send_packet(m_sock, e, target_addr))
+	if (m_sock_man->send_packet(m_sock, e, target_addr, o->id()))
 	{
 		if (!discard_response)
 		{

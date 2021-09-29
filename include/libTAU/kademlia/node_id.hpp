@@ -42,7 +42,7 @@ TORRENT_EXTRA_EXPORT int distance_exp(node_id const& n1, node_id const& n2);
 TORRENT_EXTRA_EXPORT int min_distance_exp(node_id const& n1, std::vector<node_id> const& ids);
 
 TORRENT_EXTRA_EXPORT node_id get_node_id(libTAU::aux::session_settings const& settings);
-TORRENT_EXTRA_EXPORT node_id generate_random_id();
+TORRENT_EXPORT node_id generate_random_id();
 TORRENT_EXTRA_EXPORT void make_id_secret(node_id& in);
 TORRENT_EXTRA_EXPORT node_id generate_secret_id();
 TORRENT_EXTRA_EXPORT bool verify_secret_id(node_id const& nid);

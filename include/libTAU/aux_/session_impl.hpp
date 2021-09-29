@@ -25,6 +25,7 @@ see LICENSE file.
 #include "libTAU/aux_/time.hpp"
 #include "libTAU/aux_/common.h"
 #include "libTAU/session_params.hpp" // for disk_io_constructor_type
+#include "libTAU/account_manager.hpp"
 
 #ifdef TORRENT_SSL_PEERS
 #include "libTAU/aux_/ssl_stream.hpp"
@@ -65,6 +66,7 @@ see LICENSE file.
 #include "libTAU/kademlia/dht_state.hpp"
 #include "libTAU/kademlia/announce_flags.hpp"
 #include "libTAU/kademlia/types.hpp"
+#include "libTAU/kademlia/node_entry.hpp"
 
 #include "libTAU/communication/message.hpp"
 #include "libTAU/communication/communication.hpp"
@@ -93,6 +95,7 @@ see LICENSE file.
 #include <mutex>
 #include <cstdarg> // for va_start, va_end
 #include <unordered_map>
+#include <tuple>
 
 namespace libTAU {
 
@@ -393,9 +396,7 @@ namespace aux {
 			dht::dht_tracker* dht() override { return m_dht.get(); }
 			bool announce_dht() const override { return !m_listen_sockets.empty(); }
 
-			void add_dht_node_name(std::pair<std::string, int> const& node);
-			void add_dht_node(udp::endpoint const& n) override;
-			void add_dht_router(std::pair<std::string, int> const& node);
+			void add_dht_router(std::tuple<std::string, int, std::string> const& node);
 #if TORRENT_ABI_VERSION <= 2
 #include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
 			void set_dht_settings(dht::dht_settings const& s);
@@ -437,10 +438,10 @@ namespace aux {
 			TORRENT_DEPRECATED
 			void start_dht_deprecated(entry const& startup_state);
 #endif
-			void on_dht_name_lookup(error_code const& e
-				, std::vector<address> const& addresses, int port);
 			void on_dht_router_name_lookup(error_code const& e
-				, std::vector<address> const& addresses, int port);
+				, std::vector<address> const& addresses
+				, int port
+				, std::string pubkey);
 
 			// called when a port mapping is successful, or a router returns
 			// a failure to map a port
@@ -503,10 +504,6 @@ namespace aux {
 			TORRENT_DEPRECATED int max_uploads() const;
 #endif
 
-			// deprecated, use stats counters ``num_peers_up_unchoked`` instead
-			int num_uploads() const override
-			{ return int(m_stats_counters[counters::num_peers_up_unchoked]); }
-
 			// deprecated, use stats counters ``num_peers_connected`` +
 			// ``num_peers_half_open`` instead.
 			int num_connections() const override { return int(m_connections.size()); }
@@ -524,7 +521,6 @@ namespace aux {
 
 #if TORRENT_ABI_VERSION == 1
 #include "libTAU/aux_/disable_warnings_push.hpp"
-			session_status status() const;
 			peer_id deprecated_get_peer_id() const;
 #include "libTAU/aux_/disable_warnings_pop.hpp"
 #endif
@@ -896,6 +892,14 @@ namespace aux {
 			// port we'll bind the next outgoing socket to
 			mutable int m_next_port = 0;
 
+			std::shared_ptr<account_manager> m_account_manager;
+
+			std::string m_raw_send_udp_packet;
+			std::string m_encrypted_udp_packet;
+
+			std::string m_raw_recv_udp_packet;
+			std::string m_decrypted_udp_packet;
+
 			std::unique_ptr<dht::dht_storage_interface> m_dht_storage;
 			std::shared_ptr<dht::dht_tracker> m_dht;
 			dht::dht_storage_constructor_type m_dht_storage_constructor
@@ -907,11 +911,11 @@ namespace aux {
 
 			// these are used when starting the DHT
 			// (and bootstrapping it), and then erased
-			std::vector<udp::endpoint> m_dht_router_nodes;
+			std::vector<dht::node_entry> m_dht_router_nodes;
 
 			// if a DHT node is added when there's no DHT instance, they're stored
 			// here until we start the DHT
-			std::vector<udp::endpoint> m_dht_nodes;
+			std::vector<dht::node_entry> m_dht_nodes;
 
 			// the number of DHT router lookups there are currently outstanding. As
 			// long as this is > 0, we'll postpone starting the DHT
@@ -960,6 +964,23 @@ namespace aux {
 				}
 				send_udp_packet(sock.get_ptr(), ep, p, ec, flags);
 			}
+
+			void send_udp_packet_listen_encryption(aux::listen_socket_handle const& sock
+				, udp::endpoint const& ep
+				, sha256_hash const& pk
+				, span<char const> p
+				, error_code& ec
+				, udp_send_flags_t const flags);
+
+			bool encrypt_udp_packet(sha256_hash const& pk
+				, const std::string& in
+				, std::string& out
+				, std::string& err_str);
+
+			bool decrypt_udp_packet(const std::string& in
+				, sha256_hash const& pk
+				, std::string& out
+				, std::string& err_str);
 
 			void on_udp_packet(std::weak_ptr<session_udp_socket> s
 				, std::weak_ptr<listen_socket_t> ls

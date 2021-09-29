@@ -76,7 +76,7 @@ void bootstrap::done()
 	{
 		if (o->flags & observer::flag_queried) continue;
 		// this will send a ping
-		m_node.add_node(o->target_ep());
+		m_node.add_node(node_entry(o->id(), o->target_ep()));
 	}
 	get_peers::done();
 }

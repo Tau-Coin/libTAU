@@ -51,12 +51,19 @@ struct settings;
 // libtau token
 static const std::string libtau_token = "taut";
 
+// decryption error string
+static const std::string protocol_decryption_error = "decryption error";
+
+// decryption error code
+static constexpr int protocol_decryption_error_code = 303;
+
 TORRENT_EXTRA_EXPORT entry write_nodes_entry(std::vector<node_entry> const& nodes);
 
 struct socket_manager
 {
 	virtual bool has_quota() = 0;
-	virtual bool send_packet(aux::listen_socket_handle const& s, entry& e, udp::endpoint const& addr) = 0;
+	virtual bool send_packet(aux::listen_socket_handle const& s, entry& e
+		, udp::endpoint const& addr, sha256_hash const& pk) = 0;
 protected:
 	~socket_manager() = default;
 };
@@ -90,12 +97,17 @@ public:
 	node& operator=(node&&) = delete;
 
 	void tick();
-	void bootstrap(std::vector<udp::endpoint> const& nodes
+	void bootstrap(std::vector<node_entry> const& nodes
 		, find_data::nodes_callback const& f);
-	void add_router_node(udp::endpoint const& router);
+	void add_router_node(node_entry const& router);
+
+	void add_our_id(entry& e);
 
 	void unreachable(udp::endpoint const& ep);
 	void incoming(aux::listen_socket_handle const& s, msg const& m);
+	void incoming_decryption_error(aux::listen_socket_handle const& s
+		, udp::endpoint const& ep, sha256_hash const& pk);
+	void handle_decryption_error(msg const& m);
 
 #if TORRENT_ABI_VERSION == 1
 	int num_torrents() const { return 0; }
@@ -156,7 +168,7 @@ public:
 	// pings the given node, and adds it to
 	// the routing table if it response and if the
 	// bucket is not full.
-	void add_node(udp::endpoint const& node);
+	void add_node(node_entry const& node);
 
 	int branch_factor() const;
 
@@ -216,7 +228,7 @@ private:
 	// since it might have references to it
 	std::set<traversal_algorithm*> m_running_requests;
 
-	bool incoming_request(msg const&, entry&);
+	bool incoming_request(msg const&, entry&, node_id *peer);
 
 	void write_nodes_entries(sha256_hash const& info_hash
 		, bdecode_node const& want, entry& r);

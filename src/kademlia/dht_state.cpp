@@ -38,9 +38,9 @@ namespace libTAU::dht {
 			node_id id(in);
 			in += id.size();
 			address addr;
-			if (nid.string_length() == 24)
+			if (nid.string_length() == 36)
 				addr = aux::read_v4_address(in);
-			else if (nid.string_length() == 36)
+			else if (nid.string_length() == 48)
 				addr = aux::read_v6_address(in);
 			else
 				continue;
@@ -51,17 +51,46 @@ namespace libTAU::dht {
 	}
 
 namespace {
-	entry save_nodes(std::vector<udp::endpoint> const& nodes)
+	entry save_nodes(std::vector<node_entry> const& nodes)
 	{
 		entry ret(entry::list_t);
 		entry::list_type& list = ret.list();
-		for (auto const& ep : nodes)
+		for (auto const& n : nodes)
 		{
-			std::string node;
-			std::back_insert_iterator<std::string> out(node);
-			aux::write_endpoint(ep, out);
-			list.emplace_back(node);
+			std::string nid;
+			std::copy(n.id.begin(), n.id.end(), std::back_inserter(nid));
+			aux::write_endpoint(n.ep(), std::back_inserter(nid));
+			list.emplace_back(std::move(nid));
 		}
+		return ret;
+	}
+
+	std::vector<node_entry> extract_node_entries(bdecode_node const& e, string_view key)
+	{
+		std::vector<node_entry> ret;
+		if (e.type() != bdecode_node::dict_t) return ret;
+		auto const nodes = e.dict_find_list(key);
+		if (!nodes) return ret;
+
+		for (int i = 0; i < nodes.list_size(); i++)
+		{
+			bdecode_node n = nodes.list_at(i);
+			if (n.type() != bdecode_node::string_t) continue;
+			if (n.string_length() < 32) continue;
+			char const* in = n.string_ptr();
+			node_id id(in);
+			in += id.size();
+			udp::endpoint ep;
+			if (n.string_length() == 38)
+				ep = aux::read_v4_endpoint<udp::endpoint>(in);
+			else if (n.string_length() == 50)
+				ep = aux::read_v6_endpoint<udp::endpoint>(in);
+			else
+				continue;
+
+			ret.emplace_back(id, ep);
+		}
+
 		return ret;
 	}
 } // anonymous namespace
@@ -86,9 +115,9 @@ namespace {
 		ret.nids = extract_node_ids(e, "node-id");
 
 		if (bdecode_node const nodes = e.dict_find_list("nodes"))
-			ret.nodes = aux::read_endpoint_list<udp::endpoint>(nodes);
+			ret.nodes = extract_node_entries(e, "nodes");
 		if (bdecode_node const nodes = e.dict_find_list("nodes6"))
-			ret.nodes6 = aux::read_endpoint_list<udp::endpoint>(nodes);
+			ret.nodes6 = extract_node_entries(e, "nodes6");
 		return ret;
 	}
 

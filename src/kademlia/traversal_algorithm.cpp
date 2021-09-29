@@ -578,7 +578,7 @@ void traversal_algorithm::add_router_entries()
 	}
 #endif
 	for (auto const& n : m_node.m_table)
-		add_entry(node_id(), n, observer::flag_initial);
+		add_entry(n.id, n.ep(), observer::flag_initial);
 }
 
 void traversal_algorithm::init()

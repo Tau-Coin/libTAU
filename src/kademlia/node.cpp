@@ -161,7 +161,7 @@ std::string node::generate_token(udp::endpoint const& addr
 	return libtau_token;
 }
 
-void node::bootstrap(std::vector<udp::endpoint> const& nodes
+void node::bootstrap(std::vector<node_entry> const& nodes
 	, find_data::nodes_callback const& f)
 {
 	node_id target = m_id;
@@ -179,7 +179,7 @@ void node::bootstrap(std::vector<udp::endpoint> const& nodes
 #ifndef TORRENT_DISABLE_LOGGING
 		++count;
 #endif
-		r->add_entry(node_id(), n, observer::flag_initial);
+		r->add_entry(n.id, n.ep(), observer::flag_initial);
 	}
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -210,6 +210,49 @@ void node::new_write_key()
 void node::unreachable(udp::endpoint const& ep)
 {
 	m_rpc.unreachable(ep);
+}
+
+void node::add_our_id(entry& e)
+{
+	e["id"] = m_id.to_string();
+}
+
+void node::incoming_decryption_error(aux::listen_socket_handle const& s
+	, udp::endpoint const& ep, sha256_hash const& pk)
+{
+	// ignore packets arriving on a different interface than the one we're
+	// associated with
+	if (s != m_sock) return;
+
+	entry e;
+
+	e["y"] = "e";
+	entry::list_type& l = e["e"].list();
+	l.emplace_back(protocol_decryption_error_code);
+	l.emplace_back(protocol_decryption_error);
+
+	entry& a = e["a"];
+	add_our_id(a);
+
+	m_sock_man->send_packet(m_sock, e, ep, pk);
+}
+
+void node::handle_decryption_error(msg const& m)
+{
+	bdecode_node const a_ent = m.message.dict_find_dict("a");
+	if (!a_ent)
+	{
+		return;
+	}
+
+	bdecode_node const node_id_ent = a_ent.dict_find_string("id");
+	if (!node_id_ent || node_id_ent.string_length() != 32)
+	{
+		return;
+	}
+
+	node_id const nid = node_id(node_id_ent.string_ptr());
+	// TODO: update routing table
 }
 
 void node::incoming(aux::listen_socket_handle const& s, msg const& m)
@@ -273,16 +316,19 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			/*
 			if (!m_sock_man->has_quota())
 			{
+			if (!m_sock_man->has_quota())
+			{
 				m_counters.inc_stats_counter(counters::dht_messages_in_dropped);
 				return;
 			}
 			 */
 
 			entry e;
-			bool need_response = incoming_request(m, e);
+			node_id id;
+			bool need_response = incoming_request(m, e, &id);
 			if (need_response)
 			{
-				m_sock_man->send_packet(m_sock, e, m.addr);
+				m_sock_man->send_packet(m_sock, e, m.addr, id);
 			}
 			break;
 		}
@@ -299,6 +345,12 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 					m_observer->log(dht_logger::node, "INCOMING ERROR: (%" PRId64 ") %s"
 						, err.list_int_value_at(0)
 						, std::string(err.list_string_value_at(1)).c_str());
+					/*
+					if (err.list_int_value_at(0) == protocol_decryption_error_code)
+					{
+						handle_decryption_error(m);
+						break;
+					}*/
 				}
 				else
 				{
@@ -313,24 +365,24 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 	}
 }
 
-void node::add_router_node(udp::endpoint const& router)
+void node::add_router_node(node_entry const& router)
 {
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 	{
 		m_observer->log(dht_logger::node, "adding router node: %s"
-			, aux::print_endpoint(router).c_str());
+			, aux::print_endpoint(router.ep()).c_str());
 	}
 #endif
 	m_table.add_router_node(router);
 }
 
-void node::add_node(udp::endpoint const& node)
+void node::add_node(node_entry const& node)
 {
-	if (!native_address(node)) return;
+	if (!native_address(node.ep())) return;
 	// ping the node, and if we get a reply, it
 	// will be added to the routing table
-	send_single_refresh(node, m_table.num_active_buckets());
+	send_single_refresh(node.ep(), m_table.num_active_buckets(), node.id);
 }
 
 void node::get_item(sha256_hash const& target, std::function<void(item const&)> f)
@@ -687,7 +739,7 @@ entry write_nodes_entry(std::vector<node_entry> const& nodes)
 }
 
 // build response
-bool node::incoming_request(msg const& m, entry& e)
+bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 {
 	bool need_response = true;
 
@@ -715,6 +767,7 @@ bool node::incoming_request(msg const& m, entry& e)
 	bdecode_node const arg_ent = top_level[2];
 	bool const read_only = top_level[1] && top_level[1].int_value() != 0;
 	node_id const id(top_level[3].string_ptr());
+	*peer = id;
 
 	if (!read_only)
 		m_table.heard_about(id, m.addr);

@@ -834,6 +834,8 @@ SOURCES =
 	stack_allocator
 	generate_peer_id
 	ssl
+	account_manager
+	crypto
 	;
 
 KADEMLIA_SOURCES =

@@ -152,10 +152,10 @@ public:
 
 	// adds an endpoint that will never be added to
 	// the routing table
-	void add_router_node(udp::endpoint const& router);
+	void add_router_node(node_entry const& router);
 
 	// iterates over the router nodes added
-	using router_iterator = std::set<udp::endpoint>::const_iterator;
+	using router_iterator = std::set<node_entry>::const_iterator;
 	router_iterator begin() const { return m_router_nodes.begin(); }
 	router_iterator end() const { return m_router_nodes.end(); }
 
@@ -298,7 +298,7 @@ private:
 	// been identified as router nodes. They will
 	// be used in searches, but they will never
 	// be added to the routing table.
-	std::set<udp::endpoint> m_router_nodes;
+	std::set<node_entry> m_router_nodes;
 
 	// these are all the IPs that are in the routing
 	// table. It's used to only allow a single entry

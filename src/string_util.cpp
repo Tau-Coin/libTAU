@@ -304,6 +304,70 @@ namespace libTAU::aux {
 		}
 	}
 
+	// this parses the string that's used as the dht_bootstrap_nodes setting.
+	// it is a comma-separated list of IP or device names, public key with ports. For
+	// example: "taunode://<pubkey1>@<ip>:6881,taunode://<pubkey2>@<hostname>:6881"
+	TORRENT_EXTRA_EXPORT void parse_comma_separated_string_port_key(
+		std::string const& in,
+		std::vector<std::tuple<std::string, int, std::string>>& out)
+	{
+		out.clear();
+
+		std::string::size_type start = 0;
+		std::string::size_type end = 0;
+
+		while (start < in.size())
+		{
+			// skip leading spaces
+			while (start < in.size()
+				&& is_space(in[start]))
+				++start;
+
+			end = in.find_first_of(',', start);
+			if (end == std::string::npos) end = in.size();
+
+			std::string pubkey;
+			std::string::size_type at = in.find_last_of('@', end);
+
+			if (at != std::string::npos && at > start)
+			{
+				std::string::size_type slash = in.find_last_of('/', end);
+
+				if (slash != std::string::npos && slash > start)
+				{
+					pubkey = in.substr(slash + 1, at - slash - 1);
+				}
+
+				// move start position
+				start = at + 1;
+			}
+
+			std::string::size_type colon = in.find_last_of(':', end);
+
+			if (colon != std::string::npos && colon > start)
+			{
+				int port = std::atoi(in.substr(colon + 1, end - colon - 1).c_str());
+
+				// skip trailing spaces
+				std::string::size_type soft_end = colon;
+				while (soft_end > start
+					&& is_space(in[soft_end - 1]))
+					--soft_end;
+
+				// in case this is an IPv6 address, strip off the square brackets
+				// to make it more easily parsable into an ip::address
+				if (in[start] == '[') ++start;
+				if (soft_end > start && in[soft_end-1] == ']') --soft_end;
+
+				out.emplace_back(std::make_tuple(
+						in.substr(start, soft_end - start)
+						, port, pubkey));
+			}
+
+			start = end + 1;
+		}
+	}
+
 	void parse_comma_separated_string(std::string const& in, std::vector<std::string>& out)
 	{
 		out.clear();

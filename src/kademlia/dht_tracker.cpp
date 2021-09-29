@@ -55,10 +55,10 @@ namespace libTAU::dht {
 		c.inc_stats_counter(counters::dht_allocated_observers, allocated_observers);
 	}
 
-	std::vector<udp::endpoint> concat(std::vector<udp::endpoint> const& v1
-		, std::vector<udp::endpoint> const& v2)
+	std::vector<node_entry> concat(std::vector<node_entry> const& v1
+		, std::vector<node_entry> const& v2)
 	{
-		std::vector<udp::endpoint> r = v1;
+		std::vector<node_entry> r = v1;
 		r.insert(r.end(), v2.begin(), v2.end());
 		return r;
 	}
@@ -628,8 +628,17 @@ namespace libTAU::dht {
 		}
 	}
 
+	void dht_tracker::incoming_decryption_error(aux::listen_socket_handle const& s
+		, udp::endpoint const& ep, sha256_hash const& pk)
+	{
+		for (auto& n : m_nodes)
+		{
+			n.second.dht.incoming_decryption_error(s, ep, pk);
+		}
+	}
+
 	bool dht_tracker::incoming_packet(aux::listen_socket_handle const& s
-		, udp::endpoint const& ep, span<char const> const buf)
+		, udp::endpoint const& ep, span<char const> const buf, sha256_hash const& pk)
 	{
 		int const buf_size = int(buf.size());
 
@@ -641,7 +650,17 @@ namespace libTAU::dht {
 
 		if (buf_size <= 20
 			|| buf.front() != 'd'
-			|| buf.back() != 'e') return false;
+			|| buf.back() != 'e')
+		{
+			// maybe decryption error
+			// When the incoming packet format is incorrect, it can't
+			// be distinguished whether the sender stores our old public key
+			// or network traffic attack.
+			// Suppose the node network is the mobile telecom network, a attack node
+			// can launch traffic attack. So ingore this incoming packet.
+			// incoming_decryption_error(s, ep, pk);
+			return false;
+		}
 
 		if (m_settings.get_bool(settings_pack::dht_ignore_dark_internet) && aux::is_v4(ep))
 		{
@@ -678,6 +697,10 @@ namespace libTAU::dht {
 #ifndef TORRENT_DISABLE_LOGGING
 			m_log->log_packet(dht_logger::incoming_message, buf, ep);
 #endif
+
+			// maybe decryption error
+			// incoming_decryption_error(s, ep, pk);
+
 			return false;
 		}
 
@@ -730,12 +753,12 @@ namespace libTAU::dht {
 
 namespace {
 
-	std::vector<udp::endpoint> save_nodes(node const& dht)
+	std::vector<node_entry> save_nodes(node const& dht)
 	{
-		std::vector<udp::endpoint> ret;
+		std::vector<node_entry> ret;
 
 		dht.m_table.for_each_node([&ret](node_entry const& e)
-		{ ret.push_back(e.ep()); });
+		{ ret.push_back(e); });
 
 		return ret;
 	}
@@ -756,13 +779,13 @@ namespace {
 		return ret;
 	}
 
-	void dht_tracker::add_node(udp::endpoint const& node)
+	void dht_tracker::add_node(node_entry const& node)
 	{
 		for (auto& n : m_nodes)
 			n.second.dht.add_node(node);
 	}
 
-	void dht_tracker::add_router_node(udp::endpoint const& node)
+	void dht_tracker::add_router_node(node_entry const& node)
 	{
 		for (auto& n : m_nodes)
 			n.second.dht.add_router_node(node);
@@ -802,7 +825,8 @@ namespace {
 		return m_send_quota > 0;
 	}
 
-	bool dht_tracker::send_packet(aux::listen_socket_handle const& s, entry& e, udp::endpoint const& addr)
+	bool dht_tracker::send_packet(aux::listen_socket_handle const& s, entry& e
+		, udp::endpoint const& addr, sha256_hash const& pk)
 	{
 		TORRENT_ASSERT(m_nodes.find(s) != m_nodes.end());
 
@@ -831,13 +855,13 @@ namespace {
 					{ return v.first.get_local_endpoint().protocol().family() == addr.protocol().family(); });
 
 			if (n != m_nodes.end())
-				m_send_fun(n->first, addr, m_send_buf, ec, {});
+				m_send_fun(n->first, addr, pk, m_send_buf, ec, {});
 			else
 				ec = boost::asio::error::address_family_not_supported;
 		}
 		else
 		{
-			m_send_fun(s, addr, m_send_buf, ec, {});
+			m_send_fun(s, addr, pk, m_send_buf, ec, {});
 		}
 
 		if (ec)

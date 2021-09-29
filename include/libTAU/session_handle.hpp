@@ -215,13 +215,6 @@ namespace libTAU {
 		// 	void fun(sha1_hash const& info_hash, std::vector<char>& buf, error_code& ec);
 
 #include "libTAU/aux_/disable_warnings_push.hpp"
-
-		// deprecated in libTAU 1.1, use performance_counters instead
-		// returns session wide-statistics and status. For more information, see
-		// the ``session_status`` struct.
-		TORRENT_DEPRECATED
-		session_status status() const;
-
 #include "libTAU/aux_/disable_warnings_pop.hpp"
 
 		// ``stop_dht`` stops the dht node.
@@ -263,22 +256,6 @@ namespace libTAU {
 		// ``settings_pack::enable_dht`` to false, set your constructor function
 		// and call ``apply_settings`` with ``settings_pack::enable_dht`` to true.
 		void set_dht_storage(dht::dht_storage_constructor_type sc);
-
-		// ``add_dht_node`` takes a host name and port pair. That endpoint will be
-		// pinged, and if a valid DHT reply is received, the node will be added to
-		// the routing table.
-		void add_dht_node(std::pair<std::string, int> const& node);
-
-		// ``add_dht_router`` adds the given endpoint to a list of DHT router
-		// nodes. If a search is ever made while the routing table is empty,
-		// those nodes will be used as backups. Nodes in the router node list
-		// will also never be added to the regular routing table, which
-		// effectively means they are only used for bootstrapping, to keep the
-		// load off them.
-		//
-		// An example routing node that you could typically add is
-		// ``router.bittorrent.com``.
-		void add_dht_router(std::pair<std::string, int> const& node);
 
 		// query the DHT for an immutable item at the ``target`` hash.
 		// the result is posted as a dht_immutable_item_alert.
@@ -646,11 +623,6 @@ namespace libTAU {
 		void set_proxy(proxy_settings const& s);
 		TORRENT_DEPRECATED
 		proxy_settings proxy() const;
-
-		// deprecated in 0.16
-		// Get the number of uploads.
-		TORRENT_DEPRECATED
-		int num_uploads() const;
 
 		// Get the number of connections. This number also contains the
 		// number of half open connections.

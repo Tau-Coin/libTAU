@@ -49,6 +49,7 @@ namespace libTAU::dht {
 	{
 		using send_fun_t = std::function<void(
 			aux::listen_socket_handle const&, udp::endpoint const&
+			, sha256_hash const&
 			, span<char const>, error_code&, aux::udp_send_flags_t)>;
 
 		dht_tracker(dht_observer* observer
@@ -84,8 +85,8 @@ namespace libTAU::dht {
 		void new_socket(aux::listen_socket_handle const& s);
 		void delete_socket(aux::listen_socket_handle const& s);
 
-		void add_node(udp::endpoint const& node);
-		void add_router_node(udp::endpoint const& node);
+		void add_node(node_entry const& node);
+		void add_router_node(node_entry const& node);
 
 		dht_state state() const;
 
@@ -151,7 +152,9 @@ namespace libTAU::dht {
 
 		void incoming_error(error_code const& ec, udp::endpoint const& ep);
 		bool incoming_packet(aux::listen_socket_handle const& s
-			, udp::endpoint const& ep, span<char const> buf);
+			, udp::endpoint const& ep, span<char const> buf, sha256_hash const& pk);
+		void incoming_decryption_error(aux::listen_socket_handle const& s
+			, udp::endpoint const& ep, sha256_hash const& pk);
 
 		std::vector<std::pair<node_id, udp::endpoint>> live_nodes(node_id const& nid);
 
@@ -184,7 +187,8 @@ namespace libTAU::dht {
 
 		// implements socket_manager
 		bool has_quota() override;
-		bool send_packet(aux::listen_socket_handle const& s, entry& e, udp::endpoint const& addr) override;
+		bool send_packet(aux::listen_socket_handle const& s, entry& e
+			, udp::endpoint const& addr, sha256_hash const& pk) override;
 
 		// this is the bdecode_node DHT messages are parsed into. It's a member
 		// in order to avoid having to deallocate and re-allocate it for every

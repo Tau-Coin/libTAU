@@ -602,9 +602,18 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 	if (!native_endpoint(e.ep()))
 		return failed_to_add;
 
-	// if we already have this (IP,port), don't do anything
-	if (m_router_nodes.find(e.ep()) != m_router_nodes.end())
+	auto router_it = std::find_if(m_router_nodes.begin()
+		, m_router_nodes.end()
+		, [&e](node_entry const& ne)
+			{
+				return (ne.ep() == e.ep()) && (ne.id == e.id);
+			}
+		);
+	// if we already have this (Node id, IP, port), don't do anything
+	if (router_it != m_router_nodes.end())
+	{
 		return failed_to_add;
+	}
 
 	// do we already have this IP in the table?
 	if (m_ips.exists(e.addr()))
@@ -1043,7 +1052,7 @@ void routing_table::node_failed(node_id const& nid, udp::endpoint const& ep)
 	prune_empty_bucket();
 }
 
-void routing_table::add_router_node(udp::endpoint const& router)
+void routing_table::add_router_node(node_entry const& router)
 {
 	m_router_nodes.insert(router);
 }
