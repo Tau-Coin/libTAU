@@ -42,11 +42,32 @@ namespace libTAU::blockchain {
         return m_repository->is_account_exist(chain_id, pubKey);
     }
 
-    account repository_track::get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        sha256_hash block_hash = get_account_block_hash(chain_id, pubKey);
+    std::int64_t repository_track::get_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
 
-        if (!block_hash.is_all_zeros()) {
-            block b = get_block_by_hash(block_hash);
+        if (!statePointer.empty()) {
+            if (statePointer.first_block_hash() == statePointer.last_block_hash()) {
+                return 1;
+            } else {
+                block first_block = get_block_by_hash(statePointer.first_block_hash());
+                block last_block = get_block_by_hash(statePointer.last_block_hash());
+                if (!first_block.empty() && !last_block.empty()) {
+                    account account1 = find_state_from_block(pubKey, first_block);
+                    account account2 = find_state_from_block(pubKey, last_block);
+
+                    return account1.nonce() - account2.nonce() + 1;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    account repository_track::get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
+
+        if (!statePointer.empty() && !statePointer.first_block_hash().is_all_zeros()) {
+            block b = get_block_by_hash(statePointer.first_block_hash());
             if (!b.empty()) {
                 return find_state_from_block(pubKey, b);
             }
@@ -87,142 +108,123 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_track::forward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey,
-                                                                 state_linker &stateLinker, const sha256_hash &current_block_hash) {
-        sha256_hash block_hash = get_account_block_hash(chain_id, pubKey);
-        if (!block_hash.is_all_zeros()) {
-            auto linker = get_state_linker(block_hash);
-            if (linker.empty()) {
-                return false;
-            }
-
-            stateLinker.update_previous_change_block_hash(pubKey, block_hash);
-            stateLinker.update_last_change_block_hash(pubKey, linker.get_peer_last_change_block_hash(pubKey));
-        } else {
-            stateLinker.update_last_change_block_hash(pubKey, current_block_hash);
-        }
-
-        return true;
-    }
-
-    bool repository_track::backward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey,
-                                                                  state_linker& stateLinker, const sha256_hash &current_block_hash) {
-        sha256_hash block_hash = get_account_block_hash(chain_id, pubKey);
-        if (!block_hash.is_all_zeros()) {
-            auto linker = get_state_linker(block_hash);
-            if (linker.empty()) {
-                return false;
-            }
-
-            sha256_hash current_last_change_hash = linker.get_peer_last_change_block_hash(pubKey);
-            if (current_last_change_hash == block_hash) {
-                linker.update_previous_change_block_hash(pubKey, current_block_hash);
-            } else {
-                auto current_last_change_hash_linker = get_state_linker(current_last_change_hash);
-                if (current_last_change_hash_linker.empty())
-                    return false;
-                current_last_change_hash_linker.update_previous_change_block_hash(pubKey, current_block_hash);
-                if (!save_state_linker(current_last_change_hash_linker))
-                    return false;
-            }
-
-            linker.update_last_change_block_hash(pubKey, current_block_hash);
+    bool repository_track::forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key &pubKey,
+                                                       state_linker &stateLinker, const sha256_hash &current_block_hash) {
+        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
+        if (!statePointer.empty()) {
+            auto linker = get_state_linker(statePointer.first_block_hash());
+            linker.update_next_change_block_hash(pubKey, current_block_hash);
+            stateLinker.update_previous_change_block_hash(pubKey, statePointer.first_block_hash());
             if (!save_state_linker(linker))
                 return false;
-        } else {
-            // save in db first time
-            stateLinker.update_last_change_block_hash(pubKey, current_block_hash);
+        }
 
-            if (!save_account_block_hash(chain_id, pubKey, current_block_hash))
+        return true;
+    }
+
+    bool repository_track::backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key &pubKey,
+                                                        state_linker& stateLinker, const sha256_hash &current_block_hash) {
+        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
+        if (!statePointer.empty()) {
+            auto linker = get_state_linker(statePointer.last_block_hash());
+            linker.update_previous_change_block_hash(pubKey, current_block_hash);
+            stateLinker.update_next_change_block_hash(pubKey, statePointer.last_block_hash());
+            if (!save_state_linker(linker))
                 return false;
         }
 
         return true;
     }
 
-    bool repository_track::connect_tip_block(const block &b) {
+    bool repository_track::connect_tip_block(block &b) {
         m_main_chain_blocks.push_back(b);
 
         // save block
         if (!save_block(b))
             return false;
 
+        std::set<dht::public_key> peers;
+        peers.insert(b.miner());
+        auto tx = b.tx();
+        if (!tx.empty()) {
+            peers.insert(tx.sender());
+            peers.insert(tx.receiver());
+        }
+
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.set_main_chain_block_hash(b.sha256());
-        indexKeyInfo.add_associated_peer(b.miner());
 
         state_linker stateLinker(b.sha256());
         auto& chain_id = b.chain_id();
 
-        if (!forward_update_last_change_block_hash(chain_id, b.miner(), stateLinker, b.sha256()))
-            return false;
-        // save miner state
-        if (!save_account_block_hash(chain_id, b.miner(), b.sha256()))
-            return false;
+        for (auto const& peer: peers) {
+            indexKeyInfo.add_associated_peer(peer);
 
-        auto tx = b.tx();
-        if (!tx.empty()) {
-            if (!forward_update_last_change_block_hash(chain_id, tx.sender(), stateLinker, b.sha256()))
+            // update state linker
+            if (!forward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
                 return false;
-            // save state
-            if (!save_account_block_hash(chain_id, tx.sender(), b.sha256()))
+            // update state pointer
+            auto statePointer = get_account_state_pointer(chain_id, peer);
+            if (statePointer.empty()) {
+                statePointer.setInitialBlockHash(b.sha256());
+            } else {
+                statePointer.setFirstBlockHash(b.sha256());
+            }
+            if (!save_account_state_pointer(chain_id, peer, statePointer))
                 return false;
-
-            if (!forward_update_last_change_block_hash(chain_id, tx.receiver(), stateLinker, b.sha256()))
-                return false;
-            // save state
-            if (!save_account_block_hash(chain_id, tx.receiver(), b.sha256()))
-                return false;
-
-            indexKeyInfo.add_associated_peer(tx.sender());
-            indexKeyInfo.add_associated_peer(tx.receiver());
         }
 
         if (!save_state_linker(stateLinker))
             return false;
 
-        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
-            return false;
-
-        return true;
+        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
-    bool repository_track::connect_tail_block(const block &b) {
+    bool repository_track::connect_tail_block(block &b) {
         m_main_chain_blocks.push_back(b);
 
         // save block
         if (!save_block(b))
             return false;
 
+        std::set<dht::public_key> peers;
+        peers.insert(b.miner());
+        auto tx = b.tx();
+        if (!tx.empty()) {
+            peers.insert(tx.sender());
+            peers.insert(tx.receiver());
+        }
+
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.set_main_chain_block_hash(b.sha256());
-        indexKeyInfo.add_associated_peer(b.miner());
 
         state_linker stateLinker(b.sha256());
         auto& chain_id = b.chain_id();
-        if (!backward_update_last_change_block_hash(chain_id, b.miner(), stateLinker, b.sha256()))
-            return false;
-        auto tx = b.tx();
-        if (!tx.empty()) {
-            if (!backward_update_last_change_block_hash(chain_id, tx.sender(), stateLinker, b.sha256()))
-                return false;
-            if (!backward_update_last_change_block_hash(chain_id, tx.receiver(), stateLinker, b.sha256()))
-                return false;
 
-            indexKeyInfo.add_associated_peer(tx.sender());
-            indexKeyInfo.add_associated_peer(tx.receiver());
+        for (auto const& peer: peers) {
+            indexKeyInfo.add_associated_peer(peer);
+
+            // update state linker
+            if (!backward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
+                return false;
+            // update state pointer
+            auto statePointer = get_account_state_pointer(chain_id, peer);
+            if (statePointer.empty()) {
+                statePointer.setInitialBlockHash(b.sha256());
+            } else {
+                statePointer.setLastBlockHash(b.sha256());
+            }
+            if (!save_account_state_pointer(chain_id, peer, statePointer))
+                return false;
         }
 
         if (!save_state_linker(stateLinker))
             return false;
 
-        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
-            return false;
-
-        return true;
+        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
-    bool repository_track::rollback_block(const block &b) {
+    bool repository_track::rollback_block(block &b) {
         if (b.empty())
             return false;
 
@@ -231,14 +233,19 @@ namespace libTAU::blockchain {
         for (auto const& item: stateLinker.get_previous_change_block_hash_map()) {
             auto& pubKey = item.first;
             auto& block_hash = item.second;
-            save_account_block_hash(chain_id, pubKey, block_hash);
+            if (block_hash.is_all_zeros()) {
+                if (!delete_account_state_pointer(chain_id, pubKey))
+                    return false;
+            } else {
+                auto statePointer = get_account_state_pointer(chain_id, pubKey);
+                statePointer.setFirstBlockHash(block_hash);
+                if (!save_account_state_pointer(chain_id, pubKey, statePointer))
+                    return false;
 
-            // record last change block hash
-            auto linker = get_state_linker(block_hash);
-            if (linker.empty())
-                return false;
-            linker.update_last_change_block_hash(pubKey, stateLinker.get_peer_last_change_block_hash(pubKey));
-            if (!save_state_linker(linker))
+                // no need to update state linker
+            }
+
+            if (!delete_state_linker(b.sha256()))
                 return false;
         }
 
@@ -246,10 +253,7 @@ namespace libTAU::blockchain {
         indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
         indexKeyInfo.clear_main_chain_block_hash();
         indexKeyInfo.clear_associated_peers();
-        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
-            return false;
-
-        return true;
+        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
     bool repository_track::delete_block(const sha256_hash &hash) {
@@ -367,7 +371,7 @@ namespace libTAU::blockchain {
         return m_repository->update_user_state_db(chain_id, pubKey);
     }
 
-    sha256_hash repository_track::get_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+    state_pointer repository_track::get_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
@@ -375,23 +379,23 @@ namespace libTAU::blockchain {
         auto it = m_cache.find(key);
         if (it != m_cache.end()) {
             std::string value = it->second;
-            return sha256_hash(value.data());
+            return state_pointer(value);
         } else {
-            return m_repository->get_account_block_hash(chain_id, pubKey);
+            return m_repository->get_account_state_pointer(chain_id, pubKey);
         }
     }
 
-    bool repository_track::save_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey, const sha256_hash &hash) {
+    bool repository_track::save_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const state_pointer &statePointer) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
 
-        m_cache[key] = hash.to_string();
+        m_cache[key] = statePointer.get_encode();
 
         return true;
     }
 
-    bool repository_track::delete_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+    bool repository_track::delete_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
@@ -445,7 +449,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::save_block(const block &b) {
+    bool repository_track::save_block(block &b) {
         if (b.empty())
             return false;
 
@@ -453,7 +457,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::save_non_main_chain_block(const block &b) {
+    bool repository_track::save_non_main_chain_block(block &b) {
         // save block
         if (!save_block(b))
             return false;
@@ -531,7 +535,7 @@ namespace libTAU::blockchain {
         for (auto const& peer: associated_peers) {
             auto s = get_account(chain_id, peer);
             if (!s.empty() && s.block_number() <= block_number) {
-                if (!delete_account_block_hash(chain_id, peer))
+                if (!delete_account_state_pointer(chain_id, peer))
                     return false;
             }
         }

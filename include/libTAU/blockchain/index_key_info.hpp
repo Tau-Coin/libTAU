@@ -63,7 +63,7 @@ namespace libTAU::blockchain {
 
         void add_associated_peer(dht::public_key peer) { m_associated_peers.insert(peer); }
 
-        bool empty() { return m_main_chain_block_hash.is_all_zeros() && m_non_main_chain_block_hash_set.empty(); }
+        bool empty() const { return m_main_chain_block_hash.is_all_zeros() && m_non_main_chain_block_hash_set.empty(); }
 
         entry get_entry() const;
 

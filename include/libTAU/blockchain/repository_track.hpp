@@ -31,6 +31,8 @@ namespace libTAU::blockchain {
 
         bool is_account_exist(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
+        std::int64_t get_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+
         account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
 //        account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) override;
@@ -41,17 +43,17 @@ namespace libTAU::blockchain {
 
 //        bool save_block(block b, bool main_chain) override;
 
-        bool forward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key& pubKey,
-                                                   state_linker& stateLinker, const sha256_hash &current_block_hash) override;
+        bool forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
+                                         state_linker& stateLinker, const sha256_hash &current_block_hash) override;
 
-        bool backward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key& pubKey,
-                                                    state_linker& stateLinker, const sha256_hash &current_block_hash) override;
+        bool backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
+                                          state_linker& stateLinker, const sha256_hash &current_block_hash) override;
 
-        bool connect_tip_block(const block &b) override;
+        bool connect_tip_block(block &b) override;
 
-        bool connect_tail_block(const block &b) override;
+        bool connect_tail_block(block &b) override;
 
-        bool rollback_block(const block &b) override;
+        bool rollback_block(block &b) override;
 
         bool delete_block(const sha256_hash &hash) override;
 
@@ -83,11 +85,11 @@ namespace libTAU::blockchain {
 
         bool update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
-        sha256_hash get_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+        state_pointer get_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
-        bool save_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey, const sha256_hash &hash) override;
+        bool save_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const state_pointer &statePointer) override;
 
-        bool delete_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+        bool delete_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
         account find_state_from_block(const dht::public_key &pubKey, const block &b) override;
 
@@ -97,9 +99,9 @@ namespace libTAU::blockchain {
 
         bool delete_state_linker(const sha256_hash &block_hash) override;
 
-        bool save_block(const block &b) override;
+        bool save_block(block &b) override;
 
-        bool save_non_main_chain_block(const block &b) override;
+        bool save_non_main_chain_block(block &b) override;
 
         bool delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) override;
 

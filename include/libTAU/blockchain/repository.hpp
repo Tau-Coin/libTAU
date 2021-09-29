@@ -15,6 +15,7 @@ see LICENSE file.
 #include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
 #include "libTAU/blockchain/state_linker.hpp"
+#include "libTAU/blockchain/state_pointer.hpp"
 
 namespace libTAU::blockchain {
 
@@ -46,6 +47,8 @@ namespace libTAU::blockchain {
          */
         virtual bool is_account_exist(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
+        virtual std::int64_t get_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
         virtual account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
 //        virtual account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) = 0;
@@ -60,17 +63,17 @@ namespace libTAU::blockchain {
 
 //        virtual bool save_block(block b, bool main_chain) = 0;
 
-        virtual bool forward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key& pubKey,
-                                                           state_linker& stateLinker, const sha256_hash &current_block_hash) = 0;
+        virtual bool forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
+                                                 state_linker& stateLinker, const sha256_hash &current_block_hash) = 0;
 
-        virtual bool backward_update_last_change_block_hash(const aux::bytes &chain_id, const dht::public_key& pubKey,
-                                                            state_linker& stateLinker, const sha256_hash &current_block_hash) = 0;
+        virtual bool backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
+                                                  state_linker& stateLinker, const sha256_hash &current_block_hash) = 0;
 
-        virtual bool connect_tip_block(const block &b) = 0;
+        virtual bool connect_tip_block(block &b) = 0;
 
-        virtual bool connect_tail_block(const block &b) = 0;
+        virtual bool connect_tail_block(block &b) = 0;
 
-        virtual bool rollback_block(const block &b) = 0;
+        virtual bool rollback_block(block &b) = 0;
 
         virtual bool delete_block(const sha256_hash &hash) = 0;
 
@@ -115,11 +118,11 @@ namespace libTAU::blockchain {
 
         virtual bool update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
-        virtual sha256_hash get_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        virtual state_pointer get_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
-        virtual bool save_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey, const sha256_hash &hash) = 0;
+        virtual bool save_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const state_pointer &statePointer) = 0;
 
-        virtual bool delete_account_block_hash(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        virtual bool delete_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
         virtual account find_state_from_block(const dht::public_key &pubKey, const block &b) = 0;
 
@@ -129,9 +132,9 @@ namespace libTAU::blockchain {
 
         virtual bool delete_state_linker(const sha256_hash &block_hash) = 0;
 
-        virtual bool save_block(const block &b) = 0;
+        virtual bool save_block(block &b) = 0;
 
-        virtual bool save_non_main_chain_block(const block &b) = 0;
+        virtual bool save_non_main_chain_block(block &b) = 0;
 
         virtual bool delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) = 0;
 
