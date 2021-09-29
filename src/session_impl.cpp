@@ -2529,7 +2529,7 @@ namespace {
 		if (!m_posted_stats_header)
 		{
 			m_posted_stats_header = true;
-			m_alerts.emplace_alert<session_stats_header_alert>();
+			//m_alerts.emplace_alert<session_stats_header_alert>();
 		}
 
 		if (m_dht)
