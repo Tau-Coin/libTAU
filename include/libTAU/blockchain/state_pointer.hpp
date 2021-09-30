@@ -27,33 +27,33 @@ namespace libTAU::blockchain {
         explicit state_pointer(std::string encode): state_pointer(bdecode(encode)) {}
 
         explicit state_pointer(const sha256_hash &blockHash) :
-                m_first_block_hash(blockHash), m_last_block_hash(blockHash) {}
+                m_latest_block_hash(blockHash), m_oldest_block_hash(blockHash) {}
 
-        state_pointer(const sha256_hash &mFirstBlockHash, const sha256_hash &mLastBlockHash) :
-        m_first_block_hash(mFirstBlockHash), m_last_block_hash(mLastBlockHash) {}
+        state_pointer(const sha256_hash &mLatestBlockHash, const sha256_hash &mOldestBlockHash) :
+                m_latest_block_hash(mLatestBlockHash), m_oldest_block_hash(mOldestBlockHash) {}
 
         void setInitialBlockHash(const sha256_hash &blockHash) {
-            m_first_block_hash = blockHash;
-            m_last_block_hash = blockHash;
+            m_latest_block_hash = blockHash;
+            m_oldest_block_hash = blockHash;
         }
 
-        const sha256_hash &first_block_hash() const {
-            return m_first_block_hash;
+        const sha256_hash &latest_block_hash() const {
+            return m_latest_block_hash;
         }
 
-        void setFirstBlockHash(const sha256_hash &mFirstBlockHash) {
-            m_first_block_hash = mFirstBlockHash;
+        void setFirstBlockHash(const sha256_hash &mLatestBlockHash) {
+            m_latest_block_hash = mLatestBlockHash;
         }
 
-        const sha256_hash &last_block_hash() const {
-            return m_last_block_hash;
+        const sha256_hash &oldest_block_hash() const {
+            return m_oldest_block_hash;
         }
 
-        void setLastBlockHash(const sha256_hash &mLastBlockHash) {
-            m_last_block_hash = mLastBlockHash;
+        void setLastBlockHash(const sha256_hash &mOldestBlockHash) {
+            m_oldest_block_hash = mOldestBlockHash;
         }
 
-        bool empty() { return m_first_block_hash.is_all_zeros() && m_last_block_hash.is_all_zeros(); }
+        bool empty() { return m_latest_block_hash.is_all_zeros() && m_oldest_block_hash.is_all_zeros(); }
 
         entry get_entry() const;
 
@@ -64,9 +64,11 @@ namespace libTAU::blockchain {
         // populate state pointer data from entry
         void populate(const entry& e);
 
-        sha256_hash m_first_block_hash;
+        // latest block hash
+        sha256_hash m_latest_block_hash;
 
-        sha256_hash m_last_block_hash;
+        // oldest block hash
+        sha256_hash m_oldest_block_hash;
     };
 }
 

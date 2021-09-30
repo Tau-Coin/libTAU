@@ -17,9 +17,9 @@ namespace libTAU::blockchain {
         entry e(entry::dictionary_t);
 
         // first block hash
-        e["f"] = entry(m_first_block_hash.to_string());
+        e["f"] = entry(m_latest_block_hash.to_string());
         // last block hash
-        e["l"] = entry(m_last_block_hash.to_string());
+        e["l"] = entry(m_oldest_block_hash.to_string());
 
         return e;
     }
@@ -37,13 +37,13 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("f")))
         {
             auto first_block_hash = i->string();
-            m_first_block_hash = sha256_hash(first_block_hash.data());
+            m_latest_block_hash = sha256_hash(first_block_hash.data());
         }
         // last block hash
         if (auto* i = const_cast<entry *>(e.find_key("l")))
         {
             auto last_block_hash = i->string();
-            m_last_block_hash = sha256_hash(last_block_hash.data());
+            m_oldest_block_hash = sha256_hash(last_block_hash.data());
         }
     }
 }
