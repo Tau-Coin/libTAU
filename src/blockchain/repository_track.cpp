@@ -256,6 +256,38 @@ namespace libTAU::blockchain {
         return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
+    bool repository_track::expire_block(block &b) {
+        if (b.empty())
+            return false;
+
+        auto& chain_id = b.chain_id();
+        auto stateLinker = get_state_linker(b.sha256());
+        for (auto const& item: stateLinker.get_next_change_block_hash_map()) {
+            auto& pubKey = item.first;
+            auto& block_hash = item.second;
+            if (block_hash.is_all_zeros()) {
+                if (!delete_account_state_pointer(chain_id, pubKey))
+                    return false;
+            } else {
+                auto statePointer = get_account_state_pointer(chain_id, pubKey);
+                statePointer.setLastBlockHash(block_hash);
+                if (!save_account_state_pointer(chain_id, pubKey, statePointer))
+                    return false;
+
+                // no need to update state linker
+            }
+
+            if (!delete_state_linker(b.sha256()))
+                return false;
+        }
+
+        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
+        indexKeyInfo.clear_main_chain_block_hash();
+        indexKeyInfo.clear_associated_peers();
+        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
+    }
+
     bool repository_track::delete_block(const sha256_hash &hash) {
         m_cache[hash.to_string()] = std::string ();
         return true;
@@ -513,7 +545,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::delete_outdated_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) {
+    bool repository_track::delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) {
         index_key_info indexKeyInfo = get_index_info(chain_id, block_number);
         auto& main_chain_block_hash = indexKeyInfo.main_chain_block_hash();
         if (!main_chain_block_hash.is_all_zeros()) {
@@ -540,10 +572,8 @@ namespace libTAU::blockchain {
             }
         }
 
-        if (!delete_index_info(chain_id, block_number))
-            return false;
+        return delete_index_info(chain_id, block_number);
 
-        return true;
     }
 
 }

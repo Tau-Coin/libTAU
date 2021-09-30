@@ -55,6 +55,8 @@ namespace libTAU::blockchain {
 
         bool rollback_block(block &b) override;
 
+        bool expire_block(block &b) override;
+
         bool delete_block(const sha256_hash &hash) override;
 
         sha256_hash get_best_tip_block_hash(const aux::bytes &chain_id) override;
@@ -109,7 +111,7 @@ namespace libTAU::blockchain {
 
         bool save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) override;
 
-        bool delete_outdated_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) override;
+        bool delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) override;
 
     private:
 

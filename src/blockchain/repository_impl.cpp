@@ -510,12 +510,16 @@ namespace libTAU::blockchain {
         return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
+    bool repository_impl::expire_block(block &b) {
+        return false;
+    }
+
     bool repository_impl::delete_block(const sha256_hash &hash) {
         leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), hash.to_string());
         return status.ok();
     }
 
-    bool repository_impl::delete_outdated_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) {
+    bool repository_impl::delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) {
         index_key_info indexKeyInfo = get_index_info(chain_id, block_number);
         auto& main_chain_block_hash = indexKeyInfo.main_chain_block_hash();
         if (!main_chain_block_hash.is_all_zeros()) {
@@ -542,10 +546,8 @@ namespace libTAU::blockchain {
             }
         }
 
-        if (!delete_index_info(chain_id, block_number))
-            return false;
+        return delete_index_info(chain_id, block_number);
 
-        return true;
     }
 
     sha256_hash repository_impl::get_best_tip_block_hash(const aux::bytes &chain_id) {

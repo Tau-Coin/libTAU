@@ -75,6 +75,8 @@ namespace libTAU::blockchain {
 
         virtual bool rollback_block(block &b) = 0;
 
+        virtual bool expire_block(block &b) = 0;
+
         virtual bool delete_block(const sha256_hash &hash) = 0;
 
         virtual sha256_hash get_best_tip_block_hash(const aux::bytes &chain_id) = 0;
@@ -142,7 +144,7 @@ namespace libTAU::blockchain {
 
         virtual bool save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) = 0;
 
-        virtual bool delete_outdated_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+        virtual bool delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP
