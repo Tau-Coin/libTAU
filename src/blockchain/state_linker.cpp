@@ -19,6 +19,14 @@ namespace libTAU::blockchain {
         // block hash
         e["h"] = entry(m_block_hash.to_string());
 
+        // next change map
+        entry n(entry::dictionary_t);
+        for (auto const& item: m_next_change_block_hash_map) {
+            std::string key(item.first.bytes.begin(), item.first.bytes.end());
+            n[key] = entry(item.second.to_string());
+        }
+        e["n"] = n;
+
         // previous change map
         entry p(entry::dictionary_t);
         for (auto const& item: m_previous_change_block_hash_map) {
@@ -26,14 +34,6 @@ namespace libTAU::blockchain {
             p[key] = entry(item.second.to_string());
         }
         e["p"] = p;
-
-        // last change map
-        entry l(entry::dictionary_t);
-        for (auto const& item: m_last_change_block_hash_map) {
-            std::string key(item.first.bytes.begin(), item.first.bytes.end());
-            l[key] = entry(item.second.to_string());
-        }
-        e["l"] = l;
 
         return e;
     }
@@ -52,20 +52,20 @@ namespace libTAU::blockchain {
         {
             m_block_hash = sha256_hash(i->string().data());
         }
-        // previous change map
+        // next change block hash map
+        if (auto* i = const_cast<entry *>(e.find_key("n")))
+        {
+            auto & dic = i->dict();
+            for (auto const& item: dic) {
+                m_next_change_block_hash_map[dht::public_key(item.first.data())] = sha256_hash(item.second.string().data());
+            }
+        }
+        // previous change block hash map
         if (auto* i = const_cast<entry *>(e.find_key("p")))
         {
             auto & dic = i->dict();
             for (auto const& item: dic) {
                 m_previous_change_block_hash_map[dht::public_key(item.first.data())] = sha256_hash(item.second.string().data());
-            }
-        }
-        // last change map
-        if (auto* i = const_cast<entry *>(e.find_key("l")))
-        {
-            auto & dic = i->dict();
-            for (auto const& item: dic) {
-                m_last_change_block_hash_map[dht::public_key(item.first.data())] = sha256_hash(item.second.string().data());
             }
         }
     }

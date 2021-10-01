@@ -36,18 +36,14 @@ namespace libTAU::blockchain {
         explicit state_linker(const sha256_hash &mBlockHash) : m_block_hash(mBlockHash) {}
 
         state_linker(const sha256_hash &mBlockHash,
-                     std::map<dht::public_key, sha256_hash> mPreviousChangeBlockHashMap,
-                     std::map<dht::public_key, sha256_hash> mLastChangeBlockHashMap) :
-                     m_block_hash(mBlockHash), m_previous_change_block_hash_map(std::move(mPreviousChangeBlockHashMap)),
-                     m_last_change_block_hash_map(std::move(mLastChangeBlockHashMap)) {}
+                     std::map<dht::public_key, sha256_hash> mNextChangeBlockHashMap,
+                     std::map<dht::public_key, sha256_hash> mPreviousChangeBlockHashMap) :
+                     m_block_hash(mBlockHash), m_next_change_block_hash_map(std::move(mNextChangeBlockHashMap)),
+                     m_previous_change_block_hash_map(std::move(mPreviousChangeBlockHashMap)) {}
 
         const std::map<dht::public_key, sha256_hash> &get_next_change_block_hash_map() const { return m_next_change_block_hash_map; }
 
         const std::map<dht::public_key, sha256_hash> &get_previous_change_block_hash_map() const { return m_previous_change_block_hash_map; }
-
-        const std::map<dht::public_key, sha256_hash> &get_last_change_block_hash_map() const { return m_last_change_block_hash_map; }
-
-        void set_last_change_block_hash_map(const std::map<dht::public_key, sha256_hash> &mLastChangeBlockHashMap) { m_last_change_block_hash_map = mLastChangeBlockHashMap; }
 
         void set_previous_change_block_hash_map(const std::map<dht::public_key, sha256_hash> &mPreviousChangeBlockHashMap) { m_previous_change_block_hash_map = mPreviousChangeBlockHashMap; }
 
@@ -55,13 +51,9 @@ namespace libTAU::blockchain {
 
         void update_previous_change_block_hash(dht::public_key pubKey, sha256_hash previous_change_block_hash) { m_previous_change_block_hash_map[pubKey] = previous_change_block_hash; }
 
-        void update_last_change_block_hash(dht::public_key pubKey, sha256_hash last_change_block_hash) { m_last_change_block_hash_map[pubKey] = last_change_block_hash; }
-
         sha256_hash get_peer_next_change_block_hash(const dht::public_key& pubKey) { return m_next_change_block_hash_map[pubKey]; }
 
         sha256_hash get_peer_previous_change_block_hash(const dht::public_key& pubKey) { return m_previous_change_block_hash_map[pubKey]; }
-
-        sha256_hash get_peer_last_change_block_hash(const dht::public_key& pubKey) { return m_last_change_block_hash_map[pubKey]; }
 
         const sha256_hash &block_hash() const { return m_block_hash; }
 
@@ -84,9 +76,6 @@ namespace libTAU::blockchain {
 
         // previous change block hash map
         std::map<dht::public_key, sha256_hash> m_previous_change_block_hash_map;
-
-        // last change block hash map
-        std::map<dht::public_key, sha256_hash> m_last_change_block_hash_map;
     };
 }
 
