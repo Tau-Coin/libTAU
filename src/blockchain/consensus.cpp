@@ -11,11 +11,11 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    std::int64_t consensus::calculate_required_base_target(block previousBlock, block ancestor3) {
+    std::int64_t consensus::calculate_required_base_target(block &previousBlock, block &ancestor3) {
         return 0;
     }
 
-    sha256_hash consensus::calculate_generation_signature(sha256_hash preGenerationSignature, const dht::public_key& pubkey) {
+    sha256_hash consensus::calculate_generation_signature(const sha256_hash &preGenerationSignature, const dht::public_key& pubkey) {
         std::string data;
         data.insert(data.end(), preGenerationSignature.begin(), preGenerationSignature.end());
         data.insert(data.end(), pubkey.bytes.begin(), pubkey.bytes.end());
@@ -27,7 +27,7 @@ namespace libTAU::blockchain {
         return baseTarget * power * time;
     }
 
-    std::int64_t consensus::calculate_random_hit(sha256_hash generationSignature) {
+    std::int64_t consensus::calculate_random_hit(const sha256_hash &generationSignature) {
         return 0;
     }
 

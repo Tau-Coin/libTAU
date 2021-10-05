@@ -16,9 +16,9 @@ see LICENSE file.
 namespace libTAU::blockchain {
     struct consensus {
 
-        static std::int64_t calculate_required_base_target(block previousBlock, block ancestor3);
+        static std::int64_t calculate_required_base_target(block &previousBlock, block &ancestor3);
 
-        static sha256_hash calculate_generation_signature(sha256_hash preGenerationSignature, const dht::public_key& pubkey);
+        static sha256_hash calculate_generation_signature(const sha256_hash &preGenerationSignature, const dht::public_key& pubkey);
 
         /**
          * get miner target value
@@ -26,7 +26,7 @@ namespace libTAU::blockchain {
          */
         static std::int64_t calculate_miner_target_value(std::int64_t baseTarget, std::int64_t power, std::int64_t time);
 
-        static std::int64_t calculate_random_hit(sha256_hash generationSignature);
+        static std::int64_t calculate_random_hit(const sha256_hash &generationSignature);
 
         /**
          * calculate cumulative difficulty: last cumulative difficulty + DiffAdjustNumerator / base target
