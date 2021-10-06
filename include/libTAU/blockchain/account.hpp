@@ -14,16 +14,19 @@ see LICENSE file.
 namespace libTAU::blockchain {
     class account {
     public:
-        account(int64_t mBalance, int64_t mNonce) : m_balance(mBalance), m_nonce(mNonce) {}
-
         account(int64_t mBalance, int64_t mNonce, int64_t mBlockNumber) : m_balance(mBalance), m_nonce(mNonce),
                                                                           m_block_number(mBlockNumber) {}
+
+        account(int64_t mBalance, int64_t mNonce, int64_t mEffectivePower, int64_t mBlockNumber) :
+            m_balance(mBalance), m_nonce(mNonce), m_effective_power(mEffectivePower), m_block_number(mBlockNumber) {}
 
         bool empty() const { return m_balance == 0 && m_nonce == 0; }
 
         int64_t balance() const { return m_balance; }
 
         int64_t nonce() const { return m_nonce; }
+
+        int64_t effective_power() const { return m_effective_power; }
 
         int64_t block_number() const { return m_block_number; }
 
@@ -33,6 +36,9 @@ namespace libTAU::blockchain {
 
         // nonce
         std::int64_t m_nonce;
+
+        // effective power
+        std::int64_t m_effective_power;
 
         // block number
         std::int64_t m_block_number;
