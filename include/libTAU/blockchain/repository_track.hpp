@@ -35,6 +35,8 @@ namespace libTAU::blockchain {
 
         account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
+        account get_account_with_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+
 //        account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) override;
 
         bool is_block_exist(const sha256_hash &hash) override;

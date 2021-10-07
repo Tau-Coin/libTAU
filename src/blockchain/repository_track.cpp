@@ -76,6 +76,30 @@ namespace libTAU::blockchain {
         return account(0, 0, 0);
     }
 
+    account repository_track::get_account_with_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        account acct(0, 0, 0, 0);
+        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
+
+        if (!statePointer.empty() && !statePointer.latest_block_hash().is_all_zeros()) {
+            block latest_block = get_block_by_hash(statePointer.latest_block_hash());
+            if (!latest_block.empty()) {
+                acct = find_state_from_block(pubKey, latest_block);
+
+                if (statePointer.latest_block_hash() == statePointer.oldest_block_hash()) {
+                    acct.set_effective_power(1);
+                } else {
+                    block oldest_block = get_block_by_hash(statePointer.oldest_block_hash());
+                    if (!oldest_block.empty()) {
+                        account account2 = find_state_from_block(pubKey, oldest_block);
+                        acct.set_effective_power(acct.nonce() - account2.nonce() + 1);
+                    }
+                }
+            }
+        }
+
+        return acct;
+    }
+
 //    account repository_track::get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) {
 //        auto s = get_account(chain_id, pubKey);
 //

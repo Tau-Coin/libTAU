@@ -51,6 +51,8 @@ namespace libTAU::blockchain {
 
         virtual account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
+        virtual account get_account_with_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
 //        virtual account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) = 0;
 
         /**

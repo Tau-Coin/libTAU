@@ -26,6 +26,8 @@ namespace libTAU::blockchain {
 
         int64_t nonce() const { return m_nonce; }
 
+        void set_effective_power(int64_t mEffectivePower) { m_effective_power = mEffectivePower; }
+
         int64_t effective_power() const { return m_effective_power; }
 
         int64_t block_number() const { return m_block_number; }
