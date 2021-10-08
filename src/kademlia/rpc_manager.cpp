@@ -137,6 +137,7 @@ rpc_manager::rpc_manager(node_id const& our_id
 	, m_table(table)
 	, m_our_id(our_id)
 	, m_allocated_observers(0)
+	, m_invoked_requests(0)
 	, m_destructing(false)
 {
 #ifdef TORRENT_DISABLE_LOGGING
@@ -159,7 +160,18 @@ void* rpc_manager::allocate_observer()
 {
 	m_pool_allocator.set_next_size(10);
 	void* ret = m_pool_allocator.malloc();
-	if (ret != nullptr) ++m_allocated_observers;
+	if (ret != nullptr)
+	{
+		++m_allocated_observers;
+		// 'm_invoked_requests' is the total number of invoked requests
+		// after the node starts. When its value becomes nagetive,
+		// reset it into 0.
+		++m_invoked_requests;
+		if (m_invoked_requests < 0)
+		{
+			m_invoked_requests = 0;
+		}
+	}
 	return ret;
 }
 

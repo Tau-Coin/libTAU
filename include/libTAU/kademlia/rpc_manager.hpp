@@ -95,6 +95,8 @@ public:
 
 	int num_allocated_observers() const { return m_allocated_observers; }
 
+	int num_invoked_requests() const { return m_invoked_requests; }
+
 	void update_node_id(node_id const& id) { m_our_id = id; }
 
 private:
@@ -115,6 +117,7 @@ private:
 	routing_table& m_table;
 	node_id m_our_id;
 	std::uint32_t m_allocated_observers:31;
+	std::int64_t m_invoked_requests;
 	std::uint32_t m_destructing:1;
 };
 

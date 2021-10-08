@@ -48,11 +48,13 @@ namespace libTAU::dht {
 
 	void add_dht_counters(node const& dht, counters& c)
 	{
-		auto const [nodes, replacements, allocated_observers] = dht.get_stats_counters();
+		auto const [nodes, replacements, allocated_observers, invoked_requests]
+				= dht.get_stats_counters();
 
 		c.inc_stats_counter(counters::dht_nodes, nodes);
 		c.inc_stats_counter(counters::dht_node_cache, replacements);
 		c.inc_stats_counter(counters::dht_allocated_observers, allocated_observers);
+		c.inc_stats_counter(counters::dht_invoked_requests, invoked_requests);
 	}
 
 	std::vector<node_entry> concat(std::vector<node_entry> const& v1
@@ -219,6 +221,7 @@ namespace libTAU::dht {
 		c.set_value(counters::dht_nodes, 0);
 		c.set_value(counters::dht_node_cache, 0);
 		c.set_value(counters::dht_allocated_observers, 0);
+		c.set_value(counters::dht_invoked_requests, 0);
 
 		for (auto const& n : m_nodes)
 			add_dht_counters(n.second.dht, c);
