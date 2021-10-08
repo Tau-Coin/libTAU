@@ -32,7 +32,7 @@ namespace libTAU::blockchain {
         state_pointer(const sha256_hash &mLatestBlockHash, const sha256_hash &mOldestBlockHash) :
                 m_latest_block_hash(mLatestBlockHash), m_oldest_block_hash(mOldestBlockHash) {}
 
-        void setInitialBlockHash(const sha256_hash &blockHash) {
+        void set_initial_block_hash(const sha256_hash &blockHash) {
             m_latest_block_hash = blockHash;
             m_oldest_block_hash = blockHash;
         }
@@ -41,7 +41,7 @@ namespace libTAU::blockchain {
             return m_latest_block_hash;
         }
 
-        void setFirstBlockHash(const sha256_hash &mLatestBlockHash) {
+        void set_latest_block_hash(const sha256_hash &mLatestBlockHash) {
             m_latest_block_hash = mLatestBlockHash;
         }
 
@@ -49,7 +49,7 @@ namespace libTAU::blockchain {
             return m_oldest_block_hash;
         }
 
-        void setLastBlockHash(const sha256_hash &mOldestBlockHash) {
+        void set_oldest_block_hash(const sha256_hash &mOldestBlockHash) {
             m_oldest_block_hash = mOldestBlockHash;
         }
 

@@ -443,9 +443,9 @@ namespace libTAU::blockchain {
             // update state pointer
             auto statePointer = get_account_state_pointer(chain_id, peer);
             if (statePointer.empty()) {
-                statePointer.setInitialBlockHash(b.sha256());
+                statePointer.set_initial_block_hash(b.sha256());
             } else {
-                statePointer.setFirstBlockHash(b.sha256());
+                statePointer.set_latest_block_hash(b.sha256());
             }
             if (!save_account_state_pointer(chain_id, peer, statePointer))
                 return false;
@@ -487,9 +487,9 @@ namespace libTAU::blockchain {
             // update state pointer
             auto statePointer = get_account_state_pointer(chain_id, peer);
             if (statePointer.empty()) {
-                statePointer.setInitialBlockHash(b.sha256());
+                statePointer.set_initial_block_hash(b.sha256());
             } else {
-                statePointer.setLastBlockHash(b.sha256());
+                statePointer.set_oldest_block_hash(b.sha256());
             }
             if (!save_account_state_pointer(chain_id, peer, statePointer))
                 return false;
@@ -516,7 +516,7 @@ namespace libTAU::blockchain {
                     return false;
             } else {
                 auto statePointer = get_account_state_pointer(chain_id, pubKey);
-                statePointer.setFirstBlockHash(block_hash);
+                statePointer.set_latest_block_hash(block_hash);
                 if (!save_account_state_pointer(chain_id, pubKey, statePointer))
                     return false;
 
