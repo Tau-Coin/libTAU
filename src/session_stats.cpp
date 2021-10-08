@@ -30,6 +30,8 @@ namespace {
 #define METRIC(category, name) { #category "." #name, counters:: name },
 	aux::array<stats_metric_impl, counters::num_counters> const metrics
 	({{
+		METRIC(peer, connection_attempts)
+		METRIC(peer, connection_attempt_loops)
 		METRIC(peer, boost_connection_attempts)
 		METRIC(peer, missed_connection_attempts)
 		METRIC(peer, no_peer_connection_attempts)
@@ -144,6 +146,7 @@ namespace {
 		METRIC(dht, dht_put_out)
 		METRIC(dht, dht_sample_infohashes_in)
 		METRIC(dht, dht_sample_infohashes_out)
+		METRIC(dht, dht_invoked_requests)
 
 		// the number of failed incoming DHT requests by kind of request
 		METRIC(dht, dht_invalid_announce)

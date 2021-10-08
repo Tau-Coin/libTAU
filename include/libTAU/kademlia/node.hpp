@@ -186,7 +186,7 @@ public:
 
 	dht_status status() const;
 
-	std::tuple<int, int, int> get_stats_counters() const;
+	std::tuple<int, int, int, std::int64_t> get_stats_counters() const;
 
 #if TORRENT_ABI_VERSION == 1
 #include "libTAU/aux_/disable_deprecation_warnings_push.hpp"

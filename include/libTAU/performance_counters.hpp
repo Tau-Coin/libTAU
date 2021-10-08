@@ -90,6 +90,7 @@ namespace libTAU {
 			dht_put_out,
 			dht_sample_infohashes_in,
 			dht_sample_infohashes_out,
+			dht_invoked_requests,
 
 			dht_invalid_announce,
 			dht_invalid_get_peers,
