@@ -155,14 +155,14 @@ namespace libTAU::blockchain {
     }
 
     std::int64_t repository_impl::get_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
+        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
 
-        if (!statePointer.empty()) {
-            if (statePointer.latest_block_hash() == statePointer.oldest_block_hash()) {
+        if (!accountBlockPointer.empty()) {
+            if (accountBlockPointer.latest_block_hash() == accountBlockPointer.oldest_block_hash()) {
                 return 1;
             } else {
-                block latest_block = get_block_by_hash(statePointer.latest_block_hash());
-                block oldest_block = get_block_by_hash(statePointer.oldest_block_hash());
+                block latest_block = get_block_by_hash(accountBlockPointer.latest_block_hash());
+                block oldest_block = get_block_by_hash(accountBlockPointer.oldest_block_hash());
                 if (!latest_block.empty() && !oldest_block.empty()) {
                     account account1 = find_state_from_block(pubKey, latest_block);
                     account account2 = find_state_from_block(pubKey, oldest_block);
@@ -177,10 +177,10 @@ namespace libTAU::blockchain {
 
     // check block number
     account repository_impl::get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
+        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
 
-        if (!statePointer.empty() && !statePointer.latest_block_hash().is_all_zeros()) {
-            block b = get_block_by_hash(statePointer.latest_block_hash());
+        if (!accountBlockPointer.empty() && !accountBlockPointer.latest_block_hash().is_all_zeros()) {
+            block b = get_block_by_hash(accountBlockPointer.latest_block_hash());
             if (!b.empty()) {
                 return find_state_from_block(pubKey, b);
             }
@@ -191,17 +191,17 @@ namespace libTAU::blockchain {
 
     account repository_impl::get_account_with_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         account acct(0, 0, 0, 0);
-        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
+        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
 
-        if (!statePointer.empty() && !statePointer.latest_block_hash().is_all_zeros()) {
-            block latest_block = get_block_by_hash(statePointer.latest_block_hash());
+        if (!accountBlockPointer.empty() && !accountBlockPointer.latest_block_hash().is_all_zeros()) {
+            block latest_block = get_block_by_hash(accountBlockPointer.latest_block_hash());
             if (!latest_block.empty()) {
                 acct = find_state_from_block(pubKey, latest_block);
 
-                if (statePointer.latest_block_hash() == statePointer.oldest_block_hash()) {
+                if (accountBlockPointer.latest_block_hash() == accountBlockPointer.oldest_block_hash()) {
                     acct.set_effective_power(1);
                 } else {
-                    block oldest_block = get_block_by_hash(statePointer.oldest_block_hash());
+                    block oldest_block = get_block_by_hash(accountBlockPointer.oldest_block_hash());
                     if (!oldest_block.empty()) {
                         account account2 = find_state_from_block(pubKey, oldest_block);
                         acct.set_effective_power(acct.nonce() - account2.nonce() + 1);
@@ -223,7 +223,7 @@ namespace libTAU::blockchain {
 //        return s;
 //    }
 
-    state_pointer repository_impl::get_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+    account_block_pointer repository_impl::get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
@@ -231,20 +231,20 @@ namespace libTAU::blockchain {
         std::string value;
         leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
 
-        return state_pointer(value);
+        return account_block_pointer(value);
     }
 
-    bool repository_impl::save_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const state_pointer &statePointer) {
+    bool repository_impl::save_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const account_block_pointer &accountBlockPointer) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
 
-        leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, statePointer.get_encode());
+        leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, accountBlockPointer.get_encode());
 
         return status.ok();
     }
 
-    bool repository_impl::delete_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+    bool repository_impl::delete_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
@@ -387,11 +387,11 @@ namespace libTAU::blockchain {
 
     bool repository_impl::forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key &pubKey,
                                                       state_linker &stateLinker, const sha256_hash &current_block_hash) {
-        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
-        if (!statePointer.empty()) {
-            auto linker = get_state_linker(statePointer.latest_block_hash());
+        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+        if (!accountBlockPointer.empty()) {
+            auto linker = get_state_linker(accountBlockPointer.latest_block_hash());
             linker.update_next_change_block_hash(pubKey, current_block_hash);
-            stateLinker.update_previous_change_block_hash(pubKey, statePointer.latest_block_hash());
+            stateLinker.update_previous_change_block_hash(pubKey, accountBlockPointer.latest_block_hash());
             if (!save_state_linker(linker))
                 return false;
         }
@@ -401,11 +401,11 @@ namespace libTAU::blockchain {
 
     bool repository_impl::backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key &pubKey,
                                                        state_linker& stateLinker, const sha256_hash &current_block_hash) {
-        state_pointer statePointer = get_account_state_pointer(chain_id, pubKey);
-        if (!statePointer.empty()) {
-            auto linker = get_state_linker(statePointer.oldest_block_hash());
+        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+        if (!accountBlockPointer.empty()) {
+            auto linker = get_state_linker(accountBlockPointer.oldest_block_hash());
             linker.update_previous_change_block_hash(pubKey, current_block_hash);
-            stateLinker.update_next_change_block_hash(pubKey, statePointer.oldest_block_hash());
+            stateLinker.update_next_change_block_hash(pubKey, accountBlockPointer.oldest_block_hash());
             if (!save_state_linker(linker))
                 return false;
         }
@@ -441,13 +441,13 @@ namespace libTAU::blockchain {
             if (!forward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
                 return false;
             // update state pointer
-            auto statePointer = get_account_state_pointer(chain_id, peer);
-            if (statePointer.empty()) {
-                statePointer.set_initial_block_hash(b.sha256());
+            auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+            if (accountBlockPointer.empty()) {
+                accountBlockPointer.set_initial_block_hash(b.sha256());
             } else {
-                statePointer.set_latest_block_hash(b.sha256());
+                accountBlockPointer.set_latest_block_hash(b.sha256());
             }
-            if (!save_account_state_pointer(chain_id, peer, statePointer))
+            if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
                 return false;
         }
 
@@ -485,13 +485,13 @@ namespace libTAU::blockchain {
             if (!backward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
                 return false;
             // update state pointer
-            auto statePointer = get_account_state_pointer(chain_id, peer);
-            if (statePointer.empty()) {
-                statePointer.set_initial_block_hash(b.sha256());
+            auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+            if (accountBlockPointer.empty()) {
+                accountBlockPointer.set_initial_block_hash(b.sha256());
             } else {
-                statePointer.set_oldest_block_hash(b.sha256());
+                accountBlockPointer.set_oldest_block_hash(b.sha256());
             }
-            if (!save_account_state_pointer(chain_id, peer, statePointer))
+            if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
                 return false;
         }
 
@@ -512,12 +512,12 @@ namespace libTAU::blockchain {
             auto& pubKey = item.first;
             auto& block_hash = item.second;
             if (block_hash.is_all_zeros()) {
-                if (!delete_account_state_pointer(chain_id, pubKey))
+                if (!delete_account_block_pointer(chain_id, pubKey))
                     return false;
             } else {
-                auto statePointer = get_account_state_pointer(chain_id, pubKey);
-                statePointer.set_latest_block_hash(block_hash);
-                if (!save_account_state_pointer(chain_id, pubKey, statePointer))
+                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+                accountBlockPointer.set_latest_block_hash(block_hash);
+                if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
                     return false;
 
                 // no need to update state linker
@@ -565,7 +565,7 @@ namespace libTAU::blockchain {
         for (auto const& peer: associated_peers) {
             auto s = get_account(chain_id, peer);
             if (!s.empty() && s.block_number() <= block_number) {
-                if (!delete_account_state_pointer(chain_id, peer))
+                if (!delete_account_block_pointer(chain_id, peer))
                     return false;
             }
         }

@@ -6,8 +6,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#ifndef LIBTAU_STATE_POINTER_HPP
-#define LIBTAU_STATE_POINTER_HPP
+#ifndef LIBTAU_ACCOUNT_BLOCK_POINTER_HPP
+#define LIBTAU_ACCOUNT_BLOCK_POINTER_HPP
 
 
 #include "libTAU/bencode.hpp"
@@ -16,20 +16,20 @@ see LICENSE file.
 #include "libTAU/sha1_hash.hpp"
 
 namespace libTAU::blockchain {
-    class state_pointer {
+    class account_block_pointer {
     public:
-        state_pointer() = default;
+        account_block_pointer() = default;
 
         // @param Construct with entry
-        explicit state_pointer(const entry& e);
+        explicit account_block_pointer(const entry& e);
 
         // @param Construct with bencode
-        explicit state_pointer(std::string encode): state_pointer(bdecode(encode)) {}
+        explicit account_block_pointer(std::string encode): account_block_pointer(bdecode(encode)) {}
 
-        explicit state_pointer(const sha256_hash &blockHash) :
+        explicit account_block_pointer(const sha256_hash &blockHash) :
                 m_latest_block_hash(blockHash), m_oldest_block_hash(blockHash) {}
 
-        state_pointer(const sha256_hash &mLatestBlockHash, const sha256_hash &mOldestBlockHash) :
+        account_block_pointer(const sha256_hash &mLatestBlockHash, const sha256_hash &mOldestBlockHash) :
                 m_latest_block_hash(mLatestBlockHash), m_oldest_block_hash(mOldestBlockHash) {}
 
         void set_initial_block_hash(const sha256_hash &blockHash) {
@@ -73,4 +73,4 @@ namespace libTAU::blockchain {
 }
 
 
-#endif //LIBTAU_STATE_POINTER_HPP
+#endif //LIBTAU_ACCOUNT_BLOCK_POINTER_HPP

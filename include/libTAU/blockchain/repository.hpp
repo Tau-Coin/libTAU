@@ -15,7 +15,7 @@ see LICENSE file.
 #include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
 #include "libTAU/blockchain/state_linker.hpp"
-#include "libTAU/blockchain/state_pointer.hpp"
+#include "libTAU/blockchain/account_block_pointer.hpp"
 
 namespace libTAU::blockchain {
 
@@ -122,11 +122,11 @@ namespace libTAU::blockchain {
 
         virtual bool update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
-        virtual state_pointer get_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        virtual account_block_pointer get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
-        virtual bool save_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const state_pointer &statePointer) = 0;
+        virtual bool save_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const account_block_pointer &accountBlockPointer) = 0;
 
-        virtual bool delete_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        virtual bool delete_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
         virtual account find_state_from_block(const dht::public_key &pubKey, const block &b) = 0;
 

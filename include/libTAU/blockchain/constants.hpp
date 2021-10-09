@@ -20,14 +20,12 @@ namespace libTAU::blockchain {
     constexpr int DEFAULT_MIN_BLOCK_TIME = 60;
     constexpr int DEFAULT_MAX_BLOCK_TIME = 540;
 
-    // 2^64 = 0x010000000000000000
-    constexpr int64_t GenesisBaseTarget = 1111111111;
-
-    constexpr int averageBlockTime = 300;
-
     constexpr int minRatio = 265;
 
     constexpr int maxRatio = 335;
+
+    // 0x21D0369D036978
+    constexpr int64_t GENESIS_BASE_TARGET = 9517607212509560;
 
     // 2^64 = 0x010000000000000000
     const aux::bigint DiffAdjustNumerator = aux::bigint(1) << 64;

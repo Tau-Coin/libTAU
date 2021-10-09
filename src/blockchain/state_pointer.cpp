@@ -6,7 +6,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libTAU/blockchain/state_pointer.hpp"
+#include "libTAU/blockchain/account_block_pointer.hpp"
 
 namespace libTAU::blockchain {
     state_pointer::state_pointer(const entry &e) {

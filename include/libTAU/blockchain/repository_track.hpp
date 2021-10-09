@@ -89,11 +89,11 @@ namespace libTAU::blockchain {
 
         bool update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
-        state_pointer get_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+        account_block_pointer get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
-        bool save_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const state_pointer &statePointer) override;
+        bool save_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const account_block_pointer &accountBlockPointer) override;
 
-        bool delete_account_state_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+        bool delete_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
         account find_state_from_block(const dht::public_key &pubKey, const block &b) override;
 

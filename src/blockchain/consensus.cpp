@@ -13,7 +13,7 @@ namespace libTAU::blockchain {
 
     std::int64_t consensus::calculate_required_base_target(block &previousBlock, block &ancestor3) {
         if (previousBlock.block_number() <= 3) {
-            return GenesisBaseTarget;
+            return GENESIS_BASE_TARGET;
         }
 
         long totalTimeInterval = 0;
@@ -26,7 +26,7 @@ namespace libTAU::blockchain {
         auto previousBlockBaseTarget = previousBlock.base_target();
         std::int64_t requiredBaseTarget;
 
-        if (timeAver > averageBlockTime ) {
+        if (timeAver > DEFAULT_BLOCK_TIME ) {
             long min;
 
             if (timeAver < maxRatio) {
@@ -35,7 +35,7 @@ namespace libTAU::blockchain {
                 min = maxRatio;
             }
 
-            requiredBaseTarget = previousBlockBaseTarget * min / averageBlockTime;
+            requiredBaseTarget = previousBlockBaseTarget * min / DEFAULT_BLOCK_TIME;
         } else {
             long max;
 
@@ -50,7 +50,7 @@ namespace libTAU::blockchain {
             // 这里采用和公式中的顺序一样，即：
             // If 𝐼𝑛 > AverageBlockTime, 𝑇(𝑏,𝑛) = 𝑇(𝑏,𝑛−1) * (min(𝐼𝑛,𝑅𝑚𝑎𝑥) / AverageBlockTime).
             // If 𝐼𝑛 < AverageBlockTime, 𝑇(𝑏,𝑛) = 𝑇(𝑏,𝑛−1) * (1− 𝛾 * (AverageBlockTime−max(𝐼𝑛,𝑅𝑚𝑖𝑛)) / AverageBlockTime)
-            auto delta = previousBlockBaseTarget * 64 / 100 * (averageBlockTime - max) / averageBlockTime;
+            auto delta = previousBlockBaseTarget * 64 / 100 * (DEFAULT_BLOCK_TIME - max) / DEFAULT_BLOCK_TIME;
             requiredBaseTarget = previousBlockBaseTarget - delta;
         }
 
