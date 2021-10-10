@@ -20,9 +20,8 @@ namespace libTAU::blockchain {
     constexpr int DEFAULT_MIN_BLOCK_TIME = 60;
     constexpr int DEFAULT_MAX_BLOCK_TIME = 540;
 
-    constexpr int minRatio = 265;
-
-    constexpr int maxRatio = 335;
+    constexpr int MIN_RATIO = 265;
+    constexpr int MAX_RATIO = 335;
 
     // 0x21D0369D036978
     constexpr int64_t GENESIS_BASE_TARGET = 9517607212509560;

@@ -64,10 +64,10 @@ namespace libTAU::blockchain {
         // populate state pointer data from entry
         void populate(const entry& e);
 
-        // latest block hash
+        // the latest block hash
         sha256_hash m_latest_block_hash;
 
-        // oldest block hash
+        // the oldest block hash
         sha256_hash m_oldest_block_hash;
     };
 }

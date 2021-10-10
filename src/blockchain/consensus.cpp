@@ -29,20 +29,20 @@ namespace libTAU::blockchain {
         if (timeAver > DEFAULT_BLOCK_TIME ) {
             long min;
 
-            if (timeAver < maxRatio) {
+            if (timeAver < MAX_RATIO) {
                 min = timeAver;
             } else {
-                min = maxRatio;
+                min = MAX_RATIO;
             }
 
             requiredBaseTarget = previousBlockBaseTarget * min / DEFAULT_BLOCK_TIME;
         } else {
             long max;
 
-            if (timeAver > minRatio) {
+            if (timeAver > MIN_RATIO) {
                 max = timeAver;
             } else {
-                max = minRatio;
+                max = MIN_RATIO;
             }
 
             // 注意计算顺序：在计算机中整数的乘除法的计算顺序，对最终结果是有影响的，比如：
@@ -88,41 +88,32 @@ namespace libTAU::blockchain {
     std::int64_t consensus::calculate_mining_time_interval(std::int64_t hit, std::int64_t baseTarget,
                                                                       std::int64_t power) {
         std::int64_t interval = hit / (baseTarget * power);
-        auto remainder = hit % (baseTarget * power);
-        if (remainder > 0) {
-            interval++;
+
+        // make sure hit > target
+        interval++;
+
+        if (interval < DEFAULT_MIN_BLOCK_TIME) {
+            interval = DEFAULT_MIN_BLOCK_TIME;
+        } else if (interval > DEFAULT_MAX_BLOCK_TIME) {
+            interval = DEFAULT_MAX_BLOCK_TIME;
         }
-//        if (timeInterval < this.minBlockTime) {
-//            timeInterval = this.minBlockTime;
-//        } else if (timeInterval > this.maxBlockTime) {
-//            timeInterval = this.maxBlockTime;
-//        }
 
         return interval;
     }
 
     bool consensus::verify_hit(std::int64_t hit, std::int64_t baseTarget, std::int64_t power,
                                          std::int64_t timeInterval) {
-        auto target = calculate_miner_target_value(baseTarget, power, timeInterval);
-        if (hit < target) {
+        if (timeInterval < DEFAULT_MIN_BLOCK_TIME) {
             return false;
+        } else if (timeInterval >= DEFAULT_MAX_BLOCK_TIME) {
+            return true;
+        } else {
+            auto target = calculate_miner_target_value(baseTarget, power, timeInterval);
+            if (hit <= target) {
+                return false;
+            }
         }
-//        if (timeInterval < this.minBlockTime) {
-//            logger.error("Chain ID:{}: Time interval is less than MinBlockTime[{}]",
-//                         new String(this.chainID), this.minBlockTime);
-//            return false;
-//        } else if (timeInterval >= this.maxBlockTime) {
-//            logger.debug("Chain ID:{}: OK. Time interval is greater than MaxBlockTime[{}]",
-//                         new String(this.chainID), this.maxBlockTime);
-//            return true;
-//        } else {
-//            BigInteger target = this.calculateMinerTargetValue(baseTarget, power, timeInterval);
-//            if (target.compareTo(hit) <= 0) {
-//                logger.error("Chain ID:{}: Invalid POT: target[{}] <= hit[{}]",
-//                             new String(this.chainID), target, hit);
-//                return false;
-//            }
-//        }
+
         return true;
     }
 
