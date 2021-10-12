@@ -81,12 +81,6 @@ namespace upnp_errors {
 	// the boost.system error category for UPnP errors
 	TORRENT_EXPORT boost::system::error_category& upnp_category();
 
-#if TORRENT_ABI_VERSION == 1
-	TORRENT_DEPRECATED
-	inline boost::system::error_category& get_upnp_category()
-	{ return upnp_category(); }
-#endif
-
 struct parse_state
 {
 	bool in_service = false;

@@ -70,7 +70,6 @@
 #include "libTAU/session.hpp"
 #include "libTAU/session_handle.hpp"
 #include "libTAU/session_params.hpp"
-#include "libTAU/session_settings.hpp"
 #include "libTAU/session_stats.hpp"
 #include "libTAU/session_status.hpp"
 #include "libTAU/session_types.hpp"
