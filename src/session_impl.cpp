@@ -421,8 +421,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		, m_created(clock_type::now())
 		, m_last_tick(m_created)
 		, m_last_second_tick(m_created - milliseconds(900))
-		, m_timer(m_io_context)
-		, m_paused(flags & session::paused)
 	{
 	}
 
@@ -578,10 +576,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		// abort the main thread
 		m_abort = true;
 		error_code ec;
-
-		// we rely on on_tick() during shutdown, but we don't need to wait a
-		// whole second for it to fire
-		m_timer.cancel();
 
 		stop_ip_notifier();
 		stop_upnp();
@@ -2135,14 +2129,6 @@ namespace {
 		// proxy
 		if (m_settings.get_int(settings_pack::proxy_type) != settings_pack::none)
 			return;
-
-		if (m_paused)
-		{
-#ifndef TORRENT_DISABLE_LOGGING
-			session_log(" <== INCOMING CONNECTION [ ignored, paused ]");
-#endif
-			return;
-		}
 
 		error_code ec;
 		// we got a connection request!

@@ -686,8 +686,6 @@ namespace aux {
 			// they are deleted (from the network thread)
 			std::vector<std::shared_ptr<peer_connection>> m_undead_peers;
 
-			// keep the io_context alive until we have posted the job
-			// to clear the undead peers
 			executor_work_guard<io_context::executor_type> m_work;
 
 			// this maps sockets to their peer_connection
@@ -933,10 +931,6 @@ namespace aux {
 			};
 			void remap_ports(remap_port_mask_t mask, listen_socket_t& s);
 
-			// the timer used to fire the tick
-			deadline_timer m_timer;
-			aux::handler_storage<aux::tick_handler_max_size, aux::tick_handler> m_tick_handler_storage;
-
 			// abort may not fail and cannot allocate memory
 			aux::handler_storage<aux::abort_handler_max_size, aux::abort_handler> m_abort_handler_storage;
 
@@ -961,9 +955,6 @@ namespace aux {
 			// is being destructed and the thread
 			// should exit
 			bool m_abort = false;
-
-			// is true if the session is paused
-			bool m_paused = false;
 
 			// set to true the first time post_session_stats() is
 			// called and we post the headers alert
