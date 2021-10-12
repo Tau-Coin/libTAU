@@ -600,4 +600,20 @@ namespace libTAU::blockchain {
 
     }
 
+    std::set<aux::bytes> repository_track::get_all_chains() {
+        return m_repository->get_all_chains();
+    }
+
+    bool repository_track::save_chains(const std::set<aux::bytes> &chains) {
+        return m_repository->save_chains(chains);
+    }
+
+    bool repository_track::add_new_chain(const aux::bytes &chain_id) {
+        return m_repository->add_new_chain(chain_id);
+    }
+
+    bool repository_track::delete_chain(const aux::bytes &chain_id) {
+        return m_repository->delete_chain(chain_id);
+    }
+
 }

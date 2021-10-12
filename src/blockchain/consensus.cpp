@@ -85,6 +85,7 @@ namespace libTAU::blockchain {
         return static_cast<int64_t>(lastCumulativeDifficulty + DiffAdjustNumerator / baseTarget);
     }
 
+    // Note: DEFAULT_MIN_BLOCK_TIME/DEFAULT_MAX_BLOCK_TIME is different from nxt
     std::int64_t consensus::calculate_mining_time_interval(std::int64_t hit, std::int64_t baseTarget,
                                                                       std::int64_t power) {
         std::int64_t interval = hit / (baseTarget * power);

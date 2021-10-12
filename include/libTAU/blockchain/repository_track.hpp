@@ -115,6 +115,14 @@ namespace libTAU::blockchain {
 
         bool delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) override;
 
+        std::set<aux::bytes> get_all_chains() override;
+
+        bool save_chains(const std::set<aux::bytes> &chains) override;
+
+        bool add_new_chain(const aux::bytes &chain_id) override;
+
+        bool delete_chain(const aux::bytes &chain_id) override;
+
     private:
 
         repository *m_repository;

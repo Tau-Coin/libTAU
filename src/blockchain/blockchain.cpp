@@ -8,14 +8,64 @@ see LICENSE file.
 
 #include "libTAU/blockchain/blockchain.hpp"
 
+
+using namespace std::placeholders;
+
 namespace libTAU::blockchain {
 
     bool blockchain::init() {
-        return false;
+        return true;
+    }
+
+    bool blockchain::start()
+    {
+        log("INFO: Start BlockChain...");
+        if (!init()) {
+            log("ERROR: Init fail.");
+            return false;
+        }
+
+        m_stop = false;
+
+        m_refresh_timer.expires_after(milliseconds(m_refresh_time));
+        m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
+
+        return true;
+    }
+
+    bool blockchain::stop()
+    {
+        m_stop = true;
+
+        clear();
+
+        log("INFO: Stop Communication...");
+
+        return true;
+    }
+
+    void blockchain::clear() {
+
     }
 
     void blockchain::refresh_timeout(const error_code &e) {
+        if (e || m_stop) return;
 
+        try {
+            // 随机挑选一个朋友put/get
+//            aux::bytes peer = select_friend_randomly();
+//            if (!peer.empty()) {
+//                log("INFO: Select peer:%s", aux::toHex(peer).c_str());
+//                request_signal(peer);
+//                publish_signal(peer);
+//            }
+
+            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
+            m_refresh_timer.async_wait(
+                    std::bind(&blockchain::refresh_timeout, self(), _1));
+        } catch (std::exception &e) {
+            log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+        }
     }
 
     bool blockchain::should_log() const

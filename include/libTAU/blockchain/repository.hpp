@@ -11,6 +11,8 @@ see LICENSE file.
 
 
 #include <map>
+#include <set>
+
 #include "libTAU/blockchain/index_key_info.hpp"
 #include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
@@ -25,6 +27,7 @@ namespace libTAU::blockchain {
     // 的状态链接器，状态链接器通过previous change指针，可以完整回溯该账户的变化历史。
     struct TORRENT_EXPORT repository {
 
+        const std::string key_chains = "chains";
         const std::string key_separator = "_";
         const std::string key_suffix_state_linker = "linker";
         const std::string key_suffix_best_tip_block_hash = "tip";
@@ -147,6 +150,14 @@ namespace libTAU::blockchain {
         virtual bool save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) = 0;
 
         virtual bool delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+
+        virtual std::set<aux::bytes> get_all_chains() = 0;
+
+        virtual bool save_chains(const std::set<aux::bytes> &chains) = 0;
+
+        virtual bool add_new_chain(const aux::bytes &chain_id) = 0;
+
+        virtual bool delete_chain(const aux::bytes &chain_id) = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP

@@ -672,4 +672,47 @@ namespace libTAU::blockchain {
     void repository_impl::rollback() {
 
     }
+
+    std::set<aux::bytes> repository_impl::get_all_chains() {
+        std::set<aux::bytes> chains;
+        std::string value;
+        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key_chains, &value);
+        if (!value.empty()) {
+            entry e = bdecode(value);
+            auto & lst = e.list();
+            for (auto const& chain_id: lst) {
+                auto id = chain_id.string();
+                chains.insert(aux::bytes(id.begin(), id.end()));
+            }
+        }
+
+        return chains;
+    }
+
+    bool repository_impl::save_chains(const std::set<aux::bytes> &chains) {
+        entry::list_type chain_id_list;
+        for (auto const& chain_id: chains) {
+            chain_id_list.push_back(std::string(chain_id.begin(), chain_id.end()));
+        }
+        std::string encode;
+        bencode(std::back_inserter(encode), chain_id_list);
+
+        leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key_chains, encode);
+        return status.ok();
+    }
+
+    bool repository_impl::add_new_chain(const aux::bytes &chain_id) {
+        std::set<aux::bytes> chains = get_all_chains();
+        chains.insert(chain_id);
+
+        return save_chains(chains);
+    }
+
+    bool repository_impl::delete_chain(const aux::bytes &chain_id) {
+        std::set<aux::bytes> chains = get_all_chains();
+        chains.erase(chain_id);
+
+        return save_chains(chains);
+    }
+
 }

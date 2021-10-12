@@ -10,8 +10,9 @@ see LICENSE file.
 #define LIBTAU_BLOCKCHAIN_HPP
 
 
-#include <set>
 #include <map>
+#include <set>
+#include <vector>
 
 #include "libTAU/time.hpp"
 #include "libTAU/aux_/alert_manager.hpp" // for alert_manager
@@ -24,8 +25,11 @@ namespace libTAU::blockchain {
 
     using system_clock = std::chrono::system_clock;
 
+    // default refresh time of main task(50)(ms)
+    constexpr int blockchain_default_refresh_time = 50;
+
 //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
-    // This is the basic logging and debug interface offered by the communication.
+    // This is the basic logging and debug interface offered by the blockchain.
     // a release build with logging disabled (which is the default) will
     // not have this class at all
     struct TORRENT_EXTRA_EXPORT blockchain_logger
@@ -42,9 +46,21 @@ namespace libTAU::blockchain {
     class TORRENT_EXPORT blockchain final:
             public std::enable_shared_from_this<blockchain>, blockchain_logger  {
     public:
+        // start blockchain
+        bool start();
+
+        // stop
+        bool stop();
+
     private:
         // initialize member variables
         bool init();
+
+        // clear all cache
+        void clear();
+
+        std::shared_ptr<blockchain> self()
+        { return shared_from_this(); }
 
 //#ifndef TORRENT_DISABLE_LOGGING
         bool should_log() const override;
@@ -59,11 +75,16 @@ namespace libTAU::blockchain {
         // session interface
         aux::session_interface& m_ses;
 
+        // refresh time interval
+        int m_refresh_time = blockchain_default_refresh_time;
+
         // deadline timer
         aux::deadline_timer m_refresh_timer;
 
+        bool m_stop = false;
+
         // all chains
-        std::set<aux::bytes> m_chains;
+        std::vector<aux::bytes> m_chains;
     };
 }
 
