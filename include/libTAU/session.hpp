@@ -22,11 +22,6 @@ see LICENSE file.
 #include "libTAU/session_params.hpp"
 #include "libTAU/session_types.hpp" // for session_flags_t
 
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/fingerprint.hpp"
-#include <cstdio> // for snprintf
-#endif
-
 namespace libTAU {
 
 	struct plugin;
@@ -57,14 +52,6 @@ namespace libTAU {
 	// upload rates by allowing large send buffers.
 	TORRENT_EXPORT settings_pack min_memory_usage();
 	TORRENT_EXPORT settings_pack high_performance_seed();
-#if TORRENT_ABI_VERSION == 1
-	TORRENT_DEPRECATED
-	inline void min_memory_usage(settings_pack& set)
-	{ set = min_memory_usage(); }
-	TORRENT_DEPRECATED
-	inline void high_performance_seed(settings_pack& set)
-	{ set = high_performance_seed(); }
-#endif
 
 namespace aux {
 
@@ -157,68 +144,6 @@ namespace aux {
 		session(session const&) = delete;
 		session& operator=(session const&) = delete;
 
-#if TORRENT_ABI_VERSION <= 2
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-
-		// Constructs the session objects which acts as the container of torrents.
-		// It provides configuration options across torrents (such as rate limits,
-		// disk cache, ip filter etc.). In order to avoid a race condition between
-		// starting the session and configuring it, you can pass in a
-		// settings_pack object. Its settings will take effect before the session
-		// starts up.
-		//
-		// The ``flags`` parameter can be used to start default features (UPnP &
-		// NAT-PMP) and default plugins (ut_metadata, ut_pex and smart_ban). The
-		// default is to start those features. If you do not want them to start,
-		// pass 0 as the flags parameter.
-		TORRENT_DEPRECATED
-		session(settings_pack&& pack, session_flags_t const flags);
-		TORRENT_DEPRECATED
-		session(settings_pack const& pack, session_flags_t const flags);
-		explicit session(settings_pack&& pack) : session(std::move(pack), add_default_plugins) {}
-		explicit session(settings_pack const& pack) : session(pack, add_default_plugins) {}
-
-		// overload of the constructor that takes an external io_context to run
-		// the session object on. This is primarily useful for tests that may want
-		// to run multiple sessions on a single io_context, or low resource
-		// systems where additional threads are expensive and sharing an
-		// io_context with other events is fine.
-		//
-		// .. warning::
-		// 	The session object does not cleanly terminate with an external
-		// 	``io_context``. The ``io_context::run()`` call _must_ have returned
-		// 	before it's safe to destruct the session. Which means you *MUST*
-		// 	call session::abort() and save the session_proxy first, then
-		// 	destruct the session object, then sync with the io_context, then
-		// 	destruct the session_proxy object.
-		TORRENT_DEPRECATED
-		session(settings_pack&&, io_context&, session_flags_t);
-		TORRENT_DEPRECATED
-		session(settings_pack const&, io_context&, session_flags_t);
-		session(settings_pack&& pack, io_context& ios) : session(std::move(pack), ios, add_default_plugins) {}
-		session(settings_pack const& pack, io_context& ios) : session(pack, ios, add_default_plugins) {}
-
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif // TORRENT_ABI_VERSION
-
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-
-		TORRENT_DEPRECATED
-		session(fingerprint const& print
-			, session_flags_t const flags = start_default_features | add_default_plugins
-			, alert_category_t const alert_mask = alert_category::error);
-
-		TORRENT_DEPRECATED
-		session(fingerprint const& print
-			, std::pair<int, int> listen_port_range
-			, char const* listen_interface = "0.0.0.0"
-			, session_flags_t const flags = start_default_features | add_default_plugins
-			, alert_category_t const alert_mask = alert_category::error);
-
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif // TORRENT_ABI_VERSION
-
 		// The destructor of session will notify all trackers that our torrents
 		// have been shut down. If some trackers are down, they will time out.
 		// All this before the destructor of session returns. So, it's advised
@@ -246,14 +171,7 @@ namespace aux {
 
 		void start(session_flags_t, session_params&& params, io_context* ios);
 
-#if TORRENT_ABI_VERSION <= 2
-		void start(session_flags_t flags, settings_pack&& sp, io_context* ios);
-#endif
-
 		void start(session_params const& params, io_context* ios) = delete;
-#if TORRENT_ABI_VERSION <= 2
-		void start(session_flags_t flags, settings_pack const& sp, io_context* ios) = delete;
-#endif
 
 		// data shared between the main thread
 		// and the working thread

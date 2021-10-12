@@ -80,10 +80,6 @@ see LICENSE file.
 #include "libTAU/flags.hpp"
 #include "libTAU/span.hpp"
 
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/session_settings.hpp"
-#endif
-
 #include <leveldb/db.h>
 #include <sqlite3.h>
 #include <algorithm>
@@ -397,13 +393,6 @@ namespace aux {
 			bool announce_dht() const override { return !m_listen_sockets.empty(); }
 
 			void add_dht_router(std::tuple<std::string, int, std::string> const& node);
-#if TORRENT_ABI_VERSION <= 2
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-			void set_dht_settings(dht::dht_settings const& s);
-			dht::dht_settings get_dht_settings() const;
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif
-
 			void start_communication();
 			void stop_communication();
 
@@ -432,12 +421,6 @@ namespace aux {
 
 			void dht_live_nodes(sha256_hash const& nid);
 
-#if TORRENT_ABI_VERSION == 1
-			TORRENT_DEPRECATED
-			entry dht_state() const;
-			TORRENT_DEPRECATED
-			void start_dht_deprecated(entry const& startup_state);
-#endif
 			void on_dht_router_name_lookup(error_code const& e
 				, std::vector<address> const& addresses
 				, int port
@@ -485,25 +468,6 @@ namespace aux {
 
 			std::size_t set_alert_queue_size_limit(std::size_t queue_size_limit_);
 
-#if TORRENT_ABI_VERSION == 1
-			TORRENT_DEPRECATED void pop_alerts();
-			TORRENT_DEPRECATED alert const* pop_alert();
-			TORRENT_DEPRECATED int upload_rate_limit_depr() const;
-			TORRENT_DEPRECATED int download_rate_limit_depr() const;
-			TORRENT_DEPRECATED int local_upload_rate_limit() const;
-			TORRENT_DEPRECATED int local_download_rate_limit() const;
-
-			TORRENT_DEPRECATED void set_local_download_rate_limit(int bytes_per_second);
-			TORRENT_DEPRECATED void set_local_upload_rate_limit(int bytes_per_second);
-			TORRENT_DEPRECATED void set_download_rate_limit_depr(int bytes_per_second);
-			TORRENT_DEPRECATED void set_upload_rate_limit_depr(int bytes_per_second);
-			TORRENT_DEPRECATED void set_max_connections(int limit);
-			TORRENT_DEPRECATED void set_max_uploads(int limit);
-
-			TORRENT_DEPRECATED int max_connections() const;
-			TORRENT_DEPRECATED int max_uploads() const;
-#endif
-
 			// deprecated, use stats counters ``num_peers_connected`` +
 			// ``num_peers_half_open`` instead.
 			int num_connections() const override { return int(m_connections.size()); }
@@ -518,12 +482,6 @@ namespace aux {
 				TORRENT_ASSERT(is_single_thread());
 				m_optimistic_unchoke_time_scaler = 0;
 			}
-
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/aux_/disable_warnings_push.hpp"
-			peer_id deprecated_get_peer_id() const;
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif
 
 			std::uint16_t listen_port() const override;
 			std::uint16_t listen_port(listen_socket_t* sock) const;
@@ -549,10 +507,6 @@ namespace aux {
 			void abort() noexcept;
 			void abort_stage2() noexcept;
 
-#if TORRENT_ABI_VERSION <= 2
-			void save_state(entry* e, save_state_flags_t flags) const;
-			void load_state(bdecode_node const* e, save_state_flags_t flags);
-#endif
 			session_params session_state(save_state_flags_t flags) const;
 
 			proxy_settings proxy() const override;
@@ -628,12 +582,6 @@ namespace aux {
 			// the settings for the client
 			aux::session_settings m_settings;
 
-#if TORRENT_ABI_VERSION == 1
-			void update_ssl_listen();
-			void update_rate_limit_utp();
-			void update_ignore_rate_limits_on_local_network();
-#endif
-
 			void update_dht_upload_rate_limit();
 			void update_proxy();
 			void update_peer_tos();
@@ -708,17 +656,6 @@ namespace aux {
 
 			// handles delayed alerts
 			mutable alert_manager m_alerts;
-
-#if TORRENT_ABI_VERSION == 1
-			// the alert pointers stored in m_alerts
-			mutable aux::vector<alert*> m_alert_pointers;
-
-			// if not all the alerts in m_alert_pointers have been delivered to
-			// the client. This is the offset into m_alert_pointers where the next
-			// alert is. If this is greater than or equal to m_alert_pointers.size()
-			// it means we need to request new alerts from the main thread.
-			mutable int m_alert_pointer_pos = 0;
-#endif
 
 			// the peer class that all peers belong to by default
 			peer_class_t m_global_class{0};
@@ -862,10 +799,6 @@ namespace aux {
 			void trancieve_ip_packet(int bytes, bool ipv6) override;
 			void sent_syn(bool ipv6) override;
 			void received_synack(bool ipv6) override;
-
-#if TORRENT_ABI_VERSION == 1
-			int m_peak_up_rate = 0;
-#endif
 
 			time_point m_created;
 			std::uint16_t session_time() const override

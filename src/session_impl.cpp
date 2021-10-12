@@ -534,143 +534,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
 	}
 
-#if TORRENT_ABI_VERSION <= 2
-	// TODO: 2 the ip filter should probably be saved here too
-	void session_impl::save_state(entry* eptr, save_state_flags_t const flags) const
-	{
-		TORRENT_ASSERT(is_single_thread());
-
-		entry& e = *eptr;
-		// make it a dict
-		e.dict();
-
-		if (flags & session::save_settings)
-		{
-			entry::dictionary_type& sett = e["settings"].dict();
-			save_settings_to_dict(non_default_settings(m_settings), sett);
-		}
-
-		if (flags & session::save_dht_settings)
-		{
-			e["dht"] = dht::save_dht_settings(get_dht_settings());
-		}
-
-		if (m_dht && (flags & session::save_dht_state))
-		{
-			e["dht state"] = dht::save_dht_state(m_dht->state());
-		}
-	}
-
-	void session_impl::load_state(bdecode_node const* e
-		, save_state_flags_t const flags)
-	{
-		TORRENT_ASSERT(is_single_thread());
-
-		bdecode_node settings;
-		if (e->type() != bdecode_node::dict_t) return;
-
-		bool need_update_dht = false;
-		if (flags & session_handle::save_dht_state)
-		{
-			settings = e->dict_find_dict("dht state");
-			if (settings)
-			{
-				m_dht_state = dht::read_dht_state(settings);
-				need_update_dht = true;
-			}
-		}
-
-#if TORRENT_ABI_VERSION == 1
-		bool need_update_proxy = false;
-		if (flags & session_handle::save_proxy)
-		{
-			settings = e->dict_find_dict("proxy");
-			if (settings)
-			{
-				m_settings.bulk_set([&settings](session_settings_single_thread& s)
-				{
-					bdecode_node val;
-					val = settings.dict_find_int("port");
-					if (val) s.set_int(settings_pack::proxy_port, int(val.int_value()));
-					val = settings.dict_find_int("type");
-					if (val) s.set_int(settings_pack::proxy_type, int(val.int_value()));
-					val = settings.dict_find_int("proxy_hostnames");
-					if (val) s.set_bool(settings_pack::proxy_hostnames, val.int_value() != 0);
-					val = settings.dict_find_string("hostname");
-					if (val) s.set_str(settings_pack::proxy_hostname, std::string(val.string_value()));
-					val = settings.dict_find_string("password");
-					if (val) s.set_str(settings_pack::proxy_password, std::string(val.string_value()));
-					val = settings.dict_find_string("username");
-					if (val) s.set_str(settings_pack::proxy_username, std::string(val.string_value()));
-				});
-				need_update_proxy = true;
-			}
-		}
-
-		settings = e->dict_find_dict("encryption");
-		if (settings)
-		{
-			m_settings.bulk_set([&settings](session_settings_single_thread& s)
-			{
-				bdecode_node val;
-				val = settings.dict_find_int("prefer_rc4");
-				if (val) s.set_bool(settings_pack::prefer_rc4, val.int_value() != 0);
-				val = settings.dict_find_int("out_enc_policy");
-				if (val) s.set_int(settings_pack::out_enc_policy, int(val.int_value()));
-				val = settings.dict_find_int("in_enc_policy");
-				if (val) s.set_int(settings_pack::in_enc_policy, int(val.int_value()));
-				val = settings.dict_find_int("allowed_enc_level");
-				if (val) s.set_int(settings_pack::allowed_enc_level, int(val.int_value()));
-			});
-		}
-#endif
-
-		if ((flags & session_handle::save_settings)
-			|| (flags & session_handle::save_dht_settings)
-			)
-		{
-			settings = e->dict_find_dict("settings");
-			if (settings)
-			{
-				// apply_settings_pack will update dht and proxy
-				settings_pack pack = load_pack_from_dict(settings);
-
-				// these settings are not loaded from state
-				// they are set by the client software, not configured by users
-				pack.clear(settings_pack::user_agent);
-				pack.clear(settings_pack::peer_fingerprint);
-
-				apply_settings_pack_impl(pack);
-				need_update_dht = false;
-#if TORRENT_ABI_VERSION == 1
-				need_update_proxy = false;
-#endif
-			}
-		}
-
-		if (flags & session_handle::save_dht_settings)
-		{
-			// This is here for backwards compatibility, to support loading state
-			// files in the previous file format, where the DHT settings were in
-			// its own dictionary
-			settings = e->dict_find_dict("dht");
-			if (settings)
-			{
-				settings_pack sett;
-				aux::apply_deprecated_dht_settings(sett, settings);
-				apply_settings_pack_impl(sett);
-			}
-		}
-
-		if (need_update_dht) start_dht();
-
-#if TORRENT_ABI_VERSION == 1
-		if (need_update_proxy) update_proxy();
-#endif
-
-	}
-#endif
-
 	session_params session_impl::session_state(save_state_flags_t const flags) const
 	{
 		TORRENT_ASSERT(is_single_thread());
@@ -678,13 +541,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		session_params ret;
 		if (flags & session::save_settings)
 			ret.settings = non_default_settings(m_settings);
-
-#if TORRENT_ABI_VERSION <= 2
-	if (flags & session_handle::save_dht_settings)
-	{
-		ret.dht_settings = get_dht_settings();
-	}
-#endif
 
 		if (m_dht && (flags & session::save_dht_state))
 			ret.dht_state = m_dht->state();
@@ -964,9 +820,6 @@ namespace {
 		bool const reopen_listen_port
 			= setting_changed<std::string>(pack, m_settings, settings_pack::listen_interfaces)
 			|| setting_changed<int>(pack, m_settings, settings_pack::proxy_type)
-#if TORRENT_ABI_VERSION == 1
-			|| setting_changed<int>(pack, m_settings, settings_pack::ssl_listen)
-#endif
 			;
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -2406,13 +2259,6 @@ namespace {
 
     }
 
-#if TORRENT_ABI_VERSION == 1
-	peer_id session_impl::deprecated_get_peer_id() const
-	{
-		return aux::generate_peer_id(m_settings);
-	}
-#endif
-
 	int session_impl::next_port() const
 	{
 		int start = m_settings.get_int(settings_pack::outgoing_port);
@@ -2728,44 +2574,6 @@ namespace {
 		return std::any_of(m_outgoing_interfaces.begin(), m_outgoing_interfaces.end()
 			, [&device](std::string const& s) { return s == device; });
 	}
-
-#if TORRENT_ABI_VERSION == 1
-
-	void session_impl::update_ssl_listen()
-	{
-		// this function maps the previous functionality of just setting the ssl
-		// listen port in order to enable the ssl listen sockets, to the new
-		// mechanism where SSL sockets are specified in listen_interfaces.
-		std::vector<std::string> ignore;
-		auto current_ifaces = parse_listen_interfaces(
-			m_settings.get_str(settings_pack::listen_interfaces), ignore);
-		// these are the current interfaces we have, first remove all the SSL
-		// interfaces
-		current_ifaces.erase(std::remove_if(current_ifaces.begin(), current_ifaces.end()
-			, std::bind(&listen_interface_t::ssl, _1)), current_ifaces.end());
-
-		int const ssl_listen_port = m_settings.get_int(settings_pack::ssl_listen);
-
-		// setting a port of 0 means to disable listening on SSL, so just update
-		// the interface list with the new list, and we're done
-		if (ssl_listen_port == 0)
-		{
-			m_settings.set_str(settings_pack::listen_interfaces
-				, print_listen_interfaces(current_ifaces));
-			return;
-		}
-
-		std::vector<listen_interface_t> new_ifaces;
-		std::transform(current_ifaces.begin(), current_ifaces.end()
-			, std::back_inserter(new_ifaces), [](listen_interface_t in)
-			{ in.ssl = true; return in; });
-
-		current_ifaces.insert(current_ifaces.end(), new_ifaces.begin(), new_ifaces.end());
-
-		m_settings.set_str(settings_pack::listen_interfaces
-			, print_listen_interfaces(current_ifaces));
-	}
-#endif // TORRENT_ABI_VERSION
 
 	void session_impl::update_listen_interfaces()
 	{
@@ -3382,71 +3190,6 @@ namespace {
 		return m_communication->add_new_message(msg, false);
 	}	
 
-#if TORRENT_ABI_VERSION <= 2
-	void session_impl::set_dht_settings(dht::dht_settings const& settings)
-	{
-#define SET_BOOL(name) m_settings.set_bool(settings_pack::dht_ ## name, settings.name)
-#define SET_INT(name) m_settings.set_int(settings_pack::dht_ ## name, settings.name)
-
-		SET_INT(max_peers_reply);
-		SET_INT(search_branching);
-		SET_INT(max_fail_count);
-		SET_INT(max_dht_items);
-		SET_INT(max_peers);
-		SET_INT(max_torrent_search_reply);
-		SET_BOOL(restrict_routing_ips);
-		SET_BOOL(restrict_search_ips);
-		SET_BOOL(extended_routing_table);
-		SET_BOOL(aggressive_lookups);
-		SET_BOOL(privacy_lookups);
-		SET_BOOL(enforce_node_id);
-		SET_BOOL(ignore_dark_internet);
-		SET_INT(block_timeout);
-		SET_INT(block_ratelimit);
-		SET_BOOL(read_only);
-		SET_INT(item_lifetime);
-		SET_INT(upload_rate_limit);
-		SET_INT(sample_infohashes_interval);
-		SET_INT(max_infohashes_sample_count);
-#undef SET_BOOL
-#undef SET_INT
-		update_dht_upload_rate_limit();
-	}
-
-	dht::dht_settings session_impl::get_dht_settings() const
-	{
-		dht::dht_settings sett;
-#define SET_BOOL(name) \
-		sett.name = m_settings.get_bool( settings_pack::dht_ ## name )
-#define SET_INT(name) \
-		sett.name = m_settings.get_int( settings_pack::dht_ ## name )
-
-		SET_INT(max_peers_reply);
-		SET_INT(search_branching);
-		SET_INT(max_fail_count);
-		SET_INT(max_dht_items);
-		SET_INT(max_peers);
-		SET_INT(max_torrent_search_reply);
-		SET_BOOL(restrict_routing_ips);
-		SET_BOOL(restrict_search_ips);
-		SET_BOOL(extended_routing_table);
-		SET_BOOL(aggressive_lookups);
-		SET_BOOL(privacy_lookups);
-		SET_BOOL(enforce_node_id);
-		SET_BOOL(ignore_dark_internet);
-		SET_INT(block_timeout);
-		SET_INT(block_ratelimit);
-		SET_BOOL(read_only);
-		SET_INT(item_lifetime);
-		SET_INT(upload_rate_limit);
-		SET_INT(sample_infohashes_interval);
-		SET_INT(max_infohashes_sample_count);
-#undef SET_BOOL
-#undef SET_INT
-		return sett;
-	}
-#endif
-
 	void session_impl::set_dht_state(dht::dht_state&& state)
 	{
 		m_dht_state = std::move(state);
@@ -3456,26 +3199,6 @@ namespace {
 	{
 		m_dht_storage_constructor = std::move(sc);
 	}
-
-#if TORRENT_ABI_VERSION == 1
-	entry session_impl::dht_state() const
-	{
-		return m_dht ? dht::save_dht_state(m_dht->state()) : entry();
-	}
-
-	void session_impl::start_dht_deprecated(entry const& startup_state)
-	{
-		std::vector<char> tmp;
-		bencode(std::back_inserter(tmp), startup_state);
-
-		bdecode_node e;
-		error_code ec;
-		if (tmp.empty() || bdecode(&tmp[0], &tmp[0] + tmp.size(), e, ec) != 0)
-			return;
-		m_dht_state = dht::read_dht_state(e);
-		start_dht();
-	}
-#endif
 
 	void session_impl::add_dht_router(std::tuple<std::string, int, std::string> const& node)
 	{
@@ -3692,80 +3415,6 @@ namespace {
 #endif
 	}
 
-#if TORRENT_ABI_VERSION == 1
-	int session_impl::max_connections() const
-	{
-		return m_settings.get_int(settings_pack::connections_limit);
-	}
-
-	int session_impl::max_uploads() const
-	{
-		return m_settings.get_int(settings_pack::unchoke_slots_limit);
-	}
-
-	void session_impl::set_local_download_rate_limit(int bytes_per_second)
-	{
-		settings_pack p;
-		p.set_int(settings_pack::local_download_rate_limit, bytes_per_second);
-		apply_settings_pack_impl(p);
-	}
-
-	void session_impl::set_local_upload_rate_limit(int bytes_per_second)
-	{
-		settings_pack p;
-		p.set_int(settings_pack::local_upload_rate_limit, bytes_per_second);
-		apply_settings_pack_impl(p);
-	}
-
-	void session_impl::set_download_rate_limit_depr(int bytes_per_second)
-	{
-		settings_pack p;
-		p.set_int(settings_pack::download_rate_limit, bytes_per_second);
-		apply_settings_pack_impl(p);
-	}
-
-	void session_impl::set_upload_rate_limit_depr(int bytes_per_second)
-	{
-		settings_pack p;
-		p.set_int(settings_pack::upload_rate_limit, bytes_per_second);
-		apply_settings_pack_impl(p);
-	}
-
-	void session_impl::set_max_connections(int limit)
-	{
-		settings_pack p;
-		p.set_int(settings_pack::connections_limit, limit);
-		apply_settings_pack_impl(p);
-	}
-
-	void session_impl::set_max_uploads(int limit)
-	{
-		settings_pack p;
-		p.set_int(settings_pack::unchoke_slots_limit, limit);
-		apply_settings_pack_impl(p);
-	}
-
-	int session_impl::local_upload_rate_limit() const
-	{
-		return upload_rate_limit(m_local_peer_class);
-	}
-
-	int session_impl::local_download_rate_limit() const
-	{
-		return download_rate_limit(m_local_peer_class);
-	}
-
-	int session_impl::upload_rate_limit_depr() const
-	{
-		return upload_rate_limit(m_global_class);
-	}
-
-	int session_impl::download_rate_limit_depr() const
-	{
-		return download_rate_limit(m_global_class);
-	}
-#endif // DEPRECATE
-
 	namespace {
 		template <typename Socket>
 		void set_tos(Socket& s, int v, error_code& ec)
@@ -3921,65 +3570,6 @@ namespace {
 	{
 		m_alerts.get_all(*alerts);
 	}
-
-#if TORRENT_ABI_VERSION == 1
-	void session_impl::update_rate_limit_utp()
-	{
-		if (m_settings.get_bool(settings_pack::rate_limit_utp))
-		{
-			// allow the global or local peer class to limit uTP peers
-			m_peer_class_type_filter.allow(peer_class_type_filter::utp_socket
-				, m_global_class);
-			m_peer_class_type_filter.allow(peer_class_type_filter::ssl_utp_socket
-				, m_global_class);
-		}
-		else
-		{
-			// don't add the global or local peer class to limit uTP peers
-			m_peer_class_type_filter.disallow(peer_class_type_filter::utp_socket
-				, m_global_class);
-			m_peer_class_type_filter.disallow(peer_class_type_filter::ssl_utp_socket
-				, m_global_class);
-		}
-	}
-
-	void session_impl::update_ignore_rate_limits_on_local_network()
-	{
-		init_peer_class_filter(
-			m_settings.get_bool(settings_pack::ignore_limits_on_local_network));
-	}
-
-	// this function is called on the user's thread
-	// not the network thread
-	void session_impl::pop_alerts()
-	{
-		// if we don't have any alerts in our local cache, we have to ask
-		// the alert_manager for more. It will swap our vector with its and
-		// destruct eny left-over alerts in there.
-		if (m_alert_pointer_pos >= int(m_alert_pointers.size()))
-		{
-			pop_alerts(&m_alert_pointers);
-			m_alert_pointer_pos = 0;
-		}
-	}
-
-	alert const* session_impl::pop_alert()
-	{
-		if (m_alert_pointer_pos >= int(m_alert_pointers.size()))
-		{
-			pop_alerts();
-			if (m_alert_pointers.empty())
-				return nullptr;
-		}
-
-		if (m_alert_pointers.empty()) return nullptr;
-
-		// clone here to be backwards compatible, to make the client delete the
-		// alert object
-		return m_alert_pointers[m_alert_pointer_pos++];
-	}
-
-#endif
 
 	alert* session_impl::wait_for_alert(time_duration max_wait)
 	{
