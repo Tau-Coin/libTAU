@@ -152,30 +152,6 @@ struct stats_metric;
 // include/libTAU/settings_pack.hpp
 struct settings_interface;
 struct settings_pack;
-
-#if TORRENT_ABI_VERSION <= 2
-
-// include/libTAU/alert_types.hpp
-struct stats_alert;
-struct anonymous_mode_alert;
-
-// include/libTAU/fingerprint.hpp
-struct fingerprint;
-
-// include/libTAU/kademlia/dht_settings.hpp
-namespace dht {
-struct dht_settings;
-}
-
-// include/libTAU/session_settings.hpp
-struct pe_settings;
-
-// include/libTAU/session_status.hpp
-struct utp_status;
-struct session_status;
-
-#endif // TORRENT_ABI_VERSION
-
 }
 
 namespace lt = libTAU;

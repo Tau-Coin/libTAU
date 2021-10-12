@@ -42,15 +42,8 @@ namespace {
 	settings_pack min_memory_usage()
 	{
 		settings_pack set;
-#if TORRENT_ABI_VERSION == 1
-		// receive data directly into disk buffers
-		// this yields more system calls to read() and
-		// kqueue(), but saves RAM.
-		set.set_bool(settings_pack::contiguous_recv_buffer, false);
-#endif
 
 		set.set_int(settings_pack::max_peer_recv_buffer_size, 32 * 1024 + 200);
-
 		set.set_int(settings_pack::disk_io_write_mode, settings_pack::disable_os_cache);
 		set.set_int(settings_pack::disk_io_read_mode, settings_pack::disable_os_cache);
 
@@ -215,45 +208,6 @@ namespace {
 			ios = m_io_service.get();
 		}
 
-#if TORRENT_ABI_VERSION <= 2
-		// in case the session_params has its dht_settings in use, pick out the
-		// non-default settings from there and move them into the main settings.
-		// any conflicting options set in main settings take precedence
-		{
-		dht::dht_settings const def_sett{};
-#define SET_BOOL(name) if (!params.settings.has_val(settings_pack::dht_ ## name) && \
-	def_sett.name != params.dht_settings.name) \
-		params.settings.set_bool(settings_pack::dht_ ## name, params.dht_settings.name)
-#define SET_INT(name) if (!params.settings.has_val(settings_pack::dht_ ## name) && \
-	def_sett.name != params.dht_settings.name) \
-		params.settings.set_int(settings_pack::dht_ ## name, params.dht_settings.name)
-
-		SET_INT(max_peers_reply);
-		SET_INT(search_branching);
-		SET_INT(max_fail_count);
-		SET_INT(max_torrents);
-		SET_INT(max_dht_items);
-		SET_INT(max_peers);
-		SET_INT(max_torrent_search_reply);
-		SET_BOOL(restrict_routing_ips);
-		SET_BOOL(restrict_search_ips);
-		SET_BOOL(extended_routing_table);
-		SET_BOOL(aggressive_lookups);
-		SET_BOOL(privacy_lookups);
-		SET_BOOL(enforce_node_id);
-		SET_BOOL(ignore_dark_internet);
-		SET_INT(block_timeout);
-		SET_INT(block_ratelimit);
-		SET_BOOL(read_only);
-		SET_INT(item_lifetime);
-		SET_INT(upload_rate_limit);
-		SET_INT(sample_infohashes_interval);
-		SET_INT(max_infohashes_sample_count);
-#undef SET_BOOL
-#undef SET_INT
-		}
-#endif
-
 		// TODO: start() should just use flags out of the session_params object,
 		m_impl = std::make_shared<aux::session_impl>(std::ref(*ios)
 			, std::move(params.settings)
@@ -281,22 +235,6 @@ namespace {
 				[=] { s->run(); });
 		}
 	}
-
-#if TORRENT_ABI_VERSION <= 2
-	void session::start(session_flags_t const flags, settings_pack&& sp, io_context* ios)
-	{
-		if (flags & add_default_plugins)
-		{
-			session_params sp_(std::move(sp));
-			start(flags, std::move(sp_), ios);
-		}
-		else
-		{
-			session_params sp_(std::move(sp), {});
-			start(flags, std::move(sp_), ios);
-		}
-	}
-#endif
 
 	session::session(session&&) = default;
 
@@ -350,71 +288,6 @@ namespace {
 	}
 #endif
 
-#if TORRENT_ABI_VERSION <= 2
-	session::session(settings_pack&& pack, session_flags_t const flags)
-	{
-		start(flags, std::move(pack), nullptr);
-	}
-
-	session::session(settings_pack const& pack, session_flags_t const flags)
-	{
-		start(flags, settings_pack(pack), nullptr);
-	}
-
-	session::session(settings_pack&& pack, io_context& ios, session_flags_t const flags)
-	{
-		start(flags, std::move(pack), &ios);
-	}
-
-	session::session(settings_pack const& pack, io_context& ios, session_flags_t const flags)
-	{
-		start(flags, settings_pack(pack), &ios);
-	}
-#endif
-
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-	session::session(fingerprint const& print, session_flags_t const flags
-		, alert_category_t const alert_mask)
-	{
-		settings_pack pack;
-		pack.set_int(settings_pack::alert_mask, int(alert_mask));
-		pack.set_str(settings_pack::peer_fingerprint, print.to_string());
-		if (!(flags & start_default_features))
-		{
-			pack.set_bool(settings_pack::enable_upnp, false);
-			pack.set_bool(settings_pack::enable_natpmp, false);
-		}
-
-		start(flags, std::move(pack), nullptr);
-	}
-
-	session::session(fingerprint const& print, std::pair<int, int> listen_port_range
-		, char const* listen_interface, session_flags_t const flags
-		, alert_category_t const alert_mask)
-	{
-		TORRENT_ASSERT(listen_port_range.first > 0);
-		TORRENT_ASSERT(listen_port_range.first <= listen_port_range.second);
-
-		settings_pack pack;
-		pack.set_int(settings_pack::alert_mask, int(alert_mask));
-		pack.set_int(settings_pack::max_retry_port_bind, listen_port_range.second - listen_port_range.first);
-		pack.set_str(settings_pack::peer_fingerprint, print.to_string());
-		char if_string[100];
-
-		if (listen_interface == nullptr) listen_interface = "0.0.0.0";
-		std::snprintf(if_string, sizeof(if_string), "%s:%d", listen_interface, listen_port_range.first);
-		pack.set_str(settings_pack::listen_interfaces, if_string);
-
-		if (!(flags & start_default_features))
-		{
-			pack.set_bool(settings_pack::enable_upnp, false);
-			pack.set_bool(settings_pack::enable_natpmp, false);
-		}
-		start(flags, std::move(pack), nullptr);
-	}
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif // TORRENT_ABI_VERSION
 	session& session::operator=(session&&) & = default;
 
 	session::~session()

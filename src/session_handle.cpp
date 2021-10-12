@@ -42,10 +42,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libTAU/peer_class_type_filter.hpp"
 #include "libTAU/aux_/scope_end.hpp"
 
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/read_resume_data.hpp"
-#endif
-
 using libTAU::aux::session_impl;
 
 namespace libTAU {
@@ -55,29 +51,10 @@ namespace libTAU {
 	constexpr peer_class_t session_handle::local_peer_class_id;
 
 	constexpr save_state_flags_t session_handle::save_settings;
-#if TORRENT_ABI_VERSION <= 2
-	constexpr save_state_flags_t session_handle::save_dht_settings TORRENT_DEPRECATED;
-#endif
 	constexpr save_state_flags_t session_handle::save_dht_state;
-#if TORRENT_ABI_VERSION == 1
-	constexpr save_state_flags_t session_handle::save_encryption_settings;
-	constexpr save_state_flags_t session_handle::save_as_map TORRENT_DEPRECATED_ENUM;
-	constexpr save_state_flags_t session_handle::save_proxy TORRENT_DEPRECATED_ENUM;
-	constexpr save_state_flags_t session_handle::save_i2p_proxy TORRENT_DEPRECATED_ENUM;
-	constexpr save_state_flags_t session_handle::save_dht_proxy TORRENT_DEPRECATED_ENUM;
-	constexpr save_state_flags_t session_handle::save_peer_proxy TORRENT_DEPRECATED_ENUM;
-	constexpr save_state_flags_t session_handle::save_web_proxy TORRENT_DEPRECATED_ENUM;
-	constexpr save_state_flags_t session_handle::save_tracker_proxy TORRENT_DEPRECATED_ENUM;
-#endif
 	constexpr save_state_flags_t session_handle::save_extension_state;
 	constexpr save_state_flags_t session_handle::save_ip_filter;
 
-#if TORRENT_ABI_VERSION <= 2
-	constexpr session_flags_t session_handle::add_default_plugins;
-#endif
-#if TORRENT_ABI_VERSION == 1
-	constexpr session_flags_t session_handle::start_default_features;
-#endif
 	constexpr session_flags_t session_handle::paused;
 
 	constexpr reopen_network_flags_t session_handle::reopen_map_ports;
@@ -170,22 +147,6 @@ namespace libTAU {
 		return r;
 	}
 
-#if TORRENT_ABI_VERSION <= 2
-	void session_handle::save_state(entry& e, save_state_flags_t const flags) const
-	{
-		entry* ep = &e;
-		sync_call(&session_impl::save_state, ep, flags);
-	}
-
-	void session_handle::load_state(bdecode_node const& e
-		, save_state_flags_t const flags)
-	{
-		// this needs to be synchronized since the lifespan
-		// of e is tied to the caller
-		sync_call(&session_impl::load_state, &e, flags);
-	}
-#endif
-
 	session_params session_handle::session_state(save_state_flags_t const flags) const
 	{
 		return sync_call_ret<session_params>(&session_impl::session_state, flags);
@@ -217,37 +178,6 @@ namespace libTAU {
 	{
 		async_call(&session_impl::set_dht_state, std::move(st));
 	}
-
-#if TORRENT_ABI_VERSION == 1
-	void session_handle::set_load_function(user_load_function_t fun)
-	{
-		async_call(&session_impl::set_load_function, fun);
-	}
-
-	void session_handle::start_dht()
-	{
-		settings_pack p;
-		apply_settings(std::move(p));
-	}
-
-	void session_handle::stop_dht()
-	{
-		settings_pack p;
-		apply_settings(std::move(p));
-	}
-#endif // TORRENT_ABI_VERSION
-
-#if TORRENT_ABI_VERSION <= 2
-	void session_handle::set_dht_settings(dht::dht_settings const& settings)
-	{
-		async_call(&session_impl::set_dht_settings, settings);
-	}
-
-	dht::dht_settings session_handle::get_dht_settings() const
-	{
-		return sync_call_ret<dht::dht_settings>(&session_impl::get_dht_settings);
-	}
-#endif
 
 	bool session_handle::is_dht_running() const
 	{
@@ -293,36 +223,6 @@ namespace libTAU {
 	{
 		async_call(&session_impl::dht_live_nodes, nid);
 	}
-
-#if TORRENT_ABI_VERSION == 1
-	void session_handle::load_state(entry const& ses_state
-		, save_state_flags_t const flags)
-	{
-		if (ses_state.type() == entry::undefined_t) return;
-		std::vector<char> buf;
-		bencode(std::back_inserter(buf), ses_state);
-		bdecode_node e;
-		error_code ec;
-#if TORRENT_USE_ASSERTS || !defined BOOST_NO_EXCEPTIONS
-		int ret =
-#endif
-		bdecode(&buf[0], &buf[0] + buf.size(), e, ec);
-
-		TORRENT_ASSERT(ret == 0);
-#ifndef BOOST_NO_EXCEPTIONS
-		if (ret != 0) aux::throw_ex<system_error>(ec);
-#endif
-		sync_call(&session_impl::load_state, &e, flags);
-	}
-
-	entry session_handle::state() const
-	{
-		entry ret;
-		auto retp = &ret;
-		sync_call(&session_impl::save_state, retp, save_state_flags_t::all());
-		return ret;
-	}
-#endif // TORRENT_ABI_VERSION
 
 	void session_handle::new_account_seed(std::array<char, 32> seed)
 	{
@@ -399,26 +299,6 @@ namespace libTAU {
 		async_call(&session_impl::set_port_filter, f);
 	}
 
-#if TORRENT_ABI_VERSION == 1
-	void session_handle::set_peer_id(peer_id const& id)
-	{
-		settings_pack p;
-		p.set_str(settings_pack::peer_fingerprint, id.to_string());
-		apply_settings(std::move(p));
-	}
-
-	void session_handle::set_key(std::uint32_t)
-	{
-		// this is just a dummy function now, as we generate the key automatically
-		// per listen interface
-	}
-
-	peer_id session_handle::id() const
-	{
-		return sync_call_ret<peer_id>(&session_impl::deprecated_get_peer_id);
-	}
-#endif
-
 	unsigned short session_handle::listen_port() const
 	{
 		return sync_call_ret<unsigned short, unsigned short(session_impl::*)() const>
@@ -476,59 +356,6 @@ namespace libTAU {
 		async_call(&session_impl::set_peer_class, cid, pci);
 	}
 
-#if TORRENT_ABI_VERSION == 1
-	void session_handle::use_interfaces(char const* interfaces)
-	{
-		settings_pack p;
-		p.set_str(settings_pack::outgoing_interfaces, interfaces);
-		apply_settings(std::move(p));
-	}
-
-	void session_handle::listen_on(
-		std::pair<int, int> const& port_range
-		, error_code& ec
-		, const char* net_interface, int flags)
-	{
-		settings_pack p;
-		std::string interfaces_str;
-		if (net_interface == nullptr || strlen(net_interface) == 0)
-			net_interface = "0.0.0.0";
-
-		interfaces_str = print_endpoint(tcp::endpoint(make_address(net_interface, ec), std::uint16_t(port_range.first)));
-		if (ec) return;
-
-		p.set_str(settings_pack::listen_interfaces, interfaces_str);
-		p.set_int(settings_pack::max_retry_port_bind, port_range.second - port_range.first);
-		p.set_bool(settings_pack::listen_system_port_fallback, (flags & session::listen_no_system_port) == 0);
-		apply_settings(std::move(p));
-	}
-#endif
-
-#if TORRENT_ABI_VERSION == 1
-	void session_handle::set_pe_settings(pe_settings const& r)
-	{
-		settings_pack p;
-		p.set_bool(settings_pack::prefer_rc4, r.prefer_rc4);
-		p.set_int(settings_pack::out_enc_policy, r.out_enc_policy);
-		p.set_int(settings_pack::in_enc_policy, r.in_enc_policy);
-		p.set_int(settings_pack::allowed_enc_level, r.allowed_enc_level);
-
-		apply_settings(std::move(p));
-	}
-
-	pe_settings session_handle::get_pe_settings() const
-	{
-		settings_pack sett = get_settings();
-
-		pe_settings r;
-		r.prefer_rc4 = sett.get_bool(settings_pack::prefer_rc4);
-		r.out_enc_policy = std::uint8_t(sett.get_int(settings_pack::out_enc_policy));
-		r.in_enc_policy = std::uint8_t(sett.get_int(settings_pack::in_enc_policy));
-		r.allowed_enc_level = std::uint8_t(sett.get_int(settings_pack::allowed_enc_level));
-		return r;
-	}
-#endif
-
 	void session_handle::apply_settings(settings_pack const& s)
 	{
 		TORRENT_ASSERT_PRECOND(!s.has_val(settings_pack::out_enc_policy)
@@ -565,163 +392,6 @@ namespace libTAU {
 	{
 		return sync_call_ret<settings_pack>(&session_impl::get_settings);
 	}
-
-#if TORRENT_ABI_VERSION == 1
-	void session_handle::set_i2p_proxy(proxy_settings const& s)
-	{
-		settings_pack pack;
-		pack.set_str(settings_pack::i2p_hostname, s.hostname);
-		pack.set_int(settings_pack::i2p_port, s.port);
-
-		apply_settings(pack);
-	}
-
-	proxy_settings session_handle::i2p_proxy() const
-	{
-		proxy_settings ret;
-		settings_pack sett = get_settings();
-		ret.hostname = sett.get_str(settings_pack::i2p_hostname);
-		ret.port = std::uint16_t(sett.get_int(settings_pack::i2p_port));
-		return ret;
-	}
-
-	void session_handle::set_proxy(proxy_settings const& s)
-	{
-		settings_pack p;
-		p.set_str(settings_pack::proxy_hostname, s.hostname);
-		p.set_str(settings_pack::proxy_username, s.username);
-		p.set_str(settings_pack::proxy_password, s.password);
-		p.set_int(settings_pack::proxy_type, s.type);
-		p.set_int(settings_pack::proxy_port, s.port);
-		p.set_bool(settings_pack::proxy_hostnames,s.proxy_hostnames);
-		p.set_bool(settings_pack::proxy_peer_connections, s.proxy_peer_connections);
-
-		apply_settings(std::move(p));
-	}
-
-	proxy_settings session_handle::proxy() const
-	{
-		settings_pack sett = get_settings();
-		return proxy_settings(sett);
-	}
-
-	int session_handle::num_connections() const
-	{
-		return sync_call_ret<int>(&session_impl::num_connections);
-	}
-
-	void session_handle::set_peer_proxy(proxy_settings const& s)
-	{
-		set_proxy(s);
-	}
-
-	void session_handle::set_web_seed_proxy(proxy_settings const&)
-	{
-		// NO-OP
-	}
-
-	void session_handle::set_tracker_proxy(proxy_settings const& s)
-	{
-		// if the tracker proxy is enabled, set the "proxy_tracker_connections"
-		// setting
-		settings_pack pack;
-		pack.set_bool(settings_pack::proxy_tracker_connections
-			, s.type != settings_pack::none);
-		apply_settings(pack);
-	}
-
-	proxy_settings session_handle::peer_proxy() const
-	{
-		return proxy();
-	}
-
-	proxy_settings session_handle::web_seed_proxy() const
-	{
-		return proxy();
-	}
-
-	proxy_settings session_handle::tracker_proxy() const
-	{
-		settings_pack const sett = get_settings();
-		return sett.get_bool(settings_pack::proxy_tracker_connections)
-			? proxy_settings(sett) : proxy_settings();
-	}
-
-	void session_handle::set_dht_proxy(proxy_settings const&)
-	{
-		// NO-OP
-	}
-
-	proxy_settings session_handle::dht_proxy() const
-	{
-		return proxy();
-	}
-
-	int session_handle::upload_rate_limit() const
-	{
-		return sync_call_ret<int>(&session_impl::upload_rate_limit_depr);
-	}
-
-	int session_handle::download_rate_limit() const
-	{
-		return sync_call_ret<int>(&session_impl::download_rate_limit_depr);
-	}
-
-	int session_handle::local_upload_rate_limit() const
-	{
-		return sync_call_ret<int>(&session_impl::local_upload_rate_limit);
-	}
-
-	int session_handle::local_download_rate_limit() const
-	{
-		return sync_call_ret<int>(&session_impl::local_download_rate_limit);
-	}
-
-	int session_handle::max_half_open_connections() const { return 8; }
-
-	void session_handle::set_local_upload_rate_limit(int bytes_per_second)
-	{
-		async_call(&session_impl::set_local_upload_rate_limit, bytes_per_second);
-	}
-
-	void session_handle::set_local_download_rate_limit(int bytes_per_second)
-	{
-		async_call(&session_impl::set_local_download_rate_limit, bytes_per_second);
-	}
-
-	void session_handle::set_upload_rate_limit(int bytes_per_second)
-	{
-		async_call(&session_impl::set_upload_rate_limit_depr, bytes_per_second);
-	}
-
-	void session_handle::set_download_rate_limit(int bytes_per_second)
-	{
-		async_call(&session_impl::set_download_rate_limit_depr, bytes_per_second);
-	}
-
-	void session_handle::set_max_connections(int limit)
-	{
-		async_call(&session_impl::set_max_connections, limit);
-	}
-
-	void session_handle::set_max_uploads(int limit)
-	{
-		async_call(&session_impl::set_max_uploads, limit);
-	}
-
-	void session_handle::set_max_half_open_connections(int) {}
-
-	int session_handle::max_uploads() const
-	{
-		return sync_call_ret<int>(&session_impl::max_uploads);
-	}
-
-	int session_handle::max_connections() const
-	{
-		return sync_call_ret<int>(&session_impl::max_connections);
-	}
-
-#endif // TORRENT_ABI_VERSION
 
 	// the alerts are const, they may not be deleted by the client
 	void session_handle::pop_alerts(std::vector<alert*>* alerts)

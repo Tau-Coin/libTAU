@@ -54,26 +54,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libTAU/kademlia/dht_storage.hpp"
 #include "libTAU/kademlia/announce_flags.hpp"
 
-#if TORRENT_ABI_VERSION <= 2
-#include "libTAU/kademlia/dht_settings.hpp"
-#endif
-
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/session_settings.hpp"
-#include <deque>
-#endif
-
 #include "libTAU/extensions.hpp"
 #include "libTAU/session_types.hpp" // for session_flags_t
 #include "libTAU/communication/message.hpp" // for adding new message
 
 namespace libTAU {
-
-#if TORRENT_ABI_VERSION == 1
-	struct session_status;
-	using user_load_function_t = std::function<void(sha1_hash const&
-		, std::vector<char>&, error_code&)>;
-#endif
 
 	// this class provides a non-owning handle to a session and a subset of the
 	// interface of the session class. If the underlying session is destructed
@@ -92,11 +77,6 @@ namespace libTAU {
 		session_handle& operator=(session_handle const&) & = default;
 		session_handle& operator=(session_handle&&) & noexcept = default;
 
-#if TORRENT_ABI_VERSION == 1
-		using save_state_flags_t = libTAU::save_state_flags_t;
-		using session_flags_t = libTAU::session_flags_t;
-#endif
-
 		// returns true if this handle refers to a valid session object. If the
 		// session has been destroyed, all session_handle objects will expire and
 		// not be valid.
@@ -105,60 +85,15 @@ namespace libTAU {
 		// saves settings (i.e. the settings_pack)
 		static constexpr save_state_flags_t save_settings = 0_bit;
 
-#if TORRENT_ABI_VERSION <= 2
-		// saves dht_settings. All DHT settings are now part of the main
-		// settings_pack, and saved by setting the save_settings flag
-		TORRENT_DEPRECATED static constexpr save_state_flags_t save_dht_settings = 1_bit;
-#endif
-
 		// saves dht state such as nodes and node-id, possibly accelerating
 		// joining the DHT if provided at next session startup.
 		static constexpr save_state_flags_t save_dht_state = 2_bit;
-
-#if TORRENT_ABI_VERSION == 1
-		// save pe_settings
-		TORRENT_DEPRECATED static constexpr save_state_flags_t save_encryption_settings = 3_bit;
-		TORRENT_DEPRECATED static constexpr save_state_flags_t save_as_map = 4_bit;
-		TORRENT_DEPRECATED static constexpr save_state_flags_t save_proxy = 5_bit;
-		TORRENT_DEPRECATED static constexpr save_state_flags_t save_i2p_proxy = 6_bit;
-		TORRENT_DEPRECATED static constexpr save_state_flags_t save_dht_proxy = 7_bit;
-		TORRENT_DEPRECATED static constexpr save_state_flags_t save_peer_proxy = 8_bit;
-		TORRENT_DEPRECATED static constexpr save_state_flags_t save_web_proxy = 9_bit;
-		TORRENT_DEPRECATED static constexpr save_state_flags_t save_tracker_proxy = 10_bit;
-#endif
 
 		// load or save state from plugins
 		static constexpr save_state_flags_t save_extension_state = 11_bit;
 
 		// load or save the IP filter set on the session
 		static constexpr save_state_flags_t save_ip_filter = 12_bit;
-
-#if TORRENT_ABI_VERSION <= 2
-		// deprecated in 2.0
-		// instead of these functions, use session_state() below, and restore
-		// state using the session_params on session construction.
-
-		// loads and saves all session settings, including dht_settings,
-		// encryption settings and proxy settings. ``save_state`` writes all keys
-		// to the ``entry`` that's passed in, which needs to either not be
-		// initialized, or initialized as a dictionary.
-		//
-		// ``load_state`` expects a bdecode_node which can be built from a bencoded
-		// buffer with bdecode().
-		//
-		// The ``flags`` argument is used to filter which parts of the session
-		// state to save or load. By default, all state is saved/restored (except
-		// for the individual torrents).
-		//
-		// When saving settings, there are two fields that are *not* loaded.
-		// ``peer_fingerprint`` and ``user_agent``. Those are left as configured
-		// by the ``session_settings`` passed to the session constructor or
-		// subsequently set via apply_settings().
-		TORRENT_DEPRECATED
-		void save_state(entry& e, save_state_flags_t flags = save_state_flags_t::all()) const;
-		TORRENT_DEPRECATED
-		void load_state(bdecode_node const& e, save_state_flags_t flags = save_state_flags_t::all());
-#endif
 
 		// returns the current session state. This can be passed to
 		// write_session_params() to save the state to disk and restored using
@@ -188,56 +123,6 @@ namespace libTAU {
 		// session_params on startup.
 		void set_dht_state(dht::dht_state const& st);
 		void set_dht_state(dht::dht_state&& st);
-
-#if TORRENT_ABI_VERSION == 1
-		// *the feature of dynamically loading/unloading torrents is deprecated
-		// and discouraged*
-		//
-		// This function enables dynamic-loading-of-torrent-files_. When a
-		// torrent is unloaded but needs to be available in memory, this function
-		// is called **from within the libTAU network thread**. From within
-		// this thread, you can **not** use any of the public APIs of libTAU
-		// itself. The info-hash of the torrent is passed in to the function
-		// and it is expected to fill in the passed in ``vector<char>`` with the
-		// .torrent file corresponding to it.
-		//
-		// If there is an error loading the torrent file, the ``error_code``
-		// (``ec``) should be set to reflect the error. In such case, the torrent
-		// itself is stopped and set to an error state with the corresponding
-		// error code.
-		//
-		// Given that the function is called from the internal network thread of
-		// libTAU, it's important to not stall. libTAU will not be able
-		// to send nor receive any data until the function call returns.
-		//
-		// The signature of the function to pass in is::
-		//
-		// 	void fun(sha1_hash const& info_hash, std::vector<char>& buf, error_code& ec);
-
-#include "libTAU/aux_/disable_warnings_push.hpp"
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-
-		// ``stop_dht`` stops the dht node.
-		// deprecated. use settings_pack::enable_dht instead
-		TORRENT_DEPRECATED
-		void start_dht();
-		TORRENT_DEPRECATED
-		void stop_dht();
-#endif
-
-#if TORRENT_ABI_VERSION <= 2
-
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-		// ``set_dht_settings`` sets some parameters available to the dht node.
-		// See dht_settings for more information.
-		//
-		// ``get_dht_settings()`` returns the current settings
-		void set_dht_settings(dht::dht_settings const& settings);
-		dht::dht_settings get_dht_settings() const;
-
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-
-#endif
 
 		// ``is_dht_running()`` returns true if the DHT support has been started
 		// and false otherwise.
@@ -329,16 +214,6 @@ namespace libTAU {
 		// use save_state and load_state instead
 		void add_extension(std::shared_ptr<plugin> ext);
 
-#if TORRENT_ABI_VERSION == 1
-		// deprecated in 0.15
-		// use load_state and save_state instead
-		TORRENT_DEPRECATED
-		void load_state(entry const& ses_state
-			, save_state_flags_t flags = save_state_flags_t::all());
-		TORRENT_DEPRECATED
-		entry state() const;
-#endif // TORRENT_ABI_VERSION
-
 		// Sets a filter that will be used to reject and accept incoming as well
 		// as outgoing connections based on their originating ip address. The
 		// default filter will allow connections to any ip address. To build a
@@ -355,24 +230,6 @@ namespace libTAU {
 		// The main intention is to be able to avoid triggering certain
 		// anti-virus software by connecting to SMTP, FTP ports.
 		void set_port_filter(port_filter const& f);
-
-#if TORRENT_ABI_VERSION == 1
-		// deprecated in 1.1, use settings_pack::peer_fingerprint instead
-		TORRENT_DEPRECATED
-		void set_peer_id(peer_id const& pid);
-
-		// deprecated in 1.1.7. read settings_pack::peer_fingerprint instead
-		TORRENT_DEPRECATED
-		peer_id id() const;
-#endif
-
-#if TORRENT_ABI_VERSION == 1
-		// deprecated in 1.2
-		// sets the key sent to trackers. If it's not set, it is initialized
-		// by libTAU. The key may be used by the tracker to identify the
-		// peer potentially across you changing your IP.
-		void set_key(std::uint32_t key);
-#endif
 
 		// built-in peer classes
 		static constexpr peer_class_t global_peer_class_id{0};
@@ -523,56 +380,12 @@ namespace libTAU {
 		peer_class_info get_peer_class(peer_class_t cid) const;
 		void set_peer_class(peer_class_t cid, peer_class_info const& pci);
 
-#if TORRENT_ABI_VERSION == 1
-		// if the listen port failed in some way you can retry to listen on
-		// another port- range with this function. If the listener succeeded and
-		// is currently listening, a call to this function will shut down the
-		// listen port and reopen it using these new properties (the given
-		// interface and port range). As usual, if the interface is left as 0
-		// this function will return false on failure. If it fails, it will also
-		// generate alerts describing the error. It will return true on success.
-		enum listen_on_flags_t
-		{
-			// this is always on starting with 0.16.2
-			listen_reuse_address TORRENT_DEPRECATED_ENUM = 0x01,
-			listen_no_system_port TORRENT_DEPRECATED_ENUM = 0x02
-		};
-
-		// deprecated in 0.16
-
-		// specify which interfaces to bind outgoing connections to
-		// This has been moved to a session setting
-		TORRENT_DEPRECATED
-		void use_interfaces(char const* interfaces);
-
-		// instead of using this, specify listen interface and port in
-		// the settings_pack::listen_interfaces setting
-		TORRENT_DEPRECATED
-		void listen_on(
-			std::pair<int, int> const& port_range
-			, error_code& ec
-			, const char* net_interface = nullptr
-			, int flags = 0);
-#endif
-
 		// delete the files belonging to the torrent from disk.
 		// including the part-file, if there is one
 		static constexpr remove_flags_t delete_files = 0_bit;
 
 		// delete just the part-file associated with this torrent
 		static constexpr remove_flags_t delete_partfile = 1_bit;
-
-#if TORRENT_ABI_VERSION <= 2
-		// this will add common extensions like ut_pex, ut_metadata, lt_tex
-		// smart_ban and possibly others.
-		TORRENT_DEPRECATED static constexpr session_flags_t add_default_plugins = 0_bit;
-#endif
-
-#if TORRENT_ABI_VERSION == 1
-		// this will start features like DHT, local service discovery, UPnP
-		// and NAT-PMP.
-		TORRENT_DEPRECATED static constexpr session_flags_t start_default_features = 1_bit;
-#endif
 
 		// when set, the session will start paused. Call
 		// session_handle::resume() to start
@@ -584,104 +397,6 @@ namespace libTAU {
 		void apply_settings(settings_pack const&);
 		void apply_settings(settings_pack&&);
 		settings_pack get_settings() const;
-
-#if TORRENT_ABI_VERSION == 1
-
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-
-		// deprecated in libTAU 1.1. use settings_pack instead
-		TORRENT_DEPRECATED
-		void set_pe_settings(pe_settings const&);
-		TORRENT_DEPRECATED
-		pe_settings get_pe_settings() const;
-
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-
-		// ``set_i2p_proxy`` sets the i2p_ proxy, and tries to open a persistent
-		// connection to it. The only used fields in the proxy settings structs
-		// are ``hostname`` and ``port``.
-		//
-		// ``i2p_proxy`` returns the current i2p proxy in use.
-		//
-		// .. _i2p: http://www.i2p2.de
-
-		TORRENT_DEPRECATED
-		void set_i2p_proxy(proxy_settings const&);
-		TORRENT_DEPRECATED
-		proxy_settings i2p_proxy() const;
-
-		// These functions sets and queries the proxy settings to be used for the
-		// session.
-		//
-		// For more information on what settings are available for proxies, see
-		// proxy_settings. If the session is not in anonymous mode, proxies that
-		// aren't working or fail, will automatically be disabled and packets
-		// will flow without using any proxy. If you want to enforce using a
-		// proxy, even when the proxy doesn't work, enable anonymous_mode in
-		// settings_pack.
-		TORRENT_DEPRECATED
-		void set_proxy(proxy_settings const& s);
-		TORRENT_DEPRECATED
-		proxy_settings proxy() const;
-
-		// Get the number of connections. This number also contains the
-		// number of half open connections.
-		TORRENT_DEPRECATED
-		int num_connections() const;
-
-		// deprecated in 0.15.
-		TORRENT_DEPRECATED
-		void set_peer_proxy(proxy_settings const& s);
-		TORRENT_DEPRECATED
-		void set_web_seed_proxy(proxy_settings const& s);
-		TORRENT_DEPRECATED
-		void set_tracker_proxy(proxy_settings const& s);
-
-		TORRENT_DEPRECATED
-		proxy_settings peer_proxy() const;
-		TORRENT_DEPRECATED
-		proxy_settings web_seed_proxy() const;
-		TORRENT_DEPRECATED
-		proxy_settings tracker_proxy() const;
-
-		TORRENT_DEPRECATED
-		void set_dht_proxy(proxy_settings const& s);
-		TORRENT_DEPRECATED
-		proxy_settings dht_proxy() const;
-
-		// deprecated in 0.16
-		TORRENT_DEPRECATED
-		int upload_rate_limit() const;
-		TORRENT_DEPRECATED
-		int download_rate_limit() const;
-		TORRENT_DEPRECATED
-		int local_upload_rate_limit() const;
-		TORRENT_DEPRECATED
-		int local_download_rate_limit() const;
-		TORRENT_DEPRECATED
-		int max_half_open_connections() const;
-
-		TORRENT_DEPRECATED
-		void set_local_upload_rate_limit(int bytes_per_second);
-		TORRENT_DEPRECATED
-		void set_local_download_rate_limit(int bytes_per_second);
-		TORRENT_DEPRECATED
-		void set_upload_rate_limit(int bytes_per_second);
-		TORRENT_DEPRECATED
-		void set_download_rate_limit(int bytes_per_second);
-		TORRENT_DEPRECATED
-		void set_max_uploads(int limit);
-		TORRENT_DEPRECATED
-		void set_max_connections(int limit);
-		TORRENT_DEPRECATED
-		void set_max_half_open_connections(int limit);
-
-		TORRENT_DEPRECATED
-		int max_connections() const;
-		TORRENT_DEPRECATED
-		int max_uploads() const;
-
-#endif
 
 		// Alerts is the main mechanism for libTAU to report errors and
 		// events. ``pop_alerts`` fills in the vector passed to it with pointers
