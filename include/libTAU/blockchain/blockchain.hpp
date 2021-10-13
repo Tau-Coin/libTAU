@@ -20,6 +20,7 @@ see LICENSE file.
 #include "libTAU/aux_/deadline_timer.hpp"
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/kademlia/item.hpp"
+#include "libTAU/blockchain/repository.hpp"
 
 namespace libTAU::blockchain {
 
@@ -69,6 +70,15 @@ namespace libTAU::blockchain {
 
         void refresh_timeout(error_code const& e);
 
+        // select a chain randomly
+        aux::bytes select_chain_randomly();
+
+        // select a peer randomly
+        dht::public_key select_peer_randomly(const aux::bytes &chain_id);
+
+        // select a peer randomly
+        std::set<dht::public_key> select_unchoked_peers(const aux::bytes &chain_id, std::int64_t block_number);
+
         // io context
         io_context& m_ioc;
 
@@ -81,10 +91,17 @@ namespace libTAU::blockchain {
         // deadline timer
         aux::deadline_timer m_refresh_timer;
 
+        // blockchain db
+        std::shared_ptr<repository> m_repository;
+
         bool m_stop = false;
 
         // all chains
         std::vector<aux::bytes> m_chains;
+
+        // all chain peers
+        std::map<aux::bytes, std::set<dht::public_key>> m_chain_peers;
+
     };
 }
 

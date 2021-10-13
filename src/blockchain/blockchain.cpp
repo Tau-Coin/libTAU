@@ -14,6 +14,16 @@ using namespace std::placeholders;
 namespace libTAU::blockchain {
 
     bool blockchain::init() {
+        // get all chains
+        auto chains = m_repository->get_all_chains();
+        m_chains.insert(m_chains.end(), chains.begin(), chains.end());
+
+        // get all peers
+        for(auto const& chain_id: m_chains) {
+            auto peers = m_repository->get_all_peers(chain_id);
+            m_chain_peers[chain_id] = peers;
+        }
+
         return true;
     }
 
@@ -52,13 +62,13 @@ namespace libTAU::blockchain {
         if (e || m_stop) return;
 
         try {
-            // 随机挑选一个朋友put/get
-//            aux::bytes peer = select_friend_randomly();
-//            if (!peer.empty()) {
-//                log("INFO: Select peer:%s", aux::toHex(peer).c_str());
+            // 随机挑选一条
+            aux::bytes chain_id = select_chain_randomly();
+            if (!chain_id.empty()) {
+                log("INFO: Select chain:%s", aux::toHex(chain_id).c_str());
 //                request_signal(peer);
 //                publish_signal(peer);
-//            }
+            }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(
@@ -67,6 +77,78 @@ namespace libTAU::blockchain {
             log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
     }
+
+    aux::bytes blockchain::select_chain_randomly() {
+        aux::bytes chain_id;
+
+        if (!m_chains.empty())
+        {
+            // 产生随机数
+            srand(total_microseconds(system_clock::now().time_since_epoch()));
+            auto index = rand() % m_chains.size();
+            chain_id = m_chains[index];
+        }
+
+        return chain_id;
+    }
+
+    dht::public_key blockchain::select_peer_randomly(const aux::bytes &chain_id) {
+        dht::public_key peer{};
+        auto& chain_peers = m_chain_peers[chain_id];
+        std::vector<dht::public_key> peers(chain_peers.begin(), chain_peers.end());
+
+        if (!peers.empty())
+        {
+            // 产生随机数
+            srand(total_microseconds(system_clock::now().time_since_epoch()));
+            auto index = rand() % peers.size();
+            peer = peers[index];
+        }
+
+        return peer;
+    }
+
+    std::set<dht::public_key> blockchain::select_unchoked_peers(const aux::bytes &chain_id, std::int64_t block_number) {
+        std::set<dht::public_key> peers;
+        auto chain_peers = m_chain_peers[chain_id];
+
+        dht::public_key *pk = m_ses.pubkey();
+        chain_peers.insert(*pk);
+        if (chain_peers.size() > 1) {
+            auto r_iterator = chain_peers.find(*pk);
+            auto l_iterator = r_iterator;
+            auto offset = block_number % chain_peers.size();
+            for (auto i = 0; i < offset; i++) {
+                r_iterator++;
+                if (r_iterator == chain_peers.end()) {
+                    r_iterator = chain_peers.begin();
+                }
+
+                if (l_iterator == chain_peers.begin()) {
+                    l_iterator = chain_peers.end();
+                }
+                l_iterator--;
+            }
+
+            peers.insert(*r_iterator);
+            peers.insert(*l_iterator);
+            r_iterator++;
+            if (r_iterator == chain_peers.end()) {
+                r_iterator = chain_peers.begin();
+            }
+
+            if (l_iterator == chain_peers.begin()) {
+                l_iterator = chain_peers.end();
+            }
+            l_iterator--;
+
+            peers.insert(*r_iterator);
+            peers.insert(*l_iterator);
+        }
+
+        return peers;
+    }
+
 
     bool blockchain::should_log() const
     {
