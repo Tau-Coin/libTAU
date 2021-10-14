@@ -173,6 +173,8 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	if (val) sett.set_int(settings_pack::dht_max_peers_reply, int(val.int_value()));
 	val = s.dict_find_int("search_branching");
 	if (val) sett.set_int(settings_pack::dht_search_branching, int(val.int_value()));
+	val = s.dict_find_int("invoke_limit");
+	if (val) sett.set_int(settings_pack::dht_invoke_limit, int(val.int_value()));
 	val = s.dict_find_int("max_fail_count");
 	if (val) sett.set_int(settings_pack::dht_max_fail_count, int(val.int_value()));
 	val = s.dict_find_int("max_dht_items");
