@@ -7,6 +7,7 @@ see LICENSE file.
 */
 
 #include "libTAU/blockchain/blockchain.hpp"
+#include "libTAU/blockchain/consensus.hpp"
 
 
 using namespace std::placeholders;
@@ -20,8 +21,7 @@ namespace libTAU::blockchain {
 
         // get all peers
         for(auto const& chain_id: m_chains) {
-            auto peers = m_repository->get_all_peers(chain_id);
-            m_chain_peers[chain_id] = peers;
+            load_chain(chain_id);
         }
 
         return true;
@@ -49,7 +49,29 @@ namespace libTAU::blockchain {
 
         clear();
 
-        log("INFO: Stop Communication...");
+        log("INFO: Stop BlockChain...");
+
+        return true;
+    }
+
+    bool blockchain::follow_chain(const aux::bytes &chain_id) {
+        return true;
+    }
+
+    bool blockchain::load_chain(const aux::bytes &chain_id) {
+        auto peers = m_repository->get_all_peers(chain_id);
+        m_chain_peers[chain_id] = peers;
+
+        auto tip_block_hash = m_repository->get_best_tip_block_hash(chain_id);
+        auto tail_block_hash = m_repository->get_best_tail_block_hash(chain_id);
+        if (!tip_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros()) {
+            auto tip_block = m_repository->get_block_by_hash(tip_block_hash);
+            auto tail_block = m_repository->get_block_by_hash(tail_block_hash);
+            if (!tip_block.empty() && !tail_block.empty()) {
+                m_best_tip_blocks[chain_id] = tip_block;
+                m_best_tail_blocks[chain_id] = tail_block;
+            }
+        }
 
         return true;
     }
@@ -75,6 +97,16 @@ namespace libTAU::blockchain {
                     std::bind(&blockchain::refresh_timeout, self(), _1));
         } catch (std::exception &e) {
             log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+        }
+    }
+
+    void blockchain::try_to_refresh_unchoked_peers(const aux::bytes &chain_id, const error_code &e) {
+        std::int64_t now = total_seconds(system_clock::now().time_since_epoch());
+        if (now / DEFAULT_BLOCK_TIME != m_update_peer_time[chain_id]) {
+            auto peers = select_unchoked_peers(chain_id);
+            m_unchoked_peers[chain_id] = peers;
+
+            m_update_peer_time[chain_id] = now / DEFAULT_BLOCK_TIME;
         }
     }
 
@@ -108,16 +140,18 @@ namespace libTAU::blockchain {
         return peer;
     }
 
-    std::set<dht::public_key> blockchain::select_unchoked_peers(const aux::bytes &chain_id, std::int64_t block_number) {
+    std::set<dht::public_key> blockchain::select_unchoked_peers(const aux::bytes &chain_id) {
         std::set<dht::public_key> peers;
         auto chain_peers = m_chain_peers[chain_id];
 
+        // todo: insert in set?
         dht::public_key *pk = m_ses.pubkey();
         chain_peers.insert(*pk);
         if (chain_peers.size() > 1) {
             auto r_iterator = chain_peers.find(*pk);
             auto l_iterator = r_iterator;
-            auto offset = block_number % chain_peers.size();
+            std::int64_t second = total_seconds(system_clock::now().time_since_epoch());
+            auto offset = (second / DEFAULT_BLOCK_TIME) % chain_peers.size();
             for (auto i = 0; i < offset; i++) {
                 r_iterator++;
                 if (r_iterator == chain_peers.end()) {
@@ -147,6 +181,54 @@ namespace libTAU::blockchain {
         }
 
         return peers;
+    }
+
+    block blockchain::try_to_mine_block(const aux::bytes &chain_id) {
+        dht::secret_key *sk = m_ses.serkey();
+        dht::public_key *pk = m_ses.pubkey();
+
+        block b;
+        auto best_tip_block = m_best_tip_blocks[chain_id];
+        if (!best_tip_block.empty()) {
+            block ancestor1 = m_repository->get_block_by_hash(best_tip_block.sha256());
+            if (ancestor1.empty()) {
+                // todo:request
+                return b;
+            }
+
+            block ancestor2 = m_repository->get_block_by_hash(ancestor1.sha256());
+            if (ancestor2.empty()) {
+                // todo:request
+                return b;
+            }
+
+            block ancestor3 = m_repository->get_block_by_hash(ancestor2.sha256());
+            if (ancestor3.empty()) {
+                // todo:request
+                return b;
+            }
+
+            std::int64_t base_target = consensus::calculate_required_base_target(best_tip_block, ancestor3);
+            std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
+            if (power <= 0) {
+                // todo:request
+                return b;
+            }
+            auto genSig = consensus::calculate_generation_signature(best_tip_block.generation_signature(), *pk);
+            auto hit = consensus::calculate_random_hit(genSig);
+            auto interval = consensus::calculate_mining_time_interval(hit, base_target, power);
+
+            std::int64_t now = total_seconds(system_clock::now().time_since_epoch());
+            if (now - best_tip_block.timestamp() >= interval) {
+                auto miner_account = m_repository->get_account(chain_id, *pk);
+                b = block(block_version::block_version1, chain_id,
+                          (best_tip_block.timestamp() + interval), best_tip_block.block_number() + 1,
+                          best_tip_block.sha256(), base_target, 0, genSig, transaction(), *pk,
+                          miner_account.balance(), miner_account.nonce(), 0, 0, 0, 0);
+            }
+        }
+
+        return b;
     }
 
 

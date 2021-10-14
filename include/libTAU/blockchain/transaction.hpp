@@ -18,6 +18,7 @@ see LICENSE file.
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
 #include "libTAU/kademlia/types.hpp"
+#include <libTAU/sha1_hash.hpp>
 
 namespace libTAU::blockchain {
     enum tx_version {

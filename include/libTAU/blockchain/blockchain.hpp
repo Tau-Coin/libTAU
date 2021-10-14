@@ -20,6 +20,7 @@ see LICENSE file.
 #include "libTAU/aux_/deadline_timer.hpp"
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/kademlia/item.hpp"
+#include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/repository.hpp"
 
 namespace libTAU::blockchain {
@@ -53,6 +54,10 @@ namespace libTAU::blockchain {
         // stop
         bool stop();
 
+        bool follow_chain(const aux::bytes &chain_id);
+
+        bool load_chain(const aux::bytes &chain_id);
+
     private:
         // initialize member variables
         bool init();
@@ -70,6 +75,8 @@ namespace libTAU::blockchain {
 
         void refresh_timeout(error_code const& e);
 
+        void try_to_refresh_unchoked_peers(const aux::bytes &chain_id, error_code const& e);
+
         // select a chain randomly
         aux::bytes select_chain_randomly();
 
@@ -77,7 +84,9 @@ namespace libTAU::blockchain {
         dht::public_key select_peer_randomly(const aux::bytes &chain_id);
 
         // select a peer randomly
-        std::set<dht::public_key> select_unchoked_peers(const aux::bytes &chain_id, std::int64_t block_number);
+        std::set<dht::public_key> select_unchoked_peers(const aux::bytes &chain_id);
+
+        block try_to_mine_block(const aux::bytes &chain_id);
 
         // io context
         io_context& m_ioc;
@@ -101,6 +110,18 @@ namespace libTAU::blockchain {
 
         // all chain peers
         std::map<aux::bytes, std::set<dht::public_key>> m_chain_peers;
+
+        // un-choked peers
+        std::map<aux::bytes, std::set<dht::public_key>> m_unchoked_peers;
+
+        // update un-choked peers time
+        std::map<aux::bytes, std::int64_t> m_update_peer_time;
+
+        // best tip blocks
+        std::map<aux::bytes, block> m_best_tip_blocks;
+
+        // best tail blocks
+        std::map<aux::bytes, block> m_best_tail_blocks;
 
     };
 }
