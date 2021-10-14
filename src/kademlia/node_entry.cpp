@@ -37,6 +37,8 @@ namespace libTAU { namespace dht {
 		if (new_rtt == 0xffff) return;
 		if (rtt == 0xffff) rtt = std::uint16_t(new_rtt);
 		else rtt = std::uint16_t(int(rtt) * 2 / 3 + new_rtt / 3);
+
+		reset_invoke_failed();
 	}
 
 }}

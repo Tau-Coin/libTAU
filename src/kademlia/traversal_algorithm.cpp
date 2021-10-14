@@ -18,6 +18,7 @@ see LICENSE file.
 #include <libTAU/kademlia/dht_settings.hpp>
 #include <libTAU/kademlia/io.hpp>
 #include <libTAU/aux_/socket_io.hpp> // for read_*_endpoint
+#include <libTAU/aux_/random.hpp>
 #include <libTAU/alert_types.hpp> // for dht_lookup
 #include <libTAU/aux_/time.hpp>
 
@@ -61,6 +62,9 @@ traversal_algorithm::traversal_algorithm(node& dht_node, node_id const& target)
 	: m_node(dht_node)
 	, m_target(target)
 {
+
+	m_branch_factor = aux::numeric_cast<std::int8_t>(m_node.branch_factor());
+	m_invoke_limit = aux::numeric_cast<std::int8_t>(m_node.invoke_limit());
 #ifndef TORRENT_DISABLE_LOGGING
 	m_id = m_node.search_id();
 	dht_observer* logger = get_node().observer();
@@ -234,7 +238,6 @@ void traversal_algorithm::add_entry(node_id const& id
 				// calling finished() or failed()
 				ptr->flags |= observer::flag_done;
 				TORRENT_ASSERT(m_invoke_count > 0);
-				--m_invoke_count;
 			}
 
 #if TORRENT_USE_ASSERTS
@@ -294,8 +297,32 @@ void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 	// let the routing table know this node may exist
 	m_node.m_table.heard_about(id, addr);
 
+	node_entry *existing;
+	std::tie(existing, std::ignore, std::ignore) = m_node.m_table.find_node(addr);
+
+#ifndef TORRENT_DISABLE_LOGGING
+	if (logger != nullptr && logger->should_log(dht_logger::traversal))
+	{
+		if (existing != nullptr)
+		{
+			logger->log(dht_logger::traversal
+				, "[%u] NODE id: %s addr: %s distance: %d allow-invoke: %s type: %s"
+				, m_id, aux::to_hex(id).c_str(), aux::print_endpoint(addr).c_str()
+				, distance_exp(m_target, id)
+				, existing->allow_invoke() ? "true" : "false", name());
+		}
+		else
+		{
+			logger->log(dht_logger::traversal
+				, "[%u] NODE id: %s addr: %s not found, type: %s"
+				, m_id, aux::to_hex(id).c_str(), aux::print_endpoint(addr).c_str()
+				, name());
+		}
+	}
+#endif
+
 	// only accept other nodes when target nodes are not specified.
-	if (!m_direct_invoking)
+	if (!m_direct_invoking && (existing != nullptr && existing->allow_invoke()))
 	{
 		add_entry(id, addr, {});
 	}
@@ -320,8 +347,6 @@ void traversal_algorithm::finished(observer_ptr o)
 	o->flags |= observer::flag_alive;
 
 	++m_responses;
-	TORRENT_ASSERT(m_invoke_count > 0);
-	--m_invoke_count;
 	bool const is_done = add_requests();
 	if (is_done) done();
 }
@@ -372,7 +397,13 @@ void traversal_algorithm::failed(observer_ptr o, traversal_flags_t const flags)
 
 		++m_timeouts;
 		TORRENT_ASSERT(m_invoke_count > 0);
-		--m_invoke_count;
+
+		node_entry *existing;
+		std::tie(existing, std::ignore, std::ignore) = m_node.m_table.find_node(o->target_ep());
+		if (existing != nullptr)
+		{
+			existing->invoke_failed();
+		}
 	}
 
 	// this is another reason to decrement the branch factor, to prevent another
@@ -458,6 +489,7 @@ void traversal_algorithm::done()
 	m_results.clear();
 	m_sorted_results = 0;
 	m_invoke_count = 0;
+	m_invoke_failed = 0;
 }
 
 bool traversal_algorithm::add_requests()
@@ -485,8 +517,6 @@ bool traversal_algorithm::add_requests()
 		return true;
 	}
 
-	int results_target = m_node.m_table.bucket_size();
-
 	// this only counts outstanding requests at the top of the
 	// target list. This is <= m_invoke count. m_invoke_count
 	// is the total number of outstanding requests, including
@@ -494,10 +524,55 @@ bool traversal_algorithm::add_requests()
 	// the current point we've reached in the search.
 	int outstanding = 0;
 
-	// if we're doing aggressive lookups, we keep branch-factor
-	// outstanding requests _at the tops_ of the result list. Otherwise
-	// we just keep any branch-factor outstanding requests
-	bool const agg = m_node.settings().get_bool(settings_pack::dht_aggressive_lookups);
+	int has_invoked = 0;
+
+	// if the first 'invoke_limit' nodes are all invoked, just return true;
+	int j = 0;
+
+	if (m_invoke_count < m_invoke_limit)
+	{
+		for (auto i = m_results.begin(), end(m_results.end());
+			i != end && j < m_invoke_limit;
+			++i)
+		{
+			j++;
+
+			observer* o = i->get();
+			if (o->flags & observer::flag_alive)
+			{
+				TORRENT_ASSERT(o->flags & observer::flag_queried);
+				has_invoked++;
+				continue;
+			}
+			if (o->flags & observer::flag_queried)
+			{
+				// if it's queried, not alive and not failed, it
+				// must be currently in flight
+				if (!(o->flags & observer::flag_failed))
+					++outstanding;
+
+				has_invoked++;
+				continue;
+			}
+		}
+
+		if (outstanding == 0
+			&& (has_invoked >= m_invoke_limit || has_invoked == int(m_results.size())))
+		{
+			return true;
+		}
+		else if (outstanding != 0
+			&& (has_invoked >= m_invoke_limit || has_invoked == int(m_results.size())))
+		{
+			return false;
+		}
+	}
+
+	// this only counts invoking requests for once calling this function.
+	int invokes = 0;
+
+	std::uint32_t random_max = int(m_results.size()) >= m_invoke_limit ?
+			std::uint32_t(m_invoke_limit) - 1 : std::uint32_t(m_results.size()) - 1;
 
 	// Find the first node that hasn't already been queried.
 	// and make sure that the 'm_branch_factor' top nodes
@@ -507,27 +582,25 @@ bool traversal_algorithm::add_requests()
 	// limits the number of outstanding requests, this limits the
 	// number of good outstanding requests. It will use more traffic,
 	// but is intended to speed up lookups
-	for (auto i = m_results.begin()
-		, end(m_results.end()); i != end
-		&& results_target > 0
-		&& (agg ? outstanding < m_branch_factor
-			: m_invoke_count < m_branch_factor);
-		++i)
+	while (invokes < m_branch_factor
+		&& m_invoke_count < m_invoke_limit
+		&& m_invoke_count < (aux::numeric_cast<std::int16_t>(m_results.size()))
+		&& m_responses + m_timeouts + outstanding + m_invoke_failed
+			< (aux::numeric_cast<std::int16_t>(m_results.size()))
+	)
 	{
-		observer* o = i->get();
+		// generate random
+		std::uint32_t const r = aux::random(random_max);
+		observer* o = (m_results.begin() + r)->get();
+
 		if (o->flags & observer::flag_alive)
 		{
 			TORRENT_ASSERT(o->flags & observer::flag_queried);
-			--results_target;
 			continue;
 		}
+
 		if (o->flags & observer::flag_queried)
 		{
-			// if it's queried, not alive and not failed, it
-			// must be currently in flight
-			if (!(o->flags & observer::flag_failed))
-				++outstanding;
-
 			continue;
 		}
 
@@ -536,34 +609,50 @@ bool traversal_algorithm::add_requests()
 		if (logger != nullptr && logger->should_log(dht_logger::traversal))
 		{
 			logger->log(dht_logger::traversal
-				, "[%u] INVOKE nodes-left: %d top-invoke-count: %d "
-				"invoke-count: %d branch-factor: %d "
+				, "[%u] INVOKE node-index: %d top-invoke-count: %d "
+				"invoke-count: %d branch-factor: %d invoke-limit: %d "
 				"distance: %d id: %s addr: %s type: %s"
-				, m_id, int(m_results.end() - i), outstanding, int(m_invoke_count)
-				, int(m_branch_factor), distance_exp(m_target, o->id()), aux::to_hex(o->id()).c_str()
+				, m_id, r, outstanding, int(m_invoke_count)
+				, int(m_branch_factor), int(m_invoke_limit)
+				, distance_exp(m_target, o->id()), aux::to_hex(o->id()).c_str()
 				, aux::print_address(o->target_addr()).c_str(), name());
 		}
 #endif
 
 		o->flags |= observer::flag_queried;
-		if (invoke(*i))
+		if (invoke(*(m_results.begin() + r)))
 		{
 			TORRENT_ASSERT(m_invoke_count < std::numeric_limits<std::int8_t>::max());
-			++m_invoke_count;
 			++outstanding;
+			++invokes;
 		}
 		else
 		{
 			o->flags |= observer::flag_failed;
+			++m_invoke_failed;
+
+			if (!(o->flags & observer::flag_no_id))
+				m_node.m_table.node_failed(o->id(), o->target_ep());
 		}
+
+		++m_invoke_count;
 	}
 
-	// this is the completion condition. If we found m_node.m_table.bucket_size()
-	// (i.e. k=8) completed results, without finding any still
-	// outstanding requests, we're done.
-	// also, if invoke count is 0, it means we didn't even find 'k'
-	// working nodes, we still have to terminate though.
-	return (results_target == 0 && outstanding == 0) || m_invoke_count == 0;
+	// 1. m_responses + m_timeouts + m_invoke_failed >= m_invoke_limit
+	//     we have invoked enough requests and all requests were all processed.
+	// 2. m_timeouts == m_invoke_count
+	//     all the requests were timeout.
+	// 3. m_responses + m_timeouts + m_invoke_failed = m_results.size()
+	//     the total size of m_results is less than m_invoke_limit
+	//     and all requests were all processed.
+	// 4. if invoke count is 0, it means we didn't even find any
+	//     working nodes, we still have to terminate though.
+	return (outstanding == 0 && (m_responses + m_timeouts + m_invoke_failed >= m_invoke_limit))
+			|| (outstanding == 0 && m_invoke_count != 0 && m_timeouts == m_invoke_count)
+			|| (outstanding == 0 && m_invoke_count != 0
+					&& (m_responses + m_timeouts + m_invoke_failed
+							== aux::numeric_cast<std::int16_t>(m_results.size())))
+			|| m_invoke_count == 0;
 }
 
 void traversal_algorithm::add_router_entries()
@@ -583,7 +672,6 @@ void traversal_algorithm::add_router_entries()
 
 void traversal_algorithm::init()
 {
-	m_branch_factor = aux::numeric_cast<std::int8_t>(m_node.branch_factor());
 	m_node.add_traversal_algorithm(this);
 }
 

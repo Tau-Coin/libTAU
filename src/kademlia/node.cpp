@@ -101,6 +101,8 @@ node::~node() = default;
 
 int node::branch_factor() const { return m_settings.get_int(settings_pack::dht_search_branching); }
 
+int node::invoke_limit() const { return m_settings.get_int(settings_pack::dht_invoke_limit); }
+
 bool node::verify_token(string_view token, sha256_hash const& info_hash
 	, udp::endpoint const& addr) const
 {
@@ -416,6 +418,9 @@ void node::get_item(sha256_hash const& target
 		, std::bind(f, _1), find_data::nodes_callback());
 	// set target endpoints instead of depth traversal
 	ta->set_direct_endpoints(eps);
+	// invoke as soon as possible
+	ta->set_branch_factor(eps.size());
+	ta->set_invoke_limit(eps.size());
 	ta->start();
 }
 

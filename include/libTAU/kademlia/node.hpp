@@ -172,6 +172,8 @@ public:
 
 	int branch_factor() const;
 
+	int invoke_limit() const;
+
 	void add_traversal_algorithm(traversal_algorithm* a)
 	{
 		std::lock_guard<std::mutex> l(m_mutex);

@@ -1908,6 +1908,10 @@ namespace aux {
 			// alpha in the kademlia paper
 			dht_search_branching,
 
+			// the request total number limit for one dht operation(etc. get_peers, get, put).
+			// This parameter is called beta factor in libTAU implementation.
+			dht_invoke_limit,
+
 			// the maximum number of failed tries to contact a node before it is
 			// removed from the routing table. If there are known working nodes that
 			// are ready to replace a failing node, it will be replaced immediately,

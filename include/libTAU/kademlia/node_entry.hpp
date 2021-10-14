@@ -45,6 +45,24 @@ struct TORRENT_EXPORT node_entry
 		return std::make_tuple(!verified, rtt) < std::make_tuple(!rhs.verified, rhs.rtt);
 	}
 
+	void invoke_failed()
+	{
+		invoke_fail_count++;
+		last_invoke_failed = aux::time_now();
+	}
+
+	bool allow_invoke()
+	{
+		return invoke_fail_count < 10
+			|| last_invoke_failed + minutes(5) < aux::time_now();
+	}
+
+	void reset_invoke_failed()
+	{
+		invoke_fail_count = 0;
+		last_invoke_failed = min_time();
+	}
+
 #ifndef TORRENT_DISABLE_LOGGING
 	time_point first_seen = aux::time_now();
 #endif
@@ -65,6 +83,10 @@ struct TORRENT_EXPORT node_entry
 	std::uint8_t timeout_count = 0xff;
 
 	bool verified = false;
+
+	time_point last_invoke_failed = min_time();
+
+	int invoke_fail_count = 0;
 };
 
 } // namespace libTAU::dht

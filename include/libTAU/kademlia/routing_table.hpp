@@ -194,6 +194,12 @@ public:
 		, find_nodes_flags_t options, int count = 0);
 	void remove_node(node_entry* n, bucket_t* b);
 
+	// return a pointer the node_entry with the given endpoint
+	// or 0 if we don't have such a node. Both the address and the
+	// port has to match
+	std::tuple<node_entry*, routing_table::table_t::iterator, bucket_t*>
+	find_node(udp::endpoint const& ep);
+
 	int bucket_size(int bucket) const
 	{
 		int num_buckets = int(m_buckets.size());
@@ -260,12 +266,6 @@ private:
 	void remove_node_internal(node_entry* n, bucket_t& b);
 
 	void split_bucket();
-
-	// return a pointer the node_entry with the given endpoint
-	// or 0 if we don't have such a node. Both the address and the
-	// port has to match
-	std::tuple<node_entry*, routing_table::table_t::iterator, bucket_t*>
-	find_node(udp::endpoint const& ep);
 
 	// if the bucket is not full, try to fill it with nodes from the
 	// replacement list
