@@ -20,8 +20,11 @@ see LICENSE file.
 #include "libTAU/aux_/deadline_timer.hpp"
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/kademlia/item.hpp"
+#include "libTAU/kademlia/node_entry.hpp"
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/repository.hpp"
+#include "libTAU/blockchain/repository_impl.hpp"
+#include "libTAU/blockchain/repository_track.hpp"
 
 namespace libTAU::blockchain {
 
@@ -30,24 +33,31 @@ namespace libTAU::blockchain {
     // default refresh time of main task(50)(ms)
     constexpr int blockchain_default_refresh_time = 50;
 
-//#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
+    // salt length (first 16 bytes of public key)
+    constexpr int blockchain_salt_length = 16;
+
+    //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
     // This is the basic logging and debug interface offered by the blockchain.
     // a release build with logging disabled (which is the default) will
     // not have this class at all
     struct TORRENT_EXTRA_EXPORT blockchain_logger
-    {
-//#ifndef TORRENT_DISABLE_LOGGING
+            {
+        //#ifndef TORRENT_DISABLE_LOGGING
         virtual bool should_log() const = 0;
         virtual void log(char const* fmt, ...) const TORRENT_FORMAT(2,3) = 0;
-//#endif
-    protected:
-        ~blockchain_logger() {}
-    };
-//#endif // TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
+        //#endif
+            protected:
+                ~blockchain_logger() {}
+            };
+    //#endif // TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
 
     class TORRENT_EXPORT blockchain final:
             public std::enable_shared_from_this<blockchain>, blockchain_logger  {
     public:
+        blockchain(io_context& mIoc, aux::session_interface &mSes) :
+        m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
+            m_repository = std::make_shared<repository_impl>(m_ses.sqldb(), m_ses.kvdb());
+        }
         // start blockchain
         bool start();
 
@@ -68,14 +78,14 @@ namespace libTAU::blockchain {
         std::shared_ptr<blockchain> self()
         { return shared_from_this(); }
 
-//#ifndef TORRENT_DISABLE_LOGGING
+        //#ifndef TORRENT_DISABLE_LOGGING
         bool should_log() const override;
         void log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
-//#endif
+        //#endif
 
         void refresh_timeout(error_code const& e);
 
-        void try_to_refresh_unchoked_peers(const aux::bytes &chain_id, error_code const& e);
+        void try_to_refresh_unchoked_peers(const aux::bytes &chain_id);
 
         // select a chain randomly
         aux::bytes select_chain_randomly();
@@ -87,6 +97,37 @@ namespace libTAU::blockchain {
         std::set<dht::public_key> select_unchoked_peers(const aux::bytes &chain_id);
 
         block try_to_mine_block(const aux::bytes &chain_id);
+
+        // make a salt on mutable channel
+        static std::string make_salt(const aux::bytes &chain_id);
+
+        // request signal from a given peer
+        void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        // publish online/new message signal to a given peer
+        void publish_signal(const aux::bytes& peer);
+
+        // immutable data callback
+        void get_immutable_callback(aux::bytes const& peer, sha256_hash target, dht::item const& i);
+
+        // mutable data callback
+        void get_mutable_callback(dht::item const& i, bool);
+
+        // get immutable item from dht
+        void dht_get_immutable_item(aux::bytes const& peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
+
+        // get mutable item from dht
+        void dht_get_mutable_item(std::array<char, 32> key
+                                  , std::string salt = std::string());
+
+        // put immutable item to dht
+        void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
+
+        // put mutable item to dht
+        void dht_put_mutable_item(std::array<char, 32> key
+                                  , std::function<void(entry&, std::array<char,64>&
+                                          , std::int64_t&, std::string const&)> cb
+                                          , std::string salt = std::string());
 
         // io context
         io_context& m_ioc;

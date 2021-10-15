@@ -8,6 +8,7 @@ see LICENSE file.
 
 #include "libTAU/blockchain/blockchain.hpp"
 #include "libTAU/blockchain/consensus.hpp"
+#include "libTAU/kademlia/dht_tracker.hpp"
 
 
 using namespace std::placeholders;
@@ -88,8 +89,15 @@ namespace libTAU::blockchain {
             aux::bytes chain_id = select_chain_randomly();
             if (!chain_id.empty()) {
                 log("INFO: Select chain:%s", aux::toHex(chain_id).c_str());
-//                request_signal(peer);
-//                publish_signal(peer);
+                try_to_refresh_unchoked_peers(chain_id);
+                auto& unchoked_peers = m_unchoked_peers[chain_id];
+                std::set<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
+                auto p = select_peer_randomly(chain_id);
+                peers.insert(p);
+                for (auto const& peer: peers) {
+                    request_signal(chain_id, peer);
+//                    publish_signal(peer);
+                }
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
@@ -100,7 +108,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::try_to_refresh_unchoked_peers(const aux::bytes &chain_id, const error_code &e) {
+    void blockchain::try_to_refresh_unchoked_peers(const aux::bytes &chain_id) {
         std::int64_t now = total_seconds(system_clock::now().time_since_epoch());
         if (now / DEFAULT_BLOCK_TIME != m_update_peer_time[chain_id]) {
             auto peers = select_unchoked_peers(chain_id);
@@ -225,12 +233,154 @@ namespace libTAU::blockchain {
                           (best_tip_block.timestamp() + interval), best_tip_block.block_number() + 1,
                           best_tip_block.sha256(), base_target, 0, genSig, transaction(), *pk,
                           miner_account.balance(), miner_account.nonce(), 0, 0, 0, 0);
+                b.sign(*pk, *sk);
             }
         }
 
         return b;
     }
 
+    std::string blockchain::make_salt(const aux::bytes &chain_id) {
+        std::string salt(chain_id.begin(), chain_id.begin() + blockchain_salt_length);
+
+        return salt;
+    }
+
+    void blockchain::request_signal(const aux::bytes &chain_id, const dht::public_key &peer) {
+//        dht::public_key * my_pk = m_ses.pubkey();
+//        aux::bytes public_key(my_pk->bytes.begin(), my_pk->bytes.end());
+//
+//        // salt is x pubkey when request signal
+//        auto salt = make_salt(public_key);
+//
+//        std::array<char, 32> pk{};
+//        std::copy(peer.begin(), peer.end(), pk.begin());
+//
+//        log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer).c_str(), aux::toHex(salt).c_str());
+//        dht_get_mutable_item(pk, salt);
+    }
+
+    void blockchain::publish_signal(const aux::bytes &peer) {
+
+    }
+
+    // callback for dht_immutable_get
+    void blockchain::get_immutable_callback(aux::bytes const& peer, sha256_hash target
+            , dht::item const& i)
+    {
+        log("DEBUG: Immutable callback");
+        TORRENT_ASSERT(!i.is_mutable());
+        if (!i.empty()) {
+            log("INFO: Got immutable data callback, target[%s].", aux::toHex(target.to_string()).c_str());
+
+//            message msg(i.value());
+//
+//            add_new_message(peer, msg, true);
+        }
+    }
+
+    void blockchain::dht_get_immutable_item(aux::bytes const& peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
+    {
+        if (!m_ses.dht()) return;
+        log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
+        m_ses.dht()->get_item(target, eps, std::bind(&blockchain::get_immutable_callback
+                , this, peer, target, _1));
+    }
+
+    // callback for dht_mutable_get
+    void blockchain::get_mutable_callback(dht::item const& i
+            , bool const authoritative)
+    {
+        TORRENT_ASSERT(i.is_mutable());
+
+        // construct mutable data wrapper from entry
+        if (!i.empty()) {
+            dht::public_key * pk = m_ses.pubkey();
+            aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
+
+            aux::bytes peer(i.pk().bytes.begin(), i.pk().bytes.end());
+        }
+    }
+
+    // key is a 32-byte binary string, the public key to look up.
+    // the salt is optional
+    void blockchain::dht_get_mutable_item(std::array<char, 32> key
+            , std::string salt)
+    {
+        if (!m_ses.dht()) return;
+        m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&blockchain::get_mutable_callback
+                , this, _1, _2), std::move(salt));
+    }
+
+    namespace {
+
+        void on_dht_put_immutable_item(aux::alert_manager& alerts, sha256_hash target, int num)
+        {
+        }
+
+        void put_mutable_data(entry& e, std::array<char, 64>& sig
+                , std::int64_t& ts
+                , std::string const& salt
+                , std::array<char, 32> const& pk
+                , std::array<char, 64> const& sk
+                , entry const& data)
+        {
+            using lt::dht::sign_mutable_item;
+
+            e = data;
+            std::vector<char> buf;
+            // bencode要发布的mutable data
+            bencode(std::back_inserter(buf), e);
+            dht::signature sign;
+            // get unix timestamp
+            ts = libTAU::aux::utcTime();
+            // 对编码完成之后的数据(data + salt + ts)进行签名
+            sign = sign_mutable_item(buf, salt, dht::timestamp(ts)
+                    , dht::public_key(pk.data())
+                    , dht::secret_key(sk.data()));
+            sig = sign.bytes;
+        }
+
+        void on_dht_put_mutable_item(aux::alert_manager& alerts, dht::item const& i, int num)
+        {
+        }
+
+        void put_mutable_callback(dht::item& i
+                , std::function<void(entry&, std::array<char, 64>&
+                , std::int64_t&, std::string const&)> cb)
+        {
+            entry value = i.value();
+            dht::signature sig = i.sig();
+            dht::public_key pk = i.pk();
+            dht::timestamp ts = i.ts();
+            std::string salt = i.salt();
+            // 提取item信息，交给cb处理
+            cb(value, sig.bytes, ts.value, salt);
+            // 使用新生成的item信息替换旧的item
+            i.assign(std::move(value), salt, ts, pk, sig);
+        }
+    } // anonymous namespace
+
+    void blockchain::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
+    {
+        if (!m_ses.dht()) return;
+        log("INFO: Put immutable item target[%s], entries[%zu], data[%s]",
+            aux::toHex(target.to_string()).c_str(), eps.size(), data.to_string().c_str());
+
+        m_ses.dht()->put_item(data,  eps, std::bind(&on_dht_put_immutable_item, std::ref(m_ses.alerts())
+                , target, _1));
+    }
+
+    void blockchain::dht_put_mutable_item(std::array<char, 32> key
+            , std::function<void(entry&, std::array<char,64>&
+            , std::int64_t&, std::string const&)> cb
+            , std::string salt)
+    {
+        if (!m_ses.dht()) return;
+        m_ses.dht()->put_item(dht::public_key(key.data())
+                , std::bind(&on_dht_put_mutable_item, std::ref(m_ses.alerts()), _1, _2)
+                , std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
+    }
 
     bool blockchain::should_log() const
     {
