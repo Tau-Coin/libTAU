@@ -89,15 +89,24 @@ namespace libTAU::blockchain {
             aux::bytes chain_id = select_chain_randomly();
             if (!chain_id.empty()) {
                 log("INFO: Select chain:%s", aux::toHex(chain_id).c_str());
+
+                block b = try_to_mine_block(chain_id);
+
+                if (!b.empty()) {
+                    process_block(chain_id, b);
+                }
+
                 try_to_refresh_unchoked_peers(chain_id);
+
                 auto& unchoked_peers = m_unchoked_peers[chain_id];
                 std::set<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
                 auto p = select_peer_randomly(chain_id);
                 peers.insert(p);
                 for (auto const& peer: peers) {
                     request_signal(chain_id, peer);
-//                    publish_signal(peer);
                 }
+
+                publish_signal(chain_id);
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
@@ -158,8 +167,8 @@ namespace libTAU::blockchain {
         if (chain_peers.size() > 1) {
             auto r_iterator = chain_peers.find(*pk);
             auto l_iterator = r_iterator;
-            std::int64_t second = total_seconds(system_clock::now().time_since_epoch());
-            auto offset = (second / DEFAULT_BLOCK_TIME) % chain_peers.size();
+            std::int64_t now = total_seconds(system_clock::now().time_since_epoch());
+            auto offset = (now / DEFAULT_BLOCK_TIME) % chain_peers.size();
             for (auto i = 0; i < offset; i++) {
                 r_iterator++;
                 if (r_iterator == chain_peers.end()) {
@@ -240,6 +249,10 @@ namespace libTAU::blockchain {
         return b;
     }
 
+    bool blockchain::process_block(const aux::bytes &chain_id, block b) {
+        return false;
+    }
+
     std::string blockchain::make_salt(const aux::bytes &chain_id) {
         std::string salt(chain_id.begin(), chain_id.begin() + blockchain_salt_length);
 
@@ -247,20 +260,14 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::request_signal(const aux::bytes &chain_id, const dht::public_key &peer) {
-//        dht::public_key * my_pk = m_ses.pubkey();
-//        aux::bytes public_key(my_pk->bytes.begin(), my_pk->bytes.end());
-//
-//        // salt is x pubkey when request signal
-//        auto salt = make_salt(public_key);
-//
-//        std::array<char, 32> pk{};
-//        std::copy(peer.begin(), peer.end(), pk.begin());
-//
-//        log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer).c_str(), aux::toHex(salt).c_str());
-//        dht_get_mutable_item(pk, salt);
+        // salt is x pubkey when request signal
+        auto salt = make_salt(chain_id);
+
+        log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer).c_str(), aux::toHex(salt).c_str());
+        dht_get_mutable_item(peer.bytes, salt);
     }
 
-    void blockchain::publish_signal(const aux::bytes &peer) {
+    void blockchain::publish_signal(const aux::bytes &chain_id) {
 
     }
 

@@ -98,6 +98,8 @@ namespace libTAU::blockchain {
 
         block try_to_mine_block(const aux::bytes &chain_id);
 
+        bool process_block(const aux::bytes &chain_id, block b);
+
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id);
 
@@ -105,7 +107,7 @@ namespace libTAU::blockchain {
         void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // publish online/new message signal to a given peer
-        void publish_signal(const aux::bytes& peer);
+        void publish_signal(const aux::bytes &chain_id);
 
         // immutable data callback
         void get_immutable_callback(aux::bytes const& peer, sha256_hash target, dht::item const& i);
