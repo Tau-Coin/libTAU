@@ -198,10 +198,6 @@ namespace libTAU::aux {
 
 		virtual void inc_boost_connections() = 0;
 
-#if TORRENT_USE_SSL
-		virtual ssl::context* ssl_ctx() = 0 ;
-#endif
-
 		virtual bool announce_dht() const = 0;
 		virtual bool has_dht() const = 0;
 		virtual int external_udp_port(address const& local_address) const = 0;

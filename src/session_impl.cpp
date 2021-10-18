@@ -410,12 +410,9 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		, session_flags_t const flags)
 		: m_settings(pack)
 		, m_io_context(ioc)
-#if TORRENT_USE_SSL
-		, m_ssl_ctx(ssl::context::tls_client)
 #ifdef TORRENT_SSL_PEERS
 		, m_peer_ssl_ctx(ssl::context::tls)
 #endif
-#endif // TORRENT_USE_SSL
 		, m_alerts(m_settings.get_int(settings_pack::alert_queue_size)
 			, alert_category_t{static_cast<unsigned int>(m_settings.get_int(settings_pack::alert_mask))})
 		, m_host_resolver(m_io_context)
@@ -3535,23 +3532,6 @@ namespace {
 	{
 		m_alerts.set_alert_mask(alert_category_t(
 			static_cast<std::uint32_t>(m_settings.get_int(settings_pack::alert_mask))));
-	}
-
-	void session_impl::update_validate_https()
-	{
-#if TORRENT_USE_SSL
-		auto const flags = m_settings.get_bool(settings_pack::validate_https_trackers)
-			? ssl::context::verify_peer
-				| ssl::context::verify_fail_if_no_peer_cert
-				| ssl::context::verify_client_once
-			: ssl::context::verify_none;
-		error_code ec;
-		m_ssl_ctx.set_verify_mode(flags, ec);
-
-#ifndef TORRENT_DISABLE_LOGGING
-		if (ec) session_log("SSL set_verify_mode failed: %s", ec.message().c_str());
-#endif
-#endif
 	}
 
 	void session_impl::pop_alerts(std::vector<alert*>* alerts)

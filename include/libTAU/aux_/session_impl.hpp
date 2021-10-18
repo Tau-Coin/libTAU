@@ -606,7 +606,6 @@ namespace aux {
 			void update_socket_buffer_size();
 			void update_connections_limit();
 			void update_alert_mask();
-			void update_validate_https();
 
 			void new_account_seed(std::array<char, 32>& seed);
 			void set_loop_time_interval(int milliseconds);
@@ -640,11 +639,6 @@ namespace aux {
 			counters m_stats_counters;
 
 			io_context& m_io_context;
-
-#if TORRENT_USE_SSL
-			// this is a generic SSL context used when talking to HTTPS servers
-			ssl::context m_ssl_ctx;
-#endif
 
 #ifdef TORRENT_SSL_PEERS
 			// this is the SSL context used for SSL listen sockets. It doesn't
@@ -736,9 +730,6 @@ namespace aux {
 			// we might need more than one listen socket
 			std::vector<std::shared_ptr<listen_socket_t>> m_listen_sockets;
 
-#if TORRENT_USE_SSL
-			ssl::context* ssl_ctx() override { return &m_ssl_ctx; }
-#endif
 #ifdef TORRENT_SSL_PEERS
 			void on_incoming_utp_ssl(socket_type s);
 			void ssl_handshake(error_code const& ec, socket_type* s);
