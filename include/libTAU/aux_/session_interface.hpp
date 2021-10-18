@@ -140,7 +140,6 @@ namespace libTAU::aux {
 		virtual void deferred_submit_jobs() = 0;
 
 		virtual std::uint16_t listen_port() const = 0;
-		virtual std::uint16_t ssl_listen_port() const = 0;
 
 		virtual int listen_port(aux::transport ssl, address const& local_addr) = 0;
 
@@ -197,10 +196,6 @@ namespace libTAU::aux {
 		static constexpr std::size_t num_torrent_lists = 8;
 
 		virtual void inc_boost_connections() = 0;
-
-#if TORRENT_USE_SSL
-		virtual ssl::context* ssl_ctx() = 0 ;
-#endif
 
 		virtual bool announce_dht() const = 0;
 		virtual bool has_dht() const = 0;

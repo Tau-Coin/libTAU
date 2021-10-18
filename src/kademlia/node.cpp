@@ -1000,7 +1000,10 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 			write_nodes_entries(target, msg_keys[7], reply);
 		}
 
-		m_table.node_seen(id, m.addr, 0xffff);
+		if (!read_only)
+		{
+			m_table.node_seen(id, m.addr, 0xffff);
+		}
 	}
 	else if (query == "get")
 	{

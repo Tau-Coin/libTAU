@@ -410,12 +410,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		, session_flags_t const flags)
 		: m_settings(pack)
 		, m_io_context(ioc)
-#if TORRENT_USE_SSL
-		, m_ssl_ctx(ssl::context::tls_client)
-#ifdef TORRENT_SSL_PEERS
-		, m_peer_ssl_ctx(ssl::context::tls)
-#endif
-#endif // TORRENT_USE_SSL
 		, m_alerts(m_settings.get_int(settings_pack::alert_queue_size)
 			, alert_category_t{static_cast<unsigned int>(m_settings.get_int(settings_pack::alert_mask))})
 		, m_host_resolver(m_io_context)
@@ -594,15 +588,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 			sqlite3_close_v2(m_sqldb);
 			m_sqldb = nullptr;
 		}
-
-#ifdef TORRENT_SSL_PEERS
-		for (auto const& s : m_incoming_sockets)
-		{
-			s->close(ec);
-			TORRENT_ASSERT(!ec);
-		}
-		m_incoming_sockets.clear();
-#endif
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log(" aborting all tracker requests");
@@ -842,13 +827,13 @@ namespace {
 		listen_endpoint_t const& lep, error_code& ec)
 	{
 		int retries = m_settings.get_int(settings_pack::max_retry_port_bind);
-		tcp::endpoint bind_ep(lep.addr, std::uint16_t(lep.port));
+		udp::endpoint udp_bind_ep(lep.addr, std::uint16_t(lep.port));
 
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
 			session_log("attempting to open listen socket to: %s on device: %s %s%s%s%s%s"
-				, print_endpoint(bind_ep).c_str(), lep.device.c_str()
+				, print_endpoint(udp_bind_ep).c_str(), lep.device.c_str()
 				, (lep.ssl == transport::ssl) ? "ssl " : ""
 				, (lep.flags & listen_socket_t::local_network) ? "local-network " : ""
 				, (lep.flags & listen_socket_t::accept_incoming) ? "accept-incoming " : "no-incoming "
@@ -859,7 +844,7 @@ namespace {
 
 		auto ret = std::make_shared<listen_socket_t>();
 		ret->ssl = lep.ssl;
-		ret->original_port = bind_ep.port();
+		ret->original_port = udp_bind_ep.port();
 		ret->flags = lep.flags;
 		ret->netmask = lep.netmask;
 		operation_t last_op = operation_t::unknown;
@@ -868,208 +853,10 @@ namespace {
 			? socket_type_t::tcp_ssl
 			: socket_type_t::tcp;
 
-		// if we're in force-proxy mode, don't open TCP listen sockets. We cannot
-		// accept connections on our local machine in this case.
-		// TODO: 3 the logic in this if-block should be factored out into a
-		// separate function. At least most of it
-		if (ret->flags & listen_socket_t::accept_incoming)
-		{
-			ret->sock = std::make_shared<tcp::acceptor>(m_io_context);
-			ret->sock->open(bind_ep.protocol(), ec);
-			last_op = operation_t::sock_open;
-			if (ec)
-			{
-#ifndef TORRENT_DISABLE_LOGGING
-				if (should_log())
-				{
-					session_log("failed to open socket: %s"
-						, ec.message().c_str());
-				}
-#endif
-
-				if (m_alerts.should_post<listen_failed_alert>())
-					m_alerts.emplace_alert<listen_failed_alert>(lep.device, bind_ep, last_op
-						, ec, sock_type);
-				return ret;
-			}
-
-#ifdef TORRENT_WINDOWS
-			{
-				// this is best-effort. ignore errors
-				error_code err;
-				ret->sock->set_option(exclusive_address_use(true), err);
-#ifndef TORRENT_DISABLE_LOGGING
-				if (err && should_log())
-				{
-					session_log("failed enable exclusive address use on listen socket: %s"
-						, err.message().c_str());
-				}
-#endif // TORRENT_DISABLE_LOGGING
-			}
-#else
-
-			{
-				// this is best-effort. ignore errors
-				error_code err;
-				ret->sock->set_option(tcp::acceptor::reuse_address(true), err);
-#ifndef TORRENT_DISABLE_LOGGING
-				if (err && should_log())
-				{
-					session_log("failed enable reuse-address on listen socket: %s"
-						, err.message().c_str());
-				}
-#endif // TORRENT_DISABLE_LOGGING
-			}
-#endif // TORRENT_WINDOWS
-
-			if (is_v6(bind_ep))
-			{
-				error_code err; // ignore errors here
-				ret->sock->set_option(boost::asio::ip::v6_only(true), err);
-#ifndef TORRENT_DISABLE_LOGGING
-				if (err && should_log())
-				{
-					session_log("failed enable v6 only on listen socket: %s"
-						, err.message().c_str());
-				}
-#endif // LOGGING
-
-#ifdef TORRENT_WINDOWS
-				// enable Teredo on windows
-				ret->sock->set_option(v6_protection_level(PROTECTION_LEVEL_UNRESTRICTED), err);
-#ifndef TORRENT_DISABLE_LOGGING
-				if (err && should_log())
-				{
-					session_log("failed enable IPv6 unrestricted protection level on "
-						"listen socket: %s", err.message().c_str());
-				}
-#endif // TORRENT_DISABLE_LOGGING
-#endif // TORRENT_WINDOWS
-			}
-
-			if (!lep.device.empty())
-			{
-				// we have an actual device we're interested in listening on, if we
-				// have SO_BINDTODEVICE functionality, use it now.
-#if TORRENT_HAS_BINDTODEVICE
-				bind_device(*ret->sock, lep.device.c_str(), ec);
-#ifndef TORRENT_DISABLE_LOGGING
-				if (ec && should_log())
-				{
-					session_log("bind to device failed (device: %s): %s"
-						, lep.device.c_str(), ec.message().c_str());
-				}
-#endif // TORRENT_DISABLE_LOGGING
-				ec.clear();
-#endif // TORRENT_HAS_BINDTODEVICE
-			}
-
-			ret->sock->bind(bind_ep, ec);
-			last_op = operation_t::sock_bind;
-
-			while (ec == error_code(error::address_in_use) && retries > 0)
-			{
-				TORRENT_ASSERT_VAL(ec, ec);
-#ifndef TORRENT_DISABLE_LOGGING
-				if (should_log())
-				{
-					session_log("failed to bind listen socket to: %s on device: %s :"
-						" [%s] (%d) %s (retries: %d)"
-						, print_endpoint(bind_ep).c_str()
-						, lep.device.c_str()
-						, ec.category().name(), ec.value(), ec.message().c_str()
-						, retries);
-				}
-#endif
-				ec.clear();
-				--retries;
-				bind_ep.port(bind_ep.port() + 1);
-				ret->sock->bind(bind_ep, ec);
-			}
-
-			if (ec == error_code(error::address_in_use)
-				&& m_settings.get_bool(settings_pack::listen_system_port_fallback)
-				&& bind_ep.port() != 0)
-			{
-				// instead of giving up, try let the OS pick a port
-				bind_ep.port(0);
-				ec.clear();
-				ret->sock->bind(bind_ep, ec);
-				last_op = operation_t::sock_bind;
-			}
-
-			if (ec)
-			{
-				// not even that worked, give up
-
-#ifndef TORRENT_DISABLE_LOGGING
-				if (should_log())
-				{
-					session_log("failed to bind listen socket to: %s on device: %s :"
-						" [%s] (%d) %s (giving up)"
-						, print_endpoint(bind_ep).c_str()
-						, lep.device.c_str()
-						, ec.category().name(), ec.value(), ec.message().c_str());
-				}
-#endif
-				if (m_alerts.should_post<listen_failed_alert>())
-				{
-					m_alerts.emplace_alert<listen_failed_alert>(lep.device, bind_ep
-						, last_op, ec, sock_type);
-				}
-				ret->sock.reset();
-				return ret;
-			}
-			ret->local_endpoint = ret->sock->local_endpoint(ec);
-			last_op = operation_t::getname;
-			if (ec)
-			{
-#ifndef TORRENT_DISABLE_LOGGING
-				if (should_log())
-				{
-					session_log("get_sockname failed on listen socket: %s"
-						, ec.message().c_str());
-				}
-#endif
-				if (m_alerts.should_post<listen_failed_alert>())
-				{
-					m_alerts.emplace_alert<listen_failed_alert>(lep.device, bind_ep
-						, last_op, ec, sock_type);
-				}
-				return ret;
-			}
-
-			TORRENT_ASSERT(ret->local_endpoint.port() == bind_ep.port()
-				|| bind_ep.port() == 0);
-
-			if (bind_ep.port() == 0) bind_ep = ret->local_endpoint;
-
-			ret->sock->listen(m_settings.get_int(settings_pack::listen_queue_size), ec);
-			last_op = operation_t::sock_listen;
-
-			if (ec)
-			{
-#ifndef TORRENT_DISABLE_LOGGING
-				if (should_log())
-				{
-					session_log("cannot listen on interface \"%s\": %s"
-						, lep.device.c_str(), ec.message().c_str());
-				}
-#endif
-				if (m_alerts.should_post<listen_failed_alert>())
-				{
-					m_alerts.emplace_alert<listen_failed_alert>(lep.device, bind_ep
-						, last_op, ec, sock_type);
-				}
-				return ret;
-			}
-		} // accept incoming
-
 		socket_type_t const udp_sock_type
 			= (lep.ssl == transport::ssl)
 			? socket_type_t::utp_ssl
 			: socket_type_t::utp;
-		udp::endpoint udp_bind_ep(bind_ep.address(), bind_ep.port());
 
 		ret->udp_sock = std::make_shared<session_udp_socket>(m_io_context, ret);
 		ret->udp_sock->sock.open(udp_bind_ep.protocol(), ec);
@@ -1086,7 +873,7 @@ namespace {
 			last_op = operation_t::sock_open;
 			if (m_alerts.should_post<listen_failed_alert>())
 				m_alerts.emplace_alert<listen_failed_alert>(lep.device
-					, bind_ep, last_op, ec, udp_sock_type);
+					, udp_bind_ep, last_op, ec, udp_sock_type);
 
 			return ret;
 		}
@@ -1115,7 +902,7 @@ namespace {
 			{
 				session_log("failed to bind udp socket to: %s on device: %s :"
 					" [%s] (%d) %s (retries: %d)"
-					, print_endpoint(bind_ep).c_str()
+					, print_endpoint(udp_bind_ep).c_str()
 					, lep.device.c_str()
 					, ec.category().name(), ec.value(), ec.message().c_str()
 					, retries);
@@ -1150,7 +937,7 @@ namespace {
 
 			if (m_alerts.should_post<listen_failed_alert>())
 				m_alerts.emplace_alert<listen_failed_alert>(lep.device
-					, bind_ep, last_op, ec, udp_sock_type);
+					, udp_bind_ep, last_op, ec, udp_sock_type);
 
 			return ret;
 		}
@@ -1188,9 +975,8 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
-			session_log(" listening on: %s TCP port: %d UDP port: %d"
-				, bind_ep.address().to_string().c_str()
-				, ret->tcp_external_port(), ret->udp_external_port());
+			session_log(" listening on: %s UDP port: %d"
+				, udp_bind_ep.address().to_string().c_str(), ret->udp_external_port());
 		}
 #endif
 		return ret;
@@ -1322,24 +1108,6 @@ namespace {
 			// expand device names and populate eps
 			for (auto const& iface : m_listen_interfaces)
 			{
-#if !TORRENT_USE_SSL
-				if (iface.ssl)
-				{
-#ifndef TORRENT_DISABLE_LOGGING
-					session_log("attempted to listen ssl with no library support on device: \"%s\""
-						, iface.device.c_str());
-#endif
-					if (m_alerts.should_post<listen_failed_alert>())
-					{
-						m_alerts.emplace_alert<listen_failed_alert>(iface.device
-							, operation_t::sock_open
-							, boost::asio::error::operation_not_supported
-							, socket_type_t::tcp_ssl);
-					}
-					continue;
-				}
-#endif
-
 				// now we have a device to bind to. This device may actually just be an
 				// IP address or a device name. In case it's a device name, we want to
 				// (potentially) end up binding a socket for each IP address associated
@@ -2011,109 +1779,11 @@ namespace {
 			(*listen)->incoming_connection = true;
 
 		socket_type c = [&]{
-#ifdef TORRENT_SSL_PEERS
-			if (ssl == transport::ssl)
-			{
-				// accept connections initializing the SSL connection to use the peer
-				// ssl context. Since it has the servername callback set on it, we will
-				// switch away from this context into a specific torrent once we start
-				// handshaking
-				return socket_type(ssl_stream<tcp::socket>(tcp::socket(std::move(s)), m_peer_ssl_ctx));
-			}
-			else
-#endif
-			{
-				return socket_type(tcp::socket(std::move(s)));
-			}
+			return socket_type(tcp::socket(std::move(s)));
 		}();
 
-#ifdef TORRENT_SSL_PEERS
-		TORRENT_ASSERT((ssl == transport::ssl) == is_ssl(c));
-#endif
-
-#ifdef TORRENT_SSL_PEERS
-		if (ssl == transport::ssl)
-		{
-			TORRENT_ASSERT(is_ssl(c));
-
-			// save the socket so we can cancel the handshake
-			// TODO: this size need to be capped
-			auto iter = m_incoming_sockets.emplace(std::make_unique<socket_type>(std::move(c))).first;
-
-			auto sock = iter->get();
-			// for SSL connections, incoming_connection() is called
-			// after the handshake is done
-			ADD_OUTSTANDING_ASYNC("session_impl::ssl_handshake");
-			std::get<ssl_stream<tcp::socket>>(**iter).async_accept_handshake(
-				[this, sock] (error_code const& err) { ssl_handshake(err, sock); });
-		}
-		else
-#endif
-		{
-			incoming_connection(std::move(c));
-		}
+		incoming_connection(std::move(c));
 	}
-
-#ifdef TORRENT_SSL_PEERS
-
-	void session_impl::on_incoming_utp_ssl(socket_type s)
-	{
-		TORRENT_ASSERT(is_ssl(s));
-
-		// save the socket so we can cancel the handshake
-
-		// TODO: this size need to be capped
-		auto iter = m_incoming_sockets.emplace(std::make_unique<socket_type>(std::move(s))).first;
-		auto sock = iter->get();
-
-		// for SSL connections, incoming_connection() is called
-		// after the handshake is done
-		ADD_OUTSTANDING_ASYNC("session_impl::ssl_handshake");
-		std::get<ssl_stream<utp_stream>>(**iter).async_accept_handshake(
-			[this, sock] (error_code const& err) { ssl_handshake(err, sock); });
-	}
-
-	// to test SSL connections, one can use this openssl command template:
-	//
-	// openssl s_client -cert <client-cert>.pem -key <client-private-key>.pem
-	//   -CAfile <torrent-cert>.pem  -debug -connect 127.0.0.1:4433 -tls1
-	//   -servername <hex-encoded-info-hash>
-
-	void session_impl::ssl_handshake(error_code const& ec, socket_type* sock)
-	{
-		COMPLETE_ASYNC("session_impl::ssl_handshake");
-
-		auto iter = m_incoming_sockets.find(sock);
-
-		// this happens if the SSL connection is aborted because we're shutting
-		// down
-		if (iter == m_incoming_sockets.end()) return;
-
-		socket_type s(std::move(**iter));
-		TORRENT_ASSERT(is_ssl(s));
-		m_incoming_sockets.erase(iter);
-
-		error_code e;
-		tcp::endpoint endp = s.remote_endpoint(e);
-		if (e) return;
-
-#ifndef TORRENT_DISABLE_LOGGING
-		if (should_log())
-		{
-			session_log(" *** peer SSL handshake done [ ip: %s ec: %s socket: %s ]"
-				, print_endpoint(endp).c_str(), ec.message().c_str(), socket_type_name(s));
-		}
-#endif
-
-		if (ec)
-		{
-			return;
-		}
-
-		incoming_connection(std::move(s));
-	}
-
-#endif // TORRENT_SSL_PEERS
 
 	void session_impl::incoming_connection(socket_type s)
 	{
@@ -2667,13 +2337,14 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
-		/*
         std::string home_dir = std::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		*/
+
+		/*
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+		*/
 
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
@@ -2833,50 +2504,9 @@ namespace {
 			return std::uint16_t(sock->tcp_external_port());
 		}
 
-#ifdef TORRENT_SSL_PEERS
-		for (auto const& s : m_listen_sockets)
-		{
-			if (!(s->flags & listen_socket_t::accept_incoming)) continue;
-			if (s->ssl == transport::plaintext)
-				return std::uint16_t(s->tcp_external_port());
-		}
-		return 0;
-#else
 		sock = m_listen_sockets.front().get();
 		if (!(sock->flags & listen_socket_t::accept_incoming)) return 0;
 		return std::uint16_t(sock->tcp_external_port());
-#endif
-	}
-
-	// TODO: 2 this function should be removed and users need to deal with the
-	// more generic case of having multiple ssl ports
-	std::uint16_t session_impl::ssl_listen_port() const
-	{
-		return ssl_listen_port(nullptr);
-	}
-
-	std::uint16_t session_impl::ssl_listen_port(listen_socket_t* sock) const
-	{
-#ifdef TORRENT_SSL_PEERS
-		if (sock)
-		{
-			if (!(sock->flags & listen_socket_t::accept_incoming)) return 0;
-			return std::uint16_t(sock->tcp_external_port());
-		}
-
-		if (m_settings.get_int(settings_pack::proxy_type) != settings_pack::none)
-			return 0;
-
-		for (auto const& s : m_listen_sockets)
-		{
-			if (!(s->flags & listen_socket_t::accept_incoming)) continue;
-			if (s->ssl == transport::ssl)
-				return std::uint16_t(s->tcp_external_port());
-		}
-#else
-		TORRENT_UNUSED(sock);
-#endif
-		return 0;
 	}
 
 	int session_impl::get_listen_port(transport const ssl, aux::listen_socket_handle const& s)
@@ -3535,23 +3165,6 @@ namespace {
 	{
 		m_alerts.set_alert_mask(alert_category_t(
 			static_cast<std::uint32_t>(m_settings.get_int(settings_pack::alert_mask))));
-	}
-
-	void session_impl::update_validate_https()
-	{
-#if TORRENT_USE_SSL
-		auto const flags = m_settings.get_bool(settings_pack::validate_https_trackers)
-			? ssl::context::verify_peer
-				| ssl::context::verify_fail_if_no_peer_cert
-				| ssl::context::verify_client_once
-			: ssl::context::verify_none;
-		error_code ec;
-		m_ssl_ctx.set_verify_mode(flags, ec);
-
-#ifndef TORRENT_DISABLE_LOGGING
-		if (ec) session_log("SSL set_verify_mode failed: %s", ec.message().c_str());
-#endif
-#endif
 	}
 
 	void session_impl::pop_alerts(std::vector<alert*>* alerts)

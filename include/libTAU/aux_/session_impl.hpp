@@ -27,10 +27,6 @@ see LICENSE file.
 #include "libTAU/session_params.hpp" // for disk_io_constructor_type
 #include "libTAU/account_manager.hpp"
 
-#ifdef TORRENT_SSL_PEERS
-#include "libTAU/aux_/ssl_stream.hpp"
-#endif
-
 #include "libTAU/session.hpp" // for user_load_function_t
 #include "libTAU/aux_/ip_voter.hpp"
 #include "libTAU/entry.hpp"
@@ -485,8 +481,6 @@ namespace aux {
 
 			std::uint16_t listen_port() const override;
 			std::uint16_t listen_port(listen_socket_t* sock) const;
-			std::uint16_t ssl_listen_port() const override;
-			std::uint16_t ssl_listen_port(listen_socket_t* sock) const;
 
 			// used by the DHT tracker, returns a UDP listen port
 			int get_listen_port(transport ssl, aux::listen_socket_handle const& s) override;
@@ -606,7 +600,6 @@ namespace aux {
 			void update_socket_buffer_size();
 			void update_connections_limit();
 			void update_alert_mask();
-			void update_validate_https();
 
 			void new_account_seed(std::array<char, 32>& seed);
 			void set_loop_time_interval(int milliseconds);
@@ -640,19 +633,6 @@ namespace aux {
 			counters m_stats_counters;
 
 			io_context& m_io_context;
-
-#if TORRENT_USE_SSL
-			// this is a generic SSL context used when talking to HTTPS servers
-			ssl::context m_ssl_ctx;
-#endif
-
-#ifdef TORRENT_SSL_PEERS
-			// this is the SSL context used for SSL listen sockets. It doesn't
-			// verify peers, but it has the servername callback set on it. Once it
-			// knows which torrent a peer is connecting to, it will switch the
-			// socket over to the torrent specific context, which does verify peers
-			ssl::context m_peer_ssl_ctx;
-#endif
 
 			// handles delayed alerts
 			mutable alert_manager m_alerts;
@@ -693,14 +673,6 @@ namespace aux {
 			// peers.
 			connection_map m_connections;
 
-#ifdef TORRENT_SSL_PEERS
-			// this list holds incoming connections while they
-			// are performing SSL handshake. When we shut down
-			// the session, all of these are disconnected, otherwise
-			// they would linger and stall or hang session shutdown
-			std::set<std::unique_ptr<socket_type>, unique_ptr_less> m_incoming_sockets;
-#endif
-
 			// maps IP ranges to bitfields representing peer class IDs
 			// to assign peers matching a specific IP range based on its
 			// remote endpoint
@@ -735,14 +707,6 @@ namespace aux {
 			// since we might be listening on multiple interfaces
 			// we might need more than one listen socket
 			std::vector<std::shared_ptr<listen_socket_t>> m_listen_sockets;
-
-#if TORRENT_USE_SSL
-			ssl::context* ssl_ctx() override { return &m_ssl_ctx; }
-#endif
-#ifdef TORRENT_SSL_PEERS
-			void on_incoming_utp_ssl(socket_type s);
-			void ssl_handshake(error_code const& ec, socket_type* s);
-#endif
 
 			// round-robin index into m_outgoing_interfaces
 			mutable std::uint8_t m_interface_index = 0;
