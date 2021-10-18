@@ -878,35 +878,6 @@ namespace {
 				return ret;
 			}
 
-#ifdef TORRENT_WINDOWS
-			{
-				// this is best-effort. ignore errors
-				error_code err;
-				ret->sock->set_option(exclusive_address_use(true), err);
-#ifndef TORRENT_DISABLE_LOGGING
-				if (err && should_log())
-				{
-					session_log("failed enable exclusive address use on listen socket: %s"
-						, err.message().c_str());
-				}
-#endif // TORRENT_DISABLE_LOGGING
-			}
-#else
-
-			{
-				// this is best-effort. ignore errors
-				error_code err;
-				ret->sock->set_option(tcp::acceptor::reuse_address(true), err);
-#ifndef TORRENT_DISABLE_LOGGING
-				if (err && should_log())
-				{
-					session_log("failed enable reuse-address on listen socket: %s"
-						, err.message().c_str());
-				}
-#endif // TORRENT_DISABLE_LOGGING
-			}
-#endif // TORRENT_WINDOWS
-
 			if (is_v6(bind_ep))
 			{
 				error_code err; // ignore errors here
@@ -918,18 +889,6 @@ namespace {
 						, err.message().c_str());
 				}
 #endif // LOGGING
-
-#ifdef TORRENT_WINDOWS
-				// enable Teredo on windows
-				ret->sock->set_option(v6_protection_level(PROTECTION_LEVEL_UNRESTRICTED), err);
-#ifndef TORRENT_DISABLE_LOGGING
-				if (err && should_log())
-				{
-					session_log("failed enable IPv6 unrestricted protection level on "
-						"listen socket: %s", err.message().c_str());
-				}
-#endif // TORRENT_DISABLE_LOGGING
-#endif // TORRENT_WINDOWS
 			}
 
 			if (!lep.device.empty())
@@ -1307,24 +1266,6 @@ namespace {
 			// expand device names and populate eps
 			for (auto const& iface : m_listen_interfaces)
 			{
-#if !TORRENT_USE_SSL
-				if (iface.ssl)
-				{
-#ifndef TORRENT_DISABLE_LOGGING
-					session_log("attempted to listen ssl with no library support on device: \"%s\""
-						, iface.device.c_str());
-#endif
-					if (m_alerts.should_post<listen_failed_alert>())
-					{
-						m_alerts.emplace_alert<listen_failed_alert>(iface.device
-							, operation_t::sock_open
-							, boost::asio::error::operation_not_supported
-							, socket_type_t::tcp_ssl);
-					}
-					continue;
-				}
-#endif
-
 				// now we have a device to bind to. This device may actually just be an
 				// IP address or a device name. In case it's a device name, we want to
 				// (potentially) end up binding a socket for each IP address associated
