@@ -410,9 +410,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		, session_flags_t const flags)
 		: m_settings(pack)
 		, m_io_context(ioc)
-#ifdef TORRENT_SSL_PEERS
-		, m_peer_ssl_ctx(ssl::context::tls)
-#endif
 		, m_alerts(m_settings.get_int(settings_pack::alert_queue_size)
 			, alert_category_t{static_cast<unsigned int>(m_settings.get_int(settings_pack::alert_mask))})
 		, m_host_resolver(m_io_context)
@@ -591,15 +588,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 			sqlite3_close_v2(m_sqldb);
 			m_sqldb = nullptr;
 		}
-
-#ifdef TORRENT_SSL_PEERS
-		for (auto const& s : m_incoming_sockets)
-		{
-			s->close(ec);
-			TORRENT_ASSERT(!ec);
-		}
-		m_incoming_sockets.clear();
-#endif
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log(" aborting all tracker requests");
@@ -2008,109 +1996,11 @@ namespace {
 			(*listen)->incoming_connection = true;
 
 		socket_type c = [&]{
-#ifdef TORRENT_SSL_PEERS
-			if (ssl == transport::ssl)
-			{
-				// accept connections initializing the SSL connection to use the peer
-				// ssl context. Since it has the servername callback set on it, we will
-				// switch away from this context into a specific torrent once we start
-				// handshaking
-				return socket_type(ssl_stream<tcp::socket>(tcp::socket(std::move(s)), m_peer_ssl_ctx));
-			}
-			else
-#endif
-			{
-				return socket_type(tcp::socket(std::move(s)));
-			}
+			return socket_type(tcp::socket(std::move(s)));
 		}();
 
-#ifdef TORRENT_SSL_PEERS
-		TORRENT_ASSERT((ssl == transport::ssl) == is_ssl(c));
-#endif
-
-#ifdef TORRENT_SSL_PEERS
-		if (ssl == transport::ssl)
-		{
-			TORRENT_ASSERT(is_ssl(c));
-
-			// save the socket so we can cancel the handshake
-			// TODO: this size need to be capped
-			auto iter = m_incoming_sockets.emplace(std::make_unique<socket_type>(std::move(c))).first;
-
-			auto sock = iter->get();
-			// for SSL connections, incoming_connection() is called
-			// after the handshake is done
-			ADD_OUTSTANDING_ASYNC("session_impl::ssl_handshake");
-			std::get<ssl_stream<tcp::socket>>(**iter).async_accept_handshake(
-				[this, sock] (error_code const& err) { ssl_handshake(err, sock); });
-		}
-		else
-#endif
-		{
-			incoming_connection(std::move(c));
-		}
+		incoming_connection(std::move(c));
 	}
-
-#ifdef TORRENT_SSL_PEERS
-
-	void session_impl::on_incoming_utp_ssl(socket_type s)
-	{
-		TORRENT_ASSERT(is_ssl(s));
-
-		// save the socket so we can cancel the handshake
-
-		// TODO: this size need to be capped
-		auto iter = m_incoming_sockets.emplace(std::make_unique<socket_type>(std::move(s))).first;
-		auto sock = iter->get();
-
-		// for SSL connections, incoming_connection() is called
-		// after the handshake is done
-		ADD_OUTSTANDING_ASYNC("session_impl::ssl_handshake");
-		std::get<ssl_stream<utp_stream>>(**iter).async_accept_handshake(
-			[this, sock] (error_code const& err) { ssl_handshake(err, sock); });
-	}
-
-	// to test SSL connections, one can use this openssl command template:
-	//
-	// openssl s_client -cert <client-cert>.pem -key <client-private-key>.pem
-	//   -CAfile <torrent-cert>.pem  -debug -connect 127.0.0.1:4433 -tls1
-	//   -servername <hex-encoded-info-hash>
-
-	void session_impl::ssl_handshake(error_code const& ec, socket_type* sock)
-	{
-		COMPLETE_ASYNC("session_impl::ssl_handshake");
-
-		auto iter = m_incoming_sockets.find(sock);
-
-		// this happens if the SSL connection is aborted because we're shutting
-		// down
-		if (iter == m_incoming_sockets.end()) return;
-
-		socket_type s(std::move(**iter));
-		TORRENT_ASSERT(is_ssl(s));
-		m_incoming_sockets.erase(iter);
-
-		error_code e;
-		tcp::endpoint endp = s.remote_endpoint(e);
-		if (e) return;
-
-#ifndef TORRENT_DISABLE_LOGGING
-		if (should_log())
-		{
-			session_log(" *** peer SSL handshake done [ ip: %s ec: %s socket: %s ]"
-				, print_endpoint(endp).c_str(), ec.message().c_str(), socket_type_name(s));
-		}
-#endif
-
-		if (ec)
-		{
-			return;
-		}
-
-		incoming_connection(std::move(s));
-	}
-
-#endif // TORRENT_SSL_PEERS
 
 	void session_impl::incoming_connection(socket_type s)
 	{
@@ -2830,50 +2720,9 @@ namespace {
 			return std::uint16_t(sock->tcp_external_port());
 		}
 
-#ifdef TORRENT_SSL_PEERS
-		for (auto const& s : m_listen_sockets)
-		{
-			if (!(s->flags & listen_socket_t::accept_incoming)) continue;
-			if (s->ssl == transport::plaintext)
-				return std::uint16_t(s->tcp_external_port());
-		}
-		return 0;
-#else
 		sock = m_listen_sockets.front().get();
 		if (!(sock->flags & listen_socket_t::accept_incoming)) return 0;
 		return std::uint16_t(sock->tcp_external_port());
-#endif
-	}
-
-	// TODO: 2 this function should be removed and users need to deal with the
-	// more generic case of having multiple ssl ports
-	std::uint16_t session_impl::ssl_listen_port() const
-	{
-		return ssl_listen_port(nullptr);
-	}
-
-	std::uint16_t session_impl::ssl_listen_port(listen_socket_t* sock) const
-	{
-#ifdef TORRENT_SSL_PEERS
-		if (sock)
-		{
-			if (!(sock->flags & listen_socket_t::accept_incoming)) return 0;
-			return std::uint16_t(sock->tcp_external_port());
-		}
-
-		if (m_settings.get_int(settings_pack::proxy_type) != settings_pack::none)
-			return 0;
-
-		for (auto const& s : m_listen_sockets)
-		{
-			if (!(s->flags & listen_socket_t::accept_incoming)) continue;
-			if (s->ssl == transport::ssl)
-				return std::uint16_t(s->tcp_external_port());
-		}
-#else
-		TORRENT_UNUSED(sock);
-#endif
-		return 0;
 	}
 
 	int session_impl::get_listen_port(transport const ssl, aux::listen_socket_handle const& s)

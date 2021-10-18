@@ -244,7 +244,6 @@ namespace libTAU {
 		//
 		// ``listen_port()`` returns the port we ended up listening on.
 		unsigned short listen_port() const;
-		unsigned short ssl_listen_port() const;
 		bool is_listening() const;
 
 		// Sets the peer class filter for this session. All new peer connections

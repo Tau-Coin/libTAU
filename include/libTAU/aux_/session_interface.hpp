@@ -140,7 +140,6 @@ namespace libTAU::aux {
 		virtual void deferred_submit_jobs() = 0;
 
 		virtual std::uint16_t listen_port() const = 0;
-		virtual std::uint16_t ssl_listen_port() const = 0;
 
 		virtual int listen_port(aux::transport ssl, address const& local_addr) = 0;
 

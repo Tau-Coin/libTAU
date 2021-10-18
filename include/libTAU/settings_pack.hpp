@@ -1680,34 +1680,10 @@ namespace aux {
 			// io-threads to use.
 			aio_threads,
 
-#if TORRENT_ABI_VERSION == 1
-			// for some aio back-ends, ``aio_max`` specifies the max number of
-			// outstanding jobs.
-			aio_max TORRENT_DEPRECATED_ENUM,
-
-			// .. note:: This is not implemented
-			//
-			// ``network_threads`` is the number of threads to use to call
-			// ``async_write_some`` (i.e. send) on peer connection sockets. When
-			// seeding at extremely high rates, this may become a bottleneck, and
-			// setting this to 2 or more may parallelize that cost. When using SSL
-			// torrents, all encryption for outgoing traffic is done within the
-			// socket send functions, and this will help parallelizing the cost of
-			// SSL encryption as well.
-			network_threads TORRENT_DEPRECATED_ENUM,
-
-			// ``ssl_listen`` sets the listen port for SSL connections. If this is
-			// set to 0, no SSL listen port is opened. Otherwise a socket is
-			// opened on this port. This setting is only taken into account when
-			// opening the regular listen port, and won't re-open the listen
-			// socket simply by changing this setting.
-			ssl_listen TORRENT_DEPRECATED_ENUM,
-#else
 			// hidden
 			deprecated_aio_max,
 			deprecated_network_threads,
 			deprecated_ssl_listen,
-#endif
 
 			// ``tracker_backoff`` determines how aggressively to back off from
 			// retrying failing trackers. This value determines *x* in the
