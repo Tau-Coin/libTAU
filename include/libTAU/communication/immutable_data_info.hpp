@@ -44,6 +44,22 @@ namespace libTAU::communication {
         // @returns a pretty-printed string representation of message structure
         std::string to_string() const;
 
+        bool operator<(const immutable_data_info &rhs) const {
+            return m_target < rhs.m_target;
+        }
+
+        bool operator>(const immutable_data_info &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const immutable_data_info &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const immutable_data_info &rhs) const {
+            return !(*this < rhs);
+        }
+
         friend std::ostream &operator<<(std::ostream &os, const immutable_data_info &info);
 
     private:
