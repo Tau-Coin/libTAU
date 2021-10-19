@@ -486,7 +486,7 @@ void node::put_item(sha256_hash const& target, entry const& data, std::function<
 
 	item i;
 	i.assign(data);
-	auto put_ta = std::make_shared<dht::put_data>(*this, std::bind(f, _2));
+	auto put_ta = std::make_shared<dht::put_data>(*this, target, std::bind(f, _2));
 	put_ta->set_data(std::move(i));
 
 	auto ta = std::make_shared<dht::get_item>(*this, target
@@ -510,7 +510,7 @@ void node::put_item(sha256_hash const& target
 	item i;
 	i.assign(data);
 
-	auto ta = std::make_shared<dht::put_data>(*this, std::bind(f, _2));
+	auto ta = std::make_shared<dht::put_data>(*this, target, std::bind(f, _2));
 	ta->set_data(std::move(i));
 	ta->set_direct_endpoints(eps);
 	ta->set_discard_response(true);
@@ -533,10 +533,10 @@ void node::put_item(public_key const& pk, std::string const& salt
 	}
 #endif
 
-	auto put_ta = std::make_shared<dht::put_data>(*this, f);
-
 	item i(pk, salt);
 	data_cb(i);
+
+	auto put_ta = std::make_shared<dht::put_data>(*this, item_target_id(salt, pk), f);
 	put_ta->set_data(std::move(i));
 
 	put_ta->start();

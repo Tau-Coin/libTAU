@@ -29,7 +29,7 @@ struct put_data: traversal_algorithm
 {
 	using put_callback = std::function<void(item const&, int)>;
 
-	put_data(node& node, put_callback callback);
+	put_data(node& node, node_id const& target, put_callback callback);
 
 	char const* name() const override;
 	void start() override;

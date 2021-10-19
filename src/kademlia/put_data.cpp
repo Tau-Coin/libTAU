@@ -48,8 +48,8 @@ void put_data_observer::reply(msg const& m)
     done();
 }
 
-put_data::put_data(node& dht_node, put_callback callback)
-	: traversal_algorithm(dht_node, {})
+put_data::put_data(node& dht_node, node_id const& target, put_callback callback)
+	: traversal_algorithm(dht_node, target)
 	, m_put_callback(std::move(callback))
 {}
 
