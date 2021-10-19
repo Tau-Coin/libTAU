@@ -73,6 +73,22 @@ namespace libTAU::blockchain {
 
         bool verify_signature() const;
 
+        bool operator<(const transaction &rhs) const {
+            return m_fee < rhs.m_fee;
+        }
+
+        bool operator>(const transaction &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const transaction &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const transaction &rhs) const {
+            return !(*this < rhs);
+        }
+
     private:
 
         std::string get_encode_without_signature() const;
