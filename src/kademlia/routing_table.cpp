@@ -1102,7 +1102,7 @@ std::vector<node_entry> routing_table::find_node(node_id const& target
 		else
 		{
 			std::remove_copy_if(b.begin(), b.end(), std::back_inserter(l)
-				, [](node_entry const& ne) { return !ne.confirmed(); });
+				, [](node_entry const& ne) { return !ne.confirmed() || !ne.allow_invoke(); });
 		}
 
 		if (int(l.size()) == count) return l;
@@ -1141,7 +1141,7 @@ std::vector<node_entry> routing_table::find_node(node_id const& target
 		else
 		{
 			std::remove_copy_if(b.begin(), b.end(), std::back_inserter(l)
-				, [](node_entry const& ne) { return !ne.confirmed(); });
+				, [](node_entry const& ne) { return !ne.confirmed() || !ne.allow_invoke(); });
 		}
 
 		if (int(l.size()) == count) return l;

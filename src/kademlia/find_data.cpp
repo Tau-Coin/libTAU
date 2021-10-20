@@ -75,7 +75,7 @@ void find_data::start()
 	if (m_results.empty() && !m_direct_invoking)
 	{
 		std::vector<node_entry> const nodes = m_node.m_table.find_node(
-			target(), routing_table::include_failed);
+			target(), routing_table::include_pinged);
 
 		for (auto const& n : nodes)
 		{
