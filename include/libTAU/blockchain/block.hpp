@@ -35,20 +35,20 @@ namespace libTAU::blockchain {
         // @param Construct with bencode
         explicit block(std::string encode): block(bdecode(encode)) {}
 
-        block(block_version mVersion, aux::bytes mChainId, int64_t mTimestamp, int64_t mBlockNumber,
+        block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
                 sha256_hash mPreviousBlockHash, int64_t mBaseTarget, int64_t mCumulativeDifficulty,
                 sha256_hash mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
               int64_t mMinerBalance, int64_t mMinerNonce, int64_t mSenderBalance, int64_t mSenderNonce,
-              int64_t mReceiverBalance, int64_t mReceiverNonce) : m_version(mVersion), m_chain_id(std::move(mChainId)),
+              int64_t mReceiverBalance, int64_t mReceiverNonce) : m_chain_id(std::move(mChainId)), m_version(mVersion),
               m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash),
               m_base_target(mBaseTarget), m_cumulative_difficulty(mCumulativeDifficulty),
               m_generation_signature(mGenerationSignature), m_tx(std::move(mTx)), m_miner(mMiner),
               m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce), m_sender_balance(mSenderBalance),
               m_sender_nonce(mSenderNonce), m_receiver_balance(mReceiverBalance), m_receiver_nonce(mReceiverNonce) {}
 
-        block_version version() const { return m_version; }
-
         const aux::bytes &chain_id() const { return m_chain_id; }
+
+        block_version version() const { return m_version; }
 
         int64_t timestamp() const { return m_timestamp; }
 
@@ -102,11 +102,11 @@ namespace libTAU::blockchain {
         // populate block data from entry
         void populate(const entry& e);
 
-        // block version
-        block_version m_version = block_version1;
-
         // chain id
         aux::bytes m_chain_id;
+
+        // block version
+        block_version m_version = block_version1;
 
         // timestamp
         std::int64_t m_timestamp{};

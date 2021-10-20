@@ -59,10 +59,10 @@ namespace libTAU::blockchain {
     entry block::get_entry_without_signature() const {
         entry e(entry::dictionary_t);
 
-        // version
-        e["v"] = entry(m_version);
         // chain id
         e["i"] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // version
+        e["v"] = entry(m_version);
         // timestamp
         e["t"] = entry(m_timestamp);
         // block number
@@ -97,16 +97,16 @@ namespace libTAU::blockchain {
 
 
     void block::populate(const entry &e) {
-        // version
-        if (auto* i = const_cast<entry *>(e.find_key("v")))
-        {
-            m_version = static_cast<block_version>(i->integer());
-        }
         // chain id
         if (auto* i = const_cast<entry *>(e.find_key("i")))
         {
             auto chain_id = i->string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+        // version
+        if (auto* i = const_cast<entry *>(e.find_key("v")))
+        {
+            m_version = static_cast<block_version>(i->integer());
         }
         // timestamp
         if (auto* i = const_cast<entry *>(e.find_key("t")))

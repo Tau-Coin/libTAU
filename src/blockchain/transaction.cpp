@@ -19,6 +19,8 @@ namespace libTAU::blockchain {
     entry transaction::get_entry_without_signature() const {
         entry e(entry::dictionary_t);
 
+        // chain id
+        e["i"] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // version
         e["v"] = entry(m_version);
         // timestamp
@@ -81,6 +83,12 @@ namespace libTAU::blockchain {
     }
 
     void transaction::populate(const entry &e) {
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key("i")))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
         // version
         if (auto* i = const_cast<entry *>(e.find_key("v")))
         {

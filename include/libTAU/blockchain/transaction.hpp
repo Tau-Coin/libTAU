@@ -36,11 +36,13 @@ namespace libTAU::blockchain {
         // @param Construct with bencode
         explicit transaction(std::string encode): transaction(bdecode(encode)) {}
 
-        transaction(tx_version mVersion, int64_t mTimestamp, const dht::public_key &mSender,
+        transaction(aux::bytes mChainId, tx_version mVersion, int64_t mTimestamp, const dht::public_key &mSender,
                     const dht::public_key &mReceiver, int64_t mNonce, int64_t mAmount, int64_t mFee,
-                    aux::bytes mPayload) : m_version(mVersion), m_timestamp(mTimestamp), m_sender(mSender),
-                    m_receiver(mReceiver), m_nonce(mNonce), m_amount(mAmount),
-                    m_fee(mFee), m_payload(std::move(mPayload)) {}
+                    aux::bytes mPayload) : m_chain_id(std::move(mChainId)), m_version(mVersion),
+                    m_timestamp(mTimestamp), m_sender(mSender), m_receiver(mReceiver), m_nonce(mNonce),
+                    m_amount(mAmount), m_fee(mFee), m_payload(std::move(mPayload)) {}
+
+        const aux::bytes &chain_id() const { return m_chain_id; }
 
         tx_version version() const { return m_version; }
 
@@ -55,6 +57,8 @@ namespace libTAU::blockchain {
         int64_t amount() const { return m_amount; }
 
         int64_t fee() const { return m_fee; }
+
+        int64_t cost() const { return m_amount + m_fee; }
 
         const aux::bytes &payload() const { return m_payload; }
 
@@ -97,6 +101,9 @@ namespace libTAU::blockchain {
 
         // populate transaction data from entry
         void populate(const entry& e);
+
+        // chain id
+        aux::bytes m_chain_id;
 
         // version
         tx_version m_version = tx_version1;
