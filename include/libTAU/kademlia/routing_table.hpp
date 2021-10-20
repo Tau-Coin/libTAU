@@ -309,6 +309,8 @@ private:
 
 	// constant called k in paper
 	int const m_bucket_size;
+
+	int const m_replace_bucket_size;
 };
 
 TORRENT_EXTRA_EXPORT routing_table::add_node_status_t
