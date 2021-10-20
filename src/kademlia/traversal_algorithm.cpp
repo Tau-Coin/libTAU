@@ -322,7 +322,10 @@ void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 #endif
 
 	// only accept other nodes when target nodes are not specified.
-	if (!m_direct_invoking && (existing != nullptr && existing->allow_invoke()))
+	// When one endpoint aren't accepted by routing table, give it
+	// invoking chance if its distance is enough small.
+	if (!m_direct_invoking && (existing == nullptr
+			|| (existing != nullptr && existing->allow_invoke())))
 	{
 		add_entry(id, addr, {});
 	}
@@ -444,7 +447,7 @@ void traversal_algorithm::done()
 	m_done = true;
 #ifndef TORRENT_DISABLE_LOGGING
 	int results_target = m_node.m_table.bucket_size();
-	int closest_target = 160;
+	int closest_target = 256;
 #endif
 
 	for (auto const& o : m_results)

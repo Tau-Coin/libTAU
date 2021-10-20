@@ -243,6 +243,7 @@ routing_table::routing_table(node_id const& id, udp const proto, int const bucke
 	, m_depth(0)
 	, m_last_self_refresh(min_time())
 	, m_bucket_size(bucket_size)
+	, m_replace_bucket_size(1024)
 {
 	// bucket sizes must be a power of 2
 	TORRENT_ASSERT_VAL(((bucket_size - 1) & bucket_size) == 0, bucket_size);
@@ -853,7 +854,7 @@ ip_ok:
 		return node_added;
 	}
 
-	if (int(rb.size()) >= m_bucket_size)
+	if (int(rb.size()) >= m_replace_bucket_size/*m_bucket_size*/)
 	{
 		// if the replacement bucket is full, remove the oldest entry
 		// but prefer nodes that haven't been pinged, since they are
@@ -862,7 +863,8 @@ ip_ok:
 			, [] (node_entry const& ne) { return !ne.pinged(); });
 		if (j == rb.end())
 		{
-			auto const ret = replace_node_impl(e, rb, m_ips, bucket_index, m_bucket_size, last_bucket
+			auto const ret = replace_node_impl(e, rb, m_ips, bucket_index
+				, m_replace_bucket_size/*m_bucket_size*/, last_bucket
 #ifndef TORRENT_DISABLE_LOGGING
 				, nullptr
 #endif
@@ -873,7 +875,7 @@ ip_ok:
 		rb.erase(j);
 	}
 
-	if (rb.empty()) rb.reserve(m_bucket_size);
+	if (rb.empty()) rb.reserve(m_replace_bucket_size/*m_bucket_size*/);
 	rb.push_back(e);
 	m_ips.insert(e.addr());
 	return node_added;
@@ -1102,7 +1104,7 @@ std::vector<node_entry> routing_table::find_node(node_id const& target
 		else
 		{
 			std::remove_copy_if(b.begin(), b.end(), std::back_inserter(l)
-				, [](node_entry const& ne) { return !ne.confirmed(); });
+				, [](node_entry const& ne) { return !ne.confirmed() || !ne.allow_invoke(); });
 		}
 
 		if (int(l.size()) == count) return l;
@@ -1141,7 +1143,7 @@ std::vector<node_entry> routing_table::find_node(node_id const& target
 		else
 		{
 			std::remove_copy_if(b.begin(), b.end(), std::back_inserter(l)
-				, [](node_entry const& ne) { return !ne.confirmed(); });
+				, [](node_entry const& ne) { return !ne.confirmed() || !ne.allow_invoke(); });
 		}
 
 		if (int(l.size()) == count) return l;

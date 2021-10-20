@@ -51,7 +51,7 @@ struct TORRENT_EXPORT node_entry
 		last_invoke_failed = aux::time_now();
 	}
 
-	bool allow_invoke()
+	bool allow_invoke() const
 	{
 		return invoke_fail_count < 10
 			|| last_invoke_failed + minutes(5) < aux::time_now();

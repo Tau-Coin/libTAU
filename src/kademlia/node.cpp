@@ -546,7 +546,7 @@ void node::find_live_nodes(node_id const& id
 	, std::vector<node_entry>& l
 	, int count)
 {
-	auto nes = m_table.find_node(id, routing_table::include_failed, count);
+	auto nes = m_table.find_node(id, routing_table::include_pinged, count);
 
 	for (auto& ne : nes)
 	{
@@ -610,7 +610,7 @@ void node::tick()
 		return;
 	}
 
-	if (m_last_ping + minutes(5) > now) return;
+	if (m_last_ping + seconds(30) > now) return;
 
 	node_entry const* ne = m_table.next_refresh();
 	if (ne == nullptr) return;

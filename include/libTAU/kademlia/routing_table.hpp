@@ -188,6 +188,8 @@ public:
 	// nodes that have not been pinged are considered failed by this flag
 	static inline constexpr find_nodes_flags_t include_failed = 0_bit;
 
+	static inline constexpr find_nodes_flags_t include_pinged = 1_bit;
+
 	// fills the vector with the count nodes from our buckets that
 	// are nearest to the given id.
 	std::vector<node_entry> find_node(node_id const& target
@@ -307,6 +309,8 @@ private:
 
 	// constant called k in paper
 	int const m_bucket_size;
+
+	int const m_replace_bucket_size;
 };
 
 TORRENT_EXTRA_EXPORT routing_table::add_node_status_t
