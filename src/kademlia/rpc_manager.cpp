@@ -163,14 +163,6 @@ void* rpc_manager::allocate_observer()
 	if (ret != nullptr)
 	{
 		++m_allocated_observers;
-		// 'm_invoked_requests' is the total number of invoked requests
-		// after the node starts. When its value becomes nagetive,
-		// reset it into 0.
-		++m_invoked_requests;
-		if (m_invoked_requests < 0)
-		{
-			m_invoked_requests = 0;
-		}
 	}
 	return ret;
 }
@@ -473,6 +465,15 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 #if TORRENT_USE_ASSERTS
 		o->m_was_sent = true;
 #endif
+
+		// 'm_invoked_requests' is the total number of invoked requests
+		// after the node starts. When its value becomes nagetive,
+		// reset it into 0.
+		++m_invoked_requests;
+		if (m_invoked_requests < 0)
+		{
+			m_invoked_requests = 0;
+		}
 		return true;
 	}
 	return false;
