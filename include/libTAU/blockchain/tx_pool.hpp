@@ -17,8 +17,10 @@ see LICENSE file.
 
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/transaction.hpp"
+#include "libTAU/blockchain/tx_entry.hpp"
 
 namespace libTAU::blockchain {
+
     class tx_pool {
     public:
         tx_pool(std::shared_ptr<repository> mRepository) : m_repository(std::move(mRepository)) {}
@@ -34,17 +36,26 @@ namespace libTAU::blockchain {
 
         bool add_tx(transaction tx);
 
+        transaction get_transaction_by_account(const dht::public_key& pubKey) const;
+
+        void delete_transaction_by_account(const dht::public_key& pubKey);
+
+        bool process_best(const block& b);
+
         void clear();
 
     private:
+
         // blockchain db
         std::shared_ptr<repository> m_repository;
 
 //        std::int64_t m_expiration_block_number = 0;
 
-        std::set<transaction> m_all_txs;
+        std::map<sha256_hash, transaction> m_all_txs;
 
-        std::map<dht::public_key, transaction> m_account_tx;
+        std::set<tx_entry> m_ordered_txs;
+
+        std::map<dht::public_key, sha256_hash> m_account_tx;
     };
 }
 
