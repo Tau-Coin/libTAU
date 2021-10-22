@@ -343,7 +343,7 @@ void traversal_algorithm::finished(observer_ptr o)
 	if (o->flags & observer::flag_short_timeout)
 	{
 		TORRENT_ASSERT(m_branch_factor > 0);
-		--m_branch_factor;
+		//--m_branch_factor;
 	}
 
 	TORRENT_ASSERT(o->flags & observer::flag_queried);
@@ -380,7 +380,7 @@ void traversal_algorithm::failed(observer_ptr o, traversal_flags_t const flags)
 		if (!(o->flags & observer::flag_short_timeout)
 			&& m_branch_factor < std::numeric_limits<std::int8_t>::max())
 		{
-			++m_branch_factor;
+			//++m_branch_factor;
 			o->flags |= observer::flag_short_timeout;
 		}
 #ifndef TORRENT_DISABLE_LOGGING
@@ -416,8 +416,8 @@ void traversal_algorithm::failed(observer_ptr o, traversal_flags_t const flags)
 	if (decrement_branch_factor)
 	{
 		TORRENT_ASSERT(m_branch_factor > 0);
-		--m_branch_factor;
-		if (m_branch_factor <= 0) m_branch_factor = 1;
+		//--m_branch_factor;
+		//if (m_branch_factor <= 0) m_branch_factor = 1;
 	}
 
 	bool const is_done = add_requests();
