@@ -15,6 +15,8 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
+    constexpr int EFFECTIVE_BLOCK_NUMBER = 288 * 365;
+
     // block time
     constexpr int DEFAULT_BLOCK_TIME = 300;
     constexpr int DEFAULT_MIN_BLOCK_TIME = 60;

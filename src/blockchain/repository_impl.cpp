@@ -535,7 +535,35 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::expire_block(block &b) {
-        return false;
+        if (b.empty())
+            return false;
+
+        auto& chain_id = b.chain_id();
+        auto stateLinker = get_state_linker(b.sha256());
+        for (auto const& item: stateLinker.get_next_change_block_hash_map()) {
+            auto& pubKey = item.first;
+            auto& block_hash = item.second;
+            if (block_hash.is_all_zeros()) {
+                if (!delete_account_block_pointer(chain_id, pubKey))
+                    return false;
+            } else {
+                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+                accountBlockPointer.set_oldest_block_hash(block_hash);
+                if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
+                    return false;
+
+                // no need to update state linker
+            }
+
+            if (!delete_state_linker(b.sha256()))
+                return false;
+        }
+
+        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
+        indexKeyInfo.clear_main_chain_block_hash();
+        indexKeyInfo.clear_associated_peers();
+        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
     bool repository_impl::delete_block(const sha256_hash &hash) {

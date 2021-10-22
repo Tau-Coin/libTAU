@@ -25,6 +25,7 @@ see LICENSE file.
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/repository_impl.hpp"
 #include "libTAU/blockchain/repository_track.hpp"
+#include "libTAU/blockchain/tx_pool.hpp"
 
 namespace libTAU::blockchain {
 
@@ -98,7 +99,9 @@ namespace libTAU::blockchain {
 
         block try_to_mine_block(const aux::bytes &chain_id);
 
-        bool process_block(const aux::bytes &chain_id, block b);
+        bool verify_block(const aux::bytes &chain_id, block &b, block &best_tip_block);
+
+        bool process_block(const aux::bytes &chain_id, block &b);
 
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id);
@@ -150,6 +153,9 @@ namespace libTAU::blockchain {
 
         // all chains
         std::vector<aux::bytes> m_chains;
+
+        // tx pool
+        std::map<aux::bytes, tx_pool> m_tx_pools;
 
         // all chain peers
         std::map<aux::bytes, std::set<dht::public_key>> m_chain_peers;
