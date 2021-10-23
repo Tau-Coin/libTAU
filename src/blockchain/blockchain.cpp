@@ -58,6 +58,9 @@ namespace libTAU::blockchain {
     bool blockchain::follow_chain(const aux::bytes &chain_id) {
         load_chain(chain_id);
 
+        m_repository->add_new_chain(chain_id);
+        m_chains.push_back(chain_id);
+
         return true;
     }
 
@@ -108,7 +111,9 @@ namespace libTAU::blockchain {
                 auto& unchoked_peers = m_unchoked_peers[chain_id];
                 std::set<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
                 auto p = select_peer_randomly(chain_id);
-                peers.insert(p);
+                if (!(p == dht::public_key())) {
+                    peers.insert(p);
+                }
                 for (auto const& peer: peers) {
                     request_signal(chain_id, peer);
                 }
@@ -244,11 +249,25 @@ namespace libTAU::blockchain {
 
             std::int64_t now = total_seconds(system_clock::now().time_since_epoch());
             if (now - best_tip_block.timestamp() >= interval) {
+                auto tx = m_tx_pools[chain_id].get_best_transaction();
+                auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(best_tip_block.cumulative_difficulty(), base_target);
                 auto miner_account = m_repository->get_account(chain_id, *pk);
-                b = block(chain_id, block_version::block_version1,
-                          (best_tip_block.timestamp() + interval), best_tip_block.block_number() + 1,
-                          best_tip_block.sha256(), base_target, 0, genSig, transaction(), *pk,
-                          miner_account.balance(), miner_account.nonce(), 0, 0, 0, 0);
+                std::int64_t sender_balance = 0;
+                std::int64_t sender_nonce = 0;
+                std::int64_t receiver_balance = 0;
+                std::int64_t receiver_nonce = 0;
+                if (!tx.empty()) {
+                    auto sender_account = m_repository->get_account(chain_id, tx.sender());
+                    sender_balance = sender_account.balance();
+                    sender_nonce = sender_account.nonce();
+                    auto receiver_account = m_repository->get_account(chain_id, tx.receiver());
+                    receiver_balance = receiver_account.balance();
+                    receiver_nonce = receiver_account.nonce();
+                }
+                b = block(chain_id, block_version::block_version1,(best_tip_block.timestamp() + interval),
+                          best_tip_block.block_number() + 1, best_tip_block.sha256(), base_target,
+                          cumulative_difficulty, genSig, tx, *pk, miner_account.balance(), miner_account.nonce(),
+                          sender_balance, sender_nonce, receiver_balance, receiver_nonce);
                 b.sign(*pk, *sk);
             }
         }
@@ -321,8 +340,9 @@ namespace libTAU::blockchain {
                 if (b.block_number() - m_best_tail_blocks[chain_id].block_number() > EFFECTIVE_BLOCK_NUMBER) {
                     m_repository->expire_block(m_best_tail_blocks[chain_id]);
                     // get main chain block
+                    best_tail_block = m_repository->get_main_chain_block_by_number(chain_id, b.block_number() - EFFECTIVE_BLOCK_NUMBER);
+                    repo->set_best_tail_block_hash(chain_id, best_tail_block.sha256());
                 }
-                repo->set_best_tail_block_hash(chain_id, b.sha256());
                 // update peer set
                 repo->update_user_state_db(b);
                 repo->commit();
@@ -331,6 +351,22 @@ namespace libTAU::blockchain {
                 m_tx_pools[chain_id].process_best(b);
 
                 m_best_tip_blocks[chain_id] = b;
+                if (!best_tail_block.empty()) {
+                    m_best_tail_blocks[chain_id] = best_tail_block;
+                }
+            }
+
+            if (m_best_tip_blocks[chain_id].block_number() - m_best_tail_blocks[chain_id].block_number() < EFFECTIVE_BLOCK_NUMBER &&
+                    b.sha256() == m_best_tail_blocks[chain_id].previous_block_hash()) {
+                auto repo = m_repository->start_tracking();
+                repo->connect_tail_block(b);
+                repo->set_best_tail_block_hash(chain_id, b.sha256());
+
+                // update peer set
+                repo->update_user_state_db(b);
+                repo->commit();
+                m_repository->flush();
+
                 m_best_tail_blocks[chain_id] = b;
             }
         }

@@ -45,6 +45,8 @@ namespace libTAU::blockchain {
 
         block get_block_by_hash(const sha256_hash &hash) override;
 
+        block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) override;
+
 //        bool save_block(block b, bool main_chain) override;
 
         bool forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,

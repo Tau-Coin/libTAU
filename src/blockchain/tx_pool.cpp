@@ -101,6 +101,10 @@ namespace libTAU::blockchain {
         }
     }
 
+    dht::public_key tx_pool::select_active_sender_randomly() {
+        return dht::public_key();
+    }
+
     void tx_pool::clear() {
         m_all_txs.clear();
         m_account_tx.clear();

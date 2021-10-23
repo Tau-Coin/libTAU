@@ -128,6 +128,15 @@ namespace libTAU::blockchain {
         }
     }
 
+    block repository_track::get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+        auto index_info = get_index_info(chain_id, block_number);
+        if (!index_info.empty() && !index_info.main_chain_block_hash().is_all_zeros()) {
+            return get_block_by_hash(index_info.main_chain_block_hash());
+        }
+
+        return block();
+    }
+
 //    bool repository_track::save_block(block b, bool main_chain) {
 //        return true;
 //    }

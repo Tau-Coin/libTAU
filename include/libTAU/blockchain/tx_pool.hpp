@@ -45,6 +45,8 @@ namespace libTAU::blockchain {
 
         bool process_best(const block& b);
 
+        dht::public_key select_active_sender_randomly();
+
         void clear();
 
     private:
