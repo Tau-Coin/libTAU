@@ -81,6 +81,8 @@ namespace libTAU::blockchain {
             if (!tip_block.empty() && !tail_block.empty()) {
                 m_best_tip_blocks[chain_id] = tip_block;
                 m_best_tail_blocks[chain_id] = tail_block;
+
+                try_to_update_consensus_point_block(chain_id);
             }
         }
 
@@ -308,6 +310,21 @@ namespace libTAU::blockchain {
         return consensus::verify_hit(hit, base_target, power, interval);
     }
 
+    void blockchain::try_to_update_consensus_point_block(const aux::bytes &chain_id) {
+        auto& tip_block = m_best_tip_blocks[chain_id];
+        auto& tail_block = m_best_tail_blocks[chain_id];
+
+        if ((tip_block.block_number() / 100 - 1) * 100 <= tail_block.block_number()) {
+            m_consensus_point_blocks[chain_id] = tail_block;
+        } else {
+            auto& consensus_block = m_consensus_point_blocks[chain_id];
+            if (consensus_block.empty() || consensus_block.block_number() != (tip_block.block_number() / 100 - 1) * 100) {
+                consensus_block = m_repository->get_main_chain_block_by_number(chain_id, (tip_block.block_number() / 100 - 1) * 100);
+                m_consensus_point_blocks[chain_id] = consensus_block;
+            }
+        }
+    }
+
     bool blockchain::process_block(const aux::bytes &chain_id, block &b) {
         if (b.empty())
             return false;
@@ -371,7 +388,13 @@ namespace libTAU::blockchain {
             }
         }
 
+        try_to_update_consensus_point_block(chain_id);
+
         return true;
+    }
+
+    void blockchain::refresh_vote() {
+
     }
 
     std::string blockchain::make_salt(const aux::bytes &chain_id) {

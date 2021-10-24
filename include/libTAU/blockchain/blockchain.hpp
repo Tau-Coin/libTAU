@@ -99,9 +99,13 @@ namespace libTAU::blockchain {
 
         block try_to_mine_block(const aux::bytes &chain_id);
 
+        void try_to_update_consensus_point_block(const aux::bytes &chain_id);
+
         bool verify_block(const aux::bytes &chain_id, block &b, block &best_tip_block);
 
         bool process_block(const aux::bytes &chain_id, block &b);
+
+        void refresh_vote();
 
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id);
@@ -166,11 +170,16 @@ namespace libTAU::blockchain {
         // update un-choked peers time
         std::map<aux::bytes, std::int64_t> m_update_peer_time;
 
+        std::set<block> m_blocks;
+
         // best tip blocks
         std::map<aux::bytes, block> m_best_tip_blocks;
 
         // best tail blocks
         std::map<aux::bytes, block> m_best_tail_blocks;
+
+        // consensus point blocks
+        std::map<aux::bytes, block> m_consensus_point_blocks;
 
     };
 }
