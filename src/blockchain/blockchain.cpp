@@ -102,6 +102,19 @@ namespace libTAU::blockchain {
             if (!chain_id.empty()) {
                 log("INFO: Select chain:%s", aux::toHex(chain_id).c_str());
 
+                auto &best_tip_block = m_best_tip_blocks[chain_id];
+                auto &best_tail_block = m_best_tail_blocks[chain_id];
+                auto &blocks = m_blocks[chain_id];
+                for(auto it = blocks.begin(); it != blocks.end(); ++it) {
+                    auto b = *it;
+                    if (best_tip_block.empty() || b.previous_block_hash() == best_tip_block.sha256() ||
+                        b.sha256() == best_tail_block.previous_block_hash()) {
+                        process_block(chain_id, b);
+                        blocks.erase(it);
+                    }
+                }
+
+                // mine
                 block b = try_to_mine_block(chain_id);
 
                 if (!b.empty()) {
@@ -111,14 +124,19 @@ namespace libTAU::blockchain {
                 try_to_refresh_unchoked_peers(chain_id);
 
                 auto& unchoked_peers = m_unchoked_peers[chain_id];
-                std::set<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
+                std::vector<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
                 auto p = select_peer_randomly(chain_id);
                 if (!(p == dht::public_key())) {
-                    peers.insert(p);
+                    peers.push_back(p);
                 }
-                for (auto const& peer: peers) {
-                    request_signal(chain_id, peer);
+                if (!peers.empty())
+                {
+                    // 产生随机数
+                    srand(total_microseconds(system_clock::now().time_since_epoch()));
+                    auto index = rand() % peers.size();
+                    request_signal(chain_id, peers[index]);
                 }
+
 
                 publish_signal(chain_id);
             }
@@ -223,26 +241,22 @@ namespace libTAU::blockchain {
         if (!best_tip_block.empty()) {
             block ancestor1 = m_repository->get_block_by_hash(best_tip_block.previous_block_hash());
             if (ancestor1.empty()) {
-                // todo:request
                 return b;
             }
 
             block ancestor2 = m_repository->get_block_by_hash(ancestor1.previous_block_hash());
             if (ancestor2.empty()) {
-                // todo:request
                 return b;
             }
 
             block ancestor3 = m_repository->get_block_by_hash(ancestor2.previous_block_hash());
             if (ancestor3.empty()) {
-                // todo:request
                 return b;
             }
 
             std::int64_t base_target = consensus::calculate_required_base_target(best_tip_block, ancestor3);
             std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
             if (power <= 0) {
-                // todo:request
                 return b;
             }
             auto genSig = consensus::calculate_generation_signature(best_tip_block.generation_signature(), *pk);
@@ -277,37 +291,37 @@ namespace libTAU::blockchain {
         return b;
     }
 
-    bool blockchain::verify_block(const aux::bytes &chain_id, block &b, block &best_tip_block) {
+    RESULT blockchain::verify_block(const aux::bytes &chain_id, block &b, block &best_tip_block) {
         if (b.empty())
-            return false;
+            return FALSE;
 
         if (!b.verify_signature())
-            return false;
+            return FALSE;
 
         block ancestor1 = m_repository->get_block_by_hash(best_tip_block.previous_block_hash());
-        if (ancestor1.empty()) {
-            // todo:request
-        }
+        if (ancestor1.empty())
+            return MISSING;
 
         block ancestor2 = m_repository->get_block_by_hash(ancestor1.previous_block_hash());
-        if (ancestor2.empty()) {
-            // todo:request
-        }
+        if (ancestor2.empty())
+            return MISSING;
 
         block ancestor3 = m_repository->get_block_by_hash(ancestor2.previous_block_hash());
-        if (ancestor3.empty()) {
-            // todo:request
-        }
+        if (ancestor3.empty())
+            return MISSING;
 
         std::int64_t base_target = consensus::calculate_required_base_target(best_tip_block, ancestor3);
         std::int64_t power = m_repository->get_effective_power(chain_id, b.miner());
-        if (power <= 0) {
-            // todo:request
-        }
+        if (power <= 0)
+            return MISSING;
+
         auto genSig = consensus::calculate_generation_signature(best_tip_block.generation_signature(), b.miner());
         auto hit = consensus::calculate_random_hit(genSig);
         auto interval = consensus::calculate_mining_time_interval(hit, base_target, power);
-        return consensus::verify_hit(hit, base_target, power, interval);
+        if (!consensus::verify_hit(hit, base_target, power, interval))
+            return FALSE;
+
+        return TRUE;
     }
 
     void blockchain::try_to_update_consensus_point_block(const aux::bytes &chain_id) {
@@ -325,9 +339,9 @@ namespace libTAU::blockchain {
         }
     }
 
-    bool blockchain::process_block(const aux::bytes &chain_id, block &b) {
+    RESULT blockchain::process_block(const aux::bytes &chain_id, block &b) {
         if (b.empty())
-            return false;
+            return FALSE;
 
         auto it  = m_best_tip_blocks.find(chain_id);
         if (it == m_best_tip_blocks.end()) {
@@ -346,8 +360,9 @@ namespace libTAU::blockchain {
             m_best_tail_blocks[chain_id] = b;
         } else {
             if (b.previous_block_hash() == it->second.sha256()) {
-                if (!verify_block(chain_id, b, it->second))
-                    return false;
+                auto result = verify_block(chain_id, b, it->second);
+                if (result != TRUE)
+                    return result;
 
                 auto repo = m_repository->start_tracking();
                 repo->connect_tip_block(b);
@@ -390,10 +405,10 @@ namespace libTAU::blockchain {
 
         try_to_update_consensus_point_block(chain_id);
 
-        return true;
+        return TRUE;
     }
 
-    void blockchain::refresh_vote() {
+    void blockchain::refresh_vote(const aux::bytes &chain_id) {
 
     }
 

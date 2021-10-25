@@ -21,6 +21,7 @@ see LICENSE file.
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
+#include "libTAU/blockchain/blockchain_signal.hpp"
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/repository_impl.hpp"
@@ -37,19 +38,24 @@ namespace libTAU::blockchain {
     // salt length (first 16 bytes of public key)
     constexpr int blockchain_salt_length = 16;
 
+    enum RESULT {
+        TRUE,
+        FALSE,
+        MISSING,
+    };
+
     //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
     // This is the basic logging and debug interface offered by the blockchain.
     // a release build with logging disabled (which is the default) will
     // not have this class at all
-    struct TORRENT_EXTRA_EXPORT blockchain_logger
-            {
+    struct TORRENT_EXTRA_EXPORT blockchain_logger {
         //#ifndef TORRENT_DISABLE_LOGGING
         virtual bool should_log() const = 0;
         virtual void log(char const* fmt, ...) const TORRENT_FORMAT(2,3) = 0;
         //#endif
             protected:
                 ~blockchain_logger() {}
-            };
+    };
     //#endif // TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
 
     class TORRENT_EXPORT blockchain final:
@@ -101,11 +107,11 @@ namespace libTAU::blockchain {
 
         void try_to_update_consensus_point_block(const aux::bytes &chain_id);
 
-        bool verify_block(const aux::bytes &chain_id, block &b, block &best_tip_block);
+        RESULT verify_block(const aux::bytes &chain_id, block &b, block &best_tip_block);
 
-        bool process_block(const aux::bytes &chain_id, block &b);
+        RESULT process_block(const aux::bytes &chain_id, block &b);
 
-        void refresh_vote();
+        void refresh_vote(const aux::bytes &chain_id);
 
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id);
@@ -170,7 +176,8 @@ namespace libTAU::blockchain {
         // update un-choked peers time
         std::map<aux::bytes, std::int64_t> m_update_peer_time;
 
-        std::set<block> m_blocks;
+        // block cache
+        std::map<aux::bytes, std::set<block>> m_blocks;
 
         // best tip blocks
         std::map<aux::bytes, block> m_best_tip_blocks;
@@ -180,6 +187,14 @@ namespace libTAU::blockchain {
 
         // consensus point blocks
         std::map<aux::bytes, block> m_consensus_point_blocks;
+
+        // blockchain signal time(map:key1->chain id, key2->peer, value->signal time(ms))
+        std::map<aux::bytes, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
+
+        // blockchain hash prefix array(map:key1->chain id, key2->peer, value->hash prefix array)
+        std::map<aux::bytes, std::map<aux::bytes, aux::bytes>> m_latest_hash_prefix_array;
+
+        std::map<aux::bytes, std::map<dht::public_key, aux::bytes>> m_votes;
 
     };
 }
