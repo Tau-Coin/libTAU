@@ -280,6 +280,16 @@ namespace libTAU::blockchain {
         return block();
     }
 
+    sha256_hash
+    repository_impl::get_main_chain_block_hash_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+        auto index_info = get_index_info(chain_id, block_number);
+        if (!index_info.empty() && !index_info.main_chain_block_hash().is_all_zeros()) {
+            return index_info.main_chain_block_hash();
+        }
+
+        return libTAU::sha256_hash();
+    }
+
     account repository_impl::find_state_from_block(const dht::public_key &pubKey, const block &b) {
         if (pubKey == b.miner()) {
             return account(b.miner_balance(), b.miner_nonce(), b.block_number());

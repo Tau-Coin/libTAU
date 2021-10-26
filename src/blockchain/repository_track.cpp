@@ -137,6 +137,16 @@ namespace libTAU::blockchain {
         return block();
     }
 
+    sha256_hash
+    repository_track::get_main_chain_block_hash_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+        auto index_info = get_index_info(chain_id, block_number);
+        if (!index_info.empty() && !index_info.main_chain_block_hash().is_all_zeros()) {
+            return index_info.main_chain_block_hash();
+        }
+
+        return libTAU::sha256_hash();
+    }
+
 //    bool repository_track::save_block(block b, bool main_chain) {
 //        return true;
 //    }

@@ -111,6 +111,8 @@ namespace libTAU::blockchain {
 
         RESULT process_block(const aux::bytes &chain_id, block &b);
 
+        RESULT try_to_rebranch(const aux::bytes &chain_id, block &target);
+
         void refresh_vote(const aux::bytes &chain_id);
 
         // make a salt on mutable channel
@@ -177,7 +179,7 @@ namespace libTAU::blockchain {
         std::map<aux::bytes, std::int64_t> m_update_peer_time;
 
         // block cache
-        std::map<aux::bytes, std::set<block>> m_blocks;
+        std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;
 
         // best tip blocks
         std::map<aux::bytes, block> m_best_tip_blocks;
@@ -188,13 +190,17 @@ namespace libTAU::blockchain {
         // consensus point blocks
         std::map<aux::bytes, block> m_consensus_point_blocks;
 
-        // blockchain signal time(map:key1->chain id, key2->peer, value->signal time(ms))
+        // current best votes
+        std::map<aux::bytes, vote> m_best_votes;
+
+        // votes
+        std::map<aux::bytes, std::map<dht::public_key, vote>> m_votes;
+
+        // blockchain signal time(map:key1->chain id, key2->peer, value->signal time(ms))(1min)
         std::map<aux::bytes, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
 
         // blockchain hash prefix array(map:key1->chain id, key2->peer, value->hash prefix array)
         std::map<aux::bytes, std::map<aux::bytes, aux::bytes>> m_latest_hash_prefix_array;
-
-        std::map<aux::bytes, std::map<dht::public_key, aux::bytes>> m_votes;
 
     };
 }

@@ -32,6 +32,10 @@ namespace libTAU::blockchain {
 
         int64_t block_number() const { return m_block_number; }
 
+        int count() const { return m_count; }
+
+        void cast_vote() { m_count++; }
+
         bool empty() { return m_block_hash.is_all_zeros(); }
 
         entry get_entry() const;
@@ -47,6 +51,22 @@ namespace libTAU::blockchain {
             return !(rhs == *this);
         }
 
+        bool operator<(const vote &rhs) const {
+            return m_count < rhs.m_count;
+        }
+
+        bool operator>(const vote &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const vote &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const vote &rhs) const {
+            return !(*this < rhs);
+        }
+
     private:
         // populate block chain signal info from entry
         void populate(const entry& e);
@@ -54,6 +74,8 @@ namespace libTAU::blockchain {
         sha256_hash m_block_hash;
 
         std::int64_t m_block_number{};
+
+        int m_count = 1;
     };
 }
 

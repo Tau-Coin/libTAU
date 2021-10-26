@@ -101,16 +101,22 @@ namespace libTAU::blockchain {
             aux::bytes chain_id = select_chain_randomly();
             if (!chain_id.empty()) {
                 log("INFO: Select chain:%s", aux::toHex(chain_id).c_str());
+                auto &best_vote = m_best_votes[chain_id];
+                if (!best_vote.empty()) {
+                    auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id, best_vote.block_number());
+                    if (hash != best_vote.block_hash()) {
+                        // re-branch
+                    }
+                }
 
                 auto &best_tip_block = m_best_tip_blocks[chain_id];
                 auto &best_tail_block = m_best_tail_blocks[chain_id];
-                auto &blocks = m_blocks[chain_id];
-                for(auto it = blocks.begin(); it != blocks.end(); ++it) {
-                    auto b = *it;
-                    if (best_tip_block.empty() || b.previous_block_hash() == best_tip_block.sha256() ||
-                        b.sha256() == best_tail_block.previous_block_hash()) {
-                        process_block(chain_id, b);
-                        blocks.erase(it);
+                auto &block_map = m_blocks[chain_id];
+                for(auto it = block_map.begin(); it != block_map.end(); ++it) {
+                    if (best_tip_block.empty() || it->second.previous_block_hash() == best_tip_block.sha256() ||
+                        it->second.sha256() == best_tail_block.previous_block_hash()) {
+                        process_block(chain_id, it->second);
+                        block_map.erase(it);
                     }
                 }
 
@@ -408,8 +414,65 @@ namespace libTAU::blockchain {
         return TRUE;
     }
 
-    void blockchain::refresh_vote(const aux::bytes &chain_id) {
+    RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, block &target) {
+        auto &best_tip_block = m_best_tip_blocks[chain_id];
 
+        std::vector<block> undo_blocks{best_tip_block};
+        std::vector<block> new_blocks{target};
+
+        block main_chain_block = best_tip_block;
+        while (main_chain_block.block_number() > target.block_number()) {
+            main_chain_block = m_repository->get_block_by_hash(main_chain_block.previous_block_hash());
+            if (main_chain_block.empty())
+                return MISSING;
+            undo_blocks.push_back(main_chain_block);
+        }
+
+        block reference_block = target;
+        while (best_tip_block.block_number() < reference_block.block_number()) {
+            auto &block_maps = m_blocks[chain_id];
+            auto it = block_maps.find(reference_block.previous_block_hash());
+            if (it != block_maps.end()) {
+                reference_block = it->second;
+            } else {
+                reference_block = m_repository->get_block_by_hash(reference_block.previous_block_hash());
+                if (reference_block.empty())
+                    return MISSING;
+            }
+            new_blocks.push_back(reference_block);
+        }
+
+        while (main_chain_block.sha256() != reference_block.sha256()) {
+            main_chain_block = m_repository->get_block_by_hash(main_chain_block.previous_block_hash());
+            if (main_chain_block.empty())
+                return MISSING;
+
+            reference_block = m_repository->get_block_by_hash(reference_block.previous_block_hash());
+            if (reference_block.empty())
+                return MISSING;
+        }
+
+        return TRUE;
+    }
+
+    void blockchain::refresh_vote(const aux::bytes &chain_id) {
+        std::set<vote> votes;
+        auto & peer_votes = m_votes[chain_id];
+        for (auto const& v: peer_votes) {
+            auto it = votes.find(v.second);
+            if (it != votes.end()) {
+                auto cv = *it;
+                cv.cast_vote();
+                votes.insert(cv);
+            } else {
+                votes.insert(v.second);
+            }
+        }
+
+        if (!votes.empty()) {
+            m_best_votes[chain_id] = *votes.rbegin();
+        }
+        m_votes[chain_id].clear();
     }
 
     std::string blockchain::make_salt(const aux::bytes &chain_id) {
