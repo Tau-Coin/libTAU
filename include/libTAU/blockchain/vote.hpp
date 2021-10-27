@@ -34,7 +34,7 @@ namespace libTAU::blockchain {
 
         int count() const { return m_count; }
 
-        void cast_vote() { m_count++; }
+        void vote_up() { m_count++; }
 
         bool empty() { return m_block_hash.is_all_zeros(); }
 
