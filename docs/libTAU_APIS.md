@@ -148,9 +148,7 @@
 	
 	交易池交易
 	void onTransactionPool(List<Transaction> txs);
-	
-	new Offchain message
-	void onNewChianMessage(ChianMessage msg);
+
 	
 	
 	
