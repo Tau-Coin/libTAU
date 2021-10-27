@@ -59,7 +59,8 @@ struct ip_change_notifier_impl final : ip_change_notifier
 {
 	explicit ip_change_notifier_impl(io_context& ios)
 		: m_socket(ios
-			, netlink::endpoint(netlink(NETLINK_ROUTE), RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR))
+			//, netlink::endpoint(netlink(NETLINK_ROUTE), RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR))
+			, netlink::endpoint(netlink(NETLINK_ROUTE), RTMGRP_IPV4_IFADDR))
 	{
 		// Linux can generate ENOBUFS if the socket's buffers are full
 		// don't treat it as an error
