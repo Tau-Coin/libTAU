@@ -65,3 +65,91 @@
 	bool add_new_message(communication::message msg);
 
 ## Blockchain业务相关
+
+### 区块链暴露供外部使用的数据结构
+
+	创世区块账户信息
+	class GenesisAccount {
+		byte[] account;
+		BigInteger balance;
+		BigInteger power;
+	}
+	
+	创世区块结构
+	class GenesisConfig {
+		GenesisConfig(String communityName, List<GenesisAccount> genesisItems);
+		byte[] getChianID();
+	}
+
+	区块结构
+	class Block {
+		...
+	}
+	
+	交易结构
+	class Transaction {
+		...
+	}
+	
+	交易类型
+	enum TransactionType {
+		...
+	}
+	
+	账户信息
+	class AccountInfo {
+		BigInteger balance;
+		BigInteger nonce;
+	}
+	
+	链URL结构组织（tauchain:?bs=pk1&bs=pk2&dn=chainID）
+	URL中的tauchain为小写字母
+	class ChainUrl {
+		String encode(String chainID, List<String> publicKeys);
+		ChainUrl decode(String url);
+	}
+	
+### 区块链外部可调用的接口
+	
+	创建新的社区
+	boolean createNewCommunity(GenesisConfig cf);
+	
+	提交交易到交易池
+	boolean submitTransaction(Transaction tx);
+	
+	获取账户信息
+	AccountInfo getAccountInfo(String chainID, String publicKey);
+	
+	跟随链
+	followChain(ChainUrl url);
+	
+	取消跟随链
+	unfollowChain(String chainID);
+	
+	获取当前分叉点Block
+	Block getCurrentForkBlock(String chainID);
+	
+	获取共识点投票前三名的区块号和哈希
+	List<Block> getTopConsensusBlock(String chainID, int topNum);
+	
+	获取tip前三名区块号和哈希
+	List<Block> getTopTipBlock(String chainID, int topNum);
+	
+### 区块链上报的接口
+	
+	新的区块
+	void onNewBlock(Block block);
+	
+	同步区块
+	void onSyncBlock(Block block);
+	
+	区块回滚
+	void onBlockRollback(Block block);
+	
+	交易池交易
+	void onTransactionPool(List<Transaction> txs);
+
+	
+	
+	
+	
