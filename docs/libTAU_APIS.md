@@ -96,14 +96,6 @@
 		...
 	}
 	
-	Offchain message
-	class ChianMessage {
-		String chainID;
-		String senderPk;
-		String msg;
-		...
-	}
-	
 	账户信息
 	class AccountInfo {
 		BigInteger balance;
@@ -114,7 +106,7 @@
 	URL中的tauchain为小写字母
 	class ChainUrl {
 		String encode(String chainID, List<String> publicKeys);
-		ChainUrl decode(String link);
+		ChainUrl decode(String url);
 	}
 	
 ### 区块链外部可调用的接口
@@ -124,9 +116,6 @@
 	
 	提交交易到交易池
 	boolean submitTransaction(Transaction tx);
-
-	send Offchain message
-	boolean sendChianMessage(ChianMessage msg);
 	
 	获取账户信息
 	AccountInfo getAccountInfo(String chainID, String publicKey);
@@ -138,7 +127,7 @@
 	unfollowChain(String chainID);
 	
 	获取当前分叉点Block
-	void getCurrentForkBlock(Block block);
+	Block getCurrentForkBlock(String chainID);
 	
 	获取共识点投票前三名的区块号和哈希
 	List<Block> getTopConsensusBlock(String chainID, int topNum);
@@ -156,6 +145,9 @@
 	
 	区块回滚
 	void onBlockRollback(Block block);
+	
+	交易池交易
+	void onTransactionPool(List<Transaction> txs);
 	
 	new Offchain message
 	void onNewChianMessage(ChianMessage msg);
