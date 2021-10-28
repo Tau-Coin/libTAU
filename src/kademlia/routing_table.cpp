@@ -255,7 +255,7 @@ int routing_table::bucket_limit(int bucket) const
 {
 	if (!m_settings.get_bool(settings_pack::dht_extended_routing_table)) return m_bucket_size;
 
-	static const aux::array<int, 4> size_exceptions{{{16, 8, 4, 2}}};
+	static const aux::array<int, 4> size_exceptions{{{128, 8, 4, 2}}};
 	if (bucket < size_exceptions.end_index())
 		return m_bucket_size * size_exceptions[bucket];
 	return m_bucket_size;
@@ -815,7 +815,7 @@ ip_ok:
 	// if all nodes in the bucket, including the new node id (e.id) fall in the
 	// same bucket, splitting isn't going to do anything.
 	bool const can_split = (std::next(i) == m_buckets.end()
-		&& m_buckets.size() < 255)
+		&& m_buckets.size() < 1)
 		&& (m_settings.get_bool(settings_pack::dht_prefer_verified_node_ids) == false
 			|| (e.verified && mostly_verified_nodes(b)))
 		&& e.confirmed()
@@ -854,7 +854,8 @@ ip_ok:
 		return node_added;
 	}
 
-	if (int(rb.size()) >= m_replace_bucket_size/*m_bucket_size*/)
+	//if (int(rb.size()) >= m_replace_bucket_size/*m_bucket_size*/)
+	if (int(rb.size()) >= 1024)
 	{
 		// if the replacement bucket is full, remove the oldest entry
 		// but prefer nodes that haven't been pinged, since they are
@@ -875,7 +876,8 @@ ip_ok:
 		rb.erase(j);
 	}
 
-	if (rb.empty()) rb.reserve(m_replace_bucket_size/*m_bucket_size*/);
+	//if (rb.empty()) rb.reserve(m_replace_bucket_size/*m_bucket_size*/);
+	if (rb.empty()) rb.reserve(1024);
 	rb.push_back(e);
 	m_ips.insert(e.addr());
 	return node_added;
