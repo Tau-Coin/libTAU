@@ -62,7 +62,7 @@ namespace libTAU::blockchain {
             public std::enable_shared_from_this<blockchain>, blockchain_logger  {
     public:
         blockchain(io_context& mIoc, aux::session_interface &mSes) :
-        m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
+        m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc), m_vote_timer(mIoc) {
             m_repository = std::make_shared<repository_impl>(m_ses.sqldb(), m_ses.kvdb());
         }
         // start blockchain
@@ -92,6 +92,8 @@ namespace libTAU::blockchain {
 
         void refresh_timeout(error_code const& e);
 
+        void refresh_vote_timeout(error_code const& e);
+
         void try_to_refresh_unchoked_peers(const aux::bytes &chain_id);
 
         // select a chain randomly
@@ -107,7 +109,7 @@ namespace libTAU::blockchain {
 
         void try_to_update_consensus_point_block(const aux::bytes &chain_id);
 
-        RESULT verify_block(const aux::bytes &chain_id, block &b, block &best_tip_block);
+        RESULT verify_block(const aux::bytes &chain_id, block &b, block &previous_block, repository *repo);
 
         RESULT process_block(const aux::bytes &chain_id, block &b);
 
@@ -161,6 +163,9 @@ namespace libTAU::blockchain {
 
         // deadline timer
         aux::deadline_timer m_refresh_timer;
+
+        // vote timer
+        aux::deadline_timer m_vote_timer;
 
         // blockchain db
         std::shared_ptr<repository> m_repository;

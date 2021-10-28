@@ -27,10 +27,10 @@ namespace libTAU::blockchain {
         e["cv"] = m_consensus_point_vote.get_entry();
 
         // best block
-        e["bb"] = m_best_tip_block.get_entry();
+        e["bb"] = m_best_tip_block_info.get_entry();
 
         // immutable block
-        e["ib"] = m_immutable_block_info.get_entry();
+        e["ib"] = m_consensus_point_block_info.get_entry();
 
         // block set
         entry::list_type block_list;
@@ -53,12 +53,12 @@ namespace libTAU::blockchain {
         }
         e["db"] = demand_block_hash_list;
 
-        // demand tx hash set
-        entry::list_type demand_tx_hash_list;
-        for (auto const& hash: m_demand_tx_hash_set) {
-            demand_tx_hash_list.push_back(hash.to_string());
-        }
-        e["dt"] = demand_tx_hash_list;
+//        // demand tx hash set
+//        entry::list_type demand_tx_hash_list;
+//        for (auto const& hash: m_demand_tx_hash_set) {
+//            demand_tx_hash_list.push_back(hash.to_string());
+//        }
+//        e["dt"] = demand_tx_hash_list;
 
         // tx hash prefix bytes
         e["ta"] = entry(std::string(m_tx_hash_prefix_array.begin(), m_tx_hash_prefix_array.end()));
@@ -93,12 +93,12 @@ namespace libTAU::blockchain {
         // best block
         if (auto* i = const_cast<entry *>(e.find_key("bb")))
         {
-            m_best_tip_block = immutable_data_info(*i);
+            m_best_tip_block_info = immutable_data_info(*i);
         }
         // immutable block
         if (auto* i = const_cast<entry *>(e.find_key("ib")))
         {
-            m_immutable_block_info = immutable_data_info(*i);
+            m_consensus_point_block_info = immutable_data_info(*i);
         }
         // block set
         if (auto* i = const_cast<entry *>(e.find_key("bs")))
@@ -124,14 +124,14 @@ namespace libTAU::blockchain {
                 m_demand_block_hash_set.emplace(hash.string().data());
             }
         }
-        // demand tx hash set
-        if (auto* i = const_cast<entry *>(e.find_key("dt")))
-        {
-            auto & lst = i->list();
-            for (auto const& hash: lst) {
-                m_demand_tx_hash_set.emplace(hash.string().data());
-            }
-        }
+//        // demand tx hash set
+//        if (auto* i = const_cast<entry *>(e.find_key("dt")))
+//        {
+//            auto & lst = i->list();
+//            for (auto const& hash: lst) {
+//                m_demand_tx_hash_set.emplace(hash.string().data());
+//            }
+//        }
         // tx hash prefix bytes
         if (auto* i = const_cast<entry *>(e.find_key("ta")))
         {

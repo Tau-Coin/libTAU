@@ -24,8 +24,14 @@ namespace libTAU::blockchain {
 
     aux::bytes tx_pool::get_hash_prefix_array() const {
         libTAU::aux::bytes hash_prefix_array;
+        int count = 0;
         for (auto it = m_ordered_txs.rbegin(); it != m_ordered_txs.rend(); ++it) {
+            count++;
             hash_prefix_array.push_back(it->txid()[0]);
+
+            if (10 == count) {
+                break;
+            }
         }
 
         return hash_prefix_array;
@@ -83,7 +89,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    bool tx_pool::process_best(const block& b) {
+    bool tx_pool::process_block(const block& b) {
         std::set<dht::public_key> peers;
         peers.insert(b.miner());
         auto tx = b.tx();

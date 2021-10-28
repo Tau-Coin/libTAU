@@ -37,11 +37,11 @@ namespace libTAU::blockchain {
         blockchain_signal(const vote &mConsensusPointVote, immutable_data_info mBestTipBlock,
                           immutable_data_info mImmutableBlockInfo, std::set<immutable_data_info> mBlockSet,
                           std::set<immutable_data_info> mTxSet, std::set<sha256_hash> mDemandBlockHashSet,
-                          std::set<sha256_hash> mDemandTxHashSet, aux::bytes mTxHashPrefixArray)
-                : m_consensus_point_vote(mConsensusPointVote), m_best_tip_block(std::move(mBestTipBlock)),
-                  m_immutable_block_info(std::move(mImmutableBlockInfo)), m_block_set(std::move(mBlockSet)),
+                          aux::bytes mTxHashPrefixArray)
+                : m_consensus_point_vote(mConsensusPointVote), m_best_tip_block_info(std::move(mBestTipBlock)),
+                  m_consensus_point_block_info(std::move(mImmutableBlockInfo)), m_block_set(std::move(mBlockSet)),
                   m_tx_set(std::move(mTxSet)), m_demand_block_hash_set(std::move(mDemandBlockHashSet)),
-                  m_demand_tx_hash_set(std::move(mDemandTxHashSet)), m_tx_hash_prefix_array(std::move(mTxHashPrefixArray)) {}
+                  m_tx_hash_prefix_array(std::move(mTxHashPrefixArray)) {}
 
 //        blockchain_signal(const sha256_hash &mConsensusPointBlockHash, int64_t mConsensusPointBlockNumber,
 //                          immutable_data_info mBestBlock, immutable_data_info mImmutableBlock,
@@ -66,13 +66,13 @@ namespace libTAU::blockchain {
 
         void set_consensus_point_vote(const vote &mConsensusPointVote) { m_consensus_point_vote = mConsensusPointVote; }
 
-        const immutable_data_info &best_tip_block() const { return m_best_tip_block; }
+        const immutable_data_info &best_tip_block_info() const { return m_best_tip_block_info; }
 
-        void set_best_tip_block(const immutable_data_info &mBestBlock) { m_best_tip_block = mBestBlock; }
+        void set_best_tip_block_info(const immutable_data_info &mBestBlockInfo) { m_best_tip_block_info = mBestBlockInfo; }
 
-        const immutable_data_info &immutable_block_info() const { return m_immutable_block_info; }
+        const immutable_data_info &immutable_block_info() const { return m_consensus_point_block_info; }
 
-        void set_immutable_block_info(const immutable_data_info &mImmutableBlockInfo) { m_immutable_block_info = mImmutableBlockInfo; }
+        void set_immutable_block_info(const immutable_data_info &mImmutableBlockInfo) { m_consensus_point_block_info = mImmutableBlockInfo; }
 
         const std::set<immutable_data_info> &get_block_set() const { return m_block_set; }
 
@@ -86,9 +86,9 @@ namespace libTAU::blockchain {
 
         void set_demand_block_hash_set(const std::set<sha256_hash> &mDemandBlockHashSet) { m_demand_block_hash_set = mDemandBlockHashSet; }
 
-        const std::set<sha256_hash> &get_demand_tx_hash_set() const { return m_demand_tx_hash_set; }
-
-        void set_demand_tx_hash_set(const std::set<sha256_hash> &mDemandTxHashSet) { m_demand_tx_hash_set = mDemandTxHashSet; }
+//        const std::set<sha256_hash> &get_demand_tx_hash_set() const { return m_demand_tx_hash_set; }
+//
+//        void set_demand_tx_hash_set(const std::set<sha256_hash> &mDemandTxHashSet) { m_demand_tx_hash_set = mDemandTxHashSet; }
 
         const aux::bytes &get_tx_hash_prefix_array() const { return m_tx_hash_prefix_array; }
 
@@ -108,9 +108,9 @@ namespace libTAU::blockchain {
 //
 //        std::int64_t m_consensus_point_block_number{};
 
-        immutable_data_info m_best_tip_block;
+        immutable_data_info m_best_tip_block_info;
 
-        immutable_data_info m_immutable_block_info;
+        immutable_data_info m_consensus_point_block_info;
 
         std::set<immutable_data_info> m_block_set;
 
@@ -118,7 +118,7 @@ namespace libTAU::blockchain {
 
         std::set<sha256_hash> m_demand_block_hash_set;
 
-        std::set<sha256_hash> m_demand_tx_hash_set;
+//        std::set<sha256_hash> m_demand_tx_hash_set;
 
         aux::bytes m_tx_hash_prefix_array;
     };

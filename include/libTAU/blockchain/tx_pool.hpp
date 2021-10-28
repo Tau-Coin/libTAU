@@ -43,7 +43,7 @@ namespace libTAU::blockchain {
 
         void delete_transaction_by_account(const dht::public_key& pubKey);
 
-        bool process_best(const block& b);
+        bool process_block(const block& b);
 
         dht::public_key select_active_sender_randomly();
 

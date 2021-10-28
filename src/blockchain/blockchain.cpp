@@ -41,6 +41,9 @@ namespace libTAU::blockchain {
         m_refresh_timer.expires_after(milliseconds(m_refresh_time));
         m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
 
+        m_vote_timer.expires_after(seconds(DEFAULT_BLOCK_TIME));
+        m_vote_timer.async_wait(std::bind(&blockchain::refresh_vote_timeout, self(), _1));
+
         return true;
     }
 
@@ -152,6 +155,21 @@ namespace libTAU::blockchain {
                     std::bind(&blockchain::refresh_timeout, self(), _1));
         } catch (std::exception &e) {
             log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+        }
+    }
+
+    void blockchain::refresh_vote_timeout(const error_code &e) {
+        if (e || m_stop) return;
+
+        try {
+            for (auto const& chain_id: m_chains) {
+                refresh_vote(chain_id);
+            }
+
+            m_vote_timer.expires_after(seconds(DEFAULT_BLOCK_TIME));
+            m_vote_timer.async_wait(std::bind(&blockchain::refresh_vote_timeout, self(), _1));
+        } catch (std::exception &e) {
+            log("Exception vote [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
     }
 
@@ -297,31 +315,31 @@ namespace libTAU::blockchain {
         return b;
     }
 
-    RESULT blockchain::verify_block(const aux::bytes &chain_id, block &b, block &best_tip_block) {
+    RESULT blockchain::verify_block(const aux::bytes &chain_id, block &b, block &previous_block, repository *repo) {
         if (b.empty())
             return FALSE;
 
         if (!b.verify_signature())
             return FALSE;
 
-        block ancestor1 = m_repository->get_block_by_hash(best_tip_block.previous_block_hash());
+        block ancestor1 = repo->get_block_by_hash(previous_block.previous_block_hash());
         if (ancestor1.empty())
             return MISSING;
 
-        block ancestor2 = m_repository->get_block_by_hash(ancestor1.previous_block_hash());
+        block ancestor2 = repo->get_block_by_hash(ancestor1.previous_block_hash());
         if (ancestor2.empty())
             return MISSING;
 
-        block ancestor3 = m_repository->get_block_by_hash(ancestor2.previous_block_hash());
+        block ancestor3 = repo->get_block_by_hash(ancestor2.previous_block_hash());
         if (ancestor3.empty())
             return MISSING;
 
-        std::int64_t base_target = consensus::calculate_required_base_target(best_tip_block, ancestor3);
-        std::int64_t power = m_repository->get_effective_power(chain_id, b.miner());
+        std::int64_t base_target = consensus::calculate_required_base_target(previous_block, ancestor3);
+        std::int64_t power = repo->get_effective_power(chain_id, b.miner());
         if (power <= 0)
             return MISSING;
 
-        auto genSig = consensus::calculate_generation_signature(best_tip_block.generation_signature(), b.miner());
+        auto genSig = consensus::calculate_generation_signature(previous_block.generation_signature(), b.miner());
         auto hit = consensus::calculate_random_hit(genSig);
         auto interval = consensus::calculate_mining_time_interval(hit, base_target, power);
         if (!consensus::verify_hit(hit, base_target, power, interval))
@@ -352,8 +370,8 @@ namespace libTAU::blockchain {
         if (b.empty())
             return FALSE;
 
-        auto it  = m_best_tip_blocks.find(chain_id);
-        if (it == m_best_tip_blocks.end()) {
+        auto &best_tip_block  = m_best_tip_blocks[chain_id];
+        if (best_tip_block.empty()) {
             auto track = m_repository->start_tracking();
             track->connect_tip_block(b);
             track->set_best_tip_block_hash(chain_id, b.sha256());
@@ -363,17 +381,18 @@ namespace libTAU::blockchain {
             track->commit();
             m_repository->flush();
 
-            m_tx_pools[chain_id].process_best(b);
+            m_tx_pools[chain_id].process_block(b);
 
             m_best_tip_blocks[chain_id] = b;
             m_best_tail_blocks[chain_id] = b;
         } else {
-            if (b.previous_block_hash() == it->second.sha256()) {
-                auto result = verify_block(chain_id, b, it->second);
+            if (b.previous_block_hash() == best_tip_block.sha256()) {
+                auto track = m_repository->start_tracking();
+
+                auto result = verify_block(chain_id, b, best_tip_block, track);
                 if (result != TRUE)
                     return result;
 
-                auto track = m_repository->start_tracking();
                 track->connect_tip_block(b);
                 track->set_best_tip_block_hash(chain_id, b.sha256());
 
@@ -389,7 +408,7 @@ namespace libTAU::blockchain {
                 track->commit();
                 m_repository->flush();
 
-                m_tx_pools[chain_id].process_best(b);
+                m_tx_pools[chain_id].process_block(b);
 
                 m_best_tip_blocks[chain_id] = b;
                 if (!best_tail_block.empty()) {
@@ -433,8 +452,16 @@ namespace libTAU::blockchain {
         std::vector<block> undo_blocks;
         std::vector<block> new_blocks;
 
+        bool is_consensus_immutable = is_consensus_point_immutable(chain_id);
+        auto consensus_point_block = m_consensus_point_blocks[chain_id];
+
         block main_chain_block = best_tip_block;
         while (main_chain_block.block_number() > target.block_number()) {
+            if (is_consensus_immutable && main_chain_block.sha256() == consensus_point_block.sha256()) {
+                m_blocks[chain_id].clear();
+                return FALSE;
+            }
+
             undo_blocks.push_back(main_chain_block);
 
             main_chain_block = m_repository->get_block_by_hash(main_chain_block.previous_block_hash());
@@ -458,6 +485,11 @@ namespace libTAU::blockchain {
         }
 
         while (main_chain_block.sha256() != reference_block.sha256()) {
+            if (is_consensus_immutable && main_chain_block.sha256() == consensus_point_block.sha256()) {
+                m_blocks[chain_id].clear();
+                return FALSE;
+            }
+
             undo_blocks.push_back(main_chain_block);
 
             main_chain_block = m_repository->get_block_by_hash(main_chain_block.previous_block_hash());
@@ -480,6 +512,8 @@ namespace libTAU::blockchain {
                 return FALSE;
         }
 
+        new_blocks.push_back(reference_block);
+
         auto track = m_repository->start_tracking();
         auto best_tail_block = m_best_tail_blocks[chain_id];
         bool tail_missing = false;
@@ -489,26 +523,47 @@ namespace libTAU::blockchain {
                 auto previous_block = track->get_block_by_hash(best_tail_block.previous_block_hash());
                 if (!previous_block.empty()) {
                     best_tail_block = previous_block;
+                    track->connect_tail_block(previous_block);
                 } else {
                     tail_missing = true;
                 }
             }
 
-            m_tx_pools[chain_id].process_best(b);
+            m_tx_pools[chain_id].process_block(b);
         }
 
-        for (auto &b: new_blocks) {
+        for (auto i = new_blocks.size(); i > 1; i--) {
+            auto &b = new_blocks[i - 2];
+            auto &previous_block = new_blocks[i - 1];
+
+            if (!tail_missing) {
+                auto result = verify_block(chain_id, b, previous_block, track);
+                if (result != TRUE)
+                    return result;
+            }
+
             track->connect_tip_block(b);
             // update peer set
             track->update_user_state_db(b);
 
-            m_tx_pools[chain_id].process_best(b);
+            m_tx_pools[chain_id].process_block(b);
         }
 
+        while (target.block_number() - best_tail_block.block_number() > EFFECTIVE_BLOCK_NUMBER) {
+            track->expire_block(best_tail_block);
+            // get main chain block
+            best_tail_block = track->get_main_chain_block_by_number(chain_id, best_tail_block.block_number() + 1);
+            track->set_best_tail_block_hash(chain_id, best_tail_block.sha256());
+        }
         track->set_best_tip_block_hash(chain_id, target.sha256());
 
         track->commit();
         m_repository->flush();
+
+        m_best_tip_blocks[chain_id] = target;
+        m_best_tail_blocks[chain_id] = best_tail_block;
+
+        try_to_update_consensus_point_block(chain_id);
 
         return TRUE;
     }
@@ -535,72 +590,6 @@ namespace libTAU::blockchain {
             m_best_votes[chain_id] = *votes.rbegin();
         }
         m_votes[chain_id].clear();
-    }
-
-    std::string blockchain::make_salt(const aux::bytes &chain_id) {
-        std::string salt(chain_id.begin(), chain_id.begin() + blockchain_salt_length);
-
-        return salt;
-    }
-
-    void blockchain::request_signal(const aux::bytes &chain_id, const dht::public_key &peer) {
-        // salt is x pubkey when request signal
-        auto salt = make_salt(chain_id);
-
-        log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer).c_str(), aux::toHex(salt).c_str());
-        dht_get_mutable_item(peer.bytes, salt);
-    }
-
-    void blockchain::publish_signal(const aux::bytes &chain_id) {
-
-    }
-
-    // callback for dht_immutable_get
-    void blockchain::get_immutable_callback(aux::bytes const& peer, sha256_hash target
-            , dht::item const& i)
-    {
-        log("DEBUG: Immutable callback");
-        TORRENT_ASSERT(!i.is_mutable());
-        if (!i.empty()) {
-            log("INFO: Got immutable data callback, target[%s].", aux::toHex(target.to_string()).c_str());
-
-//            message msg(i.value());
-//
-//            add_new_message(peer, msg, true);
-        }
-    }
-
-    void blockchain::dht_get_immutable_item(aux::bytes const& peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
-    {
-        if (!m_ses.dht()) return;
-        log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
-        m_ses.dht()->get_item(target, eps, std::bind(&blockchain::get_immutable_callback
-                , this, peer, target, _1));
-    }
-
-    // callback for dht_mutable_get
-    void blockchain::get_mutable_callback(dht::item const& i
-            , bool const authoritative)
-    {
-        TORRENT_ASSERT(i.is_mutable());
-
-        // construct mutable data wrapper from entry
-        if (!i.empty()) {
-            dht::public_key * pk = m_ses.pubkey();
-            aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
-
-            aux::bytes peer(i.pk().bytes.begin(), i.pk().bytes.end());
-        }
-    }
-
-    // key is a 32-byte binary string, the public key to look up.
-    // the salt is optional
-    void blockchain::dht_get_mutable_item(std::array<char, 32> key
-            , std::string salt)
-    {
-        if (!m_ses.dht()) return;
-        m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&blockchain::get_mutable_callback
-                , this, _1, _2), std::move(salt));
     }
 
     namespace {
@@ -651,6 +640,127 @@ namespace libTAU::blockchain {
             i.assign(std::move(value), salt, ts, pk, sig);
         }
     } // anonymous namespace
+
+    std::string blockchain::make_salt(const aux::bytes &chain_id) {
+        std::string salt(chain_id.begin(), chain_id.begin() + blockchain_salt_length);
+
+        return salt;
+    }
+
+    void blockchain::request_signal(const aux::bytes &chain_id, const dht::public_key &peer) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(chain_id);
+
+        log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer).c_str(), aux::toHex(salt).c_str());
+        dht_get_mutable_item(peer.bytes, salt);
+    }
+
+    void blockchain::publish_signal(const aux::bytes &chain_id) {
+        auto &consensus_point_block = m_consensus_point_blocks[chain_id];
+        vote consensus_point_vote;
+        if (!consensus_point_block.empty()) {
+            consensus_point_vote.setBlockHash(consensus_point_block.sha256());
+            consensus_point_vote.setBlockNumber(consensus_point_block.block_number());
+        }
+
+        auto &best_tip_block = m_best_tip_blocks[chain_id];
+        immutable_data_info best_tip_block_info;
+        if (!best_tip_block.empty()) {
+//        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
+//                (peer, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
+
+            std::vector<dht::node_entry> entries;
+            m_ses.dht()->find_live_nodes(best_tip_block.sha256(), entries);
+            log("INFO: Put immutable best tip block target[%s], entries[%zu]",
+                aux::toHex(best_tip_block.sha256().to_string()).c_str(), entries.size());
+            dht_put_immutable_item(best_tip_block.get_entry(), entries, best_tip_block.sha256());
+
+            best_tip_block_info = immutable_data_info(best_tip_block.sha256(), entries);
+        }
+
+        immutable_data_info consensus_point_block_info;
+        if (!consensus_point_block.empty()) {
+//        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
+//                (peer, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
+
+            std::vector<dht::node_entry> entries;
+            m_ses.dht()->find_live_nodes(consensus_point_block.sha256(), entries);
+            log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
+                aux::toHex(consensus_point_block.sha256().to_string()).c_str(), entries.size());
+            dht_put_immutable_item(consensus_point_block.get_entry(), entries, consensus_point_block.sha256());
+
+            consensus_point_block_info = immutable_data_info(consensus_point_block.sha256(), entries);
+        }
+
+        std::set<immutable_data_info> block_set;
+
+        std::set<immutable_data_info> tx_set;
+
+        std::set<sha256_hash> demand_block_hash_set;
+
+        aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array();
+
+        blockchain_signal signal(consensus_point_vote, best_tip_block_info, consensus_point_block_info,
+                                 block_set, tx_set, demand_block_hash_set, tx_hash_prefix_array);
+
+//        log("INFO: Publish online signal: peer[%s], salt[%s], online signal[%s]", aux::toHex(pk->bytes).c_str(),
+//            aux::toHex(salt).c_str(), onlineSignal.to_string().c_str());
+
+        dht::public_key * pk = m_ses.pubkey();
+        dht::secret_key * sk = m_ses.serkey();
+
+        auto salt = make_salt(chain_id);
+        dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
+                , pk->bytes, sk->bytes, signal.get_entry()), salt);
+    }
+
+    // callback for dht_immutable_get
+    void blockchain::get_immutable_callback(aux::bytes const& peer, sha256_hash target
+            , dht::item const& i)
+    {
+        log("DEBUG: Immutable callback");
+        TORRENT_ASSERT(!i.is_mutable());
+        if (!i.empty()) {
+            log("INFO: Got immutable data callback, target[%s].", aux::toHex(target.to_string()).c_str());
+
+//            message msg(i.value());
+//
+//            add_new_message(peer, msg, true);
+        }
+    }
+
+    void blockchain::dht_get_immutable_item(aux::bytes const& peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
+    {
+        if (!m_ses.dht()) return;
+        log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
+        m_ses.dht()->get_item(target, eps, std::bind(&blockchain::get_immutable_callback
+                , this, peer, target, _1));
+    }
+
+    // callback for dht_mutable_get
+    void blockchain::get_mutable_callback(dht::item const& i
+            , bool const authoritative)
+    {
+        TORRENT_ASSERT(i.is_mutable());
+
+        // construct mutable data wrapper from entry
+        if (!i.empty()) {
+            dht::public_key * pk = m_ses.pubkey();
+            aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
+
+            aux::bytes peer(i.pk().bytes.begin(), i.pk().bytes.end());
+        }
+    }
+
+    // key is a 32-byte binary string, the public key to look up.
+    // the salt is optional
+    void blockchain::dht_get_mutable_item(std::array<char, 32> key
+            , std::string salt)
+    {
+        if (!m_ses.dht()) return;
+        m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&blockchain::get_mutable_callback
+                , this, _1, _2), std::move(salt));
+    }
 
     void blockchain::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
     {

@@ -28,9 +28,16 @@ namespace libTAU::blockchain {
         // @param Construct with bencode
         explicit vote(std::string encode): vote(bdecode(encode)) {}
 
+        vote(const sha256_hash &mBlockHash, int64_t mBlockNumber) : m_block_hash(mBlockHash),
+                                                                    m_block_number(mBlockNumber) {}
+
         const sha256_hash &block_hash() const { return m_block_hash; }
 
+        void setBlockHash(const sha256_hash &mBlockHash) { m_block_hash = mBlockHash; }
+
         int64_t block_number() const { return m_block_number; }
+
+        void setBlockNumber(int64_t mBlockNumber) { m_block_number = mBlockNumber; }
 
         int count() const { return m_count; }
 
