@@ -105,8 +105,8 @@
 	链URL结构组织（tauchain:?bs=pk1&bs=pk2&dn=chainID）
 	URL中的tauchain为小写字母
 	class ChainUrl {
-		String encode(String chainID, List<String> publicKeys);
-		ChainUrl decode(String url);
+		static String encode(String chainID, List<String> publicKeys);
+		static ChainUrl decode(String url);
 	}
 	
 ### 区块链外部可调用的接口
@@ -126,12 +126,6 @@
 	取消跟随链
 	unfollowChain(String chainID);
 	
-	获取当前分叉点Block
-	Block getCurrentForkBlock(String chainID);
-	
-	获取共识点投票前三名的区块号和哈希
-	List<Block> getTopConsensusBlock(String chainID, int topNum);
-	
 	获取tip前三名区块号和哈希
 	List<Block> getTopTipBlock(String chainID, int topNum);
 	
@@ -148,8 +142,9 @@
 	
 	交易池交易
 	void onTransactionPool(List<Transaction> txs);
-
 	
-	
-	
-	
+	当前分叉点Block
+    void onCurrentForkBlock(Block block);
+    
+    共识点投票前三名的区块号和哈希
+    void onTopConsensusBlock(List<Block> block);
