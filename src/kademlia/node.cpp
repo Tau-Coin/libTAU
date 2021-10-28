@@ -600,7 +600,7 @@ void node::tick()
 	// if m_table.depth() < 4, means routing_table doesn't
 	// have enough nodes.
 	time_point const now = aux::time_now();
-	if (m_last_self_refresh + minutes(10) < now && m_table.depth() < 4)
+	if (m_last_self_refresh + seconds(30) < now && m_table.depth() < 4)
 	{
 		node_id target = m_id;
 		make_id_secret(target);
