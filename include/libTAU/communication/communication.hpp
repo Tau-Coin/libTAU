@@ -221,6 +221,9 @@ namespace libTAU {
             // all friends
             std::vector<aux::bytes> m_friends;
 
+            // peer access time
+            std::map<aux::bytes, std::int64_t> m_peer_access_times;
+
             // chatting friend(time:s)
             std::pair<aux::bytes, std::int64_t> m_chatting_friend = std::make_pair(aux::bytes(), 0);
 
