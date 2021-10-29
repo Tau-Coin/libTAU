@@ -129,6 +129,12 @@
 	获取tip前三名区块号和哈希
 	List<Block> getTopTipBlock(String chainID, int topNum);
 	
+	获取交易打包的最小交易费
+    long getMedianTxFree(String chainID);
+    
+    获取在线信号中的社区choke成员
+    List<String> getChokeMembers(String chainID);
+	
 ### 区块链上报的接口
 	
 	新的区块
@@ -140,8 +146,8 @@
 	区块回滚
 	void onBlockRollback(Block block);
 	
-	交易池交易
-	void onTransactionPool(List<Transaction> txs);
+	接收到新交易
+	void onNewTransaction(Transaction tx);
 	
 	当前分叉点Block
     void onCurrentForkBlock(Block block);
