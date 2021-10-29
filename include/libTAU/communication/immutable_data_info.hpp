@@ -35,6 +35,8 @@ namespace libTAU::communication {
         // @returns target(immutable data hash)
         const sha256_hash &target() const { return m_target; }
 
+        bool empty() const { return m_target.is_all_zeros(); }
+
         // @returns entries
         const std::vector<dht::node_entry> &entries() const { return m_entries; }
 

@@ -38,6 +38,9 @@ namespace libTAU::blockchain {
     // salt length (first 16 bytes of public key)
     constexpr int blockchain_salt_length = 16;
 
+    // max tx list size
+    constexpr int blockchain_max_tx_list_size = 10;
+
     enum RESULT {
         TRUE,
         FALSE,
@@ -121,6 +124,10 @@ namespace libTAU::blockchain {
 
         void refresh_vote(const aux::bytes &chain_id);
 
+        // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing tx和confirmation root)
+        void find_best_solution(std::vector<transaction>& txs, const aux::bytes& hash_prefix_array,
+                                std::vector<transaction> &missing_txs, std::vector<sha256_hash> &confirmation_roots);
+
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id);
 
@@ -131,16 +138,22 @@ namespace libTAU::blockchain {
         void publish_signal(const aux::bytes &chain_id);
 
         // immutable data callback
-        void get_immutable_callback(aux::bytes const& peer, sha256_hash target, dht::item const& i);
-
-        // mutable data callback
-        void get_mutable_callback(dht::item const& i, bool);
+        void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);
 
         // get immutable item from dht
-        void dht_get_immutable_item(aux::bytes const& peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
+        void dht_get_immutable_block_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
+
+        // immutable data callback
+        void get_immutable_tx_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);
+
+        // get immutable item from dht
+        void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
+
+        // mutable data callback
+        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool);
 
         // get mutable item from dht
-        void dht_get_mutable_item(std::array<char, 32> key
+        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key
                                   , std::string salt = std::string());
 
         // put immutable item to dht

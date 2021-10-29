@@ -14,6 +14,7 @@ see LICENSE file.
 #include <map>
 #include <queue>
 #include <utility>
+#include <vector>
 
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/transaction.hpp"
@@ -36,6 +37,8 @@ namespace libTAU::blockchain {
         transaction get_best_transaction() const;
 
         aux::bytes get_hash_prefix_array() const;
+
+        std::vector<transaction> get_top_ten_transactions();
 
         bool add_tx(transaction tx);
 

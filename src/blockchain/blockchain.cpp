@@ -641,6 +641,153 @@ namespace libTAU::blockchain {
         }
     } // anonymous namespace
 
+    namespace {
+        /**
+         * 选用编辑代价最小的，并返回该操作代表的操作数
+         * @param swap 替换的代价
+         * @param insert 插入的代价
+         * @param del 删除的代价
+         * @return 0:替换，1：插入，2：删除
+         */
+        size_t optCode(size_t swap, size_t insert, size_t del) {
+            // 如果替换编辑距离最少，则返回0标识，
+            // 即使三种操作距离一样，优先选择替换操作
+            if (swap <= insert && swap <= del) {
+                return 0;
+            }
+
+            // 如果插入操作编辑最少，返回1标识，如果插入和删除距离一样，优先选择插入
+            if (insert < swap && insert <= del) {
+                return 1;
+            }
+
+            // 如果删除操作编辑最少，返回2标识
+            return 2;
+        }
+    }
+
+    void blockchain::find_best_solution(std::vector<transaction> &txs, const aux::bytes &hash_prefix_array,
+                                        std::vector<transaction> &missing_txs,
+                                        std::vector<sha256_hash> &confirmation_roots) {
+        // 如果对方没有信息，则本地消息全为缺失消息
+        if (hash_prefix_array.empty()) {
+            log("INFO: Hash prefix array is empty");
+            missing_txs.insert(missing_txs.end(), txs.begin(), txs.end());
+            return;
+        }
+
+        if (!txs.empty()) {
+            auto size = txs.size();
+            // 对方数组为source
+            const aux::bytes& source = hash_prefix_array;
+            // 本地消息数组为target
+            aux::bytes target;
+            for (auto &tx: txs) {
+                target.push_back(tx.sha256()[0]);
+            }
+
+            const size_t sourceLength = source.size();
+            const size_t targetLength = size;
+
+            log("INFO: tx array: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
+            // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
+            if (source == target) {
+                for (auto &tx: txs) {
+//                        log("INFO: Confirm message hash[%s]", aux::toHex(msg.sha256().to_string()).c_str());
+                    confirmation_roots.push_back(tx.sha256());
+                }
+                return;
+            }
+
+            // 状态转移矩阵
+            size_t dist[sourceLength + 1][targetLength + 1];
+            // 操作矩阵
+            size_t operations[sourceLength + 1][targetLength + 1];
+
+            // 初始化，[i, 0]转换到空，需要编辑的距离，也即删除的数量
+            for (size_t i = 0; i < sourceLength + 1; i++) {
+                dist[i][0] = i;
+                if (i > 0) {
+                    operations[i][0] = 2;
+                }
+            }
+
+            // 初始化，空转换到[0, j]，需要编辑的距离，也即增加的数量
+            for (size_t j = 0; j < targetLength + 1; j++) {
+                dist[0][j] = j;
+                if (j > 0) {
+                    operations[0][j] = 1;
+                }
+            }
+
+            // 开始填充状态转移矩阵，第0位为空，所以从1开始有数据，[i, j]为当前子串最小编辑操作
+            for (size_t i = 1; i < sourceLength + 1; i++) {
+                for (size_t j = 1; j < targetLength + 1; j++) {
+                    // 第i个数据，实际的index需要i-1，替换的代价，相同无需替换，代价为0，不同代价为1
+                    size_t cost = source[i - 1] == target[j - 1] ? 0 : 1;
+                    // [i, j]在[i, j-1]的基础上，最小的编辑操作为增加1
+                    size_t insert = dist[i][j - 1] + 1;
+                    // [i, j]在[i-1, j]的基础上，最小的编辑操作为删除1
+                    size_t del = dist[i - 1][j] + 1;
+                    // [i, j]在[i-1, j-1]的基础上，最大的编辑操作为1次替换
+                    size_t swap = dist[i - 1][j - 1] + cost;
+
+                    // 在[i-1, j]， [i, j-1]， [i-1, j-1]三种转换到[i, j]的最小操作中，取最小值
+                    dist[i][j] = std::min(std::min(insert, del), swap);
+
+                    // 选择一种最少编辑的操作
+                    operations[i][j] = optCode(swap, insert, del);
+                }
+            }
+
+            // 回溯编辑路径，统计中间信息
+            auto i = sourceLength;
+            auto j = targetLength;
+            while (0 != dist[i][j]) {
+                if (0 == operations[i][j]) {
+                    // 如果是替换操作，则将target对应的替换消息加入列表
+                    if (source[i - 1] != target[j - 1]) {
+                        missing_txs.push_back(txs[j - 1]);
+                    } else {
+//                            log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
+                        confirmation_roots.push_back(txs[j - 1].sha256());
+                    }
+                    i--;
+                    j--;
+                } else if (1 == operations[i][j]) {
+                    // 如果是插入操作，则将target对应的插入消息加入列表
+                    // 注意由于消息是按照时间戳从小到大排列，如果缺第一个，并且此时双方满载，则判定为被挤出去而产生的差异，并非真的缺少
+                    if (1 != j || targetLength != blockchain_max_tx_list_size ||
+                        sourceLength != blockchain_max_tx_list_size) {
+                        missing_txs.push_back(txs[j - 1]);
+
+                        // 如果是插入操作，则将邻近哈希前缀一样的消息也当作缺失的消息
+                        auto k = j - 1;
+                        while (k + 1 < targetLength && target[k] == target[k + 1]) {
+                            missing_txs.push_back(txs[k + 1]);
+                            k++;
+                        }
+                    }
+
+                    j--;
+                } else if (2 == operations[i][j]) {
+                    // 如果是删除操作，可能是对方新消息，忽略
+                    i--;
+                }
+            }
+
+            // 找到距离为0可能仍然不够，可能有前缀相同的情况，这时dist[i][j]很多为0的情况，
+            // 因此，需要把剩余的加入confirmation root集合即可
+            for(; j > 0; j--) {
+//                    log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
+                confirmation_roots.push_back(txs[j - 1].sha256());
+            }
+
+            // reverse missing messages
+//                std::reverse(missing_messages.begin(), missing_messages.end());
+        }
+    }
+
     std::string blockchain::make_salt(const aux::bytes &chain_id) {
         std::string salt(chain_id.begin(), chain_id.begin() + blockchain_salt_length);
 
@@ -652,7 +799,7 @@ namespace libTAU::blockchain {
         auto salt = make_salt(chain_id);
 
         log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer).c_str(), aux::toHex(salt).c_str());
-        dht_get_mutable_item(peer.bytes, salt);
+        dht_get_mutable_item(chain_id, peer.bytes, salt);
     }
 
     void blockchain::publish_signal(const aux::bytes &chain_id) {
@@ -715,51 +862,118 @@ namespace libTAU::blockchain {
     }
 
     // callback for dht_immutable_get
-    void blockchain::get_immutable_callback(aux::bytes const& peer, sha256_hash target
-            , dht::item const& i)
+    void blockchain::get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i)
     {
-        log("DEBUG: Immutable callback");
+        log("DEBUG: Immutable block callback");
         TORRENT_ASSERT(!i.is_mutable());
         if (!i.empty()) {
-            log("INFO: Got immutable data callback, target[%s].", aux::toHex(target.to_string()).c_str());
+            log("INFO: Got immutable block callback, target[%s].", aux::toHex(target.to_string()).c_str());
 
-//            message msg(i.value());
-//
-//            add_new_message(peer, msg, true);
+            block b(i.value());
+            if (!b.empty()) {
+                m_blocks[chain_id][b.sha256()] = b;
+            }
         }
     }
 
-    void blockchain::dht_get_immutable_item(aux::bytes const& peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
+    void blockchain::dht_get_immutable_block_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
     {
         if (!m_ses.dht()) return;
-        log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
-        m_ses.dht()->get_item(target, eps, std::bind(&blockchain::get_immutable_callback
-                , this, peer, target, _1));
+        log("INFO: Get immutable block, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
+        m_ses.dht()->get_item(target, eps, std::bind(&blockchain::get_immutable_block_callback
+                , this, chain_id, target, _1));
+    }
+
+    // callback for dht_immutable_get
+    void blockchain::get_immutable_tx_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i)
+    {
+        log("DEBUG: Immutable tx callback");
+        TORRENT_ASSERT(!i.is_mutable());
+        if (!i.empty()) {
+            log("INFO: Got immutable tx callback, target[%s].", aux::toHex(target.to_string()).c_str());
+
+            transaction tx(i.value());
+            m_tx_pools[chain_id].add_tx(tx);
+        }
+    }
+
+    void blockchain::dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
+    {
+        if (!m_ses.dht()) return;
+        log("INFO: Get immutable tx, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
+        m_ses.dht()->get_item(target, eps, std::bind(&blockchain::get_immutable_tx_callback
+                , this, chain_id, target, _1));
     }
 
     // callback for dht_mutable_get
-    void blockchain::get_mutable_callback(dht::item const& i
+    void blockchain::get_mutable_callback(aux::bytes const& chain_id, dht::item const& i
             , bool const authoritative)
     {
         TORRENT_ASSERT(i.is_mutable());
 
         // construct mutable data wrapper from entry
         if (!i.empty()) {
-            dht::public_key * pk = m_ses.pubkey();
-            aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
+//            dht::public_key * pk = m_ses.pubkey();
+//            aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
 
-            aux::bytes peer(i.pk().bytes.begin(), i.pk().bytes.end());
+            auto peer = i.pk();
+
+            blockchain_signal signal(i.value());
+
+            // todo: latest signal time
+            auto consensus_point_vote = signal.consensus_point_vote();
+            if (!consensus_point_vote.empty()) {
+                m_votes[chain_id][peer] = consensus_point_vote;
+            }
+
+            auto &best_tip_block_info = signal.best_tip_block_info();
+            if (!best_tip_block_info.empty()) {
+                // get immutable message
+//                log("INFO: Payload:%s", payload.to_string().c_str());
+                dht_get_immutable_block_item(chain_id, best_tip_block_info.target(), best_tip_block_info.entries());
+            }
+
+            auto &consensus_point_block_info = signal.consensus_point_block_info();
+            if (!consensus_point_block_info.empty()) {
+                // get immutable message
+//                log("INFO: Payload:%s", payload.to_string().c_str());
+                dht_get_immutable_block_item(chain_id, consensus_point_block_info.target(), consensus_point_block_info.entries());
+            }
+
+            auto &block_info_set = signal.block_info_set();
+            for (auto const & block_info: block_info_set) {
+                if (!block_info.empty()) {
+                    dht_get_immutable_block_item(chain_id, block_info.target(), block_info.entries());
+                }
+            }
+
+            auto &tx_info_set = signal.tx_info_set();
+            for (auto const & tx_info: tx_info_set) {
+                if (!tx_info.empty()) {
+                    dht_get_immutable_tx_item(chain_id, tx_info.target(), tx_info.entries());
+                }
+            }
+
+            // find out missing messages and confirmation root
+            std::vector<transaction> missing_txs;
+            std::vector<sha256_hash> confirmation_roots;
+            std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_transactions();
+            log("INFO: Txs size:%zu", txs.size());
+            find_best_solution(txs, signal.tx_hash_prefix_array(),
+                               missing_txs, confirmation_roots);
+
+            log("INFO: Found missing tx size %zu", missing_txs.size());
         }
     }
 
     // key is a 32-byte binary string, the public key to look up.
     // the salt is optional
-    void blockchain::dht_get_mutable_item(std::array<char, 32> key
+    void blockchain::dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key
             , std::string salt)
     {
         if (!m_ses.dht()) return;
         m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&blockchain::get_mutable_callback
-                , this, _1, _2), std::move(salt));
+                , this, chain_id, _1, _2), std::move(salt));
     }
 
     void blockchain::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)

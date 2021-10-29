@@ -34,14 +34,14 @@ namespace libTAU::blockchain {
 
         // block set
         entry::list_type block_list;
-        for (auto const& item: m_block_set) {
+        for (auto const& item: m_block_info_set) {
             block_list.push_back(item.get_entry());
         }
         e["bs"] = block_list;
 
         // tx set
         entry::list_type tx_list;
-        for (auto const& item: m_tx_set) {
+        for (auto const& item: m_tx_info_set) {
             tx_list.push_back(item.get_entry());
         }
         e["ts"] = tx_list;
@@ -105,7 +105,7 @@ namespace libTAU::blockchain {
         {
             auto & lst = i->list();
             for (auto const& item: lst) {
-                m_block_set.emplace(item);
+                m_block_info_set.emplace(item);
             }
         }
         // tx set
@@ -113,7 +113,7 @@ namespace libTAU::blockchain {
         {
             auto & lst = i->list();
             for (auto const& item: lst) {
-                m_tx_set.emplace(item);
+                m_tx_info_set.emplace(item);
             }
         }
         // demand block hash set

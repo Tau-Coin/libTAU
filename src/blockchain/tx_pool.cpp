@@ -37,6 +37,22 @@ namespace libTAU::blockchain {
         return hash_prefix_array;
     }
 
+    std::vector<transaction> tx_pool::get_top_ten_transactions() {
+        std::vector<transaction> txs;
+        int count = 0;
+        for (auto it = m_ordered_txs.rbegin(); it != m_ordered_txs.rend(); ++it) {
+            count++;
+            auto &tx = m_all_txs[it->txid()];
+            txs.push_back(tx);
+
+            if (10 == count) {
+                break;
+            }
+        }
+
+        return txs;
+    }
+
     bool tx_pool::add_tx(transaction tx) {
         if (tx.empty())
             return false;
