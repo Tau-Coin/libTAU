@@ -601,6 +601,8 @@ namespace libTAU {
         }
 
         online_signal communication::make_signal(const aux::bytes& peer) {
+            auto now = total_milliseconds(system_clock::now().time_since_epoch());
+
             // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
             aux::bytes hash_prefix_bytes;
             auto message_list = m_message_list_map[peer];
@@ -617,7 +619,7 @@ namespace libTAU {
             auto missing_messages = m_missing_messages[peer];
             auto size = missing_messages.size();
             if (size > 0) {
-                srand(total_milliseconds(system_clock::now().time_since_epoch()));
+                srand(now);
                 auto index = rand() % size;
 
                 auto it = missing_messages.begin();
@@ -631,8 +633,7 @@ namespace libTAU {
 
                     if (!missing_message.empty()) {
                         // post syncing message hash
-                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
-                                (peer, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
+                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, missing_message.sha256(), now);
 
                         std::vector<dht::node_entry> entries;
                         m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
@@ -641,11 +642,20 @@ namespace libTAU {
                         dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
 
                         payload = immutable_data_info(missing_message.sha256(), entries);
+
+                        if (1 == size) {
+                            m_last_gasp_payload[peer] = payload;
+                            m_last_gasp_time[peer] = now;
+                        }
                     } else {
                         log("INFO: Missing message is empty.");
                     }
                 }
             } else {
+                if (now - m_last_gasp_time[peer] < 1000) {
+                    payload = m_last_gasp_payload[peer];
+                    log("INFO: Last gasp.");
+                }
                 log("INFO: Peer[%s] has no missing messages", aux::toHex(peer).c_str());
             }
 
@@ -660,14 +670,12 @@ namespace libTAU {
                 log("INFO: Take friend %s", aux::toHex(fri).c_str());
                 aux::bytes friend_info = m_message_db->get_friend_info(std::make_pair(public_key, fri));
 
-                online_signal onlineSignal(total_milliseconds(system_clock::now().time_since_epoch()), m_device_id,
-                                           hash_prefix_bytes, payload, friend_info);
+                online_signal onlineSignal(now, m_device_id, hash_prefix_bytes, payload, friend_info);
                 log("INFO: Make online signal:%s on XX channel", onlineSignal.to_string().c_str());
 
                 return onlineSignal;
             } else {
-                online_signal onlineSignal(total_milliseconds(system_clock::now().time_since_epoch()), m_device_id,
-                                           hash_prefix_bytes, payload);
+                online_signal onlineSignal(now, m_device_id,hash_prefix_bytes, payload);
                 log("INFO: Make online signal:%s on XY channel", onlineSignal.to_string().c_str());
 
                 return onlineSignal;
