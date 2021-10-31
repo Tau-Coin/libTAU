@@ -28,17 +28,19 @@ namespace libTAU::blockchain {
 
     class blockchain_signal {
     public:
+        blockchain_signal() = default;
+
         // @param Construct with entry
         explicit blockchain_signal(const entry& e);
 
         // @param Construct with bencode
         explicit blockchain_signal(std::string encode): blockchain_signal(bdecode(encode)) {}
 
-        blockchain_signal(const vote &mConsensusPointVote, immutable_data_info mBestTipBlock,
+        blockchain_signal(int64_t mTimestamp, const vote &mConsensusPointVote, immutable_data_info mBestTipBlock,
                           immutable_data_info mImmutableBlockInfo, std::set<immutable_data_info> mBlockSet,
                           std::set<immutable_data_info> mTxSet, std::set<sha256_hash> mDemandBlockHashSet,
-                          aux::bytes mTxHashPrefixArray)
-                : m_consensus_point_vote(mConsensusPointVote), m_best_tip_block_info(std::move(mBestTipBlock)),
+                          aux::bytes mTxHashPrefixArray):
+                  m_timestamp(mTimestamp), m_consensus_point_vote(mConsensusPointVote), m_best_tip_block_info(std::move(mBestTipBlock)),
                   m_consensus_point_block_info(std::move(mImmutableBlockInfo)), m_block_info_set(std::move(mBlockSet)),
                   m_tx_info_set(std::move(mTxSet)), m_demand_block_hash_set(std::move(mDemandBlockHashSet)),
                   m_tx_hash_prefix_array(std::move(mTxHashPrefixArray)) {}
@@ -61,6 +63,9 @@ namespace libTAU::blockchain {
 //        int64_t get_consensus_point_block_number() const { return m_consensus_point_block_number; }
 //
 //        void set_consensus_point_block_number(int64_t mConsensusPointBlockNumber) { m_consensus_point_block_number = mConsensusPointBlockNumber; }
+
+        // @returns timestamp
+        int64_t timestamp() const { return m_timestamp; }
 
         const vote &consensus_point_vote() const { return m_consensus_point_vote; }
 
@@ -101,6 +106,9 @@ namespace libTAU::blockchain {
     private:
         // populate block chain signal info from entry
         void populate(const entry& e);
+
+        // online signal timestamp
+        std::int64_t m_timestamp;
 
         vote m_consensus_point_vote;
 

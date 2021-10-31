@@ -104,13 +104,6 @@ namespace libTAU::blockchain {
             aux::bytes chain_id = select_chain_randomly();
             if (!chain_id.empty()) {
                 log("INFO: Select chain:%s", aux::toHex(chain_id).c_str());
-                auto &best_vote = m_best_votes[chain_id];
-                if (!best_vote.empty()) {
-                    auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id, best_vote.block_number());
-                    if (hash != best_vote.block_hash()) {
-                        // re-branch
-                    }
-                }
 
                 auto &best_tip_block = m_best_tip_blocks[chain_id];
                 auto &best_tail_block = m_best_tail_blocks[chain_id];
@@ -120,6 +113,21 @@ namespace libTAU::blockchain {
                         it->second.sha256() == best_tail_block.previous_block_hash()) {
                         process_block(chain_id, it->second);
                         block_map.erase(it);
+                    }
+                }
+
+                auto &best_vote = m_best_votes[chain_id];
+                if (!best_vote.empty()) {
+                    auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id, best_vote.block_number());
+                    if (hash != best_vote.block_hash()) {
+                        // re-branch
+                        auto vote_block = m_blocks[chain_id][best_vote.block_hash()];
+                        if (!vote_block.empty()) {
+                            auto result = try_to_rebranch(chain_id, vote_block);
+                            if (result == MISSING) {
+                                m_blocks[chain_id].clear();
+                            }
+                        }
                     }
                 }
 
@@ -443,6 +451,19 @@ namespace libTAU::blockchain {
             return false;
 
         return true;
+    }
+
+    bool blockchain::is_sync_completed(const aux::bytes &chain_id) {
+        auto &best_tail_block = m_best_tail_blocks[chain_id];
+        auto &best_tip_block = m_best_tip_blocks[chain_id];
+
+        if (best_tail_block.block_number() < 0 && best_tail_block.previous_block_hash().is_all_zeros())
+            return true;
+
+        if (best_tip_block.block_number() - best_tail_block.block_number() >= EFFECTIVE_BLOCK_NUMBER)
+            return true;
+
+        return false;
     }
 
     RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, block &target) {
@@ -847,8 +868,10 @@ namespace libTAU::blockchain {
 
         aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array();
 
-        blockchain_signal signal(consensus_point_vote, best_tip_block_info, consensus_point_block_info,
-                                 block_set, tx_set, demand_block_hash_set, tx_hash_prefix_array);
+        blockchain_signal signal(total_milliseconds(system_clock::now().time_since_epoch()), consensus_point_vote,
+                                 best_tip_block_info, consensus_point_block_info,
+                                 block_set, tx_set, demand_block_hash_set,
+                                 tx_hash_prefix_array);
 
 //        log("INFO: Publish online signal: peer[%s], salt[%s], online signal[%s]", aux::toHex(pk->bytes).c_str(),
 //            aux::toHex(salt).c_str(), onlineSignal.to_string().c_str());
@@ -913,8 +936,7 @@ namespace libTAU::blockchain {
 
         // construct mutable data wrapper from entry
         if (!i.empty()) {
-//            dht::public_key * pk = m_ses.pubkey();
-//            aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
+            auto now = total_milliseconds(system_clock::now().time_since_epoch());
 
             auto peer = i.pk();
 
@@ -922,7 +944,7 @@ namespace libTAU::blockchain {
 
             // todo: latest signal time
             auto consensus_point_vote = signal.consensus_point_vote();
-            if (!consensus_point_vote.empty()) {
+            if (!consensus_point_vote.empty() && now < signal.timestamp() + DEFAULT_BLOCK_TIME * 1000) {
                 m_votes[chain_id][peer] = consensus_point_vote;
             }
 
@@ -954,6 +976,12 @@ namespace libTAU::blockchain {
                 }
             }
 
+            auto it = m_unchoked_peers[chain_id].find(peer);
+            if (it != m_unchoked_peers[chain_id].end()) {
+                m_unchoked_peer_signal[chain_id][peer] = signal;
+            }
+
+            // todo: remove
             // find out missing messages and confirmation root
             std::vector<transaction> missing_txs;
             std::vector<sha256_hash> confirmation_roots;

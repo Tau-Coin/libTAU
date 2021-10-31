@@ -24,6 +24,9 @@ namespace libTAU::blockchain {
 //        // consensus point block number
 //        e["cn"] = entry(m_consensus_point_block_number);
 
+        // timestamp
+        e["ts"] = entry(m_timestamp);
+
         e["cv"] = m_consensus_point_vote.get_entry();
 
         // best block
@@ -44,7 +47,7 @@ namespace libTAU::blockchain {
         for (auto const& item: m_tx_info_set) {
             tx_list.push_back(item.get_entry());
         }
-        e["ts"] = tx_list;
+        e["ti"] = tx_list;
 
         // demand block hash set
         entry::list_type demand_block_hash_list;
@@ -85,6 +88,11 @@ namespace libTAU::blockchain {
 //        {
 //            m_consensus_point_block_number = i->integer();
 //        }
+        // timestamp
+        if (auto* i = const_cast<entry *>(e.find_key("ts")))
+        {
+            m_timestamp = i->integer();
+        }
         // consensus point vote
         if (auto* i = const_cast<entry *>(e.find_key("cv")))
         {
@@ -109,7 +117,7 @@ namespace libTAU::blockchain {
             }
         }
         // tx set
-        if (auto* i = const_cast<entry *>(e.find_key("ts")))
+        if (auto* i = const_cast<entry *>(e.find_key("ti")))
         {
             auto & lst = i->list();
             for (auto const& item: lst) {
