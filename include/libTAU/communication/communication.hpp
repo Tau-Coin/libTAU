@@ -244,6 +244,10 @@ namespace libTAU {
 
             // missing messages (map:key->peer, value->missing message list)
             std::map<aux::bytes, std::set<message>> m_missing_messages;
+
+            std::map<aux::bytes, immutable_data_info> m_last_gasp_payload;
+
+            std::map<aux::bytes, std::int64_t> m_last_gasp_time;
         };
     }
 }

@@ -118,6 +118,8 @@ namespace libTAU::blockchain {
 
         bool is_consensus_point_immutable(const aux::bytes &chain_id);
 
+        bool is_sync_completed(const aux::bytes &chain_id);
+
         RESULT try_to_rebranch(const aux::bytes &chain_id, block &target);
 
         void seek_tail(const aux::bytes &chain_id);
@@ -197,6 +199,9 @@ namespace libTAU::blockchain {
         // un-choked peers
         std::map<aux::bytes, std::set<dht::public_key>> m_unchoked_peers;
 
+        // un-choked peers signal
+        std::map<aux::bytes, std::map<dht::public_key, blockchain_signal>> m_unchoked_peer_signal;
+
         // update un-choked peers time
         std::map<aux::bytes, std::int64_t> m_update_peer_time;
 
@@ -217,9 +222,6 @@ namespace libTAU::blockchain {
 
         // votes
         std::map<aux::bytes, std::map<dht::public_key, vote>> m_votes;
-
-        // current best votes
-        std::map<aux::bytes, bool> m_sync_completed;
 
         // blockchain signal time(map:key1->chain id, key2->peer, value->signal time(ms))(1min)
         std::map<aux::bytes, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
