@@ -66,6 +66,9 @@ namespace libTAU::blockchain {
         // tx hash prefix bytes
         e["ta"] = entry(std::string(m_tx_hash_prefix_array.begin(), m_tx_hash_prefix_array.end()));
 
+        // peer
+        e["pr"] = entry(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
+
         return e;
     }
 
@@ -145,6 +148,12 @@ namespace libTAU::blockchain {
         {
             std::string hash_prefix_array = i->string();
             m_tx_hash_prefix_array = aux::bytes(hash_prefix_array.begin(), hash_prefix_array.end());
+        }
+        // peer
+        if (auto* i = const_cast<entry *>(e.find_key("pr")))
+        {
+            auto peer = i->string();
+            m_peer = dht::public_key(peer.data());
         }
     }
 

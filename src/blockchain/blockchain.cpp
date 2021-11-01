@@ -58,13 +58,24 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool blockchain::follow_chain(const aux::bytes &chain_id) {
+    bool blockchain::followChain(const aux::bytes &chain_id) {
         load_chain(chain_id);
 
         m_repository->add_new_chain(chain_id);
         m_chains.push_back(chain_id);
 
         return true;
+    }
+
+    bool blockchain::unfollowChain(const aux::bytes &chain_id) {
+        for (auto it = m_chains.begin(); it != m_chains.end(); ++it) {
+            if (chain_id == *it) {
+                m_chains.erase(it);
+            }
+        }
+        // todo clear
+
+        return false;
     }
 
     bool blockchain::load_chain(const aux::bytes &chain_id) {
@@ -188,6 +199,8 @@ namespace libTAU::blockchain {
             m_unchoked_peers[chain_id] = peers;
 
             m_update_peer_time[chain_id] = now / DEFAULT_BLOCK_TIME;
+
+            m_unchoked_peer_signal[chain_id].clear();
         }
     }
 
@@ -209,6 +222,22 @@ namespace libTAU::blockchain {
         dht::public_key peer{};
         auto& chain_peers = m_chain_peers[chain_id];
         std::vector<dht::public_key> peers(chain_peers.begin(), chain_peers.end());
+
+        if (!peers.empty())
+        {
+            // 产生随机数
+            srand(total_microseconds(system_clock::now().time_since_epoch()));
+            auto index = rand() % peers.size();
+            peer = peers[index];
+        }
+
+        return peer;
+    }
+
+    dht::public_key blockchain::select_unchoked_peer_randomly(const aux::bytes &chain_id) {
+        dht::public_key peer{};
+        auto& unchoked_peers = m_unchoked_peers[chain_id];
+        std::vector<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
 
         if (!peers.empty())
         {
@@ -444,6 +473,12 @@ namespace libTAU::blockchain {
         return TRUE;
     }
 
+    bool blockchain::is_empty_chain(const aux::bytes &chain_id) {
+        auto &best_tip_block = m_best_tip_blocks[chain_id];
+
+        return best_tip_block.empty();
+    }
+
     bool blockchain::is_consensus_point_immutable(const aux::bytes &chain_id) {
         auto &best_vote = m_best_votes[chain_id];
         auto &consensus_block = m_consensus_point_blocks[chain_id];
@@ -587,10 +622,6 @@ namespace libTAU::blockchain {
         try_to_update_consensus_point_block(chain_id);
 
         return TRUE;
-    }
-
-    void blockchain::seek_tail(const aux::bytes &chain_id) {
-
     }
 
     void blockchain::refresh_vote(const aux::bytes &chain_id) {
@@ -860,18 +891,154 @@ namespace libTAU::blockchain {
             consensus_point_block_info = immutable_data_info(consensus_point_block.sha256(), entries);
         }
 
+        auto peer = select_unchoked_peer_randomly(chain_id);
+        auto peer_signal = m_unchoked_peer_signal[chain_id][peer];
+
         std::set<immutable_data_info> block_set;
+        if (!peer_signal.demand_block_hash_set().empty())
+        {
+            auto& demand_block_hash_set = peer_signal.demand_block_hash_set();
+            std::vector<sha256_hash> block_hashes(demand_block_hash_set.begin(), demand_block_hash_set.end());
+            // 产生随机数
+            srand(total_microseconds(system_clock::now().time_since_epoch()));
+            auto index = rand() % block_hashes.size();
+            auto demand_block_hash = block_hashes[index];
+            auto demand_block = m_repository->get_block_by_hash(demand_block_hash);
+            if (!demand_block.empty()) {
+                //        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
+//                (peer, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
+
+                std::vector<dht::node_entry> entries;
+                m_ses.dht()->find_live_nodes(demand_block.sha256(), entries);
+                log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
+                    aux::toHex(demand_block.sha256().to_string()).c_str(), entries.size());
+                dht_put_immutable_item(demand_block.get_entry(), entries, demand_block.sha256());
+
+                immutable_data_info demand_block_info(demand_block.sha256(), entries);
+                block_set.insert(demand_block_info);
+            }
+        }
 
         std::set<immutable_data_info> tx_set;
+        // find out missing messages and confirmation root
+        std::vector<transaction> missing_txs;
+        std::vector<sha256_hash> confirmation_roots;
+        std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_transactions();
+        log("INFO: Txs size:%zu", txs.size());
+        find_best_solution(txs, peer_signal.tx_hash_prefix_array(),missing_txs, confirmation_roots);
+
+        log("INFO: Found missing tx size %zu", missing_txs.size());
+
+        if (!missing_txs.empty()) {
+            // 产生随机数
+            srand(total_microseconds(system_clock::now().time_since_epoch()));
+            auto index = rand() % missing_txs.size();
+            auto miss_tx = missing_txs[index];
+            if (!miss_tx.empty()) {
+                //        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
+//                (peer, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
+
+                std::vector<dht::node_entry> entries;
+                m_ses.dht()->find_live_nodes(miss_tx.sha256(), entries);
+                log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
+                    aux::toHex(miss_tx.sha256().to_string()).c_str(), entries.size());
+                dht_put_immutable_item(miss_tx.get_entry(), entries, miss_tx.sha256());
+
+                immutable_data_info demand_tx_info(miss_tx.sha256(), entries);
+                tx_set.insert(demand_tx_info);
+            }
+        }
 
         std::set<sha256_hash> demand_block_hash_set;
+        auto &best_vote = m_best_votes[chain_id];
+        if (is_empty_chain(chain_id)) {
+            if (!best_vote.empty()) {
+                demand_block_hash_set.insert(best_vote.block_hash());
+            } else {
+                // select randomly
+                auto &votes = m_votes[chain_id];
+                auto it = votes.begin();
+                if (it != votes.end()) {
+                    demand_block_hash_set.insert(it->second.block_hash());
+                }
+            }
+        } else {
+            if (!best_vote.empty()) {
+                auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id, best_vote.block_number());
+                if (hash != best_vote.block_hash()) {
+                    demand_block_hash_set.insert(best_vote.block_hash());
+                } else {
+                    auto &block_map = m_blocks[chain_id];
+                    for (auto & item: block_map) {
+                        auto b = item.second;
+                        if (b.cumulative_difficulty() > best_tip_block.cumulative_difficulty()) {
+                            auto previous_hash = b.previous_block_hash();
+                            auto it = block_map.find(previous_hash);
+                            while (true) {
+                                if (it != block_map.end()) {
+                                    b = it->second;
+                                    if (b.empty()) {
+                                        demand_block_hash_set.insert(previous_hash);
+                                        break;
+                                    } else {
+                                        previous_hash = b.previous_block_hash();
+                                        it = block_map.find(previous_hash);
+                                    }
+                                } else {
+                                    demand_block_hash_set.insert(previous_hash);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!is_sync_completed(chain_id)) {
+                        auto &best_tail_block = m_best_tail_blocks[chain_id];
+                        if (!best_tail_block.empty()) {
+                            demand_block_hash_set.insert(best_tail_block.previous_block_hash());
+                        }
+                    }
+                }
+            } else {
+                auto &block_map = m_blocks[chain_id];
+                for (auto & item: block_map) {
+                    auto b = item.second;
+                    if (b.cumulative_difficulty() > best_tip_block.cumulative_difficulty()) {
+                        auto previous_hash = b.previous_block_hash();
+                        auto it = block_map.find(previous_hash);
+                        while (true) {
+                            if (it != block_map.end()) {
+                                b = it->second;
+                                if (b.empty()) {
+                                    demand_block_hash_set.insert(previous_hash);
+                                    break;
+                                } else {
+                                    previous_hash = b.previous_block_hash();
+                                    it = block_map.find(previous_hash);
+                                }
+                            } else {
+                                demand_block_hash_set.insert(previous_hash);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!is_sync_completed(chain_id)) {
+                    auto &best_tail_block = m_best_tail_blocks[chain_id];
+                    if (!best_tail_block.empty()) {
+                        demand_block_hash_set.insert(best_tail_block.previous_block_hash());
+                    }
+                }
+            }
+        }
 
         aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array();
+
+        auto p = select_peer_randomly(chain_id);
 
         blockchain_signal signal(total_milliseconds(system_clock::now().time_since_epoch()), consensus_point_vote,
                                  best_tip_block_info, consensus_point_block_info,
                                  block_set, tx_set, demand_block_hash_set,
-                                 tx_hash_prefix_array);
+                                 tx_hash_prefix_array, p);
 
 //        log("INFO: Publish online signal: peer[%s], salt[%s], online signal[%s]", aux::toHex(pk->bytes).c_str(),
 //            aux::toHex(salt).c_str(), onlineSignal.to_string().c_str());
@@ -976,21 +1143,13 @@ namespace libTAU::blockchain {
                 }
             }
 
+            // todo get peer
+
+            // save signal
             auto it = m_unchoked_peers[chain_id].find(peer);
             if (it != m_unchoked_peers[chain_id].end()) {
                 m_unchoked_peer_signal[chain_id][peer] = signal;
             }
-
-            // todo: remove
-            // find out missing messages and confirmation root
-            std::vector<transaction> missing_txs;
-            std::vector<sha256_hash> confirmation_roots;
-            std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_transactions();
-            log("INFO: Txs size:%zu", txs.size());
-            find_best_solution(txs, signal.tx_hash_prefix_array(),
-                               missing_txs, confirmation_roots);
-
-            log("INFO: Found missing tx size %zu", missing_txs.size());
         }
     }
 
@@ -1043,5 +1202,54 @@ namespace libTAU::blockchain {
 #endif
     }
     catch (std::exception const&) {}
+
+
+    bool blockchain::createNewCommunity(std::map<dht::public_key, account> accounts) {
+        return false;
+    }
+
+    bool blockchain::submitTransaction(transaction tx) {
+        if (!tx.empty()) {
+            auto &chain_id = tx.chain_id();
+            return m_tx_pools[chain_id].add_tx(tx);
+        }
+
+        return false;
+    }
+
+    account blockchain::getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey) {
+        return m_repository->get_account_with_effective_power(chain_id, publicKey);
+    }
+
+    std::vector<block> blockchain::getTopTipBlock(const aux::bytes &chain_id, int topNum) {
+        std::vector<block> blocks;
+        if (topNum > 0) {
+            auto best_tip_block = m_best_tip_blocks[chain_id];
+            if (!best_tip_block.empty()) {
+                blocks.push_back(best_tip_block);
+                topNum--;
+                auto previous_hash = best_tip_block.previous_block_hash();
+                while (!previous_hash.is_all_zeros() && topNum > 0) {
+                    auto b = m_repository->get_block_by_hash(previous_hash);
+                    if (!b.empty()) {
+                        blocks.push_back(b);
+                        previous_hash = b.previous_block_hash();
+                    }
+                }
+            }
+        }
+
+        return blocks;
+    }
+
+    std::int64_t blockchain::getMedianTxFree(const aux::bytes &chain_id) {
+        std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_transactions();
+        auto size = txs.size();
+        if (size > 0) {
+            return txs[size / 2].fee();
+        }
+
+        return 0;
+    }
 
 }
