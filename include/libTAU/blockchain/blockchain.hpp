@@ -74,7 +74,19 @@ namespace libTAU::blockchain {
         // stop
         bool stop();
 
+        bool createNewCommunity(std::map<dht::public_key, account> accounts);
+
         bool follow_chain(const aux::bytes &chain_id);
+
+        bool unfollow_chain(const aux::bytes &chain_id);
+
+        bool submitTransaction(transaction tx);
+
+        account getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey);
+
+        std::vector<block> getTopTipBlock(const aux::bytes &chain_id, int topNum);
+
+        std::int64_t getMedianTxFree(const aux::bytes &chain_id);
 
     private:
         // initialize member variables

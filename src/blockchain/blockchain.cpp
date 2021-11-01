@@ -67,6 +67,17 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    bool blockchain::unfollow_chain(const aux::bytes &chain_id) {
+        for (auto it = m_chains.begin(); it != m_chains.end(); ++it) {
+            if (chain_id == *it) {
+                m_chains.erase(it);
+            }
+        }
+        // todo clear
+
+        return false;
+    }
+
     bool blockchain::load_chain(const aux::bytes &chain_id) {
         // create tx pool
         m_tx_pools.insert(std::pair<aux::bytes, tx_pool>(chain_id, tx_pool(m_repository)));
@@ -1022,10 +1033,12 @@ namespace libTAU::blockchain {
 
         aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array();
 
+        auto p = select_peer_randomly(chain_id);
+
         blockchain_signal signal(total_milliseconds(system_clock::now().time_since_epoch()), consensus_point_vote,
                                  best_tip_block_info, consensus_point_block_info,
                                  block_set, tx_set, demand_block_hash_set,
-                                 tx_hash_prefix_array);
+                                 tx_hash_prefix_array, p);
 
 //        log("INFO: Publish online signal: peer[%s], salt[%s], online signal[%s]", aux::toHex(pk->bytes).c_str(),
 //            aux::toHex(salt).c_str(), onlineSignal.to_string().c_str());
@@ -1130,6 +1143,8 @@ namespace libTAU::blockchain {
                 }
             }
 
+            // todo get peer
+
             // save signal
             auto it = m_unchoked_peers[chain_id].find(peer);
             if (it != m_unchoked_peers[chain_id].end()) {
@@ -1187,5 +1202,54 @@ namespace libTAU::blockchain {
 #endif
     }
     catch (std::exception const&) {}
+
+
+    bool blockchain::createNewCommunity(std::map<dht::public_key, account> accounts) {
+        return false;
+    }
+
+    bool blockchain::submitTransaction(transaction tx) {
+        if (!tx.empty()) {
+            auto &chain_id = tx.chain_id();
+            return m_tx_pools[chain_id].add_tx(tx);
+        }
+
+        return false;
+    }
+
+    account blockchain::getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey) {
+        return m_repository->get_account_with_effective_power(chain_id, publicKey);
+    }
+
+    std::vector<block> blockchain::getTopTipBlock(const aux::bytes &chain_id, int topNum) {
+        std::vector<block> blocks;
+        if (topNum > 0) {
+            auto best_tip_block = m_best_tip_blocks[chain_id];
+            if (!best_tip_block.empty()) {
+                blocks.push_back(best_tip_block);
+                topNum--;
+                auto previous_hash = best_tip_block.previous_block_hash();
+                while (!previous_hash.is_all_zeros() && topNum > 0) {
+                    auto b = m_repository->get_block_by_hash(previous_hash);
+                    if (!b.empty()) {
+                        blocks.push_back(b);
+                        previous_hash = b.previous_block_hash();
+                    }
+                }
+            }
+        }
+
+        return blocks;
+    }
+
+    std::int64_t blockchain::getMedianTxFree(const aux::bytes &chain_id) {
+        std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_transactions();
+        auto size = txs.size();
+        if (size > 0) {
+            return txs[size / 2].fee();
+        }
+
+        return 0;
+    }
 
 }

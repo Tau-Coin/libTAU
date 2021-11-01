@@ -24,6 +24,8 @@ namespace libTAU::blockchain {
 
         int64_t balance() const { return m_balance; }
 
+        void set_balance(int64_t mBalance) { m_balance = mBalance; }
+
         int64_t nonce() const { return m_nonce; }
 
         void set_effective_power(int64_t mEffectivePower) { m_effective_power = mEffectivePower; }

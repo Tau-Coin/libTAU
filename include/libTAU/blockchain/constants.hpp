@@ -15,6 +15,8 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
+    int64_t GENESIS_BLOCK_BALANCE = 100000000000000;
+
     constexpr int EFFECTIVE_BLOCK_NUMBER = 288 * 365;
 
     // block time
