@@ -324,7 +324,8 @@ namespace libTAU {
                 // 随机挑选一个朋友put/get
                 aux::bytes peer = select_friend_randomly();
                 std::int64_t current_time = total_milliseconds(system_clock::now().time_since_epoch());
-                if (!peer.empty() && current_time > (m_peer_access_times[peer] + 1000)) {
+				int random_time_interval = rand()%400 + 800;
+                if (!peer.empty() && current_time > (m_peer_access_times[peer] + random_time_interval)) {
                     log("INFO: Select peer:%s", aux::toHex(peer).c_str());
                     m_peer_access_times[peer] = current_time;
 
