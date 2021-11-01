@@ -76,8 +76,6 @@ namespace libTAU::blockchain {
 
         bool follow_chain(const aux::bytes &chain_id);
 
-        bool load_chain(const aux::bytes &chain_id);
-
     private:
         // initialize member variables
         bool init();
@@ -97,6 +95,8 @@ namespace libTAU::blockchain {
 
         void refresh_vote_timeout(error_code const& e);
 
+        bool load_chain(const aux::bytes &chain_id);
+
         void try_to_refresh_unchoked_peers(const aux::bytes &chain_id);
 
         // select a chain randomly
@@ -104,6 +104,9 @@ namespace libTAU::blockchain {
 
         // select a peer randomly
         dht::public_key select_peer_randomly(const aux::bytes &chain_id);
+
+        // select an un-choked peer randomly
+        dht::public_key select_unchoked_peer_randomly(const aux::bytes &chain_id);
 
         // select a peer randomly
         std::set<dht::public_key> select_unchoked_peers(const aux::bytes &chain_id);
@@ -116,13 +119,13 @@ namespace libTAU::blockchain {
 
         RESULT process_block(const aux::bytes &chain_id, block &b);
 
+        bool is_empty_chain(const aux::bytes &chain_id);
+
         bool is_consensus_point_immutable(const aux::bytes &chain_id);
 
         bool is_sync_completed(const aux::bytes &chain_id);
 
         RESULT try_to_rebranch(const aux::bytes &chain_id, block &target);
-
-        void seek_tail(const aux::bytes &chain_id);
 
         void refresh_vote(const aux::bytes &chain_id);
 
@@ -225,9 +228,6 @@ namespace libTAU::blockchain {
 
         // blockchain signal time(map:key1->chain id, key2->peer, value->signal time(ms))(1min)
         std::map<aux::bytes, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
-
-        // blockchain hash prefix array(map:key1->chain id, key2->peer, value->hash prefix array)
-        std::map<aux::bytes, std::map<aux::bytes, aux::bytes>> m_latest_hash_prefix_array;
 
     };
 }

@@ -87,7 +87,7 @@ namespace libTAU::blockchain {
 
         void set_tx_info_set(const std::set<immutable_data_info> &mTxInfoSet) { m_tx_info_set = mTxInfoSet; }
 
-        const std::set<sha256_hash> &get_demand_block_hash_set() const { return m_demand_block_hash_set; }
+        const std::set<sha256_hash> &demand_block_hash_set() const { return m_demand_block_hash_set; }
 
         void set_demand_block_hash_set(const std::set<sha256_hash> &mDemandBlockHashSet) { m_demand_block_hash_set = mDemandBlockHashSet; }
 
