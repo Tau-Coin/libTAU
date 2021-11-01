@@ -58,7 +58,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool blockchain::follow_chain(const aux::bytes &chain_id) {
+    bool blockchain::followChain(const aux::bytes &chain_id) {
         load_chain(chain_id);
 
         m_repository->add_new_chain(chain_id);
@@ -67,7 +67,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool blockchain::unfollow_chain(const aux::bytes &chain_id) {
+    bool blockchain::unfollowChain(const aux::bytes &chain_id) {
         for (auto it = m_chains.begin(); it != m_chains.end(); ++it) {
             if (chain_id == *it) {
                 m_chains.erase(it);
