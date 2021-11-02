@@ -1332,7 +1332,7 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_new_tip_block_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_new_tip_block_alert(aux::stack_allocator& alloc, blockchain::block blk);
+        TORRENT_UNEXPORT blockchain_new_tip_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_new_tip_block_alert, 39, alert_priority::critical)
 
@@ -1348,7 +1348,7 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_new_tail_block_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_new_tail_block_alert(aux::stack_allocator& alloc, blockchain::block blk);
+        TORRENT_UNEXPORT blockchain_new_tail_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_new_tail_block_alert, 40, alert_priority::critical)
 
@@ -1364,7 +1364,7 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_rollback_block_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_rollback_block_alert(aux::stack_allocator& alloc, blockchain::block blk);
+        TORRENT_UNEXPORT blockchain_rollback_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_rollback_block_alert, 41, alert_priority::critical)
 
@@ -1396,7 +1396,7 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_top_three_votes_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_top_three_votes_alert(aux::stack_allocator& alloc, std::vector<blockchain::vote> vs);
+        TORRENT_UNEXPORT blockchain_top_three_votes_alert(aux::stack_allocator& alloc, std::vector<libTAU::blockchain::vote> vs);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_top_three_votes_alert, 43, alert_priority::critical)
 
@@ -1405,14 +1405,14 @@ namespace libTAU {
         std::string message() const override;
 
         // top three votes
-        std::vector<blockchain::vote> votes;
+        std::vector<libTAU::blockchain::vote> votes;
     };
 
     // this alert is posted when get new tx from other peers.
     struct TORRENT_EXPORT blockchain_new_transaction_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_new_transaction_alert(aux::stack_allocator& alloc, blockchain::transaction t);
+        TORRENT_UNEXPORT blockchain_new_transaction_alert(aux::stack_allocator& alloc, libTAU::blockchain::transaction t);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_new_transaction_alert, 44, alert_priority::critical)
 
