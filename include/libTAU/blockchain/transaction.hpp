@@ -20,7 +20,8 @@ see LICENSE file.
 #include "libTAU/kademlia/types.hpp"
 #include <libTAU/sha1_hash.hpp>
 
-namespace libTAU::blockchain {
+namespace libTAU {
+namespace blockchain {
     enum tx_version {
         tx_version1,
         tx_unknown_version,
@@ -135,6 +136,7 @@ namespace libTAU::blockchain {
         // sha256 hash
         sha256_hash m_hash;
     };
+}
 }
 
 

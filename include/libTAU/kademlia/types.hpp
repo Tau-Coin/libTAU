@@ -68,26 +68,6 @@ namespace dht {
 		std::array<char, len> bytes;
 	};
 
-	struct sequence_number
-	{
-		sequence_number() : value(0) {}
-		explicit sequence_number(std::int64_t v) : value(v) {}
-		sequence_number(sequence_number const& sqn) = default;
-		bool operator<(sequence_number rhs) const
-		{ return value < rhs.value; }
-		bool operator>(sequence_number rhs) const
-		{ return value > rhs.value; }
-		sequence_number& operator=(sequence_number rhs) &
-		{ value = rhs.value; return *this; }
-		bool operator<=(sequence_number rhs) const
-		{ return value <= rhs.value; }
-		bool operator==(sequence_number const& rhs) const
-		{ return value == rhs.value; }
-		sequence_number& operator++()
-		{ ++value; return *this; }
-		std::int64_t value;
-	};
-
 	struct timestamp
 	{
 		timestamp() : value(0) {}

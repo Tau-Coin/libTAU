@@ -18,7 +18,8 @@ see LICENSE file.
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
 
-namespace libTAU::blockchain {
+namespace libTAU {
+namespace blockchain {
 
     enum block_version {
         block_version1,
@@ -156,6 +157,7 @@ namespace libTAU::blockchain {
         // sha256 hash
         sha256_hash m_hash;
     };
+}
 }
 
 
