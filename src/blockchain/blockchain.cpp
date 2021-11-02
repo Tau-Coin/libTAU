@@ -424,6 +424,8 @@ namespace libTAU::blockchain {
 
             m_best_tip_blocks[chain_id] = b;
             m_best_tail_blocks[chain_id] = b;
+
+            m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
         } else {
             if (b.previous_block_hash() == best_tip_block.sha256()) {
                 auto track = m_repository->start_tracking();
@@ -453,6 +455,8 @@ namespace libTAU::blockchain {
                 if (!best_tail_block.empty()) {
                     m_best_tail_blocks[chain_id] = best_tail_block;
                 }
+
+                m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
             }
 
             if (m_best_tip_blocks[chain_id].block_number() - m_best_tail_blocks[chain_id].block_number() < EFFECTIVE_BLOCK_NUMBER &&
@@ -467,6 +471,8 @@ namespace libTAU::blockchain {
                 m_repository->flush();
 
                 m_best_tail_blocks[chain_id] = b;
+
+                m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(b);
             }
         }
 
@@ -588,6 +594,8 @@ namespace libTAU::blockchain {
             }
 
             m_tx_pools[chain_id].process_block(b);
+
+            m_ses.alerts().emplace_alert<blockchain_rollback_block_alert>(b);
         }
 
         for (auto i = new_blocks.size(); i > 1; i--) {
@@ -605,7 +613,11 @@ namespace libTAU::blockchain {
             track->update_user_state_db(b);
 
             m_tx_pools[chain_id].process_block(b);
+
+            m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
         }
+
+        m_ses.alerts().emplace_alert<blockchain_fork_point_block_alert>(reference_block);
 
         while (target.block_number() - best_tail_block.block_number() > EFFECTIVE_BLOCK_NUMBER) {
             track->expire_block(best_tail_block);
@@ -642,6 +654,18 @@ namespace libTAU::blockchain {
 
         if (!votes.empty()) {
             m_best_votes[chain_id] = *votes.rbegin();
+
+            std::vector<vote> top_three_votes;
+            int i = 0;
+            for (auto it = votes.rbegin(); it != votes.rend(); ++it) {
+                if (i >= 3)
+                    break;
+
+                top_three_votes.push_back(*it);
+                i++;
+            }
+            m_ses.alerts().emplace_alert<blockchain_top_three_votes_alert>(top_three_votes);
+
         }
         m_votes[chain_id].clear();
     }
@@ -1086,6 +1110,8 @@ namespace libTAU::blockchain {
 
             transaction tx(i.value());
             m_tx_pools[chain_id].add_tx(tx);
+
+            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
         }
     }
 
@@ -1188,7 +1214,7 @@ namespace libTAU::blockchain {
 
     bool blockchain::should_log() const
     {
-        return m_ses.alerts().should_post<communication_log_alert>();
+        return m_ses.alerts().should_post<blockchain_log_alert>();
     }
 
     TORRENT_FORMAT(2,3)
@@ -1199,7 +1225,7 @@ namespace libTAU::blockchain {
 
         va_list v;
         va_start(v, fmt);
-        m_ses.alerts().emplace_alert<communication_log_alert>(fmt, v);
+        m_ses.alerts().emplace_alert<blockchain_log_alert>(fmt, v);
         va_end(v);
 #endif
     }

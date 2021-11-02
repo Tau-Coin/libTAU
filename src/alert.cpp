@@ -1485,4 +1485,141 @@ namespace {
 #endif
     }
 
+	blockchain_log_alert::blockchain_log_alert(aux::stack_allocator& alloc, char const* log)
+			: m_alloc(alloc)
+			, m_str_idx(alloc.copy_string(log))
+	{}
+	blockchain_log_alert::blockchain_log_alert(aux::stack_allocator& alloc, char const* fmt, va_list v)
+			: m_alloc(alloc)
+			, m_str_idx(alloc.format_string(fmt, v))
+	{}
+
+	char const* blockchain_log_alert::log_message() const
+	{
+		return m_alloc.get().ptr(m_str_idx);
+	}
+
+#if TORRENT_ABI_VERSION == 1
+	char const* blockchain_log_alert::msg() const
+	{
+		return log_message();
+	}
+#endif
+
+	std::string blockchain_log_alert::message() const
+	{
+#ifdef TORRENT_DISABLE_ALERT_MSG
+		return {};
+#else
+		return log_message();
+#endif
+	}
+
+	blockchain_new_tip_block_alert::blockchain_new_tip_block_alert(aux::stack_allocator&
+			, blockchain::block blk)
+			: blk(std::move(blk))
+	{}
+
+	std::string blockchain_new_tip_block_alert::message() const
+	{
+#ifdef TORRENT_DISABLE_ALERT_MSG
+		return {};
+#else
+		char buffer[256];
+		auto b = blk;
+		std::snprintf(buffer, sizeof(buffer), "new tip block hash: %s"
+				, aux::toHex(b.sha256().to_string()).c_str());
+		return buffer;
+#endif
+	}
+
+	blockchain_new_tail_block_alert::blockchain_new_tail_block_alert(aux::stack_allocator&
+			, blockchain::block blk)
+			: blk(std::move(blk))
+	{}
+
+	std::string blockchain_new_tail_block_alert::message() const
+	{
+#ifdef TORRENT_DISABLE_ALERT_MSG
+		return {};
+#else
+		char buffer[256];
+		auto b = blk;
+		std::snprintf(buffer, sizeof(buffer), "new tail block hash: %s"
+				, aux::toHex(b.sha256().to_string()).c_str());
+		return buffer;
+#endif
+	}
+
+	blockchain_rollback_block_alert::blockchain_rollback_block_alert(aux::stack_allocator&
+			, blockchain::block blk)
+			: blk(std::move(blk))
+	{}
+
+	std::string blockchain_rollback_block_alert::message() const
+	{
+#ifdef TORRENT_DISABLE_ALERT_MSG
+		return {};
+#else
+		char buffer[256];
+		auto b = blk;
+		std::snprintf(buffer, sizeof(buffer), "rollback block hash: %s"
+				, aux::toHex(b.sha256().to_string()).c_str());
+		return buffer;
+#endif
+	}
+
+	blockchain_fork_point_block_alert::blockchain_fork_point_block_alert(aux::stack_allocator&
+			, blockchain::block blk)
+			: blk(std::move(blk))
+	{}
+
+	std::string blockchain_fork_point_block_alert::message() const
+	{
+#ifdef TORRENT_DISABLE_ALERT_MSG
+		return {};
+#else
+		char buffer[256];
+		auto b = blk;
+		std::snprintf(buffer, sizeof(buffer), "fork point block hash: %s"
+				, aux::toHex(b.sha256().to_string()).c_str());
+		return buffer;
+#endif
+	}
+
+	blockchain_top_three_votes_alert::blockchain_top_three_votes_alert(aux::stack_allocator&
+			, std::vector<blockchain::vote> vs)
+			: votes(std::move(vs))
+	{}
+
+	std::string blockchain_top_three_votes_alert::message() const
+	{
+#ifdef TORRENT_DISABLE_ALERT_MSG
+		return {};
+#else
+		char msg[256];
+		std::snprintf(msg, sizeof(msg), "votes size %zu", votes.size());
+		return msg;
+#endif
+	}
+
+    blockchain_new_transaction_alert::blockchain_new_transaction_alert(aux::stack_allocator&
+			, blockchain::transaction t)
+			: tx(std::move(t))
+	{}
+
+	std::string blockchain_new_transaction_alert::message() const
+	{
+#ifdef TORRENT_DISABLE_ALERT_MSG
+		return {};
+#else
+		char buffer[256];
+		auto t = tx;
+		std::snprintf(buffer, sizeof(buffer), "new tx hash: %s"
+				, aux::toHex(t.sha256().to_string()).c_str());
+		return buffer;
+#endif
+	}
+
+
 } // namespace libTAU

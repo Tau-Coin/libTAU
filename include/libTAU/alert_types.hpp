@@ -43,6 +43,9 @@ see LICENSE file.
 #include "libTAU/aux_/deprecated.hpp"
 #include "libTAU/aux_/common.h"
 #include "libTAU/communication/message.hpp"
+#include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/transaction.hpp"
+#include "libTAU/blockchain/vote.hpp"
 
 #include "libTAU/aux_/disable_warnings_push.hpp"
 #include <boost/shared_array.hpp>
@@ -71,7 +74,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 38;
+	constexpr int num_alert_types = 45;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1295,6 +1298,132 @@ namespace libTAU {
         // last seen time
         int64_t last_seen;
     };
+
+    // This alert is posted by blockchain event. Its main purpose is
+    // troubleshooting and debugging. It's not enabled by the default alert
+    // mask and is enabled by the ``alert_category::blockchain_log`` bit.
+    // Furthermore, it's by default disabled as a build configuration.
+    struct TORRENT_EXPORT blockchain_log_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_log_alert(aux::stack_allocator& alloc, char const* log);
+        TORRENT_UNEXPORT blockchain_log_alert(aux::stack_allocator& alloc, char const* fmt, va_list v);
+
+        TORRENT_DEFINE_ALERT(blockchain_log_alert, 38)
+
+        static inline constexpr alert_category_t static_category = alert_category::blockchain_log;
+        std::string message() const override;
+
+        // returns the log message
+        char const* log_message() const;
+
+#if TORRENT_ABI_VERSION == 1
+        // returns the log message
+        TORRENT_DEPRECATED
+        char const* msg() const;
+#endif
+
+    private:
+        std::reference_wrapper<aux::stack_allocator const> m_alloc;
+        aux::allocation_slot m_str_idx;
+    };
+
+    // this alert is posted when new tip block is found from other peers.
+    struct TORRENT_EXPORT blockchain_new_tip_block_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_new_tip_block_alert(aux::stack_allocator& alloc, blockchain::block blk);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_tip_block_alert, 39, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // message found from peers.
+        libTAU::blockchain::block blk;
+    };
+
+    // this alert is posted when new tail block is found from other peers.
+    struct TORRENT_EXPORT blockchain_new_tail_block_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_new_tail_block_alert(aux::stack_allocator& alloc, blockchain::block blk);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_tail_block_alert, 40, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // message found from peers.
+        libTAU::blockchain::block blk;
+    };
+
+    // this alert is posted when rollback block.
+    struct TORRENT_EXPORT blockchain_rollback_block_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_rollback_block_alert(aux::stack_allocator& alloc, blockchain::block blk);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_rollback_block_alert, 41, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // message found from peers.
+        libTAU::blockchain::block blk;
+    };
+
+    // this alert is posted when fork point block is found.
+    struct TORRENT_EXPORT blockchain_fork_point_block_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_fork_point_block_alert(aux::stack_allocator& alloc, blockchain::block blk);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_fork_point_block_alert, 42, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // message found from peers.
+        libTAU::blockchain::block blk;
+    };
+
+    // this alert is posted when voting end.
+    struct TORRENT_EXPORT blockchain_top_three_votes_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_top_three_votes_alert(aux::stack_allocator& alloc, std::vector<blockchain::vote> vs);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_top_three_votes_alert, 43, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // top three votes
+        std::vector<blockchain::vote> votes;
+    };
+
+    // this alert is posted when get new tx from other peers.
+    struct TORRENT_EXPORT blockchain_new_transaction_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_new_transaction_alert(aux::stack_allocator& alloc, blockchain::transaction t);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_transaction_alert, 44, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // message found from peers.
+        libTAU::blockchain::transaction tx;
+    };
+
 
 #undef TORRENT_DEFINE_ALERT_IMPL
 #undef TORRENT_DEFINE_ALERT

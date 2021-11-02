@@ -17,73 +17,75 @@ see LICENSE file.
 #include "libTAU/kademlia/types.hpp"
 
 
-namespace libTAU::blockchain {
-    class vote {
-    public:
-        vote() = default;
+namespace libTAU {
+    namespace blockchain {
+        class vote {
+        public:
+            vote() = default;
 
-        // @param Construct with entry
-        explicit vote(const entry& e);
+            // @param Construct with entry
+            explicit vote(const entry& e);
 
-        // @param Construct with bencode
-        explicit vote(std::string encode): vote(bdecode(encode)) {}
+            // @param Construct with bencode
+            explicit vote(std::string encode): vote(bdecode(encode)) {}
 
-        vote(const sha256_hash &mBlockHash, int64_t mBlockNumber) : m_block_hash(mBlockHash),
-                                                                    m_block_number(mBlockNumber) {}
+            vote(const sha256_hash &mBlockHash, int64_t mBlockNumber) : m_block_hash(mBlockHash),
+            m_block_number(mBlockNumber) {}
 
-        const sha256_hash &block_hash() const { return m_block_hash; }
+            const sha256_hash &block_hash() const { return m_block_hash; }
 
-        void setBlockHash(const sha256_hash &mBlockHash) { m_block_hash = mBlockHash; }
+            void setBlockHash(const sha256_hash &mBlockHash) { m_block_hash = mBlockHash; }
 
-        int64_t block_number() const { return m_block_number; }
+            int64_t block_number() const { return m_block_number; }
 
-        void setBlockNumber(int64_t mBlockNumber) { m_block_number = mBlockNumber; }
+            void setBlockNumber(int64_t mBlockNumber) { m_block_number = mBlockNumber; }
 
-        int count() const { return m_count; }
+            int count() const { return m_count; }
 
-        void vote_up() { m_count++; }
+            void vote_up() { m_count++; }
 
-        bool empty() { return m_block_hash.is_all_zeros(); }
+            bool empty() { return m_block_hash.is_all_zeros(); }
 
-        entry get_entry() const;
+            entry get_entry() const;
 
-        std::string get_encode() const;
+            std::string get_encode() const;
 
-        bool operator==(const vote &rhs) const {
-            return m_block_hash == rhs.m_block_hash &&
-                   m_block_number == rhs.m_block_number;
-        }
+            bool operator==(const vote &rhs) const {
+                return m_block_hash == rhs.m_block_hash &&
+                m_block_number == rhs.m_block_number;
+            }
 
-        bool operator!=(const vote &rhs) const {
-            return !(rhs == *this);
-        }
+            bool operator!=(const vote &rhs) const {
+                return !(rhs == *this);
+            }
 
-        bool operator<(const vote &rhs) const {
-            return m_count < rhs.m_count;
-        }
+            bool operator<(const vote &rhs) const {
+                return m_count < rhs.m_count;
+            }
 
-        bool operator>(const vote &rhs) const {
-            return rhs < *this;
-        }
+            bool operator>(const vote &rhs) const {
+                return rhs < *this;
+            }
 
-        bool operator<=(const vote &rhs) const {
-            return !(rhs < *this);
-        }
+            bool operator<=(const vote &rhs) const {
+                return !(rhs < *this);
+            }
 
-        bool operator>=(const vote &rhs) const {
-            return !(*this < rhs);
-        }
+            bool operator>=(const vote &rhs) const {
+                return !(*this < rhs);
+            }
 
-    private:
-        // populate block chain signal info from entry
-        void populate(const entry& e);
+        private:
+            // populate block chain signal info from entry
+            void populate(const entry& e);
 
-        sha256_hash m_block_hash;
+            sha256_hash m_block_hash;
 
-        std::int64_t m_block_number{};
+            std::int64_t m_block_number{};
 
-        int m_count = 1;
-    };
+            int m_count = 1;
+        };
+    }
 }
 
 
