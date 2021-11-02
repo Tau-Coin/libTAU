@@ -74,7 +74,9 @@ namespace libTAU::blockchain {
         // stop
         bool stop();
 
-        bool createNewCommunity(std::map<dht::public_key, account> accounts);
+        aux::bytes create_chain_id(std::string community_name);
+
+        bool createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts);
 
         bool followChain(const aux::bytes &chain_id);
 

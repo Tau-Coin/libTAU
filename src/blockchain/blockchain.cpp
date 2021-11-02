@@ -73,6 +73,8 @@ namespace libTAU::blockchain {
                 m_chains.erase(it);
             }
         }
+
+        m_repository->delete_chain(chain_id);
         // todo clear
 
         return false;
@@ -1204,8 +1206,72 @@ namespace libTAU::blockchain {
     catch (std::exception const&) {}
 
 
-    bool blockchain::createNewCommunity(std::map<dht::public_key, account> accounts) {
-        return false;
+    aux::bytes blockchain::create_chain_id(std::string community_name) {
+        libTAU::aux::bytes chain_id;
+        dht::public_key * pk = m_ses.pubkey();
+        std::int64_t now = total_microseconds(system_clock::now().time_since_epoch());
+
+        std::string spk(pk->bytes.begin(), pk->bytes.end());
+        std::stringstream data;
+        data << spk << now;
+        sha256_hash hash = dht::item_target_id(data.str());
+        chain_id.insert(chain_id.end(), hash.begin(), hash.begin() + CHAIN_ID_HASH_MAX_LENGTH);
+
+        if (community_name.length() > CHAIN_ID_COMMUNITY_NAME_MAX_LENGTH) {
+            chain_id.insert(chain_id.end(), community_name.begin(), community_name.begin() + CHAIN_ID_COMMUNITY_NAME_MAX_LENGTH);
+        } else {
+            chain_id.insert(chain_id.end(), community_name.begin(), community_name.end());
+        }
+
+        return chain_id;
+    }
+
+    bool blockchain::createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts) {
+        std::int64_t now = total_seconds(system_clock::now().time_since_epoch());
+
+        dht::secret_key *sk = m_ses.serkey();
+        dht::public_key *pk = m_ses.pubkey();
+
+        std::int64_t base_target = GENESIS_BASE_TARGET;
+        std::string data(pk->bytes.begin(), pk->bytes.end());
+        auto genSig = dht::item_target_id(data);
+        std::int64_t cumulative_difficulty = 0;
+
+        std::int64_t size = accounts.size();
+        std::int64_t block_number = -1 * size;
+        sha256_hash previous_hash;
+
+        std::vector<block> blocks;
+        for (auto const &act: accounts) {
+            auto miner = act.first;
+            std::int64_t miner_balance = act.second.balance();
+
+            block b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
+                            base_target, cumulative_difficulty, genSig, transaction(), miner, miner_balance,
+                            0, 0, 0, 0, 0);
+            b.sign(*pk, *sk);
+
+            blocks.push_back(b);
+
+            previous_hash = b.sha256();
+            block_number++;
+        }
+
+        block b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
+                        base_target, cumulative_difficulty, genSig, transaction(), *pk, GENESIS_BLOCK_BALANCE,
+                        0, 0, 0, 0, 0);
+        b.sign(*pk, *sk);
+
+        blocks.push_back(b);
+
+
+        followChain(chain_id);
+
+        for (auto &blk: blocks) {
+            process_block(chain_id, blk);
+        }
+
+        return true;
     }
 
     bool blockchain::submitTransaction(transaction tx) {

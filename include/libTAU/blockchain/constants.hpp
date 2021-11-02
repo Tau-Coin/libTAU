@@ -15,7 +15,10 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    constexpr int64_t GENESIS_BLOCK_BALANCE = 100000000000000;
+    // chain id
+    constexpr int CHAIN_ID_MAX_LENGTH = 32;
+    constexpr int CHAIN_ID_HASH_MAX_LENGTH = 8;
+    constexpr int CHAIN_ID_COMMUNITY_NAME_MAX_LENGTH = 24;
 
     constexpr int EFFECTIVE_BLOCK_NUMBER = 288 * 365;
 
@@ -26,6 +29,9 @@ namespace libTAU::blockchain {
 
     constexpr int MIN_RATIO = 265;
     constexpr int MAX_RATIO = 335;
+
+    // genesis block balance
+    constexpr int64_t GENESIS_BLOCK_BALANCE = 100000000000000;
 
     // 0x21D0369D036978
     constexpr int64_t GENESIS_BASE_TARGET = 9517607212509560;
