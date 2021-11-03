@@ -870,21 +870,18 @@ COMMUNICATION_SOURECS =
 	;
 
 BLOCKCHAIN_SOURECS =
-
 	account_block_pointer
 	block
 	blockchain
 	blockchain_signal
 	chain_url
 	consensus
-
     index_key_info
-
+    repository
     repository_impl
     repository_track
     state_linker
     transaction
-
     tx_pool
     vote
 	;

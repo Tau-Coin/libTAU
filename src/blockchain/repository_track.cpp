@@ -42,63 +42,63 @@ namespace libTAU::blockchain {
         return m_repository->is_account_exist(chain_id, pubKey);
     }
 
-    std::int64_t repository_track::get_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
-
-        if (!accountBlockPointer.empty()) {
-            if (accountBlockPointer.latest_block_hash() == accountBlockPointer.oldest_block_hash()) {
-                return 1;
-            } else {
-                block latest_block = get_block_by_hash(accountBlockPointer.latest_block_hash());
-                block oldest_block = get_block_by_hash(accountBlockPointer.oldest_block_hash());
-                if (!latest_block.empty() && !oldest_block.empty()) {
-                    account account1 = find_state_from_block(pubKey, latest_block);
-                    account account2 = find_state_from_block(pubKey, oldest_block);
-
-                    return account1.nonce() - account2.nonce() + 1;
-                }
-            }
-        }
-
-        return 0;
-    }
-
-    account repository_track::get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
-
-        if (!accountBlockPointer.empty() && !accountBlockPointer.latest_block_hash().is_all_zeros()) {
-            block b = get_block_by_hash(accountBlockPointer.latest_block_hash());
-            if (!b.empty()) {
-                return find_state_from_block(pubKey, b);
-            }
-        }
-
-        return account(0, 0, 0);
-    }
-
-    account repository_track::get_account_with_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        account acct(0, 0, 0, 0);
-        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
-
-        if (!accountBlockPointer.empty() && !accountBlockPointer.latest_block_hash().is_all_zeros()) {
-            block latest_block = get_block_by_hash(accountBlockPointer.latest_block_hash());
-            if (!latest_block.empty()) {
-                acct = find_state_from_block(pubKey, latest_block);
-
-                if (accountBlockPointer.latest_block_hash() == accountBlockPointer.oldest_block_hash()) {
-                    acct.set_effective_power(1);
-                } else {
-                    block oldest_block = get_block_by_hash(accountBlockPointer.oldest_block_hash());
-                    if (!oldest_block.empty()) {
-                        account account2 = find_state_from_block(pubKey, oldest_block);
-                        acct.set_effective_power(acct.nonce() - account2.nonce() + 1);
-                    }
-                }
-            }
-        }
-
-        return acct;
-    }
+//    std::int64_t repository_track::get_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+//
+//        if (!accountBlockPointer.empty()) {
+//            if (accountBlockPointer.latest_block_hash() == accountBlockPointer.oldest_block_hash()) {
+//                return 1;
+//            } else {
+//                block latest_block = get_block_by_hash(accountBlockPointer.latest_block_hash());
+//                block oldest_block = get_block_by_hash(accountBlockPointer.oldest_block_hash());
+//                if (!latest_block.empty() && !oldest_block.empty()) {
+//                    account account1 = find_state_from_block(pubKey, latest_block);
+//                    account account2 = find_state_from_block(pubKey, oldest_block);
+//
+//                    return account1.nonce() - account2.nonce() + 1;
+//                }
+//            }
+//        }
+//
+//        return 0;
+//    }
+//
+//    account repository_track::get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+//
+//        if (!accountBlockPointer.empty() && !accountBlockPointer.latest_block_hash().is_all_zeros()) {
+//            block b = get_block_by_hash(accountBlockPointer.latest_block_hash());
+//            if (!b.empty()) {
+//                return find_state_from_block(pubKey, b);
+//            }
+//        }
+//
+//        return account(0, 0, 0);
+//    }
+//
+//    account repository_track::get_account_with_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        account acct(0, 0, 0, 0);
+//        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+//
+//        if (!accountBlockPointer.empty() && !accountBlockPointer.latest_block_hash().is_all_zeros()) {
+//            block latest_block = get_block_by_hash(accountBlockPointer.latest_block_hash());
+//            if (!latest_block.empty()) {
+//                acct = find_state_from_block(pubKey, latest_block);
+//
+//                if (accountBlockPointer.latest_block_hash() == accountBlockPointer.oldest_block_hash()) {
+//                    acct.set_effective_power(1);
+//                } else {
+//                    block oldest_block = get_block_by_hash(accountBlockPointer.oldest_block_hash());
+//                    if (!oldest_block.empty()) {
+//                        account account2 = find_state_from_block(pubKey, oldest_block);
+//                        acct.set_effective_power(acct.nonce() - account2.nonce() + 1);
+//                    }
+//                }
+//            }
+//        }
+//
+//        return acct;
+//    }
 
 //    account repository_track::get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) {
 //        auto s = get_account(chain_id, pubKey);
@@ -128,56 +128,56 @@ namespace libTAU::blockchain {
         }
     }
 
-    block repository_track::get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
-        auto index_info = get_index_info(chain_id, block_number);
-        if (!index_info.empty() && !index_info.main_chain_block_hash().is_all_zeros()) {
-            return get_block_by_hash(index_info.main_chain_block_hash());
-        }
-
-        return block();
-    }
-
-    sha256_hash
-    repository_track::get_main_chain_block_hash_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
-        auto index_info = get_index_info(chain_id, block_number);
-        if (!index_info.empty() && !index_info.main_chain_block_hash().is_all_zeros()) {
-            return index_info.main_chain_block_hash();
-        }
-
-        return libTAU::sha256_hash();
-    }
+//    block repository_track::get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+//        auto index_info = get_index_info(chain_id, block_number);
+//        if (!index_info.empty() && !index_info.main_chain_block_hash().is_all_zeros()) {
+//            return get_block_by_hash(index_info.main_chain_block_hash());
+//        }
+//
+//        return block();
+//    }
+//
+//    sha256_hash
+//    repository_track::get_main_chain_block_hash_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+//        auto index_info = get_index_info(chain_id, block_number);
+//        if (!index_info.empty() && !index_info.main_chain_block_hash().is_all_zeros()) {
+//            return index_info.main_chain_block_hash();
+//        }
+//
+//        return libTAU::sha256_hash();
+//    }
 
 //    bool repository_track::save_block(block b, bool main_chain) {
 //        return true;
 //    }
 
-    bool repository_track::forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key &pubKey,
-                                                       state_linker &stateLinker, const sha256_hash &current_block_hash) {
-        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
-        if (!accountBlockPointer.empty()) {
-            auto linker = get_state_linker(accountBlockPointer.latest_block_hash());
-            linker.update_next_change_block_hash(pubKey, current_block_hash);
-            stateLinker.update_previous_change_block_hash(pubKey, accountBlockPointer.latest_block_hash());
-            if (!save_state_linker(linker))
-                return false;
-        }
-
-        return true;
-    }
-
-    bool repository_track::backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key &pubKey,
-                                                        state_linker& stateLinker, const sha256_hash &current_block_hash) {
-        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
-        if (!accountBlockPointer.empty()) {
-            auto linker = get_state_linker(accountBlockPointer.oldest_block_hash());
-            linker.update_previous_change_block_hash(pubKey, current_block_hash);
-            stateLinker.update_next_change_block_hash(pubKey, accountBlockPointer.oldest_block_hash());
-            if (!save_state_linker(linker))
-                return false;
-        }
-
-        return true;
-    }
+//    bool repository_track::forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key &pubKey,
+//                                                       state_linker &stateLinker, const sha256_hash &current_block_hash) {
+//        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+//        if (!accountBlockPointer.empty()) {
+//            auto linker = get_state_linker(accountBlockPointer.latest_block_hash());
+//            linker.update_next_change_block_hash(pubKey, current_block_hash);
+//            stateLinker.update_previous_change_block_hash(pubKey, accountBlockPointer.latest_block_hash());
+//            if (!save_state_linker(linker))
+//                return false;
+//        }
+//
+//        return true;
+//    }
+//
+//    bool repository_track::backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key &pubKey,
+//                                                        state_linker& stateLinker, const sha256_hash &current_block_hash) {
+//        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+//        if (!accountBlockPointer.empty()) {
+//            auto linker = get_state_linker(accountBlockPointer.oldest_block_hash());
+//            linker.update_previous_change_block_hash(pubKey, current_block_hash);
+//            stateLinker.update_next_change_block_hash(pubKey, accountBlockPointer.oldest_block_hash());
+//            if (!save_state_linker(linker))
+//                return false;
+//        }
+//
+//        return true;
+//    }
 
     bool repository_track::connect_tip_block(block &b) {
         m_main_chain_blocks.push_back(b);
@@ -430,17 +430,17 @@ namespace libTAU::blockchain {
 //        return m_repository->get_account_from_user_db(chain_id, pubKey);
 //    }
 
-    bool repository_track::update_user_state_db(const block &b) {
-        update_user_state_db(b.chain_id(), b.miner());
-
-        auto tx = b.tx();
-        if (!tx.empty()) {
-            update_user_state_db(b.chain_id(), tx.sender());
-            update_user_state_db(b.chain_id(), tx.receiver());
-        }
-
-        return true;
-    }
+//    bool repository_track::update_user_state_db(const block &b) {
+//        update_user_state_db(b.chain_id(), b.miner());
+//
+//        auto tx = b.tx();
+//        if (!tx.empty()) {
+//            update_user_state_db(b.chain_id(), tx.sender());
+//            update_user_state_db(b.chain_id(), tx.receiver());
+//        }
+//
+//        return true;
+//    }
 
     bool repository_track::update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         return m_repository->update_user_state_db(chain_id, pubKey);
@@ -479,17 +479,17 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    account repository_track::find_state_from_block(const dht::public_key &pubKey, const block &b) {
-        if (pubKey == b.miner()) {
-            return account(b.miner_balance(), b.miner_nonce(), b.block_number());
-        } else if (pubKey == b.tx().sender()) {
-            return account(b.sender_balance(), b.sender_nonce(), b.block_number());
-        } else if (pubKey == b.tx().receiver()) {
-            return account(b.receiver_balance(), b.receiver_nonce(), b.block_number());
-        }
-
-        return account(0, 0, 0);
-    }
+//    account repository_track::find_state_from_block(const dht::public_key &pubKey, const block &b) {
+//        if (pubKey == b.miner()) {
+//            return account(b.miner_balance(), b.miner_nonce(), b.block_number());
+//        } else if (pubKey == b.tx().sender()) {
+//            return account(b.sender_balance(), b.sender_nonce(), b.block_number());
+//        } else if (pubKey == b.tx().receiver()) {
+//            return account(b.receiver_balance(), b.receiver_nonce(), b.block_number());
+//        }
+//
+//        return account(0, 0, 0);
+//    }
 
     state_linker repository_track::get_state_linker(const sha256_hash &block_hash) {
         std::string key;
@@ -532,18 +532,18 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::save_non_main_chain_block(block &b) {
-        // save block
-        if (!save_block(b))
-            return false;
-
-        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
-        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
-        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
-            return false;
-
-        return true;
-    }
+//    bool repository_track::save_non_main_chain_block(block &b) {
+//        // save block
+//        if (!save_block(b))
+//            return false;
+//
+//        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+//        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
+//        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
+//            return false;
+//
+//        return true;
+//    }
 
     bool repository_track::delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) {
         std::string key;
@@ -588,36 +588,35 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) {
-        index_key_info indexKeyInfo = get_index_info(chain_id, block_number);
-        auto& main_chain_block_hash = indexKeyInfo.main_chain_block_hash();
-        if (!main_chain_block_hash.is_all_zeros()) {
-            if (!delete_block(main_chain_block_hash))
-                return false;
-            if (!delete_state_linker(main_chain_block_hash))
-                return false;
-        }
-
-        auto& non_main_chain_block_hash_set = indexKeyInfo.non_main_chain_block_hash_set();
-        for (auto const& hash: non_main_chain_block_hash_set) {
-            if (!delete_block(hash))
-                return false;
-            if (!delete_state_linker(hash))
-                return false;
-        }
-
-        auto& associated_peers = indexKeyInfo.associated_peers();
-        for (auto const& peer: associated_peers) {
-            auto s = get_account(chain_id, peer);
-            if (!s.empty() && s.block_number() <= block_number) {
-                if (!delete_account_block_pointer(chain_id, peer))
-                    return false;
-            }
-        }
-
-        return delete_index_info(chain_id, block_number);
-
-    }
+//    bool repository_track::delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) {
+//        index_key_info indexKeyInfo = get_index_info(chain_id, block_number);
+//        auto& main_chain_block_hash = indexKeyInfo.main_chain_block_hash();
+//        if (!main_chain_block_hash.is_all_zeros()) {
+//            if (!delete_block(main_chain_block_hash))
+//                return false;
+//            if (!delete_state_linker(main_chain_block_hash))
+//                return false;
+//        }
+//
+//        auto& non_main_chain_block_hash_set = indexKeyInfo.non_main_chain_block_hash_set();
+//        for (auto const& hash: non_main_chain_block_hash_set) {
+//            if (!delete_block(hash))
+//                return false;
+//            if (!delete_state_linker(hash))
+//                return false;
+//        }
+//
+//        auto& associated_peers = indexKeyInfo.associated_peers();
+//        for (auto const& peer: associated_peers) {
+//            auto s = get_account(chain_id, peer);
+//            if (!s.empty() && s.block_number() <= block_number) {
+//                if (!delete_account_block_pointer(chain_id, peer))
+//                    return false;
+//            }
+//        }
+//
+//        return delete_index_info(chain_id, block_number);
+//    }
 
     std::set<aux::bytes> repository_track::get_all_chains() {
         return m_repository->get_all_chains();
@@ -627,12 +626,18 @@ namespace libTAU::blockchain {
         return m_repository->save_chains(chains);
     }
 
-    bool repository_track::add_new_chain(const aux::bytes &chain_id) {
-        return m_repository->add_new_chain(chain_id);
-    }
-
-    bool repository_track::delete_chain(const aux::bytes &chain_id) {
-        return m_repository->delete_chain(chain_id);
-    }
+//    bool repository_track::add_new_chain(const aux::bytes &chain_id) {
+//        std::set<aux::bytes> chains = get_all_chains();
+//        chains.insert(chain_id);
+//
+//        return save_chains(chains);
+//    }
+//
+//    bool repository_track::delete_chain(const aux::bytes &chain_id) {
+//        std::set<aux::bytes> chains = get_all_chains();
+//        chains.erase(chain_id);
+//
+//        return save_chains(chains);
+//    }
 
 }

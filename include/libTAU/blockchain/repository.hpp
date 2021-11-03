@@ -50,11 +50,11 @@ namespace libTAU::blockchain {
          */
         virtual bool is_account_exist(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
-        virtual std::int64_t get_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        std::int64_t get_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey);
 
-        virtual account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey);
 
-        virtual account get_account_with_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        account get_account_with_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey);
 
 //        virtual account get_account_without_verification(aux::bytes chain_id, dht::public_key pubKey) = 0;
 
@@ -66,17 +66,17 @@ namespace libTAU::blockchain {
 
         virtual block get_block_by_hash(const sha256_hash &hash) = 0;
 
-        virtual block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+        block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number);
 
-        virtual sha256_hash get_main_chain_block_hash_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+        sha256_hash get_main_chain_block_hash_by_number(const aux::bytes &chain_id, std::int64_t block_number);
 
 //        virtual bool save_block(block b, bool main_chain) = 0;
 
-        virtual bool forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
-                                                 state_linker& stateLinker, const sha256_hash &current_block_hash) = 0;
+        bool forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
+                                                 state_linker& stateLinker, const sha256_hash &current_block_hash);
 
-        virtual bool backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
-                                                  state_linker& stateLinker, const sha256_hash &current_block_hash) = 0;
+        bool backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
+                                                  state_linker& stateLinker, const sha256_hash &current_block_hash);
 
         virtual bool connect_tip_block(block &b) = 0;
 
@@ -125,7 +125,7 @@ namespace libTAU::blockchain {
 
 //        virtual account get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) = 0;
 
-        virtual bool update_user_state_db(const block &b) = 0;
+        bool update_user_state_db(const block &b);
 
         virtual bool update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
@@ -135,7 +135,7 @@ namespace libTAU::blockchain {
 
         virtual bool delete_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
-        virtual account find_state_from_block(const dht::public_key &pubKey, const block &b) = 0;
+        static account find_state_from_block(const dht::public_key &pubKey, const block &b);
 
         virtual state_linker get_state_linker(const sha256_hash &block_hash) = 0;
 
@@ -145,7 +145,7 @@ namespace libTAU::blockchain {
 
         virtual bool save_block(block &b) = 0;
 
-        virtual bool save_non_main_chain_block(block &b) = 0;
+        bool save_non_main_chain_block(block &b);
 
         virtual bool delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) = 0;
 
@@ -153,15 +153,15 @@ namespace libTAU::blockchain {
 
         virtual bool save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) = 0;
 
-        virtual bool delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+        bool delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number);
 
         virtual std::set<aux::bytes> get_all_chains() = 0;
 
         virtual bool save_chains(const std::set<aux::bytes> &chains) = 0;
 
-        virtual bool add_new_chain(const aux::bytes &chain_id) = 0;
+        bool add_new_chain(const aux::bytes &chain_id);
 
-        virtual bool delete_chain(const aux::bytes &chain_id) = 0;
+        bool delete_chain(const aux::bytes &chain_id);
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP
