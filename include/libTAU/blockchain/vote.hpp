@@ -19,7 +19,7 @@ see LICENSE file.
 
 namespace libTAU {
     namespace blockchain {
-        class vote {
+        class TORRENT_EXPORT vote {
         public:
             vote() = default;
 
