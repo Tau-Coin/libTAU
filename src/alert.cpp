@@ -1307,7 +1307,10 @@ namespace {
 		"socks5", "communication_new_device_id", "communication_new_message",
 		"communication_confirmation_root", "communication_syncing_message",
 		"communication_friend_info", "communication_log",
-		"communication_last_seen"
+		"communication_last_seen", "blockchain_log_alert",
+		"blockchain_new_tip_block_alert", "blockchain_new_tail_block_alert",
+		"blockchain_rollback_block_alert", "blockchain_fork_point_block_alert",
+		"blockchain_top_three_votes_alert", "blockchain_new_transaction_alert"
 		}};
 
 		TORRENT_ASSERT(alert_type >= 0);

@@ -80,6 +80,7 @@ namespace libTAU::blockchain {
         for (auto it = m_chains.begin(); it != m_chains.end(); ++it) {
             if (chain_id == *it) {
                 m_chains.erase(it);
+                break;
             }
         }
 
@@ -914,7 +915,7 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(chain_id);
 
-        log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer).c_str(), aux::toHex(salt).c_str());
+//        log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer.bytes.data()).c_str(), aux::toHex(salt).c_str());
         dht_get_mutable_item(chain_id, peer.bytes, salt);
     }
 

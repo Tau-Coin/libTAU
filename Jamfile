@@ -869,6 +869,26 @@ COMMUNICATION_SOURECS =
 	immutable_data_info
 	;
 
+BLOCKCHAIN_SOURECS =
+
+	account_block_pointer
+	block
+	blockchain
+	blockchain_signal
+	chain_url
+	consensus
+
+    index_key_info
+
+    repository_impl
+    repository_track
+    state_linker
+    transaction
+
+    tx_pool
+    vote
+	;
+
 ED25519_SOURCES =
 	add_scalar
 	fe
@@ -912,6 +932,7 @@ lib TAU
 	: # sources
 	src/$(SOURCES).cpp
 	src/communication/$(COMMUNICATION_SOURECS).cpp
+	src/blockchain/$(BLOCKCHAIN_SOURECS).cpp
 
 	: # requirements
 	<threading>multi
