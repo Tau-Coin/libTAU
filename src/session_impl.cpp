@@ -66,6 +66,10 @@ see LICENSE file.
 #include "libTAU/communication/message.hpp"
 #include "libTAU/communication/communication.hpp"
 
+#include "libTAU/blockchain/account.hpp"
+#include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/transaction.hpp"
+
 #include "libTAU/aux_/enum_net.hpp"
 #include "libTAU/upnp.hpp"
 #include "libTAU/natpmp.hpp"
@@ -578,6 +582,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		stop_natpmp();
 		stop_dht();
 		stop_communication();
+		stop_blockchain();
 
 
 		if(m_kvdb) {
@@ -2620,13 +2625,36 @@ namespace {
 		// todo: initialize device_id
 		m_communication = std::make_shared<communication::communication>(m_device_id, m_io_context, *this);
 
-		m_alerts.emplace_alert<session_start_over_alert>(true);
-
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("starting Communication");
 #endif
 
 		m_communication->start();
+		
+	}
+
+	void session_impl::start_blockchain()
+	{
+
+		stop_blockchain();
+
+		if (m_abort)
+		{
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("not starting Blockchain, aborting");
+#endif
+			return;
+		}
+		// todo: initialize device_id
+		m_blockchain = std::make_shared<blockchain::blockchain>(m_io_context, *this);
+
+		m_alerts.emplace_alert<session_start_over_alert>(true);
+
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("starting Blockchain");
+#endif
+
+		m_blockchain->start();
 		
 	}
 
@@ -2719,6 +2747,20 @@ namespace {
 
 	}
 
+	void session_impl::stop_blockchain()
+	{
+
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("about to stop Blockchain, running: %s", m_blockchain ? "true" : "false");
+#endif
+
+		if(m_blockchain)
+		{
+			m_blockchain->stop();
+		}
+
+	}
+
 	void session_impl::stop_dht()
 	{
 #ifndef TORRENT_DISABLE_LOGGING
@@ -2807,6 +2849,37 @@ namespace {
 		*/
 		return m_communication->add_new_message(msg, false);
 	}	
+
+	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts) {
+		return m_blockchain->createNewCommunity(chain_id, accounts);
+	}
+
+	bool session_impl::follow_chain(const aux::bytes &chain_id) {
+		return m_blockchain->followChain(chain_id);
+	}
+
+	bool session_impl::unfollow_chain(const aux::bytes &chain_id) {
+		return m_blockchain->unfollowChain(chain_id);
+	}
+
+	bool session_impl::submit_transaction(const blockchain::transaction & tx) {
+		return m_blockchain->submitTransaction(tx);
+	}
+
+	bool session_impl::get_account_info(const aux::bytes &chain_id, dht::public_key pub_key, blockchain::account * act) {
+		*act =  m_blockchain->getAccountInfo(chain_id, pub_key);
+		return true;
+	}
+
+	bool session_impl::get_top_tip_block(const aux::bytes &chain_id, int num, std::vector<blockchain::block> * blks) {
+		
+		*blks =  m_blockchain->getTopTipBlock(chain_id, num);
+		return true;
+	}
+
+	std::int64_t session_impl::get_median_tx_free(const aux::bytes &chain_id) {
+		return m_blockchain->getMedianTxFree(chain_id);
+	}
 
 	void session_impl::set_dht_state(dht::dht_state&& state)
 	{

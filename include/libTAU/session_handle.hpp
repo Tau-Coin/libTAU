@@ -56,7 +56,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "libTAU/extensions.hpp"
 #include "libTAU/session_types.hpp" // for session_flags_t
+
 #include "libTAU/communication/message.hpp" // for adding new message
+
+#include "libTAU/blockchain/account.hpp" 
+#include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/transaction.hpp"
 
 namespace libTAU {
 
@@ -341,6 +346,21 @@ namespace libTAU {
 
 		// add a new message
 		bool add_new_message(communication::message msg);
+
+		// create new community
+        bool create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
+		// follow chain
+        bool follow_chain(std::vector<char> chain_id);
+		// unfollow chain
+        bool unfollow_chain(std::vector<char> chain_id);
+		// submit transaction
+        bool submit_transaction(const blockchain::transaction & tx);
+		// get account info
+        blockchain::account get_account_info(std::vector<char> chain_id, dht::public_key publicKey);
+		// get top and tip blocks
+        std::vector<blockchain::block> get_top_tip_block(std::vector<char> chain_id, int num);
+		// get median tx fee
+        std::int64_t get_median_tx_free(std::vector<char> chain_id);
 
 		// This call dereferences the reference count of the specified peer
 		// class. When creating a peer class it's automatically referenced by 1.

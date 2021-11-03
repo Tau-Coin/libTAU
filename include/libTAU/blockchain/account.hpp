@@ -13,8 +13,10 @@ see LICENSE file.
 
 namespace libTAU {
     namespace blockchain {
-        class account {
+        class TORRENT_EXPORT account {
         public:
+			account() = default;
+
             account(int64_t mBalance, int64_t mNonce, int64_t mBlockNumber) : m_balance(mBalance), m_nonce(mNonce),
             m_block_number(mBlockNumber) {}
 

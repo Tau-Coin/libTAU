@@ -283,6 +283,52 @@ namespace libTAU {
 		return sync_call_ret<bool>(&session_impl::add_new_message, msg);
 	}
 
+	// create new community
+    bool session_handle::create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts)
+	{
+		return sync_call_ret<bool>(&session_impl::create_new_community, chain_id, accounts);
+	}
+
+	// follow chain
+    bool session_handle::follow_chain(std::vector<char> chain_id)
+	{
+		return sync_call_ret<bool>(&session_impl::follow_chain, chain_id);
+	}
+
+	// unfollow chain
+    bool session_handle::unfollow_chain(std::vector<char> chain_id)
+	{
+		return sync_call_ret<bool>(&session_impl::unfollow_chain, chain_id);
+	}
+
+	// submit transaction
+    bool session_handle::submit_transaction(const blockchain::transaction & tx)
+	{
+		return sync_call_ret<bool>(&session_impl::submit_transaction, tx);
+	}
+
+	// get account info
+    blockchain::account session_handle::get_account_info(std::vector<char> chain_id, dht::public_key pub_key)
+	{
+		blockchain::account * act;
+		sync_call(&session_impl::get_account_info, chain_id, pub_key, act);
+		return *act;
+	}
+
+	// get top and tip blocks
+    std::vector<blockchain::block> session_handle::get_top_tip_block(std::vector<char> chain_id, int num)
+	{
+		std::vector<blockchain::block> blks;
+		sync_call(&session_impl::get_top_tip_block, chain_id, num, &blks);
+		return blks;
+	}
+
+	// get median tx fee
+    std::int64_t session_handle::get_median_tx_free(std::vector<char> chain_id)
+	{
+		return sync_call_ret<std::int64_t>(&session_impl::get_median_tx_free, chain_id);
+	}
+
 	void session_handle::set_ip_filter(ip_filter f)
 	{
 		std::shared_ptr<ip_filter> copy = std::make_shared<ip_filter>(std::move(f));

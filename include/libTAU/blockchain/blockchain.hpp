@@ -29,7 +29,8 @@ see LICENSE file.
 #include "libTAU/blockchain/repository_track.hpp"
 #include "libTAU/blockchain/tx_pool.hpp"
 
-namespace libTAU::blockchain {
+namespace libTAU {
+namespace blockchain {
 
     using system_clock = std::chrono::system_clock;
 
@@ -250,6 +251,7 @@ namespace libTAU::blockchain {
         std::map<aux::bytes, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
 
     };
+}
 }
 
 

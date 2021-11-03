@@ -58,6 +58,7 @@ see LICENSE file.
 #include "libTAU/aux_/bloom_filter.hpp"
 #include "libTAU/peer_class.hpp"
 #include "libTAU/peer_class_type_filter.hpp"
+#include "libTAU/kademlia/types.hpp"
 #include "libTAU/kademlia/dht_observer.hpp"
 #include "libTAU/kademlia/dht_state.hpp"
 #include "libTAU/kademlia/announce_flags.hpp"
@@ -66,6 +67,11 @@ see LICENSE file.
 
 #include "libTAU/communication/message.hpp"
 #include "libTAU/communication/communication.hpp"
+
+#include "libTAU/blockchain/account.hpp"
+#include "libTAU/blockchain/blockchain.hpp"
+#include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/transaction.hpp"
 
 #include "libTAU/aux_/resolver.hpp"
 #include "libTAU/aux_/invariant_check.hpp"
@@ -389,8 +395,14 @@ namespace aux {
 			bool announce_dht() const override { return !m_listen_sockets.empty(); }
 
 			void add_dht_router(std::tuple<std::string, int, std::string> const& node);
+
+			//communicaiton
 			void start_communication();
 			void stop_communication();
+
+			//blockchain
+			void start_blockchain();
+			void stop_blockchain();
 
 			// you must give up ownership of the dht state
 			void set_dht_state(dht::dht_state&& state);
@@ -612,6 +624,14 @@ namespace aux {
             void set_active_friends(std::vector<aux::bytes> active_friends);
             bool add_new_message(const communication::message& msg);
 
+            bool create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
+        	bool follow_chain(const aux::bytes &chain_id);
+        	bool unfollow_chain(const aux::bytes &chain_id);
+        	bool submit_transaction(const blockchain::transaction & tx);
+        	bool get_account_info(const aux::bytes &chain_id, dht::public_key publicKey, blockchain::account* act);
+        	bool get_top_tip_block(const aux::bytes &chain_id, int topNum, std::vector<blockchain::block>* blks);
+        	std::int64_t get_median_tx_free(const aux::bytes &chain_id);
+
 		private:
 
 			// return the settings value for int setting "n", if the value is
@@ -803,6 +823,9 @@ namespace aux {
 			// communication
 			std::shared_ptr<communication::communication> m_communication;
 			aux::bytes m_device_id;
+
+			// blockchain
+			std::shared_ptr<blockchain::blockchain> m_blockchain;
 
 			// these are used when starting the DHT
 			// (and bootstrapping it), and then erased
