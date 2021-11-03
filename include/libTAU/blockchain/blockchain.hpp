@@ -96,7 +96,10 @@ namespace libTAU::blockchain {
         bool init();
 
         // clear all cache
-        void clear();
+        void clear_all_cache();
+
+        // clear chain cache
+        void clear_chain_cache(const aux::bytes &chain_id);
 
         std::shared_ptr<blockchain> self()
         { return shared_from_this(); }
@@ -109,6 +112,8 @@ namespace libTAU::blockchain {
         void refresh_timeout(error_code const& e);
 
         void refresh_vote_timeout(error_code const& e);
+
+        bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
         bool load_chain(const aux::bytes &chain_id);
 

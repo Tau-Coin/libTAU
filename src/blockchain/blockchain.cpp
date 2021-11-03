@@ -51,7 +51,7 @@ namespace libTAU::blockchain {
     {
         m_stop = true;
 
-        clear();
+        clear_all_cache();
 
         log("INFO: Stop BlockChain...");
 
@@ -59,8 +59,10 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::followChain(const chain_url &url) {
-        const auto& chain_id = url.chain_id();
-        const auto& peers = url.chain_id();
+        return followChain(url.chain_id(), url.peers());
+    }
+
+    bool blockchain::followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
         if (!chain_id.empty()) {
             // todo:peers
             load_chain(chain_id);
@@ -82,7 +84,8 @@ namespace libTAU::blockchain {
         }
 
         m_repository->delete_chain(chain_id);
-        // todo clear
+        clear_chain_cache(chain_id);
+        // todo: clear data in db?
 
         return false;
     }
@@ -112,8 +115,36 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    void blockchain::clear() {
+    void blockchain::clear_all_cache() {
+        m_chains.clear();
+        m_tx_pools.clear();
+        m_chain_peers.clear();
+        m_unchoked_peers.clear();
+        m_unchoked_peer_signal.clear();
+        m_update_peer_time.clear();
+        m_blocks.clear();
+        m_best_tip_blocks.clear();
+        m_best_tail_blocks.clear();
+        m_consensus_point_blocks.clear();
+        m_best_votes.clear();
+        m_votes.clear();
+        m_latest_signal_time.clear();
+    }
 
+    void blockchain::clear_chain_cache(const aux::bytes &chain_id) {
+//        m_chains.erase(chain_id);
+        m_tx_pools[chain_id].clear();
+        m_chain_peers[chain_id].clear();
+        m_unchoked_peers[chain_id].clear();
+        m_unchoked_peer_signal[chain_id].clear();
+        m_update_peer_time.erase(chain_id);
+        m_blocks[chain_id].clear();
+        m_best_tip_blocks.erase(chain_id);
+        m_best_tail_blocks.erase(chain_id);
+        m_consensus_point_blocks.erase(chain_id);
+        m_best_votes.erase(chain_id);
+        m_votes[chain_id].clear();
+        m_latest_signal_time[chain_id].clear();
     }
 
     void blockchain::refresh_timeout(const error_code &e) {
@@ -1274,9 +1305,11 @@ namespace libTAU::blockchain {
         std::int64_t block_number = -1 * size;
         sha256_hash previous_hash;
 
+        std::set<dht::public_key> peers;
         std::vector<block> blocks;
         for (auto const &act: accounts) {
             auto miner = act.first;
+            peers.insert(miner);
             std::int64_t miner_balance = act.second.balance();
 
             block b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
@@ -1297,8 +1330,7 @@ namespace libTAU::blockchain {
 
         blocks.push_back(b);
 
-
-        followChain(chain_id);
+        followChain(chain_id, peers);
 
         for (auto &blk: blocks) {
             process_block(chain_id, blk);
