@@ -58,13 +58,20 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool blockchain::followChain(const aux::bytes &chain_id) {
-        load_chain(chain_id);
+    bool blockchain::followChain(const chain_url &url) {
+        const auto& chain_id = url.chain_id();
+        const auto& peers = url.chain_id();
+        if (!chain_id.empty()) {
+            // todo:peers
+            load_chain(chain_id);
 
-        m_repository->add_new_chain(chain_id);
-        m_chains.push_back(chain_id);
+            m_repository->add_new_chain(chain_id);
+            m_chains.push_back(chain_id);
 
-        return true;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     bool blockchain::unfollowChain(const aux::bytes &chain_id) {

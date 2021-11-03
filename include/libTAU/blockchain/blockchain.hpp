@@ -22,6 +22,7 @@ see LICENSE file.
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
 #include "libTAU/blockchain/blockchain_signal.hpp"
+#include "libTAU/blockchain/chain_url.hpp"
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/repository_impl.hpp"
@@ -78,7 +79,7 @@ namespace libTAU::blockchain {
 
         bool createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts);
 
-        bool followChain(const aux::bytes &chain_id);
+        bool followChain(const chain_url &url);
 
         bool unfollowChain(const aux::bytes &chain_id);
 
