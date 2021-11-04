@@ -625,6 +625,8 @@ namespace aux {
             void set_active_friends(std::vector<aux::bytes> active_friends);
             bool add_new_message(const communication::message& msg);
 
+			
+        	void create_chain_id(std::string community_name, std::vector<char>* id);
             bool create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
         	bool follow_chain(const blockchain::chain_url & cul);
         	bool unfollow_chain(const aux::bytes &chain_id);

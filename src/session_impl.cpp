@@ -2850,6 +2850,11 @@ namespace {
 		return m_communication->add_new_message(msg, false);
 	}	
 
+	void session_impl::create_chain_id(std::string community_name, std::vector<char>* id)
+	{
+		*id = m_blockchain->create_chain_id(community_name);
+	}
+
 	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts) {
 		return m_blockchain->createNewCommunity(chain_id, accounts);
 	}

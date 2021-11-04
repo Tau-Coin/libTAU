@@ -348,6 +348,8 @@ namespace libTAU {
 		// add a new message
 		bool add_new_message(communication::message msg);
 
+		// create chain id
+		std::vector<std::int8_t> create_chain_id(std::string community_name);
 		// create new community
         bool create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
 		// follow chain
