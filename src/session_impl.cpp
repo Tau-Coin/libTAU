@@ -2854,8 +2854,8 @@ namespace {
 		return m_blockchain->createNewCommunity(chain_id, accounts);
 	}
 
-	bool session_impl::follow_chain(const aux::bytes &chain_id) {
-		return m_blockchain->followChain(chain_id);
+	bool session_impl::follow_chain(const blockchain::chain_url &cul) {
+		return m_blockchain->followChain(cul);
 	}
 
 	bool session_impl::unfollow_chain(const aux::bytes &chain_id) {

@@ -61,6 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "libTAU/blockchain/account.hpp" 
 #include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/chain_url.hpp" 
 #include "libTAU/blockchain/transaction.hpp"
 
 namespace libTAU {
@@ -350,7 +351,7 @@ namespace libTAU {
 		// create new community
         bool create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
 		// follow chain
-        bool follow_chain(std::vector<char> chain_id);
+        bool follow_chain(const blockchain::chain_url & cul);
 		// unfollow chain
         bool unfollow_chain(std::vector<char> chain_id);
 		// submit transaction
