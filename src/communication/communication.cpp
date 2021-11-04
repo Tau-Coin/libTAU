@@ -638,13 +638,12 @@ namespace libTAU {
 
                         std::vector<dht::node_entry> entries;
                         m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-                        log("INFO: Put immutable message target[%s], entries[%zu]",
-                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
-                        dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
-
                         while (entries.size() > 2) {
                             entries.pop_back();
                         }
+                        log("INFO: Put immutable message target[%s], entries[%zu]",
+                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
+                        dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
 
                         payload = immutable_data_info(missing_message.sha256(), entries);
 

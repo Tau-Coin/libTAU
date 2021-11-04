@@ -944,6 +944,9 @@ namespace libTAU::blockchain {
 
             std::vector<dht::node_entry> entries;
             m_ses.dht()->find_live_nodes(best_tip_block.sha256(), entries);
+            while (entries.size() > 1) {
+                entries.pop_back();
+            }
             log("INFO: Put immutable best tip block target[%s], entries[%zu]",
                 aux::toHex(best_tip_block.sha256().to_string()).c_str(), entries.size());
             dht_put_immutable_item(best_tip_block.get_entry(), entries, best_tip_block.sha256());
@@ -958,6 +961,9 @@ namespace libTAU::blockchain {
 
             std::vector<dht::node_entry> entries;
             m_ses.dht()->find_live_nodes(consensus_point_block.sha256(), entries);
+            while (entries.size() > 1) {
+                entries.pop_back();
+            }
             log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
                 aux::toHex(consensus_point_block.sha256().to_string()).c_str(), entries.size());
             dht_put_immutable_item(consensus_point_block.get_entry(), entries, consensus_point_block.sha256());
@@ -984,6 +990,9 @@ namespace libTAU::blockchain {
 
                 std::vector<dht::node_entry> entries;
                 m_ses.dht()->find_live_nodes(demand_block.sha256(), entries);
+                while (entries.size() > 1) {
+                    entries.pop_back();
+                }
                 log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
                     aux::toHex(demand_block.sha256().to_string()).c_str(), entries.size());
                 dht_put_immutable_item(demand_block.get_entry(), entries, demand_block.sha256());
@@ -1014,6 +1023,9 @@ namespace libTAU::blockchain {
 
                 std::vector<dht::node_entry> entries;
                 m_ses.dht()->find_live_nodes(miss_tx.sha256(), entries);
+                while (entries.size() > 1) {
+                    entries.pop_back();
+                }
                 log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
                     aux::toHex(miss_tx.sha256().to_string()).c_str(), entries.size());
                 dht_put_immutable_item(miss_tx.get_entry(), entries, miss_tx.sha256());
