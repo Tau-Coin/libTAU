@@ -110,15 +110,15 @@ namespace libTAU::blockchain {
         void populate(const entry& e);
 
         // online signal timestamp
-        std::int64_t m_timestamp;
+        std::int64_t m_timestamp; // 10
 
-        vote m_consensus_point_vote;
+        vote m_consensus_point_vote; // 40
 
 //        sha256_hash m_consensus_point_block_hash;
 //
 //        std::int64_t m_consensus_point_block_number{};
 
-        immutable_data_info m_best_tip_block_info;
+        immutable_data_info m_best_tip_block_info; // 1-70
 
         immutable_data_info m_consensus_point_block_info;
 
@@ -126,13 +126,13 @@ namespace libTAU::blockchain {
 
         std::set<immutable_data_info> m_tx_info_set;
 
-        std::set<sha256_hash> m_demand_block_hash_set;
+        std::set<sha256_hash> m_demand_block_hash_set; // 64
 
 //        std::set<sha256_hash> m_demand_tx_hash_set;
 
-        aux::bytes m_tx_hash_prefix_array;
+        aux::bytes m_tx_hash_prefix_array; // 10
 
-        dht::public_key m_peer;
+        dht::public_key m_peer; // 32
     };
 }
 

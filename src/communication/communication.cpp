@@ -642,6 +642,10 @@ namespace libTAU {
                             aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
                         dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
 
+                        while (entries.size() > 2) {
+                            entries.pop_back();
+                        }
+
                         payload = immutable_data_info(missing_message.sha256(), entries);
 
                         if (1 == size) {
@@ -653,7 +657,7 @@ namespace libTAU {
                     }
                 }
             } else {
-                if (now - m_last_gasp_time[peer] < 1000) {
+                if (now - m_last_gasp_time[peer] < 60000) {
                     payload = m_last_gasp_payload[peer];
                     log("INFO: Last gasp.");
                 }
