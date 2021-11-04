@@ -14,11 +14,11 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool repository_track::create_user_state_db(const aux::bytes &chain_id) {
+    bool repository_track::create_peer_db(const aux::bytes &chain_id) {
         return false;
     }
 
-    bool repository_track::delete_user_state_db(const aux::bytes &chain_id) {
+    bool repository_track::delete_peer_db(const aux::bytes &chain_id) {
         return false;
     }
 
@@ -26,7 +26,51 @@ namespace libTAU::blockchain {
         return m_repository->get_all_peers(chain_id);
     }
 
-    bool repository_track::delete_peer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+    dht::public_key repository_track::get_peer_randomly(const aux::bytes &chain_id) {
+        return m_repository->get_peer_randomly(chain_id);
+    }
+
+    bool repository_track::delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        return false;
+    }
+
+    //    account repository_track::get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) {
+//        return m_repository->get_account_from_user_db(chain_id, pubKey);
+//    }
+
+//    bool repository_track::update_user_state_db(const block &b) {
+//        update_user_state_db(b.chain_id(), b.miner());
+//
+//        auto tx = b.tx();
+//        if (!tx.empty()) {
+//            update_user_state_db(b.chain_id(), tx.sender());
+//            update_user_state_db(b.chain_id(), tx.receiver());
+//        }
+//
+//        return true;
+//    }
+
+    bool repository_track::add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        return m_repository->add_peer_in_peer_db(chain_id, pubKey);
+    }
+
+    bool repository_track::create_gossip_peer_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::delete_gossip_peer_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    std::set<dht::public_key> repository_track::get_all_gossip_peers(const aux::bytes &chain_id) {
+        return m_repository->get_all_gossip_peers(chain_id);
+    }
+
+    bool repository_track::delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        return false;
+    }
+
+    bool repository_track::add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         return false;
     }
 
@@ -424,26 +468,6 @@ namespace libTAU::blockchain {
 
     void repository_track::rollback() {
         m_cache.clear();
-    }
-
-//    account repository_track::get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) {
-//        return m_repository->get_account_from_user_db(chain_id, pubKey);
-//    }
-
-//    bool repository_track::update_user_state_db(const block &b) {
-//        update_user_state_db(b.chain_id(), b.miner());
-//
-//        auto tx = b.tx();
-//        if (!tx.empty()) {
-//            update_user_state_db(b.chain_id(), tx.sender());
-//            update_user_state_db(b.chain_id(), tx.receiver());
-//        }
-//
-//        return true;
-//    }
-
-    bool repository_track::update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        return m_repository->update_user_state_db(chain_id, pubKey);
     }
 
     account_block_pointer repository_track::get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {

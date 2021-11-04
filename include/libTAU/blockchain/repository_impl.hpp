@@ -23,13 +23,31 @@ namespace libTAU::blockchain {
 
         bool init() override;
 
-        bool create_user_state_db(const aux::bytes &chain_id) override;
+        bool create_peer_db(const aux::bytes &chain_id) override;
 
-        bool delete_user_state_db(const aux::bytes &chain_id) override;
+        bool delete_peer_db(const aux::bytes &chain_id) override;
 
         std::set<dht::public_key> get_all_peers(const aux::bytes &chain_id) override;
 
-        bool delete_peer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+        dht::public_key get_peer_randomly(const aux::bytes &chain_id) override;
+
+        bool delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+
+        //        account get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) override;
+
+//        bool update_user_state_db(const block &b) override;
+
+        bool add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+
+        bool create_gossip_peer_db(const aux::bytes &chain_id) override;
+
+        bool delete_gossip_peer_db(const aux::bytes &chain_id) override;
+
+        std::set<dht::public_key> get_all_gossip_peers(const aux::bytes &chain_id) override;
+
+        bool delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+
+        bool add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
         bool is_account_exist(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
@@ -88,12 +106,6 @@ namespace libTAU::blockchain {
         bool commit() override;
 
         void rollback() override;
-
-//        account get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) override;
-
-//        bool update_user_state_db(const block &b) override;
-
-        bool update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
         account_block_pointer get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 

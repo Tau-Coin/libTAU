@@ -11,13 +11,10 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    bool repository::update_user_state_db(const block &b) {
-        update_user_state_db(b.chain_id(), b.miner());
-
-        auto tx = b.tx();
-        if (!tx.empty()) {
-            update_user_state_db(b.chain_id(), tx.sender());
-            update_user_state_db(b.chain_id(), tx.receiver());
+    bool repository::add_block_peer_in_peer_db(const block &b) {
+        auto peers = b.get_block_peers();
+        for (auto const& peer: peers) {
+            add_peer_in_peer_db(b.chain_id(), peer);
         }
 
         return true;

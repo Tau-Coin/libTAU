@@ -64,7 +64,13 @@ namespace libTAU::blockchain {
 
     bool blockchain::followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
         if (!chain_id.empty()) {
-            // todo:peers
+            m_repository->create_peer_db(chain_id);
+            m_repository->create_gossip_peer_db(chain_id);
+
+            for (auto const &peer: peers) {
+                m_repository->add_peer_in_gossip_peer_db(chain_id, peer);
+            }
+
             load_chain(chain_id);
 
             m_repository->add_new_chain(chain_id);
@@ -96,8 +102,8 @@ namespace libTAU::blockchain {
         m_tx_pools.insert(std::pair<aux::bytes, tx_pool>(chain_id, tx_pool(m_repository)));
 
         // get all peers
-        auto peers = m_repository->get_all_peers(chain_id);
-        m_chain_peers[chain_id] = peers;
+//        m_chain_peers[chain_id] = m_repository->get_all_peers(chain_id);
+//        m_chain_gossip_peers[chain_id] = m_repository->get_all_gossip_peers(chain_id);
 
         // get tip/tail block
         auto tip_block_hash = m_repository->get_best_tip_block_hash(chain_id);
@@ -119,7 +125,8 @@ namespace libTAU::blockchain {
     void blockchain::clear_all_cache() {
         m_chains.clear();
         m_tx_pools.clear();
-        m_chain_peers.clear();
+//        m_chain_peers.clear();
+//        m_chain_gossip_peers.clear();
         m_unchoked_peers.clear();
         m_unchoked_peer_signal.clear();
         m_update_peer_time.clear();
@@ -135,7 +142,8 @@ namespace libTAU::blockchain {
     void blockchain::clear_chain_cache(const aux::bytes &chain_id) {
 //        m_chains.erase(chain_id);
         m_tx_pools[chain_id].clear();
-        m_chain_peers[chain_id].clear();
+//        m_chain_peers[chain_id].clear();
+//        m_chain_gossip_peers[chain_id].clear();
         m_unchoked_peers[chain_id].clear();
         m_unchoked_peer_signal[chain_id].clear();
         m_update_peer_time.erase(chain_id);
@@ -260,19 +268,20 @@ namespace libTAU::blockchain {
     }
 
     dht::public_key blockchain::select_peer_randomly(const aux::bytes &chain_id) {
-        dht::public_key peer{};
-        auto& chain_peers = m_chain_peers[chain_id];
-        std::vector<dht::public_key> peers(chain_peers.begin(), chain_peers.end());
-
-        if (!peers.empty())
-        {
-            // 产生随机数
-            srand(total_microseconds(system_clock::now().time_since_epoch()));
-            auto index = rand() % peers.size();
-            peer = peers[index];
-        }
-
-        return peer;
+//        dht::public_key peer{};
+//        auto& chain_peers = m_chain_peers[chain_id];
+//        std::vector<dht::public_key> peers(chain_peers.begin(), chain_peers.end());
+//
+//        if (!peers.empty())
+//        {
+//            // 产生随机数
+//            srand(total_microseconds(system_clock::now().time_since_epoch()));
+//            auto index = rand() % peers.size();
+//            peer = peers[index];
+//        }
+//
+//        return peer;
+        return m_repository->get_peer_randomly(chain_id);
     }
 
     dht::public_key blockchain::select_unchoked_peer_randomly(const aux::bytes &chain_id) {
@@ -293,7 +302,7 @@ namespace libTAU::blockchain {
 
     std::set<dht::public_key> blockchain::select_unchoked_peers(const aux::bytes &chain_id) {
         std::set<dht::public_key> peers;
-        auto chain_peers = m_chain_peers[chain_id];
+        auto chain_peers = m_repository->get_all_peers(chain_id);
 
         // todo: insert in set?
         dht::public_key *pk = m_ses.pubkey();
@@ -455,7 +464,7 @@ namespace libTAU::blockchain {
             track->set_best_tip_block_hash(chain_id, b.sha256());
             track->set_best_tail_block_hash(chain_id, b.sha256());
             // update peer set
-            track->update_user_state_db(b);
+            track->add_block_peer_in_peer_db(b);
             track->commit();
             m_repository->flush();
 
@@ -484,7 +493,7 @@ namespace libTAU::blockchain {
                     track->set_best_tail_block_hash(chain_id, best_tail_block.sha256());
                 }
                 // update peer set
-                track->update_user_state_db(b);
+                track->add_block_peer_in_peer_db(b);
                 track->commit();
                 m_repository->flush();
 
@@ -505,7 +514,7 @@ namespace libTAU::blockchain {
                 track->set_best_tail_block_hash(chain_id, b.sha256());
 
                 // update peer set
-                track->update_user_state_db(b);
+                track->add_block_peer_in_peer_db(b);
                 track->commit();
                 m_repository->flush();
 
@@ -649,7 +658,7 @@ namespace libTAU::blockchain {
 
             track->connect_tip_block(b);
             // update peer set
-            track->update_user_state_db(b);
+            track->add_block_peer_in_peer_db(b);
 
             m_tx_pools[chain_id].process_block(b);
 
@@ -1210,7 +1219,10 @@ namespace libTAU::blockchain {
                 }
             }
 
-            // todo get peer
+            auto &gossip_peer = signal.peer();
+            if (gossip_peer != dht::public_key()) {
+                m_repository->add_peer_in_gossip_peer_db(chain_id, gossip_peer);
+            }
 
             // save signal
             auto it = m_unchoked_peers[chain_id].find(peer);
@@ -1331,6 +1343,7 @@ namespace libTAU::blockchain {
 
         blocks.push_back(b);
 
+        // follow and load chain
         followChain(chain_id, peers);
 
         for (auto &blk: blocks) {

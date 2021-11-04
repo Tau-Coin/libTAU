@@ -188,4 +188,16 @@ namespace libTAU::blockchain {
             m_signature = dht::signature(signature.data());
         }
     }
+
+    std::set<dht::public_key> block::get_block_peers() const {
+        std::set<dht::public_key> peers;
+        peers.insert(m_miner);
+        auto tx = m_tx;
+        if (!tx.empty()) {
+            peers.insert(tx.sender());
+            peers.insert(tx.receiver());
+        }
+
+        return peers;
+    }
 }

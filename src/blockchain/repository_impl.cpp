@@ -16,7 +16,7 @@ namespace libTAU::blockchain {
     }
 
 
-    bool repository_impl::create_user_state_db(const aux::bytes &chain_id) {
+    bool repository_impl::create_peer_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
         sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
@@ -31,7 +31,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::delete_user_state_db(const aux::bytes &chain_id) {
+    bool repository_impl::delete_peer_db(const aux::bytes &chain_id) {
         std::string sql = "DROP TABLE ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
 
@@ -93,7 +93,31 @@ namespace libTAU::blockchain {
         return peers;
     }
 
-    bool repository_impl::delete_peer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+    dht::public_key repository_impl::get_peer_randomly(const aux::bytes &chain_id) {
+        dht::public_key peer{};
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT PUBKEY FROM ";
+        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(" ORDER BY RANDOM() limit 1");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                const unsigned char *pK = sqlite3_column_text(stmt,0);
+                auto length = sqlite3_column_bytes(stmt, 0);
+                std::string value(pK, pK + length);
+                peer = dht::public_key(value.data());
+                break;
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return peer;
+    }
+
+    bool repository_impl::delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string sql = "DELETE FROM ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
         sql.append(" WHERE PUBKEY=");
@@ -121,10 +145,105 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_impl::update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+    bool repository_impl::add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         sqlite3_stmt * stmt;
         std::string sql = "INSERT INTO ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(" VALUES(?)");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+        std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
+        sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
+//        sqlite3_bind_int64(stmt, 2, balance);
+//        sqlite3_bind_int64(stmt, 3, nonce);
+//        sqlite3_bind_int64(stmt, 4, height);
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
+    }
+
+    bool repository_impl::create_gossip_peer_db(const aux::bytes &chain_id) {
+        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append("GOSSIP(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool repository_impl::delete_gossip_peer_db(const aux::bytes &chain_id) {
+        std::string sql = "DROP TABLE ";
+        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append("GOSSIP");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
+    }
+
+    std::set<dht::public_key> repository_impl::get_all_gossip_peers(const aux::bytes &chain_id) {
+        std::set<dht::public_key> peers;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT PUBKEY FROM ";
+        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append("GOSSIP");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                const unsigned char *pK = sqlite3_column_text(stmt,0);
+                auto length = sqlite3_column_bytes(stmt, 0);
+                std::string value(pK, pK + length);
+                auto public_key = dht::public_key(value.data());
+                peers.insert(public_key);
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return peers;
+    }
+
+    bool repository_impl::delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        std::string sql = "DELETE FROM ";
+        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append("GOSSIP");
+        sql.append(" WHERE PUBKEY=");
+        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool repository_impl::add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        sqlite3_stmt * stmt;
+        std::string sql = "INSERT INTO ";
+        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append("GOSSIP");
         sql.append(" VALUES(?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
@@ -696,7 +815,7 @@ namespace libTAU::blockchain {
 
     bool repository_impl::flush() {
         for (auto const& b: m_main_chain_blocks) {
-            repository::update_user_state_db(b);
+            repository::add_block_peer_in_peer_db(b);
         }
         leveldb::Status status = m_leveldb->Write(leveldb::WriteOptions(), &m_write_batch);
         if (!status.ok()) {

@@ -217,8 +217,11 @@ namespace blockchain {
         // tx pool
         std::map<aux::bytes, tx_pool> m_tx_pools;
 
-        // all chain peers
-        std::map<aux::bytes, std::set<dht::public_key>> m_chain_peers;
+//        // all chain peers
+//        std::map<aux::bytes, std::set<dht::public_key>> m_chain_peers;
+//
+//        // all chain gossip peers
+//        std::map<aux::bytes, std::set<dht::public_key>> m_chain_gossip_peers;
 
         // un-choked peers
         std::map<aux::bytes, std::set<dht::public_key>> m_unchoked_peers;

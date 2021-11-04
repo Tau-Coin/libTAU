@@ -92,7 +92,9 @@ namespace blockchain {
 
         void sign(dht::public_key const& pk, dht::secret_key const& sk);
 
-        bool verify_signature() const ;
+        bool verify_signature() const;
+
+        std::set<dht::public_key> get_block_peers() const;
 
     private:
 

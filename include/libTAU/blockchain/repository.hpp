@@ -36,13 +36,31 @@ namespace libTAU::blockchain {
         // init db
         virtual bool init() = 0;
 
-        virtual bool create_user_state_db(const aux::bytes &chain_id) = 0;
+        virtual bool create_peer_db(const aux::bytes &chain_id) = 0;
 
-        virtual bool delete_user_state_db(const aux::bytes &chain_id) = 0;
+        virtual bool delete_peer_db(const aux::bytes &chain_id) = 0;
 
         virtual std::set<dht::public_key> get_all_peers(const aux::bytes &chain_id) = 0;
 
-        virtual bool delete_peer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        virtual dht::public_key get_peer_randomly(const aux::bytes &chain_id) = 0;
+
+        virtual bool delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
+        //        virtual account get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) = 0;
+
+        bool add_block_peer_in_peer_db(const block &b);
+
+        virtual bool add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
+        virtual bool create_gossip_peer_db(const aux::bytes &chain_id) = 0;
+
+        virtual bool delete_gossip_peer_db(const aux::bytes &chain_id) = 0;
+
+        virtual std::set<dht::public_key> get_all_gossip_peers(const aux::bytes &chain_id) = 0;
+
+        virtual bool delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
+        virtual bool add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
         /**
          * check if account exist
@@ -122,12 +140,6 @@ namespace libTAU::blockchain {
          * to a snapshot of the repository
          */
         virtual void rollback() = 0;
-
-//        virtual account get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) = 0;
-
-        bool update_user_state_db(const block &b);
-
-        virtual bool update_user_state_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
         virtual account_block_pointer get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 

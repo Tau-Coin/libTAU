@@ -26,7 +26,11 @@ namespace dht {
 		bool operator==(public_key const& rhs) const
 		{ return bytes == rhs.bytes; }
 
-        bool operator<(const public_key &rhs) const {
+		bool operator!=(const public_key &rhs) const {
+			return !(rhs == *this);
+		}
+
+		bool operator<(const public_key &rhs) const {
             return bytes < rhs.bytes;
         }
 
