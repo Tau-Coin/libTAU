@@ -58,6 +58,8 @@ namespace libTAU::blockchain {
 
         virtual std::set<dht::public_key> get_all_gossip_peers(const aux::bytes &chain_id) = 0;
 
+        virtual dht::public_key get_gossip_peer_randomly(const aux::bytes &chain_id) = 0;
+
         virtual bool delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
         virtual bool add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;

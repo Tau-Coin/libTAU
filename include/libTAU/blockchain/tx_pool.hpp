@@ -46,9 +46,9 @@ namespace libTAU::blockchain {
 
         void delete_transaction_by_account(const dht::public_key& pubKey);
 
-        bool process_block(const block& b);
+        bool process_block_peers(const block& b);
 
-        dht::public_key select_active_sender_randomly();
+        std::set<dht::public_key> get_active_peers();
 
         void clear();
 
@@ -64,6 +64,8 @@ namespace libTAU::blockchain {
         std::set<tx_entry> m_ordered_txs;
 
         std::map<dht::public_key, sha256_hash> m_account_tx;
+
+        std::queue<dht::public_key> m_active_peers;
     };
 }
 

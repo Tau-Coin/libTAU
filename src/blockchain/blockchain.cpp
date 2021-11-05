@@ -200,12 +200,25 @@ namespace libTAU::blockchain {
 
                 try_to_refresh_unchoked_peers(chain_id);
 
+                // select 4 unchoked peers
                 auto& unchoked_peers = m_unchoked_peers[chain_id];
                 std::vector<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
-                auto p = select_peer_randomly(chain_id);
+                // select one peer from gossip db
+//                auto p = select_peer_randomly(chain_id);
+                auto p = m_repository->get_gossip_peer_randomly(chain_id);
                 if (!(p == dht::public_key())) {
                     peers.push_back(p);
                 }
+                // select one peer from tx pool
+                std::set<dht::public_key> tx_active_peers = m_tx_pools[chain_id].get_active_peers();
+                std::vector<dht::public_key> active_peers(tx_active_peers.begin(), tx_active_peers.end());
+                if (!active_peers.empty()) {
+                    // 产生随机数
+                    srand(total_microseconds(system_clock::now().time_since_epoch()));
+                    auto index = rand() % peers.size();
+                    peers.push_back(active_peers[index]);
+                }
+
                 if (!peers.empty())
                 {
                     // 产生随机数
@@ -304,40 +317,73 @@ namespace libTAU::blockchain {
         std::set<dht::public_key> peers;
         auto chain_peers = m_repository->get_all_peers(chain_id);
 
-        // todo: insert in set?
         dht::public_key *pk = m_ses.pubkey();
         chain_peers.insert(*pk);
         if (chain_peers.size() > 1) {
-            auto r_iterator = chain_peers.find(*pk);
-            auto l_iterator = r_iterator;
-            std::int64_t now = total_seconds(system_clock::now().time_since_epoch());
-            auto offset = (now / DEFAULT_BLOCK_TIME) % chain_peers.size();
-            for (auto i = 0; i < offset; i++) {
-                r_iterator++;
-                if (r_iterator == chain_peers.end()) {
-                    r_iterator = chain_peers.begin();
-                }
+            std::map<sha256_hash, dht::public_key> hash_peer_map;
+            std::set<sha256_hash> hashes;
+            std::int64_t now = total_seconds(system_clock::now().time_since_epoch()) / DEFAULT_BLOCK_TIME;
+            for (auto const& peer: chain_peers) {
+                std::string spk(peer.bytes.begin(), peer.bytes.end());
+                std::stringstream data;
+                data << spk << now;
+                sha256_hash hash = dht::item_target_id(data.str());
 
-                if (l_iterator == chain_peers.begin()) {
-                    l_iterator = chain_peers.end();
+                hashes.insert(hash);
+                hash_peer_map[hash] = peer;
+            }
+
+            std::string spk(pk->bytes.begin(), pk->bytes.end());
+            std::stringstream data;
+            data << spk << now;
+            sha256_hash my_hash = dht::item_target_id(data.str());
+
+            auto r_iterator = hashes.find(my_hash);
+            auto l_iterator = r_iterator;
+            for (auto i = 0; i < 2; i++) {
+                r_iterator++;
+                if (r_iterator == hashes.end()) {
+                    r_iterator = hashes.begin();
+                }
+                peers.insert(hash_peer_map[*r_iterator]);
+
+                if (l_iterator == hashes.begin()) {
+                    l_iterator = hashes.end();
                 }
                 l_iterator--;
+                peers.insert(hash_peer_map[*l_iterator]);
             }
 
-            peers.insert(*r_iterator);
-            peers.insert(*l_iterator);
-            r_iterator++;
-            if (r_iterator == chain_peers.end()) {
-                r_iterator = chain_peers.begin();
-            }
-
-            if (l_iterator == chain_peers.begin()) {
-                l_iterator = chain_peers.end();
-            }
-            l_iterator--;
-
-            peers.insert(*r_iterator);
-            peers.insert(*l_iterator);
+//            auto r_iterator = chain_peers.find(*pk);
+//            auto l_iterator = r_iterator;
+//            std::int64_t now = total_seconds(system_clock::now().time_since_epoch());
+//            auto offset = (now / DEFAULT_BLOCK_TIME) % chain_peers.size();
+//            for (auto i = 0; i < offset; i++) {
+//                r_iterator++;
+//                if (r_iterator == chain_peers.end()) {
+//                    r_iterator = chain_peers.begin();
+//                }
+//
+//                if (l_iterator == chain_peers.begin()) {
+//                    l_iterator = chain_peers.end();
+//                }
+//                l_iterator--;
+//            }
+//
+//            peers.insert(*r_iterator);
+//            peers.insert(*l_iterator);
+//            r_iterator++;
+//            if (r_iterator == chain_peers.end()) {
+//                r_iterator = chain_peers.begin();
+//            }
+//
+//            if (l_iterator == chain_peers.begin()) {
+//                l_iterator = chain_peers.end();
+//            }
+//            l_iterator--;
+//
+//            peers.insert(*r_iterator);
+//            peers.insert(*l_iterator);
         }
 
         return peers;
@@ -468,7 +514,7 @@ namespace libTAU::blockchain {
             track->commit();
             m_repository->flush();
 
-            m_tx_pools[chain_id].process_block(b);
+            m_tx_pools[chain_id].process_block_peers(b);
 
             m_best_tip_blocks[chain_id] = b;
             m_best_tail_blocks[chain_id] = b;
@@ -497,7 +543,7 @@ namespace libTAU::blockchain {
                 track->commit();
                 m_repository->flush();
 
-                m_tx_pools[chain_id].process_block(b);
+                m_tx_pools[chain_id].process_block_peers(b);
 
                 m_best_tip_blocks[chain_id] = b;
                 if (!best_tail_block.empty()) {
@@ -641,7 +687,7 @@ namespace libTAU::blockchain {
                 }
             }
 
-            m_tx_pools[chain_id].process_block(b);
+            m_tx_pools[chain_id].process_block_peers(b);
 
             m_ses.alerts().emplace_alert<blockchain_rollback_block_alert>(b);
         }
@@ -660,7 +706,7 @@ namespace libTAU::blockchain {
             // update peer set
             track->add_block_peer_in_peer_db(b);
 
-            m_tx_pools[chain_id].process_block(b);
+            m_tx_pools[chain_id].process_block_peers(b);
 
             m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
         }

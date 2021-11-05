@@ -66,6 +66,10 @@ namespace libTAU::blockchain {
         return m_repository->get_all_gossip_peers(chain_id);
     }
 
+    dht::public_key repository_track::get_gossip_peer_randomly(const aux::bytes &chain_id) {
+        return m_repository->get_gossip_peer_randomly(chain_id);
+    }
+
     bool repository_track::delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         return false;
     }

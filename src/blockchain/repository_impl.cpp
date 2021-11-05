@@ -222,6 +222,30 @@ namespace libTAU::blockchain {
         return peers;
     }
 
+    dht::public_key repository_impl::get_gossip_peer_randomly(const aux::bytes &chain_id) {
+        dht::public_key peer{};
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT PUBKEY FROM ";
+        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append("GOSSIP ORDER BY RANDOM() limit 1");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                const unsigned char *pK = sqlite3_column_text(stmt,0);
+                auto length = sqlite3_column_bytes(stmt, 0);
+                std::string value(pK, pK + length);
+                peer = dht::public_key(value.data());
+                break;
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return peer;
+    }
+
     bool repository_impl::delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string sql = "DELETE FROM ";
         sql.append(std::string(chain_id.begin(), chain_id.end()));
