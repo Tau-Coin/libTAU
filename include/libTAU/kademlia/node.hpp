@@ -174,6 +174,8 @@ public:
 
 	int invoke_limit() const;
 
+	int bootstrap_interval() const;
+
 	void add_traversal_algorithm(traversal_algorithm* a)
 	{
 		std::lock_guard<std::mutex> l(m_mutex);
@@ -233,7 +235,7 @@ private:
 	bool incoming_request(msg const&, entry&, node_id *peer);
 
 	void write_nodes_entries(sha256_hash const& info_hash
-		, bdecode_node const& want, entry& r);
+		, bdecode_node const& want, entry& r, int min_distance_exp = -1);
 
 	node_id m_id;
 

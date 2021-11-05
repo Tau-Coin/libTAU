@@ -325,7 +325,8 @@ void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 	// When one endpoint aren't accepted by routing table, give it
 	// invoking chance if its distance is enough small.
 	if (!m_direct_invoking && (existing == nullptr
-			|| (existing != nullptr && existing->allow_invoke())))
+				|| (existing != nullptr && existing->allow_invoke()))
+		&& distance_exp(m_target, id) <= allow_distance())
 	{
 		add_entry(id, addr, {});
 	}
@@ -493,6 +494,15 @@ void traversal_algorithm::done()
 	m_sorted_results = 0;
 	m_invoke_count = 0;
 	m_invoke_failed = 0;
+}
+
+int traversal_algorithm::allow_distance() const
+{
+	int index = int(m_results.size()) >= m_invoke_limit ?
+			m_invoke_limit - 1 : int(m_results.size()) - 1;
+	observer* o = (m_results.begin() + index)->get();
+
+	return distance_exp(m_target, o->id());
 }
 
 bool traversal_algorithm::add_requests()

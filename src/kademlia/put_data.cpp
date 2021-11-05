@@ -15,6 +15,7 @@ see LICENSE file.
 #include <libTAU/kademlia/dht_observer.hpp>
 #include <libTAU/kademlia/node.hpp>
 #include <libTAU/aux_/io_bytes.hpp>
+#include <libTAU/aux_/random.hpp>
 #include <libTAU/performance_counters.hpp>
 
 namespace libTAU { namespace dht {
@@ -64,8 +65,14 @@ void put_data::start()
 		std::vector<node_entry> const nodes = m_node.m_table.find_node(
 			target(), routing_table::include_pinged);
 
-		for (auto const& n : nodes)
+		// select a random node_entry
+		if (nodes.size() > 0)
 		{
+			std::uint32_t const range = nodes.size() >= invoke_limit() ?
+					invoke_limit() - 1 : nodes.size() - 1;
+			std::uint32_t const r = aux::random(range);
+			auto const& n = nodes[r];
+
 			add_entry(n.id, n.ep(), observer::flag_initial);
 		}
 	}
@@ -101,6 +108,7 @@ bool put_data::invoke(observer_ptr o)
 		a["k"] = m_data.pk().bytes;
 		a["ts"] = m_data.ts().value;
 		a["sig"] = m_data.sig().bytes;
+		a["distance"] = traversal_algorithm::allow_distance();
 		if (!m_data.salt().empty())
 		{
 			a["salt"] = m_data.salt();

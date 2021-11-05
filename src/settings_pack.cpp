@@ -342,6 +342,7 @@ namespace libTAU {
 		SET(dht_max_peers_reply, 100, nullptr),
 		SET(dht_search_branching, 1, nullptr),
 		SET(dht_invoke_limit, 3, nullptr),
+		SET(dht_bootstrap_interval, 30, nullptr),
 		SET(dht_max_fail_count, 20, nullptr),
 		SET(dht_max_torrents, 2000, nullptr),
 		SET(dht_max_dht_items, 700, nullptr),

@@ -102,6 +102,11 @@ protected:
 	int num_responses() const { return m_responses; }
 	int num_timeouts() const { return m_timeouts; }
 
+	// the min distance of the endpoint which is allowed into m_results.
+	int allow_distance() const;
+
+	int invoke_limit() const { return m_invoke_limit; }
+
 	node& m_node;
 
 	// this vector is sorted by node-id distance from our node id. Closer nodes

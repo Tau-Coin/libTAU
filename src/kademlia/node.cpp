@@ -103,6 +103,8 @@ int node::branch_factor() const { return m_settings.get_int(settings_pack::dht_s
 
 int node::invoke_limit() const { return m_settings.get_int(settings_pack::dht_invoke_limit); }
 
+int node::bootstrap_interval() const { return m_settings.get_int(settings_pack::dht_bootstrap_interval); }
+
 bool node::verify_token(string_view token, sha256_hash const& info_hash
 	, udp::endpoint const& addr) const
 {
@@ -600,7 +602,7 @@ void node::tick()
 	// if m_table.depth() < 4, means routing_table doesn't
 	// have enough nodes.
 	time_point const now = aux::time_now();
-	if (m_last_self_refresh + seconds(30) < now && m_table.depth() < 4)
+	if (m_last_self_refresh + seconds(bootstrap_interval()) < now && m_table.depth() < 4)
 	{
 		node_id target = m_id;
 		make_id_secret(target);
@@ -870,13 +872,14 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 			{"cas", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"salt", bdecode_node::string_t, 0, key_desc_t::optional},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
+			{"distance", bdecode_node::int_t, 0, key_desc_t::optional},
 		};
 
 		// attempt to parse the message
 		// also reject the message if it has any non-fatal encoding errors
 		// because put messages contain a signed value they must have correct bencoding
 		// otherwise the value will not round-trip without breaking the signature
-		bdecode_node msg_keys[8];
+		bdecode_node msg_keys[9];
 		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string)
 			|| arg_ent.has_soft_error(error_string))
 		{
@@ -935,6 +938,8 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 			incoming_error(e, "invalid token");
 			return need_response;
 		}
+
+		int min_distance_exp = -1;
 
 		if (!mutable_put)
 		{
@@ -996,8 +1001,12 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 					, m.addr.address());
 			}
 
+			if (msg_keys[8])
+			{
+				min_distance_exp = msg_keys[8].int_value();
+			}
 			// for mutable item, return 'nodes' field
-			write_nodes_entries(target, msg_keys[7], reply);
+			write_nodes_entries(target, msg_keys[7], reply, min_distance_exp);
 		}
 
 		if (!read_only)
@@ -1012,12 +1021,13 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 			{"target", bdecode_node::string_t, 32, 0},
 			{"mutable", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
+			{"distance", bdecode_node::int_t, 0, key_desc_t::optional},
 		};
 
 		// k is not used for now
 
 		// attempt to parse the message
-		bdecode_node msg_keys[4];
+		bdecode_node msg_keys[5];
 		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string))
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_get);
@@ -1036,9 +1046,14 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 
 		// always return nodes as well as peers for mutable item
 		bool const get_mutable = msg_keys[2] && msg_keys[2].int_value() != 0;
+		int min_distance_exp = -1;
 		if (get_mutable)
 		{
-			write_nodes_entries(target, msg_keys[3], reply);
+			if (msg_keys[4])
+			{
+				min_distance_exp = msg_keys[4].int_value();
+			}
+			write_nodes_entries(target, msg_keys[3], reply, min_distance_exp);
 		}
 
 		// if the get has a timestamp it must be for a mutable item
@@ -1084,13 +1099,23 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 
 // TODO: limit number of entries in the result
 void node::write_nodes_entries(sha256_hash const& info_hash
-	, bdecode_node const& want, entry& r)
+	, bdecode_node const& want, entry& r, int min_distance_exp)
 {
 	// if no wants entry was specified, include a nodes
 	// entry based on the protocol the request came in with
 	if (want.type() != bdecode_node::list_t)
 	{
-		std::vector<node_entry> const n = m_table.find_node(info_hash, {});
+		std::vector<node_entry> n = m_table.find_node(info_hash, {});
+		if (min_distance_exp > 0)
+		{
+			auto it = std::find_if(n.begin(), n.end()
+				, [&] (node_entry const& ne)
+				  { return distance_exp(info_hash, ne.id) > min_distance_exp; });
+			if (it != n.end())
+			{
+				n.erase(it, n.end());
+			}
+		}
 		r[protocol_nodes_key()] = write_nodes_entry(n);
 		return;
 	}
@@ -1107,7 +1132,17 @@ void node::write_nodes_entries(sha256_hash const& info_hash
 			continue;
 		node* wanted_node = m_get_foreign_node(info_hash, wanted.string_value());
 		if (!wanted_node) continue;
-		std::vector<node_entry> const n = wanted_node->m_table.find_node(info_hash, {});
+		std::vector<node_entry> n = wanted_node->m_table.find_node(info_hash, {});
+		if (min_distance_exp > 0)
+		{
+			auto it = std::find_if(n.begin(), n.end()
+				, [&] (node_entry const& ne)
+				  { return distance_exp(info_hash, ne.id) > min_distance_exp; });
+			if (it != n.end())
+			{
+				n.erase(it, n.end());
+			}
+		}
 		r[wanted_node->protocol_nodes_key()] = write_nodes_entry(n);
 	}
 }

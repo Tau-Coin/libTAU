@@ -1881,6 +1881,9 @@ namespace aux {
 			// This parameter is called beta factor in libTAU implementation.
 			dht_invoke_limit,
 
+			// the time interval(seconds) of bootstrap
+			dht_bootstrap_interval,
+
 			// the maximum number of failed tries to contact a node before it is
 			// removed from the routing table. If there are known working nodes that
 			// are ready to replace a failing node, it will be replaced immediately,

@@ -14,6 +14,7 @@ see LICENSE file.
 
 #include <libTAU/config.hpp>
 #include <libTAU/bdecode.hpp>
+#include <libTAU/aux_/random.hpp>
 #include <libTAU/kademlia/get_item.hpp>
 #include <libTAU/kademlia/node.hpp>
 #include <libTAU/kademlia/dht_observer.hpp>
@@ -110,6 +111,30 @@ get_item::get_item(
 {
 }
 
+void get_item::start()
+{
+	// if the user didn't add seed-nodes manually, grab k (bucket size)
+	// nodes from routing table.
+	if (m_results.empty() && !m_direct_invoking)
+	{
+		std::vector<node_entry> const nodes = m_node.m_table.find_node(
+				target(), routing_table::include_pinged);
+
+		// select a random node_entry
+		if (nodes.size() > 0)
+		{
+			std::uint32_t const range = nodes.size() >= invoke_limit() ?
+					invoke_limit() - 1 : nodes.size() - 1;
+			std::uint32_t const r = aux::random(range);
+			auto const& n = nodes[r];
+
+			add_entry(n.id, n.ep(), observer::flag_initial);
+		}
+	}
+
+	traversal_algorithm::start();
+}
+
 char const* get_item::name() const { return "get"; }
 
 observer_ptr get_item::new_observer(udp::endpoint const& ep
@@ -133,6 +158,11 @@ bool get_item::invoke(observer_ptr o)
 	e["q"] = "get";
 	a["target"] = target().to_string();
 	a["mutable"] = m_immutable ? 0 : 1;
+
+	if (!m_immutable)
+	{
+		a["distance"] = traversal_algorithm::allow_distance();
+	}
 
 	m_node.stats_counters().inc_stats_counter(counters::dht_get_out);
 
