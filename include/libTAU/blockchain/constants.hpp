@@ -12,6 +12,7 @@ see LICENSE file.
 
 #include "libTAU/aux_/common.h"
 #include "libTAU/aux_/common_data.h"
+#include "libTAU/kademlia/types.hpp"
 
 namespace libTAU::blockchain {
 
