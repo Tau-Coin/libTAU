@@ -127,9 +127,11 @@ namespace libTAU::blockchain {
          */
         virtual repository* start_tracking() = 0;
 
-        virtual void update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &main_chain_blocks) = 0;
+        virtual void
+        update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,
+                     const std::vector<block> &discarded_blocks) = 0;
 
-        virtual bool flush() = 0;
+        virtual bool flush(const aux::bytes &chain_id) = 0;
 
         /**
          * Store all the temporary changes made

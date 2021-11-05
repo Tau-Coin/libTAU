@@ -99,9 +99,10 @@ namespace libTAU::blockchain {
 
         repository *start_tracking() override;
 
-        void update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &main_chain_blocks) override;
+        void update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,
+                          const std::vector<block> &discarded_blocks) override;
 
-        bool flush() override;
+        bool flush(const aux::bytes &chain_id) override;
 
         bool commit() override;
 
@@ -147,7 +148,11 @@ namespace libTAU::blockchain {
 
         std::map<std::string, std::string> m_cache;
 
-        std::vector<block> m_main_chain_blocks;
+        // main chain connected blocks
+        std::vector<block> m_connected_blocks;
+
+        // main chain discarded blocks
+        std::vector<block> m_discarded_blocks;
     };
 }
 

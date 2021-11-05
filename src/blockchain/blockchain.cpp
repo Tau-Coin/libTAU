@@ -512,7 +512,7 @@ namespace libTAU::blockchain {
             // update peer set
             track->add_block_peer_in_peer_db(b);
             track->commit();
-            m_repository->flush();
+            m_repository->flush(chain_id);
 
             m_tx_pools[chain_id].process_block_peers(b);
 
@@ -541,7 +541,7 @@ namespace libTAU::blockchain {
                 // update peer set
                 track->add_block_peer_in_peer_db(b);
                 track->commit();
-                m_repository->flush();
+                m_repository->flush(chain_id);
 
                 m_tx_pools[chain_id].process_block_peers(b);
 
@@ -562,7 +562,7 @@ namespace libTAU::blockchain {
                 // update peer set
                 track->add_block_peer_in_peer_db(b);
                 track->commit();
-                m_repository->flush();
+                m_repository->flush(chain_id);
 
                 m_best_tail_blocks[chain_id] = b;
 
@@ -722,7 +722,7 @@ namespace libTAU::blockchain {
         track->set_best_tip_block_hash(chain_id, target.sha256());
 
         track->commit();
-        m_repository->flush();
+        m_repository->flush(chain_id);
 
         m_best_tip_blocks[chain_id] = target;
         m_best_tail_blocks[chain_id] = best_tail_block;

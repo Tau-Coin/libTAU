@@ -576,7 +576,7 @@ namespace libTAU::blockchain {
 //    }
 
     bool repository_impl::connect_tip_block(block &b) {
-        m_main_chain_blocks.push_back(b);
+        m_connected_blocks.push_back(b);
 
         // save block
         if (!save_block(b))
@@ -620,7 +620,7 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::connect_tail_block(block &b) {
-        m_main_chain_blocks.push_back(b);
+        m_connected_blocks.push_back(b);
 
         // save block
         if (!save_block(b))
@@ -668,6 +668,8 @@ namespace libTAU::blockchain {
         if (b.empty())
             return false;
 
+        m_discarded_blocks.push_back(b);
+
         auto& chain_id = b.chain_id();
         auto stateLinker = get_state_linker(b.sha256());
         for (auto const& item: stateLinker.get_previous_change_block_hash_map()) {
@@ -699,6 +701,8 @@ namespace libTAU::blockchain {
     bool repository_impl::expire_block(block &b) {
         if (b.empty())
             return false;
+
+        m_discarded_blocks.push_back(b);
 
         auto& chain_id = b.chain_id();
         auto stateLinker = get_state_linker(b.sha256());
@@ -825,7 +829,9 @@ namespace libTAU::blockchain {
         return new repository_track(this);
     }
 
-    void repository_impl::update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &main_chain_blocks) {
+    void repository_impl::update_batch(const std::map<std::string, std::string> &cache,
+                                       const std::vector<block> &connected_blocks,
+                                       const std::vector<block> &discarded_blocks) {
         for (auto const& item: cache) {
             if (item.second.empty()) {
                 m_write_batch.Delete(item.first);
@@ -834,20 +840,49 @@ namespace libTAU::blockchain {
             }
         }
 
-        m_main_chain_blocks.insert(m_main_chain_blocks.end(), main_chain_blocks.begin(), main_chain_blocks.end());
+        m_connected_blocks.insert(m_connected_blocks.end(), connected_blocks.begin(), connected_blocks.end());
+        m_discarded_blocks.insert(m_discarded_blocks.end(), discarded_blocks.begin(), discarded_blocks.end());
     }
 
-    bool repository_impl::flush() {
-        for (auto const& b: m_main_chain_blocks) {
-            repository::add_block_peer_in_peer_db(b);
-        }
+    bool repository_impl::flush(const aux::bytes &chain_id) {
+        // flush into leveldb
         leveldb::Status status = m_leveldb->Write(leveldb::WriteOptions(), &m_write_batch);
         if (!status.ok()) {
             return false;
         }
 
         m_write_batch.Clear();
-        m_main_chain_blocks.clear();
+
+        // flush into sqlite
+        std::set<dht::public_key> new_peers;
+        for (auto const& b: m_connected_blocks) {
+            new_peers.merge(b.get_block_peers());
+        }
+        for (auto const &peer: new_peers) {
+            add_peer_in_peer_db(chain_id, peer);
+        }
+        m_connected_blocks.clear();
+
+        // get current tail block number
+        if (!m_discarded_blocks.empty()) {
+            auto best_tail_block_hash = get_best_tail_block_hash(chain_id);
+            auto tail_block = get_block_by_hash(best_tail_block_hash);
+            std::int64_t tail_number = tail_block.block_number();
+
+            std::set<dht::public_key> validate_peers;
+            for (auto const &b: m_discarded_blocks) {
+                validate_peers.merge(b.get_block_peers());
+            }
+            for (auto const &peer: validate_peers) {
+                auto act = get_account(chain_id, peer);
+                if (act.empty() || act.block_number() < tail_number) {
+                    // remove outdated peer
+                    delete_peer_in_peer_db(chain_id, peer);
+                }
+            }
+
+            m_discarded_blocks.clear();
+        }
 
         return true;
     }

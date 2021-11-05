@@ -228,7 +228,7 @@ namespace libTAU::blockchain {
 //    }
 
     bool repository_track::connect_tip_block(block &b) {
-        m_main_chain_blocks.push_back(b);
+        m_connected_blocks.push_back(b);
 
         // save block
         if (!save_block(b))
@@ -272,7 +272,7 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::connect_tail_block(block &b) {
-        m_main_chain_blocks.push_back(b);
+        m_connected_blocks.push_back(b);
 
         // save block
         if (!save_block(b))
@@ -319,6 +319,8 @@ namespace libTAU::blockchain {
         if (b.empty())
             return false;
 
+        m_discarded_blocks.push_back(b);
+
         auto& chain_id = b.chain_id();
         auto stateLinker = get_state_linker(b.sha256());
         for (auto const& item: stateLinker.get_previous_change_block_hash_map()) {
@@ -350,6 +352,8 @@ namespace libTAU::blockchain {
     bool repository_track::expire_block(block &b) {
         if (b.empty())
             return false;
+
+        m_discarded_blocks.push_back(b);
 
         auto& chain_id = b.chain_id();
         auto stateLinker = get_state_linker(b.sha256());
@@ -452,26 +456,32 @@ namespace libTAU::blockchain {
         return new repository_track(this);
     }
 
-    void repository_track::update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &main_chain_blocks) {
+    void repository_track::update_batch(const std::map<std::string, std::string> &cache,
+                                        const std::vector<block> &connected_blocks,
+                                        const std::vector<block> &discarded_blocks) {
         m_cache.insert(cache.begin(), cache.end());
-        m_main_chain_blocks.insert(m_main_chain_blocks.end(), main_chain_blocks.begin(), main_chain_blocks.end());
+        m_connected_blocks.insert(m_connected_blocks.end(), connected_blocks.begin(), connected_blocks.end());
+        m_discarded_blocks.insert(m_discarded_blocks.end(), discarded_blocks.begin(), discarded_blocks.end());
     }
 
     // unsupported
-    bool repository_track::flush() {
+    bool repository_track::flush(const aux::bytes &chain_id) {
         return false;
     }
 
     bool repository_track::commit() {
-        m_repository->update_batch(m_cache, m_main_chain_blocks);
+        m_repository->update_batch(m_cache, m_connected_blocks, m_discarded_blocks);
         m_cache.clear();
-        m_main_chain_blocks.clear();
+        m_connected_blocks.clear();
+        m_discarded_blocks.clear();
 
         return true;
     }
 
     void repository_track::rollback() {
         m_cache.clear();
+        m_connected_blocks.clear();
+        m_discarded_blocks.clear();
     }
 
     account_block_pointer repository_track::get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
