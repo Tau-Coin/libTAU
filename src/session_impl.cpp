@@ -1171,6 +1171,14 @@ namespace {
 			try
 #endif
 		{
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("ready to setup_listener(%s) device: %s"
+					, print_endpoint(ep.addr, ep.port).c_str()
+					, ep.device.c_str());
+			}
+#endif // TORRENT_DISABLE_LOGGING
 			if(ep.addr.is_v4()) {
 				std::shared_ptr<listen_socket_t> s = setup_listener(ep, ec);
 
@@ -1229,22 +1237,7 @@ namespace {
 			for (auto const& l : new_sockets)
 			{
 				error_code err;
-				if (l->sock)
-				{
-					tcp::endpoint const tcp_ep = l->sock->local_endpoint(err);
-					if (!err)
-					{
-						socket_type_t const socket_type
-							= l->ssl == transport::ssl
-							? socket_type_t::tcp_ssl
-							: socket_type_t::tcp;
-
-						m_alerts.emplace_alert<listen_succeeded_alert>(
-							tcp_ep, socket_type);
-					}
-				}
-
-				if (l->udp_sock)
+				if (l->udp_sock && !(l->flags & listen_socket_t::local_network))
 				{
 					udp::endpoint const udp_ep = l->udp_sock->sock.local_endpoint(err);
 					if (!err && l->udp_sock->sock.is_open())
@@ -2344,14 +2337,14 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
+		/*
         std::string home_dir = std::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+		*/
 
-		/*
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		*/
 
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
