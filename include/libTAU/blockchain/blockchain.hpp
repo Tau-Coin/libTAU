@@ -96,6 +96,8 @@ namespace blockchain {
         // initialize member variables
         bool init();
 
+        bool create_TAU_chain();
+
         // clear all cache
         void clear_all_cache();
 

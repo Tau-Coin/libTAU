@@ -638,8 +638,8 @@ namespace libTAU {
 
                         std::vector<dht::node_entry> entries;
                         m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-                        while (entries.size() > 2) {
-                            entries.pop_back();
+                        if (entries.size() > 2) {
+                            entries.resize(2);
                         }
                         log("INFO: Put immutable message target[%s], entries[%zu]",
                             aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());

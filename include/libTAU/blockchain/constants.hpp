@@ -15,6 +15,14 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
+    const aux::bytes TAU_CHAIN_ID = aux::asBytes("TAUCOIN");
+    const std::int64_t TAU_CHAIN_GENESIS_TIMESTAMP = 1636105286297;
+    const std::vector<dht::public_key> TAU_CHAIN_GENESIS_ACCOUNT = {
+            dht::public_key(aux::fromHex("63ec42130442c91e23d56dc73708e06eb164883ab74c9813764c3fd0e2042dc4").data()),
+            dht::public_key(aux::fromHex("809df518ee450ded0a659aeb4bc5bec636e2cff012fc88d343b7419af974bb81").data()),
+            dht::public_key(aux::fromHex("2a62868271f3d3455e4b1ea0c1f96263732d0347349f9daa3247107ce1b2b2f9").data()),
+            dht::public_key(aux::fromHex("3e87c35d2079858d88dcb113edadaf1b339fcd4f74c539faa9a9bd59e787f124").data())};
+
     // chain id
     constexpr int CHAIN_ID_MAX_LENGTH = 32;
     constexpr int CHAIN_ID_HASH_MAX_LENGTH = 8;

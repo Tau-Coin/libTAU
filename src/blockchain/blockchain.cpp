@@ -21,8 +21,17 @@ namespace libTAU::blockchain {
         m_chains.insert(m_chains.end(), chains.begin(), chains.end());
 
         // load all chains
-        for(auto const& chain_id: m_chains) {
+        bool has_tau = false;
+        for (auto const& chain_id: m_chains) {
+            if (chain_id == TAU_CHAIN_ID) {
+                has_tau = true;
+            }
             load_chain(chain_id);
+        }
+
+        // create tau chain
+        if (!has_tau) {
+            create_TAU_chain();
         }
 
         return true;
@@ -990,8 +999,8 @@ namespace libTAU::blockchain {
 
             std::vector<dht::node_entry> entries;
             m_ses.dht()->find_live_nodes(best_tip_block.sha256(), entries);
-            while (entries.size() > 1) {
-                entries.pop_back();
+            if (entries.size() > 1) {
+                entries.resize(1);
             }
             log("INFO: Put immutable best tip block target[%s], entries[%zu]",
                 aux::toHex(best_tip_block.sha256().to_string()).c_str(), entries.size());
@@ -1007,8 +1016,8 @@ namespace libTAU::blockchain {
 
             std::vector<dht::node_entry> entries;
             m_ses.dht()->find_live_nodes(consensus_point_block.sha256(), entries);
-            while (entries.size() > 1) {
-                entries.pop_back();
+            if (entries.size() > 1) {
+                entries.resize(1);
             }
             log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
                 aux::toHex(consensus_point_block.sha256().to_string()).c_str(), entries.size());
@@ -1036,8 +1045,8 @@ namespace libTAU::blockchain {
 
                 std::vector<dht::node_entry> entries;
                 m_ses.dht()->find_live_nodes(demand_block.sha256(), entries);
-                while (entries.size() > 1) {
-                    entries.pop_back();
+                if (entries.size() > 1) {
+                    entries.resize(1);
                 }
                 log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
                     aux::toHex(demand_block.sha256().to_string()).c_str(), entries.size());
@@ -1069,8 +1078,8 @@ namespace libTAU::blockchain {
 
                 std::vector<dht::node_entry> entries;
                 m_ses.dht()->find_live_nodes(miss_tx.sha256(), entries);
-                while (entries.size() > 1) {
-                    entries.pop_back();
+                if (entries.size() > 1) {
+                    entries.resize(1);
                 }
                 log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
                     aux::toHex(miss_tx.sha256().to_string()).c_str(), entries.size());
@@ -1359,6 +1368,40 @@ namespace libTAU::blockchain {
         }
 
         return chain_id;
+    }
+
+    bool blockchain::create_TAU_chain() {
+        std::int64_t size = TAU_CHAIN_GENESIS_ACCOUNT.size();
+        std::int64_t block_number = -1 * size + 1;
+        sha256_hash previous_hash;
+
+        std::set<dht::public_key> peers;
+        std::vector<block> blocks;
+        for (auto const &act: TAU_CHAIN_GENESIS_ACCOUNT) {
+            auto miner = act;
+            peers.insert(miner);
+
+            std::string data(miner.bytes.begin(), miner.bytes.end());
+            auto genSig = dht::item_target_id(data);
+
+            block b = block(TAU_CHAIN_ID, block_version::block_version1, TAU_CHAIN_GENESIS_TIMESTAMP, block_number, previous_hash,
+                            GENESIS_BASE_TARGET, 0, genSig, transaction(), miner, GENESIS_BLOCK_BALANCE,
+                            0, 0, 0, 0, 0);
+
+            blocks.push_back(b);
+
+            previous_hash = b.sha256();
+            block_number++;
+        }
+
+        // follow and load chain
+        followChain(TAU_CHAIN_ID, peers);
+
+        for (auto &blk: blocks) {
+            process_block(TAU_CHAIN_ID, blk);
+        }
+
+        return true;
     }
 
     bool blockchain::createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts) {
