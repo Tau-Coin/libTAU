@@ -269,7 +269,7 @@ void traversal_algorithm::start()
 	// in case the routing table is empty, use the
 	// router nodes in the table
 	// TODO: remove this logic when blockchain can provide more alive nodes.
-	if (m_results.size() < 3 && !m_direct_invoking) add_router_entries();
+	if (m_results.size() < 1 && !m_direct_invoking) add_router_entries();
 	init();
 	bool const is_done = add_requests();
 	if (is_done) done();
