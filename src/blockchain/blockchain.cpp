@@ -1252,8 +1252,17 @@ namespace libTAU::blockchain {
 
             blockchain_signal signal(i.value());
 
-            // todo: latest signal time
+            auto last_time = m_latest_signal_time[chain_id][peer];
+            if (signal.timestamp() > last_time) {
+                m_latest_signal_time[chain_id][peer] = signal.timestamp();
+            }
+
+            // old data in 60s also is accepted
+            if (signal.timestamp() + 60000 < last_time)
+                return;
+
             auto consensus_point_vote = signal.consensus_point_vote();
+            // only vote time in 5 min is accepted
             if (!consensus_point_vote.empty() && now < signal.timestamp() + DEFAULT_BLOCK_TIME * 1000) {
                 m_votes[chain_id][peer] = consensus_point_vote;
             }
