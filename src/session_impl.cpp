@@ -2648,8 +2648,6 @@ namespace {
 		// todo: initialize device_id
 		m_blockchain = std::make_shared<blockchain::blockchain>(m_io_context, *this);
 
-		m_alerts.emplace_alert<session_start_over_alert>(true);
-
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("starting Blockchain");
 #endif
@@ -2970,6 +2968,8 @@ namespace {
 			start_dht();
 			start_communication();
 		}
+
+		m_alerts.emplace_alert<session_start_over_alert>(true);
 	}
 
 	// callback for dht_immutable_get
