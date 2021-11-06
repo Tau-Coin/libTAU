@@ -855,10 +855,6 @@ namespace {
 		ret->flags = lep.flags;
 		ret->netmask = lep.netmask;
 		operation_t last_op = operation_t::unknown;
-		socket_type_t const sock_type
-			= (lep.ssl == transport::ssl)
-			? socket_type_t::tcp_ssl
-			: socket_type_t::tcp;
 
 		socket_type_t const udp_sock_type
 			= (lep.ssl == transport::ssl)
@@ -1391,10 +1387,25 @@ namespace {
 
 		TORRENT_ASSERT(s->sock.is_closed() || s->sock.local_endpoint().protocol() == ep.protocol());
 
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("Send UDP Packet %s", print_endpoint(ep).c_str());
+			}
+#endif
+
 		s->sock.send(ep, p, ec, flags);
 
 		if ((ec == error::would_block || ec == error::try_again) && !s->write_blocked)
 		{
+
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("Send UDP Packet Error, On UDP Writing");
+			}
+#endif
+
 			s->write_blocked = true;
 			ADD_OUTSTANDING_ASYNC("session_impl::on_udp_writeable");
 		}
