@@ -834,6 +834,7 @@ namespace {
 		listen_endpoint_t const& lep, error_code& ec)
 	{
 		int retries = m_settings.get_int(settings_pack::max_retry_port_bind);
+		tcp::endpoint bind_ep(lep.addr, std::uint16_t(lep.port));
 		udp::endpoint udp_bind_ep(lep.addr, std::uint16_t(lep.port));
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -851,7 +852,7 @@ namespace {
 
 		auto ret = std::make_shared<listen_socket_t>();
 		ret->ssl = lep.ssl;
-		ret->original_port = udp_bind_ep.port();
+		ret->original_port = bind_ep.port();
 		ret->flags = lep.flags;
 		ret->netmask = lep.netmask;
 		operation_t last_op = operation_t::unknown;
@@ -859,6 +860,191 @@ namespace {
 			= (lep.ssl == transport::ssl)
 			? socket_type_t::tcp_ssl
 			: socket_type_t::tcp;
+
+		// if we're in force-proxy mode, don't open TCP listen sockets. We cannot
+		// accept connections on our local machine in this case.
+		// TODO: 3 the logic in this if-block should be factored out into a
+		// separate function. At least most of it
+		if (ret->flags & listen_socket_t::accept_incoming)
+		{
+			ret->sock = std::make_shared<tcp::acceptor>(m_io_context);
+			ret->sock->open(bind_ep.protocol(), ec);
+			last_op = operation_t::sock_open;
+			if (ec)
+			{
+#ifndef TORRENT_DISABLE_LOGGING
+				if (should_log())
+				{
+					session_log("failed to open socket: %s"
+						, ec.message().c_str());
+				}
+#endif
+
+				if (m_alerts.should_post<listen_failed_alert>())
+					m_alerts.emplace_alert<listen_failed_alert>(lep.device, bind_ep, last_op
+						, ec, sock_type);
+				return ret;
+			}
+
+#ifdef TORRENT_WINDOWS
+			{
+				// this is best-effort. ignore errors
+				error_code err;
+				ret->sock->set_option(exclusive_address_use(true), err);
+#ifndef TORRENT_DISABLE_LOGGING
+				if (err && should_log())
+				{
+					session_log("failed enable exclusive address use on listen socket: %s"
+						, err.message().c_str());
+				}
+#endif // TORRENT_DISABLE_LOGGING
+			}
+#else
+
+			{
+				// this is best-effort. ignore errors
+				error_code err;
+				ret->sock->set_option(tcp::acceptor::reuse_address(true), err);
+#ifndef TORRENT_DISABLE_LOGGING
+				if (err && should_log())
+				{
+					session_log("failed enable reuse-address on listen socket: %s"
+						, err.message().c_str());
+				}
+#endif // TORRENT_DISABLE_LOGGING
+			}
+#endif // TORRENT_WINDOWS
+
+			if (is_v6(bind_ep))
+			{
+				error_code err; // ignore errors here
+				ret->sock->set_option(boost::asio::ip::v6_only(true), err);
+#ifndef TORRENT_DISABLE_LOGGING
+				if (err && should_log())
+				{
+					session_log("failed enable v6 only on listen socket: %s"
+						, err.message().c_str());
+				}
+#endif // LOGGING
+			}
+
+			if (!lep.device.empty())
+			{
+				// we have an actual device we're interested in listening on, if we
+				// have SO_BINDTODEVICE functionality, use it now.
+#if TORRENT_HAS_BINDTODEVICE
+				bind_device(*ret->sock, lep.device.c_str(), ec);
+#ifndef TORRENT_DISABLE_LOGGING
+				if (ec && should_log())
+				{
+					session_log("bind to device failed (device: %s): %s"
+						, lep.device.c_str(), ec.message().c_str());
+				}
+#endif // TORRENT_DISABLE_LOGGING
+				ec.clear();
+#endif // TORRENT_HAS_BINDTODEVICE
+			}
+
+			ret->sock->bind(bind_ep, ec);
+			last_op = operation_t::sock_bind;
+
+			while (ec == error_code(error::address_in_use) && retries > 0)
+			{
+				TORRENT_ASSERT_VAL(ec, ec);
+#ifndef TORRENT_DISABLE_LOGGING
+				if (should_log())
+				{
+					session_log("failed to bind listen socket to: %s on device: %s :"
+						" [%s] (%d) %s (retries: %d)"
+						, print_endpoint(bind_ep).c_str()
+						, lep.device.c_str()
+						, ec.category().name(), ec.value(), ec.message().c_str()
+						, retries);
+				}
+#endif
+				ec.clear();
+				--retries;
+				bind_ep.port(bind_ep.port() + 1);
+				ret->sock->bind(bind_ep, ec);
+			}
+
+			if (ec == error_code(error::address_in_use)
+				&& m_settings.get_bool(settings_pack::listen_system_port_fallback)
+				&& bind_ep.port() != 0)
+			{
+				// instead of giving up, try let the OS pick a port
+				bind_ep.port(0);
+				ec.clear();
+				ret->sock->bind(bind_ep, ec);
+				last_op = operation_t::sock_bind;
+			}
+
+			if (ec)
+			{
+				// not even that worked, give up
+
+#ifndef TORRENT_DISABLE_LOGGING
+				if (should_log())
+				{
+					session_log("failed to bind listen socket to: %s on device: %s :"
+						" [%s] (%d) %s (giving up)"
+						, print_endpoint(bind_ep).c_str()
+						, lep.device.c_str()
+						, ec.category().name(), ec.value(), ec.message().c_str());
+				}
+#endif
+				if (m_alerts.should_post<listen_failed_alert>())
+				{
+					m_alerts.emplace_alert<listen_failed_alert>(lep.device, bind_ep
+						, last_op, ec, sock_type);
+				}
+				ret->sock.reset();
+				return ret;
+			}
+			ret->local_endpoint = ret->sock->local_endpoint(ec);
+			last_op = operation_t::getname;
+			if (ec)
+			{
+#ifndef TORRENT_DISABLE_LOGGING
+				if (should_log())
+				{
+					session_log("get_sockname failed on listen socket: %s"
+						, ec.message().c_str());
+				}
+#endif
+				if (m_alerts.should_post<listen_failed_alert>())
+				{
+					m_alerts.emplace_alert<listen_failed_alert>(lep.device, bind_ep
+						, last_op, ec, sock_type);
+				}
+				return ret;
+			}
+
+			TORRENT_ASSERT(ret->local_endpoint.port() == bind_ep.port()
+				|| bind_ep.port() == 0);
+
+			if (bind_ep.port() == 0) bind_ep = ret->local_endpoint;
+
+			ret->sock->listen(m_settings.get_int(settings_pack::listen_queue_size), ec);
+			last_op = operation_t::sock_listen;
+
+			if (ec)
+			{
+#ifndef TORRENT_DISABLE_LOGGING
+				if (should_log())
+				{
+					session_log("cannot listen on interface \"%s\": %s"
+						, lep.device.c_str(), ec.message().c_str());
+				}
+#endif
+				if (m_alerts.should_post<listen_failed_alert>())
+				{
+					m_alerts.emplace_alert<listen_failed_alert>(lep.device, bind_ep
+						, last_op, ec, sock_type);
+				}
+				return ret;
+			}
+		} // accept incoming
 
 		socket_type_t const udp_sock_type
 			= (lep.ssl == transport::ssl)
