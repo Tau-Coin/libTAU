@@ -1425,15 +1425,18 @@ namespace libTAU::blockchain {
         std::int64_t cumulative_difficulty = 0;
 
         std::int64_t size = accounts.size();
-        std::int64_t block_number = -1 * size;
+        std::int64_t block_number = -1 * (size > MAX_NEGATIVE_BLOCK_SIZE ? MAX_NEGATIVE_BLOCK_SIZE : size);
         sha256_hash previous_hash;
 
         std::set<dht::public_key> peers;
         std::vector<block> blocks;
+        std::int64_t total_balance = 0;
+        int i = 0;
         for (auto const &act: accounts) {
             auto miner = act.first;
             peers.insert(miner);
             std::int64_t miner_balance = act.second.balance();
+            total_balance += miner_balance;
 
             block b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
                             base_target, cumulative_difficulty, genSig, transaction(), miner, miner_balance,
@@ -1444,10 +1447,15 @@ namespace libTAU::blockchain {
 
             previous_hash = b.sha256();
             block_number++;
+
+            i++;
+            if (i >= MAX_NEGATIVE_BLOCK_SIZE)
+                break;
         }
 
+        std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
         block b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                        base_target, cumulative_difficulty, genSig, transaction(), *pk, GENESIS_BLOCK_BALANCE,
+                        base_target, cumulative_difficulty, genSig, transaction(), *pk, genesis_balance,
                         0, 0, 0, 0, 0);
         b.sign(*pk, *sk);
 

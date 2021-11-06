@@ -16,12 +16,12 @@ see LICENSE file.
 #include "libTAU/aux_/common_data.h"
 #include "libTAU/kademlia/types.hpp"
 
-// URL TAUchain:?bs=pk1&bs=pk2&dn=chainID
+// URL tauchain:?bs=pk1&bs=pk2&dn=chainID
 namespace libTAU {
     namespace blockchain {
         class chain_url {
 
-            const std::string URL_PREFIX = "TAUchain:?";
+            const std::string URL_PREFIX = "tauchain:?";
             const std::string KEY_PEER = "bs";
             const std::string KEY_CHAIN_ID = "dn";
 

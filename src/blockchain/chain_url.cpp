@@ -9,7 +9,7 @@ see LICENSE file.
 #include "libTAU/blockchain/chain_url.hpp"
 
 namespace libTAU::blockchain {
-    // URL TAUchain:?bs=pk1&bs=pk2&dn=chainID
+    // URL tauchain:?bs=pk1&bs=pk2&dn=chainID
     chain_url::chain_url(std::string url) {
         size_t index = url.find(URL_PREFIX);
         url = url.substr(index + URL_PREFIX.size());
