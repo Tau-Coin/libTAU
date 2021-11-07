@@ -76,26 +76,35 @@ namespace blockchain {
         // stop
         bool stop();
 
+        // create chain id
         aux::bytes create_chain_id(std::string community_name);
 
+        // create new community
         bool createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts);
 
+        // follow a chain by url(chain id, peers)
         bool followChain(const chain_url &url);
 
+        // un-follow a chain
         bool unfollowChain(const aux::bytes &chain_id);
 
+        // send new transaction
         bool submitTransaction(transaction tx);
 
+        // get account by public key
         account getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey);
 
+        // get top tip blocks
         std::vector<block> getTopTipBlock(const aux::bytes &chain_id, int topNum);
 
+        // get median tx fee
         std::int64_t getMedianTxFree(const aux::bytes &chain_id);
 
     private:
         // initialize member variables
         bool init();
 
+        // create and follow tau chain
         bool create_TAU_chain();
 
         // clear all cache
@@ -116,10 +125,13 @@ namespace blockchain {
 
         void refresh_vote_timeout(error_code const& e);
 
+        // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
+        // load chain all info
         bool load_chain(const aux::bytes &chain_id);
 
+        // refresh unchoked peers if timeout
         void try_to_refresh_unchoked_peers(const aux::bytes &chain_id);
 
         // select a chain randomly
@@ -134,22 +146,31 @@ namespace blockchain {
         // select a peer randomly
         std::set<dht::public_key> select_unchoked_peers(const aux::bytes &chain_id);
 
+        // try to mine block
         block try_to_mine_block(const aux::bytes &chain_id);
 
+        // try to update consensus point block if block number changed
         void try_to_update_consensus_point_block(const aux::bytes &chain_id);
 
+        // verify block
         RESULT verify_block(const aux::bytes &chain_id, block &b, block &previous_block, repository *repo);
 
+        // process block
         RESULT process_block(const aux::bytes &chain_id, block &b);
 
+        // check if a chain is empty, true if has no info, false otherwise
         bool is_empty_chain(const aux::bytes &chain_id);
 
+        // check if consensus point block immutable, true if it is same to voting block, false otherwise
         bool is_consensus_point_immutable(const aux::bytes &chain_id);
 
+        // check if current chain sync completed
         bool is_sync_completed(const aux::bytes &chain_id);
 
+        // try to rebranch a more difficult chain or a voting chain
         RESULT try_to_rebranch(const aux::bytes &chain_id, block &target);
 
+        // count votes
         void refresh_vote(const aux::bytes &chain_id);
 
         // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing tx和confirmation root)
@@ -211,6 +232,7 @@ namespace blockchain {
         // blockchain db
         std::shared_ptr<repository> m_repository;
 
+        // chain status
         bool m_stop = false;
 
         // all chains
