@@ -2882,12 +2882,12 @@ namespace {
 
 	bool session_impl::get_top_tip_block(const aux::bytes &chain_id, int num, std::vector<blockchain::block> * blks) {
 		
-		*blks =  m_blockchain->getTopTipBlock(chain_id, num);
+		*blks = m_blockchain->getTopTipBlocks(chain_id, num);
 		return true;
 	}
 
 	std::int64_t session_impl::get_median_tx_free(const aux::bytes &chain_id) {
-		return m_blockchain->getMedianTxFree(chain_id);
+		return m_blockchain->getMedianTxFee(chain_id);
 	}
 
 	void session_impl::set_dht_state(dht::dht_state&& state)

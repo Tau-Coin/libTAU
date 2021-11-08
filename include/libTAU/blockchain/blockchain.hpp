@@ -95,10 +95,10 @@ namespace blockchain {
         account getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey);
 
         // get top tip blocks
-        std::vector<block> getTopTipBlock(const aux::bytes &chain_id, int topNum);
+        std::vector<block> getTopTipBlocks(const aux::bytes &chain_id, int topNum);
 
         // get median tx fee
-        std::int64_t getMedianTxFree(const aux::bytes &chain_id);
+        std::int64_t getMedianTxFee(const aux::bytes &chain_id);
 
     private:
         // initialize member variables

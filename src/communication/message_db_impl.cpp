@@ -6,8 +6,9 @@
 // see LICENSE file.
 //
 
-#include <libTAU/aux_/common.h>
+#include "libTAU/aux_/common.h"
 #include "libTAU/aux_/vector_ref.h"
+#include "libTAU/kademlia/types.hpp"
 #include "libTAU/communication/message_db_impl.hpp"
 
 namespace libTAU {
@@ -33,8 +34,8 @@ namespace libTAU {
             return true;
         }
 
-        std::vector<aux::bytes> message_db_impl::get_all_friends() {
-            std::vector<aux::bytes> friends;
+        std::vector<dht::public_key> message_db_impl::get_all_friends() {
+            std::vector<dht::public_key> friends;
 
             sqlite3_stmt * stmt;
             std::string sql = "SELECT * FROM FRIENDS";
@@ -44,8 +45,8 @@ namespace libTAU {
                     const unsigned char *pK = sqlite3_column_text(stmt,0);
                     auto length = sqlite3_column_bytes(stmt, 0);
                     std::string value(pK, pK + length);
-                    aux::bytes public_key = aux::asBytes(value);
-                    friends.push_back(public_key);
+                    dht::public_key pubKey(value.data());
+                    friends.push_back(pubKey);
                 }
             }
 
@@ -54,14 +55,14 @@ namespace libTAU {
             return friends;
         }
 
-        bool message_db_impl::save_friend(const aux::bytes& public_key) {
+        bool message_db_impl::save_friend(const libTAU::dht::public_key &pubKey) {
             sqlite3_stmt * stmt;
             std::string sql = "INSERT INTO FRIENDS VALUES(?)";
             int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
             if (ok != SQLITE_OK) {
                 return false;
             }
-            std::string value = aux::asString(public_key);
+            std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
             sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
             ok = sqlite3_step(stmt);
             if (ok != SQLITE_DONE) {
@@ -72,14 +73,14 @@ namespace libTAU {
             return true;
         }
 
-        bool message_db_impl::delete_friend(const aux::bytes& public_key) {
+        bool message_db_impl::delete_friend(const dht::public_key &pubKey) {
             sqlite3_stmt * stmt;
             std::string sql = "DELETE FROM FRIENDS WHERE PUBKEY=?";
             int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
             if (ok != SQLITE_OK) {
                 return false;
             }
-            sqlite3_bind_text(stmt, 1, std::string(public_key.begin(), public_key.end()).c_str(), public_key.size(), nullptr);
+            sqlite3_bind_text(stmt, 1, std::string(pubKey.bytes.begin(), pubKey.bytes.end()).c_str(), pubKey.len, nullptr);
             ok = sqlite3_step(stmt);
             if (ok != SQLITE_DONE) {
                 return false;
@@ -89,10 +90,10 @@ namespace libTAU {
             return true;
         }
 
-        aux::bytes message_db_impl::get_friend_info(const std::pair<aux::bytes, aux::bytes>& key) {
+        aux::bytes message_db_impl::get_friend_info(const std::pair<dht::public_key, dht::public_key> &key) {
             std::string sKey;
-            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
-            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
+            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
             sKey.insert(sKey.end(), key_suffix_friend_info.begin(), key_suffix_friend_info.end());
 
             std::string value;
@@ -103,10 +104,10 @@ namespace libTAU {
             return buffer;
         }
 
-        bool message_db_impl::save_friend_info(const std::pair<aux::bytes, aux::bytes>& key, const aux::bytes& friend_info) {
+        bool message_db_impl::save_friend_info(const std::pair<dht::public_key, dht::public_key> &key, const aux::bytes& friend_info) {
             std::string sKey;
-            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
-            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
+            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
             sKey.insert(sKey.end(), key_suffix_friend_info.begin(), key_suffix_friend_info.end());
 
             std::string value(friend_info.begin(), friend_info.end());
@@ -115,21 +116,19 @@ namespace libTAU {
             return status.ok();
         }
 
-        bool message_db_impl::delete_friend_info(const std::pair<aux::bytes, aux::bytes>& key) {
+        bool message_db_impl::delete_friend_info(const std::pair<dht::public_key, dht::public_key> &key) {
             std::string sKey;
-            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
-            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
+            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
             sKey.insert(sKey.end(), key_suffix_friend_info.begin(), key_suffix_friend_info.end());
 
             leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), sKey);
             return status.ok();
         }
 
-        communication::message message_db_impl::get_message(const aux::bytes& hash) {
-            std::string key(hash.begin(), hash.end());
-
+        communication::message message_db_impl::get_message(const sha256_hash &hash) {
             std::string value;
-            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
+            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
 //            aux::bytes buffer;
 //            buffer.insert(buffer.end(), value.begin(), value.end());
             return communication::message(value);
@@ -150,16 +149,16 @@ namespace libTAU {
             return status.ok();
         }
 
-        bool message_db_impl::delete_message(const aux::bytes& hash) {
-            std::string key(hash.begin(), hash.end());
-            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
+        bool message_db_impl::delete_message(const sha256_hash &hash) {
+            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), hash.to_string());
             return status.ok();
         }
 
-        std::string message_db_impl::get_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) {
+        std::string message_db_impl::get_latest_message_hash_list_encode(
+                const std::pair<dht::public_key, dht::public_key> &key) {
             std::string sKey;
-            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
-            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
+            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
             sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
 
             std::string value;
@@ -169,10 +168,11 @@ namespace libTAU {
             return value;
         }
 
-        bool message_db_impl::save_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key, const std::string& encode) {
+        bool message_db_impl::save_latest_message_hash_list_encode(
+                const std::pair<dht::public_key, dht::public_key> &key, const std::string& encode) {
             std::string sKey;
-            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
-            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
+            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
             sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
 
 //            std::string value(encode.begin(), encode.end());
@@ -181,10 +181,11 @@ namespace libTAU {
             return status.ok();
         }
 
-        bool message_db_impl::delete_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) {
+        bool message_db_impl::delete_latest_message_hash_list_encode(
+                const std::pair<dht::public_key, dht::public_key> &key) {
             std::string sKey;
-            sKey.insert(sKey.end(), key.first.begin(), key.first.end());
-            sKey.insert(sKey.end(), key.second.begin(), key.second.end());
+            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
+            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
             sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
 
             leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), sKey);

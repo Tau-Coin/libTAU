@@ -30,40 +30,41 @@ namespace libTAU {
             virtual bool init() = 0;
 
             // get all friends
-            virtual std::vector<aux::bytes> get_all_friends() = 0;
+            virtual std::vector<dht::public_key> get_all_friends() = 0;
 
             // save a friend in db
-            virtual bool save_friend(const aux::bytes& public_key) = 0;
+            virtual bool save_friend(const dht::public_key &pubKey) = 0;
 
             // delete a friend
-            virtual bool delete_friend(const aux::bytes& public_key) = 0;
+            virtual bool delete_friend(const dht::public_key &pubKey) = 0;
 
             // get friend info by key pair<my public key, peer public key>
-            virtual aux::bytes get_friend_info(const std::pair<aux::bytes, aux::bytes>& key) = 0;
+            virtual aux::bytes get_friend_info(const std::pair<dht::public_key, dht::public_key> &key) = 0;
 
             // save friend info
-            virtual bool save_friend_info(const std::pair<aux::bytes, aux::bytes>& key, const aux::bytes& friend_info) = 0;
+            virtual bool save_friend_info(const std::pair<dht::public_key, dht::public_key> &key, const aux::bytes& friend_info) = 0;
 
             // delete friend info by key pair<my public key, peer public key>
-            virtual bool delete_friend_info(const std::pair<aux::bytes, aux::bytes>& key) = 0;
+            virtual bool delete_friend_info(const std::pair<dht::public_key, dht::public_key> &key) = 0;
 
             // get message by hash
-            virtual communication::message get_message(const aux::bytes& hash) = 0;
+            virtual communication::message get_message(const sha256_hash &hash) = 0;
 
             // save message
             virtual bool save_message(const communication::message& msg) = 0;
 
             // delete message
-            virtual bool delete_message(const aux::bytes& hash) = 0;
+            virtual bool delete_message(const sha256_hash &hash) = 0;
 
             // get encode of the latest message hash list by key pair<my public key, peer public key>
-            virtual std::string get_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) = 0;
+            virtual std::string get_latest_message_hash_list_encode(
+                    const std::pair<dht::public_key, dht::public_key> &key) = 0;
 
             // save encode of the latest message hash list with key pair<my public key, peer public key>
-            virtual bool save_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key, const std::string& encode) = 0;
+            virtual bool save_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key, const std::string& encode) = 0;
 
             // delete encode of the latest message hash list by key pair<my public key, peer public key>
-            virtual bool delete_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) = 0;
+            virtual bool delete_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) = 0;
 
             virtual ~message_db_interface() = default;
         };

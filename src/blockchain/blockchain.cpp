@@ -1484,7 +1484,7 @@ namespace libTAU::blockchain {
         return m_repository->get_account_with_effective_power(chain_id, publicKey);
     }
 
-    std::vector<block> blockchain::getTopTipBlock(const aux::bytes &chain_id, int topNum) {
+    std::vector<block> blockchain::getTopTipBlocks(const aux::bytes &chain_id, int topNum) {
         std::vector<block> blocks;
         if (topNum > 0) {
             auto best_tip_block = m_best_tip_blocks[chain_id];
@@ -1505,7 +1505,7 @@ namespace libTAU::blockchain {
         return blocks;
     }
 
-    std::int64_t blockchain::getMedianTxFree(const aux::bytes &chain_id) {
+    std::int64_t blockchain::getMedianTxFee(const aux::bytes &chain_id) {
         std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_transactions();
         auto size = txs.size();
         if (size > 0) {

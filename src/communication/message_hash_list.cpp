@@ -18,7 +18,7 @@ namespace libTAU {
             populate(e);
         }
 
-        message_hash_list::message_hash_list(std::vector<aux::bytes> message_hash_list) {
+        message_hash_list::message_hash_list(std::vector<sha256_hash> message_hash_list) {
             m_message_hash_list = std::move(message_hash_list);
         }
 
@@ -26,7 +26,7 @@ namespace libTAU {
             entry::list_type l;
             if (!m_message_hash_list.empty()) {
                 for (auto const &hash: m_message_hash_list) {
-                    l.push_back(entry(std::string(hash.begin(), hash.end())));
+                    l.push_back(entry(hash.to_string()));
                 }
             }
             entry e(l);
@@ -40,7 +40,7 @@ namespace libTAU {
             entry::list_type l = e.list();
             for (auto const& h: l) {
                 auto hash = h.string();
-                m_message_hash_list.emplace_back(hash.begin(), hash.end());
+                m_message_hash_list.emplace_back(hash.data());
             }
         }
 

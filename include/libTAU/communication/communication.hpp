@@ -95,31 +95,31 @@ namespace libTAU {
             void set_loop_time_interval(int milliseconds);
 
             // add new friend in memory & db
-            bool add_new_friend(const aux::bytes& pubkey);
+            bool add_new_friend(const dht::public_key &pubkey);
 
             // delete friend and all related data in memory & db
-            bool delete_friend(const aux::bytes& pubkey);
+            bool delete_friend(const dht::public_key &pubkey);
 
             // get friend info by public key
-            aux::bytes get_friend_info(const aux::bytes& pubkey);
+            aux::bytes get_friend_info(const dht::public_key &pubkey);
 
             // save friend info
-            bool update_friend_info(const aux::bytes& pubkey, const aux::bytes& friend_info);
+            bool update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info);
 
             // set chatting friends
-            void set_chatting_friend(aux::bytes chatting_friend);
+            void set_chatting_friend(dht::public_key chatting_friend);
 
             // unset chatting friends
             void unset_chatting_friend();
 
             // set active friends
-            void set_active_friends(std::vector<aux::bytes> active_friends);
+            void set_active_friends(std::vector<dht::public_key> active_friends);
 
             // add a new message
             bool add_new_message(const message& msg, bool post_alert = false);
 
             // add a new message
-            bool add_new_message(const aux::bytes& peer, const message& msg, bool post_alert = false);
+            bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
 
             // reset when account changed
             void account_changed();
@@ -135,45 +135,45 @@ namespace libTAU {
             void clear();
 
             // request online/new message signal from a given peer
-            void request_signal(const aux::bytes& peer);
+            void request_signal(const dht::public_key &peer);
 
             // publish online/new message signal to a given peer
-            void publish_signal(const aux::bytes& peer);
+            void publish_signal(const dht::public_key &peer);
 
             // select a friend randomly
-            aux::bytes select_friend_randomly();
+            dht::public_key select_friend_randomly();
 
             // save the latest message hash list in database
             // @param peer is Y public key
-            void save_friend_latest_message_hash_list(const aux::bytes& peer);
+            void save_friend_latest_message_hash_list(const dht::public_key &peer);
 
             // try to update the latest message list
             // @param peer is Y public key
             // @return true if message list changed, false otherwise
-            bool try_to_update_Latest_message_list(const aux::bytes& peer, const message& msg, bool post_alert);
+            bool try_to_update_Latest_message_list(const dht::public_key &peer, const message& msg, bool post_alert);
 
             // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing message和confirmation root)
             void find_best_solution(const std::vector<message>& messages, const aux::bytes& hash_prefix_array,
                                     std::vector<message> &missing_messages, std::vector<sha256_hash> &confirmation_roots);
 
             // make a salt on mutable channel
-            static std::string make_salt(aux::bytes peer);
+            static std::string make_salt(dht::public_key peer);
 
             // make online signal
-            online_signal make_signal(const aux::bytes& peer);
+            online_signal make_signal(const dht::public_key &peer);
 
             // validate message, check if message is oversize( >1000 bytes)
             bool validate_message(const message& msg);
 
             // immutable data callback
-            void get_immutable_callback(aux::bytes const& peer, sha256_hash target
+            void get_immutable_callback(const dht::public_key &peer, sha256_hash target
                     , dht::item const& i);
 
             // mutable data callback
             void get_mutable_callback(dht::item const& i, bool);
 
             // get immutable item from dht
-            void dht_get_immutable_item(aux::bytes const& peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
+            void dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
             // get mutable item from dht
             void dht_get_mutable_item(std::array<char, 32> key
@@ -219,36 +219,36 @@ namespace libTAU {
             bool m_stop = false;
 
             // all friends
-            std::vector<aux::bytes> m_friends;
+            std::vector<dht::public_key> m_friends;
 
             // peer access time
-            std::map<aux::bytes, std::int64_t> m_peer_access_times;
+            std::map<dht::public_key, std::int64_t> m_peer_access_times;
 
             // chatting friend(time:s)
-            std::pair<aux::bytes, std::int64_t> m_chatting_friend = std::make_pair(aux::bytes(), 0);
+            std::pair<dht::public_key, std::int64_t> m_chatting_friend = std::make_pair(dht::public_key(), 0);
 
             // active friends
-            std::vector<aux::bytes> m_active_friends;
+            std::vector<dht::public_key> m_active_friends;
 
             // friend last seen time(map:key->peer, value->last seen signal time(ms))
-            std::map<aux::bytes, std::int64_t> m_last_seen;
+            std::map<dht::public_key, std::int64_t> m_last_seen;
 
             // online/new message signal time(map:key1->peer, key2->device id, value->signal time(ms))
-            std::map<aux::bytes, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
+            std::map<dht::public_key, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
 
             // online/new message signal time(map:key1->peer, key2->device id, value->hash prefix array)
-            std::map<aux::bytes, std::map<aux::bytes, aux::bytes>> m_latest_hash_prefix_array;
+            std::map<dht::public_key, std::map<aux::bytes, aux::bytes>> m_latest_hash_prefix_array;
 
             // message list(map:key->Y public key, value->message list)
-            std::map<aux::bytes, std::list<message>> m_message_list_map;
+            std::map<dht::public_key, std::list<message>> m_message_list_map;
 
             // missing messages (map:key->peer, value->missing message list)
-            std::map<aux::bytes, std::set<message>> m_missing_messages;
+            std::map<dht::public_key, std::set<message>> m_missing_messages;
 
             // put last missing message for 1min
-            std::map<aux::bytes, immutable_data_info> m_last_gasp_payload;
+            std::map<dht::public_key, immutable_data_info> m_last_gasp_payload;
 
-            std::map<aux::bytes, std::int64_t> m_last_gasp_time;
+            std::map<dht::public_key, std::int64_t> m_last_gasp_time;
         };
     }
 }
