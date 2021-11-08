@@ -2786,31 +2786,25 @@ namespace {
 		m_communication->set_loop_time_interval(milliseconds);
 	}
 
-	bool session_impl::add_new_friend(std::array<char, 32>& pubkey)
+	bool session_impl::add_new_friend(const dht::public_key& pubkey)
 	{
-		return m_communication->add_new_friend(std::vector<char>(pubkey.begin(), pubkey.end()));
+		return m_communication->add_new_friend(pubkey);
 	}
 
-	bool session_impl::delete_friend(std::array<char, 32>& pubkey)
+	bool session_impl::delete_friend(const dht::public_key& pubkey)
 	{
-		/*
-		char* pk_out = new char[65];
-		char* pk_in = pubkey.data();	
-        libTAU::aux::to_hex(pk_in, 32, pk_out);
-		session_log("Session Delete Friend: %s", pk_out);
-		*/
-		return m_communication->delete_friend(std::vector<char>(pubkey.begin(), pubkey.end()));
+		return m_communication->delete_friend(pubkey);
 
 	}
 
-	void session_impl::get_friend_info(std::array<char, 32>& pubkey, std::vector<char>* info)
+	void session_impl::get_friend_info(const dht::public_key& pubkey, std::vector<char>* info)
 	{
-		*info = m_communication->get_friend_info(std::vector<char>(pubkey.begin(), pubkey.end()));
+		*info = m_communication->get_friend_info(pubkey);
 	}
 
-	bool session_impl::update_friend_info(std::array<char, 32>& pubkey, aux::bytes friend_info)
+	bool session_impl::update_friend_info(const dht::public_key& pubkey, aux::bytes friend_info)
 	{
-		return m_communication->update_friend_info(std::vector<char>(pubkey.begin(), pubkey.end()), friend_info);
+		return m_communication->update_friend_info(pubkey, friend_info);
 	}
 
 	void session_impl::unset_chatting_friend()
@@ -2819,38 +2813,18 @@ namespace {
 		m_communication->unset_chatting_friend();
 	}
 	
-	void session_impl::set_chatting_friend(std::array<char, 32> chatting_friend)
+	void session_impl::set_chatting_friend(const dht::public_key& chatting_friend)
 	{
-		/*
-		char* pk_out = new char[65];
-		char* pk_in = chatting_friend.data();	
-        libTAU::aux::to_hex(pk_in, 32, pk_out);
-		session_log("Session Set Chatting Friend: %s", pk_out);
-		*/
-		m_communication->set_chatting_friend(std::vector<char>(chatting_friend.begin(), chatting_friend.end()));
+		m_communication->set_chatting_friend(chatting_friend);
 	}
 
-	void session_impl::set_active_friends(std::vector<aux::bytes> active_friends)
+	void session_impl::set_active_friends(std::vector<dht::public_key> active_friends)
 	{
-		/*
-		char* pk_out = new char[65];
-		for(auto k = active_friends.begin(); k != active_friends.end(); k++) {
-			char* pk_in = reinterpret_cast<char*>((*k).data());
-			libTAU::aux::to_hex(pk_in, 32, pk_out);
-			session_log("Session Set Active Friend: %s", pk_out);
-		}
-		*/
 		m_communication->set_active_friends(active_friends);
 	}
 
 	bool session_impl::add_new_message(const communication::message& msg)
 	{
-		/*
-		char* msg_out = new char[msg.size()*2 + 1];
-		char* msg_in = reinterpret_cast<char*>(msg.data());
-        libTAU::aux::to_hex(msg_in, msg.size(), msg_out);
-		session_log("Session Add New Message: %s", msg_out);
-		*/
 		return m_communication->add_new_message(msg, false);
 	}	
 

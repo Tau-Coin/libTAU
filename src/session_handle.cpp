@@ -234,26 +234,26 @@ namespace libTAU {
 		async_call(&session_impl::set_loop_time_interval, milliseconds);
 	}
 
-	bool session_handle::add_new_friend(std::array<char, 32> pubkey)
+	bool session_handle::add_new_friend(const dht::public_key& pubkey)
 	{
 		return sync_call_ret<bool>(&session_impl::add_new_friend, pubkey);
 	}
 
-	bool session_handle::delete_friend(std::array<char, 32> pubkey)
+	bool session_handle::delete_friend(const dht::public_key& pubkey)
 	{
 		return sync_call_ret<bool>(&session_impl::delete_friend, pubkey);
 	}
 
-	void session_handle::set_chatting_friend(std::array<char, 32> pubkey)
+	void session_handle::set_chatting_friend(const dht::public_key& pubkey)
 	{
 		sync_call(&session_impl::set_chatting_friend, pubkey);
 	}
 
-	std::vector<char> session_handle::get_friend_info(std::array<char, 32> pubkey)
+	std::vector<std::int8_t> session_handle::get_friend_info(const dht::public_key& pubkey)
 	{
-		std::vector<char> info;
-		sync_call(&session_impl::get_friend_info, pubkey, &info); 
-		return info;
+		std::vector<std::int8_t>* info;
+		sync_call(&session_impl::get_friend_info, pubkey, reinterpret_cast<std::vector<char>*> (info));
+		return *info;
 	}
 
 	void session_handle::unset_chatting_friend()
@@ -261,21 +261,14 @@ namespace libTAU {
 		sync_call(&session_impl::unset_chatting_friend);
 	}
 
-	bool session_handle::update_friend_info(std::array<char, 32> pubkey, std::vector<char> friend_info)
+	bool session_handle::update_friend_info(const dht::public_key& pubkey, std::vector<char> friend_info)
 	{
 		return sync_call_ret<bool>(&session_impl::update_friend_info, pubkey, friend_info);
 	}
 
-	void session_handle::set_active_friends(std::vector<std::array<char, 32>> active_friends)
+	void session_handle::set_active_friends(std::vector<dht::public_key> active_friends)
 	{
-		std::vector<aux::bytes> friends;
-
-		for (auto f = active_friends.begin(); f != active_friends.end(); f++)
-		{
-			friends.push_back(std::vector<char>((*f).begin(), (*f).end()));
-		}
-
-		sync_call(&session_impl::set_active_friends, friends);	
+		sync_call(&session_impl::set_active_friends, active_friends);	
 	}
 
 	bool session_handle::add_new_message(communication::message msg)

@@ -73,15 +73,19 @@ namespace libTAU::blockchain {
 
     bool blockchain::followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
         if (!chain_id.empty()) {
+            // create sqlite peer db
             m_repository->create_peer_db(chain_id);
             m_repository->create_gossip_peer_db(chain_id);
 
+            // add peer into db
             for (auto const &peer: peers) {
                 m_repository->add_peer_in_gossip_peer_db(chain_id, peer);
             }
 
+            // try to load chain info
             load_chain(chain_id);
 
+            // follow chain id in memory and db
             m_repository->add_new_chain(chain_id);
             m_chains.push_back(chain_id);
 
@@ -92,6 +96,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::unfollowChain(const aux::bytes &chain_id) {
+        // remove chain id from memory
         for (auto it = m_chains.begin(); it != m_chains.end(); ++it) {
             if (chain_id == *it) {
                 m_chains.erase(it);
@@ -99,7 +104,9 @@ namespace libTAU::blockchain {
             }
         }
 
+        // remove chain id from db
         m_repository->delete_chain(chain_id);
+        // remove chain cache
         clear_chain_cache(chain_id);
         // todo: clear data in db?
 
@@ -114,7 +121,8 @@ namespace libTAU::blockchain {
 //        m_chain_peers[chain_id] = m_repository->get_all_peers(chain_id);
 //        m_chain_gossip_peers[chain_id] = m_repository->get_all_gossip_peers(chain_id);
 
-        // get tip/tail block
+        // load key point block in memory
+        // load tip/tail block
         auto tip_block_hash = m_repository->get_best_tip_block_hash(chain_id);
         auto tail_block_hash = m_repository->get_best_tail_block_hash(chain_id);
         if (!tip_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros()) {
@@ -124,6 +132,7 @@ namespace libTAU::blockchain {
                 m_best_tip_blocks[chain_id] = tip_block;
                 m_best_tail_blocks[chain_id] = tail_block;
 
+                // try to load consensus point block
                 try_to_update_consensus_point_block(chain_id);
             }
         }
@@ -252,6 +261,7 @@ namespace libTAU::blockchain {
         if (e || m_stop) return;
 
         try {
+            // refresh all chain votes
             for (auto const& chain_id: m_chains) {
                 refresh_vote(chain_id);
             }
@@ -494,7 +504,9 @@ namespace libTAU::blockchain {
         auto& tip_block = m_best_tip_blocks[chain_id];
         auto& tail_block = m_best_tail_blocks[chain_id];
 
+        // calc consensus point block number
         auto block_number = (tip_block.block_number() / 100 - 1) * 100;
+        // make sure that consensus block number>=0
         if (block_number < 0) {
             block_number = 0;
         }
@@ -585,15 +597,19 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::is_empty_chain(const aux::bytes &chain_id) {
+        // check if best tip block empty
         auto &best_tip_block = m_best_tip_blocks[chain_id];
 
         return best_tip_block.empty();
     }
 
     bool blockchain::is_consensus_point_immutable(const aux::bytes &chain_id) {
+        // check if best vote and consensus block match, true if match, false otherwise
         auto &best_vote = m_best_votes[chain_id];
         auto &consensus_block = m_consensus_point_blocks[chain_id];
-        if (!best_vote.empty() && !consensus_block.empty() && best_vote.block_hash() != consensus_block.sha256())
+        if (consensus_block.empty())
+            return false;
+        if (!best_vote.empty() && best_vote.block_hash() != consensus_block.sha256())
             return false;
 
         return true;
@@ -603,9 +619,11 @@ namespace libTAU::blockchain {
         auto &best_tail_block = m_best_tail_blocks[chain_id];
         auto &best_tip_block = m_best_tip_blocks[chain_id];
 
+        // if block number<0, previous hash is all zeros, sync is completed
         if (best_tail_block.block_number() < 0 && best_tail_block.previous_block_hash().is_all_zeros())
             return true;
 
+        // if chain length = effective block number, sync is completed
         if (best_tip_block.block_number() - best_tail_block.block_number() >= EFFECTIVE_BLOCK_NUMBER)
             return true;
 
@@ -616,15 +634,18 @@ namespace libTAU::blockchain {
         auto &best_tip_block = m_best_tip_blocks[chain_id];
         auto &block_maps = m_blocks[chain_id];
 
+        // find out fork point block
         std::vector<block> undo_blocks;
         std::vector<block> new_blocks;
 
         bool is_consensus_immutable = is_consensus_point_immutable(chain_id);
         auto consensus_point_block = m_consensus_point_blocks[chain_id];
 
+        // align main chain and branch block number
         block main_chain_block = best_tip_block;
         while (main_chain_block.block_number() > target.block_number()) {
-            if (is_consensus_immutable && main_chain_block.sha256() == consensus_point_block.sha256()) {
+            // check if try to rollback consensus point block
+            if (main_chain_block.sha256() == consensus_point_block.sha256() && is_consensus_immutable) {
                 m_blocks[chain_id].clear();
                 return FALSE;
             }
@@ -652,7 +673,7 @@ namespace libTAU::blockchain {
         }
 
         while (main_chain_block.sha256() != reference_block.sha256()) {
-            if (is_consensus_immutable && main_chain_block.sha256() == consensus_point_block.sha256()) {
+            if (main_chain_block.sha256() == consensus_point_block.sha256() && is_consensus_immutable) {
                 m_blocks[chain_id].clear();
                 return FALSE;
             }
@@ -744,6 +765,7 @@ namespace libTAU::blockchain {
     void blockchain::refresh_vote(const aux::bytes &chain_id) {
         std::set<vote> votes;
         auto & peer_votes = m_votes[chain_id];
+        // count votes
         for (auto const& v: peer_votes) {
             auto it = votes.find(v.second);
             if (it != votes.end()) {
@@ -756,6 +778,7 @@ namespace libTAU::blockchain {
         }
 
         if (!votes.empty()) {
+            // select top three votes
             m_best_votes[chain_id] = *votes.rbegin();
 
             std::vector<vote> top_three_votes;
@@ -768,8 +791,9 @@ namespace libTAU::blockchain {
                 i++;
             }
             m_ses.alerts().emplace_alert<blockchain_top_three_votes_alert>(top_three_votes);
-
         }
+
+        // clear history votes for next round
         m_votes[chain_id].clear();
     }
 

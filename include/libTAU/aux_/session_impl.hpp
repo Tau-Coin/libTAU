@@ -616,13 +616,13 @@ namespace aux {
 
 			void new_account_seed(std::array<char, 32>& seed);
 			void set_loop_time_interval(int milliseconds);
-			bool add_new_friend(std::array<char, 32>& pubkey);
-			bool delete_friend(std::array<char, 32>& pubkey);
-            void get_friend_info(std::array<char, 32>& pubkey, std::vector<char>* info);
-            bool update_friend_info(std::array<char, 32>& pubkey, aux::bytes friend_info);
-			void set_chatting_friend(std::array<char, 32> chatting_friend);
+			bool add_new_friend(const dht::public_key& pubkey);
+			bool delete_friend(const dht::public_key& pubkey);
+            void get_friend_info(const dht::public_key& pubkey, std::vector<char>* info);
+            bool update_friend_info(const dht::public_key& pubkey, aux::bytes friend_info);
+			void set_chatting_friend(const dht::public_key& chatting_friend);
             void unset_chatting_friend();
-            void set_active_friends(std::vector<aux::bytes> active_friends);
+            void set_active_friends(std::vector<dht::public_key> active_friends);
             bool add_new_message(const communication::message& msg);
 
 			
