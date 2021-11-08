@@ -241,7 +241,7 @@ namespace libTAU {
 		SET(disk_io_read_mode, settings_pack::enable_os_cache, nullptr),
 		SET(outgoing_port, 0, nullptr),
 		SET(num_outgoing_ports, 0, nullptr),
-		SET(peer_tos, 0x20, &session_impl::update_peer_tos),
+		SET(peer_tos, 0x00, &session_impl::update_peer_tos),
 		SET(active_downloads, 3, nullptr),
 		SET(active_seeds, 5, nullptr),
 		SET(active_checking, 1, nullptr),
