@@ -325,25 +325,25 @@ namespace libTAU {
 		void set_loop_time_interval(int milliseconds);
 
 		// add new friend in memory & db
-		bool add_new_friend(std::array<char, 32> pubkey);
+		bool add_new_friend(const dht::public_key& pubkey);
 
 		// delete friend and all related data in memory & db
-		bool delete_friend(std::array<char, 32> pubkey);
+		bool delete_friend(const dht::public_key& pubkey);
 
 		// get friend info by public key
-		std::vector<char> get_friend_info(std::array<char, 32> pubkey);
+		std::vector<std::int8_t> get_friend_info(const dht::public_key& pubkey);
 
 		// set chatting friends
-		void set_chatting_friend(std::array<char, 32> pubkey);
+		void set_chatting_friend(const dht::public_key& pubkey);
 
 		// unset chatting friends
 		void unset_chatting_friend();
 
 		// save friend info
-		bool update_friend_info(std::array<char, 32> pubkey, std::vector<char> friend_info);
+		bool update_friend_info(const dht::public_key& pubkey, std::vector<char> friend_info);
 
 		// set active friends
-		void set_active_friends(std::vector<std::array<char, 32>> active_friends);
+		void set_active_friends(std::vector<dht::public_key> active_friends);
 
 		// add a new message
 		bool add_new_message(communication::message msg);
