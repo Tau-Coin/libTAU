@@ -294,9 +294,6 @@ void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 	}
 #endif
 
-	// let the routing table know this node may exist
-	m_node.m_table.heard_about(id, addr);
-
 	node_entry *existing;
 	std::tie(existing, std::ignore, std::ignore) = m_node.m_table.find_node(addr);
 
@@ -325,11 +322,14 @@ void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 	// When one endpoint aren't accepted by routing table, give it
 	// invoking chance if its distance is enough small.
 	if (!m_direct_invoking && (existing == nullptr
-				|| (existing != nullptr && existing->allow_invoke()))
+				|| (existing != nullptr && existing->allow_invoke() && !existing->pinged()))
 		&& distance_exp(m_target, id) <= allow_distance())
 	{
 		add_entry(id, addr, {});
 	}
+
+	// let the routing table know this node may exist
+	m_node.m_table.heard_about(id, addr);
 }
 
 void traversal_algorithm::finished(observer_ptr o)
