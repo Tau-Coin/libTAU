@@ -24,15 +24,15 @@ namespace libTAU {
             m_hash = dht::item_target_id(m_encode);
         }
 
-        message::message(std::int64_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver, aux::bytes mPayload) :
-        m_timestamp(mTimestamp), m_sender(std::move(mSender)),
-        m_receiver(std::move(mReceiver)), m_payload(std::move(mPayload)) {
+        message::message(std::int64_t mTimestamp, dht::public_key mSender, dht::public_key mReceiver, aux::bytes mPayload) :
+        m_timestamp(mTimestamp), m_sender(mSender),
+        m_receiver(mReceiver), m_payload(std::move(mPayload)) {
             // timestamp
             m_entry["t"] = entry(m_timestamp);
             // sender
-            m_entry["s"] = entry(std::string(m_sender.begin(), m_sender.end()));
+            m_entry["s"] = entry(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
             // receiver
-            m_entry["r"] = entry(std::string(m_receiver.begin(), m_receiver.end()));
+            m_entry["r"] = entry(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
             // payload
             m_entry["p"] = entry(std::string(m_payload.begin(), m_payload.end()));
 
@@ -50,13 +50,13 @@ namespace libTAU {
             if (auto* i = const_cast<entry *>(e.find_key("s")))
             {
                 auto sender = i->string();
-                m_sender = aux::bytes(sender.begin(), sender.end());
+                m_sender = dht::public_key(sender.data());
             }
             // receiver
             if (auto* i = const_cast<entry *>(e.find_key("r")))
             {
                 auto receiver = i->string();
-                m_receiver = aux::bytes(receiver.begin(), receiver.end());
+                m_receiver = dht::public_key(receiver.data());
             }
             // payload
             if (auto* i = const_cast<entry *>(e.find_key("p")))
@@ -74,8 +74,8 @@ namespace libTAU {
 
         std::ostream &operator<<(std::ostream &os, const message &message) {
             os << "message m_hash: " << aux::toHex(message.m_hash.to_string()) << "m_timestamp: "
-               << message.m_timestamp << " m_sender: " << aux::toHex(message.m_sender) << " m_receiver: "
-               << aux::toHex(message.m_receiver) << " m_payload: " << aux::toHex(message.m_payload);
+               << message.m_timestamp << " m_sender: " << aux::toHex(message.m_sender.bytes) << " m_receiver: "
+               << aux::toHex(message.m_receiver.bytes) << " m_payload: " << aux::toHex(message.m_payload);
             return os;
         }
     }

@@ -1192,7 +1192,7 @@ namespace libTAU {
     struct TORRENT_EXPORT communication_confirmation_root_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, aux::bytes p, std::vector<sha256_hash> s, std::int64_t t);
+        TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, dht::public_key p, std::vector<sha256_hash> s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_confirmation_root_alert, 33, alert_priority::critical)
 
@@ -1201,7 +1201,7 @@ namespace libTAU {
         std::string message() const override;
 
         // public key
-        aux::bytes peer;
+        dht::public_key peer;
 
         // confirmation root
         std::vector<sha256_hash> confirmation_roots;
@@ -1214,7 +1214,7 @@ namespace libTAU {
     struct TORRENT_EXPORT communication_syncing_message_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, aux::bytes p, sha256_hash s, std::int64_t t);
+        TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_syncing_message_alert, 34, alert_priority::critical)
 
@@ -1223,7 +1223,7 @@ namespace libTAU {
         std::string message() const override;
 
         // public key
-        aux::bytes peer;
+        dht::public_key peer;
 
         // syncing message hash
         sha256_hash syncing_msg_hash;
@@ -1236,7 +1236,7 @@ namespace libTAU {
     struct TORRENT_EXPORT communication_friend_info_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_friend_info_alert(aux::stack_allocator& alloc, aux::bytes p, aux::bytes t);
+        TORRENT_UNEXPORT communication_friend_info_alert(aux::stack_allocator& alloc, dht::public_key p, aux::bytes t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_friend_info_alert, 35, alert_priority::critical)
 
@@ -1245,7 +1245,7 @@ namespace libTAU {
         std::string message() const override;
 
         // public key
-        aux::bytes peer;
+        dht::public_key peer;
 
         // friend info
         aux::bytes friend_info;
@@ -1284,7 +1284,7 @@ namespace libTAU {
     struct TORRENT_EXPORT communication_last_seen_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_last_seen_alert(aux::stack_allocator& alloc, aux::bytes p, int64_t t);
+        TORRENT_UNEXPORT communication_last_seen_alert(aux::stack_allocator& alloc, dht::public_key p, int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_last_seen_alert, 37, alert_priority::critical)
 
@@ -1293,7 +1293,7 @@ namespace libTAU {
         std::string message() const override;
 
         // public key
-        aux::bytes peer;
+        dht::public_key peer;
 
         // last seen time
         int64_t last_seen;

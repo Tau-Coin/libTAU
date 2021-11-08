@@ -26,40 +26,40 @@ namespace libTAU {
             bool init() override;
 
             // get all friends
-            std::vector<aux::bytes> get_all_friends() override;
+            std::vector<dht::public_key> get_all_friends() override;
 
             // save a friend in db
-            bool save_friend(const aux::bytes& public_key) override;
+            bool save_friend(const dht::public_key &pubKey) override;
 
             // delete a friend
-            bool delete_friend(const aux::bytes& public_key) override;
+            bool delete_friend(const dht::public_key &pubKey) override;
 
             // get friend info by key pair<my public key, peer public key>
-            aux::bytes get_friend_info(const std::pair<aux::bytes, aux::bytes>& key) override;
+            aux::bytes get_friend_info(const std::pair<dht::public_key, dht::public_key> &key) override;
 
             // save friend info
-            bool save_friend_info(const std::pair<aux::bytes, aux::bytes>& key, const aux::bytes& friend_info) override;
+            bool save_friend_info(const std::pair<dht::public_key, dht::public_key> &key, const aux::bytes& friend_info) override;
 
             // delete friend info by key pair<my public key, peer public key>
-            bool delete_friend_info(const std::pair<aux::bytes, aux::bytes>& key) override;
+            bool delete_friend_info(const std::pair<dht::public_key, dht::public_key> &key) override;
 
             // get message by hash
-            communication::message get_message(const aux::bytes& hash) override;
+            communication::message get_message(const sha256_hash &hash) override;
 
             // save message
             bool save_message(const communication::message& msg) override;
 
             // delete message
-            bool delete_message(const aux::bytes& hash) override;
+            bool delete_message(const sha256_hash &hash) override;
 
             // get encode of the latest message hash list by key pair<my public key, peer public key>
-            std::string get_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) override;
+            std::string get_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) override;
 
             // save encode of the latest message hash list with key pair<my public key, peer public key>
-            bool save_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key, const std::string& encode) override;
+            bool save_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key, const std::string& encode) override;
 
             // delete encode of the latest message hash list by key pair<my public key, peer public key>
-            bool delete_latest_message_hash_list_encode(const std::pair<aux::bytes, aux::bytes>& key) override;
+            bool delete_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) override;
 
         private:
 

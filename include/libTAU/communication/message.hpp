@@ -16,6 +16,7 @@ see LICENSE file.
 #include "libTAU/hasher.hpp"
 #include <libTAU/aux_/common.h>
 #include "libTAU/aux_/common_data.h"
+#include <libTAU/kademlia/types.hpp>
 #include "libTAU/entry.hpp"
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
@@ -35,17 +36,17 @@ namespace libTAU {
             // @param Construct with bencode
             explicit message(std::string encode): message(bdecode(encode)) {}
 
-            message(std::int64_t mTimestamp, aux::bytes mSender, aux::bytes mReceiver,
+            message(std::int64_t mTimestamp, dht::public_key mSender, dht::public_key mReceiver,
                     aux::bytes mPayload);
 
             // @returns message timestamp
             std::int64_t timestamp() const { return m_timestamp; }
 
             // @returns sender
-            const aux::bytes &sender() const { return m_sender; }
+            const dht::public_key &sender() const { return m_sender; }
 
             // @returns receiver
-            const aux::bytes &receiver() const { return m_receiver; }
+            const dht::public_key &receiver() const { return m_receiver; }
 
             // @returns payload
             const aux::bytes &payload() const { return m_payload; }
@@ -99,10 +100,10 @@ namespace libTAU {
             std::int64_t m_timestamp{};
 
             // message sender
-            aux::bytes m_sender;
+            dht::public_key m_sender;
 
             // message receiver
-            aux::bytes m_receiver;
+            dht::public_key m_receiver;
 
             // payload
             aux::bytes m_payload;

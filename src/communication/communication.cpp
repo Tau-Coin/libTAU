@@ -59,17 +59,16 @@ namespace libTAU {
                 m_friends = m_message_db->get_all_friends();
 
                 dht::public_key *pk = m_ses.pubkey();
-                aux::bytes my_pk(pk->bytes.begin(), pk->bytes.end());
-                m_friends.push_back(my_pk);
+                m_friends.push_back(*pk);
 
                 log("INFO: friend size: %zu", m_friends.size());
                 for (auto const & peer: m_friends) {
-                    log("INFO: friend: %s", aux::toHex(peer).c_str());
-                    std::string encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(my_pk, peer));
+                    log("INFO: friend: %s", aux::toHex(peer.bytes).c_str());
+                    std::string encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(*pk, peer));
 
                     if (!encode.empty()) {
                         message_hash_list hashList(encode);
-                        log("INFO: %s from peer[%s]", hashList.to_string().c_str(), aux::toHex(peer).c_str());
+                        log("INFO: %s from peer[%s]", hashList.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                         for (auto const &hash: hashList.hash_list()) {
                             log("INFO: Get message hash:%s", aux::toHex(hash).c_str());
                             message msg = m_message_db->get_message(hash);
@@ -95,7 +94,7 @@ namespace libTAU {
         void communication::clear() {
             m_friends.clear();
             m_message_list_map.clear();
-            m_chatting_friend = std::make_pair(aux::bytes(), 0);
+            m_chatting_friend = std::make_pair(dht::public_key(), 0);
             m_active_friends.clear();
             m_last_seen.clear();
             m_latest_signal_time.clear();
@@ -126,13 +125,13 @@ namespace libTAU {
             m_refresh_time = milliseconds;
         }
 
-        bool communication::add_new_friend(const aux::bytes& pubkey) {
-            if (pubkey.empty()) {
+        bool communication::add_new_friend(const dht::public_key &pubkey) {
+            if (pubkey == dht::public_key()) {
                 log("ERROR: Public key is empty.");
                 return false;
             }
 
-            log("INFO: Add new friend, public key %s.", aux::toHex(pubkey).c_str());
+            log("INFO: Add new friend, public key %s.", aux::toHex(pubkey.bytes).c_str());
 
             auto it = find(m_friends.begin(), m_friends.end(), pubkey);
             if (it == m_friends.end()) {
@@ -148,8 +147,8 @@ namespace libTAU {
             return true;
         }
 
-        bool communication::delete_friend(const aux::bytes& pubkey) {
-            log("INFO: Delete friend, public key %s.", aux::toHex(pubkey).c_str());
+        bool communication::delete_friend(const dht::public_key &pubkey) {
+            log("INFO: Delete friend, public key %s.", aux::toHex(pubkey.bytes).c_str());
 
             for(auto it = m_friends.begin(); it != m_friends.end(); ++it) {
                 if (*it == pubkey) {
@@ -164,15 +163,13 @@ namespace libTAU {
             }
 
             const auto &pk = m_ses.pubkey();
-            aux::bytes my_pk;
-            my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
 
-            if (!m_message_db->delete_friend_info(std::make_pair(my_pk, pubkey))) {
+            if (!m_message_db->delete_friend_info(std::make_pair(*pk, pubkey))) {
                 log("ERROR: Delete friend info failed!");
                 return false;
             }
 
-            if (!m_message_db->delete_latest_message_hash_list_encode(std::make_pair(my_pk, pubkey))) {
+            if (!m_message_db->delete_latest_message_hash_list_encode(std::make_pair(*pk, pubkey))) {
                 log("ERROR: Delete friend message hash list encode failed!");
                 return false;
             }
@@ -180,34 +177,30 @@ namespace libTAU {
             return true;
         }
 
-        aux::bytes communication::get_friend_info(const aux::bytes& pubkey) {
+        aux::bytes communication::get_friend_info(const dht::public_key &pubkey) {
             const auto &pk = m_ses.pubkey();
-            aux::bytes my_pk;
-            my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
-            return m_message_db->get_friend_info(std::make_pair(my_pk, pubkey));
+            return m_message_db->get_friend_info(std::make_pair(*pk, pubkey));
         }
 
-        bool communication::update_friend_info(const aux::bytes& pubkey, const aux::bytes& friend_info) {
-            log("INFO: Update peer[%s] friend info[%s]", aux::toHex(pubkey).c_str(), aux::toHex(friend_info).c_str());
+        bool communication::update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info) {
+            log("INFO: Update peer[%s] friend info[%s]", aux::toHex(pubkey.bytes).c_str(), aux::toHex(friend_info).c_str());
             const auto &pk = m_ses.pubkey();
-            aux::bytes my_pk;
-            my_pk.insert(my_pk.end(), pk->bytes.begin(), pk->bytes.end());
-            return m_message_db->save_friend_info(std::make_pair(my_pk, pubkey), friend_info);
+            return m_message_db->save_friend_info(std::make_pair(*pk, pubkey), friend_info);
         }
 
-        void communication::set_chatting_friend(aux::bytes chatting_friend) {
-            log("INFO: Set chatting friend:%s", aux::toHex(chatting_friend).c_str());
-            m_chatting_friend = std::make_pair(std::move(chatting_friend), total_seconds(system_clock::now().time_since_epoch()));
+        void communication::set_chatting_friend(dht::public_key chatting_friend) {
+            log("INFO: Set chatting friend:%s", aux::toHex(chatting_friend.bytes).c_str());
+            m_chatting_friend = std::make_pair(chatting_friend, total_seconds(system_clock::now().time_since_epoch()));
         }
 
         void communication::unset_chatting_friend() {
-            if (!m_chatting_friend.first.empty()) {
+            if (m_chatting_friend.first != dht::public_key()) {
                 log("INFO: Unset chatting friend.");
-                m_chatting_friend = std::make_pair(aux::bytes(), 0);
+                m_chatting_friend = std::make_pair(dht::public_key(), 0);
             }
         }
 
-        void communication::set_active_friends(std::vector<aux::bytes> active_friends) {
+        void communication::set_active_friends(std::vector<dht::public_key> active_friends) {
             log("INFO: Set active friends[%zu].", active_friends.size());
             m_active_friends = std::move(active_friends);
         }
@@ -216,7 +209,7 @@ namespace libTAU {
             return add_new_message(msg.receiver(), msg, post_alert);
         }
 
-        bool communication::add_new_message(const aux::bytes& peer, const message& msg, bool post_alert) {
+        bool communication::add_new_message(const dht::public_key &peer, const message& msg, bool post_alert) {
             if (msg.empty()) {
                 log("ERROR: Message is empty.");
                 return false;
@@ -256,8 +249,8 @@ namespace libTAU {
             return true;
         }
 
-        aux::bytes communication::select_friend_randomly() {
-            aux::bytes peer;
+        dht::public_key communication::select_friend_randomly() {
+            dht::public_key peer{};
 
             if (!m_friends.empty())
             {
@@ -274,7 +267,7 @@ namespace libTAU {
                 }
 
                 // chatting friend有80%的概率选中
-                if (!m_chatting_friend.first.empty() && index < 8) {
+                if (m_chatting_friend.first != dht::public_key() && index < 8) {
                     peer = m_chatting_friend.first;
                 } else {
                     // 以上一次产生的随机数和时间的和作为种子，产生新的随机数，避免时钟太快，产生的随机数一样的情况
@@ -288,7 +281,7 @@ namespace libTAU {
                         peer = m_active_friends[index];
                     } else {
                         // 筛选剩余的朋友
-                        std::vector<aux::bytes> other_friends = m_friends;
+                        std::vector<dht::public_key> other_friends = m_friends;
                         for (const auto& fri: m_friends) {
                             bool found = false;
                             for (const auto& active_fri: m_active_friends) {
@@ -322,11 +315,11 @@ namespace libTAU {
 
             try {
                 // 随机挑选一个朋友put/get
-                aux::bytes peer = select_friend_randomly();
+                dht::public_key peer = select_friend_randomly();
                 std::int64_t current_time = total_milliseconds(system_clock::now().time_since_epoch());
 				int random_time_interval = rand()%400 + 800;
-                if (!peer.empty() && current_time > (m_peer_access_times[peer] + random_time_interval)) {
-                    log("INFO: Select peer:%s", aux::toHex(peer).c_str());
+                if (peer != dht::public_key() && current_time > (m_peer_access_times[peer] + random_time_interval)) {
+                    log("INFO: Select peer:%s", aux::toHex(peer.bytes).c_str());
                     m_peer_access_times[peer] = current_time;
 
                     request_signal(peer);
@@ -334,36 +327,29 @@ namespace libTAU {
                 }
 
                 m_refresh_timer.expires_after(milliseconds(m_refresh_time));
-                m_refresh_timer.async_wait(
-                        std::bind(&communication::refresh_timeout, self(), _1));
+                m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
             } catch (std::exception &e) {
                 log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             }
         }
 
-        void communication::save_friend_latest_message_hash_list(const aux::bytes& peer) {
+        void communication::save_friend_latest_message_hash_list(const dht::public_key &peer) {
             auto message_list = m_message_list_map.at(peer);
             if (!message_list.empty()) {
-                std::vector<aux::bytes> hash_list;
+                std::vector<sha256_hash> hash_list;
                 for (const auto & msg: message_list) {
-                    std::string h = msg.sha256().to_string();
-                    aux::bytes hash(h.begin(), h.end());
-//                    log("INFO: Push message hash %s into hash list", aux::toHex(hash).c_str());
-                    hash_list.push_back(hash);
+                    hash_list.push_back(msg.sha256());
                 }
 
-                const auto &pubkey = m_ses.pubkey();
-                aux::bytes public_key;
-                public_key.insert(public_key.end(), pubkey->bytes.begin(), pubkey->bytes.end());
+                dht::public_key pubkey = *m_ses.pubkey();
 
                 message_hash_list messageHashList(hash_list);
                 log("INFO: Save message hash list %s", messageHashList.to_string().c_str());
-                m_message_db->save_latest_message_hash_list_encode(std::make_pair(public_key, peer),
-                                                                   messageHashList.encode());
+                m_message_db->save_latest_message_hash_list_encode(std::make_pair(pubkey, peer),messageHashList.encode());
             }
         }
 
-        bool communication::try_to_update_Latest_message_list(const aux::bytes &peer, const message& msg, bool post_alert) {
+        bool communication::try_to_update_Latest_message_list(const dht::public_key &peer, const message& msg, bool post_alert) {
             if (msg.empty())
                 return false;
 
@@ -595,13 +581,13 @@ namespace libTAU {
             }
         }
 
-        std::string communication::make_salt(aux::bytes peer) {
-            std::string salt(peer.begin(), peer.begin() + communication_salt_length);
+        std::string communication::make_salt(dht::public_key peer) {
+            std::string salt(peer.bytes.begin(), peer.bytes.begin() + communication_salt_length);
 
             return salt;
         }
 
-        online_signal communication::make_signal(const aux::bytes& peer) {
+        online_signal communication::make_signal(const dht::public_key &peer) {
             auto now = total_milliseconds(system_clock::now().time_since_epoch());
 
             // 构造Levenshtein数组，按顺序取每条信息哈希的第一个字节
@@ -613,7 +599,7 @@ namespace libTAU {
                     hash_prefix_bytes.push_back(msg.sha256()[0]);
                 }
             } else {
-                log("INFO: Message list from peer[%s] is empty.", aux::toHex(peer).c_str());
+                log("INFO: Message list from peer[%s] is empty.", aux::toHex(peer.bytes).c_str());
             }
 
             immutable_data_info payload;
@@ -660,19 +646,18 @@ namespace libTAU {
                     payload = m_last_gasp_payload[peer];
                     log("INFO: Last gasp.");
                 }
-                log("INFO: Peer[%s] has no missing messages", aux::toHex(peer).c_str());
+                log("INFO: Peer[%s] has no missing messages", aux::toHex(peer.bytes).c_str());
             }
 
-            dht::public_key * pk = m_ses.pubkey();
-            aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
+            dht::public_key pubkey = *m_ses.pubkey();
 
-            if (peer == public_key) {
+            if (peer == pubkey) {
                 // 随机挑选一个朋友发送其信息
                 srand(total_milliseconds(system_clock::now().time_since_epoch()));
                 auto index = rand() % m_friends.size();
                 auto fri = m_friends[index];
-                log("INFO: Take friend %s", aux::toHex(fri).c_str());
-                aux::bytes friend_info = m_message_db->get_friend_info(std::make_pair(public_key, fri));
+                log("INFO: Take friend %s", aux::toHex(fri.bytes).c_str());
+                aux::bytes friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, fri));
 
                 online_signal onlineSignal(now, m_device_id, hash_prefix_bytes, payload, friend_info);
                 log("INFO: Make online signal:%s on XX channel", onlineSignal.to_string().c_str());
@@ -687,7 +672,7 @@ namespace libTAU {
         }
 
         // callback for dht_immutable_get
-        void communication::get_immutable_callback(aux::bytes const& peer, sha256_hash target
+        void communication::get_immutable_callback(const dht::public_key &peer, sha256_hash target
                 , dht::item const& i)
         {
             log("DEBUG: Immutable callback");
@@ -702,7 +687,7 @@ namespace libTAU {
             }
         }
 
-        void communication::dht_get_immutable_item(aux::bytes const& peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
+        void communication::dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
         {
             if (!m_ses.dht()) return;
             log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
@@ -718,19 +703,18 @@ namespace libTAU {
 
             // construct mutable data wrapper from entry
             if (!i.empty()) {
-                dht::public_key * pk = m_ses.pubkey();
-                aux::bytes public_key(pk->bytes.begin(), pk->bytes.end());
+                dht::public_key pubkey = *m_ses.pubkey();
 
-                aux::bytes peer(i.pk().bytes.begin(), i.pk().bytes.end());
+                dht::public_key peer = i.pk();
 
                 online_signal onlineSignal(i.value());
-                log("INFO: Got online signal:[%s] from peer[%s]", onlineSignal.to_string().c_str(), aux::toHex(peer).c_str());
+                log("INFO: Got online signal:[%s] from peer[%s]", onlineSignal.to_string().c_str(), aux::toHex(peer.bytes).c_str());
 
                 auto now_time = total_milliseconds(system_clock::now().time_since_epoch());
                 // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
                 if ((onlineSignal.timestamp() + communication_data_accepted_time < now_time) ||
                     (onlineSignal.timestamp() - communication_data_accepted_time > now_time)) {
-                    log("WARNING: Online signal timestamp from peer[%s] is out of range!", aux::toHex(peer).c_str());
+                    log("WARNING: Online signal timestamp from peer[%s] is out of range!", aux::toHex(peer.bytes).c_str());
                     return;
                 }
 
@@ -739,7 +723,7 @@ namespace libTAU {
                     m_last_seen[peer] = onlineSignal.timestamp();
                     // 通知用户新的last seen time
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, onlineSignal.timestamp());
-                    log("INFO: Last seen peer[%s], time[%ld]", aux::toHex(peer).c_str(), onlineSignal.timestamp());
+                    log("INFO: Last seen peer[%s], time[%ld]", aux::toHex(peer.bytes).c_str(), onlineSignal.timestamp());
                 }
 
                 auto &device_id = onlineSignal.device_id();
@@ -752,7 +736,7 @@ namespace libTAU {
 //                    m_latest_signal_time[peer] = device_time_map;
 
                     // if signal is from multi-device, post new device id alert and friend info alert
-                    if (peer == public_key && device_id != m_device_id) {
+                    if (peer == pubkey && device_id != m_device_id) {
                         // 通知用户新的device id
                         m_ses.alerts().emplace_alert<communication_new_device_id_alert>(device_id);
                         log("INFO: Found new device id: %s", aux::toHex(device_id).c_str());
@@ -767,7 +751,7 @@ namespace libTAU {
                     }
 
                     // if signal is from multi-device or peer Y, sync immutable data and calc LevenshteinDistance
-                    if (device_id != m_device_id || peer != public_key) {
+                    if (device_id != m_device_id || peer != pubkey) {
                         // get immutable message
                         const immutable_data_info& payload = onlineSignal.payload();
                         log("INFO: Payload:%s", payload.to_string().c_str());
@@ -869,21 +853,20 @@ namespace libTAU {
             }
         } // anonymous namespace
 
-        void communication::request_signal(const aux::bytes &peer) {
-            dht::public_key * my_pk = m_ses.pubkey();
-            aux::bytes public_key(my_pk->bytes.begin(), my_pk->bytes.end());
+        void communication::request_signal(const dht::public_key &peer) {
+            dht::public_key pubkey = *m_ses.pubkey();
 
             // salt is x pubkey when request signal
-            auto salt = make_salt(public_key);
+            auto salt = make_salt(pubkey);
 
             std::array<char, 32> pk{};
-            std::copy(peer.begin(), peer.end(), pk.begin());
+            std::copy(peer.bytes.begin(), peer.bytes.end(), pk.begin());
 
-            log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer).c_str(), aux::toHex(salt).c_str());
+            log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
             dht_get_mutable_item(pk, salt);
         }
 
-        void communication::publish_signal(const aux::bytes &peer) {
+        void communication::publish_signal(const dht::public_key &peer) {
 //            entry data;
             dht::public_key * pk = m_ses.pubkey();
             dht::secret_key * sk = m_ses.serkey();
