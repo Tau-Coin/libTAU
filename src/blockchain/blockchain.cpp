@@ -221,21 +221,23 @@ namespace libTAU::blockchain {
                 block b = try_to_mine_block(chain_id);
 
                 if (!b.empty()) {
+                    // process mined block
                     process_block(chain_id, b);
                 }
 
+                // check if need to refresh unchoed peers
                 try_to_refresh_unchoked_peers(chain_id);
 
-                // select 4 unchoked peers
+                // get 4 unchoked peers
                 auto& unchoked_peers = m_unchoked_peers[chain_id];
                 std::vector<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
-                // select one peer from gossip db
+                // get one peer from gossip db
 //                auto p = select_peer_randomly(chain_id);
                 auto p = m_repository->get_gossip_peer_randomly(chain_id);
                 if (!(p == dht::public_key())) {
                     peers.push_back(p);
                 }
-                // select one peer from tx pool
+                // get one peer from tx pool
                 std::set<dht::public_key> tx_active_peers = m_tx_pools[chain_id].get_active_peers();
                 std::vector<dht::public_key> active_peers(tx_active_peers.begin(), tx_active_peers.end());
                 if (!active_peers.empty()) {
@@ -245,6 +247,7 @@ namespace libTAU::blockchain {
                     peers.push_back(active_peers[index]);
                 }
 
+                // select one randomly from 6 peers to get
                 if (!peers.empty())
                 {
                     // 产生随机数
@@ -253,12 +256,12 @@ namespace libTAU::blockchain {
                     request_signal(chain_id, peers[index]);
                 }
 
+                // put
                 publish_signal(chain_id);
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
-            m_refresh_timer.async_wait(
-                    std::bind(&blockchain::refresh_timeout, self(), _1));
+            m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
         } catch (std::exception &e) {
             log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
@@ -282,6 +285,7 @@ namespace libTAU::blockchain {
 
     void blockchain::try_to_refresh_unchoked_peers(const aux::bytes &chain_id) {
         std::int64_t now = total_seconds(system_clock::now().time_since_epoch());
+        // check if has been updated during this 5 min
         if (now / DEFAULT_BLOCK_TIME != m_update_peer_time[chain_id]) {
             auto peers = select_unchoked_peers(chain_id);
             m_unchoked_peers[chain_id] = peers;
@@ -344,26 +348,32 @@ namespace libTAU::blockchain {
         auto chain_peers = m_repository->get_all_peers(chain_id);
 
         dht::public_key *pk = m_ses.pubkey();
+        // insert me into peer set and make sure that I am in the set
         chain_peers.insert(*pk);
+
         if (chain_peers.size() > 1) {
             std::map<sha256_hash, dht::public_key> hash_peer_map;
             std::set<sha256_hash> hashes;
             std::int64_t now = total_seconds(system_clock::now().time_since_epoch()) / DEFAULT_BLOCK_TIME;
             for (auto const& peer: chain_peers) {
+                // connect public key with time
                 std::string spk(peer.bytes.begin(), peer.bytes.end());
                 std::stringstream data;
                 data << spk << now;
+                // calc hash
                 sha256_hash hash = dht::item_target_id(data.str());
 
                 hashes.insert(hash);
                 hash_peer_map[hash] = peer;
             }
 
+            // calc myself hash to look for neighbors
             std::string spk(pk->bytes.begin(), pk->bytes.end());
             std::stringstream data;
             data << spk << now;
             sha256_hash my_hash = dht::item_target_id(data.str());
 
+            // look for two neighbors on the left and right
             auto r_iterator = hashes.find(my_hash);
             auto l_iterator = r_iterator;
             for (auto i = 0; i < 2; i++) {
@@ -534,11 +544,11 @@ namespace libTAU::blockchain {
         auto &best_tip_block  = m_best_tip_blocks[chain_id];
         if (best_tip_block.empty()) {
             auto track = m_repository->start_tracking();
+
             track->connect_tip_block(b);
             track->set_best_tip_block_hash(chain_id, b.sha256());
             track->set_best_tail_block_hash(chain_id, b.sha256());
-            // update peer set
-            track->add_block_peer_in_peer_db(b);
+
             track->commit();
             m_repository->flush(chain_id);
 
@@ -570,8 +580,7 @@ namespace libTAU::blockchain {
                     // chain changed, re-check tx pool
                     m_tx_pools[chain_id].process_block_peers(best_tail_block);
                 }
-                // update peer set
-                track->add_block_peer_in_peer_db(b);
+
                 track->commit();
                 m_repository->flush(chain_id);
 
@@ -592,8 +601,6 @@ namespace libTAU::blockchain {
                 track->connect_tail_block(b);
                 track->set_best_tail_block_hash(chain_id, b.sha256());
 
-                // update peer set
-                track->add_block_peer_in_peer_db(b);
                 track->commit();
                 m_repository->flush(chain_id);
 
@@ -779,9 +786,6 @@ namespace libTAU::blockchain {
                 m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(best_tail_block);
             }
 
-            // update peer set
-            track->add_block_peer_in_peer_db(b);
-
             m_tx_pools[chain_id].process_block_peers(b);
 
             m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
@@ -826,9 +830,10 @@ namespace libTAU::blockchain {
         }
 
         if (!votes.empty()) {
-            // select top three votes
+            // update the best vote
             m_best_votes[chain_id] = *votes.rbegin();
 
+            // select top three votes
             std::vector<vote> top_three_votes;
             int i = 0;
             for (auto it = votes.rbegin(); it != votes.rend(); ++it) {
@@ -1056,6 +1061,10 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::publish_signal(const aux::bytes &chain_id) {
+        // current time(ms)
+        auto now = total_milliseconds(system_clock::now().time_since_epoch());
+
+        // vote for consensus point
         auto &consensus_point_block = m_consensus_point_blocks[chain_id];
         vote consensus_point_vote;
         if (!consensus_point_block.empty()) {
@@ -1063,16 +1072,14 @@ namespace libTAU::blockchain {
             consensus_point_vote.setBlockNumber(consensus_point_block.block_number());
         }
 
+        // offer the best tip block
         auto &best_tip_block = m_best_tip_blocks[chain_id];
         immutable_data_info best_tip_block_info;
         if (!best_tip_block.empty()) {
-//        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
-//                (peer, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
-
             std::vector<dht::node_entry> entries;
             m_ses.dht()->find_live_nodes(best_tip_block.sha256(), entries);
-            if (entries.size() > 1) {
-                entries.resize(1);
+            if (entries.size() > blockchain_immutable_payload_put_node_size) {
+                entries.resize(blockchain_immutable_payload_put_node_size);
             }
             log("INFO: Put immutable best tip block target[%s], entries[%zu]",
                 aux::toHex(best_tip_block.sha256().to_string()).c_str(), entries.size());
@@ -1081,15 +1088,13 @@ namespace libTAU::blockchain {
             best_tip_block_info = immutable_data_info(best_tip_block.sha256(), entries);
         }
 
+        // offer the consensus point block
         immutable_data_info consensus_point_block_info;
         if (!consensus_point_block.empty()) {
-//        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
-//                (peer, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
-
             std::vector<dht::node_entry> entries;
             m_ses.dht()->find_live_nodes(consensus_point_block.sha256(), entries);
-            if (entries.size() > 1) {
-                entries.resize(1);
+            if (entries.size() > blockchain_immutable_payload_put_node_size) {
+                entries.resize(blockchain_immutable_payload_put_node_size);
             }
             log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
                 aux::toHex(consensus_point_block.sha256().to_string()).c_str(), entries.size());
@@ -1101,26 +1106,29 @@ namespace libTAU::blockchain {
         std::set<immutable_data_info> block_set;
         std::set<immutable_data_info> tx_set;
 
-        auto peer = select_unchoked_peer_randomly(chain_id);
-        if (peer != dht::public_key()) {
-            auto peer_signal = m_unchoked_peer_signal[chain_id][peer];
+        // select a signal from an unchoked peer randomly
+        auto peer_signals = m_unchoked_peer_signal[chain_id];
+        if (!peer_signals.empty()) {
+            std::vector<blockchain_signal> signals(peer_signals.begin(), peer_signals.end());
+            // 产生随机数
+            srand(now);
+            auto index = rand() % signals.size();
+            auto peer_signal = signals[index];
 
             if (!peer_signal.demand_block_hash_set().empty()) {
+                // select one demand randomly to response to for selected peer
                 auto &demand_block_hash_set = peer_signal.demand_block_hash_set();
                 std::vector<sha256_hash> block_hashes(demand_block_hash_set.begin(), demand_block_hash_set.end());
                 // 产生随机数
-                srand(total_microseconds(system_clock::now().time_since_epoch()));
-                auto index = rand() % block_hashes.size();
+                srand(now);
+                index = rand() % block_hashes.size();
                 auto demand_block_hash = block_hashes[index];
                 auto demand_block = m_repository->get_block_by_hash(demand_block_hash);
                 if (!demand_block.empty()) {
-                    //        m_ses.alerts().emplace_alert<communication_syncing_message_alert>
-//                (peer, missing_message.sha256(), total_milliseconds(system_clock::now().time_since_epoch()));
-
                     std::vector<dht::node_entry> entries;
                     m_ses.dht()->find_live_nodes(demand_block.sha256(), entries);
-                    if (entries.size() > 1) {
-                        entries.resize(1);
+                    if (entries.size() > blockchain_immutable_payload_put_node_size) {
+                        entries.resize(blockchain_immutable_payload_put_node_size);
                     }
                     log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
                         aux::toHex(demand_block.sha256().to_string()).c_str(), entries.size());
@@ -1131,7 +1139,7 @@ namespace libTAU::blockchain {
                 }
             }
 
-            // find out missing messages and confirmation root
+            // find out missing txs and confirmation root
             std::vector<transaction> missing_txs;
             std::vector<sha256_hash> confirmation_roots;
             std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_transactions();
@@ -1141,17 +1149,18 @@ namespace libTAU::blockchain {
             log("INFO: Found missing tx size %zu", missing_txs.size());
 
             if (!missing_txs.empty()) {
+                // select one missing tx to response to
                 // 产生随机数
-                srand(total_microseconds(system_clock::now().time_since_epoch()));
+                srand(now);
                 auto index = rand() % missing_txs.size();
                 auto miss_tx = missing_txs[index];
                 if (!miss_tx.empty()) {
                     std::vector<dht::node_entry> entries;
                     m_ses.dht()->find_live_nodes(miss_tx.sha256(), entries);
-                    if (entries.size() > 1) {
-                        entries.resize(1);
+                    if (entries.size() > blockchain_immutable_payload_put_node_size) {
+                        entries.resize(blockchain_immutable_payload_put_node_size);
                     }
-                    log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
+                    log("INFO: Put missing tx target[%s], entries[%zu]",
                         aux::toHex(miss_tx.sha256().to_string()).c_str(), entries.size());
                     dht_put_immutable_item(miss_tx.get_entry(), entries, miss_tx.sha256());
 
@@ -1161,13 +1170,15 @@ namespace libTAU::blockchain {
             }
         }
 
+        // get my demand
         std::set<sha256_hash> demand_block_hash_set;
         auto &best_vote = m_best_votes[chain_id];
+        // voting demand block first
         if (is_empty_chain(chain_id)) {
             if (!best_vote.empty()) {
                 demand_block_hash_set.insert(best_vote.block_hash());
             } else {
-                // select randomly
+                // select one randomly if voting has no result
                 auto &votes = m_votes[chain_id];
                 auto it = votes.begin();
                 if (it != votes.end()) {
@@ -1175,22 +1186,30 @@ namespace libTAU::blockchain {
                 }
             }
         } else {
+            // if not empty chain
+
             if (!best_vote.empty()) {
+                // check if best vote match main chain block
                 auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id, best_vote.block_number());
                 if (hash != best_vote.block_hash()) {
+                    // if not match, request best vote
                     demand_block_hash_set.insert(best_vote.block_hash());
                 } else {
                     auto &block_map = m_blocks[chain_id];
                     for (auto & item: block_map) {
                         auto b = item.second;
+                        // find a more difficult block
                         if (b.cumulative_difficulty() > best_tip_block.cumulative_difficulty()) {
+                            // todo:check if on main chain
                             auto previous_hash = b.previous_block_hash();
                             auto it = block_map.find(previous_hash);
-                            while (true) {
+                            bool found_absent = false;
+                            while (!found_absent) {
                                 if (it != block_map.end()) {
                                     b = it->second;
                                     if (b.empty()) {
                                         demand_block_hash_set.insert(previous_hash);
+                                        found_absent = true;
                                         break;
                                     } else {
                                         previous_hash = b.previous_block_hash();
@@ -1198,11 +1217,15 @@ namespace libTAU::blockchain {
                                     }
                                 } else {
                                     demand_block_hash_set.insert(previous_hash);
+                                    found_absent = true;
                                     break;
                                 }
                             }
+                            break;
                         }
                     }
+
+                    // if sync no completed, request tail block too
                     if (!is_sync_completed(chain_id)) {
                         auto &best_tail_block = m_best_tail_blocks[chain_id];
                         if (!best_tail_block.empty()) {
@@ -1215,13 +1238,16 @@ namespace libTAU::blockchain {
                 for (auto & item: block_map) {
                     auto b = item.second;
                     if (b.cumulative_difficulty() > best_tip_block.cumulative_difficulty()) {
+                        // todo:check if on main chain
                         auto previous_hash = b.previous_block_hash();
                         auto it = block_map.find(previous_hash);
-                        while (true) {
+                        bool found_absent = false;
+                        while (!found_absent) {
                             if (it != block_map.end()) {
                                 b = it->second;
                                 if (b.empty()) {
                                     demand_block_hash_set.insert(previous_hash);
+                                    found_absent = true;
                                     break;
                                 } else {
                                     previous_hash = b.previous_block_hash();
@@ -1229,9 +1255,11 @@ namespace libTAU::blockchain {
                                 }
                             } else {
                                 demand_block_hash_set.insert(previous_hash);
+                                found_absent = true;
                                 break;
                             }
                         }
+                        break;
                     }
                 }
                 if (!is_sync_completed(chain_id)) {
@@ -1243,11 +1271,14 @@ namespace libTAU::blockchain {
             }
         }
 
+        // offer tx pool info
         aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array();
 
+        // offer a peer from chain
         auto p = select_peer_randomly(chain_id);
 
-        blockchain_signal signal(total_milliseconds(system_clock::now().time_since_epoch()), consensus_point_vote,
+        // make signal
+        blockchain_signal signal(now, consensus_point_vote,
                                  best_tip_block_info, consensus_point_block_info,
                                  block_set, tx_set, demand_block_hash_set,
                                  tx_hash_prefix_array, p);

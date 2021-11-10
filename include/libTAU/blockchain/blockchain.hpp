@@ -43,6 +43,8 @@ namespace blockchain {
     // max tx list size
     constexpr int blockchain_max_tx_list_size = 10;
 
+    constexpr int blockchain_immutable_payload_put_node_size = 1;
+
     enum RESULT {
         TRUE,
         FALSE,

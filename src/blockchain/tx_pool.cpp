@@ -60,9 +60,9 @@ namespace libTAU::blockchain {
         if (!tx.verify_signature())
             return false;
 
-        auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
-        if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
-            return false;
+//        auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
+//        if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
+//            return false;
 
         auto it_txid = m_account_tx.find(tx.sender());
         if (it_txid != m_account_tx.end()) {
