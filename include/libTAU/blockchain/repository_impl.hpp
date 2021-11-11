@@ -155,6 +155,7 @@ namespace libTAU::blockchain {
         // leveldb write batch
         leveldb::WriteBatch m_write_batch;
 
+        // todo:merge by order
         // main chain connected blocks
         std::vector<block> m_connected_blocks;
 

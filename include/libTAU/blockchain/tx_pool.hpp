@@ -27,7 +27,7 @@ namespace libTAU::blockchain {
 
         tx_pool() = default;
 
-        tx_pool(std::shared_ptr<repository> mRepository) : m_repository(std::move(mRepository)) {}
+        explicit tx_pool(std::shared_ptr<repository> mRepository) : m_repository(std::move(mRepository)) {}
 
 //        tx_pool(std::shared_ptr<repository> mRepository, int64_t mExpirationBlockNumber) :
 //        m_repository(std::move(mRepository)), m_expiration_block_number(mExpirationBlockNumber) {}

@@ -854,35 +854,30 @@ namespace libTAU::blockchain {
         m_write_batch.Clear();
 
         // flush into sqlite
-        std::set<dht::public_key> new_peers;
-        for (auto const& b: m_connected_blocks) {
-            new_peers.merge(b.get_block_peers());
-        }
-        for (auto const &peer: new_peers) {
-            add_peer_in_peer_db(chain_id, peer);
-        }
-        m_connected_blocks.clear();
-
         // get current tail block number
-        if (!m_discarded_blocks.empty()) {
-            auto best_tail_block_hash = get_best_tail_block_hash(chain_id);
-            auto tail_block = get_block_by_hash(best_tail_block_hash);
-            std::int64_t tail_number = tail_block.block_number();
+        auto best_tail_block_hash = get_best_tail_block_hash(chain_id);
+        auto tail_block = get_block_by_hash(best_tail_block_hash);
+        std::int64_t tail_number = tail_block.block_number();
 
-            std::set<dht::public_key> validate_peers;
-            for (auto const &b: m_discarded_blocks) {
-                validate_peers.merge(b.get_block_peers());
-            }
-            for (auto const &peer: validate_peers) {
-                auto act = get_account(chain_id, peer);
-                if (act.empty() || act.block_number() < tail_number) {
-                    // remove outdated peer
-                    delete_peer_in_peer_db(chain_id, peer);
-                }
-            }
-
-            m_discarded_blocks.clear();
+        std::set<dht::public_key> validate_peers;
+        for (auto const& b: m_connected_blocks) {
+            validate_peers.merge(b.get_block_peers());
         }
+        for (auto const &b: m_discarded_blocks) {
+            validate_peers.merge(b.get_block_peers());
+        }
+        for (auto const &peer: validate_peers) {
+            auto act = get_account(chain_id, peer);
+            if (act.empty() || act.block_number() < tail_number) {
+                // remove outdated peer
+                delete_peer_in_peer_db(chain_id, peer);
+            } else {
+                add_peer_in_peer_db(chain_id, peer);
+            }
+        }
+
+        m_connected_blocks.clear();
+        m_discarded_blocks.clear();
 
         return true;
     }
