@@ -1107,9 +1107,12 @@ namespace libTAU::blockchain {
         std::set<immutable_data_info> tx_set;
 
         // select a signal from an unchoked peer randomly
-        auto peer_signals = m_unchoked_peer_signal[chain_id];
+        auto &peer_signals = m_unchoked_peer_signal[chain_id];
         if (!peer_signals.empty()) {
-            std::vector<blockchain_signal> signals(peer_signals.begin(), peer_signals.end());
+            std::vector<blockchain_signal> signals;
+            for (auto const& signal: peer_signals) {
+                signals.push_back(signal.second);
+            }
             // 产生随机数
             srand(now);
             auto index = rand() % signals.size();
