@@ -249,11 +249,11 @@ namespace libTAU {
 		sync_call(&session_impl::set_chatting_friend, pubkey);
 	}
 
-	std::vector<std::int8_t> session_handle::get_friend_info(const dht::public_key& pubkey)
+	std::vector<char> session_handle::get_friend_info(const dht::public_key& pubkey)
 	{
-		std::vector<std::int8_t>* info;
-		sync_call(&session_impl::get_friend_info, pubkey, reinterpret_cast<std::vector<char>*> (info));
-		return *info;
+		std::vector<char> info;
+		sync_call(&session_impl::get_friend_info, pubkey, &info);
+		return info;
 	}
 
 	void session_handle::unset_chatting_friend()
@@ -276,11 +276,13 @@ namespace libTAU {
 		return sync_call_ret<bool>(&session_impl::add_new_message, msg);
 	}
 
-	std::vector<std::int8_t> session_handle::create_chain_id(std::string community_name)
+	std::vector<char> session_handle::create_chain_id(std::vector<char> community_name)
 	{
-		std::vector<std::int8_t>* id;
-		sync_call(&session_impl::create_chain_id, community_name, reinterpret_cast<std::vector<char>*>(id)); 
-		return *id;
+		std::string name;
+		name.insert(name.begin(), community_name.begin(), community_name.end());
+		std::vector<char> id;
+		sync_call(&session_impl::create_chain_id, name, &id); 
+		return id;
 	}
 
 	// create new community

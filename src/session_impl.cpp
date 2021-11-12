@@ -1387,25 +1387,10 @@ namespace {
 
 		TORRENT_ASSERT(s->sock.is_closed() || s->sock.local_endpoint().protocol() == ep.protocol());
 
-#ifndef TORRENT_DISABLE_LOGGING
-			if (should_log())
-			{
-				session_log("Send UDP Packet %s", print_endpoint(ep).c_str());
-			}
-#endif
-
 		s->sock.send(ep, p, ec, flags);
 
 		if ((ec == error::would_block || ec == error::try_again) && !s->write_blocked)
 		{
-
-#ifndef TORRENT_DISABLE_LOGGING
-			if (should_log())
-			{
-				session_log("Send UDP Packet Error, On UDP Writing");
-			}
-#endif
-
 			s->write_blocked = true;
 			ADD_OUTSTANDING_ASYNC("session_impl::on_udp_writeable");
 		}
@@ -2834,6 +2819,18 @@ namespace {
 	}
 
 	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts) {
+		std::string id(chain_id.begin(), chain_id.end());
+		std::cout << "Create New Community id: "<< id << std::endl;
+		for(auto iter = accounts.begin(); iter != accounts.end(); iter++) {
+
+			std::string pubkey(iter->first.bytes.begin(), iter->first.bytes.end());
+			std::cout << "Create New Community pubkey: "<< pubkey << std::endl;
+			std::cout << "Create New Community account balance: "<< iter->second.balance() << std::endl;
+			std::cout << "Create New Community account nonce: "<< iter->second.nonce() << std::endl;
+			std::cout << "Create New Community account block number: "<< iter->second.block_number() << std::endl;
+
+		}
+
 		return m_blockchain->createNewCommunity(chain_id, accounts);
 	}
 
@@ -2907,6 +2904,7 @@ namespace {
 			{
 				start_dht();
 				start_communication();
+				start_blockchain();
 			}
 			return;
 		}
@@ -2947,6 +2945,7 @@ namespace {
 		{
 			start_dht();
 			start_communication();
+			start_blockchain();
 		}
 
 		m_alerts.emplace_alert<session_start_over_alert>(true);
