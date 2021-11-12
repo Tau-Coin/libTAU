@@ -39,7 +39,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libTAU/aux_/path.hpp"
 #include "libTAU/hasher.hpp"
 #include "libTAU/peer_class.hpp"
-#include "libTAU/peer_class_type_filter.hpp"
 #include "libTAU/aux_/scope_end.hpp"
 
 using libTAU::aux::session_impl;
@@ -366,16 +365,6 @@ namespace libTAU {
 	ip_filter session_handle::get_peer_class_filter() const
 	{
 		return sync_call_ret<ip_filter>(&session_impl::get_peer_class_filter);
-	}
-
-	void session_handle::set_peer_class_type_filter(peer_class_type_filter const& f)
-	{
-		async_call(&session_impl::set_peer_class_type_filter, f);
-	}
-
-	peer_class_type_filter session_handle::get_peer_class_type_filter() const
-	{
-		return sync_call_ret<peer_class_type_filter>(&session_impl::get_peer_class_type_filter);
 	}
 
 	peer_class_t session_handle::create_peer_class(char const* name)

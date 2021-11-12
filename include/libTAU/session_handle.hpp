@@ -43,7 +43,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libTAU/entry.hpp"
 #include "libTAU/alert.hpp" // alert_category::error
 #include "libTAU/peer_class.hpp"
-#include "libTAU/peer_class_type_filter.hpp"
 #include "libTAU/peer_id.hpp"
 #include "libTAU/io_context.hpp"
 #include "libTAU/session_types.hpp"
@@ -289,22 +288,6 @@ namespace libTAU {
 		// For more information, see peer-classes_.
 		void set_peer_class_filter(ip_filter const& f);
 		ip_filter get_peer_class_filter() const;
-
-		// Sets and gets the *peer class type filter*. This is controls automatic
-		// peer class assignments to peers based on what kind of socket it is.
-		//
-		// It does not only support assigning peer classes, it also supports
-		// removing peer classes based on socket type.
-		//
-		// The order of these rules being applied are:
-		//
-		// 1. peer-class IP filter
-		// 2. peer-class type filter, removing classes
-		// 3. peer-class type filter, adding classes
-		//
-		// For more information, see peer-classes_.
-		void set_peer_class_type_filter(peer_class_type_filter const& f);
-		peer_class_type_filter get_peer_class_type_filter() const;
 
 		// Creates a new peer class (see peer-classes_) with the given name. The
 		// returned integer is the new peer class identifier. Peer classes may

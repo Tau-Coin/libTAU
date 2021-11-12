@@ -57,7 +57,6 @@ see LICENSE file.
 #include "libTAU/address.hpp"
 #include "libTAU/aux_/bloom_filter.hpp"
 #include "libTAU/peer_class.hpp"
-#include "libTAU/peer_class_type_filter.hpp"
 #include "libTAU/kademlia/types.hpp"
 #include "libTAU/kademlia/dht_observer.hpp"
 #include "libTAU/kademlia/dht_state.hpp"
@@ -461,9 +460,6 @@ namespace aux {
 			void set_peer_class_filter(ip_filter const& f);
 			ip_filter const& get_peer_class_filter() const;
 
-			void set_peer_class_type_filter(peer_class_type_filter f);
-			peer_class_type_filter get_peer_class_type_filter();
-
 			peer_class_info get_peer_class(peer_class_t cid) const;
 			void set_peer_class(peer_class_t cid, peer_class_info const& pci);
 
@@ -574,8 +570,6 @@ namespace aux {
 			mutable std::condition_variable cond;
 
 			// implements session_interface
-			tcp::endpoint bind_outgoing_socket(socket_type& s
-				, address const& remote_address, error_code& ec) const override;
 			bool verify_incoming_interface(address const& addr);
 			bool verify_bound_address(address const& addr, bool utp
 				, error_code& ec) override;
@@ -663,15 +657,6 @@ namespace aux {
 			// the peer class that all peers belong to by default
 			peer_class_t m_global_class{0};
 
-			// the peer class all TCP peers belong to by default
-			// all tcp peer connections are subject to these
-			// bandwidth limits. Local peers are exempted
-			// from this limit. The purpose is to be able to
-			// throttle TCP that passes over the internet
-			// bottleneck (i.e. modem) to avoid starving out
-			// uTP connections.
-			peer_class_t m_tcp_peer_class{0};
-
 			// peer class for local peers
 			peer_class_t m_local_peer_class{0};
 
@@ -700,9 +685,6 @@ namespace aux {
 			// to assign peers matching a specific IP range based on its
 			// remote endpoint
 			ip_filter m_peer_class_filter;
-
-			// maps socket types to peer classes
-			peer_class_type_filter m_peer_class_type_filter;
 
 			// filters incoming connections
 			std::shared_ptr<ip_filter> m_ip_filter;

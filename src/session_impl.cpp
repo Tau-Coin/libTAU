@@ -458,7 +458,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 #endif
 
 		m_global_class = m_classes.new_peer_class("global");
-		m_tcp_peer_class = m_classes.new_peer_class("tcp");
 		m_local_peer_class = m_classes.new_peer_class("local");
 		// local peers are always unchoked
 		m_classes.at(m_local_peer_class)->ignore_unchoke_slots = true;
@@ -467,14 +466,9 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		m_classes.at(m_local_peer_class)->connection_limit_factor = 150;
 
 		TORRENT_ASSERT(m_global_class == session::global_peer_class_id);
-		TORRENT_ASSERT(m_tcp_peer_class == session::tcp_peer_class_id);
 		TORRENT_ASSERT(m_local_peer_class == session::local_peer_class_id);
 
 		init_peer_class_filter(true);
-
-		// TCP, SSL/TCP and I2P connections should be assigned the TCP peer class
-		m_peer_class_type_filter.add(peer_class_type_filter::tcp_socket, m_tcp_peer_class);
-		m_peer_class_type_filter.add(peer_class_type_filter::ssl_tcp_socket, m_tcp_peer_class);
 
 #ifndef TORRENT_DISABLE_LOGGING
 
@@ -721,16 +715,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	ip_filter const& session_impl::get_peer_class_filter() const
 	{
 		return m_peer_class_filter;
-	}
-
-	void session_impl::set_peer_class_type_filter(peer_class_type_filter f)
-	{
-		m_peer_class_type_filter = f;
-	}
-
-	peer_class_type_filter session_impl::get_peer_class_type_filter()
-	{
-		return m_peer_class_type_filter;
 	}
 
 	void session_impl::deferred_submit_jobs()
@@ -1108,6 +1092,13 @@ namespace {
 					, operation_t::enum_route, ec, socket_type_t::tcp);
 			}
 
+			for (auto const& ipface : ifs)
+			{
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("ip_interface name: %s, address: %s, state: %d", 
+						 ipface.name, print_address(ipface.interface_address).c_str(), ipface.state);
+#endif
+			}
 			// expand device names and populate eps
 			for (auto const& iface : m_listen_interfaces)
 			{
@@ -1118,15 +1109,17 @@ namespace {
 				interface_to_endpoints(iface, listen_socket_t::accept_incoming, ifs, eps);
 			}
 
-			if (eps.empty())
-			{
 #ifndef TORRENT_DISABLE_LOGGING
-				session_log("no listen sockets");
+			session_log("initial listen sockets size: ", eps.size());
 #endif
-			}
-
 			expand_unspecified_address(ifs, routes, eps);
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("expand unspecified listen sockets size: ", eps.size());
+#endif
 			expand_devices(ifs, eps);
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("expand listen sockets size: ", eps.size());
+#endif
 		}
 
 		auto remove_iter = partition_listen_sockets(eps, m_listen_sockets);
@@ -2090,97 +2083,6 @@ namespace {
 #endif
 	}
 
-	tcp::endpoint session_impl::bind_outgoing_socket(socket_type& s
-		, address const& remote_address, error_code& ec) const
-	{
-		tcp::endpoint bind_ep(address_v4(), 0);
-		if (m_settings.get_int(settings_pack::outgoing_port) > 0)
-		{
-#ifdef TORRENT_WINDOWS
-			s.set_option(exclusive_address_use(true), ec);
-#else
-			s.set_option(tcp::acceptor::reuse_address(true), ec);
-#endif
-			// ignore errors because the underlying socket may not
-			// be opened yet. This happens when we're routing through
-			// a proxy. In that case, we don't yet know the address of
-			// the proxy server, and more importantly, we don't know
-			// the address family of its address. This means we can't
-			// open the socket yet. The socks abstraction layer defers
-			// opening it.
-			ec.clear();
-			bind_ep.port(std::uint16_t(next_port()));
-		}
-
-		if (is_utp(s))
-		{
-			// TODO: factor out this logic into a separate function for unit
-			// testing
-
-			utp_socket_impl* impl = nullptr;
-			transport ssl = transport::plaintext;
-#if TORRENT_USE_SSL
-			if (std::get_if<ssl_stream<utp_stream>>(&s.var()) != nullptr)
-			{
-				impl = std::get<ssl_stream<utp_stream>>(s).next_layer().get_impl();
-				ssl = transport::ssl;
-			}
-			else
-#endif
-				impl = std::get<utp_stream>(s).get_impl();
-
-			std::vector<std::shared_ptr<listen_socket_t>> with_gateways;
-			std::shared_ptr<listen_socket_t> match;
-			for (auto const& ls : m_listen_sockets)
-			{
-				if (is_v4(ls->local_endpoint) != remote_address.is_v4()) continue;
-				if (ls->ssl != ssl) continue;
-				if (!(ls->flags & listen_socket_t::local_network))
-					with_gateways.push_back(ls);
-
-				if (match_addr_mask(ls->local_endpoint.address(), remote_address, ls->netmask))
-				{
-					// is this better than the previous match?
-					match = ls;
-				}
-			}
-			if (!match && !with_gateways.empty())
-				match = with_gateways[random(std::uint32_t(with_gateways.size() - 1))];
-
-			if (match)
-			{
-				impl->m_sock = match;
-				return match->local_endpoint;
-			}
-			ec.assign(boost::system::errc::not_supported, generic_category());
-			return {};
-		}
-
-		if (!m_outgoing_interfaces.empty())
-		{
-			if (m_interface_index >= m_outgoing_interfaces.size()) m_interface_index = 0;
-			std::string const& ifname = m_outgoing_interfaces[m_interface_index++];
-
-			bind_ep.address(bind_socket_to_device(m_io_context, s
-				, remote_address.is_v4() ? tcp::v4() : tcp::v6()
-				, ifname.c_str(), bind_ep.port(), ec));
-			return bind_ep;
-		}
-
-		// if we're not binding to a specific interface, bind
-		// to the same protocol family as the target endpoint
-		if (bind_ep.address().is_unspecified())
-		{
-			if (remote_address.is_v6())
-				bind_ep.address(address_v6::any());
-			else
-				bind_ep.address(address_v4::any());
-		}
-
-		s.bind(bind_ep, ec);
-		return bind_ep;
-	}
-
 	// verify that ``addr``s interface allows incoming connections
 	bool session_impl::verify_incoming_interface(address const& addr)
 	{
@@ -2333,14 +2235,14 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
+		/*
         std::string home_dir = std::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+		*/
 
-		/*
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		*/
 
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
@@ -2904,7 +2806,7 @@ namespace {
 			{
 				start_dht();
 				start_communication();
-				start_blockchain();
+				//start_blockchain();
 			}
 			return;
 		}
@@ -2945,7 +2847,7 @@ namespace {
 		{
 			start_dht();
 			start_communication();
-			start_blockchain();
+			//start_blockchain();
 		}
 
 		m_alerts.emplace_alert<session_start_over_alert>(true);
