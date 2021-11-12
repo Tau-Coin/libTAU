@@ -331,7 +331,7 @@ namespace libTAU {
 		bool delete_friend(const dht::public_key& pubkey);
 
 		// get friend info by public key
-		std::vector<std::int8_t> get_friend_info(const dht::public_key& pubkey);
+		std::vector<char> get_friend_info(const dht::public_key& pubkey);
 
 		// set chatting friends
 		void set_chatting_friend(const dht::public_key& pubkey);
@@ -349,7 +349,7 @@ namespace libTAU {
 		bool add_new_message(communication::message msg);
 
 		// create chain id
-		std::vector<std::int8_t> create_chain_id(std::string community_name);
+		std::vector<char> create_chain_id(std::vector<char> community_name);
 		// create new community
         bool create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
 		// follow chain

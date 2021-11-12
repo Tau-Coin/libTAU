@@ -2819,6 +2819,18 @@ namespace {
 	}
 
 	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts) {
+		std::string id(chain_id.begin(), chain_id.end());
+		std::cout << "Create New Community id: "<< id << std::endl;
+		for(auto iter = accounts.begin(); iter != accounts.end(); iter++) {
+
+			std::string pubkey(iter->first.bytes.begin(), iter->first.bytes.end());
+			std::cout << "Create New Community pubkey: "<< pubkey << std::endl;
+			std::cout << "Create New Community account balance: "<< iter->second.balance() << std::endl;
+			std::cout << "Create New Community account nonce: "<< iter->second.nonce() << std::endl;
+			std::cout << "Create New Community account block number: "<< iter->second.block_number() << std::endl;
+
+		}
+
 		return m_blockchain->createNewCommunity(chain_id, accounts);
 	}
 
