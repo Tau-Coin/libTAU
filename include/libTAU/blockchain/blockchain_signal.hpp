@@ -13,6 +13,7 @@ see LICENSE file.
 #include <set>
 #include <map>
 #include <utility>
+#include <ostream>
 
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
@@ -104,6 +105,11 @@ namespace libTAU::blockchain {
         entry get_entry() const;
 
         std::string get_encode() const;
+
+        // @returns a pretty-printed string representation of signal structure
+        std::string to_string() const;
+
+        friend std::ostream &operator<<(std::ostream &os, const blockchain_signal &signal);
 
     private:
         // populate block chain signal info from entry

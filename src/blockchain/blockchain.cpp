@@ -114,6 +114,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::load_chain(const aux::bytes &chain_id) {
+        log("INFO: load chain[%s]", aux::toHex(chain_id).c_str());
         // create tx pool
         m_tx_pools.insert(std::pair<aux::bytes, tx_pool>(chain_id, tx_pool(m_repository)));
 
@@ -1067,7 +1068,8 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(chain_id);
 
-//        log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer.bytes.data()).c_str(), aux::toHex(salt).c_str());
+        log("INFO: Request signal from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         dht_get_mutable_item(chain_id, peer.bytes, salt);
     }
 
@@ -1312,6 +1314,10 @@ namespace libTAU::blockchain {
         dht::secret_key * sk = m_ses.serkey();
 
         auto salt = make_salt(chain_id);
+
+        log("INFO: Publish signal [%s] on chain[%s], salt:[%s]", signal.to_string().c_str(),
+            aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+
         dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
                 , pk->bytes, sk->bytes, signal.get_entry()), salt);
     }
@@ -1512,6 +1518,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::create_TAU_chain() {
+        log("INFO: create tau chain.");
         std::int64_t size = TAU_CHAIN_GENESIS_ACCOUNT.size();
         std::int64_t block_number = -1 * size + 1;
         sha256_hash previous_hash;

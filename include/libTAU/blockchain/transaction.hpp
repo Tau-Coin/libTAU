@@ -19,6 +19,7 @@ see LICENSE file.
 #include "libTAU/bdecode.hpp"
 #include "libTAU/kademlia/types.hpp"
 #include <libTAU/sha1_hash.hpp>
+#include <ostream>
 
 namespace libTAU {
 namespace blockchain {
@@ -93,6 +94,11 @@ namespace blockchain {
         bool operator>=(const transaction &rhs) const {
             return !(*this < rhs);
         }
+
+        // @returns a pretty-printed string representation of tx structure
+        std::string to_string() const;
+
+        friend std::ostream &operator<<(std::ostream &os, const transaction &transaction);
 
     private:
 

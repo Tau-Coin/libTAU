@@ -200,4 +200,22 @@ namespace libTAU::blockchain {
 
         return peers;
     }
+
+    std::string block::to_string() const {
+        std::ostringstream os;
+        os << *this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const block &block) {
+        os << "m_chain_id: " << aux::toHex(block.m_chain_id) << " m_version: " << block.m_version << " m_timestamp: "
+           << block.m_timestamp << " m_block_number: " << block.m_block_number << " m_previous_block_hash: "
+           << block.m_previous_block_hash << " m_base_target: " << block.m_base_target << " m_cumulative_difficulty: "
+           << block.m_cumulative_difficulty << " m_generation_signature: " << block.m_generation_signature << " m_tx: "
+           << block.m_tx << " m_miner: " << aux::toHex(block.m_miner.bytes) << " m_miner_balance: " << block.m_miner_balance
+           << " m_miner_nonce: " << block.m_miner_nonce << " m_sender_balance: " << block.m_sender_balance
+           << " m_sender_nonce: " << block.m_sender_nonce << " m_receiver_balance: " << block.m_receiver_balance
+           << " m_receiver_nonce: " << block.m_receiver_nonce << " m_hash: " << block.m_hash;
+        return os;
+    }
 }

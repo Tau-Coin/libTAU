@@ -10,6 +10,7 @@ see LICENSE file.
 #define LIBTAU_BLOCK_HPP
 
 #include <utility>
+#include <ostream>
 
 #include "libTAU/aux_/common.h"
 #include "libTAU/aux_/common_data.h"
@@ -95,6 +96,11 @@ namespace blockchain {
         bool verify_signature() const;
 
         std::set<dht::public_key> get_block_peers() const;
+
+        // @returns a pretty-printed string representation of block structure
+        std::string to_string() const;
+
+        friend std::ostream &operator<<(std::ostream &os, const block &block);
 
     private:
 
