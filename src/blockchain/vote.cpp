@@ -6,6 +6,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
+#include "libTAU/aux_/common_data.h"
 #include "libTAU/blockchain/vote.hpp"
 
 namespace libTAU::blockchain {
@@ -44,5 +45,17 @@ namespace libTAU::blockchain {
         {
             m_block_number = i->integer();
         }
+    }
+
+    std::string vote::to_string() const {
+        std::ostringstream os;
+        os << *this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const vote &vote) {
+        os << "m_block_hash: " << aux::toHex(vote.m_block_hash.to_string()) << " m_block_number: "
+           << vote.m_block_number << " m_count: " << vote.m_count;
+        return os;
     }
 }

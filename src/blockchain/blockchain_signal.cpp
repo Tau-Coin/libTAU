@@ -157,4 +157,31 @@ namespace libTAU::blockchain {
         }
     }
 
+    std::string blockchain_signal::to_string() const {
+        std::ostringstream os;
+        os << *this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const blockchain_signal &signal) {
+        os << "m_timestamp: " << signal.m_timestamp << " m_consensus_point_vote: " << signal.m_consensus_point_vote
+           << " m_best_tip_block_info: " << signal.m_best_tip_block_info << " m_consensus_point_block_info: "
+           << signal.m_consensus_point_block_info << " m_tx_hash_prefix_array: " << aux::toHex(signal.m_tx_hash_prefix_array)
+           << " m_peer: " << aux::toHex(signal.m_peer.bytes);
+        os << " m_block_info_set: ";
+        for (auto const& block_info: signal.m_block_info_set) {
+            os << " block info: " << block_info;
+        }
+        os << " m_tx_info_set: ";
+        for (auto const& tx_info: signal.m_tx_info_set) {
+            os << " tx info: " << tx_info;
+        }
+        os << " m_demand_block_hash_set: ";
+        for (auto const& hash: signal.m_demand_block_hash_set) {
+            os << " demand block hash: " << aux::toHex(hash.to_string());
+        }
+
+        return os;
+    }
+
 }

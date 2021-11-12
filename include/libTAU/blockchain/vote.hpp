@@ -10,6 +10,7 @@ see LICENSE file.
 #define LIBTAU_VOTE_HPP
 
 
+#include <ostream>
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
 #include "libTAU/sha1_hash.hpp"
@@ -74,6 +75,11 @@ namespace libTAU {
             bool operator>=(const vote &rhs) const {
                 return !(*this < rhs);
             }
+
+            // @returns a pretty-printed string representation of vote structure
+            std::string to_string() const;
+
+            friend std::ostream &operator<<(std::ostream &os, const vote &vote);
 
         private:
             // populate block chain signal info from entry

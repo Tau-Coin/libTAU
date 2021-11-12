@@ -139,4 +139,18 @@ namespace libTAU::blockchain {
             m_signature = dht::signature(signature.data());
         }
     }
+
+    std::string transaction::to_string() const {
+        std::ostringstream os;
+        os << *this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const transaction &transaction) {
+        os << "m_chain_id: " << aux::toHex(transaction.m_chain_id) << " m_version: " << transaction.m_version << " m_timestamp: "
+           << transaction.m_timestamp << " m_sender: " << aux::toHex(transaction.m_sender.bytes) << " m_receiver: "
+           << aux::toHex(transaction.m_receiver.bytes) << " m_nonce: " << transaction.m_nonce << " m_amount: " << transaction.m_amount
+           << " m_fee: " << transaction.m_fee << " m_hash: " << aux::toHex(transaction.m_hash.to_string());
+        return os;
+    }
 }
