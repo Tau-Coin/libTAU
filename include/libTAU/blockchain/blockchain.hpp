@@ -102,6 +102,9 @@ namespace blockchain {
         // get median tx fee
         std::int64_t getMedianTxFee(const aux::bytes &chain_id);
 
+        // set block chain main loop time interval (ms)
+        void set_blockchain_loop_interval(int milliseconds);
+
     private:
         // initialize member variables
         bool init();

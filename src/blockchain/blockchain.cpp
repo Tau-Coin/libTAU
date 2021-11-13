@@ -1653,4 +1653,9 @@ namespace libTAU::blockchain {
         return 0;
     }
 
+    void blockchain::set_blockchain_loop_interval(int milliseconds) {
+        log("INFO: Set block chain loop interval:%d(ms)", milliseconds);
+        m_refresh_time = milliseconds;
+    }
+
 }
