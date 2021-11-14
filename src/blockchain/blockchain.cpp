@@ -73,12 +73,15 @@ namespace libTAU::blockchain {
 
     bool blockchain::followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
         if (!chain_id.empty()) {
+            log("INFO: Follow chain:%s", aux::toHex(chain_id).c_str());
+
             // create sqlite peer db
             m_repository->create_peer_db(chain_id);
             m_repository->create_gossip_peer_db(chain_id);
 
             // add peer into db
             for (auto const &peer: peers) {
+                log("INFO: chain:%s, initial peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 m_repository->add_peer_in_gossip_peer_db(chain_id, peer);
             }
 
@@ -96,6 +99,8 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::unfollowChain(const aux::bytes &chain_id) {
+        log("INFO: Unfollow chain:%s", aux::toHex(chain_id).c_str());
+
         // remove chain id from memory
         for (auto it = m_chains.begin(); it != m_chains.end(); ++it) {
             if (chain_id == *it) {
@@ -132,6 +137,8 @@ namespace libTAU::blockchain {
             if (!tip_block.empty() && !tail_block.empty()) {
                 m_best_tip_blocks[chain_id] = tip_block;
                 m_best_tail_blocks[chain_id] = tail_block;
+                log("INFO: Best tip block: %s", tip_block.to_string().c_str());
+                log("INFO: Best tail block: %s", tail_block.to_string().c_str());
 
                 // try to load consensus point block
                 try_to_update_consensus_point_block(chain_id);
@@ -204,12 +211,17 @@ namespace libTAU::blockchain {
 
                 auto &best_vote = m_best_votes[chain_id];
                 if (!best_vote.empty()) {
+                    log("INFO chain[%s] current best vote[%s]", aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
                     auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id, best_vote.block_number());
                     // if current chain block hash and voting block hash mismatch
                     if (hash != best_vote.block_hash()) {
+                        log("INFO chain[%s] main chain block[%s] mismatch the best vote",
+                            aux::toHex(chain_id).c_str(), aux::toHex(hash.to_string()).c_str());
                         // re-branch
                         auto vote_block = m_blocks[chain_id][best_vote.block_hash()];
                         if (!vote_block.empty()) {
+                            log("INFO chain[%s] try to re-branch to voting block[%s]",
+                                aux::toHex(chain_id).c_str(), vote_block.to_string().c_str());
                             auto result = try_to_rebranch(chain_id, vote_block);
                             // clear block cache if re-branch success/fail
                             if (result != MISSING) {
@@ -224,6 +236,8 @@ namespace libTAU::blockchain {
 
                 if (!b.empty()) {
                     // process mined block
+                    log("INFO chain[%s] process mined block[%s]",
+                        aux::toHex(chain_id).c_str(), b.to_string().c_str());
                     process_block(chain_id, b);
                 }
 
@@ -383,12 +397,16 @@ namespace libTAU::blockchain {
                 if (r_iterator == hashes.end()) {
                     r_iterator = hashes.begin();
                 }
+                log("INFO chain[%s] right unchoked peer[%s]",
+                    aux::toHex(chain_id).c_str(), aux::toHex(r_iterator->to_string()).c_str());
                 peers.insert(hash_peer_map[*r_iterator]);
 
                 if (l_iterator == hashes.begin()) {
                     l_iterator = hashes.end();
                 }
                 l_iterator--;
+                log("INFO chain[%s] left unchoked peer[%s]",
+                    aux::toHex(chain_id).c_str(), aux::toHex(l_iterator->to_string()).c_str());
                 peers.insert(hash_peer_map[*l_iterator]);
             }
 
@@ -487,34 +505,54 @@ namespace libTAU::blockchain {
     }
 
     RESULT blockchain::verify_block(const aux::bytes &chain_id, block &b, block &previous_block, repository *repo) {
-        if (b.empty())
+        if (b.empty()) {
+            log("INFO chain[%s] block is empty", aux::toHex(chain_id).c_str());
             return FALSE;
+        }
 
-        if (!b.verify_signature())
+        if (!b.verify_signature()) {
+            log("INFO chain[%s] block[%s] has bad signature",
+                aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
             return FALSE;
+        }
 
         block ancestor1 = repo->get_block_by_hash(previous_block.previous_block_hash());
-        if (ancestor1.empty())
+        if (ancestor1.empty()) {
+            log("INFO chain[%s] Cannot find block[%s] in db",
+                aux::toHex(chain_id).c_str(), aux::toHex(previous_block.previous_block_hash().to_string()).c_str());
             return MISSING;
+        }
 
         block ancestor2 = repo->get_block_by_hash(ancestor1.previous_block_hash());
-        if (ancestor2.empty())
+        if (ancestor2.empty()) {
+            log("INFO chain[%s] Cannot find block[%s] in db",
+                aux::toHex(chain_id).c_str(), aux::toHex(ancestor1.previous_block_hash().to_string()).c_str());
             return MISSING;
+        }
 
         block ancestor3 = repo->get_block_by_hash(ancestor2.previous_block_hash());
-        if (ancestor3.empty())
+        if (ancestor3.empty()) {
+            log("INFO chain[%s] Cannot find block[%s] in db",
+                aux::toHex(chain_id).c_str(), aux::toHex(ancestor2.previous_block_hash().to_string()).c_str());
             return MISSING;
+        }
 
         std::int64_t base_target = consensus::calculate_required_base_target(previous_block, ancestor3);
         std::int64_t power = repo->get_effective_power(chain_id, b.miner());
-        if (power <= 0)
+        if (power <= 0) {
+            log("INFO chain[%s] Cannot get account[%s] state in db",
+                aux::toHex(chain_id).c_str(), aux::toHex(b.miner().bytes).c_str());
             return MISSING;
+        }
 
         auto genSig = consensus::calculate_generation_signature(previous_block.generation_signature(), b.miner());
         auto hit = consensus::calculate_random_hit(genSig);
         auto interval = consensus::calculate_mining_time_interval(hit, base_target, power);
-        if (!consensus::verify_hit(hit, base_target, power, interval))
+        if (!consensus::verify_hit(hit, base_target, power, interval)) {
+            log("INFO chain[%s] block[%s] verify hit fail",
+                aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
             return FALSE;
+        }
 
         return TRUE;
     }
@@ -534,7 +572,10 @@ namespace libTAU::blockchain {
         if (consensus_block.empty() || consensus_block.block_number() != block_number) {
             auto b = m_repository->get_main_chain_block_by_number(chain_id, block_number);
             if (!b.empty()) {
+                log("INFO chain[%s] Consensus point block[%s]", aux::toHex(chain_id).c_str(), b.to_string().c_str());
                 m_consensus_point_blocks[chain_id] = consensus_block;
+            } else {
+                log("INFO chain[%s] Cannot find consensus point block", aux::toHex(chain_id).c_str());
             }
         }
     }
