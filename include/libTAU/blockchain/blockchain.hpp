@@ -109,6 +109,9 @@ namespace blockchain {
         // initialize member variables
         bool init();
 
+        // get current time(ms)
+        std::int64_t get_total_milliseconds();
+
         // create and follow tau chain
         bool create_TAU_chain();
 
@@ -240,14 +243,14 @@ namespace blockchain {
         // blockchain db
         std::shared_ptr<repository> m_repository;
 
+        // tx pool
+        std::map<aux::bytes, tx_pool> m_tx_pools;
+
         // chain status
         bool m_stop = false;
 
         // all chains
         std::vector<aux::bytes> m_chains;
-
-        // tx pool
-        std::map<aux::bytes, tx_pool> m_tx_pools;
 
 //        // all chain peers
 //        std::map<aux::bytes, std::set<dht::public_key>> m_chain_peers;
@@ -261,7 +264,7 @@ namespace blockchain {
         // un-choked peers signal
         std::map<aux::bytes, std::map<dht::public_key, blockchain_signal>> m_unchoked_peer_signal;
 
-        // update un-choked peers time
+        // update un-choked peers time(s)
         std::map<aux::bytes, std::int64_t> m_update_peer_time;
 
         // block cache
