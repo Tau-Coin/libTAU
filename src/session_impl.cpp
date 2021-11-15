@@ -931,7 +931,7 @@ namespace {
 
 		// if we did not open a TCP listen socket, ret->local_endpoint was never
 		// initialized, so do that now, based on the UDP socket
-		if (!(ret->flags & listen_socket_t::accept_incoming))
+		if (ret->flags & listen_socket_t::accept_incoming)
 		{
 			auto const udp_ep = ret->udp_sock->local_endpoint();
 			ret->local_endpoint = tcp::endpoint(udp_ep.address(), udp_ep.port());
@@ -1168,7 +1168,7 @@ namespace {
 					, ep.device.c_str());
 			}
 #endif // TORRENT_DISABLE_LOGGING
-			if(ep.addr.is_v4()) {
+			//if(ep.addr.is_v4()) {
 				std::shared_ptr<listen_socket_t> s = setup_listener(ep, ec);
 
 				if (!ec && (s->sock || s->udp_sock))
@@ -1190,7 +1190,7 @@ namespace {
 					TORRENT_ASSERT(bool(s->flags & listen_socket_t::accept_incoming) == bool(s->sock));
 					if (s->sock) async_accept(s->sock, s->ssl);
 				}
-			}
+			//}
 		}
 #ifndef BOOST_NO_EXCEPTIONS
 		catch (std::exception const& e)
@@ -1260,6 +1260,7 @@ namespace {
 		{
 			for (auto const& s : new_sockets)
 				start_upnp(s);
+				
 		}
 
 		if (map_ports)
@@ -2235,14 +2236,14 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
-		/*
         std::string home_dir = std::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		*/
 
+		/*
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+		*/
 
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
