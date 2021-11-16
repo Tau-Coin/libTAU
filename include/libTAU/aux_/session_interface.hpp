@@ -139,10 +139,6 @@ namespace libTAU::aux {
 
 		virtual void deferred_submit_jobs() = 0;
 
-		virtual std::uint16_t listen_port() const = 0;
-
-		virtual int listen_port(aux::transport ssl, address const& local_addr) = 0;
-
 		virtual void for_each_listen_socket(std::function<void(aux::listen_socket_handle const&)> f) = 0;
 
 		// ask for which interface and port to bind outgoing peer connections on

@@ -346,12 +346,6 @@ namespace libTAU {
 		async_call(&session_impl::set_port_filter, f);
 	}
 
-	unsigned short session_handle::listen_port() const
-	{
-		return sync_call_ret<unsigned short, unsigned short(session_impl::*)() const>
-			(&session_impl::listen_port);
-	}
-
 	bool session_handle::is_listening() const
 	{
 		return sync_call_ret<bool>(&session_impl::is_listening);
