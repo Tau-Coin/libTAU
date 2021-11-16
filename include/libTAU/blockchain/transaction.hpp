@@ -66,14 +66,14 @@ namespace blockchain {
 
         const dht::signature &signature() const { return m_signature; }
 
-        bool empty() { return sha256().is_all_zeros(); }
+        bool empty() const { return m_hash.is_all_zeros(); }
 
         entry get_entry() const;
 
         std::string get_encode() const;
 
         // @returns the SHA256 hash of this message
-        const sha256_hash &sha256();
+        const sha256_hash &sha256() const { return m_hash; };
 
         void sign(dht::public_key const& pk, dht::secret_key const& sk);
 

@@ -136,10 +136,14 @@ namespace libTAU::blockchain {
         // load tip/tail block
         auto tip_block_hash = m_repository->get_best_tip_block_hash(chain_id);
         auto tail_block_hash = m_repository->get_best_tail_block_hash(chain_id);
+        log("INFO chain id[%s], tip block hash[%s], tail block hash[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(tip_block_hash.to_string()).c_str(), aux::toHex(tip_block_hash.to_string()).c_str());
         if (!tip_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros()) {
+            log("-------------------111111111111--------------");
             auto tip_block = m_repository->get_block_by_hash(tip_block_hash);
             auto tail_block = m_repository->get_block_by_hash(tail_block_hash);
             if (!tip_block.empty() && !tail_block.empty()) {
+                log("-------------------22222222222222222--------------");
                 m_best_tip_blocks[chain_id] = tip_block;
                 m_best_tail_blocks[chain_id] = tail_block;
                 log("INFO: Best tip block: %s", tip_block.to_string().c_str());
