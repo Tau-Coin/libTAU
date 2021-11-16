@@ -407,7 +407,7 @@ namespace libTAU::blockchain {
         std::string value;
         m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
 
-        if (value.empty()) {
+        if (!value.empty()) {
             return block(value);
         }
 
@@ -775,7 +775,11 @@ namespace libTAU::blockchain {
         std::string value;
         leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
 
-        return sha256_hash(value.data());
+        if (!value.empty()) {
+            return sha256_hash(value.data());
+        }
+
+        return sha256_hash();
     }
 
     bool repository_impl::set_best_tip_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
@@ -804,7 +808,11 @@ namespace libTAU::blockchain {
         std::string value;
         leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
 
-        return sha256_hash(value.data());
+        if (!value.empty()) {
+            return sha256_hash(value.data());
+        }
+
+        return sha256_hash();
     }
 
     bool repository_impl::set_best_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {

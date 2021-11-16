@@ -14,6 +14,10 @@ see LICENSE file.
 namespace libTAU::blockchain {
     transaction::transaction(const entry& e) {
         populate(e);
+
+        std::string encode;
+        bencode(std::back_inserter(encode), e);
+        m_hash = dht::item_target_id(encode);
     }
 
     entry transaction::get_entry_without_signature() const {
@@ -65,14 +69,14 @@ namespace libTAU::blockchain {
         return encode;
     }
 
-    const sha256_hash &transaction::sha256() {
-        if (m_hash.is_all_zeros()) {
-            auto encode = get_encode();
-            m_hash = dht::item_target_id(encode);
-        }
-
-        return m_hash;
-    }
+//    const sha256_hash &transaction::sha256() {
+//        if (m_hash.is_all_zeros()) {
+//            auto encode = get_encode();
+//            m_hash = dht::item_target_id(encode);
+//        }
+//
+//        return m_hash;
+//    }
 
     void transaction::sign(const dht::public_key &pk, const dht::secret_key &sk) {
         m_signature = ed25519_sign(get_encode_without_signature(), pk, sk);
