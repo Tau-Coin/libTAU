@@ -70,8 +70,7 @@ namespace libTAU::blockchain {
             if (it_tx != m_all_txs.end()) {
                 auto old_tx = it_tx->second;
                 if (!old_tx.empty()) {
-                    // +offset?
-                    if (tx.fee() > old_tx.fee()) {
+                    if (tx.fee() >= old_tx.fee()) {
                         // replace old tx with new one
                         m_all_txs[tx.sha256()] = tx;
                         m_account_tx[tx.sender()] = tx.sha256();

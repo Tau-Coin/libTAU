@@ -24,18 +24,18 @@ namespace libTAU::blockchain {
          * get miner target value
          * target = base target * mining power * time
          */
-        static std::int64_t calculate_miner_target_value(std::int64_t baseTarget, std::int64_t power, std::int64_t time);
+        static std::uint64_t calculate_miner_target_value(std::int64_t baseTarget, std::int64_t power, std::int64_t time);
 
-        static std::int64_t calculate_random_hit(const sha256_hash &generationSignature);
+        static std::uint64_t calculate_random_hit(const sha256_hash &generationSignature);
 
         /**
          * calculate cumulative difficulty: last cumulative difficulty + DiffAdjustNumerator / base target
          */
         static std::int64_t calculate_cumulative_difficulty(std::int64_t lastCumulativeDifficulty, std::int64_t baseTarget);
 
-        static std::int64_t calculate_mining_time_interval(std::int64_t hit, std::int64_t baseTarget, std::int64_t power);
+        static std::int64_t calculate_mining_time_interval(uint64_t hit, std::int64_t baseTarget, std::int64_t power);
 
-        static bool verify_hit(std::int64_t hit, std::int64_t baseTarget, std::int64_t power, std::int64_t timeInterval);
+        static bool verify_hit(uint64_t hit, std::int64_t baseTarget, std::int64_t power, std::int64_t timeInterval);
 
     };
 }

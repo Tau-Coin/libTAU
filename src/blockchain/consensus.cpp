@@ -65,14 +65,14 @@ namespace libTAU::blockchain {
         return dht::item_target_id(data);
     }
 
-    std::int64_t consensus::calculate_miner_target_value(std::int64_t baseTarget, std::int64_t power, std::int64_t time) {
+    std::uint64_t consensus::calculate_miner_target_value(std::int64_t baseTarget, std::int64_t power, std::int64_t time) {
         return baseTarget * power * time;
     }
 
-    std::int64_t consensus::calculate_random_hit(const sha256_hash &generationSignature) {
-        std::int64_t hit = 0;
+    std::uint64_t consensus::calculate_random_hit(const sha256_hash &generationSignature) {
+        std::uint64_t hit = 0;
         for (int i = 0; i < 8; i++) {
-            auto b = generationSignature[7 - i];
+            std::uint8_t b = generationSignature[7 - i];
             hit = hit << 8;
             hit += b;
         }
@@ -86,9 +86,8 @@ namespace libTAU::blockchain {
     }
 
     // Note: DEFAULT_MIN_BLOCK_TIME/DEFAULT_MAX_BLOCK_TIME is different from nxt
-    std::int64_t consensus::calculate_mining_time_interval(std::int64_t hit, std::int64_t baseTarget,
-                                                                      std::int64_t power) {
-        std::int64_t interval = hit / (baseTarget * power);
+    std::int64_t consensus::calculate_mining_time_interval(uint64_t hit, std::int64_t baseTarget, std::int64_t power) {
+        auto interval = static_cast<std::int64_t>(hit / (baseTarget * power));
 
         // make sure hit > target
         interval++;
@@ -102,8 +101,8 @@ namespace libTAU::blockchain {
         return interval;
     }
 
-    bool consensus::verify_hit(std::int64_t hit, std::int64_t baseTarget, std::int64_t power,
-                                         std::int64_t timeInterval) {
+    bool consensus::verify_hit(uint64_t hit, std::int64_t baseTarget, std::int64_t power,
+                               std::int64_t timeInterval) {
         if (timeInterval < DEFAULT_MIN_BLOCK_TIME) {
             return false;
         } else if (timeInterval >= DEFAULT_MAX_BLOCK_TIME) {

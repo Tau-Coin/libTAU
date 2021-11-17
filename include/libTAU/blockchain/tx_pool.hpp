@@ -61,6 +61,7 @@ namespace libTAU::blockchain {
 
         std::map<sha256_hash, transaction> m_all_txs;
 
+        // ordered by fee
         std::set<tx_entry> m_ordered_txs;
 
         std::map<dht::public_key, sha256_hash> m_account_tx;
