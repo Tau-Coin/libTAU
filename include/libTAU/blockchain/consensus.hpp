@@ -16,7 +16,7 @@ see LICENSE file.
 namespace libTAU::blockchain {
     struct consensus {
 
-        static std::int64_t calculate_required_base_target(block &previousBlock, block &ancestor3);
+        static std::uint64_t calculate_required_base_target(block &previousBlock, block &ancestor3);
 
         static sha256_hash calculate_generation_signature(const sha256_hash &preGenerationSignature, const dht::public_key& pubkey);
 
@@ -24,18 +24,18 @@ namespace libTAU::blockchain {
          * get miner target value
          * target = base target * mining power * time
          */
-        static std::uint64_t calculate_miner_target_value(std::int64_t baseTarget, std::int64_t power, std::int64_t time);
+        static std::uint64_t calculate_miner_target_value(uint64_t baseTarget, uint64_t power, uint64_t time);
 
         static std::uint64_t calculate_random_hit(const sha256_hash &generationSignature);
 
         /**
          * calculate cumulative difficulty: last cumulative difficulty + DiffAdjustNumerator / base target
          */
-        static std::int64_t calculate_cumulative_difficulty(std::int64_t lastCumulativeDifficulty, std::int64_t baseTarget);
+        static std::uint64_t calculate_cumulative_difficulty(uint64_t lastCumulativeDifficulty, uint64_t baseTarget);
 
-        static std::int64_t calculate_mining_time_interval(uint64_t hit, std::int64_t baseTarget, std::int64_t power);
+        static std::uint64_t calculate_mining_time_interval(uint64_t hit, uint64_t baseTarget, uint64_t power);
 
-        static bool verify_hit(uint64_t hit, std::int64_t baseTarget, std::int64_t power, std::int64_t timeInterval);
+        static bool verify_hit(uint64_t hit, uint64_t baseTarget, uint64_t power, uint64_t timeInterval);
 
     };
 }

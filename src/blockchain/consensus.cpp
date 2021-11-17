@@ -11,7 +11,7 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    std::int64_t consensus::calculate_required_base_target(block &previousBlock, block &ancestor3) {
+    std::uint64_t consensus::calculate_required_base_target(block &previousBlock, block &ancestor3) {
         if (previousBlock.block_number() <= 3) {
             return GENESIS_BASE_TARGET;
         }
@@ -23,8 +23,8 @@ namespace libTAU::blockchain {
 
         long timeAver = totalTimeInterval / 3;
 
-        auto previousBlockBaseTarget = previousBlock.base_target();
-        std::int64_t requiredBaseTarget;
+        std::uint64_t previousBlockBaseTarget = previousBlock.base_target();
+        std::uint64_t requiredBaseTarget;
 
         if (timeAver > DEFAULT_BLOCK_TIME ) {
             long min;
@@ -65,7 +65,7 @@ namespace libTAU::blockchain {
         return dht::item_target_id(data);
     }
 
-    std::uint64_t consensus::calculate_miner_target_value(std::int64_t baseTarget, std::int64_t power, std::int64_t time) {
+    std::uint64_t consensus::calculate_miner_target_value(uint64_t baseTarget, uint64_t power, uint64_t time) {
         return baseTarget * power * time;
     }
 
@@ -80,16 +80,15 @@ namespace libTAU::blockchain {
         return hit;
     }
 
-    std::int64_t consensus::calculate_cumulative_difficulty(std::int64_t lastCumulativeDifficulty,
-                                                                       std::int64_t baseTarget) {
-        return static_cast<int64_t>(lastCumulativeDifficulty + DiffAdjustNumerator / baseTarget);
+    std::uint64_t consensus::calculate_cumulative_difficulty(uint64_t lastCumulativeDifficulty, uint64_t baseTarget) {
+        return static_cast<uint64_t>(lastCumulativeDifficulty + DiffAdjustNumerator / baseTarget);
     }
 
     // Note: DEFAULT_MIN_BLOCK_TIME/DEFAULT_MAX_BLOCK_TIME is different from nxt
-    std::int64_t consensus::calculate_mining_time_interval(uint64_t hit, std::int64_t baseTarget, std::int64_t power) {
-        auto interval = static_cast<std::int64_t>(hit / (baseTarget * power));
+    std::uint64_t consensus::calculate_mining_time_interval(uint64_t hit, uint64_t baseTarget, uint64_t power) {
+        auto interval = hit / (baseTarget * power);
 
-        // make sure hit > target
+        // make sure target > hit
         interval++;
 
         if (interval < DEFAULT_MIN_BLOCK_TIME) {
@@ -101,15 +100,14 @@ namespace libTAU::blockchain {
         return interval;
     }
 
-    bool consensus::verify_hit(uint64_t hit, std::int64_t baseTarget, std::int64_t power,
-                               std::int64_t timeInterval) {
+    bool consensus::verify_hit(uint64_t hit, uint64_t baseTarget, uint64_t power, uint64_t timeInterval) {
         if (timeInterval < DEFAULT_MIN_BLOCK_TIME) {
             return false;
         } else if (timeInterval >= DEFAULT_MAX_BLOCK_TIME) {
             return true;
         } else {
             auto target = calculate_miner_target_value(baseTarget, power, timeInterval);
-            if (hit <= target) {
+            if (target <= hit) {
                 return false;
             }
         }

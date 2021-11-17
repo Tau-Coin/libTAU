@@ -137,7 +137,7 @@ namespace libTAU::blockchain {
         auto tip_block_hash = m_repository->get_best_tip_block_hash(chain_id);
         auto tail_block_hash = m_repository->get_best_tail_block_hash(chain_id);
         log("INFO chain id[%s], tip block hash[%s], tail block hash[%s]", aux::toHex(chain_id).c_str(),
-            aux::toHex(tip_block_hash.to_string()).c_str(), aux::toHex(tip_block_hash.to_string()).c_str());
+            aux::toHex(tip_block_hash.to_string()).c_str(), aux::toHex(tail_block_hash.to_string()).c_str());
         if (!tip_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros()) {
             auto tip_block = m_repository->get_block_by_hash(tip_block_hash);
             auto tail_block = m_repository->get_block_by_hash(tail_block_hash);
@@ -486,7 +486,7 @@ namespace libTAU::blockchain {
                 }
             }
 
-            std::int64_t base_target = consensus::calculate_required_base_target(best_tip_block, ancestor);
+            auto base_target = consensus::calculate_required_base_target(best_tip_block, ancestor);
             std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
             log("INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), power);
             if (power <= 0) {
@@ -497,7 +497,8 @@ namespace libTAU::blockchain {
             auto interval = consensus::calculate_mining_time_interval(hit, base_target, power);
 
             std::int64_t now = get_total_milliseconds() / 1000; // second
-            if (now - best_tip_block.timestamp() >= interval) {
+            if (now >= best_tip_block.timestamp() + interval) {
+//                log("1-----------------------------------hit:%lu, base target:%lu, interval:%lu", hit, base_target, interval);
                 auto tx = m_tx_pools[chain_id].get_best_transaction();
                 auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(best_tip_block.cumulative_difficulty(), base_target);
                 auto miner_account = m_repository->get_account(chain_id, *pk);
@@ -545,6 +546,11 @@ namespace libTAU::blockchain {
             return TRUE;
         }
 
+        if (b.timestamp() <= previous_block.timestamp()) {
+            log("INFO chain[%s] block timestamp error.", aux::toHex(chain_id).c_str());
+            return FALSE;
+        }
+
         if (!b.verify_signature()) {
             log("INFO chain[%s] block[%s] has bad signature",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
@@ -568,7 +574,7 @@ namespace libTAU::blockchain {
             }
         }
 
-        std::int64_t base_target = consensus::calculate_required_base_target(previous_block, ancestor);
+        auto base_target = consensus::calculate_required_base_target(previous_block, ancestor);
         std::int64_t power = repo->get_effective_power(chain_id, b.miner());
         if (power <= 0) {
             log("INFO chain[%s] Cannot get account[%s] state in db",
@@ -578,7 +584,8 @@ namespace libTAU::blockchain {
 
         auto genSig = consensus::calculate_generation_signature(previous_block.generation_signature(), b.miner());
         auto hit = consensus::calculate_random_hit(genSig);
-        auto interval = consensus::calculate_mining_time_interval(hit, base_target, power);
+        auto interval = b.timestamp() - previous_block.timestamp();
+//        log("++++++++++++++++++++++++++++++++++++++++hit:%lu, base target:%ld, interval:%ld", hit, base_target, interval);
         if (!consensus::verify_hit(hit, base_target, power, interval)) {
             log("INFO chain[%s] block[%s] verify hit fail",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
