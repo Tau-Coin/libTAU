@@ -312,7 +312,9 @@ namespace libTAU {
     blockchain::account session_handle::get_account_info(std::vector<char> chain_id, dht::public_key pub_key)
 	{
 		blockchain::account * act;
+		std::cout << "get account info 0" << std::endl;
 		sync_call(&session_impl::get_account_info, chain_id, pub_key, act);
+		std::cout << "get account info 3" << std::endl;
 		return *act;
 	}
 
@@ -344,12 +346,6 @@ namespace libTAU {
 	void session_handle::set_port_filter(port_filter const& f)
 	{
 		async_call(&session_impl::set_port_filter, f);
-	}
-
-	unsigned short session_handle::listen_port() const
-	{
-		return sync_call_ret<unsigned short, unsigned short(session_impl::*)() const>
-			(&session_impl::listen_port);
 	}
 
 	bool session_handle::is_listening() const

@@ -77,7 +77,6 @@ see LICENSE file.
 #include "libTAU/aux_/invariant_check.hpp"
 #include "libTAU/extensions.hpp"
 #include "libTAU/aux_/portmap.hpp"
-#include "libTAU/aux_/lsd.hpp"
 #include "libTAU/io_context.hpp"
 #include "libTAU/flags.hpp"
 #include "libTAU/span.hpp"
@@ -100,7 +99,6 @@ namespace libTAU {
 	struct plugin;
 	struct upnp;
 	struct natpmp;
-	struct lsd;
 	struct alert;
 
 namespace dht {
@@ -208,15 +206,6 @@ namespace aux {
 		// If there are active NAT mappings the return value will be
 		// the external port returned by the NAT router, otherwise the
 		// local listen port is returned
-		int tcp_external_port()
-		{
-			for (auto const& m : tcp_port_mapping)
-			{
-				if (m.port != 0) return m.port;
-			}
-			return local_endpoint.port();
-		}
-
 		int udp_external_port()
 		{
 			for (auto const& m : udp_port_mapping)
@@ -230,7 +219,6 @@ namespace aux {
 		// 0 is natpmp 1 is upnp
 		// the order of these arrays determines the priorty in
 		// which their ports will be announced to peers
-		aux::array<listen_port_mapping, 2, portmap_transport> tcp_port_mapping;
 		aux::array<listen_port_mapping, 2, portmap_transport> udp_port_mapping;
 
 		// indicates whether this is an SSL listen socket or not
@@ -245,7 +233,6 @@ namespace aux {
 		// incoming packet is in the event queue when the socket is erased
 		// TODO: make these direct members and generate shared_ptrs to them
 		// which alias the listen_socket_t shared_ptr
-		std::shared_ptr<tcp::acceptor> sock;
 		std::shared_ptr<aux::session_udp_socket> udp_sock;
 
 		// since udp packets are expected to be dispatched frequently, this saves
@@ -254,8 +241,6 @@ namespace aux {
 
 		std::shared_ptr<natpmp> natpmp_mapper;
 		std::shared_ptr<upnp> upnp_mapper;
-
-		std::shared_ptr<struct lsd> lsd;
 
 		// set to true when we receive an incoming connection from this listen
 		// socket
@@ -320,7 +305,6 @@ namespace aux {
 			: session_interface
 			, dht::dht_observer
 			, aux::portmap_callback
-			, aux::lsd_callback
 			, single_threaded
 			, aux::error_handler_interface
 			, std::enable_shared_from_this<session_impl>
@@ -373,10 +357,6 @@ namespace aux {
 
 			io_context& get_context() override { return m_io_context; }
 			resolver_interface& get_resolver() override { return m_host_resolver; }
-
-			void async_accept(std::shared_ptr<tcp::acceptor> const&, transport);
-			void on_accept_connection(true_tcp_socket s, error_code const&
-				, std::weak_ptr<tcp::acceptor>, transport);
 
 			void incoming_connection(socket_type);
 
@@ -488,14 +468,8 @@ namespace aux {
 				m_optimistic_unchoke_time_scaler = 0;
 			}
 
-			std::uint16_t listen_port() const override;
-			std::uint16_t listen_port(listen_socket_t* sock) const;
-
 			// used by the DHT tracker, returns a UDP listen port
 			int get_listen_port(transport ssl, aux::listen_socket_handle const& s) override;
-			// used by peer connections, returns a TCP listen port
-			// or zero if no matching listen socket is found
-			int listen_port(transport ssl, address const& local_addr) override;
 
 			void for_each_listen_socket(std::function<void(aux::listen_socket_handle const&)> f) override
 			{
@@ -551,9 +525,6 @@ namespace aux {
 			bool should_log_portmap(portmap_transport transport) const override;
 			void log_portmap(portmap_transport transport, char const* msg
 				, listen_socket_handle const&) const override;
-
-			bool should_log_lsd() const override;
-			void log_lsd(char const* msg) const override;
 #endif
 
 			bool on_dht_request(string_view query

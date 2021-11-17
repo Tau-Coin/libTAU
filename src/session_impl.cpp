@@ -597,12 +597,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		// close the listen sockets
 		for (auto const& l : m_listen_sockets)
 		{
-			if (l->sock)
-			{
-				l->sock->close(ec);
-				TORRENT_ASSERT(!ec);
-			}
-
 			// TODO: 3 closing the udp sockets here means that
 			// the uTP connections cannot be closed gracefully
 			if (l->udp_sock)
@@ -1137,7 +1131,6 @@ namespace {
 					, (*remove_iter)->device.c_str());
 			}
 #endif
-			if ((*remove_iter)->sock) (*remove_iter)->sock->close(ec);
 			if ((*remove_iter)->udp_sock) (*remove_iter)->udp_sock->sock.close();
 			if ((*remove_iter)->natpmp_mapper) (*remove_iter)->natpmp_mapper->close();
 			if ((*remove_iter)->upnp_mapper) (*remove_iter)->upnp_mapper->close();
@@ -1168,10 +1161,10 @@ namespace {
 					, ep.device.c_str());
 			}
 #endif // TORRENT_DISABLE_LOGGING
-			//if(ep.addr.is_v4()) {
+			if(ep.addr.is_v4()) {
 				std::shared_ptr<listen_socket_t> s = setup_listener(ep, ec);
 
-				if (!ec && (s->sock || s->udp_sock))
+				if (!ec && s->udp_sock)
 				{
 					m_listen_sockets.emplace_back(s);
 
@@ -1186,11 +1179,8 @@ namespace {
 							m_dht->add_router_node(n);
 						}
 					}
-
-					TORRENT_ASSERT(bool(s->flags & listen_socket_t::accept_incoming) == bool(s->sock));
-					if (s->sock) async_accept(s->sock, s->ssl);
 				}
-			//}
+			}
 		}
 #ifndef BOOST_NO_EXCEPTIONS
 		catch (std::exception const& e)
@@ -1305,20 +1295,15 @@ namespace {
 	void session_impl::remap_ports(remap_port_mask_t const mask
 		, listen_socket_t& s)
 	{
-		tcp::endpoint const tcp_ep = s.sock ? s.sock->local_endpoint() : tcp::endpoint();
 		udp::endpoint const udp_ep = s.udp_sock ? s.udp_sock->sock.local_endpoint() : udp::endpoint();
 
 		if ((mask & remap_natpmp) && s.natpmp_mapper)
 		{
-			map_port(*s.natpmp_mapper, portmap_protocol::tcp, tcp_ep
-				, s.tcp_port_mapping[portmap_transport::natpmp].mapping);
 			map_port(*s.natpmp_mapper, portmap_protocol::udp, make_tcp(udp_ep)
 				, s.udp_port_mapping[portmap_transport::natpmp].mapping);
 		}
 		if ((mask & remap_upnp) && s.upnp_mapper)
 		{
-			map_port(*s.upnp_mapper, portmap_protocol::tcp, tcp_ep
-				, s.tcp_port_mapping[portmap_transport::upnp].mapping);
 			map_port(*s.upnp_mapper, portmap_protocol::udp, make_tcp(udp_ep)
 				, s.udp_port_mapping[portmap_transport::upnp].mapping);
 		}
@@ -1674,105 +1659,6 @@ namespace {
 		s->sock.async_read(make_handler([this, socket, ls, ssl](error_code const& e)
 			{ this->on_udp_packet(std::move(socket), std::move(ls), ssl, e); }
 			, s->udp_handler_storage, *this));
-	}
-
-	void session_impl::async_accept(std::shared_ptr<tcp::acceptor> const& listener
-		, transport const ssl)
-#ifndef BOOST_NO_EXCEPTIONS
-	try
-#endif
-	{
-		TORRENT_ASSERT(!m_abort);
-
-		std::weak_ptr<tcp::acceptor> ls(listener);
-		m_stats_counters.inc_stats_counter(counters::num_outstanding_accept);
-		ADD_OUTSTANDING_ASYNC("session_impl::on_accept_connection");
-		listener->async_accept([this, ls, ssl] (error_code const& ec, true_tcp_socket s)
-			{ return wrap(&session_impl::on_accept_connection, std::move(s), ec, ls, ssl); });
-	}
-#ifndef BOOST_NO_EXCEPTIONS
-	catch (system_error const& e) {
-		alerts().emplace_alert<session_error_alert>(e.code(), e.what());
-		pause();
-	} catch (std::exception const& e) {
-		alerts().emplace_alert<session_error_alert>(error_code(), e.what());
-		pause();
-	} catch (...) {
-		alerts().emplace_alert<session_error_alert>(error_code(), "unknown error");
-		pause();
-	}
-#endif
-
-	void session_impl::on_accept_connection(true_tcp_socket s, error_code const& e
-		, std::weak_ptr<tcp::acceptor> listen_socket, transport const ssl)
-	{
-		COMPLETE_ASYNC("session_impl::on_accept_connection");
-		m_stats_counters.inc_stats_counter(counters::on_accept_counter);
-		m_stats_counters.inc_stats_counter(counters::num_outstanding_accept, -1);
-
-		TORRENT_ASSERT(is_single_thread());
-		std::shared_ptr<tcp::acceptor> listener = listen_socket.lock();
-		if (!listener) return;
-
-		if (e == boost::asio::error::operation_aborted) return;
-
-		if (m_abort) return;
-
-		error_code ec;
-		if (e)
-		{
-			tcp::endpoint const ep = listener->local_endpoint(ec);
-#ifndef TORRENT_DISABLE_LOGGING
-			if (should_log())
-			{
-				session_log("error accepting connection on '%s': %s"
-					, print_endpoint(ep).c_str(), e.message().c_str());
-			}
-#endif
-#ifdef TORRENT_WINDOWS
-			// Windows sometimes generates this error. It seems to be
-			// non-fatal and we have to do another async_accept.
-			if (e.value() == ERROR_SEM_TIMEOUT)
-			{
-				async_accept(listener, ssl);
-				return;
-			}
-#endif
-#ifdef TORRENT_BSD
-			// Leopard sometimes generates an "invalid argument" error. It seems to be
-			// non-fatal and we have to do another async_accept.
-			if (e.value() == EINVAL)
-			{
-				async_accept(listener, ssl);
-				return;
-			}
-#endif
-			if (m_alerts.should_post<listen_failed_alert>())
-			{
-				m_alerts.emplace_alert<listen_failed_alert>(ep.address().to_string()
-					, ep, operation_t::sock_accept, e
-					, ssl == transport::ssl ? socket_type_t::tcp_ssl : socket_type_t::tcp);
-			}
-			return;
-		}
-		async_accept(listener, ssl);
-
-		// don't accept any connections from our local sockets if we're using a
-		// proxy
-		if (m_settings.get_int(settings_pack::proxy_type) != settings_pack::none)
-			return;
-
-		auto listen = std::find_if(m_listen_sockets.begin(), m_listen_sockets.end()
-			, [&listener](std::shared_ptr<listen_socket_t> const& l)
-		{ return l->sock == listener; });
-		if (listen != m_listen_sockets.end())
-			(*listen)->incoming_connection = true;
-
-		socket_type c = [&]{
-			return socket_type(tcp::socket(std::move(s)));
-		}();
-
-		incoming_connection(std::move(c));
 	}
 
 	void session_impl::incoming_connection(socket_type s)
@@ -2378,36 +2264,6 @@ namespace {
 		m_communication->account_changed();
 	}
 
-	// TODO: 2 this function should be removed and users need to deal with the
-	// more generic case of having multiple listen ports
-	std::uint16_t session_impl::listen_port() const
-	{
-		return listen_port(nullptr);
-	}
-
-	std::uint16_t session_impl::listen_port(listen_socket_t* sock) const
-	{
-		if (m_listen_sockets.empty()) return 0;
-		if (sock)
-		{
-			// if we're using a proxy, we won't be able to accept any TCP
-			// connections. Not even uTP connections via the port we know about.
-			// The DHT may use the implied port to make it work, but the port we
-			// announce here has no relevance for that.
-			if (sock->flags & listen_socket_t::proxy)
-				return 0;
-
-			if (!(sock->flags & listen_socket_t::accept_incoming))
-				return 0;
-
-			return std::uint16_t(sock->tcp_external_port());
-		}
-
-		sock = m_listen_sockets.front().get();
-		if (!(sock->flags & listen_socket_t::accept_incoming)) return 0;
-		return std::uint16_t(sock->tcp_external_port());
-	}
-
 	int session_impl::get_listen_port(transport const ssl, aux::listen_socket_handle const& s)
 	{
 		auto* socket = s.get();
@@ -2424,22 +2280,6 @@ namespace {
 				socket = alt_socket->get();
 		}
 		return socket->udp_external_port();
-	}
-
-	int session_impl::listen_port(transport const ssl, address const& local_addr)
-	{
-		auto socket = std::find_if(m_listen_sockets.begin(), m_listen_sockets.end()
-			, [&](std::shared_ptr<listen_socket_t> const& e)
-		{
-			if (!(e->flags & listen_socket_t::accept_incoming)) return false;
-			auto const& listen_addr = e->external_address.external_address();
-			return e->ssl == ssl
-				&& (listen_addr == local_addr
-					|| (listen_addr.is_v4() == local_addr.is_v4() && listen_addr.is_unspecified()));
-		});
-		if (socket != m_listen_sockets.end())
-			return (*socket)->tcp_external_port();
-		return 0;
 	}
 
 	void session_impl::start_natpmp(std::shared_ptr<aux::listen_socket_t> const& s)
@@ -2494,8 +2334,7 @@ namespace {
 			listen_socket->external_address.cast_vote(external_ip, source_router, address());
 		}
 
-		if (proto == portmap_protocol::tcp) listen_socket->tcp_port_mapping[transport].port = port;
-		else if (proto == portmap_protocol::udp) listen_socket->udp_port_mapping[transport].port = port;
+		if (proto == portmap_protocol::udp) listen_socket->udp_port_mapping[transport].port = port;
 
 		if (!ec && m_alerts.should_post<portmap_alert>())
 		{
@@ -2750,7 +2589,9 @@ namespace {
 	}
 
 	bool session_impl::get_account_info(const aux::bytes &chain_id, dht::public_key pub_key, blockchain::account * act) {
+		std::cout << "get account info 1" << std::endl;
 		*act =  m_blockchain->getAccountInfo(chain_id, pub_key);
+		std::cout << "get account info 2" << std::endl;
 		return true;
 	}
 
@@ -2807,7 +2648,7 @@ namespace {
 			{
 				start_dht();
 				start_communication();
-				//start_blockchain();
+				start_blockchain();
 			}
 			return;
 		}
@@ -2848,7 +2689,7 @@ namespace {
 		{
 			start_dht();
 			start_communication();
-			//start_blockchain();
+			start_blockchain();
 		}
 
 		m_alerts.emplace_alert<session_start_over_alert>(true);
@@ -3013,21 +2854,6 @@ namespace {
 		int const tos = m_settings.get_int(settings_pack::peer_tos);
 		for (auto const& l : m_listen_sockets)
 		{
-			if (l->sock)
-			{
-				error_code ec;
-				set_tos(*l->sock, tos, ec);
-
-#ifndef TORRENT_DISABLE_LOGGING
-				if (should_log())
-				{
-					session_log(">>> SET_TOS [ tcp (%s %d) tos: %x e: %s ]"
-						, l->sock->local_endpoint().address().to_string().c_str()
-						, l->sock->local_endpoint().port(), tos, ec.message().c_str());
-				}
-#endif
-			}
-
 			if (l->udp_sock)
 			{
 				error_code ec;
@@ -3099,15 +2925,6 @@ namespace {
 			}
 #endif
 			ec.clear();
-			set_socket_buffer_size(*l->sock, m_settings, ec);
-#ifndef TORRENT_DISABLE_LOGGING
-			if (ec && should_log())
-			{
-				session_log("listen socket buffer size [ tcp %s:%d] %s"
-					, l->sock->local_endpoint().address().to_string().c_str()
-					, l->sock->local_endpoint().port(), print_error(ec).c_str());
-			}
-#endif
 		}
 	}
 
@@ -3232,7 +3049,6 @@ namespace {
 	{
 		for (auto& s : m_listen_sockets)
 		{
-			s->tcp_port_mapping[portmap_transport::natpmp] = listen_port_mapping();
 			s->udp_port_mapping[portmap_transport::natpmp] = listen_port_mapping();
 			if (!s->natpmp_mapper) continue;
 			s->natpmp_mapper->close();
@@ -3245,7 +3061,6 @@ namespace {
 		for (auto& s : m_listen_sockets)
 		{
 			if (!s->upnp_mapper) continue;
-			s->tcp_port_mapping[portmap_transport::upnp] = listen_port_mapping();
 			s->udp_port_mapping[portmap_transport::upnp] = listen_port_mapping();
 			s->upnp_mapper->close();
 			s->upnp_mapper.reset();
@@ -3341,17 +3156,6 @@ namespace {
 		if (m_alerts.should_post<portmap_log_alert>())
 			m_alerts.emplace_alert<portmap_log_alert>(transport, msg
 				, listen_socket ? listen_socket->local_endpoint.address() : address());
-	}
-
-	bool session_impl::should_log_lsd() const
-	{
-		return m_alerts.should_post<log_alert>();
-	}
-
-	void session_impl::log_lsd(char const* msg) const
-	{
-		if (m_alerts.should_post<log_alert>())
-			m_alerts.emplace_alert<log_alert>(msg);
 	}
 #endif
 
