@@ -46,6 +46,9 @@ namespace libTAU::blockchain {
 
     void block::sign(const dht::public_key &pk, const dht::secret_key &sk) {
         m_signature = ed25519_sign(get_encode_without_signature(), pk, sk);
+
+        auto encode = get_encode();
+        m_hash = dht::item_target_id(encode);
     }
 
     bool block::verify_signature() const {
@@ -196,10 +199,10 @@ namespace libTAU::blockchain {
     std::set<dht::public_key> block::get_block_peers() const {
         std::set<dht::public_key> peers;
         peers.insert(m_miner);
-        auto tx = m_tx;
-        if (!tx.empty()) {
-            peers.insert(tx.sender());
-            peers.insert(tx.receiver());
+//        auto tx = m_tx;
+        if (!m_tx.empty()) {
+            peers.insert(m_tx.sender());
+            peers.insert(m_tx.receiver());
         }
 
         return peers;

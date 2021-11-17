@@ -80,6 +80,9 @@ namespace libTAU::blockchain {
 
     void transaction::sign(const dht::public_key &pk, const dht::secret_key &sk) {
         m_signature = ed25519_sign(get_encode_without_signature(), pk, sk);
+
+        auto encode = get_encode();
+        m_hash = dht::item_target_id(encode);
     }
 
     bool transaction::verify_signature() const {

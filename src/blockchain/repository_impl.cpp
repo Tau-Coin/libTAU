@@ -374,7 +374,11 @@ namespace libTAU::blockchain {
         std::string value;
         leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
 
-        return account_block_pointer(value);
+        if (!value.empty()) {
+            return account_block_pointer(value);
+        }
+
+        return account_block_pointer();
     }
 
     bool repository_impl::save_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const account_block_pointer &accountBlockPointer) {
@@ -453,7 +457,7 @@ namespace libTAU::blockchain {
         std::string value;
         m_leveldb->Get(leveldb::ReadOptions(), key, &value);
 
-        if (value.empty()) {
+        if (!value.empty()) {
             return state_linker(value);
         }
 
@@ -526,7 +530,7 @@ namespace libTAU::blockchain {
         std::string value;
         m_leveldb->Get(leveldb::ReadOptions(), key, &value);
 
-        if (value.empty()) {
+        if (!value.empty()) {
             return index_key_info(value);
         }
 

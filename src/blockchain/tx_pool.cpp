@@ -106,13 +106,7 @@ namespace libTAU::blockchain {
     }
 
     bool tx_pool::process_block_peers(const block& b) {
-        std::set<dht::public_key> peers;
-        peers.insert(b.miner());
-        auto tx = b.tx();
-        if (!tx.empty()) {
-            peers.insert(tx.sender());
-            peers.insert(tx.receiver());
-        }
+        std::set<dht::public_key> peers = b.get_block_peers();
 
         for (auto const& peer: peers) {
             auto local_tx = get_transaction_by_account(peer);
@@ -121,6 +115,8 @@ namespace libTAU::blockchain {
                 add_tx(local_tx);
             }
         }
+
+        return true;
     }
 
     std::set<dht::public_key> tx_pool::get_active_peers() {

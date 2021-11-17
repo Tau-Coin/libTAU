@@ -168,9 +168,8 @@ namespace libTAU::blockchain {
 
     block repository_track::get_block_by_hash(const sha256_hash &hash) {
         auto it = m_cache.find(hash.to_string());
-        if (it != m_cache.end()) {
-            std::string value = it->second;
-            return block(value);
+        if (it != m_cache.end() && !it->second.empty()) {
+            return block(it->second);
         } else {
             return m_repository->get_block_by_hash(hash);
         }
@@ -394,9 +393,8 @@ namespace libTAU::blockchain {
         key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
 
         auto it = m_cache.find(key);
-        if (it != m_cache.end()) {
-            std::string value = it->second;
-            return sha256_hash (value.data());
+        if (it != m_cache.end() && !it->second.empty()) {
+            return sha256_hash (it->second.data());
         } else {
             return m_repository->get_best_tip_block_hash(chain_id);
         }
@@ -426,9 +424,8 @@ namespace libTAU::blockchain {
         key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
 
         auto it = m_cache.find(key);
-        if (it != m_cache.end()) {
-            std::string value = it->second;
-            return sha256_hash (value.data());
+        if (it != m_cache.end() && !it->second.empty()) {
+            return sha256_hash (it->second.data());
         } else {
             return m_repository->get_best_tail_block_hash(chain_id);
         }
@@ -490,9 +487,8 @@ namespace libTAU::blockchain {
         key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
 
         auto it = m_cache.find(key);
-        if (it != m_cache.end()) {
-            std::string value = it->second;
-            return account_block_pointer(value);
+        if (it != m_cache.end() && !it->second.empty()) {
+            return account_block_pointer(it->second);
         } else {
             return m_repository->get_account_block_pointer(chain_id, pubKey);
         }
@@ -535,9 +531,8 @@ namespace libTAU::blockchain {
         key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
 
         auto it = m_cache.find(key);
-        if (it != m_cache.end()) {
-            std::string value = it->second;
-            return state_linker(value);
+        if (it != m_cache.end() && !it->second.empty()) {
+            return state_linker(it->second);
         } else {
             return m_repository->get_state_linker(block_hash);
         }
@@ -603,9 +598,8 @@ namespace libTAU::blockchain {
         key.insert(key.end(), str_num.begin(), str_num.end());
 
         auto it = m_cache.find(key);
-        if (it != m_cache.end()) {
-            std::string value = it->second;
-            return index_key_info(value);
+        if (it != m_cache.end() && !it->second.empty()) {
+            return index_key_info(it->second);
         } else {
             return m_repository->get_index_info(chain_id, block_number);
         }

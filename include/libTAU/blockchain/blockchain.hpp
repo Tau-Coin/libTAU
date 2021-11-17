@@ -91,7 +91,7 @@ namespace blockchain {
         bool unfollowChain(const aux::bytes &chain_id);
 
         // send new transaction
-        bool submitTransaction(transaction tx);
+        bool submitTransaction(const transaction& tx);
 
         // get account by public key
         account getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey);
