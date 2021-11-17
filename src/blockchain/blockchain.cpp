@@ -464,28 +464,29 @@ namespace libTAU::blockchain {
         block b;
         auto best_tip_block = m_best_tip_blocks[chain_id];
         if (!best_tip_block.empty()) {
-            block ancestor1 = m_repository->get_block_by_hash(best_tip_block.previous_block_hash());
-            if (ancestor1.empty()) {
-                log("INFO chain[%s] Cannot find block[%s] in db",
-                    aux::toHex(chain_id).c_str(), aux::toHex(best_tip_block.previous_block_hash().to_string()).c_str());
+            if (best_tip_block.block_number() < 0) {
+                log("INFO chain[%s] Negative and genesis block cannot be mined", aux::toHex(chain_id).c_str());
                 return b;
             }
 
-            block ancestor2 = m_repository->get_block_by_hash(ancestor1.previous_block_hash());
-            if (ancestor2.empty()) {
-                log("INFO chain[%s] Cannot find block[%s] in db",
-                    aux::toHex(chain_id).c_str(), aux::toHex(ancestor1.previous_block_hash().to_string()).c_str());
-                return b;
+            block ancestor;
+            auto previous_hash = best_tip_block.previous_block_hash();
+            if (best_tip_block.block_number() > 3) {
+                int i = 3;
+                while (i > 0) {
+                    ancestor = m_repository->get_block_by_hash(previous_hash);
+                    if (ancestor.empty()) {
+                        log("INFO chain[%s] Cannot find block[%s] in db",
+                            aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
+                        return b;
+                    }
+                    previous_hash = ancestor.previous_block_hash();
+
+                    i--;
+                }
             }
 
-            block ancestor3 = m_repository->get_block_by_hash(ancestor2.previous_block_hash());
-            if (ancestor3.empty()) {
-                log("INFO chain[%s] Cannot find block[%s] in db",
-                    aux::toHex(chain_id).c_str(), aux::toHex(ancestor2.previous_block_hash().to_string()).c_str());
-                return b;
-            }
-
-            std::int64_t base_target = consensus::calculate_required_base_target(best_tip_block, ancestor3);
+            std::int64_t base_target = consensus::calculate_required_base_target(best_tip_block, ancestor);
             std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
             log("INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), power);
             if (power <= 0) {
@@ -500,21 +501,26 @@ namespace libTAU::blockchain {
                 auto tx = m_tx_pools[chain_id].get_best_transaction();
                 auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(best_tip_block.cumulative_difficulty(), base_target);
                 auto miner_account = m_repository->get_account(chain_id, *pk);
+                std::int64_t miner_balance = miner_account.balance();
+                std::int64_t miner_nonce = miner_account.nonce();
                 std::int64_t sender_balance = 0;
                 std::int64_t sender_nonce = 0;
                 std::int64_t receiver_balance = 0;
                 std::int64_t receiver_nonce = 0;
                 if (!tx.empty()) {
+                    miner_balance += tx.fee();
+
                     auto sender_account = m_repository->get_account(chain_id, tx.sender());
-                    sender_balance = sender_account.balance();
-                    sender_nonce = sender_account.nonce();
+                    sender_balance = sender_account.balance() - tx.cost();
+                    sender_nonce = sender_account.nonce() + 1;
+
                     auto receiver_account = m_repository->get_account(chain_id, tx.receiver());
-                    receiver_balance = receiver_account.balance();
+                    receiver_balance = receiver_account.balance() + tx.amount();
                     receiver_nonce = receiver_account.nonce();
                 }
                 b = block(chain_id, block_version::block_version1,(best_tip_block.timestamp() + interval),
                           best_tip_block.block_number() + 1, best_tip_block.sha256(), base_target,
-                          cumulative_difficulty, genSig, tx, *pk, miner_account.balance(), miner_account.nonce(),
+                          cumulative_difficulty, genSig, tx, *pk, miner_balance, miner_nonce,
                           sender_balance, sender_nonce, receiver_balance, receiver_nonce);
                 b.sign(*pk, *sk);
             }
@@ -529,34 +535,40 @@ namespace libTAU::blockchain {
             return FALSE;
         }
 
+        if (previous_block.block_number() + 1 != b.block_number()) {
+            log("INFO chain[%s] block number error.", aux::toHex(chain_id).c_str());
+            return FALSE;
+        }
+
+        if (b.block_number() <= 0) {
+            log("INFO chain[%s] Negative and genesis block is always true", aux::toHex(chain_id).c_str());
+            return TRUE;
+        }
+
         if (!b.verify_signature()) {
             log("INFO chain[%s] block[%s] has bad signature",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
             return FALSE;
         }
 
-        block ancestor1 = repo->get_block_by_hash(previous_block.previous_block_hash());
-        if (ancestor1.empty()) {
-            log("INFO chain[%s] Cannot find block[%s] in db",
-                aux::toHex(chain_id).c_str(), aux::toHex(previous_block.previous_block_hash().to_string()).c_str());
-            return MISSING;
+        block ancestor;
+        auto previous_hash = previous_block.previous_block_hash();
+        if (previous_block.block_number() > 3) {
+            int i = 3;
+            while (i > 0) {
+                ancestor = repo->get_block_by_hash(previous_hash);
+                if (ancestor.empty()) {
+                    log("INFO chain[%s] Cannot find block[%s] in db",
+                        aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
+                    return MISSING;
+                }
+                previous_hash = ancestor.previous_block_hash();
+
+                i--;
+            }
         }
 
-        block ancestor2 = repo->get_block_by_hash(ancestor1.previous_block_hash());
-        if (ancestor2.empty()) {
-            log("INFO chain[%s] Cannot find block[%s] in db",
-                aux::toHex(chain_id).c_str(), aux::toHex(ancestor1.previous_block_hash().to_string()).c_str());
-            return MISSING;
-        }
-
-        block ancestor3 = repo->get_block_by_hash(ancestor2.previous_block_hash());
-        if (ancestor3.empty()) {
-            log("INFO chain[%s] Cannot find block[%s] in db",
-                aux::toHex(chain_id).c_str(), aux::toHex(ancestor2.previous_block_hash().to_string()).c_str());
-            return MISSING;
-        }
-
-        std::int64_t base_target = consensus::calculate_required_base_target(previous_block, ancestor3);
+        std::int64_t base_target = consensus::calculate_required_base_target(previous_block, ancestor);
         std::int64_t power = repo->get_effective_power(chain_id, b.miner());
         if (power <= 0) {
             log("INFO chain[%s] Cannot get account[%s] state in db",
@@ -569,6 +581,33 @@ namespace libTAU::blockchain {
         auto interval = consensus::calculate_mining_time_interval(hit, base_target, power);
         if (!consensus::verify_hit(hit, base_target, power, interval)) {
             log("INFO chain[%s] block[%s] verify hit fail",
+                aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+            return FALSE;
+        }
+
+        auto miner_account = repo->get_account(chain_id, b.miner());
+        std::int64_t miner_balance = miner_account.balance();
+        std::int64_t miner_nonce = miner_account.nonce();
+        std::int64_t sender_balance = 0;
+        std::int64_t sender_nonce = 0;
+        std::int64_t receiver_balance = 0;
+        std::int64_t receiver_nonce = 0;
+        auto const& tx = b.tx();
+        if (!tx.empty()) {
+            miner_balance += tx.fee();
+
+            auto sender_account = repo->get_account(chain_id, tx.sender());
+            sender_balance = sender_account.balance() - tx.cost();
+            sender_nonce = sender_account.nonce() + 1;
+
+            auto receiver_account = repo->get_account(chain_id, tx.receiver());
+            receiver_balance = receiver_account.balance() + tx.amount();
+            receiver_nonce = receiver_account.nonce();
+        }
+        if (miner_balance != b.miner_balance() || miner_nonce != b.miner_nonce() ||
+        sender_balance != b.sender_balance() || sender_nonce != b.sender_nonce() ||
+        receiver_balance != b.receiver_balance() || receiver_nonce != b.receiver_nonce()) {
+            log("INFO chain[%s] block[%s] state error!",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
             return FALSE;
         }

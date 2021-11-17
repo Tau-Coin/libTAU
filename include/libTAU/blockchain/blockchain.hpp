@@ -110,7 +110,7 @@ namespace blockchain {
         bool init();
 
         // get current time(ms)
-        std::int64_t get_total_milliseconds();
+        static std::int64_t get_total_milliseconds();
 
         // create and follow tau chain
         bool create_TAU_chain();
