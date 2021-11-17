@@ -312,7 +312,9 @@ namespace libTAU {
     blockchain::account session_handle::get_account_info(std::vector<char> chain_id, dht::public_key pub_key)
 	{
 		blockchain::account * act;
+		std::cout << "get account info 0" << std::endl;
 		sync_call(&session_impl::get_account_info, chain_id, pub_key, act);
+		std::cout << "get account info 3" << std::endl;
 		return *act;
 	}
 

@@ -2122,14 +2122,14 @@ namespace {
 
     void session_impl::update_db_dir()
     {    
-		/*
         std::string home_dir = std::filesystem::path(getenv("HOME")).string();
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
-		*/
 
+		/*
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
+		*/
 
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
@@ -2589,7 +2589,9 @@ namespace {
 	}
 
 	bool session_impl::get_account_info(const aux::bytes &chain_id, dht::public_key pub_key, blockchain::account * act) {
+		std::cout << "get account info 1" << std::endl;
 		*act =  m_blockchain->getAccountInfo(chain_id, pub_key);
+		std::cout << "get account info 2" << std::endl;
 		return true;
 	}
 
@@ -2646,7 +2648,7 @@ namespace {
 			{
 				start_dht();
 				start_communication();
-				//start_blockchain();
+				start_blockchain();
 			}
 			return;
 		}
@@ -2687,7 +2689,7 @@ namespace {
 		{
 			start_dht();
 			start_communication();
-			//start_blockchain();
+			start_blockchain();
 		}
 
 		m_alerts.emplace_alert<session_start_over_alert>(true);
