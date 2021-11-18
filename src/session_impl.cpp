@@ -2589,9 +2589,7 @@ namespace {
 	}
 
 	bool session_impl::get_account_info(const aux::bytes &chain_id, dht::public_key pub_key, blockchain::account * act) {
-		std::cout << "get account info 1" << std::endl;
 		*act =  m_blockchain->getAccountInfo(chain_id, pub_key);
-		std::cout << "get account info 2" << std::endl;
 		return true;
 	}
 
