@@ -707,6 +707,11 @@ namespace libTAU {
 
                 dht::public_key peer = i.pk();
 
+                // update latest item timestamp
+                if (i.ts() > m_latest_item_timestamp[peer]) {
+                    m_latest_item_timestamp[peer] = i.ts();
+                }
+
                 online_signal onlineSignal(i.value());
                 log("INFO: Got online signal:[%s] from peer[%s]", onlineSignal.to_string().c_str(), aux::toHex(peer.bytes).c_str());
 

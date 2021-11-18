@@ -249,6 +249,9 @@ namespace libTAU {
             std::map<dht::public_key, immutable_data_info> m_last_gasp_payload;
 
             std::map<dht::public_key, std::int64_t> m_last_gasp_time;
+
+            // the latest item timestamp of peer
+            std::map<dht::public_key, dht::timestamp> m_latest_item_timestamp;
         };
     }
 }
