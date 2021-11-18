@@ -77,9 +77,9 @@ namespace libTAU::blockchain {
         // previous block hash
         e["h"] = entry(m_previous_block_hash.to_string());
         // base target
-        e["b"] = entry(m_base_target);
+        e["b"] = entry(static_cast<std::int64_t>(m_base_target));
         // cumulative difficulty
-        e["d"] = entry(m_cumulative_difficulty);
+        e["d"] = entry(static_cast<std::int64_t>(m_cumulative_difficulty));
         // generation signature
         e["g"] = entry(m_generation_signature.to_string());
         // tx
@@ -134,12 +134,12 @@ namespace libTAU::blockchain {
         // base target
         if (auto* i = const_cast<entry *>(e.find_key("b")))
         {
-            m_base_target = i->integer();
+            m_base_target = static_cast<std::uint64_t>(i->integer());
         }
         // cumulative difficulty
         if (auto* i = const_cast<entry *>(e.find_key("d")))
         {
-            m_cumulative_difficulty = i->integer();
+            m_cumulative_difficulty = static_cast<std::uint64_t>(i->integer());
         }
         // generation signature
         if (auto* i = const_cast<entry *>(e.find_key("g")))

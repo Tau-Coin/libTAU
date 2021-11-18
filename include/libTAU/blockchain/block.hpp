@@ -38,7 +38,7 @@ namespace blockchain {
         explicit block(std::string encode): block(bdecode(encode)) {}
 
         block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
-                sha256_hash mPreviousBlockHash, int64_t mBaseTarget, int64_t mCumulativeDifficulty,
+                sha256_hash mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
                 sha256_hash mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
               int64_t mMinerBalance, int64_t mMinerNonce, int64_t mSenderBalance, int64_t mSenderNonce,
               int64_t mReceiverBalance, int64_t mReceiverNonce) : m_chain_id(std::move(mChainId)), m_version(mVersion),
@@ -58,9 +58,9 @@ namespace blockchain {
 
         const sha256_hash &previous_block_hash() const { return m_previous_block_hash; }
 
-        int64_t base_target() const { return m_base_target; }
+        uint64_t base_target() const { return m_base_target; }
 
-        int64_t cumulative_difficulty() const { return m_cumulative_difficulty; }
+        uint64_t cumulative_difficulty() const { return m_cumulative_difficulty; }
 
         const sha256_hash &generation_signature() const { return m_generation_signature; }
 
@@ -127,10 +127,10 @@ namespace blockchain {
         sha256_hash m_previous_block_hash;
 
         // base target
-        std::int64_t m_base_target{};
+        std::uint64_t m_base_target{};
 
         // cumulative difficulty
-        std::int64_t m_cumulative_difficulty{};
+        std::uint64_t m_cumulative_difficulty{};
 
         // generation signature
         sha256_hash m_generation_signature;

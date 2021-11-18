@@ -494,7 +494,7 @@ namespace libTAU::blockchain {
             }
             auto genSig = consensus::calculate_generation_signature(best_tip_block.generation_signature(), *pk);
             auto hit = consensus::calculate_random_hit(genSig);
-            auto interval = consensus::calculate_mining_time_interval(hit, base_target, power);
+            auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, power));
 
             std::int64_t now = get_total_milliseconds() / 1000; // second
             if (now >= best_tip_block.timestamp() + interval) {
@@ -635,10 +635,10 @@ namespace libTAU::blockchain {
 
         auto& consensus_block = m_consensus_point_blocks[chain_id];
         if (consensus_block.empty() || consensus_block.block_number() != block_number) {
-            auto b = m_repository->get_main_chain_block_by_number(chain_id, block_number);
-            if (!b.empty()) {
-                log("INFO chain[%s] Consensus point block[%s]", aux::toHex(chain_id).c_str(), b.to_string().c_str());
-                m_consensus_point_blocks[chain_id] = consensus_block;
+            auto blk = m_repository->get_main_chain_block_by_number(chain_id, block_number);
+            if (!blk.empty()) {
+                log("INFO chain[%s] Consensus point block[%s]", aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                m_consensus_point_blocks[chain_id] = blk;
             } else {
                 log("INFO chain[%s] Cannot find consensus point block", aux::toHex(chain_id).c_str());
             }
