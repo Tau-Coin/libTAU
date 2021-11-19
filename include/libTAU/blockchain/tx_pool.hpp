@@ -27,6 +27,8 @@ namespace libTAU::blockchain {
 
     constexpr int tx_pool_max_size_by_timestamp = 10;
 
+    constexpr int tx_pool_max_active_friends_size = 10;
+
     class tx_pool {
     public:
 
@@ -52,29 +54,35 @@ namespace libTAU::blockchain {
 
         bool process_block_peers(const block& b);
 
+        bool is_transaction_in_pool(const sha256_hash& txid) const;
+
         std::set<dht::public_key> get_active_peers();
 
         void clear();
 
     private:
 
+        void remove_min_fee_tx();
+
         // blockchain db
         std::shared_ptr<repository> m_repository;
 
+        // tx set
         std::map<sha256_hash, transaction> m_all_txs_by_fee;
 
         // ordered by fee
         std::set<tx_entry_with_fee> m_ordered_txs_by_fee;
 
+        // one account one tx
         std::map<dht::public_key, sha256_hash> m_account_tx_by_fee;
 
-
-
+        // tx set
         std::map<sha256_hash, transaction> m_all_txs_by_timestamp;
 
         // ordered by timestamp
         std::set<tx_entry_with_timestamp> m_ordered_txs_by_timestamp;
 
+        // active peers found from tx
         std::queue<dht::public_key> m_active_peers;
     };
 }

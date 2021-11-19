@@ -92,6 +92,9 @@ namespace libTAU::blockchain {
             return false;
 
         m_active_peers.push(tx.sender());
+        if (m_active_peers.size() > tx_pool_max_active_friends_size) {
+            m_active_peers.pop();
+        }
 
         m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
         m_all_txs_by_timestamp[tx.sha256()] = tx;
@@ -119,12 +122,26 @@ namespace libTAU::blockchain {
                         m_account_tx_by_fee[tx.sender()] = tx.sha256();
                         m_ordered_txs_by_fee.erase(tx_entry_with_fee(old_tx.sha256(), old_tx.fee()));
                         m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
+
+                        if (m_all_txs_by_fee.size() > tx_pool_max_size_by_fee) {
+                            remove_min_fee_tx();
+                        }
                     }
                 }
             }
         }
 
         return true;
+    }
+
+    void tx_pool::remove_min_fee_tx() {
+        auto it = m_ordered_txs_by_fee.begin();
+        auto it_tx = m_all_txs_by_fee.find(it->txid());
+        if (it_tx != m_all_txs_by_fee.end()) {
+            m_all_txs_by_fee.erase(it_tx);
+            m_account_tx_by_fee.erase(it_tx->second.sender());
+        }
+        m_ordered_txs_by_fee.erase(it);
     }
 
     transaction tx_pool::get_transaction_by_account(const dht::public_key& pubKey) const {
@@ -161,6 +178,20 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    bool tx_pool::is_transaction_in_pool(const sha256_hash &txid) const {
+        auto it = m_all_txs_by_fee.find(txid);
+        if (it != m_all_txs_by_fee.end()) {
+            return true;
+        }
+
+        it = m_all_txs_by_timestamp.find(txid);
+        if (it != m_all_txs_by_timestamp.end()) {
+            return true;
+        }
+
+        return false;
+    }
+
     std::set<dht::public_key> tx_pool::get_active_peers() {
         std::set<dht::public_key> peers;
         auto size = m_active_peers.size();
@@ -175,7 +206,10 @@ namespace libTAU::blockchain {
 
     void tx_pool::clear() {
         m_all_txs_by_fee.clear();
+        m_ordered_txs_by_fee.clear();
         m_account_tx_by_fee.clear();
+        m_all_txs_by_timestamp.clear();
+        m_ordered_txs_by_timestamp.clear();
     }
 
 }
