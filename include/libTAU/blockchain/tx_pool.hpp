@@ -18,9 +18,14 @@ see LICENSE file.
 
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/transaction.hpp"
-#include "libTAU/blockchain/tx_entry.hpp"
+#include "libTAU/blockchain/tx_entry_with_fee.hpp"
+#include "libTAU/blockchain/tx_entry_with_timestamp.hpp"
 
 namespace libTAU::blockchain {
+
+    constexpr int tx_pool_max_size_by_fee = 100;
+
+    constexpr int tx_pool_max_size_by_timestamp = 10;
 
     class tx_pool {
     public:
@@ -29,18 +34,17 @@ namespace libTAU::blockchain {
 
         explicit tx_pool(std::shared_ptr<repository> mRepository) : m_repository(std::move(mRepository)) {}
 
-//        tx_pool(std::shared_ptr<repository> mRepository, int64_t mExpirationBlockNumber) :
-//        m_repository(std::move(mRepository)), m_expiration_block_number(mExpirationBlockNumber) {}
-//
-//        void update_expiration_block_number(const std::shared_ptr<repository> &mRepository) { m_repository = mRepository; }
-
         transaction get_best_transaction() const;
 
-        aux::bytes get_hash_prefix_array() const;
+        aux::bytes get_hash_prefix_array_by_fee() const;
 
-        std::vector<transaction> get_top_ten_transactions();
+        std::vector<transaction> get_top_ten_fee_transactions();
 
-        bool add_tx(transaction tx);
+        aux::bytes get_hash_prefix_array_by_timestamp() const;
+
+        std::vector<transaction> get_top_ten_timestamp_transactions();
+
+        bool add_tx(const transaction& tx);
 
         transaction get_transaction_by_account(const dht::public_key& pubKey) const;
 
@@ -57,14 +61,19 @@ namespace libTAU::blockchain {
         // blockchain db
         std::shared_ptr<repository> m_repository;
 
-//        std::int64_t m_expiration_block_number = 0;
-
-        std::map<sha256_hash, transaction> m_all_txs;
+        std::map<sha256_hash, transaction> m_all_txs_by_fee;
 
         // ordered by fee
-        std::set<tx_entry> m_ordered_txs;
+        std::set<tx_entry_with_fee> m_ordered_txs_by_fee;
 
-        std::map<dht::public_key, sha256_hash> m_account_tx;
+        std::map<dht::public_key, sha256_hash> m_account_tx_by_fee;
+
+
+
+        std::map<sha256_hash, transaction> m_all_txs_by_timestamp;
+
+        // ordered by timestamp
+        std::set<tx_entry_with_timestamp> m_ordered_txs_by_timestamp;
 
         std::queue<dht::public_key> m_active_peers;
     };

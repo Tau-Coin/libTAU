@@ -1125,8 +1125,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::find_best_solution(std::vector<transaction> &txs, const aux::bytes &hash_prefix_array,
-                                        std::vector<transaction> &missing_txs,
-                                        std::vector<sha256_hash> &confirmation_roots) {
+                                        std::vector<transaction> &missing_txs) {
         // 如果对方没有信息，则本地消息全为缺失消息
         if (hash_prefix_array.empty()) {
             log("INFO: Hash prefix array is empty");
@@ -1150,10 +1149,10 @@ namespace libTAU::blockchain {
             log("INFO: tx array: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
             // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
             if (source == target) {
-                for (auto &tx: txs) {
+//                for (auto &tx: txs) {
 //                        log("INFO: Confirm message hash[%s]", aux::toHex(msg.sha256().to_string()).c_str());
-                    confirmation_roots.push_back(tx.sha256());
-                }
+//                    confirmation_roots.push_back(tx.sha256());
+//                }
                 return;
             }
 
@@ -1206,9 +1205,6 @@ namespace libTAU::blockchain {
                     // 如果是替换操作，则将target对应的替换消息加入列表
                     if (source[i - 1] != target[j - 1]) {
                         missing_txs.push_back(txs[j - 1]);
-                    } else {
-//                            log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
-                        confirmation_roots.push_back(txs[j - 1].sha256());
                     }
                     i--;
                     j--;
@@ -1236,10 +1232,10 @@ namespace libTAU::blockchain {
 
             // 找到距离为0可能仍然不够，可能有前缀相同的情况，这时dist[i][j]很多为0的情况，
             // 因此，需要把剩余的加入confirmation root集合即可
-            for(; j > 0; j--) {
+//            for(; j > 0; j--) {
 //                    log("INFO: Confirm message hash[%s]", aux::toHex(messages[j - 1].sha256().to_string()).c_str());
-                confirmation_roots.push_back(txs[j - 1].sha256());
-            }
+//                confirmation_roots.push_back(txs[j - 1].sha256());
+//            }
 
             // reverse missing messages
 //                std::reverse(missing_messages.begin(), missing_messages.end());
@@ -1343,33 +1339,65 @@ namespace libTAU::blockchain {
                 }
             }
 
-            // find out missing txs and confirmation root
-            std::vector<transaction> missing_txs;
-            std::vector<sha256_hash> confirmation_roots;
-            std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_transactions();
-            log("INFO: Txs size:%zu", txs.size());
-            find_best_solution(txs, peer_signal.tx_hash_prefix_array(), missing_txs, confirmation_roots);
+            {
+                // find out missing txs
+                std::vector<transaction> missing_txs;
+                std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
+                log("INFO: Txs size:%zu", txs.size());
+                find_best_solution(txs, peer_signal.tx_hash_prefix_array(), missing_txs);
 
-            log("INFO: Found missing tx size %zu", missing_txs.size());
+                log("INFO: Found missing tx size %zu", missing_txs.size());
 
-            if (!missing_txs.empty()) {
-                // select one missing tx to response to
-                // 产生随机数
-                srand(now);
-                auto index = rand() % missing_txs.size();
-                auto miss_tx = missing_txs[index];
-                if (!miss_tx.empty()) {
-                    std::vector<dht::node_entry> entries;
-                    m_ses.dht()->find_live_nodes(miss_tx.sha256(), entries);
-                    if (entries.size() > blockchain_immutable_payload_put_node_size) {
-                        entries.resize(blockchain_immutable_payload_put_node_size);
+                if (!missing_txs.empty()) {
+                    // select one missing tx to response to
+                    // 产生随机数
+                    srand(now);
+                    auto index = rand() % missing_txs.size();
+                    auto miss_tx = missing_txs[index];
+                    if (!miss_tx.empty()) {
+                        std::vector<dht::node_entry> entries;
+                        m_ses.dht()->find_live_nodes(miss_tx.sha256(), entries);
+                        if (entries.size() > blockchain_immutable_payload_put_node_size) {
+                            entries.resize(blockchain_immutable_payload_put_node_size);
+                        }
+                        log("INFO: Put missing tx target[%s], entries[%zu]",
+                            aux::toHex(miss_tx.sha256().to_string()).c_str(), entries.size());
+                        dht_put_immutable_item(miss_tx.get_entry(), entries, miss_tx.sha256());
+
+                        immutable_data_info demand_tx_info(miss_tx.sha256(), entries);
+                        tx_set.insert(demand_tx_info);
                     }
-                    log("INFO: Put missing tx target[%s], entries[%zu]",
-                        aux::toHex(miss_tx.sha256().to_string()).c_str(), entries.size());
-                    dht_put_immutable_item(miss_tx.get_entry(), entries, miss_tx.sha256());
+                }
+            }
 
-                    immutable_data_info demand_tx_info(miss_tx.sha256(), entries);
-                    tx_set.insert(demand_tx_info);
+            {
+                // find out missing txs
+                std::vector<transaction> missing_txs;
+                std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_timestamp_transactions();
+                log("INFO: Txs size:%zu", txs.size());
+                find_best_solution(txs, peer_signal.latest_tx_hash_prefix_array(), missing_txs);
+
+                log("INFO: Found missing tx size %zu", missing_txs.size());
+
+                if (!missing_txs.empty()) {
+                    // select one missing tx to response to
+                    // 产生随机数
+                    srand(now);
+                    auto index = rand() % missing_txs.size();
+                    auto miss_tx = missing_txs[index];
+                    if (!miss_tx.empty()) {
+                        std::vector<dht::node_entry> entries;
+                        m_ses.dht()->find_live_nodes(miss_tx.sha256(), entries);
+                        if (entries.size() > blockchain_immutable_payload_put_node_size) {
+                            entries.resize(blockchain_immutable_payload_put_node_size);
+                        }
+                        log("INFO: Put missing tx target[%s], entries[%zu]",
+                            aux::toHex(miss_tx.sha256().to_string()).c_str(), entries.size());
+                        dht_put_immutable_item(miss_tx.get_entry(), entries, miss_tx.sha256());
+
+                        immutable_data_info demand_tx_info(miss_tx.sha256(), entries);
+                        tx_set.insert(demand_tx_info);
+                    }
                 }
             }
         }
@@ -1489,7 +1517,8 @@ namespace libTAU::blockchain {
         }
 
         // offer tx pool info
-        aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array();
+        aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array_by_fee();
+        aux::bytes latest_tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp();
 
         // offer a peer from chain
         auto p = select_peer_randomly(chain_id);
@@ -1498,7 +1527,7 @@ namespace libTAU::blockchain {
         blockchain_signal signal(now, consensus_point_vote,
                                  best_tip_block_info, consensus_point_block_info,
                                  block_set, tx_set, demand_block_hash_set,
-                                 tx_hash_prefix_array, p);
+                                 tx_hash_prefix_array, latest_tx_hash_prefix_array, p);
 
         dht::public_key * pk = m_ses.pubkey();
         dht::secret_key * sk = m_ses.serkey();
@@ -1628,7 +1657,7 @@ namespace libTAU::blockchain {
             }
 
             // get gossip peer
-            auto &gossip_peer = signal.peer();
+            auto &gossip_peer = signal.gossip_peer();
             if (gossip_peer != dht::public_key()) {
                 log("INFO chain[%s] Got gossip peer[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(gossip_peer.bytes).c_str());
@@ -1847,7 +1876,7 @@ namespace libTAU::blockchain {
     }
 
     std::int64_t blockchain::getMedianTxFee(const aux::bytes &chain_id) {
-        std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_transactions();
+        std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
         auto size = txs.size();
         if (size > 0) {
             return txs[size / 2].fee();

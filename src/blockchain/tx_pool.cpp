@@ -12,20 +12,20 @@ see LICENSE file.
 namespace libTAU::blockchain {
 
     transaction tx_pool::get_best_transaction() const {
-        auto it = m_ordered_txs.rbegin();
-        if (it != m_ordered_txs.rend()) {
-            auto it_tx = m_all_txs.find(it->txid());
-            if (it_tx != m_all_txs.end())
+        auto it = m_ordered_txs_by_fee.rbegin();
+        if (it != m_ordered_txs_by_fee.rend()) {
+            auto it_tx = m_all_txs_by_fee.find(it->txid());
+            if (it_tx != m_all_txs_by_fee.end())
                 return it_tx->second;
         }
 
         return transaction();
     }
 
-    aux::bytes tx_pool::get_hash_prefix_array() const {
+    aux::bytes tx_pool::get_hash_prefix_array_by_fee() const {
         libTAU::aux::bytes hash_prefix_array;
         int count = 0;
-        for (auto it = m_ordered_txs.rbegin(); it != m_ordered_txs.rend(); ++it) {
+        for (auto it = m_ordered_txs_by_fee.rbegin(); it != m_ordered_txs_by_fee.rend(); ++it) {
             count++;
             hash_prefix_array.push_back(it->txid()[0]);
 
@@ -37,12 +37,12 @@ namespace libTAU::blockchain {
         return hash_prefix_array;
     }
 
-    std::vector<transaction> tx_pool::get_top_ten_transactions() {
+    std::vector<transaction> tx_pool::get_top_ten_fee_transactions() {
         std::vector<transaction> txs;
         int count = 0;
-        for (auto it = m_ordered_txs.rbegin(); it != m_ordered_txs.rend(); ++it) {
+        for (auto it = m_ordered_txs_by_fee.rbegin(); it != m_ordered_txs_by_fee.rend(); ++it) {
             count++;
-            auto &tx = m_all_txs[it->txid()];
+            auto &tx = m_all_txs_by_fee[it->txid()];
             txs.push_back(tx);
 
             if (10 == count) {
@@ -53,29 +53,72 @@ namespace libTAU::blockchain {
         return txs;
     }
 
-    bool tx_pool::add_tx(transaction tx) {
+    aux::bytes tx_pool::get_hash_prefix_array_by_timestamp() const {
+        libTAU::aux::bytes hash_prefix_array;
+        int count = 0;
+        for (auto it = m_ordered_txs_by_timestamp.rbegin(); it != m_ordered_txs_by_timestamp.rend(); ++it) {
+            count++;
+            hash_prefix_array.push_back(it->txid()[0]);
+
+            if (10 == count) {
+                break;
+            }
+        }
+
+        return hash_prefix_array;
+    }
+
+    std::vector<transaction> tx_pool::get_top_ten_timestamp_transactions() {
+        std::vector<transaction> txs;
+        int count = 0;
+        for (auto it = m_ordered_txs_by_timestamp.rbegin(); it != m_ordered_txs_by_timestamp.rend(); ++it) {
+            count++;
+            auto &tx = m_all_txs_by_timestamp[it->txid()];
+            txs.push_back(tx);
+
+            if (10 == count) {
+                break;
+            }
+        }
+
+        return txs;
+    }
+
+    bool tx_pool::add_tx(const transaction& tx) {
         if (tx.empty())
             return false;
 
         if (!tx.verify_signature())
             return false;
 
-//        auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
-//        if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
-//            return false;
+        m_active_peers.push(tx.sender());
 
-        auto it_txid = m_account_tx.find(tx.sender());
-        if (it_txid != m_account_tx.end()) {
-            auto it_tx = m_all_txs.find(it_txid->second);
-            if (it_tx != m_all_txs.end()) {
+        m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
+        m_all_txs_by_timestamp[tx.sha256()] = tx;
+        if (m_ordered_txs_by_timestamp.size() > tx_pool_max_size_by_timestamp) {
+            auto it = m_ordered_txs_by_timestamp.begin();
+            m_all_txs_by_timestamp.erase(it->txid());
+            m_ordered_txs_by_timestamp.erase(it);
+        }
+
+        // validate tx state
+        auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
+        if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
+            return false;
+
+
+        auto it_txid = m_account_tx_by_fee.find(tx.sender());
+        if (it_txid != m_account_tx_by_fee.end()) {
+            auto it_tx = m_all_txs_by_fee.find(it_txid->second);
+            if (it_tx != m_all_txs_by_fee.end()) {
                 auto old_tx = it_tx->second;
                 if (!old_tx.empty()) {
                     if (tx.fee() >= old_tx.fee()) {
                         // replace old tx with new one
-                        m_all_txs[tx.sha256()] = tx;
-                        m_account_tx[tx.sender()] = tx.sha256();
-                        m_ordered_txs.erase(tx_entry(old_tx.sha256(), old_tx.fee()));
-                        m_ordered_txs.insert(tx_entry(tx.sha256(), tx.fee()));
+                        m_all_txs_by_fee[tx.sha256()] = tx;
+                        m_account_tx_by_fee[tx.sender()] = tx.sha256();
+                        m_ordered_txs_by_fee.erase(tx_entry_with_fee(old_tx.sha256(), old_tx.fee()));
+                        m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
                     }
                 }
             }
@@ -85,10 +128,10 @@ namespace libTAU::blockchain {
     }
 
     transaction tx_pool::get_transaction_by_account(const dht::public_key& pubKey) const {
-        auto it_txid = m_account_tx.find(pubKey);
-        if (it_txid != m_account_tx.end()) {
-            auto it_tx = m_all_txs.find(it_txid->second);
-            if (it_tx != m_all_txs.end()) {
+        auto it_txid = m_account_tx_by_fee.find(pubKey);
+        if (it_txid != m_account_tx_by_fee.end()) {
+            auto it_tx = m_all_txs_by_fee.find(it_txid->second);
+            if (it_tx != m_all_txs_by_fee.end()) {
                 return it_tx->second;
             }
         }
@@ -97,10 +140,10 @@ namespace libTAU::blockchain {
     }
 
     void tx_pool::delete_transaction_by_account(const dht::public_key &pubKey) {
-        auto it_txid = m_account_tx.find(pubKey);
-        if (it_txid != m_account_tx.end()) {
-            m_all_txs.erase(it_txid->second);
-            m_account_tx.erase(it_txid);
+        auto it_txid = m_account_tx_by_fee.find(pubKey);
+        if (it_txid != m_account_tx_by_fee.end()) {
+            m_all_txs_by_fee.erase(it_txid->second);
+            m_account_tx_by_fee.erase(it_txid);
         }
     }
 
@@ -131,8 +174,8 @@ namespace libTAU::blockchain {
     }
 
     void tx_pool::clear() {
-        m_all_txs.clear();
-        m_account_tx.clear();
+        m_all_txs_by_fee.clear();
+        m_account_tx_by_fee.clear();
     }
 
 }

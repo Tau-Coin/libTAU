@@ -184,9 +184,9 @@ namespace blockchain {
         // count votes
         void refresh_vote(const aux::bytes &chain_id);
 
-        // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing tx和confirmation root)
+        // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing tx)
         void find_best_solution(std::vector<transaction>& txs, const aux::bytes& hash_prefix_array,
-                                std::vector<transaction> &missing_txs, std::vector<sha256_hash> &confirmation_roots);
+                                std::vector<transaction> &missing_txs);
 
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id);

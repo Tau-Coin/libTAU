@@ -40,11 +40,12 @@ namespace libTAU::blockchain {
         blockchain_signal(int64_t mTimestamp, const vote &mConsensusPointVote, immutable_data_info mBestTipBlock,
                           immutable_data_info mImmutableBlockInfo, std::set<immutable_data_info> mBlockSet,
                           std::set<immutable_data_info> mTxSet, std::set<sha256_hash> mDemandBlockHashSet,
-                          aux::bytes mTxHashPrefixArray, const dht::public_key &mPeer):
-                  m_timestamp(mTimestamp), m_consensus_point_vote(mConsensusPointVote), m_best_tip_block_info(std::move(mBestTipBlock)),
-                  m_consensus_point_block_info(std::move(mImmutableBlockInfo)), m_block_info_set(std::move(mBlockSet)),
-                  m_tx_info_set(std::move(mTxSet)), m_demand_block_hash_set(std::move(mDemandBlockHashSet)),
-                  m_tx_hash_prefix_array(std::move(mTxHashPrefixArray)), m_peer(mPeer) {}
+                          aux::bytes mTxHashPrefixArray, aux::bytes mLatestTxHashPrefixArray, const dht::public_key &mPeer):
+                m_timestamp(mTimestamp), m_consensus_point_vote(mConsensusPointVote), m_best_tip_block_info(std::move(mBestTipBlock)),
+                m_consensus_point_block_info(std::move(mImmutableBlockInfo)), m_block_info_set(std::move(mBlockSet)),
+                m_tx_info_set(std::move(mTxSet)), m_demand_block_hash_set(std::move(mDemandBlockHashSet)),
+                m_tx_hash_prefix_array(std::move(mTxHashPrefixArray)),
+                m_latest_tx_hash_prefix_array(std::move(mLatestTxHashPrefixArray)), m_gossip_peer(mPeer) {}
 
 //        blockchain_signal(const sha256_hash &mConsensusPointBlockHash, int64_t mConsensusPointBlockNumber,
 //                          immutable_data_info mBestBlock, immutable_data_info mImmutableBlock,
@@ -100,7 +101,9 @@ namespace libTAU::blockchain {
 
         void set_tx_hash_prefix_array(const aux::bytes &mTxHashPrefixArray) { m_tx_hash_prefix_array = mTxHashPrefixArray; }
 
-        const dht::public_key &peer() const { return m_peer; }
+        const aux::bytes &latest_tx_hash_prefix_array() const { return m_latest_tx_hash_prefix_array; }
+
+        const dht::public_key &gossip_peer() const { return m_gossip_peer; }
 
         entry get_entry() const;
 
@@ -116,7 +119,7 @@ namespace libTAU::blockchain {
         void populate(const entry& e);
 
         // online signal timestamp
-        std::int64_t m_timestamp; // 10
+        std::int64_t m_timestamp{}; // 10
 
         vote m_consensus_point_vote; // 40
 
@@ -136,9 +139,14 @@ namespace libTAU::blockchain {
 
 //        std::set<sha256_hash> m_demand_tx_hash_set;
 
-        aux::bytes m_tx_hash_prefix_array; // 10
+        // top ten tx
+        aux::bytes m_tx_hash_prefix_array;
 
-        dht::public_key m_peer; // 32
+        // latest tx array
+        aux::bytes m_latest_tx_hash_prefix_array;
+
+        // gossip peer
+        dht::public_key m_gossip_peer{}; // 32
     };
 }
 

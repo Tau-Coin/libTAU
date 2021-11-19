@@ -66,8 +66,11 @@ namespace libTAU::blockchain {
         // tx hash prefix bytes
         e["ta"] = entry(std::string(m_tx_hash_prefix_array.begin(), m_tx_hash_prefix_array.end()));
 
-        // peer
-        e["pr"] = entry(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
+        // latest tx hash prefix bytes
+        e["lt"] = entry(std::string(m_latest_tx_hash_prefix_array.begin(), m_latest_tx_hash_prefix_array.end()));
+
+        // gossip peer
+        e["pr"] = entry(std::string(m_gossip_peer.bytes.begin(), m_gossip_peer.bytes.end()));
 
         return e;
     }
@@ -149,11 +152,17 @@ namespace libTAU::blockchain {
             std::string hash_prefix_array = i->string();
             m_tx_hash_prefix_array = aux::bytes(hash_prefix_array.begin(), hash_prefix_array.end());
         }
-        // peer
+        // latest tx hash prefix bytes
+        if (auto* i = const_cast<entry *>(e.find_key("lt")))
+        {
+            std::string hash_prefix_array = i->string();
+            m_latest_tx_hash_prefix_array = aux::bytes(hash_prefix_array.begin(), hash_prefix_array.end());
+        }
+        // gossip peer
         if (auto* i = const_cast<entry *>(e.find_key("pr")))
         {
             auto peer = i->string();
-            m_peer = dht::public_key(peer.data());
+            m_gossip_peer = dht::public_key(peer.data());
         }
     }
 
@@ -167,7 +176,8 @@ namespace libTAU::blockchain {
         os << "m_timestamp: " << signal.m_timestamp << " m_consensus_point_vote: " << signal.m_consensus_point_vote
            << " m_best_tip_block_info: " << signal.m_best_tip_block_info << " m_consensus_point_block_info: "
            << signal.m_consensus_point_block_info << " m_tx_hash_prefix_array: " << aux::toHex(signal.m_tx_hash_prefix_array)
-           << " m_peer: " << aux::toHex(signal.m_peer.bytes);
+           << " m_latest_tx_hash_prefix_array: " << aux::toHex(signal.m_latest_tx_hash_prefix_array)
+           << " m_gossip_peer: " << aux::toHex(signal.m_gossip_peer.bytes);
         os << " m_block_info_set: ";
         for (auto const& block_info: signal.m_block_info_set) {
             os << " block info: " << block_info;
