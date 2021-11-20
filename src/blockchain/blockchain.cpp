@@ -404,13 +404,14 @@ namespace libTAU::blockchain {
             // look for two neighbors on the left and right
             auto r_iterator = hashes.find(my_hash);
             auto l_iterator = r_iterator;
-            for (auto i = 0; i < 2; i++) {
+//            for (auto i = 0; i < 2; i++) {
+                // get peers adjacent to the first location
                 r_iterator++;
                 if (r_iterator == hashes.end()) {
                     r_iterator = hashes.begin();
                 }
                 log("INFO chain[%s] right unchoked peer[%s]",
-                    aux::toHex(chain_id).c_str(), aux::toHex(r_iterator->to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(hash_peer_map[*r_iterator].bytes).c_str());
                 peers.insert(hash_peer_map[*r_iterator]);
 
                 if (l_iterator == hashes.begin()) {
@@ -418,9 +419,33 @@ namespace libTAU::blockchain {
                 }
                 l_iterator--;
                 log("INFO chain[%s] left unchoked peer[%s]",
-                    aux::toHex(chain_id).c_str(), aux::toHex(l_iterator->to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(hash_peer_map[*l_iterator].bytes).c_str());
                 peers.insert(hash_peer_map[*l_iterator]);
+//            }
+            // get peers adjacent to the third location
+            r_iterator++;
+            if (r_iterator == hashes.end()) {
+                r_iterator = hashes.begin();
             }
+            r_iterator++;
+            if (r_iterator == hashes.end()) {
+                r_iterator = hashes.begin();
+            }
+            log("INFO chain[%s] right third unchoked peer[%s]",
+                aux::toHex(chain_id).c_str(), aux::toHex(hash_peer_map[*r_iterator].bytes).c_str());
+            peers.insert(hash_peer_map[*r_iterator]);
+
+            if (l_iterator == hashes.begin()) {
+                l_iterator = hashes.end();
+            }
+            l_iterator--;
+            if (l_iterator == hashes.begin()) {
+                l_iterator = hashes.end();
+            }
+            l_iterator--;
+            log("INFO chain[%s] left third unchoked peer[%s]",
+                aux::toHex(chain_id).c_str(), aux::toHex(hash_peer_map[*l_iterator].bytes).c_str());
+            peers.insert(hash_peer_map[*l_iterator]);
 
 //            auto r_iterator = chain_peers.find(*pk);
 //            auto l_iterator = r_iterator;
@@ -1628,23 +1653,28 @@ namespace libTAU::blockchain {
             auto &best_tip_block_info = signal.best_tip_block_info();
             if (!best_tip_block_info.empty()) {
                 // get immutable message
-//                log("INFO: Payload:%s", payload.to_string().c_str());
-                dht_get_immutable_block_item(chain_id, best_tip_block_info.target(), best_tip_block_info.entries());
+                if (!m_repository->is_block_exist(best_tip_block_info.target())) {
+                    dht_get_immutable_block_item(chain_id, best_tip_block_info.target(), best_tip_block_info.entries());
+                }
             }
 
             // get consensus point block
             auto &consensus_point_block_info = signal.consensus_point_block_info();
             if (!consensus_point_block_info.empty()) {
                 // get immutable message
-//                log("INFO: Payload:%s", payload.to_string().c_str());
-                dht_get_immutable_block_item(chain_id, consensus_point_block_info.target(), consensus_point_block_info.entries());
+                if (!m_repository->is_block_exist(consensus_point_block_info.target())) {
+                    dht_get_immutable_block_item(chain_id, consensus_point_block_info.target(),
+                                                 consensus_point_block_info.entries());
+                }
             }
 
             // get offered block
             auto &block_info_set = signal.block_info_set();
             for (auto const & block_info: block_info_set) {
                 if (!block_info.empty()) {
-                    dht_get_immutable_block_item(chain_id, block_info.target(), block_info.entries());
+                    if (!m_repository->is_block_exist(block_info.target())) {
+                        dht_get_immutable_block_item(chain_id, block_info.target(), block_info.entries());
+                    }
                 }
             }
 
@@ -1652,7 +1682,9 @@ namespace libTAU::blockchain {
             auto &tx_info_set = signal.tx_info_set();
             for (auto const & tx_info: tx_info_set) {
                 if (!tx_info.empty()) {
-                    dht_get_immutable_tx_item(chain_id, tx_info.target(), tx_info.entries());
+                    if (!m_tx_pools[chain_id].is_transaction_in_pool(tx_info.target())) {
+                        dht_get_immutable_tx_item(chain_id, tx_info.target(), tx_info.entries());
+                    }
                 }
             }
 
