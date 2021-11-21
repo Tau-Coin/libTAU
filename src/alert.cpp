@@ -1529,9 +1529,8 @@ namespace {
 		return {};
 #else
 		char buffer[256];
-		auto b = blk;
 		std::snprintf(buffer, sizeof(buffer), "new tip block hash: %s"
-				, aux::toHex(b.sha256().to_string()).c_str());
+				, aux::toHex(blk.sha256().to_string()).c_str());
 		return buffer;
 #endif
 	}
@@ -1547,9 +1546,8 @@ namespace {
 		return {};
 #else
 		char buffer[256];
-		auto b = blk;
 		std::snprintf(buffer, sizeof(buffer), "new tail block hash: %s"
-				, aux::toHex(b.sha256().to_string()).c_str());
+				, aux::toHex(blk.sha256().to_string()).c_str());
 		return buffer;
 #endif
 	}
@@ -1565,9 +1563,8 @@ namespace {
 		return {};
 #else
 		char buffer[256];
-		auto b = blk;
 		std::snprintf(buffer, sizeof(buffer), "rollback block hash: %s"
-				, aux::toHex(b.sha256().to_string()).c_str());
+				, aux::toHex(blk.sha256().to_string()).c_str());
 		return buffer;
 #endif
 	}
@@ -1583,9 +1580,8 @@ namespace {
 		return {};
 #else
 		char buffer[256];
-		auto b = blk;
 		std::snprintf(buffer, sizeof(buffer), "fork point block hash: %s"
-				, aux::toHex(b.sha256().to_string()).c_str());
+				, aux::toHex(blk.sha256().to_string()).c_str());
 		return buffer;
 #endif
 	}
@@ -1617,9 +1613,8 @@ namespace {
 		return {};
 #else
 		char buffer[256];
-		auto t = tx;
 		std::snprintf(buffer, sizeof(buffer), "new tx hash: %s"
-				, aux::toHex(t.sha256().to_string()).c_str());
+				, aux::toHex(tx.sha256().to_string()).c_str());
 		return buffer;
 #endif
 	}

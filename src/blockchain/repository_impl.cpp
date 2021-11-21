@@ -586,13 +586,7 @@ namespace libTAU::blockchain {
         if (!save_block(b))
             return false;
 
-        std::set<dht::public_key> peers;
-        peers.insert(b.miner());
-        auto tx = b.tx();
-        if (!tx.empty()) {
-            peers.insert(tx.sender());
-            peers.insert(tx.receiver());
-        }
+        std::set<dht::public_key> peers = b.get_block_peers();
 
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.set_main_chain_block_hash(b.sha256());
@@ -630,13 +624,7 @@ namespace libTAU::blockchain {
         if (!save_block(b))
             return false;
 
-        std::set<dht::public_key> peers;
-        peers.insert(b.miner());
-        auto tx = b.tx();
-        if (!tx.empty()) {
-            peers.insert(tx.sender());
-            peers.insert(tx.receiver());
-        }
+        std::set<dht::public_key> peers = b.get_block_peers();
 
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.set_main_chain_block_hash(b.sha256());

@@ -1164,7 +1164,7 @@ namespace libTAU::blockchain {
             const aux::bytes& source = hash_prefix_array;
             // 本地消息数组为target
             aux::bytes target;
-            for (auto &tx: txs) {
+            for (auto const&tx: txs) {
                 target.push_back(tx.sha256()[0]);
             }
 
@@ -1174,7 +1174,7 @@ namespace libTAU::blockchain {
             log("INFO: tx array: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
             // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
             if (source == target) {
-//                for (auto &tx: txs) {
+//                for (auto const&tx: txs) {
 //                        log("INFO: Confirm message hash[%s]", aux::toHex(msg.sha256().to_string()).c_str());
 //                    confirmation_roots.push_back(tx.sha256());
 //                }
