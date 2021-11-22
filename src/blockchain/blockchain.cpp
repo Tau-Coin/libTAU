@@ -205,7 +205,7 @@ namespace libTAU::blockchain {
                 auto &best_tip_block = m_best_tip_blocks[chain_id];
                 auto &best_tail_block = m_best_tail_blocks[chain_id];
 
-                // try to find tip/tail block
+                // 1. try to connect tip/tail block
                 auto &block_map = m_blocks[chain_id];
                 for(auto it = block_map.begin(); it != block_map.end();) {
                     if (best_tip_block.empty() || it->second.previous_block_hash() == best_tip_block.sha256() ||
@@ -220,6 +220,7 @@ namespace libTAU::blockchain {
                     ++it;
                 }
 
+                // 2. check if need to re-branch to best vote
                 auto &best_vote = m_best_votes[chain_id];
                 if (!best_vote.empty()) {
                     log("INFO chain[%s] current best vote[%s]", aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
@@ -242,7 +243,7 @@ namespace libTAU::blockchain {
                     }
                 }
 
-                // mine
+                // 3. try to mine on the best chain
                 block b = try_to_mine_block(chain_id);
 
                 if (!b.empty()) {
@@ -252,10 +253,11 @@ namespace libTAU::blockchain {
                     process_block(chain_id, b);
                 }
 
+                // 4. exchange chain info with others
                 // check if need to refresh unchoed peers
                 try_to_refresh_unchoked_peers(chain_id);
 
-                // get 4 unchoked peers
+                // get four unchoked peers
                 auto& unchoked_peers = m_unchoked_peers[chain_id];
                 std::vector<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
                 // get one peer from gossip db
@@ -283,7 +285,7 @@ namespace libTAU::blockchain {
                     request_signal(chain_id, peers[index]);
                 }
 
-                // put
+                // publish signal
                 publish_signal(chain_id);
             }
 
@@ -524,7 +526,11 @@ namespace libTAU::blockchain {
             std::int64_t now = get_total_milliseconds() / 1000; // second
             if (now >= best_tip_block.timestamp() + interval) {
 //                log("1-----------------------------------hit:%lu, base target:%lu, interval:%lu", hit, base_target, interval);
-                auto tx = m_tx_pools[chain_id].get_best_transaction();
+                transaction tx;
+                if (is_sync_completed(chain_id)) {
+                    tx = m_tx_pools[chain_id].get_best_transaction();
+                }
+
                 auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(best_tip_block.cumulative_difficulty(), base_target);
                 auto miner_account = m_repository->get_account(chain_id, *pk);
                 std::int64_t miner_balance = miner_account.balance();
@@ -714,9 +720,12 @@ namespace libTAU::blockchain {
             if (b.previous_block_hash() == best_tip_block.sha256()) {
                 repository* track = m_repository->start_tracking();
 
-                auto result = verify_block(chain_id, b, best_tip_block, track);
-                if (result != TRUE)
-                    return result;
+                // no need to verify block if not sync completed
+                if (!is_sync_completed(chain_id)) {
+                    auto result = verify_block(chain_id, b, best_tip_block, track);
+                    if (result != TRUE)
+                        return result;
+                }
 
                 if (!track->connect_tip_block(b)) {
                     log("INFO chain[%s] connect tip block[%s] fail",
@@ -1289,7 +1298,7 @@ namespace libTAU::blockchain {
         // vote for consensus point
         auto &consensus_point_block = m_consensus_point_blocks[chain_id];
         vote consensus_point_vote;
-        if (!consensus_point_block.empty()) {
+        if (is_sync_completed(chain_id) && !consensus_point_block.empty()) {
             consensus_point_vote.setBlockHash(consensus_point_block.sha256());
             consensus_point_vote.setBlockNumber(consensus_point_block.block_number());
         }
