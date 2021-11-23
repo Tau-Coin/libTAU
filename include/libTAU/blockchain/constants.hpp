@@ -29,7 +29,7 @@ namespace libTAU::blockchain {
     constexpr int CHAIN_ID_HASH_MAX_LENGTH = 8;
     constexpr int CHAIN_ID_COMMUNITY_NAME_MAX_LENGTH = 24;
 
-    constexpr int EFFECTIVE_BLOCK_NUMBER = 288 * 365;
+    constexpr int EFFECTIVE_BLOCK_NUMBER = 288 * 180;
 
     constexpr int MAX_NEGATIVE_BLOCK_SIZE = 50000;
 

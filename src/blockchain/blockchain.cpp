@@ -126,7 +126,7 @@ namespace libTAU::blockchain {
     bool blockchain::load_chain(const aux::bytes &chain_id) {
         log("INFO: load chain[%s]", aux::toHex(chain_id).c_str());
         // create tx pool
-        m_tx_pools.insert(std::pair<aux::bytes, tx_pool>(chain_id, tx_pool(m_repository)));
+        m_tx_pools.insert(std::pair<aux::bytes, tx_pool>(chain_id, tx_pool(m_repository.get())));
 
         // get all peers
 //        m_chain_peers[chain_id] = m_repository->get_all_peers(chain_id);
@@ -170,7 +170,7 @@ namespace libTAU::blockchain {
         m_blocks.clear();
         m_best_tip_blocks.clear();
         m_best_tail_blocks.clear();
-        m_consensus_point_blocks.clear();
+        m_voting_point_blocks.clear();
         m_best_votes.clear();
         m_votes.clear();
         m_latest_signal_time.clear();
@@ -187,7 +187,7 @@ namespace libTAU::blockchain {
         m_blocks[chain_id].clear();
         m_best_tip_blocks.erase(chain_id);
         m_best_tail_blocks.erase(chain_id);
-        m_consensus_point_blocks.erase(chain_id);
+        m_voting_point_blocks.erase(chain_id);
         m_best_votes.erase(chain_id);
         m_votes[chain_id].clear();
         m_latest_signal_time[chain_id].clear();
@@ -664,14 +664,14 @@ namespace libTAU::blockchain {
             block_number = 0;
         }
 
-        auto& consensus_block = m_consensus_point_blocks[chain_id];
-        if (consensus_block.empty() || consensus_block.block_number() != block_number) {
+        auto& voting_point_block = m_voting_point_blocks[chain_id];
+        if (voting_point_block.empty() || voting_point_block.block_number() != block_number) {
             auto blk = m_repository->get_main_chain_block_by_number(chain_id, block_number);
             if (!blk.empty()) {
-                log("INFO chain[%s] Consensus point block[%s]", aux::toHex(chain_id).c_str(), blk.to_string().c_str());
-                m_consensus_point_blocks[chain_id] = blk;
+                log("INFO chain[%s] Voting point block[%s]", aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                m_voting_point_blocks[chain_id] = blk;
             } else {
-                log("INFO chain[%s] Cannot find consensus point block", aux::toHex(chain_id).c_str());
+                log("INFO chain[%s] Cannot find voting point block", aux::toHex(chain_id).c_str());
             }
         }
     }
@@ -809,12 +809,12 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::is_consensus_point_immutable(const aux::bytes &chain_id) {
-        // check if best vote and consensus block match, true if match, false otherwise
+        // check if best vote and voting point block match, true if matched, false otherwise
         auto &best_vote = m_best_votes[chain_id];
-        auto &consensus_block = m_consensus_point_blocks[chain_id];
-        if (consensus_block.empty())
+        auto &voting_point_block = m_voting_point_blocks[chain_id];
+        if (voting_point_block.empty())
             return false;
-        if (!best_vote.empty() && best_vote.block_hash() != consensus_block.sha256())
+        if (!best_vote.empty() && best_vote.block_hash() != voting_point_block.sha256())
             return false;
 
         return true;
@@ -854,14 +854,14 @@ namespace libTAU::blockchain {
         std::vector<block> connect_blocks;
 
         bool is_consensus_immutable = is_consensus_point_immutable(chain_id);
-        auto consensus_point_block = m_consensus_point_blocks[chain_id];
+        auto voting_point_block = m_voting_point_blocks[chain_id];
 
         // todo:: rollback until to tail?
         // align main chain and branch block number
         block main_chain_block = best_tip_block;
         while (main_chain_block.block_number() > target.block_number()) {
-            // check if try to rollback consensus point block
-            if (main_chain_block.sha256() == consensus_point_block.sha256() && is_consensus_immutable) {
+            // check if try to rollback voting point block
+            if (main_chain_block.sha256() == voting_point_block.sha256() && is_consensus_immutable) {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
 
@@ -895,7 +895,7 @@ namespace libTAU::blockchain {
 
         // find out common ancestor
         while (main_chain_block.sha256() != reference_block.sha256()) {
-            if (main_chain_block.sha256() == consensus_point_block.sha256() && is_consensus_immutable) {
+            if (main_chain_block.sha256() == voting_point_block.sha256() && is_consensus_immutable) {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
 
@@ -1295,12 +1295,12 @@ namespace libTAU::blockchain {
         // current time(ms)
         auto now = get_total_milliseconds();
 
-        // vote for consensus point
-        auto &consensus_point_block = m_consensus_point_blocks[chain_id];
+        // vote for voting point
+        auto &voting_point_block = m_voting_point_blocks[chain_id];
         vote consensus_point_vote;
-        if (is_sync_completed(chain_id) && !consensus_point_block.empty()) {
-            consensus_point_vote.setBlockHash(consensus_point_block.sha256());
-            consensus_point_vote.setBlockNumber(consensus_point_block.block_number());
+        if (is_sync_completed(chain_id) && !voting_point_block.empty()) {
+            consensus_point_vote.setBlockHash(voting_point_block.sha256());
+            consensus_point_vote.setBlockNumber(voting_point_block.block_number());
         }
 
         // offer the best tip block
@@ -1321,17 +1321,17 @@ namespace libTAU::blockchain {
 
         // offer the consensus point block
         immutable_data_info consensus_point_block_info;
-        if (!consensus_point_block.empty()) {
+        if (!voting_point_block.empty()) {
             std::vector<dht::node_entry> entries;
-            m_ses.dht()->find_live_nodes(consensus_point_block.sha256(), entries);
+            m_ses.dht()->find_live_nodes(voting_point_block.sha256(), entries);
             if (entries.size() > blockchain_immutable_payload_put_node_size) {
                 entries.resize(blockchain_immutable_payload_put_node_size);
             }
             log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
-                aux::toHex(consensus_point_block.sha256().to_string()).c_str(), entries.size());
-            dht_put_immutable_item(consensus_point_block.get_entry(), entries, consensus_point_block.sha256());
+                aux::toHex(voting_point_block.sha256().to_string()).c_str(), entries.size());
+            dht_put_immutable_item(voting_point_block.get_entry(), entries, voting_point_block.sha256());
 
-            consensus_point_block_info = immutable_data_info(consensus_point_block.sha256(), entries);
+            consensus_point_block_info = immutable_data_info(voting_point_block.sha256(), entries);
         }
 
         std::set<immutable_data_info> block_set;

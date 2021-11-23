@@ -276,8 +276,8 @@ namespace blockchain {
         // best tail blocks
         std::map<aux::bytes, block> m_best_tail_blocks;
 
-        // consensus point blocks
-        std::map<aux::bytes, block> m_consensus_point_blocks;
+        // voting point blocks
+        std::map<aux::bytes, block> m_voting_point_blocks;
 
         // current best votes
         std::map<aux::bytes, vote> m_best_votes;
