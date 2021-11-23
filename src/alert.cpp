@@ -1587,8 +1587,8 @@ namespace {
 	}
 
 	blockchain_top_three_votes_alert::blockchain_top_three_votes_alert(aux::stack_allocator&
-			, std::vector<blockchain::vote> vs)
-			: votes(std::move(vs))
+			, aux::bytes id, std::vector<blockchain::vote> vs)
+			: chain_id(std::move(id)), votes(std::move(vs))
 	{}
 
 	std::string blockchain_top_three_votes_alert::message() const
@@ -1597,7 +1597,7 @@ namespace {
 		return {};
 #else
 		char msg[256];
-		std::snprintf(msg, sizeof(msg), "votes size %zu", votes.size());
+		std::snprintf(msg, sizeof(msg), "chain[%s] votes size %zu", aux::toHex(chain_id).c_str(), votes.size());
 		return msg;
 #endif
 	}

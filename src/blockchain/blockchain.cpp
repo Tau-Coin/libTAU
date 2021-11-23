@@ -1077,7 +1077,7 @@ namespace libTAU::blockchain {
                 top_three_votes.push_back(*it);
                 i++;
             }
-            m_ses.alerts().emplace_alert<blockchain_top_three_votes_alert>(top_three_votes);
+            m_ses.alerts().emplace_alert<blockchain_top_three_votes_alert>(chain_id, top_three_votes);
         }
 
         // clear history votes for next round

@@ -1396,13 +1396,15 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_top_three_votes_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_top_three_votes_alert(aux::stack_allocator& alloc, std::vector<libTAU::blockchain::vote> vs);
+        TORRENT_UNEXPORT blockchain_top_three_votes_alert(aux::stack_allocator& alloc, aux::bytes id, std::vector<libTAU::blockchain::vote> vs);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_top_three_votes_alert, 43, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::blockchain;
 
         std::string message() const override;
+
+        aux::bytes chain_id;
 
         // top three votes
         std::vector<libTAU::blockchain::vote> votes;
