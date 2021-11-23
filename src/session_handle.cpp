@@ -330,6 +330,12 @@ namespace libTAU {
 		return sync_call_ret<std::int64_t>(&session_impl::get_median_tx_free, chain_id);
 	}
 
+	// get current time
+	std::int64_t session_handle::get_session_time()
+	{
+		return sync_call_ret<std::int64_t>(&session_impl::session_current_time_ms);
+	}
+
 	void session_handle::set_ip_filter(ip_filter f)
 	{
 		std::shared_ptr<ip_filter> copy = std::make_shared<ip_filter>(std::move(f));

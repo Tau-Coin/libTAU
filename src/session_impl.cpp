@@ -255,6 +255,8 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 			, [](listen_endpoint_t const& ep) { return !ep.addr.is_unspecified(); });
 		std::vector<listen_endpoint_t> unspecified_eps(unspecified_begin, eps.end());
 		eps.erase(unspecified_begin, eps.end());
+		//rx, tx max
+		unsigned long int total_bytes = 0;
 		for (auto const& uep : unspecified_eps)
 		{
 			bool const v4 = uep.addr.is_v4();
@@ -263,6 +265,9 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 				if (!ipface.preferred)
 					continue;
 				if (ipface.interface_address.is_v4() != v4)
+					continue;
+				// libTAU added, only v4
+				if (ipface.interface_address.is_v6())
 					continue;
 				if (!uep.device.empty() && uep.device != ipface.name)
 					continue;
@@ -279,8 +284,8 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 					continue;
 				}
 
-				// ignore interfaces that are down
-				if (ipface.state != if_state::up && ipface.state != if_state::unknown)
+				// ignore interfaces that are down, libTAU only support up state
+				if (ipface.state != if_state::up)
 					continue;
 				if (!(ipface.flags & if_flags::up))
 					continue;
@@ -295,9 +300,100 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 						&& !(ipface.flags & if_flags::pointopoint)
 						&& !has_internet_route(ipface.name, family(ipface.interface_address), routes));
 
-				eps.emplace_back(ipface.interface_address, uep.port, uep.device
-					, uep.ssl, uep.flags | listen_socket_t::was_expanded
+				//libTAU added
+				if(local)
+					continue;
+				
+				unsigned long int tmp_bytes = ipface.rx_bytes + ipface.tx_bytes
+                                 + ipface.rx_errors + ipface.tx_errors
+                                 + ipface.rx_dropped + ipface.tx_dropped;
+
+				if(0 == total_bytes) {
+					eps.emplace_back(ipface.interface_address, uep.port, uep.device
+						, uep.ssl, uep.flags | listen_socket_t::was_expanded
 					| (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
+					total_bytes = tmp_bytes;
+				}
+
+				if(tmp_bytes > total_bytes) {
+					eps.pop_back();
+					eps.emplace_back(ipface.interface_address, uep.port, uep.device
+						, uep.ssl, uep.flags | listen_socket_t::was_expanded
+					| (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
+					total_bytes = tmp_bytes;
+				}
+			}
+		}
+
+		total_bytes = 0;
+
+		if(eps.empty()) {
+			for (auto const& uep : unspecified_eps)
+			{
+				bool const v4 = uep.addr.is_v4();
+				for (auto const& ipface : ifs)
+				{
+					if (!ipface.preferred)
+						continue;
+					if (ipface.interface_address.is_v4() != v4)
+						continue;
+					// libTAU added, only v4
+					if (ipface.interface_address.is_v6())
+						continue;
+					if (!uep.device.empty() && uep.device != ipface.name)
+						continue;
+					if (std::any_of(eps.begin(), eps.end(), [&](listen_endpoint_t const& e)
+					{
+						// ignore device name because we don't want to create
+						// duplicates if the user explicitly configured an address
+						// without a device name
+						return e.addr == ipface.interface_address
+							&& e.port == uep.port
+							&& e.ssl == uep.ssl;
+					}))
+					{
+						continue;
+					}
+
+					// ignore interfaces that are down, libTAU only support unknown 
+					if (ipface.state != if_state::unknown)
+						continue;
+					if (!(ipface.flags & if_flags::up))
+						continue;
+
+					// we assume this listen_socket_t is local-network under some
+					// conditions, meaning we won't announce it to internet trackers
+					bool const local
+						= ipface.interface_address.is_loopback()
+						|| is_link_local(ipface.interface_address)
+						|| (ipface.flags & if_flags::loopback)
+						|| (!is_global(ipface.interface_address)
+							&& !(ipface.flags & if_flags::pointopoint)
+							&& !has_internet_route(ipface.name, family(ipface.interface_address), routes));
+
+					//libTAU added
+					if(local)
+						continue;
+
+					unsigned long int tmp_bytes = ipface.rx_bytes + ipface.tx_bytes
+												+ ipface.rx_errors + ipface.tx_errors
+												+ ipface.rx_dropped + ipface.tx_dropped;
+
+					if(0 == total_bytes) {
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded
+						| (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
+						total_bytes = tmp_bytes;
+					}
+
+					if(tmp_bytes > total_bytes) {
+						eps.pop_back();
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded
+						| (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
+						total_bytes = tmp_bytes;
+					}
+				}
 			}
 		}
 	}
@@ -420,6 +516,8 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 			, alert_category_t{static_cast<unsigned int>(m_settings.get_int(settings_pack::alert_mask))})
 		, m_host_resolver(m_io_context)
 		, m_work(make_work_guard(m_io_context))
+		, m_timer(m_io_context)
+		, m_session_time(total_milliseconds(std::chrono::system_clock::now().time_since_epoch()))
 		, m_created(clock_type::now())
 		, m_last_tick(m_created)
 		, m_last_second_tick(m_created - milliseconds(900))
@@ -517,6 +615,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		async_inc_threads();
 		add_outstanding_async("session_impl::on_tick");
 #endif
+		post(m_io_context, [this]{ wrap(&session_impl::on_tick, error_code()); });
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log(" done starting session");
@@ -526,6 +625,26 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
 		reopen_listen_sockets(false);
 
+	}
+
+	void session_impl::on_tick(error_code const& e)
+	{
+		TORRENT_ASSERT(is_single_thread());
+		std::int64_t current_time = total_milliseconds(std::chrono::system_clock::now().time_since_epoch());
+		session_time_modification(current_time);
+        m_timer.expires_after(seconds(1));
+		m_timer.async_wait([this](error_code const& e) {
+				this->wrap(&session_impl::on_tick, e); });
+
+	}
+
+	void session_impl::session_time_modification(std::int64_t time)
+	{
+		double sigma = 0.1;
+		double f1 = 1.0/(sigma * 2.50663);
+		double f2 = -1.0 * pow(time - m_session_time, 2)/(2.0 * pow(sigma, 2));
+		double gauss_factor = f1* pow(2.71828, f2);
+		m_session_time = (1.0 - gauss_factor) * m_session_time + gauss_factor * time;
 	}
 
 	session_params session_impl::session_state(save_state_flags_t const flags) const
@@ -572,6 +691,10 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		// abort the main thread
 		m_abort = true;
 		error_code ec;
+
+		// we rely on on_tick() during shutdown, but we don't need to wait a
+		// whole second for it to fire
+		m_timer.cancel();
 
 		stop_ip_notifier();
 		stop_upnp();
@@ -1089,8 +1212,14 @@ namespace {
 			for (auto const& ipface : ifs)
 			{
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("ip_interface name: %s, address: %s, state: %d", 
-						 ipface.name, print_address(ipface.interface_address).c_str(), ipface.state);
+			session_log("ip_interface preferred %d, name: %s, netmask: %s, address: %s, flags: %d, state: %d, rx_bytes: %u, tx_bytes: %u, rx_errors: %u, tx_errors: %u, rx_dropped: %u, tx_dropped: %u", 
+						 ipface.preferred, ipface.name, 
+						 print_address(ipface.netmask).c_str(), 
+						 print_address(ipface.interface_address).c_str(), 
+						 ipface.flags & if_flags::up, ipface.state,
+						 ipface.rx_bytes, ipface.tx_bytes,
+						 ipface.rx_errors, ipface.tx_errors,
+						 ipface.rx_dropped, ipface.tx_dropped);
 #endif
 			}
 			// expand device names and populate eps
@@ -1104,15 +1233,15 @@ namespace {
 			}
 
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("initial listen sockets size: ", eps.size());
+			session_log("initial listen sockets size: %d", eps.size());
 #endif
 			expand_unspecified_address(ifs, routes, eps);
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("expand unspecified listen sockets size: ", eps.size());
+			session_log("expand unspecified listen sockets size: %d", eps.size());
 #endif
 			expand_devices(ifs, eps);
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("expand listen sockets size: ", eps.size());
+			session_log("expand listen sockets size: %d", eps.size());
 #endif
 		}
 
@@ -1146,6 +1275,17 @@ namespace {
 				, [](std::shared_ptr<listen_socket_t> const& l)
 				{ return l->incoming_connection; }));
 
+		// Only 1 ep in libTAU
+		if(eps.size() > 1)
+		{
+			//only contain one ep for binding
+			for(int i = 0; i < (eps.size()- 1); i++)
+			{
+	    		int rand_select = rand()%eps.size();
+				eps.erase(eps.begin()+rand_select);
+			}
+		}
+
 		// open new sockets on any endpoints that didn't match with
 		// an existing socket
 		for (auto const& ep : eps)
@@ -1153,31 +1293,25 @@ namespace {
 			try
 #endif
 		{
-#ifndef TORRENT_DISABLE_LOGGING
-			if (should_log())
+			std::shared_ptr<listen_socket_t> s = setup_listener(ep, ec);
+			if (!ec && s->udp_sock && !(s->flags & listen_socket_t::local_network) && m_listen_sockets.empty())
 			{
-				session_log("ready to setup_listener(%s) device: %s"
-					, print_endpoint(ep.addr, ep.port).c_str()
-					, ep.device.c_str());
-			}
-#endif // TORRENT_DISABLE_LOGGING
-			if(ep.addr.is_v4()) {
-				std::shared_ptr<listen_socket_t> s = setup_listener(ep, ec);
-
-				if (!ec && s->udp_sock)
+#ifndef TORRENT_DISABLE_LOGGING
+				if (should_log())
 				{
-					m_listen_sockets.emplace_back(s);
+					session_log("Setup Listener(%s) device: %s"
+						, print_endpoint(ep.addr, ep.port).c_str()
+						, ep.device.c_str());
+				}
+#endif // TORRENT_DISABLE_LOGGING
+				m_listen_sockets.emplace_back(s);
+				if (m_dht && s->ssl != transport::ssl)
+				{
+					m_dht->new_socket(m_listen_sockets.back());
 
-					if (m_dht
-						&& s->ssl != transport::ssl
-						&& !(s->flags & listen_socket_t::local_network))
+					for (auto const& n : m_dht_router_nodes)
 					{
-						m_dht->new_socket(m_listen_sockets.back());
-
-						for (auto const& n : m_dht_router_nodes)
-						{
-							m_dht->add_router_node(n);
-						}
+						m_dht->add_router_node(n);
 					}
 				}
 			}

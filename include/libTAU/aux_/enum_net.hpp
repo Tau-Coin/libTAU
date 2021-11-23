@@ -84,6 +84,14 @@ enum class if_state : std::uint8_t {
 
 		interface_flags flags = if_flags::up;
 		if_state state = if_state::unknown;
+		
+		//added for stats
+		unsigned long int rx_bytes = 0;
+		unsigned long int tx_bytes = 0;
+		unsigned long int rx_errors = 0;
+		unsigned long int tx_errors = 0;
+		unsigned long int rx_dropped = 0;
+		unsigned long int tx_dropped = 0;
 	};
 
 // internal
