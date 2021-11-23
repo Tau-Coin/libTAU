@@ -345,6 +345,10 @@ namespace libTAU {
 		// get median tx fee
         std::int64_t get_median_tx_free(std::vector<char> chain_id);
 
+		// get current session system time
+        std::int64_t get_session_time();
+
+
 		// This call dereferences the reference count of the specified peer
 		// class. When creating a peer class it's automatically referenced by 1.
 		// If you want to recycle a peer class, you may call this function. You

@@ -599,6 +599,10 @@ namespace aux {
         	bool get_account_info(const aux::bytes &chain_id, dht::public_key publicKey, blockchain::account* act);
         	bool get_top_tip_block(const aux::bytes &chain_id, int topNum, std::vector<blockchain::block>* blks);
         	std::int64_t get_median_tx_free(const aux::bytes &chain_id);
+			std::int64_t session_current_time_ms() const
+			{
+				return m_session_time;
+			}
 
 		private:
 
@@ -758,6 +762,10 @@ namespace aux {
 
 			time_point m_last_tick;
 			time_point m_last_second_tick;
+			
+			std::int64_t m_session_time;
+			void on_tick(error_code const& e);
+			void session_time_modification(std::int64_t time);
 
 			// when outgoing_ports is configured, this is the
 			// port we'll bind the next outgoing socket to
@@ -873,6 +881,9 @@ namespace aux {
 				remap_natpmp_and_upnp = 3
 			};
 			void remap_ports(remap_port_mask_t mask, listen_socket_t& s);
+
+			//the timer used to fire the tick
+			deadline_timer m_timer;
 
 			// abort may not fail and cannot allocate memory
 			aux::handler_storage<aux::abort_handler_max_size, aux::abort_handler> m_abort_handler_storage;

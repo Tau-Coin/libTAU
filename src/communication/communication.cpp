@@ -260,8 +260,8 @@ namespace libTAU {
 
                 // 检查chatting friend设置时间，如果超过30分钟，则重置
                 std::int64_t current_time = total_seconds(system_clock::now().time_since_epoch());
-                log("INFO: Current time:%ld, chatting time:%ld, diff:%ld", current_time, m_chatting_friend.second,
-                    current_time - m_chatting_friend.second);
+                //log("INFO: Current time:%ld, chatting time:%ld, diff:%ld", current_time, m_chatting_friend.second,
+                //    current_time - m_chatting_friend.second);
                 if (current_time - m_chatting_friend.second > communication_max_chatting_time) {
                     unset_chatting_friend();
                 }

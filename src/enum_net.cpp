@@ -347,6 +347,7 @@ namespace {
 		int oper_state;
 		char name[64];
 		interface_flags flags;
+		struct rtnl_link_stats rls;
 	};
 
 	link_info parse_nl_link(nlmsghdr const* nl_hdr)
@@ -385,7 +386,7 @@ namespace {
 				case IFLA_LINKMODE:
 				case IFLA_LINKINFO:
 				case IFLA_STATS64:
-				case IFLA_STATS:
+				case IFLA_STATS: std::memcpy(&ret.rls, ptr, sizeof(rtnl_link_stats)); break;
 				case IFLA_PROMISCUITY:
 				default:
 					break;
@@ -513,6 +514,14 @@ namespace {
 			: interface->oper_state == if_oper::testing ? if_state::testing
 			: interface->oper_state == if_oper::unknown ? if_state::unknown
 			: if_state::unknown;
+
+		//added libTAU
+		ip_info->rx_bytes = interface->rls.rx_bytes;
+		ip_info->tx_bytes = interface->rls.tx_bytes;
+		ip_info->rx_errors = interface->rls.rx_errors;
+		ip_info->tx_errors = interface->rls.tx_errors;
+		ip_info->rx_dropped = interface->rls.rx_dropped;
+		ip_info->tx_dropped = interface->rls.tx_dropped;
 
 		return true;
 	}
