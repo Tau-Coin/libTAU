@@ -60,6 +60,8 @@ namespace libTAU::blockchain {
 
         void clear();
 
+        void recheck_all_transactions();
+
     private:
 
         void remove_min_fee_tx();

@@ -212,4 +212,20 @@ namespace libTAU::blockchain {
         m_ordered_txs_by_timestamp.clear();
     }
 
+    void tx_pool::recheck_all_transactions() {
+        std::set<transaction> txs;
+        for (auto const &item: m_all_txs_by_fee) {
+            txs.insert(item.second);
+        }
+        for (auto const &item: m_all_txs_by_timestamp) {
+            txs.insert(item.second);
+        }
+
+        clear();
+
+        for (auto const &tx: txs) {
+            add_tx(tx);
+        }
+    }
+
 }

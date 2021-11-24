@@ -202,58 +202,84 @@ namespace libTAU::blockchain {
             if (!chain_id.empty()) {
                 log("INFO: Select chain:%s", aux::toHex(chain_id).c_str());
 
-                auto &best_tip_block = m_best_tip_blocks[chain_id];
-                auto &best_tail_block = m_best_tail_blocks[chain_id];
-
-                // 1. try to connect tip/tail block
                 auto &block_map = m_blocks[chain_id];
-                for(auto it = block_map.begin(); it != block_map.end();) {
-                    if (best_tip_block.empty() || it->second.previous_block_hash() == best_tip_block.sha256() ||
-                        it->second.sha256() == best_tail_block.previous_block_hash()) {
-                        process_block(chain_id, it->second);
-                        block_map.erase(it);
 
-                        it = block_map.begin();
-                        continue;
-                    }
-
-                    ++it;
-                }
-
-                // 2. check if need to re-branch to best vote
-                auto &best_vote = m_best_votes[chain_id];
-                if (!best_vote.empty()) {
-                    log("INFO chain[%s] current best vote[%s]", aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
-                    auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id, best_vote.block_number());
-                    // if current chain block hash and voting block hash mismatch
-                    if (hash != best_vote.block_hash()) {
-                        log("INFO chain[%s] main chain block[%s] mismatch the best vote",
-                            aux::toHex(chain_id).c_str(), aux::toHex(hash.to_string()).c_str());
-                        // re-branch
-                        auto vote_block = m_blocks[chain_id][best_vote.block_hash()];
-                        if (!vote_block.empty()) {
-                            log("INFO chain[%s] try to re-branch to voting block[%s]",
-                                aux::toHex(chain_id).c_str(), vote_block.to_string().c_str());
-                            auto result = try_to_rebranch(chain_id, vote_block);
-                            // clear block cache if re-branch success/fail
-                            if (result != MISSING) {
-                                m_blocks[chain_id].clear();
-                            }
+                // 1. if empty chain, init chain with the best voting block
+                if (is_empty_chain(chain_id)) {
+                    auto &best_vote = m_best_votes[chain_id];
+                    if (!best_vote.empty()) {
+                        auto it = block_map.find(best_vote.block_hash());
+                        if (it != block_map.end()) {
+                            process_block(chain_id, it->second);
                         }
                     }
                 }
 
-                // 3. try to mine on the best chain
-                block b = try_to_mine_block(chain_id);
+                if (!is_empty_chain(chain_id)) {
+                    // 2. try to connect tip/tail block
+                    auto &best_tip_block = m_best_tip_blocks[chain_id];
+                    auto &best_tail_block = m_best_tail_blocks[chain_id];
+                    for (auto it = block_map.begin(); it != block_map.end();) {
+                        if (best_tip_block.empty() || it->second.previous_block_hash() == best_tip_block.sha256() ||
+                            it->second.sha256() == best_tail_block.previous_block_hash()) {
+                            process_block(chain_id, it->second);
+                            block_map.erase(it);
 
-                if (!b.empty()) {
-                    // process mined block
-                    log("INFO chain[%s] process mined block[%s]",
-                        aux::toHex(chain_id).c_str(), b.to_string().c_str());
-                    process_block(chain_id, b);
+                            it = block_map.begin();
+                            continue;
+                        }
+
+                        ++it;
+                    }
+
+                    // 3. try to re-branch to a more difficult chain
+                    for (auto const &item : block_map) {
+                        if (item.second.cumulative_difficulty() > best_tip_block.cumulative_difficulty()) {
+                            auto result = try_to_rebranch(chain_id, item.second);
+                            // clear block cache if re-branch success/fail
+                            if (result != MISSING) {
+                                // todo:remove all?
+                                m_blocks[chain_id].clear();
+                            }
+                        }
+                    }
+
+                    // 4. check if need to re-branch to best vote
+                    auto &best_vote = m_best_votes[chain_id];
+                    if (!best_vote.empty()) {
+                        log("INFO chain[%s] current best vote[%s]", aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
+                        auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id, best_vote.block_number());
+                        // if current chain block hash and voting block hash mismatch
+                        if (hash != best_vote.block_hash()) {
+                            log("INFO chain[%s] main chain block[%s] mismatch the best vote",
+                                aux::toHex(chain_id).c_str(), aux::toHex(hash.to_string()).c_str());
+                            // re-branch
+                            auto vote_block = m_blocks[chain_id][best_vote.block_hash()];
+                            if (!vote_block.empty()) {
+                                log("INFO chain[%s] try to re-branch to voting block[%s]",
+                                    aux::toHex(chain_id).c_str(), vote_block.to_string().c_str());
+                                auto result = try_to_rebranch(chain_id, vote_block);
+                                // clear block cache if re-branch success/fail
+                                if (result != MISSING) {
+                                    // todo:remove all?
+                                    m_blocks[chain_id].clear();
+                                }
+                            }
+                        }
+                    }
+
+                    // 5. try to mine on the best chain
+                    block b = try_to_mine_block(chain_id);
+
+                    if (!b.empty()) {
+                        // process mined block
+                        log("INFO chain[%s] process mined block[%s]",
+                            aux::toHex(chain_id).c_str(), b.to_string().c_str());
+                        process_block(chain_id, b);
+                    }
                 }
 
-                // 4. exchange chain info with others
+                // 6. exchange chain info with others
                 // check if need to refresh unchoed peers
                 try_to_refresh_unchoked_peers(chain_id);
 
@@ -808,7 +834,7 @@ namespace libTAU::blockchain {
         return best_tip_block.empty();
     }
 
-    bool blockchain::is_consensus_point_immutable(const aux::bytes &chain_id) {
+    bool blockchain::is_voting_point_immutable(const aux::bytes &chain_id) {
         // check if best vote and voting point block match, true if matched, false otherwise
         auto &best_vote = m_best_votes[chain_id];
         auto &voting_point_block = m_voting_point_blocks[chain_id];
@@ -845,7 +871,7 @@ namespace libTAU::blockchain {
         return m_repository->get_block_by_hash(hash);
     }
 
-    RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, block &target) {
+    RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, const block &target) {
         auto &best_tip_block = m_best_tip_blocks[chain_id];
         auto &block_maps = m_blocks[chain_id];
 
@@ -853,7 +879,7 @@ namespace libTAU::blockchain {
         std::vector<block> rollback_blocks;
         std::vector<block> connect_blocks;
 
-        bool is_consensus_immutable = is_consensus_point_immutable(chain_id);
+        bool isVotingPointImmutable = is_voting_point_immutable(chain_id);
         auto voting_point_block = m_voting_point_blocks[chain_id];
 
         // todo:: rollback until to tail?
@@ -861,7 +887,7 @@ namespace libTAU::blockchain {
         block main_chain_block = best_tip_block;
         while (main_chain_block.block_number() > target.block_number()) {
             // check if try to rollback voting point block
-            if (main_chain_block.sha256() == voting_point_block.sha256() && is_consensus_immutable) {
+            if (main_chain_block.sha256() == voting_point_block.sha256() && isVotingPointImmutable) {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
 
@@ -895,7 +921,7 @@ namespace libTAU::blockchain {
 
         // find out common ancestor
         while (main_chain_block.sha256() != reference_block.sha256()) {
-            if (main_chain_block.sha256() == voting_point_block.sha256() && is_consensus_immutable) {
+            if (main_chain_block.sha256() == voting_point_block.sha256() && isVotingPointImmutable) {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
 
@@ -1448,6 +1474,9 @@ namespace libTAU::blockchain {
                 auto &votes = m_votes[chain_id];
                 auto it = votes.begin();
                 if (it != votes.end()) {
+                    // select one randomly as the best vote
+                    m_best_votes[chain_id] = it->second;
+                    // request the best voting block
                     demand_block_hash_set.insert(it->second.block_hash());
                 }
             }

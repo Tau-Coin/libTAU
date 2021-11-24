@@ -170,7 +170,7 @@ namespace blockchain {
         bool is_empty_chain(const aux::bytes &chain_id);
 
         // check if consensus point block immutable, true if it is same to voting block, false otherwise
-        bool is_consensus_point_immutable(const aux::bytes &chain_id);
+        bool is_voting_point_immutable(const aux::bytes &chain_id);
 
         // check if current chain sync completed
         bool is_sync_completed(const aux::bytes &chain_id);
@@ -179,7 +179,7 @@ namespace blockchain {
         block get_block_from_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);
 
         // try to rebranch a more difficult chain or a voting chain
-        RESULT try_to_rebranch(const aux::bytes &chain_id, block &target);
+        RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target);
 
         // count votes
         void refresh_vote(const aux::bytes &chain_id);
