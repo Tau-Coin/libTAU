@@ -834,6 +834,26 @@ namespace libTAU::blockchain {
         return best_tip_block.empty();
     }
 
+    bool blockchain::is_block_immutable_certainly(const aux::bytes &chain_id, const block &blk) {
+        if (blk.block_number() <= 0) {
+            return true;
+        }
+        // block is certainly irreversible if it mis-match with best voting block
+        auto &best_vote = m_best_votes[chain_id];
+        if (!best_vote.empty()) {
+            if (best_vote.block_hash() == blk.sha256())
+                return true;
+        } else {
+            // if no voting block, use voting point block instead
+            // voting point block must be matched with historical voting results
+            auto &voting_point_block = m_voting_point_blocks[chain_id];
+            if (voting_point_block.sha256() == blk.sha256())
+                return true;
+        }
+
+        return false;
+    }
+
     bool blockchain::is_voting_point_immutable(const aux::bytes &chain_id) {
         // check if best vote and voting point block match, true if matched, false otherwise
         auto &best_vote = m_best_votes[chain_id];
@@ -905,7 +925,7 @@ namespace libTAU::blockchain {
         std::vector<block> rollback_blocks;
         std::vector<block> connect_blocks;
 
-        bool isVotingPointImmutable = is_voting_point_immutable(chain_id);
+//        bool isVotingPointImmutable = is_voting_point_immutable(chain_id);
         auto voting_point_block = m_voting_point_blocks[chain_id];
 
         // todo:: rollback until to tail?
@@ -913,10 +933,9 @@ namespace libTAU::blockchain {
         block main_chain_block = best_tip_block;
         while (main_chain_block.block_number() > target.block_number()) {
             // check if try to rollback voting point block
-            if (main_chain_block.sha256() == voting_point_block.sha256() && isVotingPointImmutable) {
+            if (is_block_immutable_certainly(chain_id, main_chain_block)) {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
-
 //                m_blocks[chain_id].clear();
                 return FALSE;
             }
@@ -947,10 +966,9 @@ namespace libTAU::blockchain {
 
         // find out common ancestor
         while (main_chain_block.sha256() != reference_block.sha256()) {
-            if (main_chain_block.sha256() == voting_point_block.sha256() && isVotingPointImmutable) {
+            if (is_block_immutable_certainly(chain_id, main_chain_block)) {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
-
 //                m_blocks[chain_id].clear();
                 return FALSE;
             }
@@ -970,12 +988,6 @@ namespace libTAU::blockchain {
                 log("INFO chain[%s] Cannot find block[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(reference_block.previous_block_hash().to_string()).c_str());
                 return MISSING;
-            }
-
-            if (main_chain_block.block_number() <= 0) {
-                log("INFO chain[%s] genesis block is immutable", aux::toHex(chain_id).c_str());
-
-                return FALSE;
             }
         }
 

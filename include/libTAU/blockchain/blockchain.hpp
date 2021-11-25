@@ -169,6 +169,9 @@ namespace blockchain {
         // check if a chain is empty, true if has no info, false otherwise
         bool is_empty_chain(const aux::bytes &chain_id);
 
+        // check if a block immutable certainly
+        bool is_block_immutable_certainly(const aux::bytes &chain_id, const block &blk);
+
         // check if consensus point block immutable, true if it is same to voting block, false otherwise
         bool is_voting_point_immutable(const aux::bytes &chain_id);
 
