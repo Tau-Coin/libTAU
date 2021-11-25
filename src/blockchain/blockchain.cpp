@@ -238,8 +238,8 @@ namespace libTAU::blockchain {
                             auto result = try_to_rebranch(chain_id, item.second);
                             // clear block cache if re-branch success/fail
                             if (result != MISSING) {
-                                // todo:remove all?
-                                m_blocks[chain_id].clear();
+//                                m_blocks[chain_id].clear();
+                                remove_all_relevant_blocks_from_cache(item.second);
                             }
                         }
                     }
@@ -261,8 +261,8 @@ namespace libTAU::blockchain {
                                 auto result = try_to_rebranch(chain_id, vote_block);
                                 // clear block cache if re-branch success/fail
                                 if (result != MISSING) {
-                                    // todo:remove all?
-                                    m_blocks[chain_id].clear();
+//                                    m_blocks[chain_id].clear();
+                                    remove_all_relevant_blocks_from_cache(vote_block);
                                 }
                             }
                         }
@@ -871,6 +871,32 @@ namespace libTAU::blockchain {
         return m_repository->get_block_by_hash(hash);
     }
 
+    void blockchain::remove_all_relevant_blocks_from_cache(const block &blk) {
+        auto& block_map = m_blocks[blk.chain_id()];
+        auto previous_hash = blk.previous_block_hash();
+        auto it = block_map.find(previous_hash);
+        while (it != block_map.end()) {
+            previous_hash = it->second.previous_block_hash();
+            block_map.erase(it);
+            it = block_map.find(previous_hash);
+        }
+
+        previous_hash = blk.sha256();
+        for (it = block_map.begin(); it != block_map.end();) {
+            if (it->second.previous_block_hash() == previous_hash) {
+                previous_hash = it->second.sha256();
+                block_map.erase(it);
+
+                it = block_map.begin();
+                continue;
+            }
+
+            ++it;
+        }
+
+        block_map.erase(blk.sha256());
+    }
+
     RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, const block &target) {
         auto &best_tip_block = m_best_tip_blocks[chain_id];
         auto &block_maps = m_blocks[chain_id];
@@ -891,7 +917,7 @@ namespace libTAU::blockchain {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
 
-                m_blocks[chain_id].clear();
+//                m_blocks[chain_id].clear();
                 return FALSE;
             }
 
@@ -925,7 +951,7 @@ namespace libTAU::blockchain {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
 
-                m_blocks[chain_id].clear();
+//                m_blocks[chain_id].clear();
                 return FALSE;
             }
 
