@@ -37,12 +37,12 @@ namespace libTAU::blockchain {
         // @param Construct with bencode
         explicit blockchain_signal(std::string encode): blockchain_signal(bdecode(encode)) {}
 
-        blockchain_signal(int64_t mTimestamp, const vote &mConsensusPointVote, immutable_data_info mBestTipBlock,
+        blockchain_signal(int64_t mTimestamp, const vote &mConsensusPointVote, immutable_data_info mHeadBlockInfo,
                           immutable_data_info mImmutableBlockInfo, std::set<immutable_data_info> mBlockSet,
                           std::set<immutable_data_info> mTxSet, std::set<sha256_hash> mDemandBlockHashSet,
                           aux::bytes mTxHashPrefixArray, aux::bytes mLatestTxHashPrefixArray, const dht::public_key &mPeer):
-                m_timestamp(mTimestamp), m_consensus_point_vote(mConsensusPointVote), m_best_tip_block_info(std::move(mBestTipBlock)),
-                m_consensus_point_block_info(std::move(mImmutableBlockInfo)), m_block_info_set(std::move(mBlockSet)),
+                m_timestamp(mTimestamp), m_consensus_point_vote(mConsensusPointVote), m_head_block_info(std::move(mHeadBlockInfo)),
+                m_voting_point_block_info(std::move(mImmutableBlockInfo)), m_block_info_set(std::move(mBlockSet)),
                 m_tx_info_set(std::move(mTxSet)), m_demand_block_hash_set(std::move(mDemandBlockHashSet)),
                 m_tx_hash_prefix_array(std::move(mTxHashPrefixArray)),
                 m_latest_tx_hash_prefix_array(std::move(mLatestTxHashPrefixArray)), m_gossip_peer(mPeer) {}
@@ -73,13 +73,13 @@ namespace libTAU::blockchain {
 
         void set_consensus_point_vote(const vote &mConsensusPointVote) { m_consensus_point_vote = mConsensusPointVote; }
 
-        const immutable_data_info &best_tip_block_info() const { return m_best_tip_block_info; }
+        const immutable_data_info &head_block_info() const { return m_head_block_info; }
 
-        void set_best_tip_block_info(const immutable_data_info &mBestBlockInfo) { m_best_tip_block_info = mBestBlockInfo; }
+        void set_head_block_info(const immutable_data_info &mHeadBlockInfo) { m_head_block_info = mHeadBlockInfo; }
 
-        const immutable_data_info &consensus_point_block_info() const { return m_consensus_point_block_info; }
+        const immutable_data_info &voting_point_block_info() const { return m_voting_point_block_info; }
 
-        void set_consensus_point_block_info(const immutable_data_info &mImmutableBlockInfo) { m_consensus_point_block_info = mImmutableBlockInfo; }
+        void set_voting_point_block_info(const immutable_data_info &mImmutableBlockInfo) { m_voting_point_block_info = mImmutableBlockInfo; }
 
         const std::set<immutable_data_info> &block_info_set() const { return m_block_info_set; }
 
@@ -127,9 +127,9 @@ namespace libTAU::blockchain {
 //
 //        std::int64_t m_consensus_point_block_number{};
 
-        immutable_data_info m_best_tip_block_info; // 1-70
+        immutable_data_info m_head_block_info; // 1-70
 
-        immutable_data_info m_consensus_point_block_info;
+        immutable_data_info m_voting_point_block_info;
 
         std::set<immutable_data_info> m_block_info_set;
 

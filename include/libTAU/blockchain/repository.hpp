@@ -30,8 +30,9 @@ namespace libTAU::blockchain {
         const std::string key_chains = "chains";
         const std::string key_separator = "_";
         const std::string key_suffix_state_linker = "linker";
-        const std::string key_suffix_best_tip_block_hash = "tip";
-        const std::string key_suffix_best_tail_block_hash = "tail";
+        const std::string key_suffix_head_block_hash = "head";
+        const std::string key_suffix_tail_block_hash = "tail";
+        const std::string key_suffix_consensus_point_block_hash = "consensus";
 
         // init db
         virtual bool init() = 0;
@@ -98,7 +99,7 @@ namespace libTAU::blockchain {
         bool backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
                                                   state_linker& stateLinker, const sha256_hash &current_block_hash);
 
-        virtual bool connect_tip_block(block &b) = 0;
+        virtual bool connect_head_block(block &b) = 0;
 
         virtual bool connect_tail_block(block &b) = 0;
 
@@ -108,17 +109,17 @@ namespace libTAU::blockchain {
 
         virtual bool delete_block(const sha256_hash &hash) = 0;
 
-        virtual sha256_hash get_best_tip_block_hash(const aux::bytes &chain_id) = 0;
+        virtual sha256_hash get_head_block_hash(const aux::bytes &chain_id) = 0;
 
-        virtual bool set_best_tip_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+        virtual bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
 
-        virtual bool delete_best_tip_block_hash(const aux::bytes &chain_id) = 0;
+        virtual bool delete_head_block_hash(const aux::bytes &chain_id) = 0;
 
-        virtual sha256_hash get_best_tail_block_hash(const aux::bytes &chain_id) = 0;
+        virtual sha256_hash get_tail_block_hash(const aux::bytes &chain_id) = 0;
 
-        virtual bool set_best_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+        virtual bool set_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
 
-        virtual bool delete_best_tail_block_hash(const aux::bytes &chain_id) = 0;
+        virtual bool delete_tail_block_hash(const aux::bytes &chain_id) = 0;
 
         /**
          * Save a snapshot and start tracking future changes

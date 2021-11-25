@@ -226,7 +226,7 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_track::connect_tip_block(block &b) {
+    bool repository_track::connect_head_block(block &b) {
         m_connected_blocks.push_back(b);
 
         // save block
@@ -375,63 +375,63 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    sha256_hash repository_track::get_best_tip_block_hash(const aux::bytes &chain_id) {
+    sha256_hash repository_track::get_head_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
+        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
 
         auto it = m_cache.find(key);
         if (it != m_cache.end() && !it->second.empty()) {
             return sha256_hash (it->second.data());
         } else {
-            return m_repository->get_best_tip_block_hash(chain_id);
+            return m_repository->get_head_block_hash(chain_id);
         }
     }
 
-    bool repository_track::set_best_tip_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+    bool repository_track::set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
+        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
         m_cache[key] = hash.to_string();
 
         return true;
     }
 
-    bool repository_track::delete_best_tip_block_hash(const aux::bytes &chain_id) {
+    bool repository_track::delete_head_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
+        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
         m_cache[key] = std::string ();
 
         return true;
     }
 
-    sha256_hash repository_track::get_best_tail_block_hash(const aux::bytes &chain_id) {
+    sha256_hash repository_track::get_tail_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
+        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
 
         auto it = m_cache.find(key);
         if (it != m_cache.end() && !it->second.empty()) {
             return sha256_hash (it->second.data());
         } else {
-            return m_repository->get_best_tail_block_hash(chain_id);
+            return m_repository->get_tail_block_hash(chain_id);
         }
     }
 
-    bool repository_track::set_best_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+    bool repository_track::set_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
+        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
         m_cache[key] = hash.to_string();
 
         return true;
     }
 
-    bool repository_track::delete_best_tail_block_hash(const aux::bytes &chain_id) {
+    bool repository_track::delete_tail_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
+        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
         m_cache[key] = std::string ();
 
         return true;

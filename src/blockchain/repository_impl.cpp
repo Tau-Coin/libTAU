@@ -579,7 +579,7 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_impl::connect_tip_block(block &b) {
+    bool repository_impl::connect_head_block(block &b) {
         m_connected_blocks.push_back(b);
 
         // save block
@@ -759,10 +759,10 @@ namespace libTAU::blockchain {
 //        return delete_index_info(chain_id, block_number);
 //    }
 
-    sha256_hash repository_impl::get_best_tip_block_hash(const aux::bytes &chain_id) {
+    sha256_hash repository_impl::get_head_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
+        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
 
         std::string value;
         leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
@@ -774,28 +774,28 @@ namespace libTAU::blockchain {
         return sha256_hash();
     }
 
-    bool repository_impl::set_best_tip_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+    bool repository_impl::set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
+        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
 
         leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, hash.to_string());
         return status.ok();
     }
 
-    bool repository_impl::delete_best_tip_block_hash(const aux::bytes &chain_id) {
+    bool repository_impl::delete_head_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tip_block_hash.begin(), key_suffix_best_tip_block_hash.end());
+        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
 
         leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
         return status.ok();
     }
 
-    sha256_hash repository_impl::get_best_tail_block_hash(const aux::bytes &chain_id) {
+    sha256_hash repository_impl::get_tail_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
+        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
 
         std::string value;
         leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
@@ -807,19 +807,19 @@ namespace libTAU::blockchain {
         return sha256_hash();
     }
 
-    bool repository_impl::set_best_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+    bool repository_impl::set_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
+        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
 
         leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, hash.to_string());
         return status.ok();
     }
 
-    bool repository_impl::delete_best_tail_block_hash(const aux::bytes &chain_id) {
+    bool repository_impl::delete_tail_block_hash(const aux::bytes &chain_id) {
         std::string key;
         key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_best_tail_block_hash.begin(), key_suffix_best_tail_block_hash.end());
+        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
 
         leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
         return status.ok();
@@ -855,7 +855,7 @@ namespace libTAU::blockchain {
 
         // flush into sqlite
         // get current tail block number
-        auto best_tail_block_hash = get_best_tail_block_hash(chain_id);
+        auto best_tail_block_hash = get_tail_block_hash(chain_id);
         auto tail_block = get_block_by_hash(best_tail_block_hash);
         std::int64_t tail_number = tail_block.block_number();
 

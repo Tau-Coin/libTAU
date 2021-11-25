@@ -30,10 +30,10 @@ namespace libTAU::blockchain {
         e["cv"] = m_consensus_point_vote.get_entry();
 
         // best block
-        e["bb"] = m_best_tip_block_info.get_entry();
+        e["bb"] = m_head_block_info.get_entry();
 
         // immutable block
-        e["ib"] = m_consensus_point_block_info.get_entry();
+        e["ib"] = m_voting_point_block_info.get_entry();
 
         // block set
         entry::list_type block_list;
@@ -107,12 +107,12 @@ namespace libTAU::blockchain {
         // best block
         if (auto* i = const_cast<entry *>(e.find_key("bb")))
         {
-            m_best_tip_block_info = immutable_data_info(*i);
+            m_head_block_info = immutable_data_info(*i);
         }
         // immutable block
         if (auto* i = const_cast<entry *>(e.find_key("ib")))
         {
-            m_consensus_point_block_info = immutable_data_info(*i);
+            m_voting_point_block_info = immutable_data_info(*i);
         }
         // block set
         if (auto* i = const_cast<entry *>(e.find_key("bs")))
@@ -174,8 +174,8 @@ namespace libTAU::blockchain {
 
     std::ostream &operator<<(std::ostream &os, const blockchain_signal &signal) {
         os << "m_timestamp: " << signal.m_timestamp << " m_consensus_point_vote: " << signal.m_consensus_point_vote
-           << " m_best_tip_block_info: " << signal.m_best_tip_block_info << " m_consensus_point_block_info: "
-           << signal.m_consensus_point_block_info << " m_tx_hash_prefix_array: " << aux::toHex(signal.m_tx_hash_prefix_array)
+           << " m_best_tip_block_info: " << signal.m_head_block_info << " m_consensus_point_block_info: "
+           << signal.m_voting_point_block_info << " m_tx_hash_prefix_array: " << aux::toHex(signal.m_tx_hash_prefix_array)
            << " m_latest_tx_hash_prefix_array: " << aux::toHex(signal.m_latest_tx_hash_prefix_array)
            << " m_gossip_peer: " << aux::toHex(signal.m_gossip_peer.bytes);
         os << " m_block_info_set: ";

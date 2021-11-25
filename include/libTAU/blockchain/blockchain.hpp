@@ -276,11 +276,14 @@ namespace blockchain {
         // block cache
         std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;
 
-        // best tip blocks
-        std::map<aux::bytes, block> m_best_tip_blocks;
+        // head blocks
+        std::map<aux::bytes, block> m_head_blocks;
 
-        // best tail blocks
-        std::map<aux::bytes, block> m_best_tail_blocks;
+        // tail blocks
+        std::map<aux::bytes, block> m_tail_blocks;
+
+        // consensus point blocks
+        std::map<aux::bytes, block> m_consensus_point_blocks;
 
         // voting point blocks
         std::map<aux::bytes, block> m_voting_point_blocks;
