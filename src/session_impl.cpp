@@ -519,8 +519,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		, m_timer(m_io_context)
 		, m_session_time(total_milliseconds(std::chrono::system_clock::now().time_since_epoch()))
 		, m_created(clock_type::now())
-		, m_last_tick(m_created)
-		, m_last_second_tick(m_created - milliseconds(900))
+		, m_last_tick(total_milliseconds(std::chrono::system_clock::now().time_since_epoch()))
 	{
 	}
 
@@ -630,8 +629,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	void session_impl::on_tick(error_code const& e)
 	{
 		TORRENT_ASSERT(is_single_thread());
-		std::int64_t current_time = total_milliseconds(std::chrono::system_clock::now().time_since_epoch());
-		session_time_modification(current_time);
+		session_time_modification();
         m_timer.expires_after(seconds(1));
 		m_timer.async_wait([this](error_code const& e) {
 				this->wrap(&session_impl::on_tick, e); });
@@ -640,11 +638,23 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
 	void session_impl::session_time_modification(std::int64_t time)
 	{
-		double sigma = 0.1;
-		double f1 = 1.0/(sigma * 2.50663);
-		double f2 = -1.0 * pow(time - m_session_time, 2)/(2.0 * pow(sigma, 2));
-		double gauss_factor = f1* pow(2.71828, f2);
-		m_session_time = (1.0 - gauss_factor) * m_session_time + gauss_factor * time;
+		std::int64_t current_time = total_milliseconds(std::chrono::system_clock::now().time_since_epoch());
+		std::int64_t delta_time = current_time - m_last_tick;
+		m_session_time += delta_time;
+		m_last_tick = current_time;
+
+		if(time != 0) {
+			std::int64_t time_s  = time/1000;
+			std::int64_t m_time_s  = m_session_time/1000;
+			double sigma = 30;
+			double f1 = 1.0/(sigma * 2.50663);
+			double f21 = -1.0 * pow(time_s - m_time_s, 2);
+			double f22 = 2.0 * pow(sigma, 2);
+			double f2 = f21 / f22;
+			double gauss_factor = f1* pow(2.71828, f2);
+			m_session_time = ((1.0 - gauss_factor) * m_time_s + gauss_factor * time_s)* 1000;
+		}
+
 	}
 
 	session_params session_impl::session_state(save_state_flags_t const flags) const
@@ -1716,12 +1726,6 @@ namespace {
 						, err_str);
 					if (!result)
 					{
-#ifndef TORRENT_DISABLE_LOGGING
-						if (should_log())
-						{
-							session_log("UDP decryption error: %s", err_str.c_str());
-						}
-#endif
 						continue;
 					}
 

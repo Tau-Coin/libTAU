@@ -760,12 +760,10 @@ namespace aux {
 				return m_created;
 			}
 
-			time_point m_last_tick;
-			time_point m_last_second_tick;
-			
+			std::int64_t m_last_tick;
 			std::int64_t m_session_time;
 			void on_tick(error_code const& e);
-			void session_time_modification(std::int64_t time);
+			void session_time_modification(std::int64_t time = 0);
 
 			// when outgoing_ports is configured, this is the
 			// port we'll bind the next outgoing socket to
