@@ -581,28 +581,39 @@ namespace libTAU::blockchain {
                 }
 
                 auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(head_block.cumulative_difficulty(), base_target);
+
+                std::map<dht::public_key, std::int64_t> peers_balance;
+                std::map<dht::public_key, std::int64_t> peers_nonce;
+
+                // get miner state
                 auto miner_account = m_repository->get_account(chain_id, *pk);
-                std::int64_t miner_balance = miner_account.balance();
-                std::int64_t miner_nonce = miner_account.nonce();
-                std::int64_t sender_balance = 0;
-                std::int64_t sender_nonce = 0;
-                std::int64_t receiver_balance = 0;
-                std::int64_t receiver_nonce = 0;
+                peers_balance[*pk] = miner_account.balance();
+                peers_nonce[*pk] = miner_account.nonce();
+
                 if (!tx.empty()) {
-                    miner_balance += tx.fee();
-
+                    // get state
                     auto sender_account = m_repository->get_account(chain_id, tx.sender());
-                    sender_balance = sender_account.balance() - tx.cost();
-                    sender_nonce = sender_account.nonce() + 1;
-
+                    peers_balance[tx.sender()] = sender_account.balance();
+                    peers_nonce[tx.sender()] = sender_account.nonce();
                     auto receiver_account = m_repository->get_account(chain_id, tx.receiver());
-                    receiver_balance = receiver_account.balance() + tx.amount();
-                    receiver_nonce = receiver_account.nonce();
+                    peers_balance[tx.receiver()] = receiver_account.balance();
+                    peers_nonce[tx.receiver()] = receiver_account.nonce();
+
+                    // adjust state
+                    // miner earns fee
+                    peers_balance[*pk] += tx.fee();
+                    // sender balance - cost(fee + amount)
+                    peers_balance[tx.sender()] -= tx.cost();
+                    // sender nonce+1
+                    peers_nonce[tx.sender()] += 1;
+                    // receiver balance + amount
+                    peers_balance[tx.receiver()] += tx.amount();
                 }
                 b = block(chain_id, block_version::block_version1, (head_block.timestamp() + interval),
                           head_block.block_number() + 1, head_block.sha256(), base_target,
-                          cumulative_difficulty, genSig, tx, *pk, miner_balance, miner_nonce,
-                          sender_balance, sender_nonce, receiver_balance, receiver_nonce);
+                          cumulative_difficulty, genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk],
+                          peers_balance[tx.sender()], peers_nonce[tx.sender()],
+                          peers_balance[tx.receiver()], peers_nonce[tx.receiver()]);
                 b.sign(*pk, *sk);
             }
         }
@@ -1997,10 +2008,15 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::submitTransaction(const transaction& tx) {
-        log("INFO: add new tx:%s", tx.to_string().c_str());
-        if (!tx.empty()) {
-            auto &chain_id = tx.chain_id();
-            return m_tx_pools[chain_id].add_tx(tx);
+        try {
+            log("INFO: add new tx:%s", tx.to_string().c_str());
+            if (!tx.empty()) {
+                auto &chain_id = tx.chain_id();
+                return m_tx_pools[chain_id].add_tx(tx);
+            }
+        } catch (std::exception &e) {
+            log("Exception add new tx [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            return false;
         }
 
         return false;
