@@ -121,6 +121,12 @@ namespace libTAU::blockchain {
 
         virtual bool delete_tail_block_hash(const aux::bytes &chain_id) = 0;
 
+        virtual sha256_hash get_consensus_point_block_hash(const aux::bytes &chain_id) = 0;
+
+        virtual bool set_consensus_point_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+
+        virtual bool delete_consensus_point_block_hash(const aux::bytes &chain_id) = 0;
+
         /**
          * Save a snapshot and start tracking future changes
          *

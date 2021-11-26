@@ -825,6 +825,39 @@ namespace libTAU::blockchain {
         return status.ok();
     }
 
+    sha256_hash repository_impl::get_consensus_point_block_hash(const aux::bytes &chain_id) {
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
+
+        std::string value;
+        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
+
+        if (!value.empty()) {
+            return sha256_hash(value.data());
+        }
+
+        return sha256_hash();
+    }
+
+    bool repository_impl::set_consensus_point_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
+
+        leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, hash.to_string());
+        return status.ok();
+    }
+
+    bool repository_impl::delete_consensus_point_block_hash(const aux::bytes &chain_id) {
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
+
+        leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
+        return status.ok();
+    }
+
     repository *repository_impl::start_tracking() {
         return new repository_track(this);
     }

@@ -437,6 +437,37 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    sha256_hash repository_track::get_consensus_point_block_hash(const aux::bytes &chain_id) {
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
+
+        auto it = m_cache.find(key);
+        if (it != m_cache.end() && !it->second.empty()) {
+            return sha256_hash (it->second.data());
+        } else {
+            return m_repository->get_tail_block_hash(chain_id);
+        }
+    }
+
+    bool repository_track::set_consensus_point_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
+        m_cache[key] = hash.to_string();
+
+        return true;
+    }
+
+    bool repository_track::delete_consensus_point_block_hash(const aux::bytes &chain_id) {
+        std::string key;
+        key.insert(key.end(), chain_id.begin(), chain_id.end());
+        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
+        m_cache[key] = std::string ();
+
+        return true;
+    }
+
     repository *repository_track::start_tracking() {
         return new repository_track(this);
     }

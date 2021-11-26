@@ -133,22 +133,27 @@ namespace libTAU::blockchain {
 //        m_chain_gossip_peers[chain_id] = m_repository->get_all_gossip_peers(chain_id);
 
         // load key point block in memory
-        // load tip/tail block
-        auto tip_block_hash = m_repository->get_head_block_hash(chain_id);
+        // load head/tail/consensus block
+        auto head_block_hash = m_repository->get_head_block_hash(chain_id);
         auto tail_block_hash = m_repository->get_tail_block_hash(chain_id);
-        log("INFO chain id[%s], tip block hash[%s], tail block hash[%s]", aux::toHex(chain_id).c_str(),
-            aux::toHex(tip_block_hash.to_string()).c_str(), aux::toHex(tail_block_hash.to_string()).c_str());
-        if (!tip_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros()) {
-            auto tip_block = m_repository->get_block_by_hash(tip_block_hash);
+        auto consensus_point_block_hash = m_repository->get_consensus_point_block_hash(chain_id);
+        log("INFO chain id[%s], head block hash[%s], tail block hash[%s], consensus point block hash[%s]",
+            aux::toHex(chain_id).c_str(), aux::toHex(head_block_hash.to_string()).c_str(),
+            aux::toHex(tail_block_hash.to_string()).c_str(), aux::toHex(consensus_point_block_hash.to_string()).c_str());
+        if (!head_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros() && !consensus_point_block_hash.is_all_zeros()) {
+            auto head_block = m_repository->get_block_by_hash(head_block_hash);
             auto tail_block = m_repository->get_block_by_hash(tail_block_hash);
-            if (!tip_block.empty() && !tail_block.empty()) {
-                m_head_blocks[chain_id] = tip_block;
+            auto consensus_point_block = m_repository->get_block_by_hash(consensus_point_block_hash);
+            if (!head_block.empty() && !tail_block.empty() && !consensus_point_block.empty()) {
+                m_head_blocks[chain_id] = head_block;
                 m_tail_blocks[chain_id] = tail_block;
-                log("INFO: Head block: %s", tip_block.to_string().c_str());
+                m_consensus_point_blocks[chain_id] = consensus_point_block;
+                log("INFO: Head block: %s", head_block.to_string().c_str());
                 log("INFO: Tail block: %s", tail_block.to_string().c_str());
+                log("INFO: Consensus point block: %s", consensus_point_block.to_string().c_str());
 
-                // try to load consensus point block
-                try_to_update_consensus_point_block(chain_id);
+                // try to update voting point block
+                try_to_update_voting_point_block(chain_id);
             }
         }
 
@@ -170,6 +175,7 @@ namespace libTAU::blockchain {
         m_blocks.clear();
         m_head_blocks.clear();
         m_tail_blocks.clear();
+        m_consensus_point_blocks.clear();
         m_voting_point_blocks.clear();
         m_best_votes.clear();
         m_votes.clear();
@@ -187,6 +193,7 @@ namespace libTAU::blockchain {
         m_blocks[chain_id].clear();
         m_head_blocks.erase(chain_id);
         m_tail_blocks.erase(chain_id);
+        m_consensus_point_blocks.erase(chain_id);
         m_voting_point_blocks.erase(chain_id);
         m_best_votes.erase(chain_id);
         m_votes[chain_id].clear();
@@ -244,26 +251,42 @@ namespace libTAU::blockchain {
                         }
                     }
 
-                    // 4. check if need to re-branch to best vote
+                    // 4. check if need to re-branch to the best vote
                     auto &best_vote = m_best_votes[chain_id];
                     if (!best_vote.empty()) {
                         log("INFO chain[%s] current best vote[%s]", aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
-                        auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id, best_vote.block_number());
-                        // if current chain block hash and voting block hash mismatch
-                        if (hash != best_vote.block_hash()) {
-                            log("INFO chain[%s] main chain block[%s] mismatch the best vote",
-                                aux::toHex(chain_id).c_str(), aux::toHex(hash.to_string()).c_str());
-                            // re-branch
-                            auto vote_block = m_blocks[chain_id][best_vote.block_hash()];
-                            if (!vote_block.empty()) {
-                                log("INFO chain[%s] try to re-branch to voting block[%s]",
-                                    aux::toHex(chain_id).c_str(), vote_block.to_string().c_str());
-                                auto result = try_to_rebranch(chain_id, vote_block);
-                                // clear block cache if re-branch success/fail
-                                if (result != MISSING) {
+
+                        auto &consensus_point_block = m_consensus_point_blocks[chain_id];
+                        if (consensus_point_block.sha256() != best_vote.block_hash()) {
+                            auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id,
+                                                                                          best_vote.block_number());
+                            // if current main chain block hash and voting block hash mismatch
+                            if (hash != best_vote.block_hash()) {
+                                log("INFO chain[%s] main chain block[%s] mismatch the best vote",
+                                    aux::toHex(chain_id).c_str(), aux::toHex(hash.to_string()).c_str());
+                                // re-branch
+                                auto vote_block = get_block_from_cache_or_db(chain_id, best_vote.block_hash());
+                                if (!vote_block.empty()) {
+                                    log("INFO chain[%s] try to re-branch to voting block[%s]",
+                                        aux::toHex(chain_id).c_str(), vote_block.to_string().c_str());
+                                    auto result = try_to_rebranch(chain_id, vote_block);
+                                    // clear block cache if re-branch success/fail
+                                    if (result != MISSING) {
 //                                    m_blocks[chain_id].clear();
-                                    remove_all_relevant_blocks_from_cache(vote_block);
+                                        remove_all_relevant_blocks_from_cache(vote_block);
+                                    }
+                                    if (result == SUCCESS) {
+                                        // update consensus point block hash as best voting block
+                                        auto blk = m_repository->get_block_by_hash(best_vote.block_hash());
+                                        m_consensus_point_blocks[chain_id] = vote_block;
+                                        m_repository->set_consensus_point_block_hash(chain_id, best_vote.block_hash());
+                                    }
                                 }
+                            } else {
+                                // update consensus point block hash as main chain hash
+                                auto blk = m_repository->get_block_by_hash(hash);
+                                m_consensus_point_blocks[chain_id] = blk;
+                                m_repository->set_consensus_point_block_hash(chain_id, hash);
                             }
                         }
                     }
@@ -590,28 +613,28 @@ namespace libTAU::blockchain {
     RESULT blockchain::verify_block(const aux::bytes &chain_id, block &b, block &previous_block, repository *repo) {
         if (b.empty()) {
             log("INFO chain[%s] block is empty", aux::toHex(chain_id).c_str());
-            return FALSE;
+            return FAIL;
         }
 
         if (previous_block.block_number() + 1 != b.block_number()) {
             log("INFO chain[%s] block number error.", aux::toHex(chain_id).c_str());
-            return FALSE;
+            return FAIL;
         }
 
         if (b.block_number() <= 0) {
             log("INFO chain[%s] Negative and genesis block is always true", aux::toHex(chain_id).c_str());
-            return TRUE;
+            return SUCCESS;
         }
 
         if (b.timestamp() <= previous_block.timestamp()) {
             log("INFO chain[%s] block timestamp error.", aux::toHex(chain_id).c_str());
-            return FALSE;
+            return FAIL;
         }
 
         if (!b.verify_signature()) {
             log("INFO chain[%s] block[%s] has bad signature",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-            return FALSE;
+            return FAIL;
         }
 
         block ancestor;
@@ -646,7 +669,7 @@ namespace libTAU::blockchain {
         if (!consensus::verify_hit(hit, base_target, power, interval)) {
             log("INFO chain[%s] block[%s] verify hit fail",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-            return FALSE;
+            return FAIL;
         }
 
         auto miner_account = repo->get_account(chain_id, b.miner());
@@ -673,18 +696,32 @@ namespace libTAU::blockchain {
         receiver_balance != b.receiver_balance() || receiver_nonce != b.receiver_nonce()) {
             log("INFO chain[%s] block[%s] state error!",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-            return FALSE;
+            return FAIL;
         }
 
-        return TRUE;
+        return SUCCESS;
     }
 
     void blockchain::try_to_update_consensus_point_block(const aux::bytes &chain_id) {
-        auto& tip_block = m_head_blocks[chain_id];
+//        auto &consensus_point_block = m_consensus_point_blocks[chain_id];
+//        auto &best_vote = m_best_votes[chain_id];
+//        auto &blocks = m_blocks[chain_id];
+//        if (!best_vote.empty()) {
+//            get_block_from_cache_or_db(chain_id, best_vote.block_hash());
+//            auto it = blocks.find(best_vote.block_hash());
+//            if (it != blocks.end()) {
+//                m_consensus_point_blocks[chain_id] = it->second;
+//                blocks.erase(it);
+//            }
+//        }
+    }
+
+    void blockchain::try_to_update_voting_point_block(const aux::bytes &chain_id) {
+        auto& head_block = m_head_blocks[chain_id];
         auto& tail_block = m_tail_blocks[chain_id];
 
-        // calc consensus point block number
-        auto block_number = (tip_block.block_number() / 100 - 1) * 100;
+        // calc voting point block number
+        auto block_number = (head_block.block_number() / 100 - 1) * 100;
         // make sure that consensus block number>=0
         if (block_number < 0) {
             block_number = 0;
@@ -704,7 +741,7 @@ namespace libTAU::blockchain {
 
     RESULT blockchain::process_block(const aux::bytes &chain_id, block &b) {
         if (b.empty())
-            return FALSE;
+            return FAIL;
 
         auto &head_block  = m_head_blocks[chain_id];
         if (head_block.empty()) {
@@ -713,26 +750,31 @@ namespace libTAU::blockchain {
             if (!track->connect_head_block(b)) {
                 log("INFO chain[%s] connect head block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-                return FALSE;
+                return FAIL;
             }
             if (!track->set_head_block_hash(chain_id, b.sha256())) {
                 log("INFO chain[%s] set head block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-                return FALSE;
+                return FAIL;
             }
             if (!track->set_tail_block_hash(chain_id, b.sha256())) {
                 log("INFO chain[%s] set tail block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-                return FALSE;
+                return FAIL;
+            }
+            if (!track->set_consensus_point_block_hash(chain_id, b.sha256())) {
+                log("INFO chain[%s] set consensus point block[%s] fail",
+                    aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+                return FAIL;
             }
 
             if (!track->commit()) {
                 log("INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
-                return FALSE;
+                return FAIL;
             }
             if (!m_repository->flush(chain_id)) {
                 log("INFO chain[%s] flush fail", aux::toHex(chain_id).c_str());
-                return FALSE;
+                return FAIL;
             }
 
             // chain changed, re-check tx pool
@@ -740,6 +782,7 @@ namespace libTAU::blockchain {
 
             m_head_blocks[chain_id] = b;
             m_tail_blocks[chain_id] = b;
+            m_consensus_point_blocks[chain_id] = b;
 
             m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
         } else {
@@ -749,19 +792,19 @@ namespace libTAU::blockchain {
                 // no need to verify block if not sync completed
                 if (!is_sync_completed(chain_id)) {
                     auto result = verify_block(chain_id, b, head_block, track);
-                    if (result != TRUE)
+                    if (result != SUCCESS)
                         return result;
                 }
 
                 if (!track->connect_head_block(b)) {
                     log("INFO chain[%s] connect head block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-                    return FALSE;
+                    return FAIL;
                 }
                 if (!track->set_head_block_hash(chain_id, b.sha256())) {
                     log("INFO chain[%s] set head block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-                    return FALSE;
+                    return FAIL;
                 }
 
                 block tail_block;
@@ -774,7 +817,7 @@ namespace libTAU::blockchain {
 
                 if (!track->commit()) {
                     log("INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
-                    return FALSE;
+                    return FAIL;
                 }
                 m_repository->flush(chain_id);
 
@@ -798,17 +841,17 @@ namespace libTAU::blockchain {
                 if (!track->connect_tail_block(b)) {
                     log("INFO chain[%s] connect tail block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-                    return FALSE;
+                    return FAIL;
                 }
                 if (!track->set_tail_block_hash(chain_id, b.sha256())) {
                     log("INFO chain[%s] set tail block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-                    return FALSE;
+                    return FAIL;
                 }
 
                 if (!track->commit()) {
                     log("INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
-                    return FALSE;
+                    return FAIL;
                 }
                 m_repository->flush(chain_id);
 
@@ -822,9 +865,9 @@ namespace libTAU::blockchain {
         }
 
         // re-locate consensus point block
-        try_to_update_consensus_point_block(chain_id);
+        try_to_update_voting_point_block(chain_id);
 
-        return TRUE;
+        return SUCCESS;
     }
 
     bool blockchain::is_empty_chain(const aux::bytes &chain_id) {
@@ -937,7 +980,7 @@ namespace libTAU::blockchain {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
 //                m_blocks[chain_id].clear();
-                return FALSE;
+                return FAIL;
             }
 
             rollback_blocks.push_back(main_chain_block);
@@ -970,7 +1013,7 @@ namespace libTAU::blockchain {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
 //                m_blocks[chain_id].clear();
-                return FALSE;
+                return FAIL;
             }
 
             rollback_blocks.push_back(main_chain_block);
@@ -1003,12 +1046,12 @@ namespace libTAU::blockchain {
             if (!track->rollback_block(b)) {
                 log("INFO chain[%s] rollback block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-                return FALSE;
+                return FAIL;
             }
 
             if (!tail_missing) {
                 // in order to maintain the effective length of the chain,
-                // re-connect old tail block when rollback a tip block
+                // re-connect old tail block when rollback a head block
                 // if tail missing, block verification will be ignored
                 auto previous_block = track->get_block_by_hash(tail_block.previous_block_hash());
                 if (!previous_block.empty()) {
@@ -1016,7 +1059,7 @@ namespace libTAU::blockchain {
                     if (!track->connect_tail_block(previous_block)) {
                         log("INFO chain[%s] connect tail block[%s] fail",
                             aux::toHex(chain_id).c_str(), aux::toHex(previous_block.sha256().to_string()).c_str());
-                        return FALSE;
+                        return FAIL;
                     }
 
                     // chain changed, re-check tx pool
@@ -1042,14 +1085,14 @@ namespace libTAU::blockchain {
 
             if (!tail_missing) {
                 auto result = verify_block(chain_id, b, previous_block, track);
-                if (result != TRUE)
+                if (result != SUCCESS)
                     return result;
             }
 
             if (!track->connect_head_block(b)) {
-                log("INFO chain[%s] connect tip block[%s] fail",
+                log("INFO chain[%s] connect head block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
-                return FALSE;
+                return FAIL;
             }
 
             // seek tail block
@@ -1057,7 +1100,7 @@ namespace libTAU::blockchain {
                 if (!track->expire_block(tail_block)) {
                     log("INFO chain[%s] expire block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(tail_block.sha256().to_string()).c_str());
-                    return FALSE;
+                    return FAIL;
                 }
                 // get previous main chain block to be expired one by one
                 tail_block = track->get_main_chain_block_by_number(chain_id, tail_block.block_number() + 1);
@@ -1084,17 +1127,17 @@ namespace libTAU::blockchain {
         if (!track->set_tail_block_hash(chain_id, tail_block.sha256())) {
             log("INFO chain[%s] set tail block[%s] fail",
                 aux::toHex(chain_id).c_str(), aux::toHex(tail_block.sha256().to_string()).c_str());
-            return FALSE;
+            return FAIL;
         }
         if (!track->set_head_block_hash(chain_id, target.sha256())) {
-            log("INFO chain[%s] set tip block[%s] fail",
+            log("INFO chain[%s] set head block[%s] fail",
                 aux::toHex(chain_id).c_str(), aux::toHex(target.sha256().to_string()).c_str());
-            return FALSE;
+            return FAIL;
         }
 
         if (!track->commit()) {
             log("INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
-            return FALSE;
+            return FAIL;
         }
         m_repository->flush(chain_id);
 
@@ -1102,9 +1145,9 @@ namespace libTAU::blockchain {
         m_tail_blocks[chain_id] = tail_block;
 
         // re-locate consensus point block
-        try_to_update_consensus_point_block(chain_id);
+        try_to_update_voting_point_block(chain_id);
 
-        return TRUE;
+        return SUCCESS;
     }
 
     void blockchain::refresh_vote(const aux::bytes &chain_id) {
@@ -1384,18 +1427,18 @@ namespace libTAU::blockchain {
         }
 
         // offer the consensus point block
-        immutable_data_info consensus_point_block_info;
+        immutable_data_info voting_point_block_info;
         if (!voting_point_block.empty()) {
             std::vector<dht::node_entry> entries;
             m_ses.dht()->find_live_nodes(voting_point_block.sha256(), entries);
             if (entries.size() > blockchain_immutable_payload_put_node_size) {
                 entries.resize(blockchain_immutable_payload_put_node_size);
             }
-            log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
+            log("INFO: Put immutable voting point block target[%s], entries[%zu]",
                 aux::toHex(voting_point_block.sha256().to_string()).c_str(), entries.size());
             dht_put_immutable_item(voting_point_block.get_entry(), entries, voting_point_block.sha256());
 
-            consensus_point_block_info = immutable_data_info(voting_point_block.sha256(), entries);
+            voting_point_block_info = immutable_data_info(voting_point_block.sha256(), entries);
         }
 
         std::set<immutable_data_info> block_set;
@@ -1428,7 +1471,7 @@ namespace libTAU::blockchain {
                     if (entries.size() > blockchain_immutable_payload_put_node_size) {
                         entries.resize(blockchain_immutable_payload_put_node_size);
                     }
-                    log("INFO: Put immutable consensus point tip block target[%s], entries[%zu]",
+                    log("INFO: Put immutable block target[%s], entries[%zu]",
                         aux::toHex(demand_block.sha256().to_string()).c_str(), entries.size());
                     dht_put_immutable_item(demand_block.get_entry(), entries, demand_block.sha256());
 
@@ -1626,7 +1669,7 @@ namespace libTAU::blockchain {
 
         // make signal
         blockchain_signal signal(now, consensus_point_vote,
-                                 head_block_info, consensus_point_block_info,
+                                 head_block_info, voting_point_block_info,
                                  block_set, tx_set, demand_block_hash_set,
                                  tx_hash_prefix_array, latest_tx_hash_prefix_array, p);
 

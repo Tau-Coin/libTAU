@@ -46,8 +46,8 @@ namespace blockchain {
     constexpr int blockchain_immutable_payload_put_node_size = 1;
 
     enum RESULT {
-        TRUE,
-        FALSE,
+        SUCCESS,
+        FAIL,
         MISSING,
     };
 
@@ -157,8 +157,11 @@ namespace blockchain {
         // try to mine block
         block try_to_mine_block(const aux::bytes &chain_id);
 
-        // try to update consensus point block if block number changed
+        // try to update consensus point block if best voting block changed
         void try_to_update_consensus_point_block(const aux::bytes &chain_id);
+
+        // try to update voting point block if chain changed
+        void try_to_update_voting_point_block(const aux::bytes &chain_id);
 
         // verify block
         RESULT verify_block(const aux::bytes &chain_id, block &b, block &previous_block, repository *repo);
