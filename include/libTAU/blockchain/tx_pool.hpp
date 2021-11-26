@@ -67,7 +67,7 @@ namespace libTAU::blockchain {
         void remove_min_fee_tx();
 
         // blockchain db
-        repository* m_repository;
+        repository* m_repository{};
 
         // tx set
         std::map<sha256_hash, transaction> m_all_txs_by_fee;

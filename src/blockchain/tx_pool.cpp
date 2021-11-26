@@ -91,10 +91,10 @@ namespace libTAU::blockchain {
         if (!tx.verify_signature())
             return false;
 
-        m_active_peers.push(tx.sender());
-        if (m_active_peers.size() > tx_pool_max_active_friends_size) {
-            m_active_peers.pop();
-        }
+//        m_active_peers.push(tx.sender());
+//        if (m_active_peers.size() > tx_pool_max_active_friends_size) {
+//            m_active_peers.pop();
+//        }
 
         m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
         m_all_txs_by_timestamp[tx.sha256()] = tx;

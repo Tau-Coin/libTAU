@@ -126,7 +126,7 @@ namespace libTAU::blockchain {
     bool blockchain::load_chain(const aux::bytes &chain_id) {
         log("INFO: load chain[%s]", aux::toHex(chain_id).c_str());
         // create tx pool
-        m_tx_pools.insert(std::pair<aux::bytes, tx_pool>(chain_id, tx_pool(m_repository.get())));
+        m_tx_pools[chain_id] = tx_pool(m_repository.get());
 
         // get all peers
 //        m_chain_peers[chain_id] = m_repository->get_all_peers(chain_id);
