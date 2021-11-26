@@ -259,16 +259,8 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		unsigned long int total_bytes = 0;
 		for (auto const& uep : unspecified_eps)
 		{
-			bool const v4 = uep.addr.is_v4();
 			for (auto const& ipface : ifs)
 			{
-				if (!ipface.preferred)
-					continue;
-				if (ipface.interface_address.is_v4() != v4)
-					continue;
-				// libTAU added, only v4
-				if (ipface.interface_address.is_v6())
-					continue;
 				if (!uep.device.empty() && uep.device != ipface.name)
 					continue;
 				if (std::any_of(eps.begin(), eps.end(), [&](listen_endpoint_t const& e)
@@ -277,122 +269,54 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 					// duplicates if the user explicitly configured an address
 					// without a device name
 					return e.addr == ipface.interface_address
-						&& e.port == uep.port
-						&& e.ssl == uep.ssl;
+						&& e.port == uep.port;
 				}))
 				{
 					continue;
 				}
 
-				// ignore interfaces that are down, libTAU only support up state
-				if (ipface.state != if_state::up)
-					continue;
-				if (!(ipface.flags & if_flags::up))
-					continue;
+				// 1st
+				if(ipface.interface_address == uep.addr)
+				{
+					eps.emplace_back(ipface.interface_address, uep.port, uep.device
+						, uep.ssl, uep.flags | listen_socket_t::was_expanded
+					| listen_socket_flags_t{});
+					break;	
+				}
 
-				// we assume this listen_socket_t is local-network under some
-				// conditions, meaning we won't announce it to internet trackers
-				bool const local
-					= ipface.interface_address.is_loopback()
-					|| is_link_local(ipface.interface_address)
-					|| (ipface.flags & if_flags::loopback)
-					|| (!is_global(ipface.interface_address)
-						&& !(ipface.flags & if_flags::pointopoint)
-						&& !has_internet_route(ipface.name, family(ipface.interface_address), routes));
-
-				//libTAU added
-				if(local)
-					continue;
-				
 				unsigned long int tmp_bytes = ipface.rx_bytes + ipface.tx_bytes
                                  + ipface.rx_errors + ipface.tx_errors
                                  + ipface.rx_dropped + ipface.tx_dropped;
 
+				if_state ipface_state = if_state::unknown;
+
 				if(0 == total_bytes) {
 					eps.emplace_back(ipface.interface_address, uep.port, uep.device
-						, uep.ssl, uep.flags | listen_socket_t::was_expanded
-					| (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
+						, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
 					total_bytes = tmp_bytes;
+					ipface_state = ipface.state; 
 				}
 
-				if(tmp_bytes > total_bytes) {
-					eps.pop_back();
-					eps.emplace_back(ipface.interface_address, uep.port, uep.device
-						, uep.ssl, uep.flags | listen_socket_t::was_expanded
-					| (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
-					total_bytes = tmp_bytes;
-				}
-			}
-		}
-
-		total_bytes = 0;
-
-		if(eps.empty()) {
-			for (auto const& uep : unspecified_eps)
-			{
-				bool const v4 = uep.addr.is_v4();
-				for (auto const& ipface : ifs)
-				{
-					if (!ipface.preferred)
-						continue;
-					if (ipface.interface_address.is_v4() != v4)
-						continue;
-					// libTAU added, only v4
-					if (ipface.interface_address.is_v6())
-						continue;
-					if (!uep.device.empty() && uep.device != ipface.name)
-						continue;
-					if (std::any_of(eps.begin(), eps.end(), [&](listen_endpoint_t const& e)
-					{
-						// ignore device name because we don't want to create
-						// duplicates if the user explicitly configured an address
-						// without a device name
-						return e.addr == ipface.interface_address
-							&& e.port == uep.port
-							&& e.ssl == uep.ssl;
-					}))
-					{
-						continue;
-					}
-
-					// ignore interfaces that are down, libTAU only support unknown 
-					if (ipface.state != if_state::unknown)
-						continue;
-					if (!(ipface.flags & if_flags::up))
-						continue;
-
-					// we assume this listen_socket_t is local-network under some
-					// conditions, meaning we won't announce it to internet trackers
-					bool const local
-						= ipface.interface_address.is_loopback()
-						|| is_link_local(ipface.interface_address)
-						|| (ipface.flags & if_flags::loopback)
-						|| (!is_global(ipface.interface_address)
-							&& !(ipface.flags & if_flags::pointopoint)
-							&& !has_internet_route(ipface.name, family(ipface.interface_address), routes));
-
-					//libTAU added
-					if(local)
-						continue;
-
-					unsigned long int tmp_bytes = ipface.rx_bytes + ipface.tx_bytes
-												+ ipface.rx_errors + ipface.tx_errors
-												+ ipface.rx_dropped + ipface.tx_dropped;
-
-					if(0 == total_bytes) {
-						eps.emplace_back(ipface.interface_address, uep.port, uep.device
-							, uep.ssl, uep.flags | listen_socket_t::was_expanded
-						| (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
-						total_bytes = tmp_bytes;
-					}
-
-					if(tmp_bytes > total_bytes) {
+				if(ipface_state == if_state::unknown) {
+					if(ipface.state == if_state::up) {
 						eps.pop_back();
 						eps.emplace_back(ipface.interface_address, uep.port, uep.device
-							, uep.ssl, uep.flags | listen_socket_t::was_expanded
-						| (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+						total_bytes = tmp_bytes;
+					} else if(tmp_bytes > total_bytes) {
+						eps.pop_back();
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
 						total_bytes = tmp_bytes;
 					}
+				} else {
+					if(ipface.state == if_state::up && tmp_bytes > total_bytes) {
+						eps.pop_back();
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+						total_bytes = tmp_bytes;
+					}
+					ipface_state = if_state::up;
 				}
 			}
 		}
@@ -928,17 +852,8 @@ namespace {
 
 		apply_pack(&pack, m_settings, this);
 
-		if (!reopen_listen_port)
-		{
-			// no need to call this if reopen_listen_port is true
-			// since the apply_pack will do it
-			update_listen_interfaces();
-		}
-		else
-		{
-			reopen_listen_sockets();
-		}
-
+		if(reopen_listen_port)
+			reopen_listen_sockets(false);
 	}
 
 	std::shared_ptr<listen_socket_t> session_impl::setup_listener(
@@ -1145,6 +1060,7 @@ namespace {
 		address const adr = make_address(iface.device.c_str(), err);
 		if (!err)
 		{
+			//default, libTAU this way
 			eps.emplace_back(adr, iface.port, std::string{}, ssl, flags);
 		}
 		else
@@ -1219,8 +1135,33 @@ namespace {
 					, operation_t::enum_route, ec, socket_type_t::tcp);
 			}
 
+			//delete unused ip_interface
+			// preferred == true, v4, state(up, unknow), not local
+			std::vector<ip_interface> ifs_tau;
 			for (auto const& ipface : ifs)
 			{
+				if (!ipface.preferred || ipface.interface_address.is_v6())
+				{
+					continue;
+				}
+
+				if (ipface.state != if_state::up && ipface.state != if_state::unknown)
+				{
+					continue;
+				}
+
+				bool const local
+					= ipface.interface_address.is_loopback()
+					|| is_link_local(ipface.interface_address)
+					|| (ipface.flags & if_flags::loopback)
+					|| (!is_global(ipface.interface_address)
+						&& !(ipface.flags & if_flags::pointopoint)
+						&& !has_internet_route(ipface.name, family(ipface.interface_address), routes));
+				if(local)
+				{
+					continue;
+				}
+
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("ip_interface preferred %d, name: %s, netmask: %s, address: %s, flags: %d, state: %d, rx_bytes: %u, tx_bytes: %u, rx_errors: %u, tx_errors: %u, rx_dropped: %u, tx_dropped: %u", 
 						 ipface.preferred, ipface.name, 
@@ -1231,7 +1172,9 @@ namespace {
 						 ipface.rx_errors, ipface.tx_errors,
 						 ipface.rx_dropped, ipface.tx_dropped);
 #endif
+				ifs_tau.push_back(ipface);
 			}
+
 			// expand device names and populate eps
 			for (auto const& iface : m_listen_interfaces)
 			{
@@ -1239,17 +1182,17 @@ namespace {
 				// IP address or a device name. In case it's a device name, we want to
 				// (potentially) end up binding a socket for each IP address associated
 				// with that device.
-				interface_to_endpoints(iface, listen_socket_t::accept_incoming, ifs, eps);
+				interface_to_endpoints(iface, listen_socket_t::accept_incoming, ifs_tau, eps);
 			}
 
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("initial listen sockets size: %d", eps.size());
 #endif
-			expand_unspecified_address(ifs, routes, eps);
+			expand_unspecified_address(ifs_tau, routes, eps);
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("expand unspecified listen sockets size: %d", eps.size());
 #endif
-			expand_devices(ifs, eps);
+			expand_devices(ifs_tau, eps);
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("expand listen sockets size: %d", eps.size());
 #endif
@@ -2649,7 +2592,12 @@ namespace {
 	void session_impl::set_loop_time_interval(int milliseconds)
 	{
 		session_log("Set Loop Time: %d", milliseconds);
+
+		//m_communication
 		m_communication->set_loop_time_interval(milliseconds);
+
+		//blockchain
+		m_blockchain->set_blockchain_loop_interval(milliseconds);
 	}
 
 	bool session_impl::add_new_friend(const dht::public_key& pubkey)
@@ -2701,15 +2649,9 @@ namespace {
 
 	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts) {
 		std::string id(chain_id.begin(), chain_id.end());
-		std::cout << "Create New Community id: "<< id << std::endl;
 		for(auto iter = accounts.begin(); iter != accounts.end(); iter++) {
 
 			std::string pubkey(iter->first.bytes.begin(), iter->first.bytes.end());
-			std::cout << "Create New Community pubkey: "<< pubkey << std::endl;
-			std::cout << "Create New Community account balance: "<< iter->second.balance() << std::endl;
-			std::cout << "Create New Community account nonce: "<< iter->second.nonce() << std::endl;
-			std::cout << "Create New Community account block number: "<< iter->second.block_number() << std::endl;
-
 		}
 
 		return m_blockchain->createNewCommunity(chain_id, accounts);
