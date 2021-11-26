@@ -111,7 +111,8 @@ namespace libTAU::blockchain {
 
 
         auto it_txid = m_account_tx_by_fee.find(tx.sender());
-        if (it_txid != m_account_tx_by_fee.end()) {
+        // find in local
+        if (it_txid != m_account_tx_by_fee.end()) { // has in local
             auto it_tx = m_all_txs_by_fee.find(it_txid->second);
             if (it_tx != m_all_txs_by_fee.end()) {
                 auto old_tx = it_tx->second;
@@ -122,13 +123,17 @@ namespace libTAU::blockchain {
                         m_account_tx_by_fee[tx.sender()] = tx.sha256();
                         m_ordered_txs_by_fee.erase(tx_entry_with_fee(old_tx.sha256(), old_tx.fee()));
                         m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
-
-                        if (m_all_txs_by_fee.size() > tx_pool_max_size_by_fee) {
-                            remove_min_fee_tx();
-                        }
                     }
                 }
             }
+        } else { // insert if cannot find in local
+            m_all_txs_by_fee[tx.sha256()] = tx;
+            m_account_tx_by_fee[tx.sender()] = tx.sha256();
+            m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
+        }
+
+        if (m_all_txs_by_fee.size() > tx_pool_max_size_by_fee) {
+            remove_min_fee_tx();
         }
 
         return true;

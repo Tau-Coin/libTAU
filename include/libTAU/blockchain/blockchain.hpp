@@ -35,7 +35,7 @@ namespace blockchain {
     using system_clock = std::chrono::system_clock;
 
     // default refresh time of main task(100)(ms)
-    constexpr int blockchain_default_refresh_time = 100;
+    constexpr int blockchain_default_refresh_time = 700;
 
     // salt length (first 16 bytes of public key)
     constexpr int blockchain_salt_length = 16;

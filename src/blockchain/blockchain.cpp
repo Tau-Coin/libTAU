@@ -913,8 +913,11 @@ namespace libTAU::blockchain {
         auto &head_block = m_head_blocks[chain_id];
         auto &tail_block = m_tail_blocks[chain_id];
 
-        // if block number<0, previous hash is all zeros, sync is completed
-        if (tail_block.block_number() < 0 && tail_block.previous_block_hash().is_all_zeros())
+        if (head_block.empty() || tail_block.empty())
+            return false;
+
+        // if block number<=0, previous hash is all zeros, sync is completed
+        if (tail_block.block_number() <= 0 && tail_block.previous_block_hash().is_all_zeros())
             return true;
 
         // if chain length = effective block number, sync is completed
@@ -1836,8 +1839,8 @@ namespace libTAU::blockchain {
     void blockchain::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
     {
         if (!m_ses.dht()) return;
-        log("INFO: Put immutable item target[%s], entries[%zu], data[%s]",
-            aux::toHex(target.to_string()).c_str(), eps.size(), data.to_string().c_str());
+        log("INFO: Put immutable item target[%s], entries[%zu]",
+            aux::toHex(target.to_string()).c_str(), eps.size());
 
         m_ses.dht()->put_item(data,  eps, std::bind(&on_dht_put_immutable_item, std::ref(m_ses.alerts())
                 , target, _1));
@@ -1994,6 +1997,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::submitTransaction(const transaction& tx) {
+        log("INFO: add new tx:%s", tx.to_string().c_str());
         if (!tx.empty()) {
             auto &chain_id = tx.chain_id();
             return m_tx_pools[chain_id].add_tx(tx);
