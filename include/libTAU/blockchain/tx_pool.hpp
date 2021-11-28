@@ -25,6 +25,7 @@ namespace libTAU::blockchain {
 
     constexpr int tx_pool_max_size_by_fee = 100;
 
+    // todo:comments
     constexpr int tx_pool_max_size_by_timestamp = 10;
 
     constexpr int tx_pool_max_active_friends_size = 10;

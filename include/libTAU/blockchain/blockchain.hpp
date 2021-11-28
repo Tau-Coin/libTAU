@@ -276,7 +276,7 @@ namespace blockchain {
         // update un-choked peers time(s)
         std::map<aux::bytes, std::int64_t> m_update_peer_time;
 
-        // block cache
+        // block cache todo:100000?
         std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;
 
         // head blocks

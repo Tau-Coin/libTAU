@@ -74,7 +74,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 45;
+	constexpr int num_alert_types = 46;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1424,6 +1424,22 @@ namespace libTAU {
 
         // message found from peers.
         libTAU::blockchain::transaction tx;
+    };
+
+    // this alert is posted when new consensus point block is found from other peers.
+    struct TORRENT_EXPORT blockchain_new_consensus_point_block_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_new_consensus_point_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_consensus_point_block_alert, 45, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // message found from peers.
+        libTAU::blockchain::block blk;
     };
 
 

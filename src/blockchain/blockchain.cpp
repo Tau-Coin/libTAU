@@ -241,6 +241,7 @@ namespace libTAU::blockchain {
 
                     // 3. try to re-branch to a more difficult chain
                     for (auto const &item : block_map) {
+                        // todo: do it in callback? O(n)
                         if (item.second.cumulative_difficulty() > head_block.cumulative_difficulty()) {
                             auto result = try_to_rebranch(chain_id, item.second);
                             // clear block cache if re-branch success/fail
@@ -280,6 +281,8 @@ namespace libTAU::blockchain {
                                         auto blk = m_repository->get_block_by_hash(best_vote.block_hash());
                                         m_consensus_point_blocks[chain_id] = vote_block;
                                         m_repository->set_consensus_point_block_hash(chain_id, best_vote.block_hash());
+
+                                        m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(vote_block);
                                     }
                                 }
                             } else {
@@ -287,6 +290,8 @@ namespace libTAU::blockchain {
                                 auto blk = m_repository->get_block_by_hash(hash);
                                 m_consensus_point_blocks[chain_id] = blk;
                                 m_repository->set_consensus_point_block_hash(chain_id, hash);
+
+                                m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(blk);
                             }
                         }
                     }
@@ -796,6 +801,8 @@ namespace libTAU::blockchain {
             m_consensus_point_blocks[chain_id] = b;
 
             m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
+            m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(b);
+            m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(b);
         } else {
             if (b.previous_block_hash() == head_block.sha256()) {
                 repository* track = m_repository->start_tracking();
@@ -1398,7 +1405,11 @@ namespace libTAU::blockchain {
     }
 
     std::string blockchain::make_salt(const aux::bytes &chain_id) {
-        std::string salt(chain_id.begin(), chain_id.begin() + blockchain_salt_length);
+        auto offset = chain_id.size() > blockchain_salt_length ? blockchain_salt_length : chain_id.size();
+        std::string salt(chain_id.begin(), chain_id.begin() + offset);
+        if (salt.length() < blockchain_salt_length) {
+            salt.append('\0', (blockchain_salt_length - salt.length()));
+        }
 
         return salt;
     }
