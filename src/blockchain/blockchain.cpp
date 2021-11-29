@@ -982,6 +982,9 @@ namespace libTAU::blockchain {
     }
 
     RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, const block &target) {
+        log("INFO chain[%s] try to rebranch to block[%s]",
+            aux::toHex(chain_id).c_str(), target.to_string().c_str());
+
         auto &head_block = m_head_blocks[chain_id];
         auto &block_maps = m_blocks[chain_id];
 
@@ -998,18 +1001,19 @@ namespace libTAU::blockchain {
         while (main_chain_block.block_number() > target.block_number()) {
             // check if try to rollback voting point block
             if (is_block_immutable_certainly(chain_id, main_chain_block)) {
-                log("INFO chain[%s] block[%s] is immutable",
-                    aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
+                log("INFO chain[%s] block[%s] is immutable.",
+                    aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.to_string()).c_str());
 //                m_blocks[chain_id].clear();
                 return FAIL;
             }
 
             rollback_blocks.push_back(main_chain_block);
 
-            main_chain_block = m_repository->get_block_by_hash(main_chain_block.previous_block_hash());
+            auto previous_hash = main_chain_block.previous_block_hash();
+            main_chain_block = m_repository->get_block_by_hash(previous_hash);
             if (main_chain_block.empty()) {
                 log("INFO chain[%s] Cannot find block[%s] in db",
-                    aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.previous_block_hash().to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 return MISSING;
             }
         }
@@ -1019,11 +1023,12 @@ namespace libTAU::blockchain {
             connect_blocks.push_back(reference_block);
 
             // find branch block from cache and db
-            reference_block = get_block_from_cache_or_db(chain_id, reference_block.previous_block_hash());
+            auto previous_hash = reference_block.previous_block_hash();
+            reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
 
             if (reference_block.empty()) {
                 log("INFO chain[%s] Cannot find block[%s]",
-                    aux::toHex(chain_id).c_str(), aux::toHex(reference_block.previous_block_hash().to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 return MISSING;
             }
         }
@@ -1032,7 +1037,7 @@ namespace libTAU::blockchain {
         while (main_chain_block.sha256() != reference_block.sha256()) {
             if (is_block_immutable_certainly(chain_id, main_chain_block)) {
                 log("INFO chain[%s] block[%s] is immutable",
-                    aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.sha256().to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(main_chain_block.to_string()).c_str());
 //                m_blocks[chain_id].clear();
                 return FAIL;
             }
@@ -1046,11 +1051,12 @@ namespace libTAU::blockchain {
             connect_blocks.push_back(reference_block);
 
             // find branch block from cache and db
-            reference_block = get_block_from_cache_or_db(chain_id, reference_block.previous_block_hash());
+            auto previous_hash = reference_block.previous_block_hash();
+            reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
 
             if (reference_block.empty()) {
                 log("INFO chain[%s] Cannot find block[%s]",
-                    aux::toHex(chain_id).c_str(), aux::toHex(reference_block.previous_block_hash().to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 return MISSING;
             }
         }
@@ -1718,10 +1724,11 @@ namespace libTAU::blockchain {
         if (!i.empty()) {
             log("INFO: Got immutable block callback, target[%s].", aux::toHex(target.to_string()).c_str());
 
-            block b(i.value());
+            block blk(i.value());
+            log("INFO: Got immutable block:%s", blk.to_string().c_str());
             // TODO: validate timestamp etc. ?
-            if (!b.empty()) {
-                m_blocks[chain_id][b.sha256()] = b;
+            if (!blk.empty()) {
+                m_blocks[chain_id][blk.sha256()] = blk;
             }
         }
     }
@@ -1952,10 +1959,10 @@ namespace libTAU::blockchain {
         // follow and load chain
         followChain(TAU_CHAIN_ID, peers);
 
-        for (auto &blk: blocks) {
-            log("Process tau chain block:%s", blk.to_string().c_str());
-            process_block(TAU_CHAIN_ID, blk);
-        }
+//        for (auto &blk: blocks) {
+//            log("Process tau chain block:%s", blk.to_string().c_str());
+//            process_block(TAU_CHAIN_ID, blk);
+//        }
 
         return true;
     }
@@ -2035,6 +2042,10 @@ namespace libTAU::blockchain {
 
     account blockchain::getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey) {
         return m_repository->get_account_with_effective_power(chain_id, publicKey);
+    }
+
+    block blockchain::getBlock(const aux::bytes &chain_id, std::int64_t block_number) {
+        return m_repository->get_main_chain_block_by_number(chain_id, block_number);
     }
 
     std::vector<block> blockchain::getTopTipBlocks(const aux::bytes &chain_id, int topNum) {

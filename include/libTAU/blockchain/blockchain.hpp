@@ -35,7 +35,7 @@ namespace blockchain {
     using system_clock = std::chrono::system_clock;
 
     // default refresh time of main task(100)(ms)
-    constexpr int blockchain_default_refresh_time = 700;
+    constexpr int blockchain_default_refresh_time = 500;
 
     // salt length (first 16 bytes of public key)
     constexpr int blockchain_salt_length = 16;
@@ -95,6 +95,9 @@ namespace blockchain {
 
         // get account by public key
         account getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey);
+
+        // get main chain block by number
+        block getBlock(const aux::bytes &chain_id, std::int64_t block_number);
 
         // get top tip blocks
         std::vector<block> getTopTipBlocks(const aux::bytes &chain_id, int topNum);

@@ -1530,7 +1530,7 @@ namespace {
 		return {};
 #else
 		char buffer[256];
-		std::snprintf(buffer, sizeof(buffer), "new tip block hash: %s"
+		std::snprintf(buffer, sizeof(buffer), "new head block hash: %s"
 				, aux::toHex(blk.sha256().to_string()).c_str());
 		return buffer;
 #endif
