@@ -326,7 +326,7 @@ namespace libTAU::blockchain {
                 if (!active_peers.empty()) {
                     // 产生随机数
                     srand(get_total_milliseconds());
-                    auto index = rand() % peers.size();
+                    auto index = rand() % active_peers.size();
                     peers.push_back(active_peers[index]);
                 }
 
