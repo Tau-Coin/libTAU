@@ -99,6 +99,9 @@ namespace blockchain {
         // get main chain block by number
         block getBlock(const aux::bytes &chain_id, std::int64_t block_number);
 
+        // get main chain block by hash
+        block getBlock(const aux::bytes &chain_id, sha256_hash block_hash);
+
         // get top tip blocks
         std::vector<block> getTopTipBlocks(const aux::bytes &chain_id, int topNum);
 
@@ -107,6 +110,9 @@ namespace blockchain {
 
         // set blockchain main loop time interval (ms)
         void set_blockchain_loop_interval(int milliseconds);
+
+        // push mutable data here
+//        void on_dht_item();
 
     private:
         // initialize member variables

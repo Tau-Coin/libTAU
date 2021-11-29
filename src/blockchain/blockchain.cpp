@@ -1959,10 +1959,10 @@ namespace libTAU::blockchain {
         // follow and load chain
         followChain(TAU_CHAIN_ID, peers);
 
-//        for (auto &blk: blocks) {
-//            log("Process tau chain block:%s", blk.to_string().c_str());
-//            process_block(TAU_CHAIN_ID, blk);
-//        }
+        for (auto &blk: blocks) {
+            log("Process tau chain block:%s", blk.to_string().c_str());
+            process_block(TAU_CHAIN_ID, blk);
+        }
 
         return true;
     }
@@ -2046,6 +2046,10 @@ namespace libTAU::blockchain {
 
     block blockchain::getBlock(const aux::bytes &chain_id, std::int64_t block_number) {
         return m_repository->get_main_chain_block_by_number(chain_id, block_number);
+    }
+
+    block blockchain::getBlock(const aux::bytes &chain_id, sha256_hash block_hash) {
+        return m_repository->get_block_by_hash(block_hash);
     }
 
     std::vector<block> blockchain::getTopTipBlocks(const aux::bytes &chain_id, int topNum) {
