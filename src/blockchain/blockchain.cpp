@@ -800,7 +800,7 @@ namespace libTAU::blockchain {
             m_tail_blocks[chain_id] = b;
             m_consensus_point_blocks[chain_id] = b;
 
-            m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
+            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(b);
             m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(b);
             m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(b);
         } else {
@@ -849,7 +849,7 @@ namespace libTAU::blockchain {
                     m_tx_pools[chain_id].process_block_peers(tail_block);
                 }
 
-                m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
+                m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(b);
             }
 
             if (m_head_blocks[chain_id].block_number() - m_tail_blocks[chain_id].block_number() < EFFECTIVE_BLOCK_NUMBER &&
@@ -1134,7 +1134,7 @@ namespace libTAU::blockchain {
 
             m_tx_pools[chain_id].process_block_peers(b);
 
-            m_ses.alerts().emplace_alert<blockchain_new_tip_block_alert>(b);
+            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(b);
         }
 
         m_ses.alerts().emplace_alert<blockchain_fork_point_block_alert>(reference_block);

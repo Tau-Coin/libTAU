@@ -1309,9 +1309,9 @@ namespace {
 		"communication_friend_info", "communication_log",
 		"communication_last_seen", "blockchain_log_alert",
 		"blockchain_new_tip_block_alert", "blockchain_new_tail_block_alert",
-		"blockchain_rollback_block_alert", "blockchain_fork_point_block_alert",
-		"blockchain_top_three_votes_alert", "blockchain_new_transaction_alert",
-		"blockchain_new_consensus_point_block_alert"
+		"blockchain_new_consensus_point_block_alert","blockchain_rollback_block_alert",
+		"blockchain_fork_point_block_alert","blockchain_top_three_votes_alert",
+		"blockchain_new_transaction_alert"
 		}};
 
 		TORRENT_ASSERT(alert_type >= 0);
@@ -1519,12 +1519,12 @@ namespace {
 #endif
 	}
 
-	blockchain_new_tip_block_alert::blockchain_new_tip_block_alert(aux::stack_allocator&
+	blockchain_new_head_block_alert::blockchain_new_head_block_alert(aux::stack_allocator&
 			, blockchain::block blk)
 			: blk(std::move(blk))
 	{}
 
-	std::string blockchain_new_tip_block_alert::message() const
+	std::string blockchain_new_head_block_alert::message() const
 	{
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
@@ -1552,6 +1552,23 @@ namespace {
 		return buffer;
 #endif
 	}
+
+    blockchain_new_consensus_point_block_alert::blockchain_new_consensus_point_block_alert(aux::stack_allocator&
+            , blockchain::block blk)
+            : blk(std::move(blk))
+    {}
+
+    std::string blockchain_new_consensus_point_block_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char buffer[256];
+        std::snprintf(buffer, sizeof(buffer), "new consensus point block hash: %s"
+                , aux::toHex(blk.sha256().to_string()).c_str());
+        return buffer;
+#endif
+    }
 
 	blockchain_rollback_block_alert::blockchain_rollback_block_alert(aux::stack_allocator&
 			, blockchain::block blk)
@@ -1616,23 +1633,6 @@ namespace {
 		char buffer[256];
 		std::snprintf(buffer, sizeof(buffer), "new tx hash: %s"
 				, aux::toHex(tx.sha256().to_string()).c_str());
-		return buffer;
-#endif
-	}
-
-	blockchain_new_consensus_point_block_alert::blockchain_new_consensus_point_block_alert(aux::stack_allocator&
-			, blockchain::block blk)
-			: blk(std::move(blk))
-	{}
-
-	std::string blockchain_new_consensus_point_block_alert::message() const
-	{
-#ifdef TORRENT_DISABLE_ALERT_MSG
-		return {};
-#else
-		char buffer[256];
-		std::snprintf(buffer, sizeof(buffer), "new consensus point block hash: %s"
-				, aux::toHex(blk.sha256().to_string()).c_str());
 		return buffer;
 #endif
 	}

@@ -63,13 +63,13 @@ struct communication_friend_info_alert;
 struct communication_log_alert;
 struct communication_last_seen_alert;
 struct blockchain_log_alert;
-struct blockchain_new_tip_block_alert;
+struct blockchain_new_head_block_alert;
 struct blockchain_new_tail_block_alert;
+struct blockchain_new_consensus_point_block_alert;
 struct blockchain_rollback_block_alert;
 struct blockchain_fork_point_block_alert;
 struct blockchain_top_three_votes_alert;
 struct blockchain_new_transaction_alert;
-struct blockchain_new_consensus_point_block_alert;
 
 // include/libTAU/announce_entry.hpp
 TORRENT_VERSION_NAMESPACE_2

@@ -1328,13 +1328,13 @@ namespace libTAU {
         aux::allocation_slot m_str_idx;
     };
 
-    // this alert is posted when new tip block is found from other peers.
-    struct TORRENT_EXPORT blockchain_new_tip_block_alert final : alert
+    // this alert is posted when new head block is found from other peers.
+    struct TORRENT_EXPORT blockchain_new_head_block_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_new_tip_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
+        TORRENT_UNEXPORT blockchain_new_head_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
 
-        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_tip_block_alert, 39, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_head_block_alert, 39, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::blockchain;
 
@@ -1360,13 +1360,29 @@ namespace libTAU {
         libTAU::blockchain::block blk;
     };
 
+    // this alert is posted when new consensus point block is found from other peers.
+    struct TORRENT_EXPORT blockchain_new_consensus_point_block_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_new_consensus_point_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_consensus_point_block_alert, 41, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // message found from peers.
+        libTAU::blockchain::block blk;
+    };
+
     // this alert is posted when rollback block.
     struct TORRENT_EXPORT blockchain_rollback_block_alert final : alert
     {
         // internal
         TORRENT_UNEXPORT blockchain_rollback_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
 
-        TORRENT_DEFINE_ALERT_PRIO(blockchain_rollback_block_alert, 41, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_rollback_block_alert, 42, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::blockchain;
 
@@ -1382,7 +1398,7 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT blockchain_fork_point_block_alert(aux::stack_allocator& alloc, blockchain::block blk);
 
-        TORRENT_DEFINE_ALERT_PRIO(blockchain_fork_point_block_alert, 42, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_fork_point_block_alert, 43, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::blockchain;
 
@@ -1398,7 +1414,7 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT blockchain_top_three_votes_alert(aux::stack_allocator& alloc, aux::bytes id, std::vector<libTAU::blockchain::vote> vs);
 
-        TORRENT_DEFINE_ALERT_PRIO(blockchain_top_three_votes_alert, 43, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_top_three_votes_alert, 44, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::blockchain;
 
@@ -1416,7 +1432,7 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT blockchain_new_transaction_alert(aux::stack_allocator& alloc, libTAU::blockchain::transaction t);
 
-        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_transaction_alert, 44, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_transaction_alert, 45, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::blockchain;
 
@@ -1424,22 +1440,6 @@ namespace libTAU {
 
         // message found from peers.
         libTAU::blockchain::transaction tx;
-    };
-
-    // this alert is posted when new consensus point block is found from other peers.
-    struct TORRENT_EXPORT blockchain_new_consensus_point_block_alert final : alert
-    {
-        // internal
-        TORRENT_UNEXPORT blockchain_new_consensus_point_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
-
-        TORRENT_DEFINE_ALERT_PRIO(blockchain_new_consensus_point_block_alert, 45, alert_priority::critical)
-
-        static constexpr alert_category_t static_category = alert_category::blockchain;
-
-        std::string message() const override;
-
-        // message found from peers.
-        libTAU::blockchain::block blk;
     };
 
 
