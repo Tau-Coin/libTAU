@@ -10,12 +10,16 @@ see LICENSE file.
 
 namespace libTAU { namespace communication {
 
+        std::int64_t online_signal::protocol_id = 0;
+
         online_signal::online_signal(const entry &e) {
             populate(e);
         }
 
         entry online_signal::get_entry() const {
             entry e(entry::dictionary_t);
+            // protocol id
+            e["pid"] = entry(protocol_id);
             // timestamp
             e["t"] = entry(m_timestamp);
             // device id

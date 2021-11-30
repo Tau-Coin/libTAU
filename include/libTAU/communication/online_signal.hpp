@@ -24,6 +24,9 @@ namespace libTAU {
         // is used to publish online info in XX channel
         struct TORRENT_EXPORT online_signal {
 
+            // protocol id
+            static std::int64_t protocol_id;
+
             // @param Construct with entry
             explicit online_signal(const entry& e);
 

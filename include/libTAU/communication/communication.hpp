@@ -127,6 +127,9 @@ namespace libTAU {
             // get current time
             std::int64_t get_current_time();
 
+            // mutable data is pushed here
+            void on_dht_item(dht::item const& i);
+
         private:
             // initialize member variables
             bool init();
@@ -162,6 +165,9 @@ namespace libTAU {
             // make online signal
             online_signal make_signal(const dht::public_key &peer);
 
+            // process signal from dht
+            void process_signal(const online_signal & signal, const dht::public_key &peer);
+
             // validate message, check if message is oversize( >1000 bytes)
             bool validate_message(const message& msg);
 
@@ -177,7 +183,7 @@ namespace libTAU {
 
             // get mutable item from dht
             void dht_get_mutable_item(std::array<char, 32> key
-                    , std::string salt = std::string());
+                    , std::string salt, dht::timestamp t);
 
             // put immutable item to dht
             void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
@@ -186,7 +192,7 @@ namespace libTAU {
             void dht_put_mutable_item(std::array<char, 32> key
                     , std::function<void(entry&, std::array<char,64>&
                     , std::int64_t&, std::string const&)> cb
-                    , std::string salt = std::string());
+                    , std::string salt, const dht::public_key &peer);
 
             std::shared_ptr<communication> self()
             { return shared_from_this(); }

@@ -120,6 +120,29 @@ namespace libTAU {
             return total_milliseconds(system_clock::now().time_since_epoch());
         }
 
+        void communication::on_dht_item(const dht::item &i) {
+            // construct mutable data wrapper from entry
+            if (!i.empty()) {
+                dht::public_key peer = i.pk();
+
+                // update latest item timestamp
+                if (i.ts() > m_latest_item_timestamp[peer]) {
+                    m_latest_item_timestamp[peer] = i.ts();
+                }
+
+                // check protocol id
+                if (auto* p = const_cast<entry *>(i.value().find_key("pid")))
+                {
+                    auto protocol_id = p->integer();
+                    if (online_signal::protocol_id == protocol_id) {
+                        online_signal onlineSignal(i.value());
+
+                        process_signal(onlineSignal, peer);
+                    }
+                }
+            }
+        }
+
         void communication::set_loop_time_interval(int milliseconds) {
             log("INFO: Set loop time:%d(ms)", milliseconds);
             m_refresh_time = milliseconds;
@@ -247,6 +270,93 @@ namespace libTAU {
             }
 
             return true;
+        }
+
+        void communication::process_signal(const online_signal &signal, const dht::public_key &peer) {
+            log("INFO: Got online signal:[%s] from peer[%s]", signal.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+
+            dht::public_key pubkey = *m_ses.pubkey();
+
+            auto now_time = total_milliseconds(system_clock::now().time_since_epoch());
+            // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
+            if ((signal.timestamp() + communication_data_accepted_time < now_time) ||
+                (signal.timestamp() - communication_data_accepted_time > now_time)) {
+                log("WARNING: Online signal timestamp from peer[%s] is out of range!", aux::toHex(peer.bytes).c_str());
+                return;
+            }
+
+            // record latest timestamp(update once per second)
+            if (signal.timestamp() / 10000 > m_last_seen[peer] / 10000) {
+                m_last_seen[peer] = signal.timestamp();
+                // 通知用户新的last seen time
+                m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signal.timestamp());
+                log("INFO: Last seen peer[%s], time[%ld]", aux::toHex(peer.bytes).c_str(), signal.timestamp());
+            }
+
+            auto &device_id = signal.device_id();
+            auto &device_time_map = m_latest_signal_time[peer];
+
+            // 检查相应设备信号的时间戳，只处理最新的数据
+            if (!device_id.empty() && signal.timestamp() > device_time_map[device_id]) {
+                // update the latest signal time
+                device_time_map[device_id] = signal.timestamp();
+//                    m_latest_signal_time[peer] = device_time_map;
+
+                // if signal is from multi-device, post new device id alert and friend info alert
+                if (peer == pubkey && device_id != m_device_id) {
+                    // 通知用户新的device id
+                    m_ses.alerts().emplace_alert<communication_new_device_id_alert>(device_id);
+                    log("INFO: Found new device id: %s", aux::toHex(device_id).c_str());
+
+                    // if data is from multi-device
+                    if (!signal.friend_info().empty()) {
+                        // 通知用户新的friend info
+                        m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer, signal.friend_info());
+                        log("INFO: Got friend info:%s", aux::toHex(signal.friend_info()).c_str());
+                    }
+                }
+
+                // if signal is from multi-device or peer Y, sync immutable data and calc LevenshteinDistance
+                if (device_id != m_device_id || peer != pubkey) {
+                    // get immutable message
+                    const immutable_data_info& payload = signal.payload();
+                    log("INFO: Payload:%s", payload.to_string().c_str());
+                    if (!payload.target().is_all_zeros()) {
+                        dht_get_immutable_item(peer, payload.target(), payload.entries());
+                    }
+
+                    // find out missing messages and confirmation root
+                    std::vector<message> missing_messages;
+                    std::vector<sha256_hash> confirmation_roots;
+                    auto message_list = m_message_list_map[peer];
+                    std::vector<message> messages(message_list.begin(), message_list.end());
+                    log("INFO: Messages size:%zu", messages.size());
+                    find_best_solution(messages, signal.hash_prefix_bytes(),
+                                       missing_messages, confirmation_roots);
+
+                    auto &device_array_map = m_latest_hash_prefix_array[peer];
+                    if (signal.hash_prefix_bytes() != device_array_map[device_id]) {
+                        // update the latest hash prefix array
+                        device_array_map[device_id] = signal.hash_prefix_bytes();
+//                            m_latest_hash_prefix_array[peer] = device_array_map;
+
+                        if (!confirmation_roots.empty()) {
+                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+                                                                                                confirmation_roots,
+                                                                                                signal.timestamp());
+                            log("INFO: Confirmation roots:%zu", confirmation_roots.size());
+                        }
+                    }
+
+                    log("INFO: Found missing message size %zu", missing_messages.size());
+
+//                        if (m_missing_messages[peer].size() < communication_max_message_list_size) {
+                    // Only the data of the latest window is processed
+                    m_missing_messages[peer].clear();
+                    m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
+//                        }
+                }
+            }
         }
 
         dht::public_key communication::select_friend_randomly() {
@@ -703,8 +813,6 @@ namespace libTAU {
 
             // construct mutable data wrapper from entry
             if (!i.empty()) {
-                dht::public_key pubkey = *m_ses.pubkey();
-
                 dht::public_key peer = i.pk();
 
                 // update latest item timestamp
@@ -713,100 +821,19 @@ namespace libTAU {
                 }
 
                 online_signal onlineSignal(i.value());
-                log("INFO: Got online signal:[%s] from peer[%s]", onlineSignal.to_string().c_str(), aux::toHex(peer.bytes).c_str());
 
-                auto now_time = total_milliseconds(system_clock::now().time_since_epoch());
-                // 验证mutable数据的时间戳，只接受当前时间前后6小时以内的数据
-                if ((onlineSignal.timestamp() + communication_data_accepted_time < now_time) ||
-                    (onlineSignal.timestamp() - communication_data_accepted_time > now_time)) {
-                    log("WARNING: Online signal timestamp from peer[%s] is out of range!", aux::toHex(peer.bytes).c_str());
-                    return;
-                }
-
-                // record latest timestamp(update once per second)
-                if (onlineSignal.timestamp() / 10000 > m_last_seen[peer] / 10000) {
-                    m_last_seen[peer] = onlineSignal.timestamp();
-                    // 通知用户新的last seen time
-                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, onlineSignal.timestamp());
-                    log("INFO: Last seen peer[%s], time[%ld]", aux::toHex(peer.bytes).c_str(), onlineSignal.timestamp());
-                }
-
-                auto &device_id = onlineSignal.device_id();
-                auto &device_time_map = m_latest_signal_time[peer];
-
-                // 检查相应设备信号的时间戳，只处理最新的数据
-                if (!device_id.empty() && onlineSignal.timestamp() > device_time_map[device_id]) {
-                    // update the latest signal time
-                    device_time_map[device_id] = onlineSignal.timestamp();
-//                    m_latest_signal_time[peer] = device_time_map;
-
-                    // if signal is from multi-device, post new device id alert and friend info alert
-                    if (peer == pubkey && device_id != m_device_id) {
-                        // 通知用户新的device id
-                        m_ses.alerts().emplace_alert<communication_new_device_id_alert>(device_id);
-                        log("INFO: Found new device id: %s", aux::toHex(device_id).c_str());
-
-                        // if data is from multi-device
-                        if (!onlineSignal.friend_info().empty()) {
-                            // 通知用户新的friend info
-                            m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer,
-                                                                                          onlineSignal.friend_info());
-                            log("INFO: Got friend info:%s", aux::toHex(onlineSignal.friend_info()).c_str());
-                        }
-                    }
-
-                    // if signal is from multi-device or peer Y, sync immutable data and calc LevenshteinDistance
-                    if (device_id != m_device_id || peer != pubkey) {
-                        // get immutable message
-                        const immutable_data_info& payload = onlineSignal.payload();
-                        log("INFO: Payload:%s", payload.to_string().c_str());
-                        if (!payload.target().is_all_zeros()) {
-                            dht_get_immutable_item(peer, payload.target(), payload.entries());
-                        }
-
-                        // find out missing messages and confirmation root
-                        std::vector<message> missing_messages;
-                        std::vector<sha256_hash> confirmation_roots;
-                        auto message_list = m_message_list_map[peer];
-                        std::vector<message> messages(message_list.begin(), message_list.end());
-                        log("INFO: Messages size:%zu", messages.size());
-                        find_best_solution(messages, onlineSignal.hash_prefix_bytes(),
-                                           missing_messages, confirmation_roots);
-
-                        auto &device_array_map = m_latest_hash_prefix_array[peer];
-                        if (onlineSignal.hash_prefix_bytes() != device_array_map[device_id]) {
-                            // update the latest hash prefix array
-                            device_array_map[device_id] = onlineSignal.hash_prefix_bytes();
-//                            m_latest_hash_prefix_array[peer] = device_array_map;
-
-                            if (!confirmation_roots.empty()) {
-                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
-                                                                                                    confirmation_roots,
-                                                                                                    onlineSignal.timestamp());
-                                log("INFO: Confirmation roots:%zu", confirmation_roots.size());
-                            }
-                        }
-
-                        log("INFO: Found missing message size %zu", missing_messages.size());
-
-//                        if (m_missing_messages[peer].size() < communication_max_message_list_size) {
-                            // Only the data of the latest window is processed
-                            m_missing_messages[peer].clear();
-                            m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
-//                        }
-                    }
-                }
+                process_signal(onlineSignal, peer);
             }
         }
 
         // key is a 32-byte binary string, the public key to look up.
         // the salt is optional
         void communication::dht_get_mutable_item(std::array<char, 32> key
-                , std::string salt)
+                , std::string salt, dht::timestamp t)
         {
             if (!m_ses.dht()) return;
             m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
-                    , this, _1, _2), std::move(salt));
+                    , this, _1, _2), std::move(salt), t.value);
         }
 
         namespace {
@@ -864,11 +891,8 @@ namespace libTAU {
             // salt is x pubkey when request signal
             auto salt = make_salt(pubkey);
 
-            std::array<char, 32> pk{};
-            std::copy(peer.bytes.begin(), peer.bytes.end(), pk.begin());
-
             log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-            dht_get_mutable_item(pk, salt);
+            dht_get_mutable_item(peer.bytes, salt, m_latest_item_timestamp[peer]);
         }
 
         void communication::publish_signal(const dht::public_key &peer) {
@@ -884,7 +908,7 @@ namespace libTAU {
                 aux::toHex(salt).c_str(), onlineSignal.to_string().c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-                    , pk->bytes, sk->bytes, onlineSignal.get_entry()), salt);
+                    , pk->bytes, sk->bytes, onlineSignal.get_entry()), salt, peer);
         }
 
         void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
@@ -900,12 +924,12 @@ namespace libTAU {
         void communication::dht_put_mutable_item(std::array<char, 32> key
                 , std::function<void(entry&, std::array<char,64>&
                 , std::int64_t&, std::string const&)> cb
-                , std::string salt)
+                , std::string salt, const dht::public_key &peer)
         {
             if (!m_ses.dht()) return;
             m_ses.dht()->put_item(dht::public_key(key.data())
                     , std::bind(&on_dht_put_mutable_item, std::ref(m_ses.alerts()), _1, _2)
-                    , std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
+                    , std::bind(&put_mutable_callback, _1, std::move(cb)), salt, peer);
         }
 
 
