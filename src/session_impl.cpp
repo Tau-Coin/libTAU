@@ -2718,6 +2718,18 @@ namespace {
 		return -1; //error
 	}
 
+	blockchain::block session_impl::get_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+		if(m_blockchain) {
+			return m_blockchain->getBlock(chain_id, block_number);
+		}
+	}
+
+	blockchain::block session_impl::get_block_by_hash(const aux::bytes &chain_id, sha256_hash block_hash) {
+		if(m_blockchain) {
+			return m_blockchain->getBlock(chain_id, block_hash);
+		}
+	}
+
 	void session_impl::set_dht_state(dht::dht_state&& state)
 	{
 		m_dht_state = std::move(state);

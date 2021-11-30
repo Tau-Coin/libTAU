@@ -330,6 +330,18 @@ namespace libTAU {
 		return sync_call_ret<std::int64_t>(&session_impl::get_median_tx_free, chain_id);
 	}
 
+	// get block by number
+    blockchain::block session_handle::get_block_by_number(std::vector<char> chain_id, std::int64_t block_number)
+	{
+		return sync_call_ret<blockchain::block>(&session_impl::get_block_by_number, chain_id, block_number);
+	}
+
+	// get block by hash
+    blockchain::block session_handle::get_block_by_hash(std::vector<char> chain_id, sha256_hash block_hash)
+	{
+		return sync_call_ret<blockchain::block>(&session_impl::get_block_by_hash, chain_id, block_hash);
+	}
+
 	// get current time
 	std::int64_t session_handle::get_session_time()
 	{

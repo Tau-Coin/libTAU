@@ -345,6 +345,12 @@ namespace libTAU {
 		// get median tx fee
         std::int64_t get_median_tx_free(std::vector<char> chain_id);
 
+		// get block by number
+        blockchain::block get_block_by_number(std::vector<char> chain_id, std::int64_t block_number);
+
+		// get median tx fee
+        blockchain::block get_block_by_hash(std::vector<char> chain_id, sha256_hash block_hash);
+
 		// get current session system time
         std::int64_t get_session_time();
 
