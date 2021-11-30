@@ -2343,7 +2343,8 @@ namespace {
 		m_dht->update_node_id();
 
 		//3. communication update node id
-		m_communication->account_changed();
+		if(m_communication)
+			m_communication->account_changed();
 	}
 
 	int session_impl::get_listen_port(transport const ssl, aux::listen_socket_handle const& s)
@@ -2594,94 +2595,127 @@ namespace {
 		session_log("Set Loop Time: %d", milliseconds);
 
 		//m_communication
-		m_communication->set_loop_time_interval(milliseconds);
+		if(m_communication)
+			m_communication->set_loop_time_interval(milliseconds);
 
 		//blockchain
-		m_blockchain->set_blockchain_loop_interval(milliseconds);
+		if(m_blockchain)
+			m_blockchain->set_blockchain_loop_interval(milliseconds);
 	}
 
 	bool session_impl::add_new_friend(const dht::public_key& pubkey)
 	{
-		return m_communication->add_new_friend(pubkey);
+		if(m_communication)
+			return m_communication->add_new_friend(pubkey);
+		else
+			return false;
 	}
 
 	bool session_impl::delete_friend(const dht::public_key& pubkey)
 	{
-		return m_communication->delete_friend(pubkey);
-
+		if(m_communication)
+			return m_communication->delete_friend(pubkey);
+		else
+			return false;
 	}
 
 	void session_impl::get_friend_info(const dht::public_key& pubkey, std::vector<char>* info)
 	{
-		*info = m_communication->get_friend_info(pubkey);
+		if(m_communication)
+			*info = m_communication->get_friend_info(pubkey);
 	}
 
 	bool session_impl::update_friend_info(const dht::public_key& pubkey, aux::bytes friend_info)
 	{
-		return m_communication->update_friend_info(pubkey, friend_info);
+		if(m_communication)
+			return m_communication->update_friend_info(pubkey, friend_info);
+		else
+			return false;
 	}
 
 	void session_impl::unset_chatting_friend()
 	{
 		session_log("Session Unset Chatting Friend");
-		m_communication->unset_chatting_friend();
+		if(m_communication)
+			m_communication->unset_chatting_friend();
 	}
 	
 	void session_impl::set_chatting_friend(const dht::public_key& chatting_friend)
 	{
-		m_communication->set_chatting_friend(chatting_friend);
+		if(m_communication)
+			m_communication->set_chatting_friend(chatting_friend);
 	}
 
 	void session_impl::set_active_friends(std::vector<dht::public_key> active_friends)
 	{
-		m_communication->set_active_friends(active_friends);
+		if(m_communication)
+			m_communication->set_active_friends(active_friends);
 	}
 
 	bool session_impl::add_new_message(const communication::message& msg)
 	{
-		return m_communication->add_new_message(msg, false);
+		if(m_communication)
+			return m_communication->add_new_message(msg, false);
+		else
+			return false;
 	}	
 
 	void session_impl::create_chain_id(std::string community_name, std::vector<char>* id)
 	{
-		*id = m_blockchain->create_chain_id(community_name);
+		if(m_blockchain)
+			*id = m_blockchain->create_chain_id(community_name);
 	}
 
 	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts) {
-		std::string id(chain_id.begin(), chain_id.end());
-		for(auto iter = accounts.begin(); iter != accounts.end(); iter++) {
-
-			std::string pubkey(iter->first.bytes.begin(), iter->first.bytes.end());
+		if(m_blockchain) {
+			std::string id(chain_id.begin(), chain_id.end());
+			for(auto iter = accounts.begin(); iter != accounts.end(); iter++) {
+				std::string pubkey(iter->first.bytes.begin(), iter->first.bytes.end());
+			}
+			return m_blockchain->createNewCommunity(chain_id, accounts);
 		}
-
-		return m_blockchain->createNewCommunity(chain_id, accounts);
+		return false; 
 	}
 
 	bool session_impl::follow_chain(const blockchain::chain_url &cul) {
-		return m_blockchain->followChain(cul);
+		if(m_blockchain)
+			return m_blockchain->followChain(cul);
+		return false;
 	}
 
 	bool session_impl::unfollow_chain(const aux::bytes &chain_id) {
-		return m_blockchain->unfollowChain(chain_id);
+		if(m_blockchain)
+			return m_blockchain->unfollowChain(chain_id);
+		return false;
 	}
 
 	bool session_impl::submit_transaction(const blockchain::transaction & tx) {
-		return m_blockchain->submitTransaction(tx);
+		if(m_blockchain)
+			return m_blockchain->submitTransaction(tx);
+		return false;
 	}
 
 	bool session_impl::get_account_info(const aux::bytes &chain_id, dht::public_key pub_key, blockchain::account * act) {
-		*act =  m_blockchain->getAccountInfo(chain_id, pub_key);
-		return true;
+		if(m_blockchain) {
+			*act =  m_blockchain->getAccountInfo(chain_id, pub_key);
+			return true;
+		}
+		return false;
 	}
 
 	bool session_impl::get_top_tip_block(const aux::bytes &chain_id, int num, std::vector<blockchain::block> * blks) {
-		
-		*blks = m_blockchain->getTopTipBlocks(chain_id, num);
-		return true;
+		if(m_blockchain) {
+			*blks = m_blockchain->getTopTipBlocks(chain_id, num);
+			return true;
+		}
+		return false;
 	}
 
 	std::int64_t session_impl::get_median_tx_free(const aux::bytes &chain_id) {
-		return m_blockchain->getMedianTxFee(chain_id);
+		if(m_blockchain) {
+			return m_blockchain->getMedianTxFee(chain_id);
+		}
+		return -1; //error
 	}
 
 	void session_impl::set_dht_state(dht::dht_state&& state)
