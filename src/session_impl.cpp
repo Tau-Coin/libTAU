@@ -3249,7 +3249,11 @@ namespace {
 
 	void session_impl::on_dht_item(dht::item& i)
 	{
-		// TODO: dispatch this item to communication and blockchain components.
+		// dispatch this item to communication and blockchain components.
+		if (m_communication)
+		{
+			m_communication->on_dht_item(i);
+		}
 	}
 
 	void session_impl::set_external_address(
