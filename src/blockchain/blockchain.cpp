@@ -899,18 +899,10 @@ namespace libTAU::blockchain {
         if (blk.block_number() <= 0) {
             return true;
         }
-        // block is certainly irreversible if it mis-match with best voting block
-        auto &best_vote = m_best_votes[chain_id];
-        if (!best_vote.empty()) {
-            if (best_vote.block_hash() == blk.sha256())
-                return true;
-        } else {
-            // if no voting block, use voting point block instead
-            // voting point block must be matched with historical voting results
-            auto &voting_point_block = m_voting_point_blocks[chain_id];
-            if (voting_point_block.sha256() == blk.sha256())
-                return true;
-        }
+
+        auto &consensus_point_block = m_consensus_point_blocks[chain_id];
+        if (consensus_point_block.sha256() == blk.sha256())
+            return true;
 
         return false;
     }
@@ -991,9 +983,6 @@ namespace libTAU::blockchain {
         // re-branch, try to find out fork point block
         std::vector<block> rollback_blocks;
         std::vector<block> connect_blocks;
-
-//        bool isVotingPointImmutable = is_voting_point_immutable(chain_id);
-        auto voting_point_block = m_voting_point_blocks[chain_id];
 
         // todo:: rollback until to tail?
         // align main chain and branch block number
