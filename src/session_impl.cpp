@@ -2599,8 +2599,8 @@ namespace {
 			m_communication->set_loop_time_interval(milliseconds);
 
 		//blockchain
-		if(m_blockchain)
-			m_blockchain->set_blockchain_loop_interval(milliseconds);
+		//if(m_blockchain)
+		//		m_blockchain->set_blockchain_loop_interval(milliseconds);
 	}
 
 	bool session_impl::add_new_friend(const dht::public_key& pubkey)
@@ -2772,7 +2772,7 @@ namespace {
 			if (m_outstanding_router_lookups == 0) 
 			{
 				start_dht();
-				start_communication();
+				//start_communication();
 				start_blockchain();
 			}
 			return;
@@ -2813,7 +2813,7 @@ namespace {
 		if (m_outstanding_router_lookups == 0)
 		{
 			start_dht();
-			start_communication();
+			//start_communication();
 			start_blockchain();
 		}
 
