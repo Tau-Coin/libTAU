@@ -437,7 +437,8 @@ namespace libTAU::dht {
 	// the salt is optional
 	void dht_tracker::get_item(public_key const& key
 		, std::function<void(item const&, bool)> cb
-		, std::string salt)
+		, std::string salt
+		, std::int64_t timestamp)
 	{
 		// firstly get mutable item from local dht storage.
 		bool const found = get_local_mutable_item(key, cb, salt);
@@ -448,11 +449,13 @@ namespace libTAU::dht {
 
 		auto ctx = std::make_shared<get_mutable_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
-			n.second.dht.get_item(key, salt, std::bind(&get_mutable_item_callback, _1, _2, ctx, cb));
+			n.second.dht.get_item(key, salt
+				, timestamp, std::bind(&get_mutable_item_callback, _1, _2, ctx, cb));
 	}
 
 	void dht_tracker::put_item(entry const& data
-		, std::function<void(int)> cb)
+		, std::function<void(int)> cb
+		, public_key const& to)
 	{
 		std::string flat_data;
 		bencode(std::back_inserter(flat_data), data);
@@ -460,13 +463,14 @@ namespace libTAU::dht {
 
 		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
-			n.second.dht.put_item(target, data, std::bind(&put_immutable_item_callback
+			n.second.dht.put_item(target, data, to, std::bind(&put_immutable_item_callback
 			, _1, ctx, cb));
 	}
 
 	void dht_tracker::put_item(entry const& data
 		, std::vector<node_entry> const& eps
-		, std::function<void(int)> cb)
+		, std::function<void(int)> cb
+		, public_key const& to)
 	{
 		std::string flat_data;
 		bencode(std::back_inserter(flat_data), data);
@@ -476,18 +480,20 @@ namespace libTAU::dht {
 		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
 		{
-			n.second.dht.put_item(target, data, eps
+			n.second.dht.put_item(target, data, eps, to
 				, std::bind(&put_immutable_item_callback, _1, ctx, cb));
 		}
 	}
 
 	void dht_tracker::put_item(public_key const& key
 		, std::function<void(item const&, int)> cb
-		, std::function<void(item&)> data_cb, std::string salt)
+		, std::function<void(item&)> data_cb
+		, std::string salt
+		, public_key const& to)
 	{
 		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
-			n.second.dht.put_item(key, salt, std::bind(&put_mutable_item_callback
+			n.second.dht.put_item(key, salt, to, std::bind(&put_mutable_item_callback
 				, _1, _2, ctx, cb), data_cb);
 	}
 

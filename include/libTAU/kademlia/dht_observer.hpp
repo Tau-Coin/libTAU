@@ -16,6 +16,7 @@ see LICENSE file.
 #include "libTAU/address.hpp"
 #include "libTAU/string_view.hpp"
 #include "libTAU/kademlia/msg.hpp"
+#include "libTAU/kademlia/item.hpp"
 #include "libTAU/aux_/session_udp_sockets.hpp" // for transport
 
 namespace libTAU {
@@ -67,6 +68,7 @@ namespace dht {
 		virtual void announce(sha256_hash const& ih, address const& addr, int port) = 0;
 		virtual bool on_dht_request(string_view query
 			, dht::msg const& request, entry& response) = 0;
+		virtual void on_dht_item(dht::item& i) = 0;
 
 	protected:
 		~dht_observer() = default;

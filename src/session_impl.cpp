@@ -3247,6 +3247,11 @@ namespace {
 		return false;
 	}
 
+	void session_impl::on_dht_item(dht::item& i)
+	{
+		// TODO: dispatch this item to communication and blockchain components.
+	}
+
 	void session_impl::set_external_address(
 		tcp::endpoint const& local_endpoint, address const& ip
 		, ip_source_t const source_type, address const& source)

@@ -18,6 +18,7 @@ see LICENSE file.
 #include <set>
 #include <mutex>
 #include <cstdint>
+#include <tuple>
 
 #include <libTAU/config.hpp>
 #include <libTAU/kademlia/dht_storage.hpp>
@@ -136,14 +137,23 @@ public:
 	void get_item(sha256_hash const& target
 		, std::vector<node_entry> const& eps
 		, std::function<void(item const&)> f);
-	void get_item(public_key const& pk, std::string const& salt, std::function<void(item const&, bool)> f);
+	void get_item(public_key const& pk
+		, std::string const& salt
+		, std::int64_t timestamp
+		, std::function<void(item const&, bool)> f);
 
-	void put_item(sha256_hash const& target, entry const& data, std::function<void(int)> f);
+	void put_item(sha256_hash const& target
+		, entry const& data
+		, public_key const& to
+		, std::function<void(int)> f);
 	void put_item(sha256_hash const& target
 		, entry const& data
 		, std::vector<node_entry> const& eps
+		, public_key const& to
 		, std::function<void(int)> f);
-	void put_item(public_key const& pk, std::string const& salt
+	void put_item(public_key const& pk
+		, std::string const& salt
+		, public_key const& to
 		, std::function<void(item const&, int)> f
 		, std::function<void(item&)> data_cb);
 
@@ -232,7 +242,13 @@ private:
 	// since it might have references to it
 	std::set<traversal_algorithm*> m_running_requests;
 
-	bool incoming_request(msg const&, entry&, node_id *peer);
+	std::tuple<bool, bool> incoming_request(msg const&, entry&, node_id *peer, node_id *to);
+
+	void push(node_id const& to, msg const& m);
+
+	void incoming_push(msg const& m);
+
+	void incoming_push_error(const char* err_str);
 
 	void write_nodes_entries(sha256_hash const& info_hash
 		, bdecode_node const& want, entry& r, int min_distance_exp = -1);

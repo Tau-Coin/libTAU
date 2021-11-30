@@ -341,9 +341,12 @@ bool rpc_manager::incoming(msg const& m, node_id* id)
 
 	int rtt = int(total_milliseconds(now - o->sent()));
 
+	bdecode_node const read_only_ent = m.message.dict_find_dict("ro");
+	bool const read_only = read_only_ent && read_only_ent.int_value() != 0;
+
 	// we found an observer for this reply, hence the node is not spoofing
 	// add it to the routing table
-	return m_table.node_seen(*id, m.addr, rtt);
+	return m_table.node_seen(*id, m.addr, rtt, read_only);
 }
 
 time_duration rpc_manager::tick()

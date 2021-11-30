@@ -29,7 +29,8 @@ struct put_data: traversal_algorithm
 {
 	using put_callback = std::function<void(item const&, int)>;
 
-	put_data(node& node, node_id const& target, put_callback callback);
+	put_data(node& node, node_id const& target
+		, public_key const& to, put_callback callback);
 
 	char const* name() const override;
 	void start() override;
@@ -47,6 +48,7 @@ protected:
 
 	put_callback m_put_callback;
 	item m_data;
+	public_key m_to;
 	bool m_done = false;
 };
 

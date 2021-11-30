@@ -46,8 +46,13 @@ namespace dht {
             return !(*this < rhs);
         }
 
+		bool is_all_zeros() const {
+			return std::all_of(bytes.begin(), bytes.end()
+				, [](char v) { return v == 0; });
+		}
+
         static constexpr int len = 32;
-		std::array<char, len> bytes;
+		std::array<char, len> bytes{};
 	};
 
 	struct secret_key

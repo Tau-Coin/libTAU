@@ -162,6 +162,10 @@ bool get_item::invoke(observer_ptr o)
 	if (!m_immutable)
 	{
 		a["distance"] = traversal_algorithm::allow_distance();
+		if (m_timestamp > 0)
+		{
+			a["ts"] = m_timestamp;
+		}
 	}
 
 	m_node.stats_counters().inc_stats_counter(counters::dht_get_out);

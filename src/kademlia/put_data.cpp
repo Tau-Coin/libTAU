@@ -49,8 +49,10 @@ void put_data_observer::reply(msg const& m)
     done();
 }
 
-put_data::put_data(node& dht_node, node_id const& target, put_callback callback)
+put_data::put_data(node& dht_node, node_id const& target
+	, public_key const& to, put_callback callback)
 	: traversal_algorithm(dht_node, target)
+	, m_to(to)
 	, m_put_callback(std::move(callback))
 {}
 
@@ -103,6 +105,10 @@ bool put_data::invoke(observer_ptr o)
 	entry& a = e["a"];
 	a["v"] = m_data.value();
 	a["token"] = libtau_token;
+	if (!m_to.is_all_zeros())
+	{
+		a["to"] = m_to.bytes;
+	}
 	if (m_data.is_mutable())
 	{
 		a["k"] = m_data.pk().bytes;

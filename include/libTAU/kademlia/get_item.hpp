@@ -48,6 +48,8 @@ public:
 
 	virtual void start();
 
+	void set_timestamp(std::int64_t timestamp) { m_timestamp = timestamp; }
+
 protected:
 	observer_ptr new_observer(udp::endpoint const& ep
 		, node_id const& id) override;
@@ -57,6 +59,8 @@ protected:
 	data_callback m_data_callback;
 	item m_data;
 	bool m_immutable;
+
+	std::int64_t m_timestamp = -1;
 };
 
 class get_item_observer : public find_data_observer

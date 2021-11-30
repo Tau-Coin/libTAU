@@ -101,28 +101,33 @@ namespace libTAU::dht {
 		// the salt is optional
 		void get_item(public_key const& key
 			, std::function<void(item const&, bool)> cb
-			, std::string salt = std::string());
+			, std::string salt = std::string()
+			, std::int64_t timestamp = -1);
 
 		// for immutable_item.
 		// the callback function will be called when put operation is done.
 		// the int parameter indicates the success numbers of put operation.
 		// TODO: removed.
 		void put_item(entry const& data
-			, std::function<void(int)> cb);
+			, std::function<void(int)> cb
+			, public_key const& to = public_key());
 
 		// put immutable_item into specified endpoints.
 		// the callback function will be called when put operation is done.
 		// the int parameter indicates the success numbers of put operation.
 		void put_item(entry const& data
 			, std::vector<node_entry> const& eps
-			, std::function<void(int)> cb);
+			, std::function<void(int)> cb
+			, public_key const& to = public_key());
 
 		// for mutable_item.
 		// the data_cb will be called when we get authoritative mutable_item,
 		// the cb is same as put immutable_item.
 		void put_item(public_key const& key
 			, std::function<void(item const&, int)> cb
-			, std::function<void(item&)> data_cb, std::string salt = std::string());
+			, std::function<void(item&)> data_cb
+			, std::string salt = std::string()
+			, public_key const& to = public_key());
 
 		// fills the vector with the count nodes from routing table buckets that
 		// are nearest to the given id.

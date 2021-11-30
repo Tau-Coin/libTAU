@@ -24,7 +24,7 @@ namespace libTAU::dht {
 struct TORRENT_EXPORT node_entry
 {
 	node_entry(node_id const& id_, udp::endpoint const& ep, int roundtriptime = 0xffff
-		, bool pinged = false);
+		, bool pinged = false, bool read_only_ = false);
 	explicit node_entry(udp::endpoint const& ep);
 	node_entry() = default;
 	void update_rtt(int new_rtt);
@@ -87,6 +87,8 @@ struct TORRENT_EXPORT node_entry
 	time_point last_invoke_failed = min_time();
 
 	int invoke_fail_count = 0;
+
+	bool read_only = false;
 };
 
 } // namespace libTAU::dht

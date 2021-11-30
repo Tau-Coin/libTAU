@@ -172,7 +172,7 @@ public:
 	// a sign of a node being alive. This node will either
 	// be inserted in the k-buckets or be moved to the top
 	// of its bucket.
-	bool node_seen(node_id const& id, udp::endpoint const& ep, int rtt);
+	bool node_seen(node_id const& id, udp::endpoint const& ep, int rtt, bool read_only);
 
 	// this may add a node to the routing table and mark it as
 	// not pinged. If the bucket the node falls into is full,
@@ -195,6 +195,9 @@ public:
 	std::vector<node_entry> find_node(node_id const& target
 		, find_nodes_flags_t options, int count = 0);
 	void remove_node(node_entry* n, bucket_t* b);
+
+	// return a pointer the node_entry with the given node id.
+	node_entry* find_node(node_id const& nid);
 
 	// return a pointer the node_entry with the given endpoint
 	// or 0 if we don't have such a node. Both the address and the

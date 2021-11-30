@@ -487,6 +487,32 @@ routing_table::find_node(udp::endpoint const& ep)
 	{nullptr, m_buckets.end(), nullptr};
 }
 
+node_entry* routing_table::find_node(node_id const& nid)
+{
+	if (nid == m_id) return nullptr;
+
+	auto const i = find_bucket(nid);
+	bucket_t& b = i->live_nodes;
+	bucket_t& rb = i->replacements;
+	bucket_t::iterator j;
+
+	j = std::find_if(b.begin(), b.end()
+		, [&nid](node_entry const& ne) { return ne.id == nid; });
+	if (j != b.end())
+	{
+		return &*j;
+	}
+
+	j = std::find_if(rb.begin(), rb.end()
+		, [&nid](node_entry const& ne) { return ne.id == nid; });
+	if (j != b.end())
+	{
+		return &*j;
+	}
+
+	return nullptr;
+}
+
 // TODO: this need to take bucket "prefix" into account. It should be unified
 // with add_node_impl()
 void routing_table::fill_from_replacements(table_t::iterator bucket)
@@ -651,6 +677,7 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 			// if the node ID is the same, just update the failcount
 			// and be done with it.
 			existing->timeout_count = 0;
+			existing->read_only = e.read_only;
 			if (e.pinged())
 			{
 				existing->update_rtt(e.rtt);
@@ -736,6 +763,7 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 		TORRENT_ASSERT(j->id == e.id && j->ep() == e.ep());
 		j->timeout_count = 0;
 		j->update_rtt(e.rtt);
+		j->read_only = e.read_only;
 		return node_added;
 	}
 
@@ -755,6 +783,7 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 		TORRENT_ASSERT(j->id == e.id && j->ep() == e.ep());
 		j->timeout_count = 0;
 		j->update_rtt(e.rtt);
+		j->read_only = e.read_only;
 		e = *j;
 		m_ips.erase(j->addr());
 		rb.erase(j);
@@ -1074,9 +1103,11 @@ void routing_table::heard_about(node_id const& id, udp::endpoint const& ep)
 // top of its bucket. the return value indicates if the table needs a refresh.
 // if true, the node should refresh the table (i.e. do a find_node on its own
 // id)
-bool routing_table::node_seen(node_id const& id, udp::endpoint const& ep, int const rtt)
+bool routing_table::node_seen(node_id const& id, udp::endpoint const& ep, int const rtt
+	, bool read_only)
 {
-	return verify_node_address(m_settings, id, ep.address()) && add_node(node_entry(id, ep, rtt, true));
+	return verify_node_address(m_settings, id, ep.address())
+		&& add_node(node_entry(id, ep, rtt, true, read_only));
 }
 
 // fills the vector with the k nodes from our buckets that
@@ -1101,12 +1132,15 @@ std::vector<node_entry> routing_table::find_node(node_id const& target
 		bucket_t const& b = j->live_nodes;
 		if (options & include_failed)
 		{
-			std::copy(b.begin(), b.end(), std::back_inserter(l));
+			// std::copy(b.begin(), b.end(), std::back_inserter(l));
+			std::remove_copy_if(b.begin(), b.end(), std::back_inserter(l)
+				, [](node_entry const& ne) { return ne.read_only; });
 		}
 		else
 		{
 			std::remove_copy_if(b.begin(), b.end(), std::back_inserter(l)
-				, [](node_entry const& ne) { return !ne.confirmed() || !ne.allow_invoke(); });
+				, [](node_entry const& ne) { return !ne.confirmed()
+											|| !ne.allow_invoke() || ne.read_only; });
 		}
 
 		if (int(l.size()) == count) return l;
@@ -1140,12 +1174,15 @@ std::vector<node_entry> routing_table::find_node(node_id const& target
 
 		if (options & include_failed)
 		{
-			std::copy(b.begin(), b.end(), std::back_inserter(l));
+			// std::copy(b.begin(), b.end(), std::back_inserter(l));
+			std::remove_copy_if(b.begin(), b.end(), std::back_inserter(l)
+				, [](node_entry const& ne) { return ne.read_only; });
 		}
 		else
 		{
 			std::remove_copy_if(b.begin(), b.end(), std::back_inserter(l)
-				, [](node_entry const& ne) { return !ne.confirmed() || !ne.allow_invoke(); });
+				, [](node_entry const& ne) { return !ne.confirmed()
+											|| !ne.allow_invoke() || ne.read_only; });
 		}
 
 		if (int(l.size()) == count) return l;

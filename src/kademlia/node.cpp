@@ -329,11 +329,31 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 
 			entry e;
 			node_id id;
-			bool need_response = incoming_request(m, e, &id);
+			node_id to;
+			bool need_response;
+			bool need_push;
+
+			std::tie(need_response, need_push) = incoming_request(m, e, &id, &to);
 			if (need_response)
 			{
 				m_sock_man->send_packet(m_sock, e, m.addr, id);
 			}
+			if (need_push)
+			{
+				// push message
+				push(to, m);
+			}
+			break;
+		}
+		case 'p':
+		{
+			TORRENT_ASSERT(m.message.dict_find_string_value("y") == "p");
+
+			// ignore packets arriving on a different interface than the one we're
+			// associated with
+			if (s != m_sock) return;
+
+			incoming_push(m);
 			break;
 		}
 		case 'e':
@@ -427,7 +447,7 @@ void node::get_item(sha256_hash const& target
 }
 
 void node::get_item(public_key const& pk, std::string const& salt
-	, std::function<void(item const&, bool)> f)
+	, std::int64_t timestamp, std::function<void(item const&, bool)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
@@ -443,6 +463,7 @@ void node::get_item(public_key const& pk, std::string const& salt
 
 	auto ta = std::make_shared<dht::get_item>(*this, pk, salt, std::move(f)
 		, find_data::nodes_callback());
+	ta->set_timestamp(timestamp);
 	ta->start();
 }
 
@@ -476,7 +497,10 @@ void put_data_cb(item const& i, bool auth
 
 } // namespace
 
-void node::put_item(sha256_hash const& target, entry const& data, std::function<void(int)> f)
+void node::put_item(sha256_hash const& target
+	, entry const& data
+	, public_key const& to
+	, std::function<void(int)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
@@ -488,7 +512,7 @@ void node::put_item(sha256_hash const& target, entry const& data, std::function<
 
 	item i;
 	i.assign(data);
-	auto put_ta = std::make_shared<dht::put_data>(*this, target, std::bind(f, _2));
+	auto put_ta = std::make_shared<dht::put_data>(*this, target, to, std::bind(f, _2));
 	put_ta->set_data(std::move(i));
 
 	auto ta = std::make_shared<dht::get_item>(*this, target
@@ -499,6 +523,7 @@ void node::put_item(sha256_hash const& target, entry const& data, std::function<
 void node::put_item(sha256_hash const& target
 	, entry const& data
 	, std::vector<node_entry> const& eps
+	, public_key const& to
 	, std::function<void(int)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
@@ -512,14 +537,16 @@ void node::put_item(sha256_hash const& target
 	item i;
 	i.assign(data);
 
-	auto ta = std::make_shared<dht::put_data>(*this, target, std::bind(f, _2));
+	auto ta = std::make_shared<dht::put_data>(*this, target, to, std::bind(f, _2));
 	ta->set_data(std::move(i));
 	ta->set_direct_endpoints(eps);
 	ta->set_discard_response(true);
 	ta->start();
 }
 
-void node::put_item(public_key const& pk, std::string const& salt
+void node::put_item(public_key const& pk
+	, std::string const& salt
+	, public_key const& to
 	, std::function<void(item const&, int)> f
 	, std::function<void(item&)> data_cb)
 {
@@ -538,7 +565,7 @@ void node::put_item(public_key const& pk, std::string const& salt
 	item i(pk, salt);
 	data_cb(i);
 
-	auto put_ta = std::make_shared<dht::put_data>(*this, item_target_id(salt, pk), f);
+	auto put_ta = std::make_shared<dht::put_data>(*this, item_target_id(salt, pk), to, f);
 	put_ta->set_data(std::move(i));
 
 	put_ta->start();
@@ -748,9 +775,10 @@ entry write_nodes_entry(std::vector<node_entry> const& nodes)
 }
 
 // build response
-bool node::incoming_request(msg const& m, entry& e, node_id *peer)
+std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *peer, node_id *to)
 {
 	bool need_response = true;
+	bool need_push = false;
 
 	e = entry(entry::dictionary_t);
 	e["y"] = "r";
@@ -768,7 +796,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 	if (!verify_message(m.message, top_desc, top_level, error_string))
 	{
 		incoming_error(e, error_string);
-		return need_response;
+		return std::make_tuple(need_response, need_push);
 	}
 
 	e["ip"] = aux::endpoint_to_bytes(m.addr);
@@ -778,8 +806,8 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 	node_id const id(top_level[3].string_ptr());
 	*peer = id;
 
-	if (!read_only)
-		m_table.heard_about(id, m.addr);
+	// m_table.heard_about(id, m.addr);
+	m_table.node_seen(id, m.addr, 0xffff, read_only);
 
 	entry& reply = e["r"];
 	m_rpc.add_our_id(reply);
@@ -790,7 +818,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 	string_view const query = top_level[0].string_value();
 
 	if (m_observer && m_observer->on_dht_request(query, m, e))
-		return need_response;
+		return std::make_tuple(need_response, need_push);
 
 	if (query == "ping")
 	{
@@ -812,7 +840,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_get_peers);
 			incoming_error(e, error_string);
-			return need_response;
+			return std::make_tuple(need_response, need_push);
 		}
 
 		sha256_hash const info_hash(msg_keys[0].string_ptr());
@@ -850,7 +878,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_find_node);
 			incoming_error(e, error_string);
-			return need_response;
+			return std::make_tuple(need_response, need_push);
 		}
 
 		m_counters.inc_stats_counter(counters::dht_find_node_in);
@@ -873,19 +901,20 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 			{"salt", bdecode_node::string_t, 0, key_desc_t::optional},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
 			{"distance", bdecode_node::int_t, 0, key_desc_t::optional},
+			{"to", bdecode_node::string_t, public_key::len, key_desc_t::optional},
 		};
 
 		// attempt to parse the message
 		// also reject the message if it has any non-fatal encoding errors
 		// because put messages contain a signed value they must have correct bencoding
 		// otherwise the value will not round-trip without breaking the signature
-		bdecode_node msg_keys[9];
+		bdecode_node msg_keys[10];
 		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string)
 			|| arg_ent.has_soft_error(error_string))
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, error_string);
-			return need_response;
+			return std::make_tuple(need_response, need_push);
 		}
 
 		m_counters.inc_stats_counter(counters::dht_put_in);
@@ -907,7 +936,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "message too big", 205);
-			return need_response;
+			return std::make_tuple(need_response, need_push);
 		}
 
 		span<char const> salt;
@@ -917,7 +946,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "salt too big", 207);
-			return need_response;
+			return std::make_tuple(need_response, need_push);
 		}
 
 		sha256_hash const target = pub_key
@@ -936,7 +965,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "invalid token");
-			return need_response;
+			return std::make_tuple(need_response, need_push);
 		}
 
 		int min_distance_exp = -1;
@@ -957,7 +986,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid (negative) timestamp");
-				return need_response;
+				return std::make_tuple(need_response, need_push);
 			}
 
 			// msg_keys[4] is the signature, msg_keys[3] is the public key
@@ -965,7 +994,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid signature", 206);
-				return need_response;
+				return std::make_tuple(need_response, need_push);
 			}
 
 			TORRENT_ASSERT(signature::len == msg_keys[4].string_length());
@@ -987,14 +1016,14 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "CAS mismatch", 301);
-					return need_response;
+					return std::make_tuple(need_response, need_push);
 				}
 
 				if (item_ts > ts)
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "old timestamp", 302);
-					return need_response;
+					return std::make_tuple(need_response, need_push);
 				}
 
 				m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
@@ -1009,9 +1038,21 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 			write_nodes_entries(target, msg_keys[7], reply, min_distance_exp);
 		}
 
+		/*
 		if (!read_only)
 		{
 			m_table.node_seen(id, m.addr, 0xffff);
+		}
+		 */
+
+		if (msg_keys[9])
+		{
+			node_id const receiver(msg_keys[9].string_ptr());
+			*to = receiver;
+			if (receiver != m_id)
+			{
+				need_push = true;
+			}
 		}
 	}
 	else if (query == "get")
@@ -1032,7 +1073,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_get);
 			incoming_error(e, error_string);
-			return need_response;
+			return std::make_tuple(need_response, need_push);
 		}
 
 		m_counters.inc_stats_counter(counters::dht_get_in);
@@ -1085,7 +1126,7 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 			if (!target_ent || target_ent.string_length() != 32)
 			{
 				incoming_error(e, "unknown message");
-				return need_response;
+				return std::make_tuple(need_response, need_push);
 			}
 		}
 
@@ -1094,7 +1135,166 @@ bool node::incoming_request(msg const& m, entry& e, node_id *peer)
 		write_nodes_entries(target, arg_ent.dict_find_list("want"), reply);
 	}
 
-	return need_response;
+	return std::make_tuple(need_response, need_push);
+}
+
+void node::push(node_id const& to, msg const& m)
+{
+	// don't push to ourself
+	if (to == m_id) return;
+
+	// find node_entry from routing table
+	auto ne = m_table.find_node(to);
+	if (ne == nullptr) return;
+	// don't push this message to sender
+	if (ne->ep() == m.addr) return;
+
+	if (ne->last_queried + seconds(60) < aux::time_now()) return;
+
+	// construct push protocol
+	entry e(m.message);
+	e["y"] = "p";
+	// TODO: remove transaction id
+
+	m_sock_man->send_packet(m_sock, e, ne->ep(), to);
+}
+
+void node::incoming_push(msg const& m)
+{
+	static key_desc_t const top_desc[] = {
+		{"q", bdecode_node::string_t, 0, 0},
+		{"ro", bdecode_node::int_t, 0, key_desc_t::optional},
+		{"a", bdecode_node::dict_t, 0, key_desc_t::parse_children},
+			{"id", bdecode_node::string_t, 32, key_desc_t::last_child},
+	};
+
+	bdecode_node top_level[4];
+	char error_string[200];
+	if (!verify_message(m.message, top_desc, top_level, error_string))
+	{
+		incoming_push_error(error_string);
+		return;
+	}
+
+	node_id const id(top_level[3].string_ptr());
+	bdecode_node const arg_ent = top_level[2];
+	string_view const query = top_level[0].string_value();
+
+	if (query == "put")
+	{
+		// the first 2 entries are for both mutable and
+		// immutable puts
+		static key_desc_t const msg_desc[] = {
+			{"token", bdecode_node::string_t, 0, 0},
+			{"v", bdecode_node::none_t, 0, 0},
+			{"ts", bdecode_node::int_t, 0, key_desc_t::optional},
+			// public key
+			{"k", bdecode_node::string_t, public_key::len, key_desc_t::optional},
+			{"sig", bdecode_node::string_t, signature::len, key_desc_t::optional},
+			{"cas", bdecode_node::int_t, 0, key_desc_t::optional},
+			{"salt", bdecode_node::string_t, 0, key_desc_t::optional},
+			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
+			{"distance", bdecode_node::int_t, 0, key_desc_t::optional},
+			{"to", bdecode_node::string_t, public_key::len, key_desc_t::optional},
+		};
+
+		// attempt to parse the message
+		// also reject the message if it has any non-fatal encoding errors
+		// because put messages contain a signed value they must have correct bencoding
+		// otherwise the value will not round-trip without breaking the signature
+		bdecode_node msg_keys[10];
+		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string)
+			|| arg_ent.has_soft_error(error_string))
+		{
+			incoming_push_error(error_string);
+			return;
+		}
+
+		if (!msg_keys[9]) return;
+
+		node_id const to(msg_keys[9].string_ptr());
+		if (to != m_id) return;
+
+		// is this a mutable put?
+		bool const mutable_put = (msg_keys[2] && msg_keys[3] && msg_keys[4]);
+
+		// public key (only set if it's a mutable put)
+		char const* pub_key = nullptr;
+		if (msg_keys[3]) pub_key = msg_keys[3].string_ptr();
+
+		// signature (only set if it's a mutable put)
+		char const* sign = nullptr;
+		if (msg_keys[4]) sign = msg_keys[4].string_ptr();
+
+		// pointer and length to the whole entry
+		span<char const> buf = msg_keys[1].data_section();
+		if (buf.size() > 1000 || buf.empty())
+		{
+			incoming_push_error("message too big");
+			return;
+		}
+
+		span<char const> salt;
+		if (msg_keys[6])
+			salt = {msg_keys[6].string_ptr(), msg_keys[6].string_length()};
+		if (salt.size() > 64)
+		{
+			incoming_push_error("salt too big");
+			return;
+		}
+
+		sha256_hash const target = pub_key
+			? item_target_id(salt, public_key(pub_key))
+			: item_target_id(buf);
+
+		if (!mutable_put)
+		{
+			error_code errc;
+			auto v = bdecode(buf.first(buf.size()), errc);
+			item i(v);
+			// transfer the item
+			if (m_observer) m_observer->on_dht_item(i);
+		}
+		else
+		{
+			// mutable put, we must verify the signature
+			timestamp const ts(msg_keys[2].int_value());
+			public_key const pk(pub_key);
+			signature const sig(sign);
+
+			if (ts < timestamp(0))
+			{
+				incoming_push_error("invalid (negative) timestamp");
+				return;
+			}
+
+			// msg_keys[4] is the signature, msg_keys[3] is the public key
+			if (!verify_mutable_item(buf, salt, ts, pk, sig))
+			{
+				incoming_push_error("invalid signature");
+				return;
+			}
+
+			TORRENT_ASSERT(signature::len == msg_keys[4].string_length());
+
+			error_code errc;
+			auto v = bdecode(buf.first(buf.size()), errc);
+			item i;
+			i.assign(v, salt, ts, pk, sig);
+			// transfer the item
+			if (m_observer) m_observer->on_dht_item(i);
+        }
+	}
+}
+
+void node::incoming_push_error(const char *err_str)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		m_observer->log(dht_logger::node, "INCOMING PUSH ERROR:%s", err_str);
+	}
+#endif
 }
 
 // TODO: limit number of entries in the result
