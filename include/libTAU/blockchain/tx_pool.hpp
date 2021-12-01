@@ -61,7 +61,11 @@ namespace libTAU::blockchain {
 
         void clear();
 
+        void recheck_account_tx(const dht::public_key& pubKey);
+
         void recheck_all_transactions();
+
+        std::set<transaction> get_all_transactions();
 
     private:
 

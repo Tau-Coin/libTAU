@@ -120,7 +120,7 @@ namespace libTAU::blockchain {
         clear_chain_cache(chain_id);
         // todo: clear data in db?
 
-        return false;
+        return true;
     }
 
     bool blockchain::load_chain(const aux::bytes &chain_id) {
@@ -839,8 +839,17 @@ namespace libTAU::blockchain {
                 }
                 m_repository->flush(chain_id);
 
+                auto txs = m_tx_pools[chain_id].get_all_transactions();
+                for (auto const &tx: txs) {
+                    log("--------before in pool tx:%s", tx.to_string().c_str());
+                }
+                log("--------process block:%s", b.to_string().c_str());
                 // chain changed, re-check tx pool
                 m_tx_pools[chain_id].process_block_peers(b);
+                txs = m_tx_pools[chain_id].get_all_transactions();
+                for (auto const &tx: txs) {
+                    log("--------after in pool tx:%s", tx.to_string().c_str());
+                }
 
                 m_head_blocks[chain_id] = b;
                 if (!tail_block.empty()) {
