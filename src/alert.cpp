@@ -1529,10 +1529,11 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-		char buffer[256];
-		std::snprintf(buffer, sizeof(buffer), "new head block hash: %s"
-				, aux::toHex(blk.sha256().to_string()).c_str());
-		return buffer;
+//		char buffer[256];
+//		std::snprintf(buffer, sizeof(buffer), "new head block hash: %s"
+//				, aux::toHex(blk.sha256().to_string()).c_str());
+//		return buffer;
+		return "++++++++++new head block:" + blk.to_string() + "  tx in block:" + blk.tx().to_string();
 #endif
 	}
 
