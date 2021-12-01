@@ -111,8 +111,8 @@ namespace blockchain {
         // set blockchain main loop time interval (ms)
         void set_blockchain_loop_interval(int milliseconds);
 
-        // push mutable data here
-//        void on_dht_item();
+        // mutable data is pushed here
+        void on_dht_item(dht::item const& i);
 
     private:
         // initialize member variables
@@ -214,6 +214,9 @@ namespace blockchain {
 
         // publish online/new message signal to a given peer
         void publish_signal(const aux::bytes &chain_id);
+
+        // process signal from dht
+        void process_signal(const blockchain_signal & signal, const aux::bytes &chain_id, const dht::public_key &peer);
 
         // immutable data callback
         void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);

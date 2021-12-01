@@ -11,12 +11,20 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
+    const std::int64_t blockchain_signal::protocol_id = 1;
+
     blockchain_signal::blockchain_signal(const entry &e) {
         populate(e);
     }
 
     entry blockchain_signal::get_entry() const {
         entry e(entry::dictionary_t);
+
+        // protocol id
+        e["pid"] = entry(protocol_id);
+
+        // chain id
+        e["cid"] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
 
 //        // consensus point block hash
 //        e["ch"] = entry(m_consensus_point_block_hash.to_string());
@@ -84,6 +92,12 @@ namespace libTAU::blockchain {
     }
 
     void blockchain_signal::populate(const entry &e) {
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key("cid")))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
 //        // consensus point block hash
 //        if (auto* i = const_cast<entry *>(e.find_key("ch")))
 //        {
@@ -173,19 +187,23 @@ namespace libTAU::blockchain {
     }
 
     std::ostream &operator<<(std::ostream &os, const blockchain_signal &signal) {
-        os << "m_timestamp: " << signal.m_timestamp << " m_consensus_point_vote: " << signal.m_consensus_point_vote
-           << " m_best_tip_block_info: " << signal.m_head_block_info << " m_consensus_point_block_info: "
-           << signal.m_voting_point_block_info << " m_tx_hash_prefix_array: " << aux::toHex(signal.m_tx_hash_prefix_array)
+        os << "m_chain_id: " << aux::toHex(signal.m_chain_id) << "m_timestamp: " << signal.m_timestamp
+           << " m_consensus_point_vote: " << signal.m_consensus_point_vote << " m_best_tip_block_info: "
+           << signal.m_head_block_info << " m_consensus_point_block_info: " << signal.m_voting_point_block_info
+           << " m_tx_hash_prefix_array: " << aux::toHex(signal.m_tx_hash_prefix_array)
            << " m_latest_tx_hash_prefix_array: " << aux::toHex(signal.m_latest_tx_hash_prefix_array)
            << " m_gossip_peer: " << aux::toHex(signal.m_gossip_peer.bytes);
+
         os << " m_block_info_set: ";
         for (auto const& block_info: signal.m_block_info_set) {
             os << " block info: " << block_info;
         }
+
         os << " m_tx_info_set: ";
         for (auto const& tx_info: signal.m_tx_info_set) {
             os << " tx info: " << tx_info;
         }
+
         os << " m_demand_block_hash_set: ";
         for (auto const& hash: signal.m_demand_block_hash_set) {
             os << " demand block hash: " << aux::toHex(hash.to_string());

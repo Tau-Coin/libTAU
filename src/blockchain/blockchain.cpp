@@ -1697,7 +1697,7 @@ namespace libTAU::blockchain {
         auto p = select_peer_randomly(chain_id);
 
         // make signal
-        blockchain_signal signal(now, consensus_point_vote,
+        blockchain_signal signal(chain_id, now, consensus_point_vote,
                                  head_block_info, voting_point_block_info,
                                  block_set, tx_set, demand_block_hash_set,
                                  tx_hash_prefix_array, latest_tx_hash_prefix_array, p);
@@ -1712,6 +1712,88 @@ namespace libTAU::blockchain {
 
         dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
                 , pk->bytes, sk->bytes, signal.get_entry()), salt);
+    }
+
+    void blockchain::process_signal(const blockchain_signal &signal, const aux::bytes &chain_id,
+                                    const dht::public_key &peer) {
+        log("INFO chain[%s] Got signal:[%s] from peer[%s]", aux::toHex(chain_id).c_str(),
+            signal.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+
+        // current time
+        auto now = get_total_milliseconds();
+
+        auto last_time = m_latest_signal_time[chain_id][peer];
+        // update latest time
+        if (signal.timestamp() > last_time) {
+            m_latest_signal_time[chain_id][peer] = signal.timestamp();
+        }
+
+        // old data in 60s also is accepted
+        if (signal.timestamp() + 60000 < last_time) {
+            log("INFO chain[%s] Signal time is too old", aux::toHex(chain_id).c_str());
+            return;
+        }
+
+        auto consensus_point_vote = signal.consensus_point_vote();
+        // only vote time in 5 min is accepted
+        if (!consensus_point_vote.empty() && now < signal.timestamp() + DEFAULT_BLOCK_TIME * 1000) {
+            log("INFO chain[%s] valid vote[%s]",
+                aux::toHex(chain_id).c_str(), consensus_point_vote.to_string().c_str());
+            m_votes[chain_id][peer] = consensus_point_vote;
+        }
+
+        // get head block
+        auto &head_block_info = signal.head_block_info();
+        if (!head_block_info.empty()) {
+            // get immutable message
+            if (!m_repository->is_block_exist(head_block_info.target())) {
+                dht_get_immutable_block_item(chain_id, head_block_info.target(), head_block_info.entries());
+            }
+        }
+
+        // get voting point block
+        auto &voting_point_block_info = signal.voting_point_block_info();
+        if (!voting_point_block_info.empty()) {
+            // get immutable message
+            if (!m_repository->is_block_exist(voting_point_block_info.target())) {
+                dht_get_immutable_block_item(chain_id, voting_point_block_info.target(),
+                                             voting_point_block_info.entries());
+            }
+        }
+
+        // get offered block
+        auto &block_info_set = signal.block_info_set();
+        for (auto const & block_info: block_info_set) {
+            if (!block_info.empty()) {
+                if (!m_repository->is_block_exist(block_info.target())) {
+                    dht_get_immutable_block_item(chain_id, block_info.target(), block_info.entries());
+                }
+            }
+        }
+
+        // get tx
+        auto &tx_info_set = signal.tx_info_set();
+        for (auto const & tx_info: tx_info_set) {
+            if (!tx_info.empty()) {
+                if (!m_tx_pools[chain_id].is_transaction_in_pool(tx_info.target())) {
+                    dht_get_immutable_tx_item(chain_id, tx_info.target(), tx_info.entries());
+                }
+            }
+        }
+
+        // get gossip peer
+        auto &gossip_peer = signal.gossip_peer();
+        if (gossip_peer != dht::public_key()) {
+            log("INFO chain[%s] Got gossip peer[%s]",
+                aux::toHex(chain_id).c_str(), aux::toHex(gossip_peer.bytes).c_str());
+            m_repository->add_peer_in_gossip_peer_db(chain_id, gossip_peer);
+        }
+
+        // save signal
+        auto it = m_unchoked_peers[chain_id].find(peer);
+        if (it != m_unchoked_peers[chain_id].end()) {
+            m_unchoked_peer_signal[chain_id][peer] = signal;
+        }
     }
 
     // callback for dht_immutable_get
@@ -1770,86 +1852,10 @@ namespace libTAU::blockchain {
 
         // construct mutable data wrapper from entry
         if (!i.empty()) {
-            // current time
-            auto now = get_total_milliseconds();
-
             auto peer = i.pk();
-
             blockchain_signal signal(i.value());
-            log("INFO chain[%s] Got signal:[%s]", aux::toHex(chain_id).c_str(), signal.to_string().c_str());
 
-            auto last_time = m_latest_signal_time[chain_id][peer];
-            // update latest time
-            if (signal.timestamp() > last_time) {
-                m_latest_signal_time[chain_id][peer] = signal.timestamp();
-            }
-
-            // old data in 60s also is accepted
-            if (signal.timestamp() + 60000 < last_time) {
-                log("INFO chain[%s] Signal time is too old", aux::toHex(chain_id).c_str());
-                return;
-            }
-
-            auto consensus_point_vote = signal.consensus_point_vote();
-            // only vote time in 5 min is accepted
-            if (!consensus_point_vote.empty() && now < signal.timestamp() + DEFAULT_BLOCK_TIME * 1000) {
-                log("INFO chain[%s] valid vote[%s]",
-                    aux::toHex(chain_id).c_str(), consensus_point_vote.to_string().c_str());
-                m_votes[chain_id][peer] = consensus_point_vote;
-            }
-
-            // get head block
-            auto &head_block_info = signal.head_block_info();
-            if (!head_block_info.empty()) {
-                // get immutable message
-                if (!m_repository->is_block_exist(head_block_info.target())) {
-                    dht_get_immutable_block_item(chain_id, head_block_info.target(), head_block_info.entries());
-                }
-            }
-
-            // get voting point block
-            auto &voting_point_block_info = signal.voting_point_block_info();
-            if (!voting_point_block_info.empty()) {
-                // get immutable message
-                if (!m_repository->is_block_exist(voting_point_block_info.target())) {
-                    dht_get_immutable_block_item(chain_id, voting_point_block_info.target(),
-                                                 voting_point_block_info.entries());
-                }
-            }
-
-            // get offered block
-            auto &block_info_set = signal.block_info_set();
-            for (auto const & block_info: block_info_set) {
-                if (!block_info.empty()) {
-                    if (!m_repository->is_block_exist(block_info.target())) {
-                        dht_get_immutable_block_item(chain_id, block_info.target(), block_info.entries());
-                    }
-                }
-            }
-
-            // get tx
-            auto &tx_info_set = signal.tx_info_set();
-            for (auto const & tx_info: tx_info_set) {
-                if (!tx_info.empty()) {
-                    if (!m_tx_pools[chain_id].is_transaction_in_pool(tx_info.target())) {
-                        dht_get_immutable_tx_item(chain_id, tx_info.target(), tx_info.entries());
-                    }
-                }
-            }
-
-            // get gossip peer
-            auto &gossip_peer = signal.gossip_peer();
-            if (gossip_peer != dht::public_key()) {
-                log("INFO chain[%s] Got gossip peer[%s]",
-                    aux::toHex(chain_id).c_str(), aux::toHex(gossip_peer.bytes).c_str());
-                m_repository->add_peer_in_gossip_peer_db(chain_id, gossip_peer);
-            }
-
-            // save signal
-            auto it = m_unchoked_peers[chain_id].find(peer);
-            if (it != m_unchoked_peers[chain_id].end()) {
-                m_unchoked_peer_signal[chain_id][peer] = signal;
-            }
+            process_signal(signal, chain_id, peer);
         }
     }
 
@@ -2084,6 +2090,29 @@ namespace libTAU::blockchain {
     void blockchain::set_blockchain_loop_interval(int milliseconds) {
         log("INFO: Set block chain loop interval:%d(ms)", milliseconds);
         m_refresh_time = milliseconds;
+    }
+
+    void blockchain::on_dht_item(const dht::item &i) {
+        // construct mutable data wrapper from entry
+        if (!i.empty()) {
+            dht::public_key peer = i.pk();
+
+            // update latest item timestamp
+//            if (i.ts() > m_latest_item_timestamp[peer]) {
+//                m_latest_item_timestamp[peer] = i.ts();
+//            }
+
+            // check protocol id
+            if (auto* p = const_cast<entry *>(i.value().find_key("pid")))
+            {
+                auto protocol_id = p->integer();
+                if (blockchain_signal::protocol_id == protocol_id) {
+                    blockchain_signal signal(i.value());
+
+                    process_signal(signal, signal.chain_id(), peer);
+                }
+            }
+        }
     }
 
 }
