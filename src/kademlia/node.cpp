@@ -1149,7 +1149,7 @@ void node::push(node_id const& to, msg const& m)
 	// don't push this message to sender
 	if (ne->ep() == m.addr) return;
 
-	if (ne->last_queried + seconds(60) < aux::time_now()) return;
+	if (ne->last_queried + seconds(600) < aux::time_now()) return;
 
 	// construct push protocol
 	entry e(m.message);
