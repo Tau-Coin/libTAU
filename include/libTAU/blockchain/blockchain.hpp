@@ -235,7 +235,7 @@ namespace blockchain {
 
         // get mutable item from dht
         void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key
-                                  , std::string salt = std::string());
+                                  , std::string salt, dht::timestamp t);
 
         // put immutable item to dht
         void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
@@ -311,6 +311,9 @@ namespace blockchain {
 
         // blockchain signal time(map:key1->chain id, key2->peer, value->signal time(ms))(1min)
         std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_latest_signal_time;
+
+        // the latest item timestamp of peer
+        std::map<aux::bytes, std::map<dht::public_key, dht::timestamp>> m_latest_item_timestamp;
 
     };
 }

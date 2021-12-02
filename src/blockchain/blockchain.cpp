@@ -1424,7 +1424,7 @@ namespace libTAU::blockchain {
 
         log("INFO: Request signal from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        dht_get_mutable_item(chain_id, peer.bytes, salt);
+        dht_get_mutable_item(chain_id, peer.bytes, salt, m_latest_item_timestamp[chain_id][peer]);
     }
 
     void blockchain::publish_signal(const aux::bytes &chain_id) {
@@ -1853,6 +1853,12 @@ namespace libTAU::blockchain {
         // construct mutable data wrapper from entry
         if (!i.empty()) {
             auto peer = i.pk();
+
+            // update latest item timestamp
+            if (i.ts() > m_latest_item_timestamp[chain_id][peer]) {
+                m_latest_item_timestamp[chain_id][peer] = i.ts();
+            }
+
             blockchain_signal signal(i.value());
 
             process_signal(signal, chain_id, peer);
@@ -1862,11 +1868,11 @@ namespace libTAU::blockchain {
     // key is a 32-byte binary string, the public key to look up.
     // the salt is optional
     void blockchain::dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key
-            , std::string salt)
+            , std::string salt, dht::timestamp t)
     {
         if (!m_ses.dht()) return;
         m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&blockchain::get_mutable_callback
-                , this, chain_id, _1, _2), std::move(salt));
+                , this, chain_id, _1, _2), std::move(salt), t.value);
     }
 
     void blockchain::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
@@ -2097,11 +2103,6 @@ namespace libTAU::blockchain {
         if (!i.empty()) {
             dht::public_key peer = i.pk();
 
-            // update latest item timestamp
-//            if (i.ts() > m_latest_item_timestamp[peer]) {
-//                m_latest_item_timestamp[peer] = i.ts();
-//            }
-
             // check protocol id
             if (auto* p = const_cast<entry *>(i.value().find_key("pid")))
             {
@@ -2109,7 +2110,14 @@ namespace libTAU::blockchain {
                 if (blockchain_signal::protocol_id == protocol_id) {
                     blockchain_signal signal(i.value());
 
-                    process_signal(signal, signal.chain_id(), peer);
+                    const auto& chain_id = signal.chain_id();
+
+                    // update latest item timestamp
+                    if (i.ts() > m_latest_item_timestamp[chain_id][peer]) {
+                        m_latest_item_timestamp[chain_id][peer] = i.ts();
+                    }
+
+                    process_signal(signal, chain_id, peer);
                 }
             }
         }

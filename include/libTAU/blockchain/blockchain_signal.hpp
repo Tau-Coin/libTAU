@@ -127,7 +127,7 @@ namespace libTAU::blockchain {
         void populate(const entry& e);
 
         // chain id
-        aux::bytes m_chain_id;
+        aux::bytes m_chain_id; // 32
 
         // online signal timestamp
         std::int64_t m_timestamp{}; // 10
