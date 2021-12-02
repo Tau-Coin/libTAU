@@ -839,17 +839,17 @@ namespace libTAU::blockchain {
                 }
                 m_repository->flush(chain_id);
 
-                auto txs = m_tx_pools[chain_id].get_all_transactions();
-                for (auto const &tx: txs) {
-                    log("--------before in pool tx:%s", tx.to_string().c_str());
-                }
-                log("--------process block:%s", b.to_string().c_str());
+//                auto txs = m_tx_pools[chain_id].get_all_transactions();
+//                for (auto const &tx: txs) {
+//                    log("--------before in pool tx:%s", tx.to_string().c_str());
+//                }
+//                log("--------process block:%s", b.to_string().c_str());
                 // chain changed, re-check tx pool
                 m_tx_pools[chain_id].process_block_peers(b);
-                txs = m_tx_pools[chain_id].get_all_transactions();
-                for (auto const &tx: txs) {
-                    log("--------after in pool tx:%s", tx.to_string().c_str());
-                }
+//                txs = m_tx_pools[chain_id].get_all_transactions();
+//                for (auto const &tx: txs) {
+//                    log("--------after in pool tx:%s", tx.to_string().c_str());
+//                }
 
                 m_head_blocks[chain_id] = b;
                 if (!tail_block.empty()) {
@@ -944,6 +944,16 @@ namespace libTAU::blockchain {
             return true;
 
         return false;
+    }
+
+    bool blockchain::is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
+        auto &block_map = m_blocks[chain_id];
+        auto it = block_map.find(hash);
+        if (it != block_map.end() && !it->second.empty()) {
+            return true;
+        }
+
+        return m_repository->is_block_exist(hash);
     }
 
     block blockchain::get_block_from_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
@@ -1192,24 +1202,28 @@ namespace libTAU::blockchain {
 
         if (!votes.empty()) {
             // update the best vote
-            m_best_votes[chain_id] = *votes.rbegin();
-            log("INFO chain[%s] best vote[%s]",
-                aux::toHex(chain_id).c_str(), votes.rbegin()->to_string().c_str());
+            auto best_vote = *votes.rbegin();
+            auto empty_chain = is_empty_chain(chain_id);
+            if (empty_chain || (!is_empty_chain(chain_id) && best_vote.count() > 1)) {
+                m_best_votes[chain_id] = best_vote;
+                log("INFO chain[%s] best vote[%s]",
+                    aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
 
-            // select top three votes
-            std::vector<vote> top_three_votes;
-            int i = 0;
-            for (auto it = votes.rbegin(); it != votes.rend(); ++it) {
-                if (i >= 3)
-                    break;
+                // select top three votes
+                std::vector<vote> top_three_votes;
+                int i = 0;
+                for (auto it = votes.rbegin(); it != votes.rend(); ++it) {
+                    if (i >= 3)
+                        break;
 
-                log("INFO chain[%s] top three vote[%s]",
-                    aux::toHex(chain_id).c_str(), it->to_string().c_str());
+                    log("INFO chain[%s] top three vote[%s]",
+                        aux::toHex(chain_id).c_str(), it->to_string().c_str());
 
-                top_three_votes.push_back(*it);
-                i++;
+                    top_three_votes.push_back(*it);
+                    i++;
+                }
+                m_ses.alerts().emplace_alert<blockchain_top_three_votes_alert>(chain_id, top_three_votes);
             }
-            m_ses.alerts().emplace_alert<blockchain_top_three_votes_alert>(chain_id, top_three_votes);
         }
 
         // clear history votes for next round
@@ -1628,7 +1642,7 @@ namespace libTAU::blockchain {
                                 // search until found absent or fork point block
                                 b = get_block_from_cache_or_db(chain_id, previous_hash);
                                 if (b.empty()) {
-                                    log("INFO chain[%s] Cannot find demanding block[%s] in db/cache",
+                                    log("INFO: ----chain[%s] Cannot find demanding block hash[%s] in db/cache",
                                         aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                                     demand_block_hash_set.insert(previous_hash);
                                     found_absent = true;
@@ -1638,6 +1652,8 @@ namespace libTAU::blockchain {
                                     if (main_chain_hash == b.sha256()) {
                                         break;
                                     }
+                                    log("INFO: ----chain[%s] Got block [%s] in local",
+                                        aux::toHex(chain_id).c_str(),  b.to_string().c_str());
                                     previous_hash = b.previous_block_hash();
                                 }
                             }
@@ -1745,8 +1761,8 @@ namespace libTAU::blockchain {
         // get head block
         auto &head_block_info = signal.head_block_info();
         if (!head_block_info.empty()) {
-            // get immutable message
-            if (!m_repository->is_block_exist(head_block_info.target())) {
+            // get immutable block
+            if (!is_block_in_cache_or_db(chain_id, head_block_info.target())) {
                 dht_get_immutable_block_item(chain_id, head_block_info.target(), head_block_info.entries());
             }
         }
@@ -1754,8 +1770,8 @@ namespace libTAU::blockchain {
         // get voting point block
         auto &voting_point_block_info = signal.voting_point_block_info();
         if (!voting_point_block_info.empty()) {
-            // get immutable message
-            if (!m_repository->is_block_exist(voting_point_block_info.target())) {
+            // get immutable block
+            if (!is_block_in_cache_or_db(chain_id, voting_point_block_info.target())) {
                 dht_get_immutable_block_item(chain_id, voting_point_block_info.target(),
                                              voting_point_block_info.entries());
             }
@@ -1765,7 +1781,7 @@ namespace libTAU::blockchain {
         auto &block_info_set = signal.block_info_set();
         for (auto const & block_info: block_info_set) {
             if (!block_info.empty()) {
-                if (!m_repository->is_block_exist(block_info.target())) {
+                if (!is_block_in_cache_or_db(chain_id, block_info.target())) {
                     dht_get_immutable_block_item(chain_id, block_info.target(), block_info.entries());
                 }
             }
@@ -1805,7 +1821,7 @@ namespace libTAU::blockchain {
             log("INFO: Got immutable block callback, target[%s].", aux::toHex(target.to_string()).c_str());
 
             block blk(i.value());
-            log("INFO: Got immutable block:%s", blk.to_string().c_str());
+            log("INFO: ----Got immutable block:%s", blk.to_string().c_str());
             // TODO: validate timestamp etc. ?
             if (!blk.empty()) {
                 m_blocks[chain_id][blk.sha256()] = blk;
@@ -1816,7 +1832,7 @@ namespace libTAU::blockchain {
     void blockchain::dht_get_immutable_block_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
     {
         if (!m_ses.dht()) return;
-        log("INFO: Get immutable block, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
+        log("INFO: ----Get immutable block, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
         m_ses.dht()->get_item(target, eps, std::bind(&blockchain::get_immutable_block_callback
                 , this, chain_id, target, _1));
     }
