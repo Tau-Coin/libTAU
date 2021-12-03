@@ -1024,6 +1024,10 @@ namespace libTAU::blockchain {
         block_map.erase(blk.sha256());
     }
 
+    void blockchain::try_to_slim_down_cache(const aux::bytes &chain_id) {
+        // todo
+    }
+
     RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, const block &target) {
         log("INFO chain[%s] try to rebranch to block[%s]",
             aux::toHex(chain_id).c_str(), target.to_string().c_str());
@@ -1249,8 +1253,8 @@ namespace libTAU::blockchain {
         if (!votes.empty()) {
             // update the best vote
             auto best_vote = *votes.rbegin();
-            auto empty_chain = is_empty_chain(chain_id);
-            if (empty_chain || (!is_empty_chain(chain_id) && best_vote.count() > 1)) {
+            // todo:match consensus point?
+            if (is_empty_chain(chain_id) || best_vote.count() > 1) {
                 m_best_votes[chain_id] = best_vote;
                 log("INFO chain[%s] best vote[%s]",
                     aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
@@ -1871,6 +1875,12 @@ namespace libTAU::blockchain {
             // TODO: validate timestamp etc. ?
             if (!blk.empty()) {
                 m_blocks[chain_id][blk.sha256()] = blk;
+
+                // notify ui tx from block
+                auto tx = blk.tx();
+                if (!tx.empty()) {
+                    m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
+                }
             }
         }
     }

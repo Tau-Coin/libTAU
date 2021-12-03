@@ -202,6 +202,8 @@ namespace blockchain {
         // remove all relevant blocks those on the same chain from cache
         void remove_all_ancestor_blocks_from_cache(const block &blk);
 
+        void try_to_slim_down_cache(const aux::bytes &chain_id);
+
         // try to rebranch a more difficult chain or a voting chain
         RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target);
 
