@@ -53,7 +53,7 @@ namespace libTAU::blockchain {
 
         void delete_transaction_by_account(const dht::public_key& pubKey);
 
-        bool process_block_peers(const block& b);
+        bool recheck_account_txs(const std::set<dht::public_key> &peers);
 
         bool is_transaction_in_pool(const sha256_hash& txid) const;
 

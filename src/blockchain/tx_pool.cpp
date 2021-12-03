@@ -174,9 +174,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    bool tx_pool::process_block_peers(const block& b) {
-        std::set<dht::public_key> peers = b.get_block_peers();
-
+    bool tx_pool::recheck_account_txs(const std::set<dht::public_key> &peers) {
         for (auto const& peer: peers) {
             recheck_account_tx(peer);
 //            auto local_tx = get_transaction_by_account(peer);
