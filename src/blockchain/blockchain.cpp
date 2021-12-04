@@ -81,13 +81,19 @@ namespace libTAU::blockchain {
             log("INFO: Follow chain:%s", aux::toHex(chain_id).c_str());
 
             // create sqlite peer db
-            m_repository->create_peer_db(chain_id);
-            m_repository->create_gossip_peer_db(chain_id);
+            if (!m_repository->create_peer_db(chain_id)) {
+                log("----INFO: chain:%s, create peer db fail.", aux::toHex(chain_id).c_str());
+            }
+            if (!m_repository->create_gossip_peer_db(chain_id)) {
+                log("----INFO: chain:%s, create gossip peer db fail.", aux::toHex(chain_id).c_str());
+            }
 
             // add peer into db
             for (auto const &peer: peers) {
                 log("INFO: chain:%s, initial peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
-                m_repository->add_peer_in_gossip_peer_db(chain_id, peer);
+                if (!m_repository->add_peer_in_gossip_peer_db(chain_id, peer)) {
+                    log("----INFO: chain:%s, insert gossip peer:%s fail in gossip db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                }
             }
 
             // try to load chain info
@@ -331,6 +337,7 @@ namespace libTAU::blockchain {
 //                auto p = select_peer_randomly(chain_id);
                 auto p = m_repository->get_gossip_peer_randomly(chain_id);
                 if (!(p == dht::public_key())) {
+                    log("------gossip peer:%s", aux::toHex(p.bytes).c_str());
                     peers.push_back(p);
                 }
                 // get one peer from tx pool
@@ -343,6 +350,7 @@ namespace libTAU::blockchain {
                     peers.push_back(active_peers[index]);
                 }
 
+                log("------peer size: %zu", peers.size());
                 // select one randomly from 6 peers to get
                 if (!peers.empty())
                 {
@@ -1865,7 +1873,6 @@ namespace libTAU::blockchain {
     // callback for dht_immutable_get
     void blockchain::get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i)
     {
-        log("DEBUG: Immutable block callback");
         TORRENT_ASSERT(!i.is_mutable());
         if (!i.empty()) {
             log("INFO: Got immutable block callback, target[%s].", aux::toHex(target.to_string()).c_str());
@@ -1888,7 +1895,6 @@ namespace libTAU::blockchain {
     void blockchain::dht_get_immutable_block_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
     {
         if (!m_ses.dht()) return;
-        log("INFO: ----Get immutable block, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
         m_ses.dht()->get_item(target, eps, std::bind(&blockchain::get_immutable_block_callback
                 , this, chain_id, target, _1));
     }
@@ -1896,7 +1902,6 @@ namespace libTAU::blockchain {
     // callback for dht_immutable_get
     void blockchain::get_immutable_tx_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i)
     {
-        log("DEBUG: Immutable tx callback");
         TORRENT_ASSERT(!i.is_mutable());
         if (!i.empty()) {
             log("INFO: Got immutable tx callback, target[%s].", aux::toHex(target.to_string()).c_str());
@@ -1911,7 +1916,6 @@ namespace libTAU::blockchain {
     void blockchain::dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
     {
         if (!m_ses.dht()) return;
-        log("INFO: Get immutable tx, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
         m_ses.dht()->get_item(target, eps, std::bind(&blockchain::get_immutable_tx_callback
                 , this, chain_id, target, _1));
     }
