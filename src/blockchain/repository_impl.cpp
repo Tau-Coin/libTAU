@@ -6,19 +6,26 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
+#include "libTAU/hasher.hpp"
 #include "libTAU/blockchain/state_linker.hpp"
 #include "libTAU/blockchain/repository_impl.hpp"
 
 namespace libTAU::blockchain {
 
+    namespace {
+        std::string chain_id_to_sha1_hash(const aux::bytes &chain_id) {
+            sha1_hash hash = hasher(chain_id).final();
+            return aux::toHex(hash);
+        }
+    }
+
     bool repository_impl::init() {
         return true;
     }
 
-
     bool repository_impl::create_peer_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
         sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
 
         char *zErrMsg = nullptr;
@@ -33,7 +40,7 @@ namespace libTAU::blockchain {
 
     bool repository_impl::delete_peer_db(const aux::bytes &chain_id) {
         std::string sql = "DROP TABLE ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -52,7 +59,7 @@ namespace libTAU::blockchain {
 //
 //        sqlite3_stmt * stmt;
 //        std::string sql = "SELECT BALANCE,NONCE,HEIGHT FROM ";
-//        sql.append(std::string(chain_id.begin(), chain_id.end()));
+//        sql.append(chain_id_to_short_hash(chain_id));
 //        sql.append(" WHERE PUBKEY=");
 //        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
 //
@@ -75,7 +82,7 @@ namespace libTAU::blockchain {
 
         sqlite3_stmt * stmt;
         std::string sql = "SELECT PUBKEY FROM ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
@@ -98,7 +105,7 @@ namespace libTAU::blockchain {
 
         sqlite3_stmt * stmt;
         std::string sql = "SELECT PUBKEY FROM ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
         sql.append(" ORDER BY RANDOM() limit 1");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -148,7 +155,7 @@ namespace libTAU::blockchain {
     bool repository_impl::add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         sqlite3_stmt * stmt;
         std::string sql = "INSERT INTO ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
         sql.append(" VALUES(?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
@@ -170,7 +177,7 @@ namespace libTAU::blockchain {
 
     bool repository_impl::create_gossip_peer_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
         sql.append("GOSSIP(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
 
         char *zErrMsg = nullptr;
@@ -185,7 +192,7 @@ namespace libTAU::blockchain {
 
     bool repository_impl::delete_gossip_peer_db(const aux::bytes &chain_id) {
         std::string sql = "DROP TABLE ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
         sql.append("GOSSIP");
 
         char *zErrMsg = nullptr;
@@ -203,7 +210,7 @@ namespace libTAU::blockchain {
 
         sqlite3_stmt * stmt;
         std::string sql = "SELECT PUBKEY FROM ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
         sql.append("GOSSIP");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -227,7 +234,7 @@ namespace libTAU::blockchain {
 
         sqlite3_stmt * stmt;
         std::string sql = "SELECT PUBKEY FROM ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
         sql.append("GOSSIP ORDER BY RANDOM() limit 1");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -248,7 +255,7 @@ namespace libTAU::blockchain {
 
     bool repository_impl::delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         std::string sql = "DELETE FROM ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
         sql.append("GOSSIP");
         sql.append(" WHERE PUBKEY=");
         sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
@@ -266,7 +273,7 @@ namespace libTAU::blockchain {
     bool repository_impl::add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         sqlite3_stmt * stmt;
         std::string sql = "INSERT INTO ";
-        sql.append(std::string(chain_id.begin(), chain_id.end()));
+        sql.append(chain_id_to_sha1_hash(chain_id));
         sql.append("GOSSIP");
         sql.append(" VALUES(?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
