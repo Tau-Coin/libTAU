@@ -3300,6 +3300,10 @@ namespace {
 		{
 			m_communication->on_dht_item(i);
 		}
+		if (m_blockchain)
+		{
+			m_blockchain->on_dht_item(i);
+		}
 	}
 
 	void session_impl::set_external_address(
