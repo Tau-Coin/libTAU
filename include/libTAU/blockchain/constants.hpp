@@ -16,8 +16,8 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    const aux::bytes TAU_CHAIN_ID = aux::asBytes("TAUCOIN9");
-    const std::int64_t TAU_CHAIN_GENESIS_TIMESTAMP = 1638162583; // seconds
+    const aux::bytes TAU_CHAIN_ID = aux::asBytes("TAUCOINabc");
+    const std::int64_t TAU_CHAIN_GENESIS_TIMESTAMP = 1638761707; // seconds
     const std::vector<dht::public_key> TAU_CHAIN_GENESIS_ACCOUNT = {
             dht::public_key(aux::fromHex("63ec42130442c91e23d56dc73708e06eb164883ab74c9813764c3fd0e2042dc4").data()),
             dht::public_key(aux::fromHex("809df518ee450ded0a659aeb4bc5bec636e2cff012fc88d343b7419af974bb81").data()),
@@ -45,7 +45,7 @@ namespace libTAU::blockchain {
     constexpr int64_t GENESIS_BLOCK_BALANCE = 100000000000000;
 
     // 0x21D0369D036978
-    constexpr int64_t GENESIS_BASE_TARGET = 9517607212509560;
+    constexpr int64_t GENESIS_BASE_TARGET = 39517607212509560;
 
     // 2^64 = 0x010000000000000000
     const aux::bigint DiffAdjustNumerator = aux::bigint(1) << 64;

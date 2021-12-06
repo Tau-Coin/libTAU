@@ -82,17 +82,17 @@ namespace libTAU::blockchain {
 
             // create sqlite peer db
             if (!m_repository->create_peer_db(chain_id)) {
-                log("----INFO: chain:%s, create peer db fail.", aux::toHex(chain_id).c_str());
+                log("INFO: chain:%s, create peer db fail.", aux::toHex(chain_id).c_str());
             }
             if (!m_repository->create_gossip_peer_db(chain_id)) {
-                log("----INFO: chain:%s, create gossip peer db fail.", aux::toHex(chain_id).c_str());
+                log("INFO: chain:%s, create gossip peer db fail.", aux::toHex(chain_id).c_str());
             }
 
             // add peer into db
             for (auto const &peer: peers) {
                 log("INFO: chain:%s, initial peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 if (!m_repository->add_peer_in_gossip_peer_db(chain_id, peer)) {
-                    log("----INFO: chain:%s, insert gossip peer:%s fail in gossip db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                    log("INFO: chain:%s, insert gossip peer:%s fail in gossip db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 }
             }
 
@@ -337,7 +337,7 @@ namespace libTAU::blockchain {
 //                auto p = select_peer_randomly(chain_id);
                 auto p = m_repository->get_gossip_peer_randomly(chain_id);
                 if (!(p == dht::public_key())) {
-                    log("------gossip peer:%s", aux::toHex(p.bytes).c_str());
+                    log("gossip peer:%s", aux::toHex(p.bytes).c_str());
                     peers.push_back(p);
                 }
                 // get one peer from tx pool
@@ -350,7 +350,7 @@ namespace libTAU::blockchain {
                     peers.push_back(active_peers[index]);
                 }
 
-                log("------peer size: %zu", peers.size());
+                log("peer size: %zu", peers.size());
                 // select one randomly from 6 peers to get
                 if (!peers.empty())
                 {

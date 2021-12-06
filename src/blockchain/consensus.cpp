@@ -91,26 +91,26 @@ namespace libTAU::blockchain {
         // make sure target > hit
         interval++;
 
-        if (interval < DEFAULT_MIN_BLOCK_TIME) {
-            interval = DEFAULT_MIN_BLOCK_TIME;
-        } else if (interval > DEFAULT_MAX_BLOCK_TIME) {
-            interval = DEFAULT_MAX_BLOCK_TIME;
-        }
+//        if (interval < DEFAULT_MIN_BLOCK_TIME) {
+//            interval = DEFAULT_MIN_BLOCK_TIME;
+//        } else if (interval > DEFAULT_MAX_BLOCK_TIME) {
+//            interval = DEFAULT_MAX_BLOCK_TIME;
+//        }
 
         return interval;
     }
 
     bool consensus::verify_hit(uint64_t hit, uint64_t baseTarget, uint64_t power, uint64_t timeInterval) {
-        if (timeInterval < DEFAULT_MIN_BLOCK_TIME) {
-            return false;
-        } else if (timeInterval >= DEFAULT_MAX_BLOCK_TIME) {
-            return true;
-        } else {
+//        if (timeInterval < DEFAULT_MIN_BLOCK_TIME) {
+//            return false;
+//        } else if (timeInterval >= DEFAULT_MAX_BLOCK_TIME) {
+//            return true;
+//        } else {
             auto target = calculate_miner_target_value(baseTarget, power, timeInterval);
             if (target <= hit) {
                 return false;
             }
-        }
+//        }
 
         return true;
     }
