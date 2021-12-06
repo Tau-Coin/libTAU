@@ -1529,11 +1529,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-//		char buffer[256];
-//		std::snprintf(buffer, sizeof(buffer), "new head block hash: %s"
-//				, aux::toHex(blk.sha256().to_string()).c_str());
-//		return buffer;
-		return "++++++++++new head block:" + blk.to_string() + "  tx in block:" + blk.tx().to_string();
+		return "new head block:" + blk.to_string();
 #endif
 	}
 
@@ -1547,10 +1543,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-		char buffer[256];
-		std::snprintf(buffer, sizeof(buffer), "new tail block hash: %s"
-				, aux::toHex(blk.sha256().to_string()).c_str());
-		return buffer;
+        return "new tail block:" + blk.to_string();
 #endif
 	}
 
@@ -1564,10 +1557,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        char buffer[256];
-        std::snprintf(buffer, sizeof(buffer), "new consensus point block hash: %s"
-                , aux::toHex(blk.sha256().to_string()).c_str());
-        return buffer;
+        return "new consensus point block:" + blk.to_string();
 #endif
     }
 
@@ -1581,10 +1571,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-		char buffer[256];
-		std::snprintf(buffer, sizeof(buffer), "rollback block hash: %s"
-				, aux::toHex(blk.sha256().to_string()).c_str());
-		return buffer;
+        return "rollback block:" + blk.to_string();
 #endif
 	}
 
@@ -1598,10 +1585,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-		char buffer[256];
-		std::snprintf(buffer, sizeof(buffer), "fork point block hash: %s"
-				, aux::toHex(blk.sha256().to_string()).c_str());
-		return buffer;
+        return "fork point block:" + blk.to_string();
 #endif
 	}
 

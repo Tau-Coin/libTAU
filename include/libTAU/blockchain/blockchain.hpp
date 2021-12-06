@@ -252,7 +252,7 @@ namespace blockchain {
         void dht_put_mutable_item(std::array<char, 32> key
                                   , std::function<void(entry&, std::array<char,64>&
                                           , std::int64_t&, std::string const&)> cb
-                                          , std::string salt = std::string());
+                                          , std::string salt, const dht::public_key &peer);
 
         // io context
         io_context& m_ioc;

@@ -49,6 +49,8 @@ namespace libTAU::blockchain {
 
         bool add_tx(const transaction& tx);
 
+        bool send_back_block_tx_to_pool(const block& blk);
+
         transaction get_transaction_by_account(const dht::public_key& pubKey) const;
 
         void delete_transaction_by_account(const dht::public_key& pubKey);
