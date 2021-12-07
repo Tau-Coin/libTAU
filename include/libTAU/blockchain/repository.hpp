@@ -132,7 +132,7 @@ namespace libTAU::blockchain {
          *
          * @return the tracker repository
          */
-        virtual repository* start_tracking() = 0;
+        virtual std::shared_ptr<repository> start_tracking() = 0;
 
         virtual void
         update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,

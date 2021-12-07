@@ -103,7 +103,7 @@ namespace libTAU::blockchain {
 
         bool delete_consensus_point_block_hash(const aux::bytes &chain_id) override;
 
-        repository *start_tracking() override;
+        std::shared_ptr<repository> start_tracking() override;
 
         void update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,
                           const std::vector<block> &discarded_blocks) override;

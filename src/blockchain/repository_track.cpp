@@ -468,8 +468,8 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    repository *repository_track::start_tracking() {
-        return new repository_track(this);
+    std::shared_ptr<repository> repository_track::start_tracking() {
+        return std::make_shared<repository_track>(this);
     }
 
     void repository_track::update_batch(const std::map<std::string, std::string> &cache,

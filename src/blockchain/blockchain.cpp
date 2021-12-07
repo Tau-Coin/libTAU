@@ -786,7 +786,7 @@ namespace libTAU::blockchain {
 
         auto &head_block  = m_head_blocks[chain_id];
         if (head_block.empty()) {
-            repository* track = m_repository->start_tracking();
+            auto track = m_repository->start_tracking();
 
             if (!track->connect_head_block(b)) {
                 log("INFO chain[%s] connect head block[%s] fail",
@@ -832,11 +832,11 @@ namespace libTAU::blockchain {
             if (b.previous_block_hash() == head_block.sha256()) {
                 std::set<dht::public_key> peers = b.get_block_peers();
 
-                repository* track = m_repository->start_tracking();
+                auto track = m_repository->start_tracking();
 
                 // no need to verify block if not sync completed
                 if (!is_sync_completed(chain_id)) {
-                    auto result = verify_block(chain_id, b, head_block, track);
+                    auto result = verify_block(chain_id, b, head_block, track.get());
                     if (result != SUCCESS)
                         return result;
                 }
@@ -894,7 +894,7 @@ namespace libTAU::blockchain {
 
             if (m_head_blocks[chain_id].block_number() - m_tail_blocks[chain_id].block_number() < EFFECTIVE_BLOCK_NUMBER &&
                 b.sha256() == m_tail_blocks[chain_id].previous_block_hash()) {
-                repository* track = m_repository->start_tracking();
+                auto track = m_repository->start_tracking();
 
                 if (!track->connect_tail_block(b)) {
                     log("INFO chain[%s] connect tail block[%s] fail",
@@ -1124,7 +1124,7 @@ namespace libTAU::blockchain {
 
         std::set<dht::public_key> peers;
 
-        repository* track = m_repository->start_tracking();
+        auto track = m_repository->start_tracking();
 
         auto &tail_block = m_tail_blocks[chain_id];
         bool tail_missing = false;
@@ -1168,7 +1168,7 @@ namespace libTAU::blockchain {
             auto &previous_block = connect_blocks[i - 1];
 
             if (!tail_missing) {
-                auto result = verify_block(chain_id, blk, previous_block, track);
+                auto result = verify_block(chain_id, blk, previous_block, track.get());
                 if (result != SUCCESS)
                     return result;
             }
