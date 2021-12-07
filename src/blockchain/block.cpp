@@ -82,22 +82,24 @@ namespace libTAU::blockchain {
         e["d"] = entry(static_cast<std::int64_t>(m_cumulative_difficulty));
         // generation signature
         e["g"] = entry(m_generation_signature.to_string());
-        // tx
-        e["tx"] = m_tx.get_entry();
         // miner
         e["m"] = entry(std::string(m_miner.bytes.begin(), m_miner.bytes.end()));
         // miner balance
         e["mb"] = entry(m_miner_balance);
         // miner nonce
         e["mn"] = entry(m_miner_nonce);
-        // sender balance
-        e["sb"] = entry(m_sender_balance);
-        // sender nonce
-        e["sn"] = entry(m_sender_nonce);
-        // receiver balance
-        e["rb"] = entry(m_receiver_balance);
-        // receiver nonce
-        e["rn"] = entry(m_receiver_nonce);
+        if (!m_tx.empty()) {
+            // tx
+            e["tx"] = m_tx.get_entry();
+            // sender balance
+            e["sb"] = entry(m_sender_balance);
+            // sender nonce
+            e["sn"] = entry(m_sender_nonce);
+            // receiver balance
+            e["rb"] = entry(m_receiver_balance);
+            // receiver nonce
+            e["rn"] = entry(m_receiver_nonce);
+        }
 
         return e;
     }

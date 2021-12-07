@@ -33,9 +33,9 @@ namespace libTAU::blockchain {
             }
 
             // create tau chain
-            if (!has_tau) {
-                create_TAU_chain();
-            }
+//            if (!has_tau) {
+//                create_TAU_chain();
+//            }
         } catch (std::exception &e) {
             log("Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             return false;
@@ -783,6 +783,8 @@ namespace libTAU::blockchain {
     RESULT blockchain::process_block(const aux::bytes &chain_id, block &b) {
         if (b.empty())
             return FAIL;
+//        log("=================== block length:%lu, tx length:%lu, block:%s",
+//            b.get_encode().length(), b.tx().get_encode().length(), b.to_string().c_str());
 
         auto &head_block  = m_head_blocks[chain_id];
         if (head_block.empty()) {
