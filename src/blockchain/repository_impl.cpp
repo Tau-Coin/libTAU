@@ -14,6 +14,7 @@ namespace libTAU::blockchain {
 
     namespace {
         std::string chain_id_to_short_hash(const aux::bytes &chain_id) {
+            // prevent SQL injection
             sha1_hash hash = hasher(chain_id).final();
             // 't' + hex(sha1(chain id))
             return "t" + aux::toHex(hash);

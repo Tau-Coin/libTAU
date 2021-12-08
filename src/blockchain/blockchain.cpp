@@ -223,9 +223,9 @@ namespace libTAU::blockchain {
                 if (is_empty_chain(chain_id)) {
                     auto &best_vote = m_best_votes[chain_id];
                     if (!best_vote.empty()) {
-                        auto it = block_map.find(best_vote.block_hash());
-                        if (it != block_map.end()) {
-                            process_block(chain_id, it->second);
+                        auto blk = get_block_from_cache_or_db(chain_id, best_vote.block_hash());
+                        if (!blk.empty()) {
+                            process_block(chain_id, blk);
                         }
                     }
                 }
@@ -1259,28 +1259,36 @@ namespace libTAU::blockchain {
             }
         }
 
-        if (!votes.empty()) {
-            // update the best vote
-            auto best_vote = *votes.rbegin();
-            // todo:match consensus point?
-            if (is_empty_chain(chain_id) || best_vote.count() > 1) {
-                m_best_votes[chain_id] = best_vote;
-                log("INFO chain[%s] best vote[%s]",
-                    aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
+        vote best_vote;
+        if (!votes.empty() || is_sync_completed(chain_id)) {
+            // if no voting result or best vote count is 1, use local voting point block
+            if (votes.empty() || votes.rbegin()->count() == 1) {
+                auto &voting_point_block = m_voting_point_blocks[chain_id];
+                best_vote = vote(voting_point_block.sha256(), voting_point_block.block_number());
+            } else {
+                // use the best vote
+                best_vote = *votes.rbegin();
+            }
 
-                // select top three votes
-                std::vector<vote> top_three_votes;
-                int i = 0;
-                for (auto it = votes.rbegin(); it != votes.rend(); ++it) {
-                    if (i >= 3)
-                        break;
+            m_best_votes[chain_id] = best_vote;
+            log("INFO chain[%s] best vote[%s]",
+                aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
 
-                    log("INFO chain[%s] top three vote[%s]",
-                        aux::toHex(chain_id).c_str(), it->to_string().c_str());
+            // select top three votes
+            std::vector<vote> top_three_votes;
+            int i = 0;
+            for (auto it = votes.rbegin(); it != votes.rend(); ++it) {
+                if (i >= 3)
+                    break;
 
-                    top_three_votes.push_back(*it);
-                    i++;
-                }
+                log("INFO chain[%s] top three vote[%s]",
+                    aux::toHex(chain_id).c_str(), it->to_string().c_str());
+
+                top_three_votes.push_back(*it);
+                i++;
+            }
+
+            if (!top_three_votes.empty()) {
                 m_ses.alerts().emplace_alert<blockchain_top_three_votes_alert>(chain_id, top_three_votes);
             }
         }
