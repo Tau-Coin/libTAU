@@ -318,13 +318,15 @@ namespace libTAU::blockchain {
                     }
 
                     // 5. try to mine on the best chain
-                    block b = try_to_mine_block(chain_id);
+                    if (is_sync_completed(chain_id)) {
+                        block b = try_to_mine_block(chain_id);
 
-                    if (!b.empty()) {
-                        // process mined block
-                        log("INFO chain[%s] process mined block[%s]",
-                            aux::toHex(chain_id).c_str(), b.to_string().c_str());
-                        process_block(chain_id, b);
+                        if (!b.empty()) {
+                            // process mined block
+                            log("INFO chain[%s] process mined block[%s]",
+                                aux::toHex(chain_id).c_str(), b.to_string().c_str());
+                            process_block(chain_id, b);
+                        }
                     }
                 }
 
