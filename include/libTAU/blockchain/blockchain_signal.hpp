@@ -44,12 +44,12 @@ namespace libTAU::blockchain {
         blockchain_signal(aux::bytes mChainId, int64_t mTimestamp, const vote &mConsensusPointVote,
                           immutable_data_info mHeadBlockInfo, immutable_data_info mImmutableBlockInfo,
                           std::set<immutable_data_info> mBlockSet, std::set<immutable_data_info> mTxSet,
-                          std::set<sha256_hash> mDemandBlockHashSet, aux::bytes mTxHashPrefixArray,
+                          std::set<sha256_hash> mDemandBlockHashSet,
                           aux::bytes mLatestTxHashPrefixArray, const dht::public_key &mPeer):
                 m_chain_id(std::move(mChainId)), m_timestamp(mTimestamp), m_consensus_point_vote(mConsensusPointVote),
                 m_head_block_info(std::move(mHeadBlockInfo)), m_voting_point_block_info(std::move(mImmutableBlockInfo)),
                 m_block_info_set(std::move(mBlockSet)), m_tx_info_set(std::move(mTxSet)),
-                m_demand_block_hash_set(std::move(mDemandBlockHashSet)), m_tx_hash_prefix_array(std::move(mTxHashPrefixArray)),
+                m_demand_block_hash_set(std::move(mDemandBlockHashSet)),
                 m_latest_tx_hash_prefix_array(std::move(mLatestTxHashPrefixArray)), m_gossip_peer(mPeer) {}
 
 //        blockchain_signal(const sha256_hash &mConsensusPointBlockHash, int64_t mConsensusPointBlockNumber,
@@ -105,9 +105,9 @@ namespace libTAU::blockchain {
 //
 //        void set_demand_tx_hash_set(const std::set<sha256_hash> &mDemandTxHashSet) { m_demand_tx_hash_set = mDemandTxHashSet; }
 
-        const aux::bytes &tx_hash_prefix_array() const { return m_tx_hash_prefix_array; }
-
-        void set_tx_hash_prefix_array(const aux::bytes &mTxHashPrefixArray) { m_tx_hash_prefix_array = mTxHashPrefixArray; }
+//        const aux::bytes &tx_hash_prefix_array() const { return m_tx_hash_prefix_array; }
+//
+//        void set_tx_hash_prefix_array(const aux::bytes &mTxHashPrefixArray) { m_tx_hash_prefix_array = mTxHashPrefixArray; }
 
         const aux::bytes &latest_tx_hash_prefix_array() const { return m_latest_tx_hash_prefix_array; }
 
@@ -152,9 +152,9 @@ namespace libTAU::blockchain {
 //        std::set<sha256_hash> m_demand_tx_hash_set;
 
         // top ten tx
-        aux::bytes m_tx_hash_prefix_array;
+//        aux::bytes m_tx_hash_prefix_array;
 
-        // latest tx array
+        // the latest tx hash array
         aux::bytes m_latest_tx_hash_prefix_array;
 
         // gossip peer

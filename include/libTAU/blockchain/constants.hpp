@@ -31,6 +31,7 @@ namespace libTAU::blockchain {
             dht::public_key(aux::fromHex("3e87c35d2079858d88dcb113edadaf1b339fcd4f74c539faa9a9bd59e787f124").data())};
 
     // chain id
+    // todo:validate
     constexpr int CHAIN_ID_MAX_LENGTH = 32;
     constexpr int CHAIN_ID_HASH_MAX_LENGTH = 8;
     constexpr int CHAIN_ID_COMMUNITY_NAME_MAX_LENGTH = 24;

@@ -72,7 +72,7 @@ namespace libTAU::blockchain {
 //        e["dt"] = demand_tx_hash_list;
 
         // tx hash prefix bytes
-        e["ta"] = entry(std::string(m_tx_hash_prefix_array.begin(), m_tx_hash_prefix_array.end()));
+//        e["ta"] = entry(std::string(m_tx_hash_prefix_array.begin(), m_tx_hash_prefix_array.end()));
 
         // latest tx hash prefix bytes
         e["lt"] = entry(std::string(m_latest_tx_hash_prefix_array.begin(), m_latest_tx_hash_prefix_array.end()));
@@ -161,11 +161,11 @@ namespace libTAU::blockchain {
 //            }
 //        }
         // tx hash prefix bytes
-        if (auto* i = const_cast<entry *>(e.find_key("ta")))
-        {
-            std::string hash_prefix_array = i->string();
-            m_tx_hash_prefix_array = aux::bytes(hash_prefix_array.begin(), hash_prefix_array.end());
-        }
+//        if (auto* i = const_cast<entry *>(e.find_key("ta")))
+//        {
+//            std::string hash_prefix_array = i->string();
+//            m_tx_hash_prefix_array = aux::bytes(hash_prefix_array.begin(), hash_prefix_array.end());
+//        }
         // latest tx hash prefix bytes
         if (auto* i = const_cast<entry *>(e.find_key("lt")))
         {
@@ -190,7 +190,7 @@ namespace libTAU::blockchain {
         os << "m_chain_id: " << aux::toHex(signal.m_chain_id) << "m_timestamp: " << signal.m_timestamp
            << " m_consensus_point_vote: " << signal.m_consensus_point_vote << " m_best_tip_block_info: "
            << signal.m_head_block_info << " m_consensus_point_block_info: " << signal.m_voting_point_block_info
-           << " m_tx_hash_prefix_array: " << aux::toHex(signal.m_tx_hash_prefix_array)
+//           << " m_tx_hash_prefix_array: " << aux::toHex(signal.m_tx_hash_prefix_array)
            << " m_latest_tx_hash_prefix_array: " << aux::toHex(signal.m_latest_tx_hash_prefix_array)
            << " m_gossip_peer: " << aux::toHex(signal.m_gossip_peer.bytes);
 

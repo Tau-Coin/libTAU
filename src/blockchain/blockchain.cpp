@@ -1592,36 +1592,36 @@ namespace libTAU::blockchain {
                 }
             }
 
-            {
-                // find out missing txs
-                std::vector<transaction> missing_txs;
-                std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
-                log("INFO: Txs size:%zu", txs.size());
-                find_best_solution(txs, peer_signal.tx_hash_prefix_array(), missing_txs);
-
-                log("INFO: Found missing tx size %zu", missing_txs.size());
-
-                if (!missing_txs.empty()) {
-                    // select one missing tx to response to
-                    // 产生随机数
-                    srand(now);
-                    auto index = rand() % missing_txs.size();
-                    auto miss_tx = missing_txs[index];
-                    if (!miss_tx.empty()) {
-                        std::vector<dht::node_entry> entries;
-                        m_ses.dht()->find_live_nodes(miss_tx.sha256(), entries);
-                        if (entries.size() > blockchain_immutable_payload_put_node_size) {
-                            entries.resize(blockchain_immutable_payload_put_node_size);
-                        }
-                        log("INFO: Put missing tx target[%s], entries[%zu]",
-                            aux::toHex(miss_tx.sha256().to_string()).c_str(), entries.size());
-                        dht_put_immutable_item(miss_tx.get_entry(), entries, miss_tx.sha256());
-
-                        immutable_data_info demand_tx_info(miss_tx.sha256(), entries);
-                        tx_set.insert(demand_tx_info);
-                    }
-                }
-            }
+//            {
+//                // find out missing txs
+//                std::vector<transaction> missing_txs;
+//                std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
+//                log("INFO: Txs size:%zu", txs.size());
+//                find_best_solution(txs, peer_signal.tx_hash_prefix_array(), missing_txs);
+//
+//                log("INFO: Found missing tx size %zu", missing_txs.size());
+//
+//                if (!missing_txs.empty()) {
+//                    // select one missing tx to response to
+//                    // 产生随机数
+//                    srand(now);
+//                    auto index = rand() % missing_txs.size();
+//                    auto miss_tx = missing_txs[index];
+//                    if (!miss_tx.empty()) {
+//                        std::vector<dht::node_entry> entries;
+//                        m_ses.dht()->find_live_nodes(miss_tx.sha256(), entries);
+//                        if (entries.size() > blockchain_immutable_payload_put_node_size) {
+//                            entries.resize(blockchain_immutable_payload_put_node_size);
+//                        }
+//                        log("INFO: Put missing tx target[%s], entries[%zu]",
+//                            aux::toHex(miss_tx.sha256().to_string()).c_str(), entries.size());
+//                        dht_put_immutable_item(miss_tx.get_entry(), entries, miss_tx.sha256());
+//
+//                        immutable_data_info demand_tx_info(miss_tx.sha256(), entries);
+//                        tx_set.insert(demand_tx_info);
+//                    }
+//                }
+//            }
 
             {
                 // find out missing txs
@@ -1775,7 +1775,7 @@ namespace libTAU::blockchain {
         }
 
         // offer tx pool info
-        aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array_by_fee();
+//        aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array_by_fee();
         aux::bytes latest_tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp();
 
         // offer a peer from chain
@@ -1785,7 +1785,7 @@ namespace libTAU::blockchain {
         blockchain_signal signal(chain_id, now, consensus_point_vote,
                                  head_block_info, voting_point_block_info,
                                  block_set, tx_set, demand_block_hash_set,
-                                 tx_hash_prefix_array, latest_tx_hash_prefix_array, p);
+                                 latest_tx_hash_prefix_array, p);
 
         dht::public_key * pk = m_ses.pubkey();
         dht::secret_key * sk = m_ses.serkey();
