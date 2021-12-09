@@ -1260,12 +1260,21 @@ namespace {
 				m_listen_sockets.emplace_back(s);
 				if (m_dht && s->ssl != transport::ssl)
 				{
+					m_dht->stop();
 					m_dht->new_socket(m_listen_sockets.back());
 
 					for (auto const& n : m_dht_router_nodes)
 					{
 						m_dht->add_router_node(n);
 					}
+
+					auto cb = [this](
+						std::vector<std::pair<dht::node_entry, std::string>> const&)
+					{
+						if (m_alerts.should_post<dht_bootstrap_alert>())
+						m_alerts.emplace_alert<dht_bootstrap_alert>();
+					};
+					m_dht->start(cb);
 				}
 			}
 		}
