@@ -3,6 +3,9 @@
 
 ## 状态相关
 
+### 时间信息
+	std::int64_t get_session_time();
+
 ### 网络状态
 	// total download rate
     int total_download_rate();
@@ -64,93 +67,109 @@
 	// add a new message
 	bool add_new_message(communication::message msg);
 
+### Communication上报alert
+	//　新的通讯device
+	communication_new_device_id_alert
+	
+	// 新的信息
+	communication_new_message_alert
+
+	// 消息被确认
+	communication_confirmation_root_alert
+
+	// 消息被同步
+	communication_syncing_message_alert
+
+	// 新的朋友
+	communication_friend_info_alert
+
+	// 朋友最新在线时间
+	communication_last_seen_alert
+
 ## Blockchain业务相关
 
 ### 区块链暴露供外部使用的数据结构
-
-	创世区块账户信息
-	class GenesisAccount {
-		byte[] account;
-		BigInteger balance;
-		BigInteger power;
-	}
-	
-	创世区块结构
-	class GenesisConfig {
-		GenesisConfig(String communityName, List<GenesisAccount> genesisItems);
-		byte[] getChianID();
-	}
-
-	区块结构
+	// 区块结构
 	class Block {
 		...
 	}
 	
-	交易结构
+	// 交易结构
 	class Transaction {
 		...
 	}
 	
-	交易类型
-	enum TransactionType {
+	// 账户信息
+	class Account {
 		...
 	}
 	
-	账户信息
-	class AccountInfo {
-		BigInteger balance;
-		BigInteger nonce;
+	// 投票信息
+	class Vote {
+		...
 	}
-	
+
+	// 链端命名	
+	class ChainURL {
+		...
+	}
+	/*
 	链URL结构组织（tauchain:?bs=pk1&bs=pk2&dn=chainID）
 	URL中的tauchain为小写字母
-	class ChainUrl {
-		static String encode(String chainID, List<String> publicKeys);
-		static ChainUrl decode(String url);
-	}
-	
+	ChainURL涉及到UTF-8编码, HEX编码,其中pk1, pk2...pkn采用HEX编码
+	ChainID也有两类：
+		1) TAU_CHAIN_ID
+		2) hasher(pk+time) + CommunityName(最长24字节)
+	*/	
+
 ### 区块链外部可调用的接口
+
+	// 创建新的ChainID
+	std::vector<char> create_chain_id(std::vector<char> community_name)
 	
-	创建新的社区
-	boolean createNewCommunity(GenesisConfig cf);
+	// 创建新的社区
+	bool create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
+
+	// 跟随链
+	bool follow_chain(const blockchain::chain_url & cul);
+
+	// 取消跟随链
+	bool unfollow_chain(std::vector<char> chain_id);
+
+	// 提交交易到交易池
+	bool submit_transaction(const blockchain::transaction & tx);
+
+	// 获取账户信息
+	blockchain::account get_account_info(std::vector<char> chain_id, dht::public_key publicKey);
+
+	// 获取tip前三名区块号和哈希
+	std::vector<blockchain::block> get_top_tip_block(std::vector<char> chain_id, int num);
+
+	// 获取交易打包的中值交易费
+	std::int64_t get_median_tx_free(std::vector<char> chain_id);
+
+	// 获取区块
+	blockchain::block get_block_by_number(std::vector<char> chain_id, std::int64_t block_number);
+	blockchain::block get_block_by_hash(std::vector<char> chain_id, sha256_hash block_hash);
 	
-	提交交易到交易池
-	boolean submitTransaction(Transaction tx);
+### 区块链上报的alert
+	新的头部区块
+	blockchain_new_head_block_alert
 	
-	获取账户信息
-	AccountInfo getAccountInfo(String chainID, String publicKey);
+	新的尾部区块
+	blockchain_new_tail_block_alert
 	
-	跟随链
-	followChain(ChainUrl url);
+	新的共识区块	
+	blockchain_new_consensus_point_block_alert
 	
-	取消跟随链
-	unfollowChain(String chainID);
-	
-	获取tip前三名区块号和哈希
-	List<Block> getTopTipBlock(String chainID, int topNum);
-	
-	获取交易打包的最小交易费
-    long getMedianTxFree(String chainID);
-    
-    获取在线信号中的社区choke成员
-    List<String> getChokeMembers(String chainID);
-	
-### 区块链上报的接口
-	
-	新的区块
-	void onNewBlock(Block block);
-	
-	同步区块
-	void onSyncBlock(Block block);
-	
-	区块回滚
-	void onBlockRollback(Block block);
-	
-	接收到新交易
-	void onNewTransaction(Transaction tx);
+	回滚的区块
+	blockchain_rollback_block_alert
 	
 	当前分叉点Block
-    void onCurrentForkBlock(Block block);
+    blockchain_fork_point_block_alert
     
-    共识点投票前三名的区块号和哈希
-    void onTopConsensusBlock(List<Block> block);
+	新交易
+	blockchain_new_transaction_alert
+	
+    共识点投票前三名的区块
+    blockchain_top_three_votes_alert
