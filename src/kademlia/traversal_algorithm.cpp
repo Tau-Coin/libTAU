@@ -498,6 +498,11 @@ void traversal_algorithm::done()
 
 int traversal_algorithm::allow_distance() const
 {
+	if (m_fixed_distance >= 0)
+	{
+		return m_fixed_distance;
+	}
+
 	int index = int(m_results.size()) >= m_invoke_limit ?
 			m_invoke_limit - 1 : int(m_results.size()) - 1;
 	observer* o = (m_results.begin() + index)->get();

@@ -51,6 +51,8 @@ struct TORRENT_EXPORT node_entry
 		last_invoke_failed = aux::time_now();
 	}
 
+	void update_endpoint(udp::endpoint const& ep) { endpoint = ep; }
+
 	bool allow_invoke() const
 	{
 		return invoke_fail_count < 10

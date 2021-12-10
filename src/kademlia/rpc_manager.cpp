@@ -427,7 +427,10 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 
 	if (m_destructing) return false;
 
-	e["y"] = "q";
+	if (e.find_key("y") == nullptr)
+	{
+		e["y"] = "q";
+	}
 	entry& a = e["a"];
 	add_our_id(a);
 

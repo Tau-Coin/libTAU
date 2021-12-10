@@ -332,8 +332,9 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			node_id to;
 			bool need_response;
 			bool need_push;
+			udp::endpoint to_ep;
 
-			std::tie(need_response, need_push) = incoming_request(m, e, &id, &to);
+			std::tie(need_response, need_push) = incoming_request(m, e, &id, &to, &to_ep);
 			if (need_response)
 			{
 				m_sock_man->send_packet(m_sock, e, m.addr, id);
@@ -341,7 +342,7 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			if (need_push)
 			{
 				// push message
-				push(to, m);
+				push(to, to_ep, m);
 			}
 			break;
 		}
@@ -353,7 +354,11 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			// associated with
 			if (s != m_sock) return;
 
-			incoming_push(m);
+			entry e;
+			node_id id;
+			incoming_push(m, e, &id);
+			m_sock_man->send_packet(m_sock, e, m.addr, id);
+
 			break;
 		}
 		case 'e':
@@ -565,10 +570,29 @@ void node::put_item(public_key const& pk
 	item i(pk, salt);
 	data_cb(i);
 
-	auto put_ta = std::make_shared<dht::put_data>(*this, item_target_id(salt, pk), to, f);
+	auto put_ta = std::make_shared<dht::put_data>(*this, item_target_id(to), to, f);
 	put_ta->set_data(std::move(i));
 
 	put_ta->start();
+}
+
+void node::get_peers(public_key const& pk, std::string const& salt)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		char hex_key[65];
+		char hex_salt[129]; // 64*2 + 1
+		aux::to_hex(pk.bytes, hex_key);
+		aux::to_hex(salt, hex_salt);
+		m_observer->log(dht_logger::node, "starting get_peers for [ key: %s, salt: %s ]"
+			, hex_key, hex_salt);
+	}
+#endif
+
+	auto ta = std::make_shared<dht::get_peers>(*this, item_target_id(salt, pk)
+		, get_peers::data_callback(), find_data::nodes_callback(), false);
+	ta->start();
 }
 
 void node::find_live_nodes(node_id const& id
@@ -775,7 +799,8 @@ entry write_nodes_entry(std::vector<node_entry> const& nodes)
 }
 
 // build response
-std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *peer, node_id *to)
+std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
+	, node_id *peer, node_id *to, udp::endpoint *to_ep)
 {
 	bool need_response = true;
 	bool need_push = false;
@@ -807,7 +832,6 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 	*peer = id;
 
 	// m_table.heard_about(id, m.addr);
-	m_table.node_seen(id, m.addr, 0xffff, read_only);
 
 	entry& reply = e["r"];
 	m_rpc.add_our_id(reply);
@@ -816,6 +840,13 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 	reply["p"] = m.addr.port();
 
 	string_view const query = top_level[0].string_value();
+
+	if (query != "put")
+	{
+		// for multi online devices, another devices with the same node id
+		// may be in our routing table.
+		m_table.node_seen(id, m.addr, 0xffff, read_only);
+	}
 
 	if (m_observer && m_observer->on_dht_request(query, m, e))
 		return std::make_tuple(need_response, need_push);
@@ -914,6 +945,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, error_string);
+			m_table.node_seen(id, m.addr, 0xffff, read_only);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -936,6 +968,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "message too big", 205);
+			m_table.node_seen(id, m.addr, 0xffff, read_only);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -946,6 +979,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "salt too big", 207);
+			m_table.node_seen(id, m.addr, 0xffff, read_only);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -965,6 +999,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "invalid token");
+			m_table.node_seen(id, m.addr, 0xffff, read_only);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -986,6 +1021,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid (negative) timestamp");
+				m_table.node_seen(id, m.addr, 0xffff, read_only);
 				return std::make_tuple(need_response, need_push);
 			}
 
@@ -994,6 +1030,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid signature", 206);
+				m_table.node_seen(id, m.addr, 0xffff, read_only);
 				return std::make_tuple(need_response, need_push);
 			}
 
@@ -1016,6 +1053,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "CAS mismatch", 301);
+					m_table.node_seen(id, m.addr, 0xffff, read_only);
 					return std::make_tuple(need_response, need_push);
 				}
 
@@ -1023,6 +1061,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "old timestamp", 302);
+					m_table.node_seen(id, m.addr, 0xffff, read_only);
 					return std::make_tuple(need_response, need_push);
 				}
 
@@ -1049,11 +1088,20 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 		{
 			node_id const receiver(msg_keys[9].string_ptr());
 			*to = receiver;
-			if (receiver != m_id)
+			auto ne = m_table.find_node(receiver);
+			if (receiver == m_id)
 			{
+				// push to ourself
+				need_push = true;
+			}
+			else if (ne != nullptr && ne->ep() != m.addr)
+			{
+				*to_ep = ne->ep();
 				need_push = true;
 			}
 		}
+
+		m_table.node_seen(id, m.addr, 0xffff, read_only);
 	}
 	else if (query == "get")
 	{
@@ -1138,29 +1186,65 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e, node_id *p
 	return std::make_tuple(need_response, need_push);
 }
 
-void node::push(node_id const& to, msg const& m)
+struct push_observer : observer
+{
+	push_observer(
+		std::shared_ptr<traversal_algorithm> algorithm
+		, udp::endpoint const& ep, node_id const& id)
+		: observer(std::move(algorithm), ep, id)
+	{}
+
+	void reply(msg const& m) override
+	{}
+};
+
+void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m)
 {
 	// don't push to ourself
-	if (to == m_id) return;
+	if (to == m_id)
+	{
+		incoming_push_ourself(m);
+		return;
+	}
 
-	// find node_entry from routing table
-	auto ne = m_table.find_node(to);
-	if (ne == nullptr) return;
 	// don't push this message to sender
-	if (ne->ep() == m.addr) return;
-
-	if (ne->last_queried + seconds(600) < aux::time_now()) return;
+	if (to_ep == m.addr) return;
 
 	// construct push protocol
 	entry e(m.message);
 	e["y"] = "p";
-	// TODO: remove transaction id
 
-	m_sock_man->send_packet(m_sock, e, ne->ep(), to);
+	// create a dummy traversal_algorithm
+	auto algo = std::make_shared<traversal_algorithm>(*this, to);
+	auto o = m_rpc.allocate_observer<push_observer>(std::move(algo), to_ep, to);
+	if (!o) return;
+#if TORRENT_USE_ASSERTS
+	o->m_in_constructor = false;
+#endif
+
+	m_rpc.invoke(e, to_ep, o);
 }
 
-void node::incoming_push(msg const& m)
+void node::incoming_push_ourself(msg const& m)
 {
+	entry e;
+	node_id peer;
+
+	incoming_push(m, e, &peer);
+}
+
+void node::incoming_push(msg const& m, entry& e, node_id *peer)
+{
+	e = entry(entry::dictionary_t);
+	e["y"] = "r";
+	e["t"] = m.message.dict_find_string_value("t");
+	e["ip"] = aux::endpoint_to_bytes(m.addr);
+
+	entry& reply = e["r"];
+	m_rpc.add_our_id(reply);
+	// mirror back the other node's external port
+	reply["p"] = m.addr.port();
+
 	static key_desc_t const top_desc[] = {
 		{"q", bdecode_node::string_t, 0, 0},
 		{"ro", bdecode_node::int_t, 0, key_desc_t::optional},
@@ -1177,6 +1261,7 @@ void node::incoming_push(msg const& m)
 	}
 
 	node_id const id(top_level[3].string_ptr());
+	*peer = id;
 	bdecode_node const arg_ent = top_level[2];
 	string_view const query = top_level[0].string_value();
 

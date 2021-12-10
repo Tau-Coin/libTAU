@@ -497,6 +497,12 @@ namespace libTAU::dht {
 				, _1, _2, ctx, cb), data_cb);
 	}
 
+	void dht_tracker::get_peers(public_key const& pk, std::string salt)
+	{
+		for (auto& n : m_nodes)
+			n.second.dht.get_peers(pk, salt);
+	}
+
 	void dht_tracker::find_live_nodes(sha256_hash const& id
 		, std::vector<node_entry>& l
 		, int count)

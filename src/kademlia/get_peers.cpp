@@ -106,9 +106,7 @@ get_peers::get_peers(
 	, m_data_callback(std::move(dcallback))
 	, m_noseeds(noseeds)
 {
-	// invoke as soon as possible
-	set_branch_factor(5);
-	set_invoke_limit(30);
+	set_invoke_limit(16);
 }
 
 char const* get_peers::name() const { return "get_peers"; }

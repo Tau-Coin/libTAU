@@ -129,6 +129,8 @@ namespace libTAU::dht {
 			, std::string salt = std::string()
 			, public_key const& to = public_key());
 
+		void get_peers(public_key const& pk, std::string salt = std::string());
+
 		// fills the vector with the count nodes from routing table buckets that
 		// are nearest to the given id.
 		// TODO: the strategy of finding live nodes from routing table.
