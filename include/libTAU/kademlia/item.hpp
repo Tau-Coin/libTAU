@@ -28,6 +28,8 @@ TORRENT_EXTRA_EXPORT sha256_hash item_target_id(span<char const> v);
 TORRENT_EXTRA_EXPORT sha256_hash item_target_id(span<char const> salt
 	, public_key const& pk);
 
+TORRENT_EXTRA_EXPORT sha256_hash item_target_id(public_key const& pk);
+
 TORRENT_EXTRA_EXPORT bool verify_mutable_item(
 	span<char const> v
 	, span<char const> salt

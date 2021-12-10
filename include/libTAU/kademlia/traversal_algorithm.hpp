@@ -105,6 +105,8 @@ protected:
 	// the min distance of the endpoint which is allowed into m_results.
 	int allow_distance() const;
 
+	void set_fixed_distance(int distance) { m_fixed_distance = distance; }
+
 	int invoke_limit() const { return m_invoke_limit; }
 
 	node& m_node;
@@ -124,6 +126,8 @@ protected:
 	// This flag indicates traversal algorithm directly invokes all requests
 	// and discard corresponding responses.
 	bool m_discard_response = false;
+
+	int m_fixed_distance = -1;
 
 	int num_sorted_results() const { return m_sorted_results; }
 

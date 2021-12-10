@@ -98,6 +98,15 @@ sha256_hash item_target_id(span<char const> salt
 	return target;
 }
 
+// calculate the target hash for a mutable item.
+sha256_hash item_target_id(public_key const& pk)
+{
+	sha256_hash target;
+	std::memcpy(&target[0], pk.bytes.begin(), 32);
+
+	return target;
+}
+
 bool verify_mutable_item(
 	span<char const> v
 	, span<char const> salt

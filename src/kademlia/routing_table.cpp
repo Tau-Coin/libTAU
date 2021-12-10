@@ -755,9 +755,11 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 	if (j != b.end())
 	{
 		// a new IP address just claimed this node-ID
-		// ignore it
+		// update endpoint
 		if (j->addr() != e.addr() || j->port() != e.port())
-			return failed_to_add;
+		{
+			j->update_endpoint(e.ep());
+		}
 
 		// we already have the node in our bucket
 		TORRENT_ASSERT(j->id == e.id && j->ep() == e.ep());
@@ -776,9 +778,11 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 	if (j != rb.end())
 	{
 		// a new IP address just claimed this node-ID
-		// ignore it
+		// update endpoint
 		if (j->addr() != e.addr() || j->port() != e.port())
-			return failed_to_add;
+		{
+			j->update_endpoint(e.ep());
+		}
 
 		TORRENT_ASSERT(j->id == e.id && j->ep() == e.ep());
 		j->timeout_count = 0;

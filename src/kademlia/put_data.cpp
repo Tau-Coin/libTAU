@@ -60,6 +60,12 @@ char const* put_data::name() const { return "put_data"; }
 
 void put_data::start()
 {
+	// for "XX" channel, set fixed allow distance into 255.
+	if (m_data.is_mutable() && m_data.pk() == m_to)
+	{
+		set_fixed_distance(255);
+	}
+
 	// if the user didn't add seed-nodes manually, grab k (bucket size)
 	// nodes from routing table.
 	if (m_results.empty() && !m_direct_invoking)
@@ -70,6 +76,13 @@ void put_data::start()
 		// select a random node_entry
 		if (nodes.size() > 0)
 		{
+			// if the first node is the target node, add it.
+			auto const& first = nodes[0];
+			if (first.id == target())
+			{
+				add_entry(first.id, first.ep(), observer::flag_initial);
+			}
+
 			std::uint32_t const range = nodes.size() >= invoke_limit() ?
 					invoke_limit() - 1 : nodes.size() - 1;
 			std::uint32_t const r = aux::random(range);
