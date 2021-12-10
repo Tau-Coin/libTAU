@@ -1262,7 +1262,7 @@ namespace {
 				{
 					m_dht->stop();
 					m_dht->new_socket(m_listen_sockets.back());
-
+					//TODO: get and add nodes from former node's routing table
 					for (auto const& n : m_dht_router_nodes)
 					{
 						m_dht->add_router_node(n);
@@ -2781,8 +2781,8 @@ namespace {
 			if (m_outstanding_router_lookups == 0) 
 			{
 				start_dht();
-				//start_communication();
-				start_blockchain();
+				start_communication();
+				//start_blockchain();
 			}
 			return;
 		}
@@ -2822,8 +2822,8 @@ namespace {
 		if (m_outstanding_router_lookups == 0)
 		{
 			start_dht();
-			//start_communication();
-			start_blockchain();
+			start_communication();
+			//start_blockchain();
 		}
 
 		m_alerts.emplace_alert<session_start_over_alert>(true);
