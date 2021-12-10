@@ -71,7 +71,13 @@ namespace libTAU::blockchain {
 
     private:
 
+        bool add_tx_to_fee_pool(const transaction& tx);
+
+        bool add_tx_to_time_pool(const transaction& tx);
+
         void remove_min_fee_tx();
+
+        void remove_oldest_tx();
 
         // blockchain db
         repository* m_repository{};
@@ -90,6 +96,9 @@ namespace libTAU::blockchain {
 
         // ordered by timestamp
         std::set<tx_entry_with_timestamp> m_ordered_txs_by_timestamp;
+
+        // one account one tx
+        std::map<dht::public_key, sha256_hash> m_account_tx_by_timestamp;
 
         // active peers found from tx
         std::queue<dht::public_key> m_active_peers;

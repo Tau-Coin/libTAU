@@ -84,31 +84,11 @@ namespace libTAU::blockchain {
         return txs;
     }
 
-    bool tx_pool::add_tx(const transaction& tx) {
-        if (tx.empty())
-            return false;
-
-        if (!tx.verify_signature())
-            return false;
-
-        m_active_peers.push(tx.sender());
-        if (m_active_peers.size() > tx_pool_max_active_friends_size) {
-            m_active_peers.pop();
-        }
-
-        m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
-        m_all_txs_by_timestamp[tx.sha256()] = tx;
-        if (m_ordered_txs_by_timestamp.size() > tx_pool_max_size_by_timestamp) {
-            auto it = m_ordered_txs_by_timestamp.begin();
-            m_all_txs_by_timestamp.erase(it->txid());
-            m_ordered_txs_by_timestamp.erase(it);
-        }
-
+    bool tx_pool::add_tx_to_fee_pool(const transaction &tx) {
         // validate tx state
         auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
         if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
             return false;
-
 
         auto it_txid = m_account_tx_by_fee.find(tx.sender());
         // find in local
@@ -135,6 +115,64 @@ namespace libTAU::blockchain {
         if (m_all_txs_by_fee.size() > tx_pool_max_size_by_fee) {
             remove_min_fee_tx();
         }
+
+        return true;
+    }
+
+    bool tx_pool::add_tx_to_time_pool(const transaction &tx) {
+        auto it_txid = m_account_tx_by_timestamp.find(tx.sender());
+        // find in local
+        if (it_txid != m_account_tx_by_timestamp.end()) { // has in local
+            auto it_tx = m_all_txs_by_timestamp.find(it_txid->second);
+            if (it_tx != m_all_txs_by_timestamp.end()) {
+                auto old_tx = it_tx->second;
+                if (!old_tx.empty()) {
+                    if (tx.timestamp() >= old_tx.timestamp()) {
+                        // replace old tx with new one
+                        m_all_txs_by_timestamp[tx.sha256()] = tx;
+                        m_account_tx_by_timestamp[tx.sender()] = tx.sha256();
+                        m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(old_tx.sha256(), old_tx.timestamp()));
+                        m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
+                    }
+                }
+            }
+        } else { // insert if cannot find in local
+            m_all_txs_by_timestamp[tx.sha256()] = tx;
+            m_account_tx_by_timestamp[tx.sender()] = tx.sha256();
+            m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
+        }
+
+        if (m_all_txs_by_timestamp.size() > tx_pool_max_size_by_timestamp) {
+            remove_oldest_tx();
+        }
+
+        return true;
+    }
+
+    bool tx_pool::add_tx(const transaction& tx) {
+        if (tx.empty())
+            return false;
+
+        if (!tx.verify_signature())
+            return false;
+
+        m_active_peers.push(tx.sender());
+        if (m_active_peers.size() > tx_pool_max_active_friends_size) {
+            m_active_peers.pop();
+        }
+
+//        m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
+//        m_all_txs_by_timestamp[tx.sha256()] = tx;
+//        if (m_ordered_txs_by_timestamp.size() > tx_pool_max_size_by_timestamp) {
+//            auto it = m_ordered_txs_by_timestamp.begin();
+//            m_all_txs_by_timestamp.erase(it->txid());
+//            m_ordered_txs_by_timestamp.erase(it);
+//        }
+
+        add_tx_to_time_pool(tx);
+
+        if (!add_tx_to_fee_pool(tx))
+            return false;
 
         return true;
     }
@@ -187,6 +225,16 @@ namespace libTAU::blockchain {
             m_account_tx_by_fee.erase(it_tx->second.sender());
         }
         m_ordered_txs_by_fee.erase(it);
+    }
+
+    void tx_pool::remove_oldest_tx() {
+        auto it = m_ordered_txs_by_timestamp.begin();
+        auto it_tx = m_all_txs_by_timestamp.find(it->txid());
+        if (it_tx != m_all_txs_by_timestamp.end()) {
+            m_all_txs_by_timestamp.erase(it_tx);
+            m_account_tx_by_timestamp.erase(it_tx->second.sender());
+        }
+        m_ordered_txs_by_timestamp.erase(it);
     }
 
     transaction tx_pool::get_transaction_by_account(const dht::public_key& pubKey) const {
@@ -259,6 +307,7 @@ namespace libTAU::blockchain {
         m_account_tx_by_fee.clear();
         m_all_txs_by_timestamp.clear();
         m_ordered_txs_by_timestamp.clear();
+        m_account_tx_by_timestamp.clear();
     }
 
     void tx_pool::recheck_account_tx(const dht::public_key &pubKey) {
