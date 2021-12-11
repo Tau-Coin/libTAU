@@ -37,6 +37,9 @@ namespace blockchain {
     // default refresh time of main task(100)(ms)
     constexpr int blockchain_default_refresh_time = 500;
 
+    // max access peer frequency(interval: 3000 ms)
+    constexpr int blockchain_max_access_peer_interval = 3000;
+
     // salt length (first 16 bytes of public key)
     constexpr int blockchain_salt_length = 16;
 
@@ -149,7 +152,7 @@ namespace blockchain {
         bool load_chain(const aux::bytes &chain_id);
 
         // refresh unchoked peers if timeout
-        void try_to_refresh_unchoked_peers(const aux::bytes &chain_id);
+//        void try_to_refresh_unchoked_peers(const aux::bytes &chain_id);
 
         // select a chain randomly
         aux::bytes select_chain_randomly();
@@ -158,7 +161,7 @@ namespace blockchain {
         dht::public_key select_peer_randomly(const aux::bytes &chain_id);
 
         // select an un-choked peer randomly
-        dht::public_key select_unchoked_peer_randomly(const aux::bytes &chain_id);
+//        dht::public_key select_unchoked_peer_randomly(const aux::bytes &chain_id);
 
         // select a peer randomly
         std::set<dht::public_key> select_unchoked_peers(const aux::bytes &chain_id);
@@ -221,7 +224,8 @@ namespace blockchain {
         void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // publish online/new message signal to a given peer
-        void publish_signal(const aux::bytes &chain_id);
+        void publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
+                            const blockchain_signal &peer_signal = blockchain_signal());
 
         // process signal from dht
         void process_signal(const blockchain_signal & signal, const aux::bytes &chain_id, const dht::public_key &peer);
@@ -287,14 +291,17 @@ namespace blockchain {
 //        // all chain gossip peers
 //        std::map<aux::bytes, std::set<dht::public_key>> m_chain_gossip_peers;
 
-        // un-choked peers
-        std::map<aux::bytes, std::set<dht::public_key>> m_unchoked_peers;
+//        // un-choked peers
+//        std::map<aux::bytes, std::set<dht::public_key>> m_unchoked_peers;
+//
+//        // un-choked peers signal
+//        std::map<aux::bytes, std::map<dht::public_key, blockchain_signal>> m_unchoked_peer_signal;
+//
+//        // update un-choked peers time(s)
+//        std::map<aux::bytes, std::int64_t> m_update_peer_time;
 
-        // un-choked peers signal
-        std::map<aux::bytes, std::map<dht::public_key, blockchain_signal>> m_unchoked_peer_signal;
-
-        // update un-choked peers time(s)
-        std::map<aux::bytes, std::int64_t> m_update_peer_time;
+        // the time that last got data from dht(ms)
+        std::map<aux::bytes, std::int64_t> m_last_got_data_time;
 
         // block cache todo:100000?
         std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;

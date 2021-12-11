@@ -117,6 +117,8 @@ namespace libTAU::blockchain {
 
         std::string get_encode() const;
 
+        bool empty() const { return m_chain_id.empty(); }
+
         // @returns a pretty-printed string representation of signal structure
         std::string to_string() const;
 

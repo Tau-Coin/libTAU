@@ -93,6 +93,9 @@ namespace libTAU::blockchain {
             // add peer into db
             for (auto const &peer: peers) {
                 log("INFO: chain:%s, initial peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                if (!m_repository->add_peer_in_peer_db(chain_id, peer)) {
+                    log("INFO: chain:%s, insert peer:%s fail in peer db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                }
                 if (!m_repository->add_peer_in_gossip_peer_db(chain_id, peer)) {
                     log("INFO: chain:%s, insert gossip peer:%s fail in gossip db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 }
@@ -177,9 +180,10 @@ namespace libTAU::blockchain {
         m_tx_pools.clear();
 //        m_chain_peers.clear();
 //        m_chain_gossip_peers.clear();
-        m_unchoked_peers.clear();
-        m_unchoked_peer_signal.clear();
-        m_update_peer_time.clear();
+//        m_unchoked_peers.clear();
+//        m_unchoked_peer_signal.clear();
+//        m_update_peer_time.clear();
+        m_last_got_data_time.clear();
         m_blocks.clear();
         m_head_blocks.clear();
         m_tail_blocks.clear();
@@ -195,9 +199,10 @@ namespace libTAU::blockchain {
         m_tx_pools[chain_id].clear();
 //        m_chain_peers[chain_id].clear();
 //        m_chain_gossip_peers[chain_id].clear();
-        m_unchoked_peers[chain_id].clear();
-        m_unchoked_peer_signal[chain_id].clear();
-        m_update_peer_time.erase(chain_id);
+//        m_unchoked_peers[chain_id].clear();
+//        m_unchoked_peer_signal[chain_id].clear();
+//        m_update_peer_time.erase(chain_id);
+        m_last_got_data_time.erase(chain_id);
         m_blocks[chain_id].clear();
         m_head_blocks.erase(chain_id);
         m_tail_blocks.erase(chain_id);
@@ -332,40 +337,45 @@ namespace libTAU::blockchain {
 
                 // 6. exchange chain info with others
                 // check if need to refresh unchoed peers
-                try_to_refresh_unchoked_peers(chain_id);
+//                try_to_refresh_unchoked_peers(chain_id);
 
                 // get four unchoked peers
-                auto& unchoked_peers = m_unchoked_peers[chain_id];
-                std::vector<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
-                // get one peer from gossip db
-//                auto p = select_peer_randomly(chain_id);
-                auto p = m_repository->get_gossip_peer_randomly(chain_id);
-                if (!(p == dht::public_key())) {
-                    log("gossip peer:%s", aux::toHex(p.bytes).c_str());
-                    peers.push_back(p);
-                }
-                // get one peer from tx pool
-                std::set<dht::public_key> tx_active_peers = m_tx_pools[chain_id].get_active_peers();
-                std::vector<dht::public_key> active_peers(tx_active_peers.begin(), tx_active_peers.end());
-                if (!active_peers.empty()) {
-                    // 产生随机数
-                    srand(get_total_milliseconds());
-                    auto index = rand() % active_peers.size();
-                    peers.push_back(active_peers[index]);
-                }
+//                auto& unchoked_peers = m_unchoked_peers[chain_id];
+//                std::vector<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
+//                // get one peer from gossip db
+////                auto p = select_peer_randomly(chain_id);
+//                auto p = m_repository->get_gossip_peer_randomly(chain_id);
+//                if (!(p == dht::public_key())) {
+//                    log("gossip peer:%s", aux::toHex(p.bytes).c_str());
+//                    peers.push_back(p);
+//                }
+//                // get one peer from tx pool
+//                std::set<dht::public_key> tx_active_peers = m_tx_pools[chain_id].get_active_peers();
+//                std::vector<dht::public_key> active_peers(tx_active_peers.begin(), tx_active_peers.end());
+//                if (!active_peers.empty()) {
+//                    // 产生随机数
+//                    srand(get_total_milliseconds());
+//                    auto index = rand() % active_peers.size();
+//                    peers.push_back(active_peers[index]);
+//                }
+//
+//                log("peer size: %zu", peers.size());
+//                // select one randomly from 6 peers to get
+//                if (!peers.empty())
+//                {
+//                    // 产生随机数
+//                    srand(get_total_milliseconds());
+//                    auto index = rand() % peers.size();
+//                    request_signal(chain_id, peers[index]);
+//                }
 
-                log("peer size: %zu", peers.size());
-                // select one randomly from 6 peers to get
-                if (!peers.empty())
-                {
-                    // 产生随机数
-                    srand(get_total_milliseconds());
-                    auto index = rand() % peers.size();
-                    request_signal(chain_id, peers[index]);
+                // current time
+                auto now = get_total_milliseconds();
+                if (now > m_last_got_data_time[chain_id] + blockchain_max_access_peer_interval) {
+                    // publish signal
+                    auto peer = select_peer_randomly(chain_id);
+                    publish_signal(chain_id, peer);
                 }
-
-                // publish signal
-                publish_signal(chain_id);
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
@@ -391,18 +401,18 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::try_to_refresh_unchoked_peers(const aux::bytes &chain_id) {
-        std::int64_t now = get_total_milliseconds() / 1000; // second
-        // check if has been updated during this 5 min
-        if (now / DEFAULT_BLOCK_TIME != m_update_peer_time[chain_id]) {
-            auto peers = select_unchoked_peers(chain_id);
-            m_unchoked_peers[chain_id] = peers;
-
-            m_update_peer_time[chain_id] = now / DEFAULT_BLOCK_TIME;
-
-            m_unchoked_peer_signal[chain_id].clear();
-        }
-    }
+//    void blockchain::try_to_refresh_unchoked_peers(const aux::bytes &chain_id) {
+//        std::int64_t now = get_total_milliseconds() / 1000; // second
+//        // check if has been updated during this 5 min
+//        if (now / DEFAULT_BLOCK_TIME != m_update_peer_time[chain_id]) {
+//            auto peers = select_unchoked_peers(chain_id);
+//            m_unchoked_peers[chain_id] = peers;
+//
+//            m_update_peer_time[chain_id] = now / DEFAULT_BLOCK_TIME;
+//
+//            m_unchoked_peer_signal[chain_id].clear();
+//        }
+//    }
 
     aux::bytes blockchain::select_chain_randomly() {
         aux::bytes chain_id;
@@ -435,21 +445,21 @@ namespace libTAU::blockchain {
         return m_repository->get_peer_randomly(chain_id);
     }
 
-    dht::public_key blockchain::select_unchoked_peer_randomly(const aux::bytes &chain_id) {
-        dht::public_key peer{};
-        auto& unchoked_peers = m_unchoked_peers[chain_id];
-        std::vector<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
-
-        if (!peers.empty())
-        {
-            // 产生随机数
-            srand(get_total_milliseconds());
-            auto index = rand() % peers.size();
-            peer = peers[index];
-        }
-
-        return peer;
-    }
+//    dht::public_key blockchain::select_unchoked_peer_randomly(const aux::bytes &chain_id) {
+//        dht::public_key peer{};
+//        auto& unchoked_peers = m_unchoked_peers[chain_id];
+//        std::vector<dht::public_key> peers(unchoked_peers.begin(), unchoked_peers.end());
+//
+//        if (!peers.empty())
+//        {
+//            // 产生随机数
+//            srand(get_total_milliseconds());
+//            auto index = rand() % peers.size();
+//            peer = peers[index];
+//        }
+//
+//        return peer;
+//    }
 
     std::set<dht::public_key> blockchain::select_unchoked_peers(const aux::bytes &chain_id) {
         std::set<dht::public_key> peers;
@@ -1510,7 +1520,8 @@ namespace libTAU::blockchain {
         dht_get_mutable_item(chain_id, peer.bytes, salt, m_latest_item_timestamp[chain_id][peer]);
     }
 
-    void blockchain::publish_signal(const aux::bytes &chain_id) {
+    void blockchain::publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
+                                    const blockchain_signal &peer_signal) {
         // current time(ms)
         auto now = get_total_milliseconds();
 
@@ -1556,19 +1567,20 @@ namespace libTAU::blockchain {
         std::set<immutable_data_info> block_set;
         std::set<immutable_data_info> tx_set;
 
-        // select a signal from an unchoked peer randomly
-        dht::public_key peer;
-        auto &peer_signals = m_unchoked_peer_signal[chain_id];
-        if (!peer_signals.empty()) {
-            // 产生随机数
-            srand(now);
-            auto index = rand() % peer_signals.size();
-            auto itor = peer_signals.begin();
-            for (int i = 0; i < index && itor != peer_signals.end(); i++) {
-                ++itor;
-            }
-            peer = itor->first;
-            auto peer_signal = itor->second;
+        if (!peer_signal.empty()) {
+            // select a signal from an unchoked peer randomly
+//        dht::public_key peer;
+//        auto &peer_signals = m_unchoked_peer_signal[chain_id];
+//        if (!peer_signals.empty()) {
+//            // 产生随机数
+//            srand(now);
+//            auto index = rand() % peer_signals.size();
+//            auto itor = peer_signals.begin();
+//            for (int i = 0; i < index && itor != peer_signals.end(); i++) {
+//                ++itor;
+//            }
+//            peer = itor->first;
+//            auto peer_signal = itor->second;
 
             if (!peer_signal.demand_block_hash_set().empty()) {
                 // select one demand randomly to response to for selected peer
@@ -1576,7 +1588,7 @@ namespace libTAU::blockchain {
                 std::vector<sha256_hash> block_hashes(demand_block_hash_set.begin(), demand_block_hash_set.end());
                 // 产生随机数
                 srand(now);
-                index = rand() % block_hashes.size();
+                auto index = rand() % block_hashes.size();
                 auto demand_block_hash = block_hashes[index];
                 auto demand_block = m_repository->get_block_by_hash(demand_block_hash);
                 if (!demand_block.empty()) {
@@ -1655,6 +1667,7 @@ namespace libTAU::blockchain {
                     }
                 }
             }
+//        }
         }
 
         // get my demand
@@ -1809,6 +1822,9 @@ namespace libTAU::blockchain {
         // current time
         auto now = get_total_milliseconds();
 
+        // record last time got data from dht
+        m_last_got_data_time[chain_id] = now;
+
         auto last_time = m_latest_signal_time[chain_id][peer];
         // update latest time
         if (signal.timestamp() > last_time) {
@@ -1877,10 +1893,13 @@ namespace libTAU::blockchain {
         }
 
         // save signal
-        auto it = m_unchoked_peers[chain_id].find(peer);
-        if (it != m_unchoked_peers[chain_id].end()) {
-            m_unchoked_peer_signal[chain_id][peer] = signal;
-        }
+//        auto it = m_unchoked_peers[chain_id].find(peer);
+//        if (it != m_unchoked_peers[chain_id].end()) {
+//            m_unchoked_peer_signal[chain_id][peer] = signal;
+//        }
+
+        // response signal
+        publish_signal(chain_id, peer, signal);
     }
 
     // callback for dht_immutable_get
