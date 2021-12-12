@@ -2077,9 +2077,9 @@ namespace libTAU::blockchain {
         // follow and load chain
         followChain(TAU_CHAIN_ID, peers);
 
-        for (auto &blk: blocks) {
-            log("Process tau chain block:%s", blk.to_string().c_str());
-            process_block(TAU_CHAIN_ID, blk);
+        for (auto it = blocks.rbegin(); it != blocks.rend(); ++it) {
+            log("Process tau chain block:%s", it->to_string().c_str());
+            process_block(TAU_CHAIN_ID, *it);
         }
 
         return true;
@@ -2136,8 +2136,8 @@ namespace libTAU::blockchain {
         // follow and load chain
         followChain(chain_id, peers);
 
-        for (auto &blk: blocks) {
-            process_block(chain_id, blk);
+        for (auto it = blocks.rbegin(); it != blocks.rend(); ++it) {
+            process_block(chain_id, *it);
         }
 
         return true;
