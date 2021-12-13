@@ -249,7 +249,7 @@ private:
 
 	void push(node_id const& to, udp::endpoint const& to_ep, msg const& m);
 
-	void incoming_push(msg const& m, entry& e, node_id *peer);
+	void incoming_push(msg const& m, entry& e, node_id *peer, item& i);
 
 	void incoming_push_ourself(msg const& m);
 

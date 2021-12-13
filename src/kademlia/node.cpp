@@ -356,8 +356,10 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 
 			entry e;
 			node_id id;
-			incoming_push(m, e, &id);
+			item i;
+			incoming_push(m, e, &id, i);
 			m_sock_man->send_packet(m_sock, e, m.addr, id);
+			if (m_observer && !i.empty()) m_observer->on_dht_item(i);
 
 			break;
 		}
@@ -1229,11 +1231,13 @@ void node::incoming_push_ourself(msg const& m)
 {
 	entry e;
 	node_id peer;
+	item i;
 
-	incoming_push(m, e, &peer);
+	incoming_push(m, e, &peer, i);
+	if (m_observer && !i.empty()) m_observer->on_dht_item(i);
 }
 
-void node::incoming_push(msg const& m, entry& e, node_id *peer)
+void node::incoming_push(msg const& m, entry& e, node_id *peer, item& i)
 {
 	e = entry(entry::dictionary_t);
 	e["y"] = "r";
@@ -1336,9 +1340,7 @@ void node::incoming_push(msg const& m, entry& e, node_id *peer)
 		{
 			error_code errc;
 			auto v = bdecode(buf.first(buf.size()), errc);
-			item i(v);
-			// transfer the item
-			if (m_observer) m_observer->on_dht_item(i);
+			i.assign(v);
 		}
 		else
 		{
@@ -1364,10 +1366,7 @@ void node::incoming_push(msg const& m, entry& e, node_id *peer)
 
 			error_code errc;
 			auto v = bdecode(buf.first(buf.size()), errc);
-			item i;
 			i.assign(v, salt, ts, pk, sig);
-			// transfer the item
-			if (m_observer) m_observer->on_dht_item(i);
         }
 	}
 }
