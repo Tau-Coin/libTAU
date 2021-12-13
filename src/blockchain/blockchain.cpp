@@ -1791,7 +1791,7 @@ namespace libTAU::blockchain {
             }
         }
 
-        if (peer_signal.empty() && demand_block_hash_set.empty()) {
+        if (!peer_signal.empty() && block_set.empty() && tx_set.empty() && demand_block_hash_set.empty()) {
 
             // offer tx pool info
 //        aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array_by_fee();
