@@ -1522,6 +1522,8 @@ namespace libTAU::blockchain {
 
     void blockchain::publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
                                     const blockchain_signal &peer_signal) {
+        log("INFO: ----chain[%s] publish to peer[%s], signal[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), peer_signal.to_string().c_str());
         // current time(ms)
         auto now = get_total_milliseconds();
 
@@ -1789,29 +1791,33 @@ namespace libTAU::blockchain {
             }
         }
 
-        // offer tx pool info
+        if (peer_signal.empty() && demand_block_hash_set.empty()) {
+
+            // offer tx pool info
 //        aux::bytes tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array_by_fee();
-        aux::bytes latest_tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp();
+            aux::bytes latest_tx_hash_prefix_array = m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp();
 
-        // offer a peer from chain
-        auto p = select_peer_randomly(chain_id);
+            // offer a peer from chain
+            auto p = select_peer_randomly(chain_id);
 
-        // make signal
-        blockchain_signal signal(chain_id, now, consensus_point_vote,
-                                 head_block_info, voting_point_block_info,
-                                 block_set, tx_set, demand_block_hash_set,
-                                 latest_tx_hash_prefix_array, p);
+            // make signal
+            blockchain_signal signal(chain_id, now, consensus_point_vote,
+                                     head_block_info, voting_point_block_info,
+                                     block_set, tx_set, demand_block_hash_set,
+                                     latest_tx_hash_prefix_array, p);
 
-        dht::public_key * pk = m_ses.pubkey();
-        dht::secret_key * sk = m_ses.serkey();
+            dht::public_key *pk = m_ses.pubkey();
+            dht::secret_key *sk = m_ses.serkey();
 
-        auto salt = make_salt(chain_id);
+            auto salt = make_salt(chain_id);
 
-        log("INFO: Publish signal [%s] on chain[%s], salt:[%s]", signal.to_string().c_str(),
-            aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log("INFO: Publish signal [%s] on chain[%s], salt:[%s]", signal.to_string().c_str(),
+                aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
 
-        dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-                , pk->bytes, sk->bytes, signal.get_entry()), salt, peer);
+            dht_put_mutable_item(pk->bytes,
+                                 std::bind(&put_mutable_data, _1, _2, _3, _4, pk->bytes, sk->bytes, signal.get_entry()),
+                                 salt, peer);
+        }
     }
 
     void blockchain::process_signal(const blockchain_signal &signal, const aux::bytes &chain_id,

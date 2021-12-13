@@ -187,7 +187,7 @@ namespace libTAU::blockchain {
     }
 
     std::ostream &operator<<(std::ostream &os, const blockchain_signal &signal) {
-        os << "m_chain_id: " << aux::toHex(signal.m_chain_id) << "m_timestamp: " << signal.m_timestamp
+        os << "m_chain_id: " << aux::toHex(signal.m_chain_id) << " m_timestamp: " << signal.m_timestamp
            << " m_consensus_point_vote: " << signal.m_consensus_point_vote << " m_best_tip_block_info: "
            << signal.m_head_block_info << " m_consensus_point_block_info: " << signal.m_voting_point_block_info
 //           << " m_tx_hash_prefix_array: " << aux::toHex(signal.m_tx_hash_prefix_array)
