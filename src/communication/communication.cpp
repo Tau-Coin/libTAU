@@ -432,7 +432,7 @@ namespace libTAU {
                     log("INFO: Select peer:%s", aux::toHex(peer.bytes).c_str());
                     m_peer_access_times[peer] = current_time;
 
-                    request_signal(peer);
+//                    request_signal(peer);
                     publish_signal(peer);
                 }
 
