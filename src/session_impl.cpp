@@ -1419,6 +1419,34 @@ namespace {
 			return -1;
 	}
 
+	udp::endpoint session_impl::external_udp_endpoint() const
+	{
+		// take the first v4 IP
+		for (auto const& i : m_listen_sockets)
+		{
+			address external_addr = i->external_address.external_address();
+			address& upnp_mapping_addr = i->udp_address_mapping[portmap_transport::upnp];
+			address& natpmp_mapping_addr = i->udp_address_mapping[portmap_transport::natpmp];
+
+			if (!external_addr.is_unspecified() && external_addr.is_v4())
+			{
+				if (external_addr == upnp_mapping_addr
+					&& i->udp_port_mapping[portmap_transport::upnp].port != 0)
+				{
+					return {external_addr, i->udp_port_mapping[portmap_transport::upnp].port};
+				}
+
+				if (external_addr == natpmp_mapping_addr
+					&& i->udp_port_mapping[portmap_transport::natpmp].port != 0)
+				{
+					return {external_addr, i->udp_port_mapping[portmap_transport::natpmp].port};
+				}
+			}
+		}
+
+		return {address(), 0};
+	}
+
 	void session_impl::send_udp_packet_hostname(std::weak_ptr<utp_socket_interface> sock
 		, char const* hostname
 		, int const port
@@ -2426,7 +2454,11 @@ namespace {
 			listen_socket->external_address.cast_vote(external_ip, source_router, address());
 		}
 
-		if (proto == portmap_protocol::udp) listen_socket->udp_port_mapping[transport].port = port;
+		if (proto == portmap_protocol::udp)
+		{
+			listen_socket->udp_port_mapping[transport].port = port;
+			listen_socket->udp_address_mapping[transport] = external_ip;
+		}
 
 		if (!ec && m_alerts.should_post<portmap_alert>())
 		{
