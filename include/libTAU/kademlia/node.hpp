@@ -245,11 +245,11 @@ private:
 	std::set<traversal_algorithm*> m_running_requests;
 
 	std::tuple<bool, bool> incoming_request(msg const&, entry&
-		, node_id *peer, node_id *to, udp::endpoint *to_ep);
+		, node_id *from, node_id *to, udp::endpoint *to_ep);
 
 	void push(node_id const& to, udp::endpoint const& to_ep, msg const& m);
 
-	void incoming_push(msg const& m, entry& e, node_id *peer, item& i);
+	void incoming_push(msg const& m, entry& e, node_id *from, item& i);
 
 	void incoming_push_ourself(msg const& m);
 
