@@ -311,7 +311,7 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			TORRENT_ASSERT(m.message.dict_find_string_value("y") == "q");
 			// When a DHT node enters the read-only state, it no longer
 			// responds to 'query' messages that it receives.
-			if (m_settings.get_bool(settings_pack::dht_read_only)) break;
+			// if (m_settings.get_bool(settings_pack::dht_read_only)) break;
 
 			// ignore packets arriving on a different interface than the one we're
 			// associated with
@@ -328,16 +328,16 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			 */
 
 			entry e;
-			node_id id;
+			node_id from;
 			node_id to;
 			bool need_response;
 			bool need_push;
 			udp::endpoint to_ep;
 
-			std::tie(need_response, need_push) = incoming_request(m, e, &id, &to, &to_ep);
+			std::tie(need_response, need_push) = incoming_request(m, e, &from, &to, &to_ep);
 			if (need_response)
 			{
-				m_sock_man->send_packet(m_sock, e, m.addr, id);
+				m_sock_man->send_packet(m_sock, e, m.addr, from);
 			}
 			if (need_push)
 			{
@@ -355,10 +355,10 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			if (s != m_sock) return;
 
 			entry e;
-			node_id id;
+			node_id from;
 			item i;
-			incoming_push(m, e, &id, i);
-			m_sock_man->send_packet(m_sock, e, m.addr, id);
+			incoming_push(m, e, &from, i);
+			m_sock_man->send_packet(m_sock, e, m.addr, from);
 			if (m_observer && !i.empty()) m_observer->on_dht_item(i);
 
 			break;
@@ -802,7 +802,7 @@ entry write_nodes_entry(std::vector<node_entry> const& nodes)
 
 // build response
 std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
-	, node_id *peer, node_id *to, udp::endpoint *to_ep)
+	, node_id *from, node_id *to, udp::endpoint *to_ep)
 {
 	bool need_response = true;
 	bool need_push = false;
@@ -831,7 +831,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 	bdecode_node const arg_ent = top_level[2];
 	bool const read_only = top_level[1] && top_level[1].int_value() != 0;
 	node_id const id(top_level[3].string_ptr());
-	*peer = id;
+	*from = id;
 
 	// m_table.heard_about(id, m.addr);
 
@@ -1103,6 +1103,8 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 			}
 		}
 
+		// for multi online devices, another devices with the same node id
+		// may be in our routing table.
 		m_table.node_seen(id, m.addr, 0xffff, read_only);
 	}
 	else if (query == "get")
@@ -1230,14 +1232,14 @@ void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m)
 void node::incoming_push_ourself(msg const& m)
 {
 	entry e;
-	node_id peer;
+	node_id from;
 	item i;
 
-	incoming_push(m, e, &peer, i);
+	incoming_push(m, e, &from, i);
 	if (m_observer && !i.empty()) m_observer->on_dht_item(i);
 }
 
-void node::incoming_push(msg const& m, entry& e, node_id *peer, item& i)
+void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 {
 	e = entry(entry::dictionary_t);
 	e["y"] = "r";
@@ -1265,7 +1267,7 @@ void node::incoming_push(msg const& m, entry& e, node_id *peer, item& i)
 	}
 
 	node_id const id(top_level[3].string_ptr());
-	*peer = id;
+	*from = id;
 	bdecode_node const arg_ent = top_level[2];
 	string_view const query = top_level[0].string_value();
 

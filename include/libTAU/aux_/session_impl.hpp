@@ -221,6 +221,8 @@ namespace aux {
 		// which their ports will be announced to peers
 		aux::array<listen_port_mapping, 2, portmap_transport> udp_port_mapping;
 
+		aux::array<address, 2, portmap_transport> udp_address_mapping;
+
 		// indicates whether this is an SSL listen socket or not
 		transport ssl = transport::plaintext;
 
@@ -490,6 +492,8 @@ namespace aux {
 
 			bool is_dht_running() const { return (m_dht.get() != nullptr); }
 			int external_udp_port(address const& local_address) const override;
+
+			udp::endpoint external_udp_endpoint() const;
 
 			void start_ip_notifier();
 			void start_natpmp();
