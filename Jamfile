@@ -860,7 +860,11 @@ KADEMLIA_SOURCES =
 	dht_settings
 	;
 
-COMMUNICATION_SOURECS =
+COMMON_SOURCES =
+    message_entry
+    ;
+
+COMMUNICATION_SOURCES =
 	online_signal
 	message
 	message_db_impl
@@ -869,7 +873,7 @@ COMMUNICATION_SOURECS =
 	immutable_data_info
 	;
 
-BLOCKCHAIN_SOURECS =
+BLOCKCHAIN_SOURCES =
 	account_block_pointer
 	block
 	blockchain
@@ -928,8 +932,9 @@ lib TAU
 
 	: # sources
 	src/$(SOURCES).cpp
-	src/communication/$(COMMUNICATION_SOURECS).cpp
-	src/blockchain/$(BLOCKCHAIN_SOURECS).cpp
+	src/common/$(COMMON_SOURCES).cpp
+	src/communication/$(COMMUNICATION_SOURCES).cpp
+	src/blockchain/$(BLOCKCHAIN_SOURCES).cpp
 
 	: # requirements
 	<threading>multi
