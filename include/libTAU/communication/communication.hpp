@@ -138,7 +138,7 @@ namespace libTAU {
             void clear();
 
             // request online/new message signal from a given peer
-            void request_signal(const dht::public_key &peer);
+//            void request_signal(const dht::public_key &peer);
 
             // publish online/new message signal to a given peer
             void publish_signal(const dht::public_key &peer);
@@ -257,7 +257,7 @@ namespace libTAU {
             std::map<dht::public_key, std::int64_t> m_last_gasp_time;
 
             // the latest item timestamp of peer
-            std::map<dht::public_key, dht::timestamp> m_latest_item_timestamp;
+//            std::map<dht::public_key, dht::timestamp> m_latest_item_timestamp;
         };
     }
 }

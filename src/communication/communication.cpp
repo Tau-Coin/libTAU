@@ -123,12 +123,12 @@ namespace libTAU {
         void communication::on_dht_item(const dht::item &i) {
             // construct mutable data wrapper from entry
             if (!i.empty()) {
-                dht::public_key peer = i.pk();
+//                dht::public_key peer = i.pk();
 
                 // update latest item timestamp
-                if (i.ts() > m_latest_item_timestamp[peer]) {
-                    m_latest_item_timestamp[peer] = i.ts();
-                }
+//                if (i.ts() > m_latest_item_timestamp[peer]) {
+//                    m_latest_item_timestamp[peer] = i.ts();
+//                }
 
                 // check protocol id
                 if (auto* p = const_cast<entry *>(i.value().find_key("pid")))
@@ -137,7 +137,7 @@ namespace libTAU {
                     if (online_signal::protocol_id == protocol_id) {
                         online_signal onlineSignal(i.value());
 
-                        process_signal(onlineSignal, peer);
+                        process_signal(onlineSignal, i.pk());
                     }
                 }
             }
@@ -813,16 +813,16 @@ namespace libTAU {
 
             // construct mutable data wrapper from entry
             if (!i.empty()) {
-                dht::public_key peer = i.pk();
-
-                // update latest item timestamp
-                if (i.ts() > m_latest_item_timestamp[peer]) {
-                    m_latest_item_timestamp[peer] = i.ts();
-                }
+//                dht::public_key peer = i.pk();
+//
+//                // update latest item timestamp
+//                if (i.ts() > m_latest_item_timestamp[peer]) {
+//                    m_latest_item_timestamp[peer] = i.ts();
+//                }
 
                 online_signal onlineSignal(i.value());
 
-                process_signal(onlineSignal, peer);
+                process_signal(onlineSignal, i.pk());
             }
         }
 
@@ -885,15 +885,15 @@ namespace libTAU {
             }
         } // anonymous namespace
 
-        void communication::request_signal(const dht::public_key &peer) {
-            dht::public_key pubkey = *m_ses.pubkey();
-
-            // salt is x pubkey when request signal
-            auto salt = make_salt(pubkey);
-
-            log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-            dht_get_mutable_item(peer.bytes, salt, m_latest_item_timestamp[peer]);
-        }
+//        void communication::request_signal(const dht::public_key &peer) {
+//            dht::public_key pubkey = *m_ses.pubkey();
+//
+//            // salt is x pubkey when request signal
+//            auto salt = make_salt(pubkey);
+//
+//            log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+//            dht_get_mutable_item(peer.bytes, salt, m_latest_item_timestamp[peer]);
+//        }
 
         void communication::publish_signal(const dht::public_key &peer) {
 //            entry data;
