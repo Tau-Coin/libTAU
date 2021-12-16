@@ -25,7 +25,7 @@ namespace libTAU {
         struct TORRENT_EXPORT online_signal {
 
             // protocol id
-            static std::int64_t protocol_id;
+            static const std::int64_t protocol_id;
 
             // @param Construct with entry
             explicit online_signal(const entry& e);

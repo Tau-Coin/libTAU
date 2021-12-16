@@ -10,7 +10,7 @@ see LICENSE file.
 
 namespace libTAU { namespace communication {
 
-        std::int64_t online_signal::protocol_id = 0;
+        const std::int64_t online_signal::protocol_id = 0;
 
         online_signal::online_signal(const entry &e) {
             populate(e);
