@@ -143,6 +143,8 @@ namespace libTAU {
             // publish online/new message signal to a given peer
             void publish_signal(const dht::public_key &peer);
 
+            void send_to(const dht::public_key &peer, entry const& data);
+
             // select a friend randomly
             dht::public_key select_friend_randomly();
 
@@ -171,22 +173,22 @@ namespace libTAU {
             // validate message, check if message is oversize( >1000 bytes)
             bool validate_message(const message& msg);
 
-            // immutable data callback
-            void get_immutable_callback(const dht::public_key &peer, sha256_hash target
-                    , dht::item const& i);
+//            // immutable data callback
+//            void get_immutable_callback(const dht::public_key &peer, sha256_hash target
+//                    , dht::item const& i);
 
-            // mutable data callback
-            void get_mutable_callback(dht::item const& i, bool);
+//            // mutable data callback
+//            void get_mutable_callback(dht::item const& i, bool);
 
             // get immutable item from dht
-            void dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
+//            void dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
-            // get mutable item from dht
-            void dht_get_mutable_item(std::array<char, 32> key
-                    , std::string salt, dht::timestamp t);
+//            // get mutable item from dht
+//            void dht_get_mutable_item(std::array<char, 32> key
+//                    , std::string salt, dht::timestamp t);
 
             // put immutable item to dht
-            void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
+//            void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
 
             // put mutable item to dht
             void dht_put_mutable_item(std::array<char, 32> key

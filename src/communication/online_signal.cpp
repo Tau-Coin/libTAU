@@ -27,7 +27,9 @@ namespace libTAU { namespace communication {
             // hash prefix bytes
             e["h"] = entry(std::string(m_hash_prefix_bytes.begin(), m_hash_prefix_bytes.end()));
             // payload
-            e["v"] = m_payload.get_entry();
+            if (!m_payload.empty()) {
+                e["v"] = m_payload.get_entry();
+            }
             // friend info
             if (!m_friend_info.empty()) {
                 e["f"] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));

@@ -10,6 +10,8 @@ see LICENSE file.
 #include <utility>
 #include <algorithm>
 
+#include "libTAU/common/data_type_id.hpp"
+#include "libTAU/common/message_entry.hpp"
 #include "libTAU/communication/message_hash_list.hpp"
 #include "libTAU/communication/communication.hpp"
 #include "libTAU/kademlia/dht_tracker.hpp"
@@ -138,6 +140,17 @@ namespace libTAU {
                         online_signal onlineSignal(i.value());
 
                         process_signal(onlineSignal, i.pk());
+                    }
+                }
+                // check data type id
+                if (auto* p = const_cast<entry *>(i.value().find_key("tid")))
+                {
+                    auto data_type_id = p->integer();
+                    if (common::message_entry::data_type_id == data_type_id) {
+                        common::message_entry msg_entry(i.value());
+                        log("INFO: Got message, hash[%s].", aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
+
+                        add_new_message(i.pk(), msg_entry.m_msg, true);
                     }
                 }
             }
@@ -318,12 +331,12 @@ namespace libTAU {
 
                 // if signal is from multi-device or peer Y, sync immutable data and calc LevenshteinDistance
                 if (device_id != m_device_id || peer != pubkey) {
-                    // get immutable message
-                    const immutable_data_info& payload = signal.payload();
-                    log("INFO: Payload:%s", payload.to_string().c_str());
-                    if (!payload.target().is_all_zeros()) {
-                        dht_get_immutable_item(peer, payload.target(), payload.entries());
-                    }
+//                    // get immutable message
+//                    const immutable_data_info& payload = signal.payload();
+//                    log("INFO: Payload:%s", payload.to_string().c_str());
+//                    if (!payload.target().is_all_zeros()) {
+//                        dht_get_immutable_item(peer, payload.target(), payload.entries());
+//                    }
 
                     // find out missing messages and confirmation root
                     std::vector<message> missing_messages;
@@ -350,11 +363,16 @@ namespace libTAU {
 
                     log("INFO: Found missing message size %zu", missing_messages.size());
 
-//                        if (m_missing_messages[peer].size() < communication_max_message_list_size) {
-                    // Only the data of the latest window is processed
-                    m_missing_messages[peer].clear();
-                    m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
-//                        }
+                    for(auto const & msg: missing_messages) {
+                        common::message_entry msg_entry(msg);
+                        send_to(peer, msg_entry.get_entry());
+                    }
+
+////                        if (m_missing_messages[peer].size() < communication_max_message_list_size) {
+//                    // Only the data of the latest window is processed
+//                    m_missing_messages[peer].clear();
+//                    m_missing_messages[peer].insert(missing_messages.begin(), missing_messages.end());
+////                        }
                 }
             }
         }
@@ -713,51 +731,51 @@ namespace libTAU {
             }
 
             immutable_data_info payload;
-            auto missing_messages = m_missing_messages[peer];
-            auto size = missing_messages.size();
-            if (size > 0) {
-                srand(now);
-                auto index = rand() % size;
-
-                auto it = missing_messages.begin();
-                for (size_t i = 0; i < index; i++) {
-                    ++it;
-                }
-
-                if (it != missing_messages.end()) {
-                    message missing_message = *it;
-                    m_missing_messages[peer].erase(missing_message);
-
-                    if (!missing_message.empty()) {
-                        // post syncing message hash
-                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, missing_message.sha256(), now);
-
-                        std::vector<dht::node_entry> entries;
-                        m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
-                        if (entries.size() > 2) {
-                            entries.resize(2);
-                        }
-                        log("INFO: Put immutable message target[%s], entries[%zu]",
-                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
-                        dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
-
-                        payload = immutable_data_info(missing_message.sha256(), entries);
-
-                        if (1 == size) {
-                            m_last_gasp_payload[peer] = payload;
-                            m_last_gasp_time[peer] = now;
-                        }
-                    } else {
-                        log("INFO: Missing message is empty.");
-                    }
-                }
-            } else {
-                if (now - m_last_gasp_time[peer] < 60000) {
-                    payload = m_last_gasp_payload[peer];
-                    log("INFO: Last gasp.");
-                }
-                log("INFO: Peer[%s] has no missing messages", aux::toHex(peer.bytes).c_str());
-            }
+//            auto missing_messages = m_missing_messages[peer];
+//            auto size = missing_messages.size();
+//            if (size > 0) {
+//                srand(now);
+//                auto index = rand() % size;
+//
+//                auto it = missing_messages.begin();
+//                for (size_t i = 0; i < index; i++) {
+//                    ++it;
+//                }
+//
+//                if (it != missing_messages.end()) {
+//                    message missing_message = *it;
+//                    m_missing_messages[peer].erase(missing_message);
+//
+//                    if (!missing_message.empty()) {
+//                        // post syncing message hash
+//                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, missing_message.sha256(), now);
+//
+//                        std::vector<dht::node_entry> entries;
+//                        m_ses.dht()->find_live_nodes(missing_message.sha256(), entries);
+//                        if (entries.size() > 2) {
+//                            entries.resize(2);
+//                        }
+//                        log("INFO: Put immutable message target[%s], entries[%zu]",
+//                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
+//                        dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
+//
+//                        payload = immutable_data_info(missing_message.sha256(), entries);
+//
+//                        if (1 == size) {
+//                            m_last_gasp_payload[peer] = payload;
+//                            m_last_gasp_time[peer] = now;
+//                        }
+//                    } else {
+//                        log("INFO: Missing message is empty.");
+//                    }
+//                }
+//            } else {
+//                if (now - m_last_gasp_time[peer] < 60000) {
+//                    payload = m_last_gasp_payload[peer];
+//                    log("INFO: Last gasp.");
+//                }
+//                log("INFO: Peer[%s] has no missing messages", aux::toHex(peer.bytes).c_str());
+//            }
 
             dht::public_key pubkey = *m_ses.pubkey();
 
@@ -781,60 +799,60 @@ namespace libTAU {
             }
         }
 
-        // callback for dht_immutable_get
-        void communication::get_immutable_callback(const dht::public_key &peer, sha256_hash target
-                , dht::item const& i)
-        {
-            log("DEBUG: Immutable callback");
-            TORRENT_ASSERT(!i.is_mutable());
-            if (!i.empty()) {
-                log("INFO: Got immutable data callback, target[%s].", aux::toHex(target.to_string()).c_str());
-//                aux::bytes encode;
-//                encode.insert(encode.end(), i.value().string().begin(), i.value().string().end());
-                message msg(i.value());
+//        // callback for dht_immutable_get
+//        void communication::get_immutable_callback(const dht::public_key &peer, sha256_hash target
+//                , dht::item const& i)
+//        {
+//            log("DEBUG: Immutable callback");
+//            TORRENT_ASSERT(!i.is_mutable());
+//            if (!i.empty()) {
+//                log("INFO: Got immutable data callback, target[%s].", aux::toHex(target.to_string()).c_str());
+////                aux::bytes encode;
+////                encode.insert(encode.end(), i.value().string().begin(), i.value().string().end());
+//                message msg(i.value());
+//
+//                add_new_message(peer, msg, true);
+//            }
+//        }
 
-                add_new_message(peer, msg, true);
-            }
-        }
-
-        void communication::dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
-        {
-            if (!m_ses.dht()) return;
-            log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
-            m_ses.dht()->get_item(target, eps, std::bind(&communication::get_immutable_callback
-                    , this, peer, target, _1));
-        }
+//        void communication::dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
+//        {
+//            if (!m_ses.dht()) return;
+//            log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
+//            m_ses.dht()->get_item(target, eps, std::bind(&communication::get_immutable_callback
+//                    , this, peer, target, _1));
+//        }
 
         // callback for dht_mutable_get
-        void communication::get_mutable_callback(dht::item const& i
-                , bool const authoritative)
-        {
-            TORRENT_ASSERT(i.is_mutable());
-
-            // construct mutable data wrapper from entry
-            if (!i.empty()) {
-//                dht::public_key peer = i.pk();
+//        void communication::get_mutable_callback(dht::item const& i
+//                , bool const authoritative)
+//        {
+//            TORRENT_ASSERT(i.is_mutable());
 //
-//                // update latest item timestamp
-//                if (i.ts() > m_latest_item_timestamp[peer]) {
-//                    m_latest_item_timestamp[peer] = i.ts();
-//                }
-
-                online_signal onlineSignal(i.value());
-
-                process_signal(onlineSignal, i.pk());
-            }
-        }
+//            // construct mutable data wrapper from entry
+//            if (!i.empty()) {
+////                dht::public_key peer = i.pk();
+////
+////                // update latest item timestamp
+////                if (i.ts() > m_latest_item_timestamp[peer]) {
+////                    m_latest_item_timestamp[peer] = i.ts();
+////                }
+//
+//                online_signal onlineSignal(i.value());
+//
+//                process_signal(onlineSignal, i.pk());
+//            }
+//        }
 
         // key is a 32-byte binary string, the public key to look up.
         // the salt is optional
-        void communication::dht_get_mutable_item(std::array<char, 32> key
-                , std::string salt, dht::timestamp t)
-        {
-            if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
-                    , this, _1, _2), std::move(salt), t.value);
-        }
+//        void communication::dht_get_mutable_item(std::array<char, 32> key
+//                , std::string salt, dht::timestamp t)
+//        {
+//            if (!m_ses.dht()) return;
+//            m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
+//                    , this, _1, _2), std::move(salt), t.value);
+//        }
 
         namespace {
 
@@ -911,15 +929,29 @@ namespace libTAU {
                     , pk->bytes, sk->bytes, onlineSignal.get_entry()), salt, peer);
         }
 
-        void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
-        {
-            if (!m_ses.dht()) return;
-            log("INFO: Put immutable item target[%s], entries[%zu], data[%s]",
-                aux::toHex(target.to_string()).c_str(), eps.size(), data.to_string().c_str());
+        void communication::send_to(const dht::public_key &peer, const entry &data) {
+            dht::public_key * pk = m_ses.pubkey();
+            dht::secret_key * sk = m_ses.serkey();
 
-            m_ses.dht()->put_item(data,  eps, std::bind(&on_dht_put_immutable_item, std::ref(m_ses.alerts())
-                    , target, _1));
+            // salt is y pubkey when publish signal
+            auto salt = make_salt(peer);
+
+            log("INFO: Publish online signal: peer[%s], salt[%s], data[%s]", aux::toHex(pk->bytes).c_str(),
+                aux::toHex(salt).c_str(), data.to_string().c_str());
+
+            dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
+                    , pk->bytes, sk->bytes, data), salt, peer);
         }
+
+//        void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
+//        {
+//            if (!m_ses.dht()) return;
+//            log("INFO: Put immutable item target[%s], entries[%zu], data[%s]",
+//                aux::toHex(target.to_string()).c_str(), eps.size(), data.to_string().c_str());
+//
+//            m_ses.dht()->put_item(data,  eps, std::bind(&on_dht_put_immutable_item, std::ref(m_ses.alerts())
+//                    , target, _1));
+//        }
 
         void communication::dht_put_mutable_item(std::array<char, 32> key
                 , std::function<void(entry&, std::array<char,64>&
