@@ -6,10 +6,11 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include "libTAU/blockchain/blockchain.hpp"
-
 #include <utility>
+
+#include "libTAU/blockchain/blockchain.hpp"
 #include "libTAU/blockchain/consensus.hpp"
+#include "libTAU/common/entry_type.hpp"
 #include "libTAU/kademlia/dht_tracker.hpp"
 
 
@@ -2232,6 +2233,27 @@ namespace libTAU::blockchain {
                     }
 
                     process_signal(signal, chain_id, peer);
+                }
+            }
+            // check data type id
+            if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type_id)))
+            {
+                auto data_type_id = p->integer();
+                switch (data_type_id) {
+                    case common::block_entry::data_type_id: {
+                        common::block_entry blk_entry(i.value());
+                        log("INFO: Got block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
+
+                        break;
+                    }
+                    case common::transaction_entry::data_type_id: {
+                        common::transaction_entry tx_entry(i.value());
+                        log("INFO: Got transaction, hash[%s].", aux::toHex(tx_entry.m_tx.sha256().to_string()).c_str());
+
+                        break;
+                    }
+                    default: {
+                    }
                 }
             }
         }

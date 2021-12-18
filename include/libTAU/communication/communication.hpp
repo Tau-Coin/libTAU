@@ -118,9 +118,6 @@ namespace libTAU {
             // add a new message
             bool add_new_message(const message& msg, bool post_alert = false);
 
-            // add a new message
-            bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
-
             // reset when account changed
             void account_changed();
 
@@ -137,12 +134,16 @@ namespace libTAU {
             // clear all cache
             void clear();
 
+            // add a new message
+            bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
+
             // request online/new message signal from a given peer
 //            void request_signal(const dht::public_key &peer);
 
             // publish online/new message signal to a given peer
             void publish_signal(const dht::public_key &peer);
 
+            // send data to peer
             void send_to(const dht::public_key &peer, entry const& data);
 
             // select a friend randomly
@@ -257,6 +258,8 @@ namespace libTAU {
             std::map<dht::public_key, immutable_data_info> m_last_gasp_payload;
 
             std::map<dht::public_key, std::int64_t> m_last_gasp_time;
+            // todo:: queue: task-timestamp
+            // todo:: (peer - request) - time
 
             // the latest item timestamp of peer
 //            std::map<dht::public_key, dht::timestamp> m_latest_item_timestamp;

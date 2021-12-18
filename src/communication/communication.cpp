@@ -10,8 +10,7 @@ see LICENSE file.
 #include <utility>
 #include <algorithm>
 
-#include "libTAU/common/data_type_id.hpp"
-#include "libTAU/common/message_entry.hpp"
+#include "libTAU/common/entry_type.hpp"
 #include "libTAU/communication/message_hash_list.hpp"
 #include "libTAU/communication/communication.hpp"
 #include "libTAU/kademlia/dht_tracker.hpp"
@@ -32,8 +31,8 @@ namespace libTAU {
 
             m_stop = false;
 
-            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
-            m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
+//            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
+//            m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
 
             return true;
         }
@@ -143,7 +142,7 @@ namespace libTAU {
                     }
                 }
                 // check data type id
-                if (auto* p = const_cast<entry *>(i.value().find_key("tid")))
+                if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type_id)))
                 {
                     auto data_type_id = p->integer();
                     if (common::message_entry::data_type_id == data_type_id) {
@@ -242,7 +241,13 @@ namespace libTAU {
         }
 
         bool communication::add_new_message(const message &msg, bool post_alert) {
-            return add_new_message(msg.receiver(), msg, post_alert);
+            if (!add_new_message(msg.receiver(), msg, post_alert))
+                return false;
+
+            common::message_entry msg_entry(msg);
+            send_to(msg.receiver(), msg_entry.get_entry());
+
+            return true;
         }
 
         bool communication::add_new_message(const dht::public_key &peer, const message& msg, bool post_alert) {

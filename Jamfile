@@ -861,9 +861,7 @@ KADEMLIA_SOURCES =
 	;
 
 COMMON_SOURCES =
-    message_entry
-    block_entry
-    transaction_entry
+    entry_type
     ;
 
 COMMUNICATION_SOURCES =
