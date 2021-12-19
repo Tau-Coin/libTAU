@@ -10,7 +10,6 @@ see LICENSE file.
 #include <utility>
 #include <algorithm>
 
-#include "libTAU/common/entry_type.hpp"
 #include "libTAU/communication/message_hash_list.hpp"
 #include "libTAU/communication/communication.hpp"
 #include "libTAU/kademlia/dht_tracker.hpp"
@@ -31,8 +30,8 @@ namespace libTAU {
 
             m_stop = false;
 
-//            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
-//            m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
+            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
+            m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
 
             return true;
         }
@@ -145,11 +144,76 @@ namespace libTAU {
                 if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type_id)))
                 {
                     auto data_type_id = p->integer();
-                    if (common::message_entry::data_type_id == data_type_id) {
-                        common::message_entry msg_entry(i.value());
-                        log("INFO: Got message, hash[%s].", aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
+                    switch (data_type_id) {
+                        case common::message_entry::data_type_id: {
+                            common::message_entry msg_entry(i.value());
+                            log("INFO: Got message, hash[%s].",
+                                aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
 
-                        add_new_message(i.pk(), msg_entry.m_msg, true);
+                            add_new_message(i.pk(), msg_entry.m_msg, true);
+
+                            break;
+                        }
+                        case common::message_levenshtein_array_entry::data_type_id: {
+                            common::message_levenshtein_array_entry levenshtein_array_entry(i.value());
+                            log("INFO: Got message levenshtein array[%s].",
+                                aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
+
+                            // find out missing messages and confirmation root
+                            auto peer = i.pk();
+                            auto now = get_current_time();
+
+                            std::vector<message> missing_messages;
+                            std::vector<sha256_hash> confirmation_roots;
+                            auto &message_list = m_message_list_map[peer];
+                            std::vector<message> messages(message_list.begin(), message_list.end());
+                            log("INFO: Messages size:%zu", messages.size());
+                            find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
+                                               missing_messages, confirmation_roots);
+
+                            if (!confirmation_roots.empty()) {
+                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+                                                                                                    confirmation_roots,
+                                                                                                    now);
+                                log("INFO: Confirmation roots:%zu", confirmation_roots.size());
+                            }
+                            log("INFO: Found missing message size %zu", missing_messages.size());
+
+                            std::int64_t time_offside = 0;
+//                            for (auto i = 0; i < missing_messages.size(); i++)
+                            auto size = missing_messages.size();
+                            for(auto k = 0; k < size; k++) {
+                                common::message_entry msg_entry(missing_messages[k]);
+                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 50 * k);
+                                m_tasks.insert(task);
+                            }
+                            for(auto k = 0; k < size; k++) {
+                                common::message_entry msg_entry(missing_messages[k]);
+                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 1000 + 50 * k);
+                                m_tasks.insert(task);
+                            }
+                            for(auto k = 0; k < size; k++) {
+                                common::message_entry msg_entry(missing_messages[k]);
+                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 5000 + 50 * k);
+                                m_tasks.insert(task);
+                            }
+
+                            if (!missing_messages.empty()) {
+                                common::entry_task levenshtein_array_task1(
+                                        common::message_levenshtein_array_entry::data_type_id, peer, now + 6000);
+                                m_tasks.insert(levenshtein_array_task1);
+                                common::entry_task levenshtein_array_task2(
+                                        common::message_levenshtein_array_entry::data_type_id, peer, now + 7000);
+                                m_tasks.insert(levenshtein_array_task2);
+                                common::entry_task levenshtein_array_task3(
+                                        common::message_levenshtein_array_entry::data_type_id, peer, now + 9000);
+                                m_tasks.insert(levenshtein_array_task3);
+                            }
+
+                            break;
+                        }
+                        default: {
+                        }
                     }
                 }
             }
@@ -245,7 +309,21 @@ namespace libTAU {
                 return false;
 
             common::message_entry msg_entry(msg);
-            send_to(msg.receiver(), msg_entry.get_entry());
+//            send_to(msg.receiver(), msg_entry.get_entry());
+            std::int64_t now = get_current_time();
+            common::entry_task task1(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now);
+            m_tasks.insert(task1);
+            common::entry_task task2(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 1000);
+            m_tasks.insert(task2);
+            common::entry_task task3(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 5000);
+            m_tasks.insert(task3);
+
+            common::entry_task levenshtein_array_task1(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 6000);
+            m_tasks.insert(levenshtein_array_task1);
+            common::entry_task levenshtein_array_task2(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 7000);
+            m_tasks.insert(levenshtein_array_task2);
+            common::entry_task levenshtein_array_task3(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 9000);
+            m_tasks.insert(levenshtein_array_task3);
 
             return true;
         }
@@ -447,20 +525,71 @@ namespace libTAU {
             if (e || m_stop) return;
 
             try {
-                // 随机挑选一个朋友put/get
-                dht::public_key peer = select_friend_randomly();
-                std::int64_t current_time = total_milliseconds(system_clock::now().time_since_epoch());
-				int random_time_interval = rand()%400 + 800;
-                if (peer != dht::public_key() && current_time > (m_peer_access_times[peer] + random_time_interval)) {
-                    log("INFO: Select peer:%s", aux::toHex(peer.bytes).c_str());
-                    m_peer_access_times[peer] = current_time;
+//                // 随机挑选一个朋友put/get
+//                dht::public_key peer = select_friend_randomly();
+//                std::int64_t current_time = total_milliseconds(system_clock::now().time_since_epoch());
+//				int random_time_interval = rand()%400 + 800;
+//                if (peer != dht::public_key() && current_time > (m_peer_access_times[peer] + random_time_interval)) {
+//                    log("INFO: Select peer:%s", aux::toHex(peer.bytes).c_str());
+//                    m_peer_access_times[peer] = current_time;
+//
+////                    request_signal(peer);
+//                    publish_signal(peer);
+//                }
 
-//                    request_signal(peer);
-                    publish_signal(peer);
+                auto now = get_current_time();
+                auto size = m_friends.size();
+                for (auto i = 0; i < size; i++) {
+                    auto& peer = m_friends[i];
+                    if (now > m_last_greeting[peer] + 60 * 60 * 1000) {
+                        m_last_greeting[peer] = now;
+
+                        common::entry_task levenshtein_array_task1(
+                                common::message_levenshtein_array_entry::data_type_id, peer, now + 50 * i);
+                        m_tasks.insert(levenshtein_array_task1);
+                        common::entry_task levenshtein_array_task2(
+                                common::message_levenshtein_array_entry::data_type_id, peer, now + 1000 + 50 * i);
+                        m_tasks.insert(levenshtein_array_task2);
+                        common::entry_task levenshtein_array_task3(
+                                common::message_levenshtein_array_entry::data_type_id, peer, now + 5000 + 50 * i);
+                        m_tasks.insert(levenshtein_array_task3);
+                    }
+                }
+
+                while (!m_tasks.empty()) {
+                    auto it = m_tasks.begin();
+                    if (it->m_timestamp >= now) {
+                        if (it->m_data_type_id == common::message_levenshtein_array_entry::data_type_id) {
+                            // 本地消息数组为target
+                            aux::bytes levenshtein_array;
+                            auto& msg_list = m_message_list_map[it->m_peer];
+                            for (auto const &msg: msg_list) {
+                                levenshtein_array.push_back(msg.sha256()[0]);
+                            }
+
+                            common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array);
+                            send_to(it->m_peer, msg_levenshtein_array.get_entry());
+                        } else {
+                            send_to(it->m_peer, it->m_entry);
+                        }
+
+                        m_tasks.erase(it);
+                    }
                 }
 
                 m_refresh_timer.expires_after(milliseconds(m_refresh_time));
                 m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
+            } catch (std::exception &e) {
+                log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            }
+        }
+
+        void communication::launch_scheduled_task(const error_code &e) {
+            if (e || m_stop) return;
+
+            try {
+                aux::deadline_timer timer(m_ioc);
+                timer.async_wait(nullptr);
             } catch (std::exception &e) {
                 log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             }

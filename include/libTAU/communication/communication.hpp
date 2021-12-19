@@ -27,6 +27,7 @@ see LICENSE file.
 #include "libTAU/aux_/alert_manager.hpp" // for alert_manager
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/kademlia/item.hpp"
+#include "libTAU/common/entry_type.hpp"
 #include "libTAU/communication/message_db_impl.hpp"
 #include "libTAU/communication/message_db_interface.hpp"
 #include "libTAU/communication/online_signal.hpp"
@@ -207,6 +208,8 @@ namespace libTAU {
 
             void refresh_timeout(error_code const& e);
 
+            void launch_scheduled_task(error_code const& e);
+
             // device id
             aux::bytes m_device_id;
 
@@ -229,6 +232,11 @@ namespace libTAU {
 
             // all friends
             std::vector<dht::public_key> m_friends;
+
+            // all tasks
+            std::set<common::entry_task> m_tasks;
+
+            std::map<dht::public_key, std::int64_t> m_last_greeting;
 
             // peer access time
             std::map<dht::public_key, std::int64_t> m_peer_access_times;

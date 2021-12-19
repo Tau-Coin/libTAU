@@ -20,6 +20,40 @@ namespace libTAU::common {
 
     const std::string entry_type_id = "tid";
 
+    struct TORRENT_EXPORT entry_task {
+
+        entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, entry mEntry, int64_t mTimestamp)
+                : m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)), m_timestamp(mTimestamp) {}
+
+        entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, int64_t mTimestamp) : m_data_type_id(mDataTypeId),
+                                                                                            m_peer(mPeer),
+                                                                                            m_timestamp(mTimestamp) {}
+
+        bool operator<(const entry_task &rhs) const {
+            return m_timestamp < rhs.m_timestamp;
+        }
+
+        bool operator>(const entry_task &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const entry_task &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const entry_task &rhs) const {
+            return !(*this < rhs);
+        }
+
+        std::int64_t m_data_type_id;
+
+        dht::public_key m_peer;
+
+        entry m_entry;
+
+        std::int64_t m_timestamp;
+    };
+
     struct TORRENT_EXPORT message_entry {
         // data type id
         static const std::int64_t data_type_id = 0;
