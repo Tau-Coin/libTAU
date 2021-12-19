@@ -588,8 +588,8 @@ namespace libTAU {
             if (e || m_stop) return;
 
             try {
-                aux::deadline_timer timer(m_ioc);
-                timer.async_wait(nullptr);
+//                aux::deadline_timer timer(m_ioc);
+//                timer.async_wait(nullptr);
             } catch (std::exception &e) {
                 log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             }
