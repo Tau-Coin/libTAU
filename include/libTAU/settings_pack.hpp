@@ -914,6 +914,10 @@ namespace aux {
 			// query messages.
 			dht_read_only,
 
+			// when set the other nodes won't refer this node.
+			// It means this node behind NAT.
+			dht_non_referrable,
+
 			// when this is true, create an affinity for downloading 4 MiB extents
 			// of adjacent pieces. This is an attempt to achieve better disk I/O
 			// throughput by downloading larger extents of bytes, for torrents with
@@ -1883,6 +1887,9 @@ namespace aux {
 
 			// the time interval(seconds) of bootstrap
 			dht_bootstrap_interval,
+
+			// the time interval(seconds) of ping
+			dht_ping_interval,
 
 			// the maximum number of failed tries to contact a node before it is
 			// removed from the routing table. If there are known working nodes that

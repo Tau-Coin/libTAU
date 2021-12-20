@@ -17,14 +17,14 @@ namespace libTAU { namespace dht {
 	node_entry::node_entry(node_id const& id_, udp::endpoint const& ep
 		, int roundtriptime
 		, bool pinged
-		, bool read_only_)
+		, bool non_referrable_)
 		: last_queried(pinged ? aux::time_now() : min_time())
 		, id(id_)
 		, endpoint(ep)
 		, rtt(roundtriptime & 0xffff)
 		, timeout_count(pinged ? 0 : 0xff)
 		, verified(true)
-		, read_only(read_only_)
+		, non_referrable(non_referrable_)
 	{
 	}
 
