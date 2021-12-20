@@ -172,7 +172,7 @@ public:
 	// a sign of a node being alive. This node will either
 	// be inserted in the k-buckets or be moved to the top
 	// of its bucket.
-	bool node_seen(node_id const& id, udp::endpoint const& ep, int rtt, bool read_only);
+	bool node_seen(node_id const& id, udp::endpoint const& ep, int rtt, bool non_referrable);
 
 	// this may add a node to the routing table and mark it as
 	// not pinged. If the bucket the node falls into is full,

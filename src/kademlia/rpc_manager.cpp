@@ -341,12 +341,12 @@ bool rpc_manager::incoming(msg const& m, node_id* id)
 
 	int rtt = int(total_milliseconds(now - o->sent()));
 
-	bdecode_node const read_only_ent = m.message.dict_find_dict("ro");
-	bool const read_only = read_only_ent && read_only_ent.int_value() != 0;
+	bdecode_node const non_referrable_ent = m.message.dict_find_dict("nr");
+	bool const non_referrable = non_referrable_ent && non_referrable_ent.int_value() != 0;
 
 	// we found an observer for this reply, hence the node is not spoofing
 	// add it to the routing table
-	return m_table.node_seen(*id, m.addr, rtt, read_only);
+	return m_table.node_seen(*id, m.addr, rtt, non_referrable);
 }
 
 time_duration rpc_manager::tick()
@@ -444,6 +444,8 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 	// When a DHT node enters the read-only state, in each outgoing query message,
 	// places a 'ro' key in the top-level message dictionary and sets its value to 1.
 	if (m_settings.get_bool(settings_pack::dht_read_only)) e["ro"] = 1;
+
+	if (m_settings.get_bool(settings_pack::dht_non_referrable)) e["nr"] = 1;
 
 	node& n = o->algorithm()->get_node();
 	if (!n.native_address(o->target_addr()))

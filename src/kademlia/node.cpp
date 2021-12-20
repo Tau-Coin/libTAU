@@ -105,6 +105,8 @@ int node::invoke_limit() const { return m_settings.get_int(settings_pack::dht_in
 
 int node::bootstrap_interval() const { return m_settings.get_int(settings_pack::dht_bootstrap_interval); }
 
+int node::ping_interval() const { return m_settings.get_int(settings_pack::dht_ping_interval); }
+
 bool node::verify_token(string_view token, sha256_hash const& info_hash
 	, udp::endpoint const& addr) const
 {
@@ -311,7 +313,7 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			TORRENT_ASSERT(m.message.dict_find_string_value("y") == "q");
 			// When a DHT node enters the read-only state, it no longer
 			// responds to 'query' messages that it receives.
-			// if (m_settings.get_bool(settings_pack::dht_read_only)) break;
+			if (m_settings.get_bool(settings_pack::dht_read_only)) break;
 
 			// ignore packets arriving on a different interface than the one we're
 			// associated with
@@ -650,22 +652,34 @@ struct ping_observer : observer
 
 void node::tick()
 {
+	// libtorrent:
 	// every now and then we refresh our own ID, just to keep
 	// expanding the routing table buckets closer to us.
 	// if m_table.depth() < 4, means routing_table doesn't
 	// have enough nodes.
+	//
+	// libTAU:
+	// every now and then we refresh our own ID, just to keep
+	// expanding the routing table buckets closer to us.
+	// So by these nodes closer to us other nodes can send data by 'push' protocol. 
 	time_point const now = aux::time_now();
-	if (m_last_self_refresh + seconds(bootstrap_interval()) < now && m_table.depth() < 4)
+	if (m_last_self_refresh + seconds(bootstrap_interval()) < now /*&& m_table.depth() < 4*/)
 	{
 		node_id target = m_id;
 		make_id_secret(target);
+
 		auto const r = std::make_shared<dht::bootstrap>(*this, target, std::bind(&nop));
+		// set alpha & beta factor
+		r->set_branch_factor(3);
+		r->set_invoke_limit(16);
+		// set referrable nodes' max XOR distance into 255
+		r->set_fixed_distance(255);
 		r->start();
 		m_last_self_refresh = now;
 		return;
 	}
 
-	if (m_last_ping + seconds(30) > now) return;
+	if (m_last_ping + seconds(ping_interval()) > now) return;
 
 	node_entry const* ne = m_table.next_refresh();
 	if (ne == nullptr) return;
@@ -810,15 +824,17 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 	e = entry(entry::dictionary_t);
 	e["y"] = "r";
 	e["t"] = m.message.dict_find_string_value("t");
+	if (m_settings.get_bool(settings_pack::dht_non_referrable)) e["nr"] = 1;
 
 	static key_desc_t const top_desc[] = {
 		{"q", bdecode_node::string_t, 0, 0},
 		{"ro", bdecode_node::int_t, 0, key_desc_t::optional},
+		{"nr", bdecode_node::int_t, 0, key_desc_t::optional},
 		{"a", bdecode_node::dict_t, 0, key_desc_t::parse_children},
 			{"id", bdecode_node::string_t, 32, key_desc_t::last_child},
 	};
 
-	bdecode_node top_level[4];
+	bdecode_node top_level[5];
 	char error_string[200];
 	if (!verify_message(m.message, top_desc, top_level, error_string))
 	{
@@ -828,9 +844,10 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 
 	e["ip"] = aux::endpoint_to_bytes(m.addr);
 
-	bdecode_node const arg_ent = top_level[2];
+	bdecode_node const arg_ent = top_level[3];
 	bool const read_only = top_level[1] && top_level[1].int_value() != 0;
-	node_id const id(top_level[3].string_ptr());
+	bool const non_referrable = top_level[2] && top_level[2].int_value() != 0;
+	node_id const id(top_level[4].string_ptr());
 	*from = id;
 
 	// m_table.heard_about(id, m.addr);
@@ -843,11 +860,11 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 
 	string_view const query = top_level[0].string_value();
 
-	if (query != "put")
+	if (query != "put" && !read_only)
 	{
 		// for multi online devices, another devices with the same node id
 		// may be in our routing table.
-		m_table.node_seen(id, m.addr, 0xffff, read_only);
+		m_table.node_seen(id, m.addr, 0xffff, non_referrable);
 	}
 
 	if (m_observer && m_observer->on_dht_request(query, m, e))
@@ -947,7 +964,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, error_string);
-			m_table.node_seen(id, m.addr, 0xffff, read_only);
+			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -970,7 +987,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "message too big", 205);
-			m_table.node_seen(id, m.addr, 0xffff, read_only);
+			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -981,7 +998,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "salt too big", 207);
-			m_table.node_seen(id, m.addr, 0xffff, read_only);
+			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -1001,7 +1018,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "invalid token");
-			m_table.node_seen(id, m.addr, 0xffff, read_only);
+			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -1023,7 +1040,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid (negative) timestamp");
-				m_table.node_seen(id, m.addr, 0xffff, read_only);
+				m_table.node_seen(id, m.addr, 0xffff, non_referrable);
 				return std::make_tuple(need_response, need_push);
 			}
 
@@ -1032,7 +1049,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid signature", 206);
-				m_table.node_seen(id, m.addr, 0xffff, read_only);
+				m_table.node_seen(id, m.addr, 0xffff, non_referrable);
 				return std::make_tuple(need_response, need_push);
 			}
 
@@ -1055,7 +1072,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "CAS mismatch", 301);
-					m_table.node_seen(id, m.addr, 0xffff, read_only);
+					m_table.node_seen(id, m.addr, 0xffff, non_referrable);
 					return std::make_tuple(need_response, need_push);
 				}
 
@@ -1063,7 +1080,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "old timestamp", 302);
-					m_table.node_seen(id, m.addr, 0xffff, read_only);
+					m_table.node_seen(id, m.addr, 0xffff, non_referrable);
 					return std::make_tuple(need_response, need_push);
 				}
 
@@ -1105,7 +1122,10 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 
 		// for multi online devices, another devices with the same node id
 		// may be in our routing table.
-		m_table.node_seen(id, m.addr, 0xffff, read_only);
+		if (!read_only)
+		{
+			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+		}
 	}
 	else if (query == "get")
 	{
@@ -1245,6 +1265,7 @@ void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 	e["y"] = "r";
 	e["t"] = m.message.dict_find_string_value("t");
 	e["ip"] = aux::endpoint_to_bytes(m.addr);
+	if (m_settings.get_bool(settings_pack::dht_non_referrable)) e["nr"] = 1;
 
 	entry& reply = e["r"];
 	m_rpc.add_our_id(reply);
@@ -1254,11 +1275,12 @@ void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 	static key_desc_t const top_desc[] = {
 		{"q", bdecode_node::string_t, 0, 0},
 		{"ro", bdecode_node::int_t, 0, key_desc_t::optional},
+		{"nr", bdecode_node::int_t, 0, key_desc_t::optional},
 		{"a", bdecode_node::dict_t, 0, key_desc_t::parse_children},
 			{"id", bdecode_node::string_t, 32, key_desc_t::last_child},
 	};
 
-	bdecode_node top_level[4];
+	bdecode_node top_level[5];
 	char error_string[200];
 	if (!verify_message(m.message, top_desc, top_level, error_string))
 	{
@@ -1266,9 +1288,16 @@ void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 		return;
 	}
 
-	node_id const id(top_level[3].string_ptr());
+	node_id const id(top_level[4].string_ptr());
 	*from = id;
-	bdecode_node const arg_ent = top_level[2];
+	bool const read_only = top_level[1] && top_level[1].int_value() != 0;
+	bool const non_referrable = top_level[2] && top_level[2].int_value() != 0;
+	if (!read_only)
+	{
+		m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+	}
+
+	bdecode_node const arg_ent = top_level[3];
 	string_view const query = top_level[0].string_value();
 
 	if (query == "put")

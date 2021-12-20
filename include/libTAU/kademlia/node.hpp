@@ -187,6 +187,7 @@ public:
 	int invoke_limit() const;
 
 	int bootstrap_interval() const;
+	int ping_interval() const;
 
 	void add_traversal_algorithm(traversal_algorithm* a)
 	{

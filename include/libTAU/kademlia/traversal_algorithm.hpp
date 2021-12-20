@@ -76,6 +76,8 @@ struct TORRENT_EXTRA_EXPORT traversal_algorithm
 	// Discard corresponding responses and rpc manager don't store these requests.
 	void set_discard_response(bool discard_response);
 
+	void set_fixed_distance(int distance) { m_fixed_distance = distance; }
+
 #ifndef TORRENT_DISABLE_LOGGING
 	std::uint32_t id() const { return m_id; }
 #endif
@@ -104,8 +106,6 @@ protected:
 
 	// the min distance of the endpoint which is allowed into m_results.
 	int allow_distance() const;
-
-	void set_fixed_distance(int distance) { m_fixed_distance = distance; }
 
 	int invoke_limit() const { return m_invoke_limit; }
 
