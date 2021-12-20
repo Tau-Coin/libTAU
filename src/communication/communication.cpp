@@ -152,6 +152,18 @@ namespace libTAU {
 
                             add_new_message(i.pk(), msg_entry.m_msg, true);
 
+                            auto peer = i.pk();
+                            auto now = get_current_time();
+                            common::entry_task levenshtein_array_task1(
+                                    common::message_levenshtein_array_entry::data_type_id, peer, now);
+                            m_tasks.insert(levenshtein_array_task1);
+                            common::entry_task levenshtein_array_task2(
+                                    common::message_levenshtein_array_entry::data_type_id, peer, now + 1000);
+                            m_tasks.insert(levenshtein_array_task2);
+                            common::entry_task levenshtein_array_task3(
+                                    common::message_levenshtein_array_entry::data_type_id, peer, now + 5000);
+                            m_tasks.insert(levenshtein_array_task3);
+
                             break;
                         }
                         case common::message_levenshtein_array_entry::data_type_id: {
@@ -196,7 +208,12 @@ namespace libTAU {
                                 m_tasks.insert(task);
                             }
 
-                            if (!missing_messages.empty()) {
+                            // check if local levenshtein array != remote levenshtein array
+                            aux::bytes levenshtein_array;
+                            for (auto const &message: messages) {
+                                levenshtein_array.push_back(message.sha256()[0]);
+                            }
+                            if (levenshtein_array_entry.m_levenshtein_array != levenshtein_array) {
                                 common::entry_task levenshtein_array_task1(
                                         common::message_levenshtein_array_entry::data_type_id, peer, now + 6000);
                                 m_tasks.insert(levenshtein_array_task1);
@@ -298,7 +315,7 @@ namespace libTAU {
         }
 
         void communication::set_active_friends(std::vector<dht::public_key> active_friends) {
-            log("INFO: Set active friends[%zu].", active_friends.size());
+//            log("INFO: Set active friends[%zu].", active_friends.size());
             m_active_friends = std::move(active_friends);
         }
 
