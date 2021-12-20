@@ -179,8 +179,6 @@ namespace libTAU {
                             }
                             log("INFO: Found missing message size %zu", missing_messages.size());
 
-                            std::int64_t time_offside = 0;
-//                            for (auto i = 0; i < missing_messages.size(); i++)
                             auto size = missing_messages.size();
                             for(auto k = 0; k < size; k++) {
                                 common::message_entry msg_entry(missing_messages[k]);
@@ -558,7 +556,7 @@ namespace libTAU {
 
                 while (!m_tasks.empty()) {
                     auto it = m_tasks.begin();
-                    if (it->m_timestamp >= now) {
+                    if (it->m_timestamp <= now) {
                         if (it->m_data_type_id == common::message_levenshtein_array_entry::data_type_id) {
                             // 本地消息数组为target
                             aux::bytes levenshtein_array;
@@ -574,6 +572,8 @@ namespace libTAU {
                         }
 
                         m_tasks.erase(it);
+                    } else {
+                        break;
                     }
                 }
 
@@ -1070,7 +1070,7 @@ namespace libTAU {
             // salt is y pubkey when publish signal
             auto salt = make_salt(peer);
 
-            log("INFO: Publish online signal: peer[%s], salt[%s], data[%s]", aux::toHex(pk->bytes).c_str(),
+            log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(pk->bytes).c_str(),
                 aux::toHex(salt).c_str(), data.to_string().c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
