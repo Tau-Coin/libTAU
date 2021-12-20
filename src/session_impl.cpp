@@ -854,8 +854,8 @@ namespace {
 
 		apply_pack(&pack, m_settings, this);
 
-		if(reopen_listen_port)
-			reopen_listen_sockets(false);
+		//if(reopen_listen_port)
+		reopen_listen_sockets(false);
 	}
 
 	std::shared_ptr<listen_socket_t> session_impl::setup_listener(
