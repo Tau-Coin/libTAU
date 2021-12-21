@@ -324,10 +324,10 @@ namespace libTAU {
                 return false;
 
             common::message_entry msg_entry(msg);
-//            send_to(msg.receiver(), msg_entry.get_entry());
+            send_to(msg.receiver(), msg_entry.get_entry());
             std::int64_t now = get_current_time();
-            common::entry_task task1(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now);
-            m_tasks.insert(task1);
+//            common::entry_task task1(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now);
+//            m_tasks.insert(task1);
             common::entry_task task2(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 1000);
             m_tasks.insert(task2);
             common::entry_task task3(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 5000);
