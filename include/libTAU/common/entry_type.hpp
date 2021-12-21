@@ -18,7 +18,9 @@ see LICENSE file.
 
 namespace libTAU::common {
 
+    // TODO:: tlv
     const std::string entry_type_id = "tid";
+    const std::string entry_type_value = "v";
 
     struct TORRENT_EXPORT entry_task {
 
@@ -109,9 +111,34 @@ namespace libTAU::common {
         aux::bytes m_levenshtein_array;
     };
 
-    struct TORRENT_EXPORT block_entry {
+    struct TORRENT_EXPORT friend_info_request_entry {
         // data type id
         static const std::int64_t data_type_id = 2;
+
+        friend_info_request_entry() = default;
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+    };
+
+    struct TORRENT_EXPORT friend_info_entry {
+        // data type id
+        static const std::int64_t data_type_id = 3;
+
+        // @param Construct with entry
+        explicit friend_info_entry(const entry& e);
+
+        explicit friend_info_entry(aux::bytes mFriendInfo) : m_friend_info(std::move(mFriendInfo)) {}
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+
+        aux::bytes m_friend_info;
+    };
+
+    struct TORRENT_EXPORT block_entry {
+        // data type id
+        static const std::int64_t data_type_id = 4;
 
         // @param Construct with entry
         explicit block_entry(const entry& e);
@@ -126,7 +153,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT transaction_entry {
         // data type id
-        static const std::int64_t data_type_id = 3;
+        static const std::int64_t data_type_id = 5;
 
         // @param Construct with entry
         explicit transaction_entry(const entry& e);

@@ -12,7 +12,7 @@ namespace libTAU::common {
 
     message_entry::message_entry(const entry &e) {
         // message
-        if (auto* i = const_cast<entry *>(e.find_key("v")))
+        if (auto* i = const_cast<entry *>(e.find_key(entry_type_value)))
         {
             m_msg = communication::message(*i);
         }
@@ -23,7 +23,7 @@ namespace libTAU::common {
         // data type id
         e[entry_type_id] = entry(data_type_id);
         // message
-        e["v"] = m_msg.get_entry();
+        e[entry_type_value] = m_msg.get_entry();
 
         return e;
     }
@@ -31,7 +31,7 @@ namespace libTAU::common {
 
     message_levenshtein_array_entry::message_levenshtein_array_entry(const entry &e) {
         // message levenshtein array
-        if (auto* i = const_cast<entry *>(e.find_key("v")))
+        if (auto* i = const_cast<entry *>(e.find_key(entry_type_value)))
         {
             std::string levenshtein_array = i->string();
             m_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
@@ -43,14 +43,43 @@ namespace libTAU::common {
         // data type id
         e[entry_type_id] = entry(data_type_id);
         // message levenshtein array
-        e["v"] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
+        e[entry_type_value] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
 
         return e;
     }
 
+    entry friend_info_request_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type_id] = entry(data_type_id);
+
+        return e;
+    }
+
+    friend_info_entry::friend_info_entry(const entry &e) {
+        // friend info
+        if (auto* i = const_cast<entry *>(e.find_key(entry_type_value)))
+        {
+            std::string friend_info = i->string();
+            m_friend_info = aux::bytes(friend_info.begin(), friend_info.end());
+        }
+    }
+
+    entry friend_info_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type_id] = entry(data_type_id);
+        // friend info
+        e[entry_type_value] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
+
+        return e;
+    }
+
+
+
     block_entry::block_entry(const entry &e) {
         // block
-        if (auto* i = const_cast<entry *>(e.find_key("v")))
+        if (auto* i = const_cast<entry *>(e.find_key(entry_type_value)))
         {
             m_blk = blockchain::block(*i);
         }
@@ -61,7 +90,7 @@ namespace libTAU::common {
         // data type id
         e[entry_type_id] = entry(data_type_id);
         // block
-        e["v"] = m_blk.get_entry();
+        e[entry_type_value] = m_blk.get_entry();
 
         return e;
     }
@@ -69,7 +98,7 @@ namespace libTAU::common {
 
     transaction_entry::transaction_entry(const entry &e) {
         // transaction
-        if (auto* i = const_cast<entry *>(e.find_key("v")))
+        if (auto* i = const_cast<entry *>(e.find_key(entry_type_value)))
         {
             m_tx = blockchain::transaction(*i);
         }
@@ -80,7 +109,7 @@ namespace libTAU::common {
         // data type id
         e[entry_type_id] = entry(data_type_id);
         // transaction
-        e["v"] = m_tx.get_entry();
+        e[entry_type_value] = m_tx.get_entry();
 
         return e;
     }

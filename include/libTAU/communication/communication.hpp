@@ -43,8 +43,8 @@ namespace libTAU {
 
         using system_clock = std::chrono::system_clock;
 
-        // default refresh time of main task(50ms)(ms)
-        constexpr int communication_default_refresh_time = 50;
+        // default refresh time of main task(100ms)(ms)
+        constexpr int communication_default_refresh_time = 100;
 
         // max message list size(used in Levenshtein Distance)
         constexpr int communication_max_message_list_size = 10;
@@ -100,6 +100,9 @@ namespace libTAU {
 
             // delete friend and all related data in memory & db
             bool delete_friend(const dht::public_key &pubkey);
+
+            // request friend info: device id/nickname/timestamp
+            void request_friend_info(const dht::public_key &peer);
 
             // get friend info by public key
             aux::bytes get_friend_info(const dht::public_key &pubkey);
