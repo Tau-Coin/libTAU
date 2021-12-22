@@ -229,7 +229,8 @@ namespace libTAU {
                             break;
                         }
                         case common::friend_info_request_entry::data_type_id: {
-                            auto friend_info = m_message_db->get_friend_info(std::make_pair(*m_ses.pubkey(), peer));
+                            auto pubkey = *m_ses.pubkey();
+                            auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
                             if (!friend_info.empty()) {
                                 common::friend_info_entry e(friend_info);
                                 common::entry_task task1(common::friend_info_entry::data_type_id, peer, e.get_entry(), now);
