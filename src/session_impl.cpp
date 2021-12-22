@@ -555,11 +555,12 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	void session_impl::on_tick(error_code const& e)
 	{
 		TORRENT_ASSERT(is_single_thread());
-		session_time_modification();
-        m_timer.expires_after(seconds(1));
-		m_timer.async_wait([this](error_code const& e) {
-				this->wrap(&session_impl::on_tick, e); });
-
+		if (!m_abort) {
+			session_time_modification();
+        	m_timer.expires_after(seconds(1));
+			m_timer.async_wait([this](error_code const& e) {
+					this->wrap(&session_impl::on_tick, e); });
+		}
 	}
 
 	void session_impl::session_time_modification(std::int64_t time)
@@ -2666,6 +2667,12 @@ namespace {
 	{
 		if(m_communication)
 			*info = m_communication->get_friend_info(pubkey);
+	}
+
+	void session_impl::request_friend_info(const dht::public_key& pubkey)
+	{
+		if(m_communication)
+			m_communication->request_friend_info(pubkey);
 	}
 
 	bool session_impl::update_friend_info(const dht::public_key& pubkey, aux::bytes friend_info)

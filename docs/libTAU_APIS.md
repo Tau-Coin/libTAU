@@ -74,11 +74,11 @@
 	// 新的信息
 	communication_new_message_alert
 
-	// 消息被确认
-	communication_confirmation_root_alert
-
 	// 消息被同步
 	communication_syncing_message_alert
+
+	// 消息被确认
+	communication_confirmation_root_alert
 
 	// 新的朋友
 	communication_friend_info_alert

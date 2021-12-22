@@ -255,6 +255,11 @@ namespace libTAU {
 		return info;
 	}
 
+	void session_handle::request_friend_info(const dht::public_key& pubkey)
+	{
+		sync_call(&session_impl::request_friend_info, pubkey);
+	}
+
 	void session_handle::unset_chatting_friend()
 	{
 		sync_call(&session_impl::unset_chatting_friend);

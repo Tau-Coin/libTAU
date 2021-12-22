@@ -590,6 +590,9 @@ namespace aux {
 			bool add_new_friend(const dht::public_key& pubkey);
 			bool delete_friend(const dht::public_key& pubkey);
             void get_friend_info(const dht::public_key& pubkey, std::vector<char>* info);
+            // request friend info: device id/nickname/timestamp
+            void request_friend_info(const dht::public_key& pubkey);
+
             bool update_friend_info(const dht::public_key& pubkey, aux::bytes friend_info);
 			void set_chatting_friend(const dht::public_key& chatting_friend);
             void unset_chatting_friend();

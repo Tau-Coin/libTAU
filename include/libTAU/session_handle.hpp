@@ -313,6 +313,9 @@ namespace libTAU {
 		// get friend info by public key
 		std::vector<char> get_friend_info(const dht::public_key& pubkey);
 
+		// request friend info by public key
+		void request_friend_info(const dht::public_key& pubkey);
+
 		// set chatting friends
 		void set_chatting_friend(const dht::public_key& pubkey);
 
