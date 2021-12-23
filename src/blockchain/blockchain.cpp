@@ -1512,14 +1512,14 @@ namespace libTAU::blockchain {
         return salt;
     }
 
-    void blockchain::request_signal(const aux::bytes &chain_id, const dht::public_key &peer) {
-        // salt is x pubkey when request signal
-        auto salt = make_salt(chain_id);
-
-        log("INFO: Request signal from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
-            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        dht_get_mutable_item(chain_id, peer.bytes, salt, m_latest_item_timestamp[chain_id][peer]);
-    }
+//    void blockchain::request_signal(const aux::bytes &chain_id, const dht::public_key &peer) {
+//        // salt is x pubkey when request signal
+//        auto salt = make_salt(chain_id);
+//
+//        log("INFO: Request signal from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+//            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+//        dht_get_mutable_item(chain_id, peer.bytes, salt, m_latest_item_timestamp[chain_id][peer]);
+//    }
 
     void blockchain::publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
                                     const blockchain_signal &peer_signal) {
@@ -1960,35 +1960,35 @@ namespace libTAU::blockchain {
     }
 
     // callback for dht_mutable_get
-    void blockchain::get_mutable_callback(aux::bytes const& chain_id, dht::item const& i
-            , bool const authoritative)
-    {
-        TORRENT_ASSERT(i.is_mutable());
-
-        // construct mutable data wrapper from entry
-        if (!i.empty()) {
-            auto peer = i.pk();
-
-            // update latest item timestamp
-            if (i.ts() > m_latest_item_timestamp[chain_id][peer]) {
-                m_latest_item_timestamp[chain_id][peer] = i.ts();
-            }
-
-            blockchain_signal signal(i.value());
-
-            process_signal(signal, chain_id, peer);
-        }
-    }
+//    void blockchain::get_mutable_callback(aux::bytes const& chain_id, dht::item const& i
+//            , bool const authoritative)
+//    {
+//        TORRENT_ASSERT(i.is_mutable());
+//
+//        // construct mutable data wrapper from entry
+//        if (!i.empty()) {
+//            auto peer = i.pk();
+//
+//            // update latest item timestamp
+//            if (i.ts() > m_latest_item_timestamp[chain_id][peer]) {
+//                m_latest_item_timestamp[chain_id][peer] = i.ts();
+//            }
+//
+//            blockchain_signal signal(i.value());
+//
+//            process_signal(signal, chain_id, peer);
+//        }
+//    }
 
     // key is a 32-byte binary string, the public key to look up.
     // the salt is optional
-    void blockchain::dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key
-            , std::string salt, dht::timestamp t)
-    {
-        if (!m_ses.dht()) return;
-        m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&blockchain::get_mutable_callback
-                , this, chain_id, _1, _2), std::move(salt), t.value);
-    }
+//    void blockchain::dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key
+//            , std::string salt, dht::timestamp t)
+//    {
+//        if (!m_ses.dht()) return;
+//        m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&blockchain::get_mutable_callback
+//                , this, chain_id, _1, _2), std::move(salt), t.value);
+//    }
 
     void blockchain::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
     {
@@ -2236,19 +2236,37 @@ namespace libTAU::blockchain {
                 }
             }
             // check data type id
-            if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type_id)))
+            if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type)))
             {
                 auto data_type_id = p->integer();
                 switch (data_type_id) {
                     case common::block_entry::data_type_id: {
                         common::block_entry blk_entry(i.value());
-                        log("INFO: Got block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
+
+                        // TODO: validate timestamp etc. ?
+                        if (!blk_entry.m_blk.empty()) {
+                            log("INFO: Got block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
+
+                            m_blocks[blk_entry.m_blk.chain_id()][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
+
+                            // notify ui tx from block
+                            if (!blk_entry.m_blk.tx().empty()) {
+                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
+                            }
+                        }
 
                         break;
                     }
                     case common::transaction_entry::data_type_id: {
                         common::transaction_entry tx_entry(i.value());
-                        log("INFO: Got transaction, hash[%s].", aux::toHex(tx_entry.m_tx.sha256().to_string()).c_str());
+                        if (!tx_entry.m_tx.empty()) {
+                            log("INFO: Got transaction, hash[%s].",
+                                aux::toHex(tx_entry.m_tx.sha256().to_string()).c_str());
+
+                            m_tx_pools[tx_entry.m_tx.chain_id()].add_tx(tx_entry.m_tx);
+
+                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
+                        }
 
                         break;
                     }
