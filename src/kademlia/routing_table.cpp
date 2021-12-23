@@ -677,11 +677,11 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 			// if the node ID is the same, just update the failcount
 			// and be done with it.
 			existing->timeout_count = 0;
-			existing->non_referrable = e.non_referrable;
 			if (e.pinged())
 			{
 				existing->update_rtt(e.rtt);
 				existing->last_queried = e.last_queried;
+				existing->non_referrable = e.non_referrable;
 			}
 			// if this was a replacement node it may be elligible for
 			// promotion to the live bucket
@@ -765,7 +765,10 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 		TORRENT_ASSERT(j->id == e.id && j->ep() == e.ep());
 		j->timeout_count = 0;
 		j->update_rtt(e.rtt);
-		j->non_referrable = e.non_referrable;
+		if (e.pinged())
+		{
+			j->non_referrable = e.non_referrable;
+		}
 		return node_added;
 	}
 
@@ -787,7 +790,10 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 		TORRENT_ASSERT(j->id == e.id && j->ep() == e.ep());
 		j->timeout_count = 0;
 		j->update_rtt(e.rtt);
-		j->non_referrable = e.non_referrable;
+		if (e.pinged())
+		{
+			j->non_referrable = e.non_referrable;
+		}
 		e = *j;
 		m_ips.erase(j->addr());
 		rb.erase(j);

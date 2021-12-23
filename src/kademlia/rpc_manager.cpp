@@ -341,7 +341,7 @@ bool rpc_manager::incoming(msg const& m, node_id* id)
 
 	int rtt = int(total_milliseconds(now - o->sent()));
 
-	bdecode_node const non_referrable_ent = m.message.dict_find_dict("nr");
+	bdecode_node const non_referrable_ent = m.message.dict_find_int("nr");
 	bool const non_referrable = non_referrable_ent && non_referrable_ent.int_value() != 0;
 
 	// we found an observer for this reply, hence the node is not spoofing
