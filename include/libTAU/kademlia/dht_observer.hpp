@@ -69,6 +69,7 @@ namespace dht {
 		virtual bool on_dht_request(string_view query
 			, dht::msg const& request, entry& response) = 0;
 		virtual void on_dht_item(dht::item& i) = 0;
+		virtual std::int64_t get_time() = 0;
 
 	protected:
 		~dht_observer() = default;

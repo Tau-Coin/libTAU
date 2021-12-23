@@ -536,6 +536,8 @@ namespace aux {
 
 			void on_dht_item(dht::item& i) override;
 
+			std::int64_t get_time() override;
+
 			void set_external_address(tcp::endpoint const& local_endpoint
 				, address const& ip
 				, ip_source_t source_type, address const& source) override;

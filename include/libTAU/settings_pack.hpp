@@ -1891,6 +1891,9 @@ namespace aux {
 			// the time interval(seconds) of ping
 			dht_ping_interval,
 
+			// the time interval(seconds) of accepting mutable item
+			dht_time_offset,
+
 			// the maximum number of failed tries to contact a node before it is
 			// removed from the routing table. If there are known working nodes that
 			// are ready to replace a failing node, it will be replaced immediately,

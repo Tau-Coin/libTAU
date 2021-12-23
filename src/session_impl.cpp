@@ -181,6 +181,8 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	if (val) sett.set_int(settings_pack::dht_invoke_limit, int(val.int_value()));
 	val = s.dict_find_int("bootstrap_interval");
 	if (val) sett.set_int(settings_pack::dht_bootstrap_interval, int(val.int_value()));
+	val = s.dict_find_int("time_offset");
+	if (val) sett.set_int(settings_pack::dht_time_offset, int(val.int_value()));
 	val = s.dict_find_int("ping_interval");
 	if (val) sett.set_int(settings_pack::dht_ping_interval, int(val.int_value()));
 	val = s.dict_find_int("max_fail_count");
@@ -3354,6 +3356,11 @@ namespace {
 		{
 			m_blockchain->on_dht_item(i);
 		}
+	}
+
+	std::int64_t session_impl::get_time()
+	{
+		return m_session_time;
 	}
 
 	void session_impl::set_external_address(
