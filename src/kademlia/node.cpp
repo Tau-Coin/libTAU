@@ -359,8 +359,11 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 			entry e;
 			node_id from;
 			item i;
-			incoming_push(m, e, &from, i);
-			m_sock_man->send_packet(m_sock, e, m.addr, from);
+			bool need_resp = incoming_push(m, e, &from, i);
+			if (need_resp)
+			{
+				m_sock_man->send_packet(m_sock, e, m.addr, from);
+			}
 			if (m_observer && !i.empty()) m_observer->on_dht_item(i);
 
 			break;
@@ -1259,7 +1262,7 @@ void node::incoming_push_ourself(msg const& m)
 	if (m_observer && !i.empty()) m_observer->on_dht_item(i);
 }
 
-void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
+bool node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 {
 	e = entry(entry::dictionary_t);
 	e["y"] = "r";
@@ -1285,7 +1288,7 @@ void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 	if (!verify_message(m.message, top_desc, top_level, error_string))
 	{
 		incoming_push_error(error_string);
-		return;
+		return true;
 	}
 
 	node_id const id(top_level[4].string_ptr());
@@ -1327,13 +1330,13 @@ void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 			|| arg_ent.has_soft_error(error_string))
 		{
 			incoming_push_error(error_string);
-			return;
+			return true;
 		}
 
-		if (!msg_keys[9]) return;
+		if (!msg_keys[9]) return true;
 
 		node_id const to(msg_keys[9].string_ptr());
-		if (to != m_id) return;
+		if (to != m_id) return false;
 
 		// is this a mutable put?
 		bool const mutable_put = (msg_keys[2] && msg_keys[3] && msg_keys[4]);
@@ -1351,7 +1354,7 @@ void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 		if (buf.size() > 1000 || buf.empty())
 		{
 			incoming_push_error("message too big");
-			return;
+			return true;
 		}
 
 		span<char const> salt;
@@ -1360,7 +1363,7 @@ void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 		if (salt.size() > 64)
 		{
 			incoming_push_error("salt too big");
-			return;
+			return true;
 		}
 
 		sha256_hash const target = pub_key
@@ -1383,14 +1386,14 @@ void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 			if (ts < timestamp(0))
 			{
 				incoming_push_error("invalid (negative) timestamp");
-				return;
+				return true;
 			}
 
 			// msg_keys[4] is the signature, msg_keys[3] is the public key
 			if (!verify_mutable_item(buf, salt, ts, pk, sig))
 			{
 				incoming_push_error("invalid signature");
-				return;
+				return true;
 			}
 
 			TORRENT_ASSERT(signature::len == msg_keys[4].string_length());
@@ -1400,6 +1403,8 @@ void node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 			i.assign(v, salt, ts, pk, sig);
         }
 	}
+
+	return true;
 }
 
 void node::incoming_push_error(const char *err_str)
