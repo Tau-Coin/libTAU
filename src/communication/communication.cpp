@@ -93,6 +93,9 @@ namespace libTAU {
 
         void communication::clear() {
             m_friends.clear();
+            m_tasks.clear();
+            m_last_greeting.clear();
+            m_peer_access_times.clear();
             m_message_list_map.clear();
             m_chatting_friend = std::make_pair(dht::public_key(), 0);
             m_active_friends.clear();
