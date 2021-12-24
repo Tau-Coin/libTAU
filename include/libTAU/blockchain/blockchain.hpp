@@ -221,7 +221,7 @@ namespace blockchain {
         static std::string make_salt(const aux::bytes &chain_id);
 
         // request signal from a given peer
-        void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // publish online/new message signal to a given peer
         void publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
@@ -243,11 +243,11 @@ namespace blockchain {
         void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
         // mutable data callback
-        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool);
+//        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool);
 
-        // get mutable item from dht
-        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key
-                                  , std::string salt, dht::timestamp t);
+//        // get mutable item from dht
+//        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key
+//                                  , std::string salt, dht::timestamp t);
 
         // put immutable item to dht
         void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);

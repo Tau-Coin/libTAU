@@ -19,8 +19,10 @@ see LICENSE file.
 namespace libTAU::common {
 
     // TODO:: tlv
-    const std::string entry_type_id = "tid";
-    const std::string entry_type_value = "v";
+    const std::string protocol_type = "pid";
+    const std::string protocol_payload = "p";
+    const std::string entry_type = "t";
+    const std::string entry_value = "v";
 
     struct TORRENT_EXPORT entry_task {
 
@@ -78,6 +80,48 @@ namespace libTAU::common {
         entry m_entry;
 
         std::int64_t m_timestamp;
+    };
+
+    struct TORRENT_EXPORT communication_entries {
+        // data type id
+        static const std::int64_t protocol_id = 0;
+
+        communication_entries() = default;
+
+        // @param Construct with entry
+        explicit communication_entries(const entry& e);
+
+        communication_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
+
+        void push_back(const entry& e) { m_entries.push_back(e); }
+
+        void pop_back() { m_entries.pop_back(); }
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+
+        std::vector<entry> m_entries;
+    };
+
+    struct TORRENT_EXPORT blockchain_entries {
+        // data type id
+        static const std::int64_t protocol_id = 1;
+
+        blockchain_entries() = default;
+
+        // @param Construct with entry
+        explicit blockchain_entries(const entry& e);
+
+        blockchain_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
+
+        void push_back(const entry& e) { m_entries.push_back(e); }
+
+        void pop_back() { m_entries.pop_back(); }
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+
+        std::vector<entry> m_entries;
     };
 
     struct TORRENT_EXPORT message_entry {

@@ -93,6 +93,9 @@ namespace libTAU {
 
         void communication::clear() {
             m_friends.clear();
+            m_tasks.clear();
+            m_last_greeting.clear();
+            m_peer_access_times.clear();
             m_message_list_map.clear();
             m_chatting_friend = std::make_pair(dht::public_key(), 0);
             m_active_friends.clear();
@@ -147,7 +150,7 @@ namespace libTAU {
                 m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
                 // check data type id
-                if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type_id)))
+                if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type)))
                 {
                     auto data_type_id = p->integer();
                     switch (data_type_id) {
@@ -608,6 +611,7 @@ namespace libTAU {
                     }
                 }
 
+                log("--------------------------- tasks size:%lu", m_tasks.size());
                 while (!m_tasks.empty()) {
                     auto it = m_tasks.begin();
                     if (it->m_timestamp <= now) {
@@ -620,8 +624,10 @@ namespace libTAU {
                             }
 
                             common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array);
+                            log("------- send peer[%s] levenshtein array", aux::toHex(it->m_peer.bytes).c_str());
                             send_to(it->m_peer, msg_levenshtein_array.get_entry());
                         } else {
+                            log("------- send peer[%s] message", aux::toHex(it->m_peer.bytes).c_str());
                             send_to(it->m_peer, it->m_entry);
                         }
 
