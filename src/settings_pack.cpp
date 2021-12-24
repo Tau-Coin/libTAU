@@ -346,7 +346,7 @@ namespace libTAU {
 		SET(dht_bootstrap_interval, 30, nullptr),
 		SET(dht_ping_interval, 30, nullptr),
 		SET(dht_time_offset, 30, nullptr),
-		SET(dht_max_fail_count, 20, nullptr),
+		SET(dht_max_fail_count, 60, nullptr),
 		SET(dht_max_torrents, 2000, nullptr),
 		SET(dht_max_dht_items, 700, nullptr),
 		SET(dht_max_peers, 500, nullptr),
