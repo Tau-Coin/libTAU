@@ -105,6 +105,12 @@ namespace libTAU::dht {
 		}
 
 		update_storage_node_ids();
+
+		// re-bootstrap
+		for (auto& n : m_nodes)
+		{
+			n.second.dht.bootstrap({}, find_data::nodes_callback());
+		}
 	}
 
 	void dht_tracker::new_socket(aux::listen_socket_handle const& s)
