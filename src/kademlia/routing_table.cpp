@@ -1082,6 +1082,14 @@ void routing_table::node_failed(node_id const& nid, udp::endpoint const& ep)
 		// has never responded at all, remove it
 		if (j->fail_count() >= m_settings.get_int(settings_pack::dht_max_fail_count) || !j->pinged())
 		{
+			if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
+			{
+				m_log->log(dht_logger::routing_table, "NODE DELETE IN ROUTING TABLE id: %s ip: %s fails: %d pinged: %d up-time: %d"
+				, aux::to_hex(nid).c_str(), aux::print_endpoint(j->ep()).c_str()
+				, j->fail_count()
+				, int(j->pinged())
+				, int(total_seconds(aux::time_now() - j->first_seen)));
+			}
 			m_ips.erase(j->addr());
 			b.erase(j);
 		}
