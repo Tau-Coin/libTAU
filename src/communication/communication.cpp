@@ -612,7 +612,7 @@ namespace libTAU {
                 }
 
                 log("--------------------------- tasks size:%lu", m_tasks.size());
-                while (!m_tasks.empty()) {
+                if (!m_tasks.empty()) {
                     auto it = m_tasks.begin();
                     if (it->m_timestamp <= now) {
                         if (it->m_data_type_id == common::message_levenshtein_array_entry::data_type_id) {
@@ -632,8 +632,6 @@ namespace libTAU {
                         }
 
                         m_tasks.erase(it);
-                    } else {
-                        break;
                     }
                 }
 
