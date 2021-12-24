@@ -299,9 +299,6 @@ namespace libTAU {
 		peer_class_t create_peer_class(char const* name);
 
 		// set main loop time interval (ms)
-		void new_account_seed(std::array<char, 32> seed);
-
-		// set main loop time interval (ms)
 		void set_loop_time_interval(int milliseconds);
 
 		// add new friend in memory & db

@@ -20,9 +20,6 @@
     int total_upload_rate();
 ## 设置相关
 
-### 账户系统
-	// set new account seed
-	void new_account_seed(std::array<char, 32> seed);
 ### 设置参数
 	// apply settings
 	void apply_settings(settings_pack const&);

@@ -372,6 +372,10 @@ namespace aux {
 
 			dht::public_key* pubkey() override {return &(std::get<dht::public_key>(m_keypair));}
 			dht::secret_key* serkey() override {return &(std::get<dht::secret_key>(m_keypair));}
+			std::tuple<dht::public_key*, dht::secret_key*> pskeys() {
+				return std::make_tuple(&(std::get<dht::public_key>(m_keypair)),
+									   &(std::get<dht::secret_key>(m_keypair)));
+			}
 
 			dht::dht_tracker* dht() override { return m_dht.get(); }
 			bool announce_dht() const override { return !m_listen_sockets.empty(); }
@@ -587,7 +591,6 @@ namespace aux {
 			void update_connections_limit();
 			void update_alert_mask();
 
-			void new_account_seed(std::array<char, 32>& seed);
 			void set_loop_time_interval(int milliseconds);
 			bool add_new_friend(const dht::public_key& pubkey);
 			bool delete_friend(const dht::public_key& pubkey);
