@@ -2374,12 +2374,35 @@ namespace {
 			m_account_manager
 				= std::make_shared<aux::account_manager>(hexseed);
 		}
+
+		//2. dht update node id
+		if(m_dht)
+			m_dht->update_node_id();
+
+		//3. communication update node id
+		if(m_communication)
+			m_communication->account_changed();
+
 	}
 
 	void session_impl::new_account_seed(std::array<char, 32>& seed) {
 
 		//1. update key pair
 		m_keypair = dht::ed25519_create_keypair(seed);
+		const char* seed_char = seed.data();
+		std::vector<char> seed_hex_char;
+		seed_hex_char.resize(64);
+        libTAU::aux::to_hex(seed_char, 32, seed_hex_char.data());
+        span<char const> hexseed(seed_hex_char.data(), 64);
+		if (m_account_manager)
+		{
+			m_account_manager->update_key(hexseed);
+		}
+		else
+		{
+			m_account_manager
+				= std::make_shared<aux::account_manager>(hexseed);
+		}
 
 		//2. dht update node id
 		m_dht->update_node_id();
