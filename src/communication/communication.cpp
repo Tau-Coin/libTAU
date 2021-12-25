@@ -201,16 +201,16 @@ namespace libTAU {
                                 common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 100 * k);
                                 m_tasks.insert(task);
                             }
-                            for(auto k = 0; k < size; k++) {
-                                common::message_entry msg_entry(missing_messages[k]);
-                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 1000 + 100 * k);
-                                m_tasks.insert(task);
-                            }
-                            for(auto k = 0; k < size; k++) {
-                                common::message_entry msg_entry(missing_messages[k]);
-                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 5000 + 100 * k);
-                                m_tasks.insert(task);
-                            }
+//                            for(auto k = 0; k < size; k++) {
+//                                common::message_entry msg_entry(missing_messages[k]);
+//                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 1000 + 100 * k);
+//                                m_tasks.insert(task);
+//                            }
+//                            for(auto k = 0; k < size; k++) {
+//                                common::message_entry msg_entry(missing_messages[k]);
+//                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 5000 + 100 * k);
+//                                m_tasks.insert(task);
+//                            }
 
                             // check if local levenshtein array != remote levenshtein array
                             aux::bytes levenshtein_array;
@@ -368,10 +368,10 @@ namespace libTAU {
             std::int64_t now = get_current_time();
 //            common::entry_task task1(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now);
 //            m_tasks.insert(task1);
-            common::entry_task task2(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 1000);
-            m_tasks.insert(task2);
-            common::entry_task task3(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 5000);
-            m_tasks.insert(task3);
+//            common::entry_task task2(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 1000);
+//            m_tasks.insert(task2);
+//            common::entry_task task3(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 5000);
+//            m_tasks.insert(task3);
 
             common::entry_task levenshtein_array_task1(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 6000);
             m_tasks.insert(levenshtein_array_task1);
@@ -379,6 +379,29 @@ namespace libTAU {
             m_tasks.insert(levenshtein_array_task2);
             common::entry_task levenshtein_array_task3(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 9000);
             m_tasks.insert(levenshtein_array_task3);
+
+//            {
+//                // 本地消息数组为target
+//                aux::bytes levenshtein_array;
+//                auto &msg_list = m_message_list_map[msg.receiver()];
+//                for (auto const &msg: msg_list) {
+//                    levenshtein_array.push_back(msg.sha256()[0]);
+//                }
+//
+//                common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array);
+//
+//                common::communication_entries communicationEntries;
+//                // big enough?
+//                communicationEntries.push_back(msg_entry.get_entry());
+//                communicationEntries.push_back(msg_levenshtein_array.get_entry());
+//
+//                common::entry_task task1(msg.receiver(), communicationEntries.get_entry(), now);
+//                m_tasks.insert(task1);
+//                common::entry_task task2(msg.receiver(), communicationEntries.get_entry(), now + 1000);
+//                m_tasks.insert(task2);
+//                common::entry_task task3(msg.receiver(), communicationEntries.get_entry(), now + 5000);
+//                m_tasks.insert(task3);
+//            }
 
             return true;
         }
