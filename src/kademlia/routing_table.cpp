@@ -730,7 +730,8 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 			}
 
 			prune_empty_bucket();
-			return failed_to_add;
+			// return failed_to_add;
+			// libTAU NOTE: remove the older entry and add the newer.
 		}
 	}
 
