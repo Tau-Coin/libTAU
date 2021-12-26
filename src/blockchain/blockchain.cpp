@@ -377,6 +377,41 @@ namespace libTAU::blockchain {
                     auto peer = select_peer_randomly(chain_id);
                     publish_signal(chain_id, peer);
                 }
+
+                if (now - m_visiting_time[chain_id].second > 60 * 1000) {
+                    auto peer = select_peer_randomly(chain_id);
+
+                    common::vote_request_entry voteRequestEntry;
+                    common::entry_task task1(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now);
+                    m_tasks.insert(task1);
+                    common::entry_task task2(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now + 1000);
+                    m_tasks.insert(task2);
+                    common::entry_task task3(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now + 5000);
+                    m_tasks.insert(task3);
+                }
+
+                if (!m_tasks.empty()) {
+                    auto it = m_tasks.begin();
+                    if (it->m_timestamp <= now) {
+//                        if (it->m_data_type_id == common::message_levenshtein_array_entry::data_type_id) {
+//                            // 本地消息数组为target
+//                            aux::bytes levenshtein_array;
+//                            auto& msg_list = m_message_list_map[it->m_peer];
+//                            for (auto const &msg: msg_list) {
+//                                levenshtein_array.push_back(msg.sha256()[0]);
+//                            }
+//
+//                            common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array);
+//                            log("------- send peer[%s] levenshtein array", aux::toHex(it->m_peer.bytes).c_str());
+//                            send_to(chain_id, it->m_peer, msg_levenshtein_array.get_entry());
+//                        } else {
+//                            log("------- send peer[%s] message", aux::toHex(it->m_peer.bytes).c_str());
+                            send_to(chain_id, it->m_peer, it->m_entry);
+//                        }
+
+                        m_tasks.erase(it);
+                    }
+                }
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
@@ -1510,6 +1545,19 @@ namespace libTAU::blockchain {
         }
 
         return salt;
+    }
+
+    void blockchain::send_to(const aux::bytes &chain_id, const dht::public_key &peer, const entry &data) {
+        dht::public_key * pk = m_ses.pubkey();
+        dht::secret_key * sk = m_ses.serkey();
+
+        auto salt = make_salt(chain_id);
+
+        log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(pk->bytes).c_str(),
+            aux::toHex(salt).c_str(), data.to_string().c_str());
+
+        dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
+                , pk->bytes, sk->bytes, data), salt, peer);
     }
 
 //    void blockchain::request_signal(const aux::bytes &chain_id, const dht::public_key &peer) {

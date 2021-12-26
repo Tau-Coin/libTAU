@@ -28,6 +28,7 @@ see LICENSE file.
 #include "libTAU/blockchain/repository_impl.hpp"
 #include "libTAU/blockchain/repository_track.hpp"
 #include "libTAU/blockchain/tx_pool.hpp"
+#include "libTAU/common/entry_type.hpp"
 
 namespace libTAU {
 namespace blockchain {
@@ -220,6 +221,9 @@ namespace blockchain {
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id);
 
+        // send data to peer
+        void send_to(const aux::bytes &chain_id, const dht::public_key &peer, entry const& data);
+
         // request signal from a given peer
 //        void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
 
@@ -302,6 +306,13 @@ namespace blockchain {
 
         // the time that last got data from dht(ms)
         std::map<aux::bytes, std::int64_t> m_last_got_data_time;
+
+        // all tasks
+        std::set<common::entry_task> m_tasks;
+
+        std::map<aux::bytes, std::set<dht::public_key>> m_visiting_history;
+
+        std::map<aux::bytes, std::pair<dht::public_key, std::int64_t>> m_visiting_time;
 
         // block cache todo:100000?
         std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;

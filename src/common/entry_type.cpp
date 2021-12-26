@@ -129,6 +129,14 @@ namespace libTAU::common {
 
 
 
+    entry block_request_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+
+        return e;
+    }
+
     block_entry::block_entry(const entry &e) {
         // block
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
@@ -148,6 +156,14 @@ namespace libTAU::common {
     }
 
 
+    entry transaction_request_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+
+        return e;
+    }
+
     transaction_entry::transaction_entry(const entry &e) {
         // transaction
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
@@ -162,6 +178,32 @@ namespace libTAU::common {
         e[entry_type] = entry(data_type_id);
         // transaction
         e[entry_value] = m_tx.get_entry();
+
+        return e;
+    }
+
+    entry vote_request_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+
+        return e;
+    }
+
+    vote_entry::vote_entry(const entry &e) {
+        // vote
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            m_vote = blockchain::vote(*i);
+        }
+    }
+
+    entry vote_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // vote
+        e[entry_value] = m_vote.get_entry();
 
         return e;
     }

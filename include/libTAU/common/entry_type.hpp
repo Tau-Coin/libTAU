@@ -13,6 +13,7 @@ see LICENSE file.
 
 #include "libTAU/aux_/export.hpp"
 #include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/vote.hpp"
 #include "libTAU/communication/message.hpp"
 #include "libTAU/entry.hpp"
 
@@ -25,6 +26,10 @@ namespace libTAU::common {
     const std::string entry_value = "v";
 
     struct TORRENT_EXPORT entry_task {
+
+        entry_task(const dht::public_key &mPeer, const entry &mEntry, int64_t mTimestamp) : m_peer(mPeer),
+                                                                                            m_entry(mEntry),
+                                                                                            m_timestamp(mTimestamp) {}
 
         entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, entry mEntry, int64_t mTimestamp)
                 : m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)), m_timestamp(mTimestamp) {}
@@ -180,9 +185,21 @@ namespace libTAU::common {
         aux::bytes m_friend_info;
     };
 
-    struct TORRENT_EXPORT block_entry {
+
+
+    struct TORRENT_EXPORT block_request_entry {
         // data type id
         static const std::int64_t data_type_id = 4;
+
+        block_request_entry() = default;
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+    };
+
+    struct TORRENT_EXPORT block_entry {
+        // data type id
+        static const std::int64_t data_type_id = 5;
 
         // @param Construct with entry
         explicit block_entry(const entry& e);
@@ -195,9 +212,19 @@ namespace libTAU::common {
         blockchain::block m_blk;
     };
 
+    struct TORRENT_EXPORT transaction_request_entry {
+        // data type id
+        static const std::int64_t data_type_id = 6;
+
+        transaction_request_entry() = default;
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+    };
+
     struct TORRENT_EXPORT transaction_entry {
         // data type id
-        static const std::int64_t data_type_id = 5;
+        static const std::int64_t data_type_id = 7;
 
         // @param Construct with entry
         explicit transaction_entry(const entry& e);
@@ -208,6 +235,31 @@ namespace libTAU::common {
         entry get_entry() const;
 
         blockchain::transaction m_tx;
+    };
+
+    struct TORRENT_EXPORT vote_request_entry {
+        // data type id
+        static const std::int64_t data_type_id = 8;
+
+        vote_request_entry() = default;
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+    };
+
+    struct TORRENT_EXPORT vote_entry {
+        // data type id
+        static const std::int64_t data_type_id = 9;
+
+        // @param Construct with entry
+        explicit vote_entry(const entry& e);
+
+        explicit vote_entry(const blockchain::vote &mVote) : m_vote(mVote) {}
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+
+        blockchain::vote m_vote;
     };
 
 }
