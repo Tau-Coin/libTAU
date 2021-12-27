@@ -128,11 +128,21 @@ namespace libTAU::common {
     }
 
 
+    block_request_entry::block_request_entry(const entry &e) {
+        // block hash
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            auto hash = i->string();
+            m_hash = sha256_hash(hash.data());
+        }
+    }
 
     entry block_request_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
         e[entry_type] = entry(data_type_id);
+        // block hash
+        e[entry_value] = entry(m_hash.to_string());
 
         return e;
     }
@@ -156,10 +166,21 @@ namespace libTAU::common {
     }
 
 
+    transaction_request_entry::transaction_request_entry(const entry &e) {
+        // tx hash
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            auto hash = i->string();
+            m_hash = sha256_hash(hash.data());
+        }
+    }
+
     entry transaction_request_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
         e[entry_type] = entry(data_type_id);
+        // block hash
+        e[entry_value] = entry(m_hash.to_string());
 
         return e;
     }
@@ -182,10 +203,23 @@ namespace libTAU::common {
         return e;
     }
 
+
+
+    vote_request_entry::vote_request_entry(const entry &e) {
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+    }
+
     entry vote_request_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
         e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
 
         return e;
     }
@@ -196,12 +230,20 @@ namespace libTAU::common {
         {
             m_vote = blockchain::vote(*i);
         }
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
     }
 
     entry vote_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
         e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // vote
         e[entry_value] = m_vote.get_entry();
 

@@ -45,6 +45,8 @@ namespace libTAU::blockchain {
     constexpr int DEFAULT_MIN_BLOCK_TIME = 60;
     constexpr int DEFAULT_MAX_BLOCK_TIME = 540;
 
+    constexpr int EXCHANGE_TX_TIME = 60;
+
     constexpr int MIN_RATIO = 265;
     constexpr int MAX_RATIO = 335;
 

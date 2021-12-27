@@ -24,12 +24,17 @@ namespace libTAU::common {
     const std::string protocol_payload = "p";
     const std::string entry_type = "t";
     const std::string entry_value = "v";
+    const std::string entry_chain_id = "i";
 
     struct TORRENT_EXPORT entry_task {
 
-        entry_task(const dht::public_key &mPeer, const entry &mEntry, int64_t mTimestamp) : m_peer(mPeer),
-                                                                                            m_entry(mEntry),
+        entry_task(const dht::public_key &mPeer, entry mEntry, int64_t mTimestamp) : m_peer(mPeer),
+                                                                                            m_entry(std::move(mEntry)),
                                                                                             m_timestamp(mTimestamp) {}
+
+        entry_task(int64_t mDataTypeId, entry mEntry, int64_t mTimestamp) : m_data_type_id(mDataTypeId),
+                                                                                   m_entry(std::move(mEntry)),
+                                                                                   m_timestamp(mTimestamp) {}
 
         entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, entry mEntry, int64_t mTimestamp)
                 : m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)), m_timestamp(mTimestamp) {}
@@ -191,10 +196,15 @@ namespace libTAU::common {
         // data type id
         static const std::int64_t data_type_id = 4;
 
-        block_request_entry() = default;
+        // @param Construct with entry
+        explicit block_request_entry(const entry& e);
+
+        explicit block_request_entry(const sha256_hash &mHash) : m_hash(mHash) {}
 
         // @returns the corresponding entry
         entry get_entry() const;
+
+        sha256_hash m_hash;
     };
 
     struct TORRENT_EXPORT block_entry {
@@ -216,10 +226,15 @@ namespace libTAU::common {
         // data type id
         static const std::int64_t data_type_id = 6;
 
-        transaction_request_entry() = default;
+        // @param Construct with entry
+        explicit transaction_request_entry(const entry& e);
+
+        explicit transaction_request_entry(const sha256_hash &mHash) : m_hash(mHash) {}
 
         // @returns the corresponding entry
         entry get_entry() const;
+
+        sha256_hash m_hash;
     };
 
     struct TORRENT_EXPORT transaction_entry {
@@ -243,8 +258,16 @@ namespace libTAU::common {
 
         vote_request_entry() = default;
 
+        // @param Construct with entry
+        explicit vote_request_entry(const entry& e);
+
+        vote_request_entry(aux::bytes mChainId) : m_chain_id(std::move(mChainId)) {}
+
         // @returns the corresponding entry
         entry get_entry() const;
+
+        // chain id
+        aux::bytes m_chain_id;
     };
 
     struct TORRENT_EXPORT vote_entry {
@@ -254,10 +277,13 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit vote_entry(const entry& e);
 
-        explicit vote_entry(const blockchain::vote &mVote) : m_vote(mVote) {}
+        vote_entry(aux::bytes mChainId, const blockchain::vote &mVote) : m_chain_id(std::move(mChainId)), m_vote(mVote) {}
 
         // @returns the corresponding entry
         entry get_entry() const;
+
+        // chain id
+        aux::bytes m_chain_id;
 
         blockchain::vote m_vote;
     };

@@ -61,6 +61,9 @@ namespace libTAU::blockchain {
         m_vote_timer.expires_after(seconds(DEFAULT_BLOCK_TIME));
         m_vote_timer.async_wait(std::bind(&blockchain::refresh_vote_timeout, self(), _1));
 
+        m_exchange_tx_timer.expires_after(seconds(EXCHANGE_TX_TIME));
+        m_exchange_tx_timer.async_wait(std::bind(&blockchain::refresh_tx_timeout, self(), _1));
+
         return true;
     }
 
@@ -325,13 +328,17 @@ namespace libTAU::blockchain {
 
                     // 5. try to mine on the best chain
                     if (is_sync_completed(chain_id)) {
-                        block b = try_to_mine_block(chain_id);
+                        block blk = try_to_mine_block(chain_id);
 
-                        if (!b.empty()) {
+                        if (!blk.empty()) {
                             // process mined block
                             log("INFO chain[%s] process mined block[%s]",
-                                aux::toHex(chain_id).c_str(), b.to_string().c_str());
-                            process_block(chain_id, b);
+                                aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                            process_block(chain_id, blk);
+
+                            common::block_entry blockEntry(blk);
+                            common::entry_task task1(common::block_entry::data_type_id, blockEntry.get_entry(), get_total_milliseconds());
+                            m_tasks.insert(task1);
                         }
                     }
                 }
@@ -372,22 +379,23 @@ namespace libTAU::blockchain {
 
                 // current time
                 auto now = get_total_milliseconds();
-                if (now > m_last_got_data_time[chain_id] + blockchain_max_access_peer_interval) {
-                    // publish signal
-                    auto peer = select_peer_randomly(chain_id);
-                    publish_signal(chain_id, peer);
-                }
+//                if (now > m_last_got_data_time[chain_id] + blockchain_max_access_peer_interval) {
+//                    // publish signal
+//                    auto peer = select_peer_randomly(chain_id);
+//                    publish_signal(chain_id, peer);
+//                }
 
                 if (now - m_visiting_time[chain_id].second > 60 * 1000) {
                     auto peer = select_peer_randomly(chain_id);
 
                     common::vote_request_entry voteRequestEntry;
-                    common::entry_task task1(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now);
-                    m_tasks.insert(task1);
-                    common::entry_task task2(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now + 1000);
-                    m_tasks.insert(task2);
-                    common::entry_task task3(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now + 5000);
-                    m_tasks.insert(task3);
+                    send_to(chain_id, peer, voteRequestEntry.get_entry());
+//                    common::entry_task task1(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now);
+//                    m_tasks.insert(task1);
+//                    common::entry_task task2(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now + 1000);
+//                    m_tasks.insert(task2);
+//                    common::entry_task task3(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now + 5000);
+//                    m_tasks.insert(task3);
                 }
 
                 if (!m_tasks.empty()) {
@@ -434,6 +442,27 @@ namespace libTAU::blockchain {
             m_vote_timer.async_wait(std::bind(&blockchain::refresh_vote_timeout, self(), _1));
         } catch (std::exception &e) {
             log("Exception vote [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+        }
+    }
+
+    void blockchain::refresh_tx_timeout(const error_code &e) {
+        if (e || m_stop) return;
+
+        try {
+            // refresh all chain votes
+            for (auto const& chain_id: m_chains) {
+                auto tx = m_tx_pools[chain_id].get_best_transaction();
+                if (!tx.empty()) {
+                    common::transaction_entry txEntry(tx);
+                    common::entry_task entryTask(common::transaction_entry::data_type_id, txEntry.get_entry(), get_total_milliseconds());
+                    m_tasks.insert(entryTask);
+                }
+            }
+
+            m_exchange_tx_timer.expires_after(seconds(EXCHANGE_TX_TIME));
+            m_exchange_tx_timer.async_wait(std::bind(&blockchain::refresh_tx_timeout, self(), _1));
+        } catch (std::exception &e) {
+            log("Exception exchange tx [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
     }
 
@@ -2288,6 +2317,19 @@ namespace libTAU::blockchain {
             {
                 auto data_type_id = p->integer();
                 switch (data_type_id) {
+                    case common::block_request_entry::data_type_id: {
+                        common::block_request_entry blk_request_entry(i.value());
+                        auto blk = m_repository->get_block_by_hash(blk_request_entry.m_hash);
+
+                        if (!blk.empty()) {
+                            common::block_entry blockEntry(blk);
+                            common::entry_task task(common::block_entry::data_type_id, peer, blockEntry.get_entry(),
+                                                     get_total_milliseconds());
+                            m_tasks.insert(task);
+                        }
+
+                        break;
+                    }
                     case common::block_entry::data_type_id: {
                         common::block_entry blk_entry(i.value());
 
@@ -2305,6 +2347,9 @@ namespace libTAU::blockchain {
 
                         break;
                     }
+                    case common::transaction_request_entry::data_type_id: {
+                        break;
+                    }
                     case common::transaction_entry::data_type_id: {
                         common::transaction_entry tx_entry(i.value());
                         if (!tx_entry.m_tx.empty()) {
@@ -2315,6 +2360,35 @@ namespace libTAU::blockchain {
 
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
                         }
+
+                        break;
+                    }
+                    case common::vote_request_entry::data_type_id: {
+                        common::vote_request_entry voteRequestEntry(i.value());
+                        auto &chain_id = voteRequestEntry.m_chain_id;
+
+                        // vote for voting point
+                        auto &voting_point_block = m_voting_point_blocks[chain_id];
+                        vote consensus_point_vote;
+                        if (is_sync_completed(chain_id) && !voting_point_block.empty()) {
+                            consensus_point_vote.setBlockHash(voting_point_block.sha256());
+                            consensus_point_vote.setBlockNumber(voting_point_block.block_number());
+
+                            common::vote_entry voteEntry(chain_id, consensus_point_vote);
+                            common::entry_task task(common::vote_entry::data_type_id, peer, voteEntry.get_entry(),
+                                                    get_total_milliseconds());
+                            m_tasks.insert(task);
+                        }
+
+                        break;
+                    }
+                    case common::vote_entry::data_type_id: {
+                        common::vote_entry voteEntry(i.value());
+                        auto &chain_id = voteEntry.m_chain_id;
+
+                        log("INFO chain[%s] valid vote[%s]",
+                            aux::toHex(chain_id).c_str(), voteEntry.m_vote.to_string().c_str());
+                        m_votes[chain_id][peer] = voteEntry.m_vote;
 
                         break;
                     }
