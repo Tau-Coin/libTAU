@@ -65,6 +65,21 @@ struct TORRENT_EXPORT node_entry
 		last_invoke_failed = min_time();
 	}
 
+	void reset()
+	{
+#ifndef TORRENT_DISABLE_LOGGING
+		first_seen = aux::time_now();
+#endif
+
+		last_queried = min_time();
+		rtt = 0xffff;
+		timeout_count = 0xff;
+		verified = false;
+		last_invoke_failed = min_time();
+		invoke_fail_count = 0;
+		non_referrable = false;
+	}
+
 #ifndef TORRENT_DISABLE_LOGGING
 	time_point first_seen = aux::time_now();
 #endif
