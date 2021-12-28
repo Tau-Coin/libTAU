@@ -337,8 +337,8 @@ namespace libTAU::blockchain {
                             process_block(chain_id, blk);
 
                             common::block_entry blockEntry(blk);
-                            common::entry_task task1(common::block_entry::data_type_id, blockEntry.get_entry(), get_total_milliseconds());
-                            m_tasks.insert(task1);
+                            common::entry_task task(common::block_entry::data_type_id, blockEntry.get_entry(), get_total_milliseconds());
+                            m_tasks.insert(task);
                         }
                     }
                 }
@@ -390,6 +390,11 @@ namespace libTAU::blockchain {
 
                     common::vote_request_entry voteRequestEntry;
                     send_to(chain_id, peer, voteRequestEntry.get_entry());
+
+                    common::head_block_request_entry headBlockRequestEntry;
+                    send_to(chain_id, peer, headBlockRequestEntry.get_entry());
+
+                    m_visiting_history[chain_id].insert(peer);
 //                    common::entry_task task1(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now);
 //                    m_tasks.insert(task1);
 //                    common::entry_task task2(common::vote_request_entry::data_type_id, peer, voteRequestEntry.get_entry(), now + 1000);
@@ -401,23 +406,15 @@ namespace libTAU::blockchain {
                 if (!m_tasks.empty()) {
                     auto it = m_tasks.begin();
                     if (it->m_timestamp <= now) {
-//                        if (it->m_data_type_id == common::message_levenshtein_array_entry::data_type_id) {
-//                            // 本地消息数组为target
-//                            aux::bytes levenshtein_array;
-//                            auto& msg_list = m_message_list_map[it->m_peer];
-//                            for (auto const &msg: msg_list) {
-//                                levenshtein_array.push_back(msg.sha256()[0]);
-//                            }
-//
-//                            common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array);
-//                            log("------- send peer[%s] levenshtein array", aux::toHex(it->m_peer.bytes).c_str());
-//                            send_to(chain_id, it->m_peer, msg_levenshtein_array.get_entry());
-//                        } else {
-//                            log("------- send peer[%s] message", aux::toHex(it->m_peer.bytes).c_str());
+                        if (it->m_peer.is_all_zeros()) {
+                            if (now - m_visiting_time[chain_id].second < 60 * 1000) {
+                                send_to(chain_id, m_visiting_time[chain_id].first, it->m_entry);
+                                m_tasks.erase(it);
+                            }
+                        } else {
                             send_to(chain_id, it->m_peer, it->m_entry);
-//                        }
-
-                        m_tasks.erase(it);
+                            m_tasks.erase(it);
+                        }
                     }
                 }
             }
@@ -853,6 +850,15 @@ namespace libTAU::blockchain {
                 m_voting_point_blocks[chain_id] = blk;
             } else {
                 log("INFO chain[%s] Cannot find voting point block", aux::toHex(chain_id).c_str());
+            }
+        }
+    }
+
+    void blockchain::try_to_update_visiting_peer(const aux::bytes &chain_id, const dht::public_key &peer) {
+        auto now = get_total_milliseconds();
+        if (peer != m_visiting_time[chain_id].first) {
+            if (m_visiting_history[chain_id].find(peer) != m_visiting_history[chain_id].end()) {
+                m_visiting_time[chain_id] = std::make_pair(peer, now);
             }
         }
     }
@@ -2343,6 +2349,8 @@ namespace libTAU::blockchain {
                             if (!blk_entry.m_blk.tx().empty()) {
                                 m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
                             }
+
+                            try_to_update_visiting_peer(blk_entry.m_blk.chain_id(), peer);
                         }
 
                         break;
@@ -2389,6 +2397,8 @@ namespace libTAU::blockchain {
                         log("INFO chain[%s] valid vote[%s]",
                             aux::toHex(chain_id).c_str(), voteEntry.m_vote.to_string().c_str());
                         m_votes[chain_id][peer] = voteEntry.m_vote;
+
+                        try_to_update_visiting_peer(chain_id, peer);
 
                         break;
                     }

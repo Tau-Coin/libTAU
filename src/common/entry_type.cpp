@@ -250,4 +250,23 @@ namespace libTAU::common {
         return e;
     }
 
+    head_block_request_entry::head_block_request_entry(const entry &e) {
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+    }
+
+    entry head_block_request_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+
+        return e;
+    }
+
 }

@@ -36,7 +36,7 @@ namespace blockchain {
     using system_clock = std::chrono::system_clock;
 
     // default refresh time of main task(100)(ms)
-    constexpr int blockchain_default_refresh_time = 500;
+    constexpr int blockchain_default_refresh_time = 100;
 
     // max access peer frequency(interval: 3000 ms)
     constexpr int blockchain_max_access_peer_interval = 3000;
@@ -177,6 +177,8 @@ namespace blockchain {
 
         // try to update voting point block if chain changed
         void try_to_update_voting_point_block(const aux::bytes &chain_id);
+
+        void try_to_update_visiting_peer(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // verify block
         RESULT verify_block(const aux::bytes &chain_id, block &b, block &previous_block, repository *repo);

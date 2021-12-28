@@ -261,7 +261,7 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit vote_request_entry(const entry& e);
 
-        vote_request_entry(aux::bytes mChainId) : m_chain_id(std::move(mChainId)) {}
+        explicit vote_request_entry(aux::bytes mChainId) : m_chain_id(std::move(mChainId)) {}
 
         // @returns the corresponding entry
         entry get_entry() const;
@@ -286,6 +286,24 @@ namespace libTAU::common {
         aux::bytes m_chain_id;
 
         blockchain::vote m_vote;
+    };
+
+    struct TORRENT_EXPORT head_block_request_entry {
+        // data type id
+        static const std::int64_t data_type_id = 10;
+
+        head_block_request_entry() = default;
+
+        // @param Construct with entry
+        explicit head_block_request_entry(const entry& e);
+
+        explicit head_block_request_entry(aux::bytes mChainId) : m_chain_id(std::move(mChainId)) {}
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+
+        // chain id
+        aux::bytes m_chain_id;
     };
 
 }
