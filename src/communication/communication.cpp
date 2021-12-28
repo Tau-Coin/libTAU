@@ -147,7 +147,6 @@ namespace libTAU {
 
                 auto peer = i.pk();
                 auto now = get_current_time();
-                m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
                 // check data type id
                 if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type)))
@@ -170,6 +169,8 @@ namespace libTAU {
                             common::entry_task levenshtein_array_task3(
                                     common::message_levenshtein_array_entry::data_type_id, peer, now + 5000);
                             m_tasks.insert(levenshtein_array_task3);
+
+                            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
                             break;
                         }
@@ -229,6 +230,8 @@ namespace libTAU {
                                 m_tasks.insert(levenshtein_array_task3);
                             }
 
+                            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
                             break;
                         }
                         case common::friend_info_request_entry::data_type_id: {
@@ -244,6 +247,8 @@ namespace libTAU {
                                 m_tasks.insert(task3);
                             }
 
+                            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
                             break;
                         }
                         case common::friend_info_entry::data_type_id: {
@@ -252,6 +257,8 @@ namespace libTAU {
                                 // 通知用户新的friend info
                                 m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer, e.m_friend_info);
                             }
+
+                            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
                             break;
                         }
