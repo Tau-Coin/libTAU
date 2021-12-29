@@ -547,7 +547,7 @@ namespace libTAU::blockchain {
                         }
 //                    }
                 }
-//                log("-----------tasks size:%lu, after size:%lu", size, tasks.size());
+                log("-----------tasks size:%lu, after size:%lu", size, tasks.size());
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
@@ -2502,14 +2502,22 @@ namespace libTAU::blockchain {
                     case common::transaction_entry::data_type_id: {
                         common::transaction_entry tx_entry(i.value());
                         if (!tx_entry.m_tx.empty()) {
+                            auto &chain_id = tx_entry.m_tx.chain_id();
                             log("INFO: Got transaction, hash[%s].",
                                 aux::toHex(tx_entry.m_tx.sha256().to_string()).c_str());
 
-                            m_tx_pools[tx_entry.m_tx.chain_id()].add_tx(tx_entry.m_tx);
+                            auto tx1 = m_tx_pools[chain_id].get_best_transaction();
+                            m_tx_pools[chain_id].add_tx(tx_entry.m_tx);
+                            auto tx2 = m_tx_pools[chain_id].get_best_transaction();
+                            if (tx1.sha256() != tx2.sha256()) {
+                                common::transaction_entry txEntry(tx2);
+                                common::entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry(), get_total_milliseconds());
+                                m_tasks[chain_id].insert(task);
+                            }
 
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
 
-                            try_to_update_visiting_peer(tx_entry.m_tx.chain_id(), peer);
+                            try_to_update_visiting_peer(chain_id, peer);
                         }
 
                         break;
