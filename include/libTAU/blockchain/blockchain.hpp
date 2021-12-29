@@ -315,7 +315,7 @@ namespace blockchain {
         std::map<aux::bytes, std::int64_t> m_last_got_data_time;
 
         // all tasks
-        std::set<common::entry_task> m_tasks;
+        std::map<aux::bytes, std::set<common::entry_task>> m_tasks;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_visiting_history;
 

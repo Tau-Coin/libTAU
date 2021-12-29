@@ -641,7 +641,7 @@ namespace libTAU {
                     }
                 }
 
-                log("--------------------------- tasks size:%lu", m_tasks.size());
+//                log("--------------------------- tasks size:%lu", m_tasks.size());
                 if (!m_tasks.empty()) {
                     auto it = m_tasks.begin();
                     if (it->m_timestamp <= now) {
@@ -654,10 +654,10 @@ namespace libTAU {
                             }
 
                             common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array);
-                            log("------- send peer[%s] levenshtein array", aux::toHex(it->m_peer.bytes).c_str());
+//                            log("------- send peer[%s] levenshtein array", aux::toHex(it->m_peer.bytes).c_str());
                             send_to(it->m_peer, msg_levenshtein_array.get_entry());
                         } else {
-                            log("------- send peer[%s] message", aux::toHex(it->m_peer.bytes).c_str());
+//                            log("------- send peer[%s] message", aux::toHex(it->m_peer.bytes).c_str());
                             send_to(it->m_peer, it->m_entry);
                         }
 
@@ -1158,7 +1158,7 @@ namespace libTAU {
             // salt is y pubkey when publish signal
             auto salt = make_salt(peer);
 
-            log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(pk->bytes).c_str(),
+            log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
                 aux::toHex(salt).c_str(), data.to_string().c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
