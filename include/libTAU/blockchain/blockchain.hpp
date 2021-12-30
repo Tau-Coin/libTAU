@@ -232,23 +232,23 @@ namespace blockchain {
 //        void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // publish online/new message signal to a given peer
-        void publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
-                            const blockchain_signal &peer_signal = blockchain_signal());
+//        void publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
+//                            const blockchain_signal &peer_signal = blockchain_signal());
 
         // process signal from dht
-        void process_signal(const blockchain_signal & signal, const aux::bytes &chain_id, const dht::public_key &peer);
+//        void process_signal(const blockchain_signal & signal, const aux::bytes &chain_id, const dht::public_key &peer);
 
         // immutable data callback
-        void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);
+//        void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);
+
+//        // get immutable item from dht
+//        void dht_get_immutable_block_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
+//
+//        // immutable data callback
+//        void get_immutable_tx_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);
 
         // get immutable item from dht
-        void dht_get_immutable_block_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
-
-        // immutable data callback
-        void get_immutable_tx_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);
-
-        // get immutable item from dht
-        void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
+//        void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
         // mutable data callback
 //        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool);
@@ -258,7 +258,7 @@ namespace blockchain {
 //                                  , std::string salt, dht::timestamp t);
 
         // put immutable item to dht
-        void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
+//        void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
 
         // put mutable item to dht
         void dht_put_mutable_item(std::array<char, 32> key
