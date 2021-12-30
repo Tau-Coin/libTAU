@@ -36,7 +36,10 @@ namespace blockchain {
     using system_clock = std::chrono::system_clock;
 
     // default refresh time of main task(100)(ms)
-    constexpr int blockchain_default_refresh_time = 200;
+    constexpr int blockchain_default_refresh_time = 100;
+
+    // max task size
+    constexpr int blockchain_max_task_size = 10000;
 
     // max access peer frequency(interval: 3000 ms)
     constexpr int blockchain_max_access_peer_interval = 3000;
@@ -147,6 +150,8 @@ namespace blockchain {
         void refresh_vote_timeout(error_code const& e);
 
         void refresh_tx_timeout(error_code const& e);
+
+        void add_entry_task_to_queue(const aux::bytes &chain_id, const common::entry_task &task);
 
         // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);

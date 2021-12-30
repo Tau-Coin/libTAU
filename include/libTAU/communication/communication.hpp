@@ -46,6 +46,9 @@ namespace libTAU {
         // default refresh time of main task(100ms)(ms)
         constexpr int communication_default_refresh_time = 100;
 
+        // max task size
+        constexpr int communication_max_task_size = 10000;
+
         // max message list size(used in Levenshtein Distance)
         constexpr int communication_max_message_list_size = 10;
 
@@ -140,6 +143,8 @@ namespace libTAU {
 
             // add a new message
             bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
+
+            void add_entry_task_to_queue(const common::entry_task &task);
 
             // request online/new message signal from a given peer
 //            void request_signal(const dht::public_key &peer);

@@ -338,7 +338,7 @@ namespace libTAU::blockchain {
 
                             common::block_entry blockEntry(blk);
                             common::entry_task task(common::block_entry::data_type_id, blockEntry.get_entry(), get_total_milliseconds());
-                            m_tasks[chain_id].insert(task);
+                            add_entry_task_to_queue(chain_id, task);
                         }
                     }
                 }
@@ -524,7 +524,7 @@ namespace libTAU::blockchain {
                         common::block_request_entry blockRequestEntry(hash);
                         common::entry_task task(common::block_request_entry::data_type_id, blockRequestEntry.get_entry(),
                                                 get_total_milliseconds());
-                        m_tasks[chain_id].insert(task);
+                        add_entry_task_to_queue(chain_id, task);
                     }
                 }
 
@@ -537,9 +537,6 @@ namespace libTAU::blockchain {
                             if (now - m_visiting_time[chain_id].second < 60 * 1000) {
                                 send_to(chain_id, m_visiting_time[chain_id].first, it->m_entry);
                                 tasks.erase(it);
-                            } else {
-                                log("-------time now[%ld], visiting time[%ld], diff[%ld]",
-                                    now, m_visiting_time[chain_id].second, now - m_visiting_time[chain_id].second);
                             }
                         } else {
                             send_to(chain_id, it->m_peer, it->m_entry);
@@ -582,8 +579,8 @@ namespace libTAU::blockchain {
                 auto tx = m_tx_pools[chain_id].get_best_transaction();
                 if (!tx.empty()) {
                     common::transaction_entry txEntry(tx);
-                    common::entry_task entryTask(common::transaction_entry::data_type_id, txEntry.get_entry(), get_total_milliseconds());
-                    m_tasks[chain_id].insert(entryTask);
+                    common::entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry(), get_total_milliseconds());
+                    add_entry_task_to_queue(chain_id, task);
                 }
             }
 
@@ -592,6 +589,14 @@ namespace libTAU::blockchain {
         } catch (std::exception &e) {
             log("Exception exchange tx [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
+    }
+
+    void blockchain::add_entry_task_to_queue(const aux::bytes &chain_id, const common::entry_task &task) {
+        if (m_tasks[chain_id].size() > blockchain_max_task_size) {
+            m_tasks[chain_id].erase(m_tasks[chain_id].begin());
+        }
+
+        m_tasks[chain_id].insert(task);
     }
 
 //    void blockchain::try_to_refresh_unchoked_peers(const aux::bytes &chain_id) {
@@ -2512,7 +2517,7 @@ namespace libTAU::blockchain {
                             if (tx1.sha256() != tx2.sha256()) {
                                 common::transaction_entry txEntry(tx2);
                                 common::entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry(), get_total_milliseconds());
-                                m_tasks[chain_id].insert(task);
+                                add_entry_task_to_queue(chain_id, task);
                             }
 
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);

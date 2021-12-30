@@ -162,13 +162,13 @@ namespace libTAU {
 
                             common::entry_task levenshtein_array_task1(
                                     common::message_levenshtein_array_entry::data_type_id, peer, now);
-                            m_tasks.insert(levenshtein_array_task1);
+                            add_entry_task_to_queue(levenshtein_array_task1);
                             common::entry_task levenshtein_array_task2(
                                     common::message_levenshtein_array_entry::data_type_id, peer, now + 1000);
-                            m_tasks.insert(levenshtein_array_task2);
+                            add_entry_task_to_queue(levenshtein_array_task2);
                             common::entry_task levenshtein_array_task3(
                                     common::message_levenshtein_array_entry::data_type_id, peer, now + 5000);
-                            m_tasks.insert(levenshtein_array_task3);
+                            add_entry_task_to_queue(levenshtein_array_task3);
 
                             m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
@@ -200,7 +200,7 @@ namespace libTAU {
                             for(auto k = 0; k < size; k++) {
                                 common::message_entry msg_entry(missing_messages[k]);
                                 common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 100 * k);
-                                m_tasks.insert(task);
+                                add_entry_task_to_queue(task);
                             }
 //                            for(auto k = 0; k < size; k++) {
 //                                common::message_entry msg_entry(missing_messages[k]);
@@ -221,13 +221,13 @@ namespace libTAU {
                             if (levenshtein_array_entry.m_levenshtein_array != levenshtein_array) {
                                 common::entry_task levenshtein_array_task1(
                                         common::message_levenshtein_array_entry::data_type_id, peer, now + 6000);
-                                m_tasks.insert(levenshtein_array_task1);
+                                add_entry_task_to_queue(levenshtein_array_task1);
                                 common::entry_task levenshtein_array_task2(
                                         common::message_levenshtein_array_entry::data_type_id, peer, now + 7000);
-                                m_tasks.insert(levenshtein_array_task2);
+                                add_entry_task_to_queue(levenshtein_array_task2);
                                 common::entry_task levenshtein_array_task3(
                                         common::message_levenshtein_array_entry::data_type_id, peer, now + 9000);
-                                m_tasks.insert(levenshtein_array_task3);
+                                add_entry_task_to_queue(levenshtein_array_task3);
                             }
 
                             m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
@@ -240,11 +240,11 @@ namespace libTAU {
                             if (!friend_info.empty()) {
                                 common::friend_info_entry e(friend_info);
                                 common::entry_task task1(common::friend_info_entry::data_type_id, peer, e.get_entry(), now);
-                                m_tasks.insert(task1);
+                                add_entry_task_to_queue(task1);
                                 common::entry_task task2(common::friend_info_entry::data_type_id, peer, e.get_entry(), now + 1000);
-                                m_tasks.insert(task2);
+                                add_entry_task_to_queue(task2);
                                 common::entry_task task3(common::friend_info_entry::data_type_id, peer, e.get_entry(), now + 5000);
-                                m_tasks.insert(task3);
+                                add_entry_task_to_queue(task3);
                             }
 
                             m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
@@ -333,9 +333,9 @@ namespace libTAU {
 //            common::entry_task task1(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now);
 //            m_tasks.insert(task1);
             common::entry_task task2(common::friend_info_request_entry::data_type_id, peer, friendInfoRequestEntry.get_entry(), now + 1000);
-            m_tasks.insert(task2);
+            add_entry_task_to_queue(task2);
             common::entry_task task3(common::friend_info_request_entry::data_type_id, peer, friendInfoRequestEntry.get_entry(), now + 5000);
-            m_tasks.insert(task3);
+            add_entry_task_to_queue(task3);
         }
 
         aux::bytes communication::get_friend_info(const dht::public_key &pubkey) {
@@ -381,11 +381,11 @@ namespace libTAU {
 //            m_tasks.insert(task3);
 
             common::entry_task levenshtein_array_task1(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 6000);
-            m_tasks.insert(levenshtein_array_task1);
+            add_entry_task_to_queue(levenshtein_array_task1);
             common::entry_task levenshtein_array_task2(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 7000);
-            m_tasks.insert(levenshtein_array_task2);
+            add_entry_task_to_queue(levenshtein_array_task2);
             common::entry_task levenshtein_array_task3(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 9000);
-            m_tasks.insert(levenshtein_array_task3);
+            add_entry_task_to_queue(levenshtein_array_task3);
 
 //            {
 //                // 本地消息数组为target
@@ -442,6 +442,14 @@ namespace libTAU {
                 return false;
 
             return try_to_update_Latest_message_list(peer, msg, post_alert);
+        }
+
+        void communication::add_entry_task_to_queue(const common::entry_task &task) {
+            if (m_tasks.size() > communication_max_task_size) {
+                m_tasks.erase(m_tasks.begin());
+            }
+
+            m_tasks.insert(task);
         }
 
         bool communication::validate_message(const message& msg) {
@@ -631,13 +639,13 @@ namespace libTAU {
 
                         common::entry_task levenshtein_array_task1(
                                 common::message_levenshtein_array_entry::data_type_id, peer, now + 100 * i);
-                        m_tasks.insert(levenshtein_array_task1);
+                        add_entry_task_to_queue(levenshtein_array_task1);
                         common::entry_task levenshtein_array_task2(
                                 common::message_levenshtein_array_entry::data_type_id, peer, now + 1000 + 100 * i);
-                        m_tasks.insert(levenshtein_array_task2);
+                        add_entry_task_to_queue(levenshtein_array_task2);
                         common::entry_task levenshtein_array_task3(
                                 common::message_levenshtein_array_entry::data_type_id, peer, now + 5000 + 100 * i);
-                        m_tasks.insert(levenshtein_array_task3);
+                        add_entry_task_to_queue(levenshtein_array_task3);
                     }
                 }
 
