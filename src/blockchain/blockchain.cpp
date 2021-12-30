@@ -2380,6 +2380,15 @@ namespace libTAU::blockchain {
             log("INFO: add new tx:%s", tx.to_string().c_str());
             if (!tx.empty()) {
                 auto &chain_id = tx.chain_id();
+
+                auto peers = m_repository->get_all_peers(chain_id);
+                common::transaction_entry txEntry(tx);
+                auto now = get_total_milliseconds();
+                for (auto const &peer: peers) {
+                    common::entry_task task(common::transaction_entry::data_type_id, peer, txEntry.get_entry(), now);
+                    add_entry_task_to_queue(chain_id, task);
+                }
+
                 return m_tx_pools[chain_id].add_tx(tx);
             }
         } catch (std::exception &e) {
