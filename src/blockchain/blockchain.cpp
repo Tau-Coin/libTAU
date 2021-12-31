@@ -2384,6 +2384,7 @@ namespace libTAU::blockchain {
                 auto peers = m_repository->get_all_peers(chain_id);
                 common::transaction_entry txEntry(tx);
                 auto now = get_total_milliseconds();
+                // TODO:: too many tasks
                 for (auto const &peer: peers) {
                     common::entry_task task(common::transaction_entry::data_type_id, peer, txEntry.get_entry(), now);
                     add_entry_task_to_queue(chain_id, task);

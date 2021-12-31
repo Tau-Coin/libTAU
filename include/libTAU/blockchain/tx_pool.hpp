@@ -43,9 +43,9 @@ namespace libTAU::blockchain {
 
         std::vector<transaction> get_top_ten_fee_transactions();
 
-        aux::bytes get_hash_prefix_array_by_timestamp() const;
+//        aux::bytes get_hash_prefix_array_by_timestamp() const;
 
-        std::vector<transaction> get_top_ten_timestamp_transactions();
+//        std::vector<transaction> get_top_ten_timestamp_transactions();
 
         bool add_tx(const transaction& tx);
 
@@ -73,11 +73,11 @@ namespace libTAU::blockchain {
 
         bool add_tx_to_fee_pool(const transaction& tx);
 
-        bool add_tx_to_time_pool(const transaction& tx);
+//        bool add_tx_to_time_pool(const transaction& tx);
 
         void remove_min_fee_tx();
 
-        void remove_oldest_tx();
+//        void remove_oldest_tx();
 
         // blockchain db
         repository* m_repository{};
@@ -92,13 +92,13 @@ namespace libTAU::blockchain {
         std::map<dht::public_key, sha256_hash> m_account_tx_by_fee;
 
         // tx set
-        std::map<sha256_hash, transaction> m_all_txs_by_timestamp;
+//        std::map<sha256_hash, transaction> m_all_txs_by_timestamp;
 
         // ordered by timestamp
-        std::set<tx_entry_with_timestamp> m_ordered_txs_by_timestamp;
+//        std::set<tx_entry_with_timestamp> m_ordered_txs_by_timestamp;
 
         // one account one tx
-        std::map<dht::public_key, sha256_hash> m_account_tx_by_timestamp;
+//        std::map<dht::public_key, sha256_hash> m_account_tx_by_timestamp;
 
         // active peers found from tx
         std::queue<dht::public_key> m_active_peers;
