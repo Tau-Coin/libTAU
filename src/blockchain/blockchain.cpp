@@ -337,7 +337,7 @@ namespace libTAU::blockchain {
                             process_block(chain_id, blk);
 
                             common::block_entry blockEntry(blk);
-                            common::entry_task task(common::block_entry::data_type_id, blockEntry.get_entry(), get_total_milliseconds());
+                            common::blockchain_entry_task task(common::block_entry::data_type_id, blockEntry.get_entry());
                             add_entry_task_to_queue(chain_id, task);
                         }
                     }
@@ -522,8 +522,7 @@ namespace libTAU::blockchain {
 
                     for (auto const& hash: demand_block_hash_set) {
                         common::block_request_entry blockRequestEntry(hash);
-                        common::entry_task task(common::block_request_entry::data_type_id, blockRequestEntry.get_entry(),
-                                                get_total_milliseconds());
+                        common::blockchain_entry_task task(common::block_request_entry::data_type_id, blockRequestEntry.get_entry());
                         add_entry_task_to_queue(chain_id, task);
                     }
                 }
@@ -532,17 +531,15 @@ namespace libTAU::blockchain {
                 auto size = tasks.size();
                 if (!tasks.empty()) {
                     auto it = tasks.begin();
-//                    if (it->m_timestamp <= now) {
-                        if (it->m_peer.is_all_zeros()) {
-                            if (now - m_visiting_time[chain_id].second < 60 * 1000) {
-                                send_to(chain_id, m_visiting_time[chain_id].first, it->m_entry);
-                                tasks.erase(it);
-                            }
-                        } else {
-                            send_to(chain_id, it->m_peer, it->m_entry);
+                    if (it->m_peer.is_all_zeros()) {
+                        if (now - m_visiting_time[chain_id].second < 60 * 1000) {
+                            send_to(chain_id, m_visiting_time[chain_id].first, it->m_entry);
                             tasks.erase(it);
                         }
-//                    }
+                    } else {
+                        send_to(chain_id, it->m_peer, it->m_entry);
+                        tasks.erase(it);
+                    }
                 }
                 log("-----------tasks size:%lu, after size:%lu", size, tasks.size());
             }
@@ -579,7 +576,7 @@ namespace libTAU::blockchain {
                 auto tx = m_tx_pools[chain_id].get_best_transaction();
                 if (!tx.empty()) {
                     common::transaction_entry txEntry(tx);
-                    common::entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry(), get_total_milliseconds());
+                    common::blockchain_entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry());
                     add_entry_task_to_queue(chain_id, task);
                 }
             }
@@ -591,7 +588,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::add_entry_task_to_queue(const aux::bytes &chain_id, const common::entry_task &task) {
+    void blockchain::add_entry_task_to_queue(const aux::bytes &chain_id, const common::blockchain_entry_task &task) {
         if (m_tasks[chain_id].size() > blockchain_max_task_size) {
             m_tasks[chain_id].erase(m_tasks[chain_id].begin());
         }
@@ -2383,10 +2380,9 @@ namespace libTAU::blockchain {
 
                 auto peers = m_repository->get_all_peers(chain_id);
                 common::transaction_entry txEntry(tx);
-                auto now = get_total_milliseconds();
                 // TODO:: too many tasks
                 for (auto const &peer: peers) {
-                    common::entry_task task(common::transaction_entry::data_type_id, peer, txEntry.get_entry(), now);
+                    common::blockchain_entry_task task(common::transaction_entry::data_type_id, peer, txEntry.get_entry());
                     add_entry_task_to_queue(chain_id, task);
                 }
 
@@ -2482,10 +2478,9 @@ namespace libTAU::blockchain {
 
                         if (!blk.empty()) {
                             common::block_entry blockEntry(blk);
-                            send_to(blk.chain_id(), peer, blockEntry.get_entry());
-//                            common::entry_task task(common::block_entry::data_type_id, peer, blockEntry.get_entry(),
-//                                                     get_total_milliseconds());
-//                            m_tasks[blk.chain_id()].insert(task);
+//                            send_to(blk.chain_id(), peer, blockEntry.get_entry());
+                            common::blockchain_entry_task task(common::block_entry::data_type_id, peer, blockEntry.get_entry());
+                            m_tasks[blk.chain_id()].insert(task);
                         } else {
                             log("INFO: Cannot get block[%s] in local", aux::toHex(blk_request_entry.m_hash).c_str());
                         }
@@ -2526,7 +2521,7 @@ namespace libTAU::blockchain {
                             auto tx2 = m_tx_pools[chain_id].get_best_transaction();
                             if (tx1.sha256() != tx2.sha256()) {
                                 common::transaction_entry txEntry(tx2);
-                                common::entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry(), get_total_milliseconds());
+                                common::blockchain_entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry());
                                 add_entry_task_to_queue(chain_id, task);
                             }
 
@@ -2549,10 +2544,9 @@ namespace libTAU::blockchain {
                             consensus_point_vote.setBlockNumber(voting_point_block.block_number());
 
                             common::vote_entry voteEntry(chain_id, consensus_point_vote);
-                            send_to(chain_id, peer, voteEntry.get_entry());
-//                            common::entry_task task(common::vote_entry::data_type_id, peer, voteEntry.get_entry(),
-//                                                    get_total_milliseconds());
-//                            m_tasks[chain_id].insert(task);
+//                            send_to(chain_id, peer, voteEntry.get_entry());
+                            common::blockchain_entry_task task(common::vote_entry::data_type_id, peer, voteEntry.get_entry());
+                            m_tasks[chain_id].insert(task);
                         }
 
                         try_to_update_visiting_peer(chain_id, peer);
@@ -2578,10 +2572,9 @@ namespace libTAU::blockchain {
 
                         if (!blk.empty()) {
                             common::block_entry blockEntry(blk);
-                            send_to(chain_id, peer, blockEntry.get_entry());
-//                            common::entry_task task(common::block_entry::data_type_id, peer, blockEntry.get_entry(),
-//                                                    get_total_milliseconds());
-//                            m_tasks[blk.chain_id()].insert(task);
+//                            send_to(chain_id, peer, blockEntry.get_entry());
+                            common::blockchain_entry_task task(common::block_entry::data_type_id, peer, blockEntry.get_entry());
+                            m_tasks[blk.chain_id()].insert(task);
                         } else {
                             log("INFO: Cannot get head block in local");
                         }
