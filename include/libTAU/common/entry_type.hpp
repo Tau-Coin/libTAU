@@ -28,10 +28,6 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT entry_task {
 
-        entry_task(const dht::public_key &mPeer, entry mEntry, int64_t mTimestamp) : m_peer(mPeer),
-                                                                                            m_entry(std::move(mEntry)),
-                                                                                            m_timestamp(mTimestamp) {}
-
         entry_task(int64_t mDataTypeId, entry mEntry, int64_t mTimestamp) : m_data_type_id(mDataTypeId),
                                                                                    m_entry(std::move(mEntry)),
                                                                                    m_timestamp(mTimestamp) {}
@@ -90,6 +86,59 @@ namespace libTAU::common {
         entry m_entry;
 
         std::int64_t m_timestamp;
+    };
+
+    struct TORRENT_EXPORT blockchain_entry_task {
+
+        blockchain_entry_task(int64_t mDataTypeId, entry mEntry) : m_data_type_id(mDataTypeId),
+                                                                            m_entry(std::move(mEntry)) {}
+
+        blockchain_entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, entry mEntry)
+                : m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)) {}
+
+        blockchain_entry_task(int64_t mDataTypeId, const dht::public_key &mPeer) : m_data_type_id(mDataTypeId),
+                                                                                            m_peer(mPeer) {}
+
+        bool operator<(const blockchain_entry_task &rhs) const {
+            std::string encode;
+            bencode(std::back_inserter(encode), m_entry);
+            std::string rhs_encode;
+            bencode(std::back_inserter(encode), rhs.m_entry);
+            if (encode < rhs_encode)
+                return true;
+            if (encode > rhs_encode)
+                return false;
+
+            if (m_peer < rhs.m_peer)
+                return true;
+            if (m_peer > rhs.m_peer)
+                return false;
+
+            if (m_data_type_id < rhs.m_data_type_id)
+                return true;
+            if (m_data_type_id > rhs.m_data_type_id)
+                return false;
+
+            return false;
+        }
+
+        bool operator>(const blockchain_entry_task &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const blockchain_entry_task &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const blockchain_entry_task &rhs) const {
+            return !(*this < rhs);
+        }
+
+        std::int64_t m_data_type_id;
+
+        dht::public_key m_peer;
+
+        entry m_entry;
     };
 
     struct TORRENT_EXPORT communication_entries {
