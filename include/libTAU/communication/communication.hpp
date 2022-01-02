@@ -150,13 +150,13 @@ namespace libTAU {
 //            void request_signal(const dht::public_key &peer);
 
             // publish online/new message signal to a given peer
-            void publish_signal(const dht::public_key &peer);
+//            void publish_signal(const dht::public_key &peer);
 
             // send data to peer
             void send_to(const dht::public_key &peer, entry const& data);
 
             // select a friend randomly
-            dht::public_key select_friend_randomly();
+//            dht::public_key select_friend_randomly();
 
             // save the latest message hash list in database
             // @param peer is Y public key
@@ -175,10 +175,10 @@ namespace libTAU {
             static std::string make_salt(dht::public_key peer);
 
             // make online signal
-            online_signal make_signal(const dht::public_key &peer);
+//            online_signal make_signal(const dht::public_key &peer);
 
             // process signal from dht
-            void process_signal(const online_signal & signal, const dht::public_key &peer);
+//            void process_signal(const online_signal & signal, const dht::public_key &peer);
 
             // validate message, check if message is oversize( >1000 bytes)
             bool validate_message(const message& msg);
@@ -247,7 +247,7 @@ namespace libTAU {
             std::map<dht::public_key, std::int64_t> m_last_greeting;
 
             // peer access time
-            std::map<dht::public_key, std::int64_t> m_peer_access_times;
+//            std::map<dht::public_key, std::int64_t> m_peer_access_times;
 
             // chatting friend(time:s)
             std::pair<dht::public_key, std::int64_t> m_chatting_friend = std::make_pair(dht::public_key(), 0);
@@ -256,24 +256,24 @@ namespace libTAU {
             std::vector<dht::public_key> m_active_friends;
 
             // friend last seen time(map:key->peer, value->last seen signal time(ms))
-            std::map<dht::public_key, std::int64_t> m_last_seen;
+//            std::map<dht::public_key, std::int64_t> m_last_seen;
 
             // online/new message signal time(map:key1->peer, key2->device id, value->signal time(ms))
-            std::map<dht::public_key, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
+//            std::map<dht::public_key, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
 
             // online/new message signal time(map:key1->peer, key2->device id, value->hash prefix array)
-            std::map<dht::public_key, std::map<aux::bytes, aux::bytes>> m_latest_hash_prefix_array;
+//            std::map<dht::public_key, std::map<aux::bytes, aux::bytes>> m_latest_hash_prefix_array;
 
             // message list(map:key->Y public key, value->message list)
             std::map<dht::public_key, std::list<message>> m_message_list_map;
 
             // missing messages (map:key->peer, value->missing message list)
-            std::map<dht::public_key, std::set<message>> m_missing_messages;
+//            std::map<dht::public_key, std::set<message>> m_missing_messages;
 
             // put last missing message for 1min
-            std::map<dht::public_key, immutable_data_info> m_last_gasp_payload;
+//            std::map<dht::public_key, immutable_data_info> m_last_gasp_payload;
 
-            std::map<dht::public_key, std::int64_t> m_last_gasp_time;
+//            std::map<dht::public_key, std::int64_t> m_last_gasp_time;
             // todo:: queue: task-timestamp
             // todo:: (peer - request) - time
 

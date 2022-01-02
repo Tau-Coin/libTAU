@@ -195,7 +195,7 @@ namespace libTAU::blockchain {
         m_voting_point_blocks.clear();
         m_best_votes.clear();
         m_votes.clear();
-        m_latest_signal_time.clear();
+//        m_latest_signal_time.clear();
     }
 
     void blockchain::clear_chain_cache(const aux::bytes &chain_id) {
@@ -214,7 +214,7 @@ namespace libTAU::blockchain {
         m_voting_point_blocks.erase(chain_id);
         m_best_votes.erase(chain_id);
         m_votes[chain_id].clear();
-        m_latest_signal_time[chain_id].clear();
+//        m_latest_signal_time[chain_id].clear();
     }
 
     void blockchain::refresh_timeout(const error_code &e) {
