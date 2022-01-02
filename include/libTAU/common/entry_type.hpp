@@ -90,14 +90,10 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT blockchain_entry_task {
 
-        blockchain_entry_task(int64_t mDataTypeId, entry mEntry) : m_data_type_id(mDataTypeId),
-                                                                            m_entry(std::move(mEntry)) {}
+        explicit blockchain_entry_task(entry mEntry) : m_entry(std::move(mEntry)) {}
 
-        blockchain_entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, entry mEntry)
-                : m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)) {}
-
-        blockchain_entry_task(int64_t mDataTypeId, const dht::public_key &mPeer) : m_data_type_id(mDataTypeId),
-                                                                                            m_peer(mPeer) {}
+        blockchain_entry_task(const dht::public_key &mPeer, entry mEntry)
+                : m_peer(mPeer), m_entry(std::move(mEntry)) {}
 
         bool operator<(const blockchain_entry_task &rhs) const {
             std::string encode;
@@ -114,11 +110,6 @@ namespace libTAU::common {
             if (m_peer > rhs.m_peer)
                 return false;
 
-            if (m_data_type_id < rhs.m_data_type_id)
-                return true;
-            if (m_data_type_id > rhs.m_data_type_id)
-                return false;
-
             return false;
         }
 
@@ -133,8 +124,6 @@ namespace libTAU::common {
         bool operator>=(const blockchain_entry_task &rhs) const {
             return !(*this < rhs);
         }
-
-        std::int64_t m_data_type_id;
 
         dht::public_key m_peer;
 
