@@ -2477,10 +2477,12 @@ namespace libTAU::blockchain {
                         auto blk = m_repository->get_block_by_hash(blk_request_entry.m_hash);
 
                         if (!blk.empty()) {
+                            auto &chain_id = blk.chain_id();
                             common::block_entry blockEntry(blk);
 //                            send_to(blk.chain_id(), peer, blockEntry.get_entry());
                             common::blockchain_entry_task task(peer, blockEntry.get_entry());
-                            m_tasks[blk.chain_id()].insert(task);
+//                            m_tasks[blk.chain_id()].insert(task);
+                            add_entry_task_to_queue(chain_id, task);
                         } else {
                             log("INFO: Cannot get block[%s] in local", aux::toHex(blk_request_entry.m_hash).c_str());
                         }
@@ -2546,7 +2548,8 @@ namespace libTAU::blockchain {
                             common::vote_entry voteEntry(chain_id, consensus_point_vote);
 //                            send_to(chain_id, peer, voteEntry.get_entry());
                             common::blockchain_entry_task task(peer, voteEntry.get_entry());
-                            m_tasks[chain_id].insert(task);
+//                            m_tasks[chain_id].insert(task);
+                            add_entry_task_to_queue(chain_id, task);
                         }
 
                         try_to_update_visiting_peer(chain_id, peer);
@@ -2574,7 +2577,8 @@ namespace libTAU::blockchain {
                             common::block_entry blockEntry(blk);
 //                            send_to(chain_id, peer, blockEntry.get_entry());
                             common::blockchain_entry_task task(peer, blockEntry.get_entry());
-                            m_tasks[blk.chain_id()].insert(task);
+//                            m_tasks[blk.chain_id()].insert(task);
+                            add_entry_task_to_queue(chain_id, task);
                         } else {
                             log("INFO: Cannot get head block in local");
                         }
