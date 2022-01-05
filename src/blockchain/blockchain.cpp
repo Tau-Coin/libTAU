@@ -950,7 +950,7 @@ namespace libTAU::blockchain {
         return SUCCESS;
     }
 
-    void blockchain::try_to_update_consensus_point_block(const aux::bytes &chain_id) {
+//    void blockchain::try_to_update_consensus_point_block(const aux::bytes &chain_id) {
 //        auto &consensus_point_block = m_consensus_point_blocks[chain_id];
 //        auto &best_vote = m_best_votes[chain_id];
 //        auto &blocks = m_blocks[chain_id];
@@ -962,7 +962,7 @@ namespace libTAU::blockchain {
 //                blocks.erase(it);
 //            }
 //        }
-    }
+//    }
 
     void blockchain::try_to_update_voting_point_block(const aux::bytes &chain_id) {
         auto& head_block = m_head_blocks[chain_id];
@@ -1171,17 +1171,17 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool blockchain::is_voting_point_immutable(const aux::bytes &chain_id) {
-        // check if best vote and voting point block match, true if matched, false otherwise
-        auto &best_vote = m_best_votes[chain_id];
-        auto &voting_point_block = m_voting_point_blocks[chain_id];
-        if (voting_point_block.empty())
-            return false;
-        if (!best_vote.empty() && best_vote.block_hash() != voting_point_block.sha256())
-            return false;
-
-        return true;
-    }
+//    bool blockchain::is_voting_point_immutable(const aux::bytes &chain_id) {
+//        // check if best vote and voting point block match, true if matched, false otherwise
+//        auto &best_vote = m_best_votes[chain_id];
+//        auto &voting_point_block = m_voting_point_blocks[chain_id];
+//        if (voting_point_block.empty())
+//            return false;
+//        if (!best_vote.empty() && best_vote.block_hash() != voting_point_block.sha256())
+//            return false;
+//
+//        return true;
+//    }
 
     bool blockchain::is_sync_completed(const aux::bytes &chain_id) {
         auto &head_block = m_head_blocks[chain_id];

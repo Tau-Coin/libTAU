@@ -178,7 +178,7 @@ namespace blockchain {
         block try_to_mine_block(const aux::bytes &chain_id);
 
         // try to update consensus point block if best voting block changed
-        void try_to_update_consensus_point_block(const aux::bytes &chain_id);
+//        void try_to_update_consensus_point_block(const aux::bytes &chain_id);
 
         // try to update voting point block if chain changed
         void try_to_update_voting_point_block(const aux::bytes &chain_id);
@@ -198,7 +198,7 @@ namespace blockchain {
         bool is_block_immutable_certainly(const aux::bytes &chain_id, const block &blk);
 
         // check if consensus point block immutable, true if it is same to voting block, false otherwise
-        bool is_voting_point_immutable(const aux::bytes &chain_id);
+//        bool is_voting_point_immutable(const aux::bytes &chain_id);
 
         // check if current chain sync completed
         bool is_sync_completed(const aux::bytes &chain_id);
