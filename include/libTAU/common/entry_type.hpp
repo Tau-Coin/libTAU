@@ -26,6 +26,10 @@ namespace libTAU::common {
     const std::string entry_value = "v";
     const std::string entry_chain_id = "i";
 
+    struct entry_base {
+        virtual entry get_entry() const = 0;
+    };
+
     struct TORRENT_EXPORT entry_task {
 
         entry_task(int64_t mDataTypeId, entry mEntry, int64_t mTimestamp) : m_data_type_id(mDataTypeId),
@@ -130,7 +134,7 @@ namespace libTAU::common {
         entry m_entry;
     };
 
-    struct TORRENT_EXPORT communication_entries {
+    struct TORRENT_EXPORT communication_entries final : entry_base {
         // data type id
         static const std::int64_t protocol_id = 0;
 
@@ -139,19 +143,19 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit communication_entries(const entry& e);
 
-        communication_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
+        explicit communication_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
 
         void push_back(const entry& e) { m_entries.push_back(e); }
 
         void pop_back() { m_entries.pop_back(); }
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         std::vector<entry> m_entries;
     };
 
-    struct TORRENT_EXPORT blockchain_entries {
+    struct TORRENT_EXPORT blockchain_entries final : entry_base {
         // data type id
         static const std::int64_t protocol_id = 1;
 
@@ -160,19 +164,19 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit blockchain_entries(const entry& e);
 
-        blockchain_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
+        explicit blockchain_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
 
         void push_back(const entry& e) { m_entries.push_back(e); }
 
         void pop_back() { m_entries.pop_back(); }
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         std::vector<entry> m_entries;
     };
 
-    struct TORRENT_EXPORT message_entry {
+    struct TORRENT_EXPORT message_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 0;
 
@@ -182,12 +186,12 @@ namespace libTAU::common {
         explicit message_entry(communication::message mMsg) : m_msg(std::move(mMsg)) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         communication::message m_msg;
     };
 
-    struct TORRENT_EXPORT message_levenshtein_array_entry {
+    struct TORRENT_EXPORT message_levenshtein_array_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 1;
 
@@ -197,23 +201,23 @@ namespace libTAU::common {
         explicit message_levenshtein_array_entry(aux::bytes mLevenshteinArray) : m_levenshtein_array(std::move(mLevenshteinArray)) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         // bytes consist of first byte of ordered messages hash
         aux::bytes m_levenshtein_array;
     };
 
-    struct TORRENT_EXPORT friend_info_request_entry {
+    struct TORRENT_EXPORT friend_info_request_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 2;
 
         friend_info_request_entry() = default;
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
     };
 
-    struct TORRENT_EXPORT friend_info_entry {
+    struct TORRENT_EXPORT friend_info_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 3;
 
@@ -223,14 +227,14 @@ namespace libTAU::common {
         explicit friend_info_entry(aux::bytes mFriendInfo) : m_friend_info(std::move(mFriendInfo)) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         aux::bytes m_friend_info;
     };
 
 
 
-    struct TORRENT_EXPORT block_request_entry {
+    struct TORRENT_EXPORT block_request_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 4;
 
@@ -240,12 +244,12 @@ namespace libTAU::common {
         explicit block_request_entry(const sha256_hash &mHash) : m_hash(mHash) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         sha256_hash m_hash;
     };
 
-    struct TORRENT_EXPORT block_entry {
+    struct TORRENT_EXPORT block_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 5;
 
@@ -255,12 +259,12 @@ namespace libTAU::common {
         explicit block_entry(blockchain::block mBlk) : m_blk(std::move(mBlk)) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         blockchain::block m_blk;
     };
 
-    struct TORRENT_EXPORT transaction_request_entry {
+    struct TORRENT_EXPORT transaction_request_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 6;
 
@@ -270,12 +274,12 @@ namespace libTAU::common {
         explicit transaction_request_entry(const sha256_hash &mHash) : m_hash(mHash) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         sha256_hash m_hash;
     };
 
-    struct TORRENT_EXPORT transaction_entry {
+    struct TORRENT_EXPORT transaction_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 7;
 
@@ -285,12 +289,12 @@ namespace libTAU::common {
         explicit transaction_entry(blockchain::transaction mTx) : m_tx(std::move(mTx)) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         blockchain::transaction m_tx;
     };
 
-    struct TORRENT_EXPORT vote_request_entry {
+    struct TORRENT_EXPORT vote_request_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 8;
 
@@ -300,13 +304,13 @@ namespace libTAU::common {
         explicit vote_request_entry(aux::bytes mChainId) : m_chain_id(std::move(mChainId)) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         // chain id
         aux::bytes m_chain_id;
     };
 
-    struct TORRENT_EXPORT vote_entry {
+    struct TORRENT_EXPORT vote_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 9;
 
@@ -316,7 +320,7 @@ namespace libTAU::common {
         vote_entry(aux::bytes mChainId, const blockchain::vote &mVote) : m_chain_id(std::move(mChainId)), m_vote(mVote) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         // chain id
         aux::bytes m_chain_id;
@@ -324,7 +328,7 @@ namespace libTAU::common {
         blockchain::vote m_vote;
     };
 
-    struct TORRENT_EXPORT head_block_request_entry {
+    struct TORRENT_EXPORT head_block_request_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 10;
 
@@ -334,7 +338,7 @@ namespace libTAU::common {
         explicit head_block_request_entry(aux::bytes mChainId) : m_chain_id(std::move(mChainId)) {}
 
         // @returns the corresponding entry
-        entry get_entry() const;
+        entry get_entry() const override;
 
         // chain id
         aux::bytes m_chain_id;
