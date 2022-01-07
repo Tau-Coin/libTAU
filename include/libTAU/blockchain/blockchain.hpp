@@ -317,7 +317,7 @@ namespace blockchain {
 //        std::map<aux::bytes, std::int64_t> m_update_peer_time;
 
         // the time that last got data from dht(ms)
-        std::map<aux::bytes, std::int64_t> m_last_got_data_time;
+//        std::map<aux::bytes, std::int64_t> m_last_got_data_time;
 
         // all tasks
         std::map<aux::bytes, std::set<common::blockchain_entry_task>> m_tasks;

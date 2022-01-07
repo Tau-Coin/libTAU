@@ -187,7 +187,7 @@ namespace libTAU::blockchain {
 //        m_unchoked_peers.clear();
 //        m_unchoked_peer_signal.clear();
 //        m_update_peer_time.clear();
-        m_last_got_data_time.clear();
+//        m_last_got_data_time.clear();
         m_blocks.clear();
         m_head_blocks.clear();
         m_tail_blocks.clear();
@@ -206,7 +206,7 @@ namespace libTAU::blockchain {
 //        m_unchoked_peers[chain_id].clear();
 //        m_unchoked_peer_signal[chain_id].clear();
 //        m_update_peer_time.erase(chain_id);
-        m_last_got_data_time.erase(chain_id);
+//        m_last_got_data_time.erase(chain_id);
         m_blocks[chain_id].clear();
         m_head_blocks.erase(chain_id);
         m_tail_blocks.erase(chain_id);
