@@ -390,12 +390,18 @@ namespace libTAU::blockchain {
 
                     if (peer != *m_ses.pubkey()) {
                         common::vote_request_entry voteRequestEntry(chain_id);
-                        send_to(chain_id, peer, voteRequestEntry.get_entry());
+//                        send_to(chain_id, peer, voteRequestEntry.get_entry());
+                        common::blockchain_entry_task task1(voteRequestEntry.get_entry());
+                        add_entry_task_to_queue(chain_id, task1);
 
                         common::head_block_request_entry headBlockRequestEntry(chain_id);
-                        send_to(chain_id, peer, headBlockRequestEntry.get_entry());
+//                        send_to(chain_id, peer, headBlockRequestEntry.get_entry());
+                        common::blockchain_entry_task task2(headBlockRequestEntry.get_entry());
+                        add_entry_task_to_queue(chain_id, task2);
 
                         m_visiting_history[chain_id].insert(peer);
+
+                        try_to_update_visiting_peer(chain_id, peer);
                     }
                 }
 
@@ -533,12 +539,20 @@ namespace libTAU::blockchain {
                     auto it = tasks.begin();
                     if (it->m_peer.is_all_zeros()) {
                         if (now - m_visiting_time[chain_id].second < 60 * 1000) {
-                            send_to(chain_id, m_visiting_time[chain_id].first, it->m_entry);
-                            tasks.erase(it);
+                            if (now > m_last_visiting_time[chain_id][m_visiting_time[chain_id].first] + 1000) {
+                                send_to(chain_id, m_visiting_time[chain_id].first, it->m_entry);
+                                tasks.erase(it);
+
+                                m_last_visiting_time[chain_id][m_visiting_time[chain_id].first] = now;
+                            }
                         }
                     } else {
-                        send_to(chain_id, it->m_peer, it->m_entry);
-                        tasks.erase(it);
+                        if (now > m_last_visiting_time[chain_id][it->m_peer] + 1000) {
+                            send_to(chain_id, it->m_peer, it->m_entry);
+                            tasks.erase(it);
+
+                            m_last_visiting_time[chain_id][it->m_peer] = now;
+                        }
                     }
                 }
                 log("-----------tasks size:%lu, after size:%lu", size, tasks.size());

@@ -326,6 +326,8 @@ namespace blockchain {
 
         std::map<aux::bytes, std::pair<dht::public_key, std::int64_t>> m_visiting_time;
 
+        std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_last_visiting_time;
+
         // block cache todo:100000?
         std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;
 
