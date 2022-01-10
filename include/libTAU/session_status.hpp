@@ -118,18 +118,10 @@ namespace libTAU {
 		// network.
 		std::int64_t dht_global_nodes;
 
-		// a vector of the currently running DHT lookups.
-		std::vector<dht_lookup> active_requests;
-
-		// contains information about every bucket in the DHT routing
-		// table.
-		std::vector<dht_routing_bucket> dht_routing_table;
-
 		// the number of nodes allocated dynamically for a
 		// particular DHT lookup. This represents roughly the amount of memory used
 		// by the DHT.
 		int dht_total_allocations;
-
 	};
 }
 

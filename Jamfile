@@ -969,7 +969,7 @@ lib TAU
 	;
 
 # install rules
-headers = [ path.glob-tree include/libTAU : *.hpp, *h ] ;
+headers = [ path.glob-tree include/libTAU : *.hpp  *h ] ;
 
 package.install install
 	: <install-source-root>libTAU
