@@ -604,6 +604,71 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		return ret;
 	}
 
+	session_status session_impl::status() const
+	{
+//		INVARIANT_CHECK;
+		TORRENT_ASSERT(is_single_thread());
+
+		session_status s;
+
+		s.total_redundant_bytes = m_stats_counters[counters::recv_redundant_bytes];
+		s.total_failed_bytes = m_stats_counters[counters::recv_failed_bytes];
+
+		s.up_bandwidth_queue = int(m_stats_counters[counters::limiter_up_queue]);
+		s.down_bandwidth_queue = int(m_stats_counters[counters::limiter_down_queue]);
+
+		s.up_bandwidth_bytes_queue = int(m_stats_counters[counters::limiter_up_bytes]);
+		s.down_bandwidth_bytes_queue = int(m_stats_counters[counters::limiter_down_bytes]);
+
+		s.has_incoming_connections = m_stats_counters[counters::has_incoming_connections] != 0;
+
+		// total
+		s.download_rate = m_stat.download_rate();
+		s.total_upload = m_stat.total_upload();
+		s.upload_rate = m_stat.upload_rate();
+		s.total_download = m_stat.total_download();
+
+		// payload
+		s.payload_download_rate = m_stat.transfer_rate(stat::download_payload);
+		s.total_payload_download = m_stat.total_transfer(stat::download_payload);
+		s.payload_upload_rate = m_stat.transfer_rate(stat::upload_payload);
+		s.total_payload_upload = m_stat.total_transfer(stat::upload_payload);
+
+		// IP-overhead
+		s.ip_overhead_download_rate = m_stat.transfer_rate(stat::download_ip_protocol);
+		s.total_ip_overhead_download = m_stats_counters[counters::recv_ip_overhead_bytes];
+		s.ip_overhead_upload_rate = m_stat.transfer_rate(stat::upload_ip_protocol);
+		s.total_ip_overhead_upload = m_stats_counters[counters::sent_ip_overhead_bytes];
+
+		// dht
+		s.total_dht_download = m_stats_counters[counters::dht_bytes_in];
+		s.total_dht_upload = m_stats_counters[counters::dht_bytes_out];
+
+		// deprecated
+		s.tracker_download_rate = 0;
+		s.tracker_upload_rate = 0;
+		s.dht_download_rate = 0;
+		s.dht_upload_rate = 0;
+
+/*
+#ifndef TORRENT_DISABLE_DHT
+		if (m_dht)
+		{
+			m_dht->dht_status(s);
+		}
+		else
+#endif
+		{
+			s.dht_nodes = 0;
+			s.dht_node_cache = 0;
+			s.dht_torrents = 0;
+			s.dht_global_nodes = 0;
+			s.dht_total_allocations = 0;
+		}
+*/
+		return s;
+	}
+
 	proxy_settings session_impl::proxy() const
 	{
 		return proxy_settings(m_settings);
@@ -614,6 +679,9 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		TORRENT_ASSERT(is_single_thread());
 
 		if (m_abort) return;
+
+		std::cout << "ABORT CALLED Start" << std::endl;
+
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log(" *** ABORT CALLED ***");
 #endif
@@ -682,6 +750,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
 		m_alerts.emplace_alert<session_stop_over_alert>(true);
 
+		std::cout << "ABORT CALLED Over" << std::endl;
 	}
 
 	void session_impl::abort_stage2() noexcept
@@ -2821,7 +2890,7 @@ namespace {
 			{
 				start_dht();
 				start_communication();
-				//start_blockchain();
+				start_blockchain();
 			}
 			return;
 		}
@@ -2862,7 +2931,7 @@ namespace {
 		{
 			start_dht();
 			start_communication();
-			//start_blockchain();
+			start_blockchain();
 		}
 
 		m_alerts.emplace_alert<session_start_over_alert>(true);

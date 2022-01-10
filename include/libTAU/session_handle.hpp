@@ -46,6 +46,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libTAU/peer_id.hpp"
 #include "libTAU/io_context.hpp"
 #include "libTAU/session_types.hpp"
+#include "libTAU/session_status.hpp"
 #include "libTAU/portmap.hpp" // for portmap_protocol
 
 #include "libTAU/aux_/common.h" // for aux::bytes
@@ -108,6 +109,10 @@ namespace libTAU {
 		// the flags parameter can be used to only save certain parts of the
 		// session state
 		session_params session_state(save_state_flags_t flags = save_state_flags_t::all()) const;
+
+		// returns session wide-statistics and status. For more information, see
+        // the ``session_status`` struct.
+		session_status status() const;
 
 		// This function will post a session_stats_alert object, containing a
 		// snapshot of the performance counters from the internals of libTAU.
