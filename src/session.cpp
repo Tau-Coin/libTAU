@@ -300,6 +300,10 @@ namespace {
 		// to keep the session_impl alive
 		m_impl->call_abort();
 
+		std::cout << "Session Impl Abort Over 0" << std::endl;
+
+		std::cout << m_thread.use_count() << std::endl;
+
 		if (m_thread && m_thread.use_count() == 1)
 		{
 #if defined TORRENT_ASIO_DEBUGGING
@@ -307,6 +311,8 @@ namespace {
 #endif
 			m_thread->join();
 		}
+
+		std::cout << "Session Impl Abort Over" << std::endl;
 	}
 
 	session_proxy session::abort()
