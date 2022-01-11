@@ -881,6 +881,7 @@ BLOCKCHAIN_SOURCES =
 	chain_url
 	consensus
     index_key_info
+    peer_info
     repository
     repository_impl
     repository_track

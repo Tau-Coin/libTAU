@@ -24,6 +24,7 @@ see LICENSE file.
 #include "libTAU/blockchain/blockchain_signal.hpp"
 #include "libTAU/blockchain/chain_url.hpp"
 #include "libTAU/blockchain/constants.hpp"
+#include "libTAU/blockchain/peer_info.hpp"
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/repository_impl.hpp"
 #include "libTAU/blockchain/repository_track.hpp"
@@ -327,6 +328,10 @@ namespace blockchain {
         std::map<aux::bytes, std::pair<dht::public_key, std::int64_t>> m_visiting_time;
 
         std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_last_visiting_time;
+
+        std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_access_list;
+
+        std::map<aux::bytes, std::map<dht::public_key, ban_info>> m_ban_list;
 
         // block cache todo:100000?
         std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;
