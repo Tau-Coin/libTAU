@@ -146,6 +146,8 @@ namespace blockchain {
         void log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
         //#endif
 
+        void main_loop();
+
         void refresh_timeout(error_code const& e);
 
         void refresh_vote_timeout(error_code const& e);

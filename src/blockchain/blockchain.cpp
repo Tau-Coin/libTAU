@@ -217,6 +217,72 @@ namespace libTAU::blockchain {
 //        m_latest_signal_time[chain_id].clear();
     }
 
+    void blockchain::main_loop() {
+        try {
+            // 随机挑选一条
+            aux::bytes chain_id = select_chain_randomly();
+            if (!chain_id.empty()) {
+                log("INFO: Select chain:%s", aux::toHex(chain_id).c_str());
+
+                // current time
+                auto now = get_total_milliseconds();
+
+                if (m_tasks[chain_id].empty()) {
+                    auto &head_block = m_head_blocks[chain_id];
+                    // get my demand
+                    std::set<sha256_hash> demand_block_hash_set;
+                    auto &best_vote = m_best_votes[chain_id];
+                    // voting demand block first
+                    if (is_empty_chain(chain_id)) {
+                        if (!best_vote.empty()) {
+                            demand_block_hash_set.insert(best_vote.block_hash());
+                        } else {
+                            // select one randomly if voting has no result
+                            auto &votes = m_votes[chain_id];
+                            auto it = votes.begin();
+                            if (it != votes.end()) {
+                                // select one randomly as the best vote
+                                m_best_votes[chain_id] = it->second;
+                                // request the best voting block
+                                demand_block_hash_set.insert(it->second.block_hash());
+                            }
+                        }
+                    }
+                }
+
+                auto &tasks = m_tasks[chain_id];
+                auto size = tasks.size();
+                if (!tasks.empty()) {
+                    auto it = tasks.begin();
+                    if (it->m_peer.is_all_zeros()) {
+                        if (now - m_visiting_time[chain_id].second < 60 * 1000) {
+                            if (now > m_last_visiting_time[chain_id][m_visiting_time[chain_id].first] + 1000) {
+                                send_to(chain_id, m_visiting_time[chain_id].first, it->m_entry);
+                                tasks.erase(it);
+
+                                m_last_visiting_time[chain_id][m_visiting_time[chain_id].first] = now;
+                            }
+                        }
+                    } else {
+                        if (now > m_last_visiting_time[chain_id][it->m_peer] + 1000) {
+                            send_to(chain_id, it->m_peer, it->m_entry);
+                            tasks.erase(it);
+
+                            m_last_visiting_time[chain_id][it->m_peer] = now;
+                        }
+                    }
+                }
+                log("-----------tasks size:%lu, after size:%lu", size, tasks.size());
+            }
+
+            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
+            m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
+        } catch (std::exception &e) {
+            log("Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+        }
+    }
+
+
     void blockchain::refresh_timeout(const error_code &e) {
         if (e || m_stop) return;
 

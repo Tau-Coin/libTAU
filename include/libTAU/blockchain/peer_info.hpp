@@ -12,6 +12,9 @@ see LICENSE file.
 
 #include <cstdint>
 
+#include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/vote.hpp"
+
 namespace libTAU::blockchain {
 
     struct peer_info {
@@ -20,6 +23,16 @@ namespace libTAU::blockchain {
         int m_score = 30;
 
         int m_stage = 0;
+
+        int m_last_seen = 0;
+
+        int m_last_request = 0;
+
+        block m_head_block;
+
+        vote m_vote;
+
+        aux::bytes m_pool_levenshtein_array;
     };
 
     struct ban_info {
