@@ -269,4 +269,23 @@ namespace libTAU::common {
         return e;
     }
 
+    tx_pool_entry::tx_pool_entry(const entry &e) {
+        // tx pool levenshtein array
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            std::string levenshtein_array = i->string();
+            m_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+        }
+    }
+
+    entry tx_pool_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // message levenshtein array
+        e[entry_value] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
+
+        return e;
+    }
+
 }

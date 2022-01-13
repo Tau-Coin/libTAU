@@ -344,6 +344,22 @@ namespace libTAU::common {
         aux::bytes m_chain_id;
     };
 
+    struct TORRENT_EXPORT tx_pool_entry final : entry_base {
+        // data type id
+        static const std::int64_t data_type_id = 11;
+
+        // @param Construct with entry
+        explicit tx_pool_entry(const entry& e);
+
+        explicit tx_pool_entry(aux::bytes mLevenshteinArray) : m_levenshtein_array(std::move(mLevenshteinArray)) {}
+
+        // @returns the corresponding entry
+        entry get_entry() const override;
+
+        // bytes consist of first byte of ordered messages hash
+        aux::bytes m_levenshtein_array;
+    };
+
 }
 
 
