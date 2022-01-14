@@ -18,6 +18,8 @@ see LICENSE file.
 namespace libTAU::blockchain {
 
     struct peer_info {
+        peer_info() = default;
+
         peer_info(int mScore) : m_score(mScore) {}
 
         int m_score = 30;
@@ -37,6 +39,8 @@ namespace libTAU::blockchain {
 
     struct ban_info {
 
+        ban_info() = default;
+
         ban_info(int mBanTimes, int64_t mFreeTime) : m_ban_times(mBanTimes), m_free_time(mFreeTime) {}
 
         void increase_ban_times() {
@@ -47,9 +51,9 @@ namespace libTAU::blockchain {
             m_free_time = mFreeTime;
         }
 
-        int m_ban_times;
+        int m_ban_times = 0;
 
-        std::int64_t m_free_time;
+        std::int64_t m_free_time = 0;
     };
 }
 
