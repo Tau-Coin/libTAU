@@ -344,6 +344,25 @@ namespace libTAU::blockchain {
                 // current time
                 auto now = get_total_milliseconds();
 
+                {
+                    // calc score
+                    auto &acl = m_access_list[chain_id];
+                    for (auto &item: acl) {
+                        if (item.second.m_last_request_time != 0 && now > item.second.m_last_request_time + 5000) {
+                            item.second.m_score = item.second.m_score - 5;
+                            item.second.m_last_request_time = 0;
+                        }
+                    }
+
+                    auto it = acl.begin();
+                    while (it != acl.end()) {
+                        if (it->second.m_score <= 0) {
+                            acl.erase(it);
+                        }
+                        it++;
+                    }
+                }
+
                 if (m_tasks[chain_id].empty()) {
                     auto &acl = m_access_list[chain_id];
                     auto size = acl.size();
@@ -351,7 +370,8 @@ namespace libTAU::blockchain {
                         std::set<dht::public_key> peers;
                         for (auto i = 5 - size; i > 0; i--) {
                             auto peer = select_peer_randomly(chain_id);
-                            if (!peer.is_all_zeros()) {
+                            // if peer is not in acl, not been banned
+                            if (!peer.is_all_zeros() && acl.find(peer) == acl.end()) {
                                 auto &ban_list = m_ban_list[chain_id];
                                 auto it = ban_list.find(peer);
                                 if (it != ban_list.end()) {
@@ -364,6 +384,7 @@ namespace libTAU::blockchain {
                             }
                         }
 
+                        // all peers those added into acl should request head block
                         for (auto const &peer: peers) {
                             common::head_block_request_entry headBlockRequestEntry(chain_id);
                             common::blockchain_entry_task task(peer, headBlockRequestEntry.get_entry());
@@ -372,6 +393,8 @@ namespace libTAU::blockchain {
                             acl[peer] = peer_info();
                         }
                     }
+
+                    // request again
                 }
 
                 if (m_tasks[chain_id].empty()) {

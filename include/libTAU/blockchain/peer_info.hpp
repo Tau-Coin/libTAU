@@ -17,18 +17,29 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
+    enum STAGE {
+        HEAD_BLOCK,
+        NORMAL,
+    };
+
     struct peer_info {
         peer_info() = default;
 
         peer_info(int mScore) : m_score(mScore) {}
 
+        void setStage(STAGE mStage) {
+            m_stage = mStage;
+        }
+
         int m_score = 30;
 
-        int m_stage = 0;
+        STAGE m_stage = HEAD_BLOCK;
 
         int m_last_seen = 0;
 
-        int m_last_request = 0;
+        int m_last_request_time = 0;
+
+        int m_expected_response = 0;
 
         block m_head_block;
 
