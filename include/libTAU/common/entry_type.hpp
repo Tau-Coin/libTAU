@@ -344,9 +344,24 @@ namespace libTAU::common {
         aux::bytes m_chain_id;
     };
 
-    struct TORRENT_EXPORT tx_pool_entry final : entry_base {
+    struct TORRENT_EXPORT head_block_entry final : entry_base {
         // data type id
         static const std::int64_t data_type_id = 11;
+
+        // @param Construct with entry
+        explicit head_block_entry(const entry& e);
+
+        explicit head_block_entry(blockchain::block mBlk) : m_blk(std::move(mBlk)) {}
+
+        // @returns the corresponding entry
+        entry get_entry() const override;
+
+        blockchain::block m_blk;
+    };
+
+    struct TORRENT_EXPORT tx_pool_entry final : entry_base {
+        // data type id
+        static const std::int64_t data_type_id = 12;
 
         // @param Construct with entry
         explicit tx_pool_entry(const entry& e);

@@ -269,6 +269,24 @@ namespace libTAU::common {
         return e;
     }
 
+    head_block_entry::head_block_entry(const entry &e) {
+        // block
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            m_blk = blockchain::block(*i);
+        }
+    }
+
+    entry head_block_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // block
+        e[entry_value] = m_blk.get_entry();
+
+        return e;
+    }
+
     tx_pool_entry::tx_pool_entry(const entry &e) {
         // tx pool levenshtein array
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
