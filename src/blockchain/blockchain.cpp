@@ -348,10 +348,19 @@ namespace libTAU::blockchain {
                     // calc score
                     auto &acl = m_access_list[chain_id];
                     for (auto &item: acl) {
-                        if (item.second.m_last_request_time != 0 && now > item.second.m_last_request_time + 5000) {
-                            item.second.m_score = item.second.m_score - 5;
-                            item.second.m_last_request_time = 0;
+                        auto &responses = item.second.m_expected_responses;
+                        auto it = responses.begin();
+                        while (it != responses.end()) {
+                            if (now > it->second + 5000) {
+                                item.second.m_score = item.second.m_score - 5;
+                                responses.erase(it);
+                            }
+                            it++;
                         }
+//                        if (item.second.m_last_request_time != 0 && now > item.second.m_last_request_time + 5000) {
+//                            item.second.m_score = item.second.m_score - 5;
+//                            item.second.m_last_request_time = 0;
+//                        }
                     }
 
                     auto it = acl.begin();
@@ -386,15 +395,20 @@ namespace libTAU::blockchain {
 
                         // all peers those added into acl should request head block
                         for (auto const &peer: peers) {
-                            common::head_block_request_entry headBlockRequestEntry(chain_id);
-                            common::blockchain_entry_task task(peer, headBlockRequestEntry.get_entry());
-                            add_entry_task_to_queue(chain_id, task);
-
                             acl[peer] = peer_info();
                         }
                     }
 
-                    // request again
+                    // check if need to request on current stage
+                    for (auto const &item: acl) {
+                        if (item.second.m_stage == HEAD_BLOCK &&
+                            item.second.m_expected_responses.find(common::head_block_entry::data_type_id)
+                            != item.second.m_expected_responses.end()) {
+                            common::head_block_request_entry headBlockRequestEntry(chain_id);
+                            common::blockchain_entry_task task(item.first, headBlockRequestEntry.get_entry());
+                            add_entry_task_to_queue(chain_id, task);
+                        }
+                    }
                 }
 
                 if (m_tasks[chain_id].empty()) {
