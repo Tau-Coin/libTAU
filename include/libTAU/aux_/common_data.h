@@ -13,6 +13,7 @@
 #include <cstring>
 #include <string>
 #include "libTAU/aux_/common.h"
+#include "libTAU/aux_/export.hpp"
 
 namespace libTAU { namespace aux {
 
@@ -59,7 +60,7 @@ template <class T> std::string toHexPrefixed(T const& _data)
 /// Converts a (printable) ASCII hex string into the corresponding byte stream.
 /// @example fromHex("41626261") == asBytes("Abba")
 /// If _throw = ThrowType::DontThrow, it replaces bad hex characters with 0's, otherwise it will throw an exception.
-bytes fromHex(std::string const& _s, WhenError _throw = WhenError::DontThrow);
+TORRENT_EXPORT bytes fromHex(std::string const& _s, WhenError _throw = WhenError::DontThrow);
 
 /// @returns true if @a _s is a hex string.
 bool isHex(std::string const& _s) noexcept;
