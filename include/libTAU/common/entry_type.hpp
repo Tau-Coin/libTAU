@@ -31,6 +31,11 @@ namespace libTAU::common {
     };
 
     struct TORRENT_EXPORT entry_task {
+        entry_task(int64_t mDataTypeId, entry mEntry)
+                : m_data_type_id(mDataTypeId), m_entry(std::move(mEntry)) {}
+
+        entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, entry mEntry)
+                : m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)) {}
 
         entry_task(int64_t mDataTypeId, entry mEntry, int64_t mTimestamp) : m_data_type_id(mDataTypeId),
                                                                                    m_entry(std::move(mEntry)),

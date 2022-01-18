@@ -121,6 +121,8 @@ namespace blockchain {
 
         // mutable data is pushed here
         void on_dht_item(dht::item const& i);
+        void on_dht_item_temp(dht::item const& i);
+
 
     private:
         // initialize member variables
@@ -154,7 +156,7 @@ namespace blockchain {
 
         void refresh_tx_timeout(error_code const& e);
 
-        void add_entry_task_to_queue(const aux::bytes &chain_id, const common::blockchain_entry_task &task);
+        void add_entry_task_to_queue(const aux::bytes &chain_id, const common::entry_task &task);
 
         // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
@@ -323,7 +325,7 @@ namespace blockchain {
 //        std::map<aux::bytes, std::int64_t> m_last_got_data_time;
 
         // all tasks
-        std::map<aux::bytes, std::set<common::blockchain_entry_task>> m_tasks;
+        std::map<aux::bytes, std::set<common::entry_task>> m_tasks;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_visiting_history;
 
