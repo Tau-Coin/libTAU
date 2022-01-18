@@ -97,6 +97,7 @@ see LICENSE file.
 
 #include <leveldb/db.h>
 #include <sqlite3.h>
+#include <snappy-c.h>
 
 // for logging the size of DHT structures
 #include <libTAU/kademlia/find_data.hpp>

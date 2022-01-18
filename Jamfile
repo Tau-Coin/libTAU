@@ -17,6 +17,7 @@ VERSION = 0.0.0 ;
 BOOST_ROOT = [ modules.peek : BOOST_ROOT ] ;
 OPENSSL_ROOT = [ modules.peek : OPENSSL_ROOT ] ;
 LEVELDB_ROOT = [ modules.peek : LEVELDB_ROOT ] ;
+SNAPPY_ROOT = [ modules.peek : SNAPPY_ROOT ] ;
 SQLITE_ROOT = [ modules.peek : SQLITE_ROOT ] ;
 
 ECHO "OS =" [ os.name ] ;
@@ -80,6 +81,11 @@ rule linking ( properties * )
     if <sqldatabase>sqldb in $(properties)
     {
         result += <library>sqlite3 ;
+    }
+
+    if <compress>snappy in $(properties)
+    {
+        result += <library>snappy ;
     }
 
 	# gcrypt libraries, if enabled
@@ -564,6 +570,24 @@ rule sqlite-include-path ( properties * )
     return $(result) ;
 }
 
+# the search path to pick up the sqlite libraries from. This is the <search>
+# property of those libraries
+rule snappy-lib-path ( properties * )
+{
+    local result ;
+    result += <search>$(SNAPPY_ROOT)/lib ;
+    return $(result) ;
+}
+
+# the include path to pick up sqlite headers from. This is the
+# usage-requirement for the sqlite-related libraries
+rule snappy-include-path ( properties * )
+{
+    local result ;
+    result += <include>$(SNAPPY_ROOT)/include ;
+    return $(result) ;
+}
+
 path-constant blacklist-file : tools/sanitizer-blacklist.txt ;
 
 feature openssl-lib : : free path ;
@@ -571,6 +595,9 @@ feature openssl-include : : free path ;
 
 feature sqlite-lib : : free path ;
 feature sqlite-include : : free path ;
+
+feature snappy-lib : : free path ;
+feature snappy-include : : free path ;
 
 feature gnutls-lib : : free path ;
 feature gnutls-include : : free path ;
@@ -650,6 +677,9 @@ feature.compose <kvdatabase>kvdb : <define>TORRENT_ENABLE_DB ;
 feature sqldatabase : sqldb : composite propagated ;
 feature.compose <sqldatabase>sqldb : <define>TORRENT_ABI_VERSION=3 ;
 
+feature compress : snappy : composite propagated ;
+feature.compose <compress>snappy : <define>TORRENT_ENABLE_COMPRESS ;
+
 feature crypto : openssl : composite propagated ;
 feature.compose <crypto>openssl
 	: <define>TORRENT_USE_OPENSSL
@@ -703,6 +733,9 @@ lib leveldb : : <name>leveldb <conditional>@leveldb-lib-path : :
 
 lib sqlite3 : : <name>sqlite3 <conditional>@sqlite-lib-path : :
     <conditional>@sqlite-include-path ;
+
+lib snappy : : <name>snappy <conditional>@snappy-lib-path : :
+    <conditional>@snappy-include-path ;
 
 # openssl libraries on windows
 # technically, crypt32 is not an OpenSSL dependency, but libTAU needs it on
