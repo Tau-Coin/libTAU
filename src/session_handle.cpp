@@ -151,9 +151,9 @@ namespace libTAU {
 		return sync_call_ret<session_params>(&session_impl::session_state, flags);
 	}
 
-	session_status session_handle::status() const
+	libTAU::session_status session_handle::status() const
     {    
-        return sync_call_ret<session_status>(&session_impl::status);
+        return sync_call_ret<libTAU::session_status>(&session_impl::status);
     }
 
 	void session_handle::post_session_stats()
