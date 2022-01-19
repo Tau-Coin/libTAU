@@ -246,10 +246,13 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit block_request_entry(const entry& e);
 
-        explicit block_request_entry(const sha256_hash &mHash) : m_hash(mHash) {}
+        block_request_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_chain_id(std::move(mChainId)), m_hash(mHash) {}
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        // chain id
+        aux::bytes m_chain_id;
 
         sha256_hash m_hash;
     };
@@ -276,10 +279,14 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit transaction_request_entry(const entry& e);
 
-        explicit transaction_request_entry(const sha256_hash &mHash) : m_hash(mHash) {}
+        transaction_request_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_chain_id(std::move(mChainId)),
+                                                                                          m_hash(mHash) {}
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        // chain id
+        aux::bytes m_chain_id;
 
         sha256_hash m_hash;
     };
@@ -371,10 +378,14 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit tx_pool_entry(const entry& e);
 
-        explicit tx_pool_entry(aux::bytes mLevenshteinArray) : m_levenshtein_array(std::move(mLevenshteinArray)) {}
+        tx_pool_entry(aux::bytes mChainId, aux::bytes mLevenshteinArray) :
+            m_chain_id(std::move(mChainId)), m_levenshtein_array(std::move(mLevenshteinArray)) {}
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        // chain id
+        aux::bytes m_chain_id;
 
         // bytes consist of first byte of ordered messages hash
         aux::bytes m_levenshtein_array;

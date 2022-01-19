@@ -211,6 +211,12 @@ namespace blockchain {
         // check if a block in cache or db
         bool is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);
 
+        bool is_peer_banned(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void increase_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
+
+        void decrease_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
+
         // get block from block cache or db
         block get_block_from_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);
 

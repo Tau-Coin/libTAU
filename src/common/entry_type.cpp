@@ -129,6 +129,12 @@ namespace libTAU::common {
 
 
     block_request_entry::block_request_entry(const entry &e) {
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
         // block hash
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
@@ -141,6 +147,8 @@ namespace libTAU::common {
         entry e(entry::dictionary_t);
         // data type id
         e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // block hash
         e[entry_value] = entry(m_hash.to_string());
 
@@ -167,6 +175,12 @@ namespace libTAU::common {
 
 
     transaction_request_entry::transaction_request_entry(const entry &e) {
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
         // tx hash
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
@@ -179,6 +193,8 @@ namespace libTAU::common {
         entry e(entry::dictionary_t);
         // data type id
         e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // block hash
         e[entry_value] = entry(m_hash.to_string());
 
@@ -288,6 +304,12 @@ namespace libTAU::common {
     }
 
     tx_pool_entry::tx_pool_entry(const entry &e) {
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
         // tx pool levenshtein array
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
@@ -300,6 +322,8 @@ namespace libTAU::common {
         entry e(entry::dictionary_t);
         // data type id
         e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // message levenshtein array
         e[entry_value] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
 
