@@ -50,10 +50,10 @@ OPENSSL_NO_OPTS: "no-deprecated no-shared no-makedepend no-static-engine no-stdi
 ```
 ### Setup snappy
 ```
-1. wget -nv -O snappy.tar.gz https://github.com/google/snappy/archive/refs/tags/1.1.9.tar.gz
+1. wget -nv -O snappy.tar.gz https://github.com/google/snappy/archive/refs/tags/1.1.8.tar.gz
 2. tar xzf snappy.tar.gz
 3. cd snappy
-4. vim CMakeLists.txt -> add_compile_options(-fPIC) && option(SNAPPY_BUILD_TESTS "Build Snappy's own tests" OFF) option(SNAPPY_BUILD_BENCHMARKS "Build Snappy's benchmarks" OFF)
+4. vim CMakeLists.txt -> add_compile_options(-fPIC) && option(SNAPPY_BUILD_TESTS "Build Snappy's own tests" OFF)
 5. mkdir build
 6. cd build
 7. cmake -D CMAKE_INSTALL_PREFIX=${PWD}/../../snappy  ../

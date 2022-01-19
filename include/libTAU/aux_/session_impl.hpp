@@ -793,6 +793,7 @@ namespace aux {
 
 			std::string m_raw_recv_udp_packet;
 			std::string m_decrypted_udp_packet;
+			std::string m_decrypted_ucd_udp_packet;
 
 			std::unique_ptr<dht::dht_storage_interface> m_dht_storage;
 			std::shared_ptr<dht::dht_tracker> m_dht;
@@ -868,7 +869,11 @@ namespace aux {
 				, span<char const> p
 				, error_code& ec
 				, udp_send_flags_t const flags);
+ #ifdef TORRENT_ENABLE_COMPRESS
+			bool compress_udp_packet(span<char const> p, std::string& out);
 
+			bool uncompress_udp_packet(const std::string& in, std::string& out);
+#endif
 			bool encrypt_udp_packet(sha256_hash const& pk
 				, const std::string& in
 				, std::string& out
