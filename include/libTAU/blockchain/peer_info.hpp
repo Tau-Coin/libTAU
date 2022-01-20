@@ -26,9 +26,7 @@ namespace libTAU::blockchain {
 
     struct peer_info {
         peer_info() = default;
-
-        peer_info(int mScore) : m_score(mScore) {}
-
+        
         void setStage(STAGE mStage) {
             m_stage = mStage;
         }
@@ -37,17 +35,17 @@ namespace libTAU::blockchain {
 
         STAGE m_stage = HEAD_BLOCK;
 
-        int m_last_seen = 0;
+//        int m_last_seen = 0;
 
-        int m_last_request_time = 0;
+//        int m_last_request_time = 0;
 
         std::map<std::int64_t, int> m_requests_time;
 
         block m_head_block;
 
-        vote m_vote;
+//        vote m_vote;
 
-        aux::bytes m_pool_levenshtein_array;
+//        aux::bytes m_pool_levenshtein_array;
     };
 
     struct ban_info {

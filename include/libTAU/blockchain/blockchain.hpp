@@ -53,6 +53,9 @@ namespace blockchain {
 
     constexpr int blockchain_immutable_payload_put_node_size = 1;
 
+    // vote interval(s)
+    constexpr int blockchain_vote_interval = 60 * 60;
+
     enum RESULT {
         SUCCESS,
         FAIL,
@@ -152,6 +155,8 @@ namespace blockchain {
 
         void refresh_timeout(error_code const& e);
 
+        void refresh_vote_timeout_temp(error_code const& e);
+
         void refresh_vote_timeout(error_code const& e);
 
         void refresh_tx_timeout(error_code const& e);
@@ -211,7 +216,11 @@ namespace blockchain {
         // check if a block in cache or db
         bool is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);
 
+        bool is_peer_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);
+
         bool is_peer_banned(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void increase_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
 
@@ -329,6 +338,9 @@ namespace blockchain {
 
         // the time that last got data from dht(ms)
 //        std::map<aux::bytes, std::int64_t> m_last_got_data_time;
+
+        std::map<aux::bytes, std::int64_t> m_last_voting_time;
+        std::map<aux::bytes, std::int64_t> m_voting_end_time;
 
         // all tasks
         std::map<aux::bytes, std::set<common::entry_task>> m_tasks;
