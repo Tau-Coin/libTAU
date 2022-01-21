@@ -17,6 +17,7 @@ see LICENSE file.
 
 #include <libTAU/kademlia/node_id.hpp>
 #include <libTAU/kademlia/types.hpp>
+#include <libTAU/kademlia/node_entry.hpp>
 
 #include <libTAU/socket.hpp>
 #include <libTAU/address.hpp>
@@ -124,6 +125,15 @@ namespace dht {
 			, public_key const& pk
 			, span<char const> salt
 			, address const& addr) = 0;
+
+		// Store relay endpoints.
+		virtual void relay_referred(node_id const& peer
+			, node_entry const& ne);
+
+		// Find relay endpoints
+		virtual void find_relays(node_id const& peer
+			, std::vector<node_entry>& l
+			, int count, udp protocol);
 
 		// This function is called periodically (non-constant frequency).
 		//

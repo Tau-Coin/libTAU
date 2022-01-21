@@ -70,6 +70,7 @@ namespace dht {
 			, dht::msg const& request, entry& response) = 0;
 		virtual void on_dht_item(dht::item& i) = 0;
 		virtual std::int64_t get_time() = 0;
+		virtual void on_dht_relay(sha256_hash const& from, entry const& payload) = 0;
 
 	protected:
 		~dht_observer() = default;

@@ -3497,6 +3497,11 @@ namespace {
 		return m_session_time;
 	}
 
+	void session_impl::on_dht_relay(sha256_hash const& from, entry const& payload)
+	{
+		// TODO: transfer payload to blockchain
+	}
+
 	void session_impl::set_external_address(
 		tcp::endpoint const& local_endpoint, address const& ip
 		, ip_source_t const source_type, address const& source)

@@ -14,6 +14,7 @@ see LICENSE file.
 */
 
 #include "libTAU/kademlia/dht_storage.hpp"
+#include "libTAU/kademlia/node_entry.hpp"
 #include "libTAU/settings_pack.hpp"
 
 #include <tuple>
@@ -127,6 +128,61 @@ namespace {
 		return std::min_element(table.begin(), table.end()
 			, immutable_item_comparator(node_ids));
 	}
+
+	struct relays_bucket
+	{
+		static constexpr int relays_max_size = 8;
+
+		// endpoints
+		std::vector<node_entry> relays;
+
+		// the last time when some endpoint is referred
+		time_point last_queried;
+
+		void referred(node_entry& e)
+		{
+			last_queried = aux::time_now();
+
+			auto it = std::find_if(relays.begin(), relays.end(),
+				[&e](node_entry const& ne)
+				{ return ne.id == e.id; });
+			if (it != relays.end())
+			{
+				if (it->ep() != e.ep())
+				{
+					it->endpoint = e.endpoint;
+				}
+
+				it->last_queried = aux::time_now();
+				return;
+			}
+
+			e.last_queried = aux::time_now();
+
+			if (relays.size() == relays_max_size)
+			{
+				// remove the oldest node entry
+				auto min_it = std::min_element(relays.begin(), relays.end(),
+					[](node_entry const& lhs, node_entry const& rhs)
+					{ return lhs.last_queried < rhs.last_queried; });
+				TORRENT_ASSERT(min_it != relays.end());
+				relays.erase(min_it);
+			}
+
+			relays.push_back(e);
+		}
+
+		void find_node(std::vector<node_entry>& l, int count)
+		{
+			l.clear();
+			if (relays.empty()) return;
+
+			auto it = std::max_element(relays.begin(), relays.end(),
+				[](node_entry const& lhs, node_entry const& rhs)
+				{ return lhs.last_queried < rhs.last_queried; });
+			l.push_back({it->id, it->ep()});
+		}
+	};
 
 	class dht_default_storage final : public dht_storage_interface
 	{
@@ -269,6 +325,51 @@ namespace {
 			touch_item(i->second, addr);
 		}
 
+		void relay_referred(node_id const& peer
+			, node_entry const& ne) override
+		{
+			node_entry add_ne(ne.id, ne.endpoint);
+
+			auto i = m_relays_table.find(peer);
+			if (i == m_relays_table.end())
+			{
+				if (int(m_relays_table.size()) >= 1000)
+				{
+					auto const j = std::min_element(m_relays_table.begin()
+						, m_relays_table.end()
+						, [](std::pair<node_id const, relays_bucket> const& lhs
+							, std::pair<node_id const, relays_bucket> const& rhs)
+							{ return lhs.second.last_queried < rhs.second.last_queried; });
+					TORRENT_ASSERT(j != m_relays_table.end());
+					m_relays_table.erase(j);
+				}
+
+				relays_bucket to_add;
+				to_add.referred(add_ne);
+
+				std::tie(i, std::ignore) = m_relays_table.insert(
+					std::make_pair(peer, std::move(to_add)));
+			}
+			else
+			{
+				relays_bucket& rb = i->second;
+				rb.referred(add_ne);
+			}
+		}
+
+		void find_relays(node_id const& peer
+			, std::vector<node_entry>& l
+			, int count
+			, udp protocol) override
+		{
+			l.clear();
+			auto const i = m_relays_table.find(peer);
+			if (i == m_relays_table.end()) return;
+
+			relays_bucket& rb = i->second;
+			rb.find_node(l, count);
+		}
+
 		void tick() override
 		{
 			if (0 == m_settings.get_int(settings_pack::dht_item_lifetime)) return;
@@ -313,6 +414,7 @@ namespace {
 		std::vector<node_id> m_node_ids;
 		std::map<node_id, dht_immutable_item> m_immutable_table;
 		std::map<node_id, dht_mutable_item> m_mutable_table;
+		std::map<node_id, relays_bucket> m_relays_table;
 	};
 }
 

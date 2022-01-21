@@ -543,6 +543,8 @@ namespace aux {
 
 			std::int64_t get_time() override;
 
+			void on_dht_relay(sha256_hash const& from, entry const& payload) override;
+
 			void set_external_address(tcp::endpoint const& local_endpoint
 				, address const& ip
 				, ip_source_t source_type, address const& source) override;
