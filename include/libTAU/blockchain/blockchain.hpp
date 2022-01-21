@@ -62,6 +62,13 @@ namespace blockchain {
         MISSING,
     };
 
+    enum CHAIN_STATUS {
+        VOTE_PREPARE,
+        VOTE_REQUEST,
+//        VOTE_COUNT,
+        MINING,
+    };
+
     //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
     // This is the basic logging and debug interface offered by the blockchain.
     // a release build with logging disabled (which is the default) will
@@ -154,6 +161,8 @@ namespace blockchain {
         void main_loop();
 
         void refresh_timeout(error_code const& e);
+
+        void refresh_count_votes(error_code const& e);
 
         void refresh_vote_timeout_temp(error_code const& e);
 
@@ -339,8 +348,9 @@ namespace blockchain {
         // the time that last got data from dht(ms)
 //        std::map<aux::bytes, std::int64_t> m_last_got_data_time;
 
-        std::map<aux::bytes, std::int64_t> m_last_voting_time;
-        std::map<aux::bytes, std::int64_t> m_voting_end_time;
+        std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
+
+        std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
 
         // all tasks
         std::map<aux::bytes, std::set<common::entry_task>> m_tasks;
