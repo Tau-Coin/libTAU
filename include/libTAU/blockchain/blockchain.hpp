@@ -65,7 +65,7 @@ namespace blockchain {
     enum CHAIN_STATUS {
         VOTE_PREPARE,
         VOTE_REQUEST,
-//        VOTE_COUNT,
+        VOTE_COUNT,
         MINING,
     };
 
@@ -164,7 +164,7 @@ namespace blockchain {
 
         void refresh_count_votes(error_code const& e);
 
-        void refresh_vote_timeout_temp(error_code const& e);
+        void count_votes(error_code const&, const aux::bytes &chain_id);
 
         void refresh_vote_timeout(error_code const& e);
 
@@ -228,6 +228,8 @@ namespace blockchain {
         bool is_peer_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);
 
         bool is_peer_banned(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void ban_peer(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);
 
@@ -349,6 +351,8 @@ namespace blockchain {
 //        std::map<aux::bytes, std::int64_t> m_last_got_data_time;
 
         std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
+
+        std::map<aux::bytes, std::int64_t> m_last_voting_time;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
 
