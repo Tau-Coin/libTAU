@@ -1691,12 +1691,8 @@ namespace libTAU::blockchain {
 
         auto &ban_list = m_ban_list[chain_id];
         auto it_ban = ban_list.find(peer);
-        if (it_ban != ban_list.end() && now < it_ban->second.m_free_time) {
-            // still banned
-            return true;
-        }
+        return it_ban != ban_list.end() && now < it_ban->second.m_free_time;
 
-        return false;
     }
 
     void blockchain::ban_peer(const aux::bytes &chain_id, const dht::public_key &peer) {
