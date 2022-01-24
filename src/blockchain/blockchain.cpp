@@ -531,6 +531,7 @@ namespace libTAU::blockchain {
                                     if (max_difficulty > head_block.cumulative_difficulty() && it != acl.end()) {
                                         // find absent block
                                         auto b = it->second.m_head_block;
+                                        auto peer = it->first;
                                         auto previous_hash = b.previous_block_hash();
                                         while (true) {
                                             // search until found absent or fork point block
@@ -539,8 +540,12 @@ namespace libTAU::blockchain {
                                                 log("INFO: ----chain[%s] Cannot find demanding block hash[%s] in db/cache",
                                                     aux::toHex(chain_id).c_str(),
                                                     aux::toHex(previous_hash.to_string()).c_str());
-                                                // todo
-                                                demand_block_hash_set.insert(previous_hash);
+
+                                                common::block_request_entry blockRequestEntry(chain_id, previous_hash);
+                                                common::entry_task task(common::block_request_entry::data_type_id,
+                                                                        peer, blockRequestEntry.get_entry());
+                                                add_entry_task_to_queue(chain_id, task);
+
                                                 break;
                                             } else {
                                                 auto main_chain_hash = m_repository->get_main_chain_block_hash_by_number(
@@ -572,6 +577,7 @@ namespace libTAU::blockchain {
                                 if (max_difficulty > head_block.cumulative_difficulty() && it != acl.end()) {
                                     // find absent block
                                     auto b = it->second.m_head_block;
+                                    auto peer = it->first;
                                     auto previous_hash = b.previous_block_hash();
                                     while (true) {
                                         // search until found absent or fork point block
@@ -580,8 +586,12 @@ namespace libTAU::blockchain {
                                             log("INFO: ----chain[%s] Cannot find demanding block hash[%s] in db/cache",
                                                 aux::toHex(chain_id).c_str(),
                                                 aux::toHex(previous_hash.to_string()).c_str());
-                                            // todo
-                                            demand_block_hash_set.insert(previous_hash);
+
+                                            common::block_request_entry blockRequestEntry(chain_id, previous_hash);
+                                            common::entry_task task(common::block_request_entry::data_type_id,
+                                                                    peer, blockRequestEntry.get_entry());
+                                            add_entry_task_to_queue(chain_id, task);
+
                                             break;
                                         } else {
                                             auto main_chain_hash = m_repository->get_main_chain_block_hash_by_number(
@@ -1692,7 +1702,6 @@ namespace libTAU::blockchain {
         auto &ban_list = m_ban_list[chain_id];
         auto it_ban = ban_list.find(peer);
         return it_ban != ban_list.end() && now < it_ban->second.m_free_time;
-
     }
 
     void blockchain::ban_peer(const aux::bytes &chain_id, const dht::public_key &peer) {
