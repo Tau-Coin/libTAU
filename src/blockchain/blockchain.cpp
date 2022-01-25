@@ -1067,6 +1067,19 @@ namespace libTAU::blockchain {
             m_tasks[chain_id].erase(m_tasks[chain_id].begin());
         }
 
+        if (!task.m_peer.is_all_zeros()) {
+            auto &peer = task.m_peer;
+            auto type_id = task.m_data_type_id;
+            auto &acl = m_access_list[chain_id];
+            auto it = acl.find(peer);
+            if (it != acl.end()) {
+                if (it->second.m_requests_time.find(type_id) != it->second.m_requests_time.end()) {
+                    // already in request
+                    return;
+                }
+            }
+        }
+
         m_tasks[chain_id].insert(task);
     }
 
