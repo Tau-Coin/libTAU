@@ -1881,8 +1881,10 @@ namespace aux {
 			// alpha in the kademlia paper
 			dht_search_branching,
 
+			// the request range for one dht operation(etc. get_peers, get, put).
+			dht_invoke_window,
+
 			// the request total number limit for one dht operation(etc. get_peers, get, put).
-			// This parameter is called beta factor in libTAU implementation.
 			dht_invoke_limit,
 
 			// the time interval(seconds) of bootstrap
