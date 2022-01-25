@@ -3117,19 +3117,20 @@ namespace libTAU::blockchain {
                         common::transaction_entry tx_entry(i.value());
                         if (!tx_entry.m_tx.empty()) {
                             auto &chain_id = tx_entry.m_tx.chain_id();
+                            auto &tx = tx_entry.m_tx;
                             log("INFO: Got transaction, hash[%s].",
-                                aux::toHex(tx_entry.m_tx.sha256().to_string()).c_str());
+                                aux::toHex(tx.sha256().to_string()).c_str());
 
-                            auto tx1 = m_tx_pools[chain_id].get_best_transaction();
-                            m_tx_pools[chain_id].add_tx(tx_entry.m_tx);
-                            auto tx2 = m_tx_pools[chain_id].get_best_transaction();
-                            if (tx1.sha256() != tx2.sha256()) {
-                                common::transaction_entry txEntry(tx2);
-                                common::entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry());
-                                add_entry_task_to_queue(chain_id, task);
+                            auto &pool = m_tx_pools[chain_id];
+                            if (!pool.is_transaction_in_pool(tx.sha256())) {
+                                if (tx.fee() > pool.get_min_allowed_fee() || tx.timestamp() > pool.get_oldest_allowed_timestamp()) {
+                                    common::transaction_entry txEntry(tx);
+                                    common::entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry());
+                                    add_entry_task_to_queue(chain_id, task);
+                                }
+
+                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
                             }
-
-                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
 
                             try_to_update_visiting_peer(chain_id, peer);
                         }

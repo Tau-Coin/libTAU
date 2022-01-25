@@ -289,6 +289,24 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    std::int64_t tx_pool::get_min_allowed_fee() {
+        auto it = m_ordered_txs_by_fee.begin();
+        if (it != m_ordered_txs_by_fee.end()) {
+            return it->fee();
+        }
+
+        return 0;
+    }
+
+    std::int64_t tx_pool::get_oldest_allowed_timestamp() {
+        auto it = m_ordered_txs_by_timestamp.begin();
+        if (it != m_ordered_txs_by_timestamp.end()) {
+            return it->timestamp();
+        }
+
+        return 0;
+    }
+
     std::set<dht::public_key> tx_pool::get_active_peers() {
         std::set<dht::public_key> peers;
         auto size = m_active_peers.size();
