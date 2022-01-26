@@ -19,6 +19,8 @@ namespace libTAU {
             const std::string key_suffix_friend_info = "fi";
             // message hash list key suffix
             const std::string key_suffix_message_hash_list = "mhl";
+            // align time key suffix
+            const std::string key_suffix_array_align_time = "at";
         }
 
         // table friends: public key
@@ -121,6 +123,43 @@ namespace libTAU {
             sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
             sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
             sKey.insert(sKey.end(), key_suffix_friend_info.begin(), key_suffix_friend_info.end());
+
+            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), sKey);
+            return status.ok();
+        }
+
+        int64_t message_db_impl::get_array_align_time(const std::pair<dht::public_key, dht::public_key> &key) {
+            std::string sKey;
+            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
+            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
+            sKey.insert(sKey.end(), key_suffix_array_align_time.begin(), key_suffix_array_align_time.end());
+
+            std::string value;
+            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), sKey, &value);
+
+            if (!value.empty()) {
+                return std::stoll(value);
+            }
+
+            return 0;
+        }
+
+        bool message_db_impl::save_array_align_time(const std::pair<dht::public_key, dht::public_key> &key,
+                                                    std::int64_t timestamp) {
+            std::string sKey;
+            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
+            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
+            sKey.insert(sKey.end(), key_suffix_array_align_time.begin(), key_suffix_array_align_time.end());
+
+            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), sKey, std::to_string(timestamp));
+            return status.ok();
+        }
+
+        bool message_db_impl::delete_array_align_time(const std::pair<dht::public_key, dht::public_key> &key) {
+            std::string sKey;
+            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
+            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
+            sKey.insert(sKey.end(), key_suffix_array_align_time.begin(), key_suffix_array_align_time.end());
 
             leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), sKey);
             return status.ok();

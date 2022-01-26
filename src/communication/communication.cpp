@@ -82,6 +82,10 @@ namespace libTAU {
                     } else {
                         log("INFO: Message hash list is empty.");
                     }
+
+                    // get array align time
+                    m_array_align_time[peer] = m_message_db->get_array_align_time(std::make_pair(*pk, peer));
+
                 }
             } catch (std::exception &e) {
                 log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
@@ -228,6 +232,9 @@ namespace libTAU {
                                 common::entry_task levenshtein_array_task3(
                                         common::message_levenshtein_array_entry::data_type_id, peer, now + 9000);
                                 add_entry_task_to_queue(levenshtein_array_task3);
+                            } else {
+                                m_array_align_time[peer] = now;
+                                m_message_db->save_array_align_time(std::make_pair(*m_ses.pubkey(), peer), now);
                             }
 
                             m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
@@ -632,19 +639,24 @@ namespace libTAU {
 
                 auto now = get_current_time();
                 auto size = m_friends.size();
-                for (auto i = 0; i < size; i++) {
-                    auto& peer = m_friends[i];
-                    if (now > m_last_greeting[peer] + 60 * 60 * 1000) {
+                for (auto it = m_friends.begin(); it != m_friends.end(); it++) {
+                    auto peer = *it;
+                    if (now > m_last_greeting[peer] + 5 * 60 * 1000) {
+                        if (m_last_greeting[peer] > 0 && now > m_array_align_time[peer] + 24 * 60 * 60 * 1000 && peer != *m_ses.pubkey()) {
+                            m_friends.erase(it);
+                            continue;
+                        }
+
                         m_last_greeting[peer] = now;
 
                         common::entry_task levenshtein_array_task1(
-                                common::message_levenshtein_array_entry::data_type_id, peer, now + 100 * i);
+                                common::message_levenshtein_array_entry::data_type_id, peer, now);
                         add_entry_task_to_queue(levenshtein_array_task1);
                         common::entry_task levenshtein_array_task2(
-                                common::message_levenshtein_array_entry::data_type_id, peer, now + 1000 + 100 * i);
+                                common::message_levenshtein_array_entry::data_type_id, peer, now + 1000);
                         add_entry_task_to_queue(levenshtein_array_task2);
                         common::entry_task levenshtein_array_task3(
-                                common::message_levenshtein_array_entry::data_type_id, peer, now + 5000 + 100 * i);
+                                common::message_levenshtein_array_entry::data_type_id, peer, now + 5000);
                         add_entry_task_to_queue(levenshtein_array_task3);
                     }
                 }

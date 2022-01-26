@@ -47,6 +47,15 @@ namespace libTAU {
             // delete friend info by key pair<my public key, peer public key>
             virtual bool delete_friend_info(const std::pair<dht::public_key, dht::public_key> &key) = 0;
 
+            // get array align time by key pair<my public key, peer public key>
+            virtual std::int64_t get_array_align_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
+
+            // save array align time
+            virtual bool save_array_align_time(const std::pair<dht::public_key, dht::public_key> &key, std::int64_t timestamp) = 0;
+
+            // delete array align time by key pair<my public key, peer public key>
+            virtual bool delete_array_align_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
+
             // get message by hash
             virtual communication::message get_message(const sha256_hash &hash) = 0;
 

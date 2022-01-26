@@ -48,6 +48,12 @@ namespace libTAU::common {
                                                                                             m_peer(mPeer),
                                                                                             m_timestamp(mTimestamp) {}
 
+        entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer,
+                   entry mEntry, int64_t mTimestamp) : m_alpha(mAlpha), m_beta(mBeta),
+                                                              m_invoke_number(mInvokeNumber),
+                                                              m_data_type_id(mDataTypeId), m_peer(mPeer),
+                                                              m_entry(std::move(mEntry)), m_timestamp(mTimestamp) {}
+
         bool operator<(const entry_task &rhs) const {
             if (m_timestamp < rhs.m_timestamp)
                 return true;
@@ -87,6 +93,12 @@ namespace libTAU::common {
         bool operator>=(const entry_task &rhs) const {
             return !(*this < rhs);
         }
+
+        int m_alpha = 1;
+
+        int m_beta = 3;
+
+        int m_invoke_number = 3;
 
         std::int64_t m_data_type_id;
 
