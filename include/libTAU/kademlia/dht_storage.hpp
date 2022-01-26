@@ -128,12 +128,12 @@ namespace dht {
 
 		// Store relay endpoints.
 		virtual void relay_referred(node_id const& peer
-			, node_entry const& ne);
+			, node_entry const& ne) = 0;
 
 		// Find relay endpoints
 		virtual void find_relays(node_id const& peer
 			, std::vector<node_entry>& l
-			, int count, udp protocol);
+			, int count, udp protocol) = 0;
 
 		// This function is called periodically (non-constant frequency).
 		//
