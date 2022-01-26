@@ -433,9 +433,17 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 	if (e.find_key("y") == nullptr)
 	{
 		e["y"] = "q";
-		// add_our_id(a);
+		add_our_id(a);
 	}
-	add_our_id(a);
+	else
+	{
+		auto ye = e.find_key("y");
+		std::string yt = ye->string();
+		if (yt != "h")
+		{
+			add_our_id(a);
+		}
+	}
 
 	std::string transaction_id;
 	transaction_id.resize(2);
