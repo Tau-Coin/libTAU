@@ -63,7 +63,7 @@ struct TORRENT_EXTRA_EXPORT traversal_algorithm
 	int invoke_count() const { TORRENT_ASSERT(m_invoke_count >= 0); return m_invoke_count; }
 	int branch_factor() const { TORRENT_ASSERT(m_branch_factor >= 0); return m_branch_factor; }
 
-	void set_branch_factor(std::int8_t branch_factor) { m_branch_factor = branch_factor; }
+	void set_invoke_window(std::int8_t invoke_window) { m_invoke_window = invoke_window; }
 	void set_invoke_limit(std::int8_t invoke_limit) { m_invoke_limit = invoke_limit; }
 
 	node& get_node() const { return m_node; }
@@ -107,6 +107,8 @@ protected:
 	// the min distance of the endpoint which is allowed into m_results.
 	int allow_distance() const;
 
+	int invoke_window() const { return m_invoke_window; }
+
 	int invoke_limit() const { return m_invoke_limit; }
 
 	node& m_node;
@@ -136,7 +138,8 @@ private:
 	node_id const m_target;
 	std::int8_t m_invoke_count = 0;
 	std::int8_t m_branch_factor = 3;
-	// This is 'beta' factor which limits the total invoked requests.
+	std::int8_t m_invoke_window = 3;
+	// limit the total invoked requests.
 	std::int8_t m_invoke_limit = 0;
 	std::int8_t m_invoke_failed = 0;
 	// the number of elements at the beginning of m_results that are sorted by

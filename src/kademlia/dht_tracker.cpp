@@ -386,6 +386,17 @@ namespace libTAU::dht {
 		int response_count;
 	};
 
+	struct send_ctx
+	{
+		explicit send_ctx(int traversals)
+			: active_traversals(traversals)
+			, response_count(0)
+		{}
+
+		int active_traversals;
+		int response_count;
+	};
+
 	void put_immutable_item_callback(int responses, std::shared_ptr<put_item_ctx> ctx
 		, std::function<void(int)> f)
 	{
@@ -396,6 +407,14 @@ namespace libTAU::dht {
 
 	void put_mutable_item_callback(item const& it, int responses, std::shared_ptr<put_item_ctx> ctx
 		, std::function<void(item const&, int)> cb)
+	{
+		ctx->response_count += responses;
+		if (--ctx->active_traversals == 0)
+			cb(it, ctx->response_count);
+	}
+
+	void send_callback(entry const& it, int responses, std::shared_ptr<send_ctx> ctx
+		, std::function<void(entry const&, int)> cb)
 	{
 		ctx->response_count += responses;
 		if (--ctx->active_traversals == 0)
@@ -504,14 +523,17 @@ namespace libTAU::dht {
 	}
 
 	// relay protocol
-	void send(public_key const& to
+	void dht_tracker::send(public_key const& to
 		, entry const& payload
 		, std::int8_t alpha
 		, std::int8_t beta
 		, std::int8_t invoke_limit
 		, std::function<void(entry const&, int)> cb)
 	{
-		// TODO: relay protocol
+		auto ctx = std::make_shared<send_ctx>(int(m_nodes.size()));
+		for (auto& n : m_nodes)
+			n.second.dht.send(to, payload, alpha, beta, invoke_limit
+				, std::bind(&send_callback, _1, _2, ctx, cb));
 	}
 
 

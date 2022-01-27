@@ -71,23 +71,10 @@ void put_data::start()
 	if (m_results.empty() && !m_direct_invoking)
 	{
 		std::vector<node_entry> const nodes = m_node.m_table.find_node(
-			target(), routing_table::include_pinged);
+			target(), routing_table::include_pinged, invoke_window());
 
-		// select a random node_entry
-		if (nodes.size() > 0)
+		for (auto& n : nodes)
 		{
-			// if the first node is the target node, add it.
-			auto const& first = nodes[0];
-			if (first.id == target())
-			{
-				add_entry(first.id, first.ep(), observer::flag_initial);
-			}
-
-			std::uint32_t const range = nodes.size() >= invoke_limit() ?
-					invoke_limit() - 1 : nodes.size() - 1;
-			std::uint32_t const r = aux::random(range);
-			auto const& n = nodes[r];
-
 			add_entry(n.id, n.ep(), observer::flag_initial);
 		}
 	}

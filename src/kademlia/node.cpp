@@ -48,6 +48,7 @@ see LICENSE file.
 #include "libTAU/kademlia/get_item.hpp"
 #include "libTAU/kademlia/msg.hpp"
 #include <libTAU/kademlia/put_data.hpp>
+#include <libTAU/kademlia/relay.hpp>
 
 using namespace std::placeholders;
 
@@ -100,6 +101,8 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 node::~node() = default;
 
 int node::branch_factor() const { return m_settings.get_int(settings_pack::dht_search_branching); }
+
+int node::invoke_window() const { return m_settings.get_int(settings_pack::dht_invoke_window); }
 
 int node::invoke_limit() const { return m_settings.get_int(settings_pack::dht_invoke_limit); }
 
@@ -485,7 +488,7 @@ void node::get_item(sha256_hash const& target
 	// set target endpoints instead of depth traversal
 	ta->set_direct_endpoints(eps);
 	// invoke as soon as possible
-	ta->set_branch_factor(eps.size());
+	ta->set_invoke_window(eps.size());
 	ta->set_invoke_limit(eps.size());
 	ta->start();
 }
@@ -615,6 +618,37 @@ void node::put_item(public_key const& pk
 	put_ta->start();
 }
 
+void node::send(public_key const& to
+	, entry const& payload
+	, std::int8_t alpha
+	, std::int8_t beta
+	, std::int8_t invoke_limit
+	, std::function<void(entry const&, int)> cb)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		char hex_to[65];
+		aux::to_hex(to.bytes, hex_to);
+		m_observer->log(dht_logger::node, "starting sending to: %s", hex_to);
+    }
+#endif
+
+	sha256_hash const& dest = item_target_id(to);
+	auto ta = std::make_shared<dht::relay>(*this, dest, cb);
+
+	ta->set_payload(std::move(payload));
+	ta->set_invoke_window(beta);
+	ta->set_invoke_limit(invoke_limit);
+
+	// find relay aux info
+	std::vector<node_entry> l;
+	m_storage.find_relays(dest, l, 1, protocol());
+	ta->add_relays_nodes(l);
+
+	ta->start();
+}
+
 void node::get_peers(public_key const& pk, std::string const& salt)
 {
 #ifndef TORRENT_DISABLE_LOGGING
@@ -704,8 +738,7 @@ void node::tick()
 		make_id_secret(target);
 
 		auto const r = std::make_shared<dht::bootstrap>(*this, target, std::bind(&nop));
-		// set alpha & beta factor
-		r->set_branch_factor(3);
+		r->set_invoke_window(8);
 		r->set_invoke_limit(16);
 		// set referrable nodes' max XOR distance into 255
 		r->set_fixed_distance(255);
