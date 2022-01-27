@@ -131,7 +131,6 @@ namespace blockchain {
 
         // mutable data is pushed here
         void on_dht_item(dht::item const& i);
-        void on_dht_item_temp(dht::item const& i);
 
 
     private:
@@ -157,8 +156,6 @@ namespace blockchain {
         bool should_log() const override;
         void log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
         //#endif
-
-        void main_loop();
 
         void refresh_timeout(error_code const& e);
 

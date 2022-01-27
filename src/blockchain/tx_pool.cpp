@@ -85,6 +85,9 @@ namespace libTAU::blockchain {
     }
 
     bool tx_pool::add_tx_to_fee_pool(const transaction &tx) {
+        if (tx.fee() <= get_min_allowed_fee())
+            return false;
+
         // validate tx state
         auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
         if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
@@ -120,6 +123,9 @@ namespace libTAU::blockchain {
     }
 
     bool tx_pool::add_tx_to_time_pool(const transaction &tx) {
+        if (tx.timestamp() <= get_oldest_allowed_timestamp())
+            return false;
+
         auto it_txid = m_account_tx_by_timestamp.find(tx.sender());
         // find in local
         if (it_txid != m_account_tx_by_timestamp.end()) { // has in local
@@ -161,17 +167,10 @@ namespace libTAU::blockchain {
             m_active_peers.pop();
         }
 
-        m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
-        m_all_txs_by_timestamp[tx.sha256()] = tx;
-        if (m_ordered_txs_by_timestamp.size() > tx_pool_max_size_by_timestamp) {
-            auto it = m_ordered_txs_by_timestamp.begin();
-            m_all_txs_by_timestamp.erase(it->txid());
-            m_ordered_txs_by_timestamp.erase(it);
-        }
+        auto ret1 = add_tx_to_time_pool(tx);
+        auto ret2 = add_tx_to_fee_pool(tx);
 
-        add_tx_to_time_pool(tx);
-
-        if (!add_tx_to_fee_pool(tx))
+        if (!ret1 && !ret2)
             return false;
 
         return true;
