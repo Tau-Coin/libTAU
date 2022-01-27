@@ -48,6 +48,18 @@ OPENSSL_NO_OPTS: "no-deprecated no-shared no-makedepend no-static-engine no-stdi
 8. make
 9. make install
 ```
+### Setup snappy
+```
+1. wget -nv -O snappy.tar.gz https://github.com/google/snappy/archive/refs/tags/1.1.8.tar.gz
+2. tar xzf snappy.tar.gz
+3. cd snappy
+4. vim CMakeLists.txt -> add_compile_options(-fPIC) && option(SNAPPY_BUILD_TESTS "Build Snappy's own tests" OFF)
+5. mkdir build
+6. cd build
+7. cmake -D CMAKE_INSTALL_PREFIX=${PWD}/../../snappy  ../
+8. make
+9. make install
+```
 ### Setup sqlite
 ```
 1. wget -nv -O sqlite.tar.gz https://sqlite.org/2021/sqlite-autoconf-3360000.tar.gz

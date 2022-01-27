@@ -105,7 +105,7 @@ public:
 	void add_our_id(entry& e);
 
 	void unreachable(udp::endpoint const& ep);
-	void incoming(aux::listen_socket_handle const& s, msg const& m);
+	void incoming(aux::listen_socket_handle const& s, msg const& m, node_id const& from);
 	void incoming_decryption_error(aux::listen_socket_handle const& s
 		, udp::endpoint const& ep, sha256_hash const& pk);
 	void handle_decryption_error(msg const& m);
@@ -219,6 +219,7 @@ public:
 	udp protocol() const { return m_protocol.protocol; }
 	char const* protocol_family_name() const { return m_protocol.family_name; }
 	char const* protocol_nodes_key() const { return m_protocol.nodes_key; }
+	char const* protocol_relay_nodes_key() const { return m_protocol.relay_nodes_key; }
 
 	bool native_address(udp::endpoint const& ep) const
 	{ return ep.protocol().family() == m_protocol.protocol.family(); }
@@ -256,6 +257,15 @@ private:
 
 	void incoming_push_error(const char* err_str);
 
+	bool incoming_relay(msg const& m, entry& e, entry& payload
+		, node_id *to, udp::endpoint *to_ep, node_id& sender, node_id const& from);
+
+	void relay(node_id const& to, udp::endpoint const& to_ep, msg const& m);
+
+	void handle_referred_relays(node_id const& peer, node_entry const& ne);
+
+	void incoming_relay_error(const char* err_str);
+
 	void write_nodes_entries(sha256_hash const& info_hash
 		, bdecode_node const& want, entry& r, int min_distance_exp = -1);
 
@@ -273,6 +283,7 @@ private:
 		udp protocol;
 		char const* family_name;
 		char const* nodes_key;
+		char const* relay_nodes_key;
 	};
 
 	static protocol_descriptor const& map_protocol_to_descriptor(udp protocol);

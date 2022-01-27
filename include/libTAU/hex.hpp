@@ -41,6 +41,10 @@ namespace aux {
 	// (len + 1) / 2 bytes.
 	TORRENT_EXPORT bool from_hex(span<char const> in, char* out);
 
+	TORRENT_EXPORT
+    inline bool from_hex(char const *in, int len, char* out)
+    { return aux::from_hex({in, len}, out); }	
+
 } // namespace aux
 
 } // namespace libTAU

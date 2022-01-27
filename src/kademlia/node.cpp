@@ -261,7 +261,7 @@ void node::handle_decryption_error(msg const& m)
 	// TODO: update routing table
 }
 
-void node::incoming(aux::listen_socket_handle const& s, msg const& m)
+void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id const& from)
 {
 	// is this a reply?
 	bdecode_node const y_ent = m.message.dict_find_string("y");
@@ -365,6 +365,38 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m)
 				m_sock_man->send_packet(m_sock, e, m.addr, from);
 			}
 			if (m_observer && !i.empty()) m_observer->on_dht_item(i);
+
+			break;
+		}
+		case 'h': // hop
+		{
+			TORRENT_ASSERT(m.message.dict_find_string_value("y") == "h");
+
+			// ignore packets arriving on a different interface than the one we're
+			// associated with
+			if (s != m_sock) return;
+
+			entry resp;
+			entry payload;
+			node_id to;
+			udp::endpoint to_ep;
+			node_id sender;
+
+			bool need_relay = incoming_relay(m, resp, payload, &to, &to_ep, sender, from);
+			m_sock_man->send_packet(m_sock, resp, m.addr, from);
+
+			if (need_relay)
+			{
+				if (to == m_id)
+				{
+					// TODO: transfer payload
+					if (m_observer) m_observer->on_dht_relay(sender, payload);
+				}
+				else
+				{
+					relay(to, to_ep, m);
+				}
+			}
 
 			break;
 		}
@@ -1240,6 +1272,8 @@ void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m)
 	// construct push protocol
 	entry e(m.message);
 	e["y"] = "p";
+	entry& reply = e["r"];
+	m_rpc.add_our_id(reply);
 
 	// create a dummy traversal_algorithm
 	auto algo = std::make_shared<traversal_algorithm>(*this, to);
@@ -1417,6 +1451,172 @@ void node::incoming_push_error(const char *err_str)
 #endif
 }
 
+bool node::incoming_relay(msg const& m, entry& e, entry& payload
+		, node_id *to, udp::endpoint *to_ep, node_id& sender, node_id const& from)
+{
+	e = entry(entry::dictionary_t);
+	e["y"] = "r";
+	e["t"] = m.message.dict_find_string_value("t");
+	e["ip"] = aux::endpoint_to_bytes(m.addr);
+	if (m_settings.get_bool(settings_pack::dht_non_referrable)) e["nr"] = 1;
+
+	entry& reply = e["r"];
+	// m_rpc.add_our_id(reply);
+	// mirror back the other node's external port
+	reply["p"] = m.addr.port();
+
+	static key_desc_t const top_desc[] = {
+		{"q", bdecode_node::string_t, 0, 0},
+		{"ro", bdecode_node::int_t, 0, key_desc_t::optional},
+		{"nr", bdecode_node::int_t, 0, key_desc_t::optional},
+		{"a", bdecode_node::dict_t, 0, key_desc_t::parse_children},
+			{"t", bdecode_node::string_t, 32, key_desc_t::last_child}, // receiver: 'to'
+	};
+
+	bdecode_node top_level[5];
+	char error_string[200];
+	if (!verify_message(m.message, top_desc, top_level, error_string))
+	{
+		incoming_relay_error(error_string);
+		return false;
+	}
+
+	node_id const target_id(top_level[4].string_ptr());
+	*to = target_id;
+
+	bool const read_only = top_level[1] && top_level[1].int_value() != 0;
+	bool const non_referrable = top_level[2] && top_level[2].int_value() != 0;
+	if (!read_only)
+	{
+		m_table.node_seen(from, m.addr, 0xffff, non_referrable);
+	}
+
+	bdecode_node const arg_ent = top_level[3];
+	string_view const query = top_level[0].string_value();
+
+	if (query == "relay")
+	{
+		static key_desc_t const msg_desc[] = {
+			// from: sender public key
+			{"f", bdecode_node::string_t, public_key::len, key_desc_t::optional},
+			{"pl", bdecode_node::none_t, 0, 0},
+			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
+			{"dis", bdecode_node::int_t, 0, key_desc_t::optional},
+		};
+
+		// attempt to parse the message
+		// also reject the message if it has any non-fatal encoding errors
+		bdecode_node msg_keys[4];
+		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string)
+			|| arg_ent.has_soft_error(error_string))
+		{
+			incoming_relay_error(error_string);
+			return false;
+		}
+
+		char const* sender_pk = nullptr;
+		if (msg_keys[0])
+		{
+			sender_pk = msg_keys[0].string_ptr();
+			sender.assign(sender_pk);
+		}
+		else
+		{
+			incoming_relay_error("from key error");
+			return false;
+		}
+
+		// push to ourself
+		if (target_id == m_id)
+		{
+			// parse payload
+			// pointer and length to the whole entry
+			span<char const> buf = msg_keys[1].data_section();
+			if (buf.size() > 1000 || buf.empty())
+			{
+				incoming_relay_error("message too big");
+				return false;
+			}
+
+			error_code errc;
+			payload = bdecode(buf.first(buf.size()), errc);
+
+			// handle referred relay nodes
+			look_for_nodes(protocol_relay_nodes_key(), protocol(), arg_ent,
+				[this, &sender](node_endpoint const& nep)
+					{ handle_referred_relays(sender, {nep.id, nep.ep});});
+		}
+		else
+		{
+			int min_distance_exp = -1;
+			if (msg_keys[3])
+			{
+				min_distance_exp = msg_keys[3].int_value();
+			}
+			// write referred nodes
+			write_nodes_entries(target_id, msg_keys[2], reply, min_distance_exp);
+
+			auto ne = m_table.find_node(target_id);
+			if (ne == nullptr || ne->ep() == m.addr) return false;
+			*to_ep = ne->ep();
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+void node::relay(node_id const& to, udp::endpoint const& to_ep, msg const& m)
+{
+    // don't relay to ourself
+	if (to == m_id)
+	{
+		return;
+	}
+
+	// don't push this message to sender
+	if (to_ep == m.addr) return;
+
+	// construct push protocol
+	entry e(m.message);
+
+	// create a dummy traversal_algorithm
+	auto algo = std::make_shared<traversal_algorithm>(*this, to);
+	auto o = m_rpc.allocate_observer<push_observer>(std::move(algo), to_ep, to);
+	if (!o) return;
+#if TORRENT_USE_ASSERTS
+	o->m_in_constructor = false;
+#endif
+
+	m_rpc.invoke(e, to_ep, o);
+}
+
+void node::handle_referred_relays(node_id const& peer, node_entry const& ne)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		m_observer->log(dht_logger::node, "push relay from:%s, id: %s, ep:%s"
+			, aux::to_hex(peer).c_str()
+			, aux::to_hex(ne.id).c_str()
+			, aux::print_endpoint(ne.ep()).c_str());
+	}
+#endif
+
+	m_storage.relay_referred(peer, ne);
+}
+
+void node::incoming_relay_error(const char *err_str)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		m_observer->log(dht_logger::node, "INCOMING RELAY ERROR:%s", err_str);
+	}
+#endif
+}
+
 // TODO: limit number of entries in the result
 void node::write_nodes_entries(sha256_hash const& info_hash
 	, bdecode_node const& want, entry& r, int min_distance_exp)
@@ -1471,8 +1671,8 @@ node::protocol_descriptor const& node::map_protocol_to_descriptor(udp const prot
 {
 	static std::array<protocol_descriptor, 2> const descriptors =
 	{{
-		{udp::v4(), "n4", "nodes"},
-		{udp::v6(), "n6", "nodes6"}
+		{udp::v4(), "n4", "nodes", "rn"},
+		{udp::v6(), "n6", "nodes6", "rn6"}
 	}};
 
 	auto const iter = std::find_if(descriptors.begin(), descriptors.end()

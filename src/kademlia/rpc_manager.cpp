@@ -21,6 +21,7 @@ see LICENSE file.
 #include <libTAU/kademlia/find_data.hpp>
 #include <libTAU/kademlia/put_data.hpp>
 #include <libTAU/kademlia/refresh.hpp>
+#include <libTAU/kademlia/relay.hpp>
 #include <libTAU/kademlia/node.hpp>
 #include <libTAU/kademlia/dht_observer.hpp>
 #include <libTAU/kademlia/get_item.hpp>
@@ -114,6 +115,7 @@ namespace {
 
 	std::size_t const observer_storage_size = std::max(
 	{sizeof(find_data_observer)
+	, sizeof(relay_observer)
 	, sizeof(put_data_observer)
 	, sizeof(get_item_observer)
 	, sizeof(get_peers_observer)
@@ -427,12 +429,21 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 
 	if (m_destructing) return false;
 
+	entry& a = e["a"];
 	if (e.find_key("y") == nullptr)
 	{
 		e["y"] = "q";
+		add_our_id(a);
 	}
-	entry& a = e["a"];
-	add_our_id(a);
+	else
+	{
+		auto ye = e.find_key("y");
+		std::string yt = ye->string();
+		if (yt != "h")
+		{
+			add_our_id(a);
+		}
+	}
 
 	std::string transaction_id;
 	transaction_id.resize(2);

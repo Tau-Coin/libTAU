@@ -97,6 +97,7 @@ see LICENSE file.
 
 #include <leveldb/db.h>
 #include <sqlite3.h>
+#include <snappy-c.h>
 
 // for logging the size of DHT structures
 #include <libTAU/kademlia/find_data.hpp>
@@ -179,6 +180,8 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	if (val) sett.set_int(settings_pack::dht_search_branching, int(val.int_value()));
 	val = s.dict_find_int("invoke_limit");
 	if (val) sett.set_int(settings_pack::dht_invoke_limit, int(val.int_value()));
+	val = s.dict_find_int("invoke_window");
+	if (val) sett.set_int(settings_pack::dht_invoke_window, int(val.int_value()));
 	val = s.dict_find_int("bootstrap_interval");
 	if (val) sett.set_int(settings_pack::dht_bootstrap_interval, int(val.int_value()));
 	val = s.dict_find_int("time_offset");
@@ -1583,7 +1586,20 @@ namespace {
 		m_raw_send_udp_packet.clear();
 		m_encrypted_udp_packet.clear();
 
-		m_raw_send_udp_packet.insert(0, p.data(), p.size());
+#ifdef TORRENT_ENABLE_COMPRESS
+		bool c_result = compress_udp_packet(p, m_raw_send_udp_packet);
+		if(!c_result){
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("UDP Compress Error!!!");
+			}
+#endif
+			return;
+		}
+#else
+		m_raw_send_udp_packet.insert(0, p, p.size());
+#endif
 
 		std::string err_str;
 		bool result = encrypt_udp_packet(pk
@@ -1622,6 +1638,46 @@ namespace {
 		// send to udp socket
 		send_udp_packet_listen(sock, ep, m_encrypted_udp_packet, ec, flags);
 	}
+
+#ifdef TORRENT_ENABLE_COMPRESS
+	bool session_impl::compress_udp_packet(span<char const> p, std::string& out)
+	{
+		//compress
+		size_t input_size = p.size();	
+		size_t output_length = snappy_max_compressed_length(input_size);
+		char* c_p = (char*)malloc(output_length);
+		size_t c_p_size = output_length;	
+		snappy_status ss = snappy_compress(p.data(), input_size, c_p, &c_p_size);
+		if(ss == SNAPPY_OK) {
+			out.insert(0, c_p, c_p_size);
+		} else {
+			free(c_p);
+			return false;
+		}
+		free(c_p);
+		return true;
+	}
+
+	bool session_impl::uncompress_udp_packet(const std::string& in, std::string& out)
+	{
+		//compress
+		size_t input_size = in.size();	
+		size_t output_length;
+		if(snappy_uncompressed_length(in.c_str(), input_size, &output_length) != SNAPPY_OK) {
+			return false;
+		};
+		char* ucd_p = (char*)malloc(output_length);
+		snappy_status ss = snappy_uncompress(in.c_str(), input_size, ucd_p, &output_length);
+		if(ss == SNAPPY_OK) {
+			out.insert(0, ucd_p, output_length);
+		} else {
+			free(ucd_p);
+			return false;
+		}
+		free(ucd_p);
+		return true;
+	}
+#endif
 
 	bool session_impl::encrypt_udp_packet(sha256_hash const& pk
 		, const std::string& in
@@ -1783,13 +1839,28 @@ namespace {
 						continue;
 					}
 
+#ifdef TORRENT_ENABLE_COMPRESS
+					bool c_result = uncompress_udp_packet(m_decrypted_udp_packet, m_decrypted_ucd_udp_packet);
+					if(!c_result){
+#ifndef TORRENT_DISABLE_LOGGING
+						if (should_log())
+						{
+							session_log("UDP Uncompress Error!!!");
+						}
+#endif
+						continue;
+					}
+#else
+					m_decrypted_ucd_udp_packet.assign(m_decrypted_udp_packet);
+#endif
+
 					auto listen_socket = ls.lock();
 					if (m_dht && m_decrypted_udp_packet.size() > 20
 						&& listen_socket)
 					{
 						m_dht->incoming_packet(listen_socket
 							, packet.from
-							, m_decrypted_udp_packet
+							, m_decrypted_ucd_udp_packet
 							, pk);
 					}
 				}
@@ -2890,7 +2961,7 @@ namespace {
 			{
 				start_dht();
 				start_communication();
-				start_blockchain();
+				//start_blockchain();
 			}
 			return;
 		}
@@ -2931,7 +3002,7 @@ namespace {
 		{
 			start_dht();
 			start_communication();
-			start_blockchain();
+			//start_blockchain();
 		}
 
 		m_alerts.emplace_alert<session_start_over_alert>(true);
@@ -3426,6 +3497,11 @@ namespace {
 	std::int64_t session_impl::get_time()
 	{
 		return m_session_time;
+	}
+
+	void session_impl::on_dht_relay(sha256_hash const& from, entry const& payload)
+	{
+		// TODO: transfer payload to blockchain
 	}
 
 	void session_impl::set_external_address(

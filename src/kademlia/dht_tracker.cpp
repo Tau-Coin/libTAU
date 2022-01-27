@@ -503,6 +503,18 @@ namespace libTAU::dht {
 				, _1, _2, ctx, cb), data_cb);
 	}
 
+	// relay protocol
+	void send(public_key const& to
+		, entry const& payload
+		, std::int8_t alpha
+		, std::int8_t beta
+		, std::int8_t invoke_limit
+		, std::function<void(entry const&, int)> cb)
+	{
+		// TODO: relay protocol
+	}
+
+
 	void dht_tracker::get_peers(public_key const& pk, std::string salt)
 	{
 		for (auto& n : m_nodes)
@@ -741,7 +753,7 @@ namespace libTAU::dht {
 
 		libTAU::dht::msg const m(m_msg, ep);
 		for (auto& n : m_nodes)
-			n.second.dht.incoming(s, m);
+			n.second.dht.incoming(s, m, pk);
 		return true;
 	}
 

@@ -112,7 +112,7 @@ namespace libTAU {
 
 		// returns session wide-statistics and status. For more information, see
         // the ``session_status`` struct.
-		session_status status() const;
+		libTAU::session_status status() const;
 
 		// This function will post a session_stats_alert object, containing a
 		// snapshot of the performance counters from the internals of libTAU.
