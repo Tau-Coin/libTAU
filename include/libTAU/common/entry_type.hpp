@@ -153,7 +153,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT communication_entries final : entry_base {
         // data type id
-        static const std::int64_t protocol_id = 0;
+        static inline constexpr std::int64_t protocol_id = 0;
 
         communication_entries() = default;
 
@@ -174,7 +174,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT blockchain_entries final : entry_base {
         // data type id
-        static const std::int64_t protocol_id = 1;
+        static inline constexpr std::int64_t protocol_id = 1;
 
         blockchain_entries() = default;
 
@@ -195,7 +195,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT message_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 0;
+        static inline constexpr std::int64_t data_type_id = 0;
 
         // @param Construct with entry
         explicit message_entry(const entry& e);
@@ -210,7 +210,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT message_levenshtein_array_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 1;
+        static inline constexpr std::int64_t data_type_id = 1;
 
         // @param Construct with entry
         explicit message_levenshtein_array_entry(const entry& e);
@@ -226,7 +226,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT friend_info_request_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 2;
+        static inline constexpr std::int64_t data_type_id = 2;
 
         friend_info_request_entry() = default;
 
@@ -236,7 +236,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT friend_info_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 3;
+        static inline constexpr std::int64_t data_type_id = 3;
 
         // @param Construct with entry
         explicit friend_info_entry(const entry& e);
@@ -253,7 +253,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT block_request_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 4;
+        static inline constexpr std::int64_t data_type_id = 4;
 
         // @param Construct with entry
         explicit block_request_entry(const entry& e);
@@ -271,7 +271,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT block_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 5;
+        static inline constexpr std::int64_t data_type_id = 5;
 
         // @param Construct with entry
         explicit block_entry(const entry& e);
@@ -286,7 +286,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT transaction_request_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 6;
+        static inline constexpr std::int64_t data_type_id = 6;
 
         // @param Construct with entry
         explicit transaction_request_entry(const entry& e);
@@ -305,7 +305,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT transaction_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 7;
+        static inline constexpr std::int64_t data_type_id = 7;
 
         // @param Construct with entry
         explicit transaction_entry(const entry& e);
@@ -320,7 +320,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT vote_request_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 8;
+        static inline constexpr std::int64_t data_type_id = 8;
 
         // @param Construct with entry
         explicit vote_request_entry(const entry& e);
@@ -336,7 +336,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT vote_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 9;
+        static inline constexpr std::int64_t data_type_id = 9;
 
         // @param Construct with entry
         explicit vote_entry(const entry& e);
@@ -354,7 +354,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT head_block_request_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 10;
+        static inline constexpr std::int64_t data_type_id = 10;
 
         // @param Construct with entry
         explicit head_block_request_entry(const entry& e);
@@ -370,7 +370,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT head_block_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 11;
+        static inline constexpr std::int64_t data_type_id = 11;
 
         // @param Construct with entry
         explicit head_block_entry(const entry& e);
@@ -385,7 +385,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT tx_pool_entry final : entry_base {
         // data type id
-        static const std::int64_t data_type_id = 12;
+        static inline constexpr std::int64_t data_type_id = 12;
 
         // @param Construct with entry
         explicit tx_pool_entry(const entry& e);
