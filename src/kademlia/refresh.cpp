@@ -62,7 +62,7 @@ bootstrap::bootstrap(
 	: get_peers(dht_node, target, get_peers::data_callback(), callback, false)
 {
 	// invoke as soon as possible
-	set_branch_factor(5);
+	set_invoke_window(8);
 	set_invoke_limit(30);
 }
 

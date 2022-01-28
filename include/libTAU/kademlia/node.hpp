@@ -157,6 +157,14 @@ public:
 		, std::function<void(item const&, int)> f
 		, std::function<void(item&)> data_cb);
 
+	// relay protocol
+	void send(public_key const& to
+		, entry const& payload
+		, std::int8_t alpha
+		, std::int8_t beta
+		, std::int8_t invoke_limit
+		, std::function<void(entry const&, int)> cb);
+
 	void get_peers(public_key const& pk, std::string const& salt);
 
 	// fills the vector with the count nodes from routing table buckets that
@@ -183,6 +191,8 @@ public:
 	void add_node(node_entry const& node);
 
 	int branch_factor() const;
+
+	int invoke_window() const;
 
 	int invoke_limit() const;
 

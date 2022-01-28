@@ -80,18 +80,18 @@ sha256_hash item_target_id(span<char const> salt
 	sha256_hash target;
 
 	// copy first 128 bits(16 bytes) of sender (public key)
-	std::memcpy(&target[0], pk.bytes.begin(), 16);
+	std::memcpy(&target[16], pk.bytes.begin(), 16);
 
 	// copy first 128 bits(16 bytes) of receiver(salt)
 	if (salt.size() > 0)
 	{
 		if (salt.size() >= 16)
 		{
-			std::memcpy(&target[16], salt.data(), 16);
+			std::memcpy(&target[0], salt.data(), 16);
 		}
 		else
 		{
-			std::memcpy(&target[16], salt.data(), salt.size());
+			std::memcpy(&target[0], salt.data(), salt.size());
 		}
 	}
 

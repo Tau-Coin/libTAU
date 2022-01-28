@@ -64,6 +64,7 @@ traversal_algorithm::traversal_algorithm(node& dht_node, node_id const& target)
 {
 
 	m_branch_factor = aux::numeric_cast<std::int8_t>(m_node.branch_factor());
+	m_invoke_window = aux::numeric_cast<std::int8_t>(m_node.invoke_window());
 	m_invoke_limit = aux::numeric_cast<std::int8_t>(m_node.invoke_limit());
 #ifndef TORRENT_DISABLE_LOGGING
 	m_id = m_node.search_id();
@@ -510,6 +511,7 @@ int traversal_algorithm::allow_distance() const
 	return distance_exp(m_target, o->id());
 }
 
+/*
 bool traversal_algorithm::add_requests()
 {
 	if (m_done) return true;
@@ -671,6 +673,160 @@ bool traversal_algorithm::add_requests()
 					&& (m_responses + m_timeouts + m_invoke_failed
 							== aux::numeric_cast<std::int16_t>(m_results.size())))
 			|| m_invoke_count == 0;
+}
+*/
+
+bool traversal_algorithm::add_requests()
+{
+	if (m_done || m_results.empty()) return true;
+
+	// Once invoke all requests if discarding response and invoking directly.
+	if (m_discard_response && m_direct_invoking)
+	{
+		for (auto i = m_results.begin(), end(m_results.end()); i != end; ++i)
+		{
+			observer* o = i->get();
+			o->flags |= observer::flag_queried;
+			if (invoke(*i))
+			{
+				TORRENT_ASSERT(m_invoke_count < std::numeric_limits<std::int8_t>::max());
+				++m_invoke_count;
+			}
+			else
+			{
+				o->flags |= observer::flag_failed;
+			}
+		}
+
+		return true;
+	}
+
+	// the following logic is based on 'alpha == 1'.
+	TORRENT_ASSERT(m_branch_factor == 1);
+
+	// this only counts outstanding requests at the top of the
+	// invoke window. Because in the condition of 'alpha == 1',
+	// the outstanding requests can only happen in invoke window.
+	int outstanding = 0;
+
+	// invoke count in invoke window.
+	int invoke_count_in_window = 0;
+	int j = 0;
+
+	// traverse the invoke window and statistic the oustanding and the invoked nodes.
+	for (auto i = m_results.begin(), end(m_results.end());
+		i != end && j < m_invoke_window;
+		++i)
+	{
+		j++;
+
+		observer* o = i->get();
+		if (o->flags & observer::flag_alive)
+		{
+			TORRENT_ASSERT(o->flags & observer::flag_queried);
+			invoke_count_in_window++;
+			continue;
+		}
+
+		if (o->flags & observer::flag_queried)
+		{
+			// if it's queried, not alive and not failed, it
+			// must be currently in flight
+			if (!(o->flags & observer::flag_failed))
+				++outstanding;
+
+			invoke_count_in_window++;
+			continue;
+		}
+	}
+
+	// 1. 'invoke_count_in_window == m_invoke_window':
+	//		the nodes in invoke window all have been invoked.
+	// 2. 'invoke_count_in_window == m_results.size()':
+	//		m_results.size() <= m_invoke_window and all
+	//		the nodes have been invoked.
+	// 3. 'm_invoke_count >= m_invoke_limit':
+	//		m_invoke_window >= m_invoke_limit
+	if (invoke_count_in_window == m_invoke_window
+		|| invoke_count_in_window == int(m_results.size())
+		|| m_invoke_count >= m_invoke_limit)
+	{
+		return outstanding == 0;
+	}
+
+	// here, randomly select a node and invoke.
+	std::uint32_t random_max = int(m_results.size()) >= m_invoke_window ?
+		std::uint32_t(m_invoke_window) - 1 : std::uint32_t(m_results.size()) - 1;
+
+	// Find the first node in invoke window that hasn't already been queried.
+	while (m_invoke_count < m_invoke_limit
+		&& invoke_count_in_window < m_invoke_window
+		&& invoke_count_in_window < aux::numeric_cast<std::int16_t>(m_results.size())
+	)
+	{
+		// generate random
+		std::uint32_t const r = aux::random(random_max);
+		observer* o = (m_results.begin() + r)->get();
+
+		if (o->flags & observer::flag_alive)
+		{
+			TORRENT_ASSERT(o->flags & observer::flag_queried);
+			continue;
+		}
+
+		if (o->flags & observer::flag_queried)
+		{
+			continue;
+		}
+
+#ifndef TORRENT_DISABLE_LOGGING
+		dht_observer* logger = get_node().observer();
+		if (logger != nullptr && logger->should_log(dht_logger::traversal))
+		{
+			logger->log(dht_logger::traversal
+				, "[%u] INVOKE node-index: %d outstanding: %d "
+				"invoke-count: %d invoke-window: %d invoke-limit: %d "
+				"distance: %d id: %s addr: %s type: %s"
+				, m_id, r, outstanding, int(m_invoke_count)
+				, int(m_invoke_window), int(m_invoke_limit)
+				, distance_exp(m_target, o->id()), aux::to_hex(o->id()).c_str()
+				, aux::print_address(o->target_addr()).c_str(), name());
+		}
+#endif
+
+		o->flags |= observer::flag_queried;
+		++m_invoke_count;
+		++invoke_count_in_window;
+
+		if (invoke(*(m_results.begin() + r)))
+		{
+			TORRENT_ASSERT(m_invoke_count < std::numeric_limits<std::int8_t>::max());
+			++outstanding;
+			break; // alpha == 1, so just invoke once
+		}
+		else
+		{
+			o->flags |= observer::flag_failed;
+			++m_invoke_failed;
+			continue; // select next random node
+		}
+	}
+
+	// 1. 'invoke_count_in_window == m_invoke_window':
+	//      the nodes in invoke window all have been invoked.
+	// 2. 'invoke_count_in_window == m_results.size()':
+	//      m_results.size() <= m_invoke_window and all
+	//      the nodes have been invoked.
+	// 3. 'm_invoke_count >= m_invoke_limit':
+	//      m_invoke_window >= m_invoke_limit
+	if (invoke_count_in_window == m_invoke_window
+		|| invoke_count_in_window == int(m_results.size())
+		|| m_invoke_count >= m_invoke_limit)
+	{
+		return outstanding == 0;
+	}
+
+	return false;
 }
 
 void traversal_algorithm::add_router_entries()
