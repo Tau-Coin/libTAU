@@ -130,7 +130,7 @@ namespace blockchain {
         void set_blockchain_loop_interval(int milliseconds);
 
         // mutable data is pushed here
-        void on_dht_item(dht::item const& i);
+        void on_dht_relay(dht::public_key const& peer, entry const& payload);
 
 
     private:

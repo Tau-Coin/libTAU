@@ -49,6 +49,10 @@ namespace libTAU::common {
                                                                                             m_timestamp(mTimestamp) {}
 
         entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer,
+                   int64_t mTimestamp) : m_alpha(mAlpha), m_beta(mBeta), m_invoke_number(mInvokeNumber),
+                                         m_data_type_id(mDataTypeId), m_peer(mPeer), m_timestamp(mTimestamp) {}
+
+        entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer,
                    entry mEntry, int64_t mTimestamp) : m_alpha(mAlpha), m_beta(mBeta),
                                                               m_invoke_number(mInvokeNumber),
                                                               m_data_type_id(mDataTypeId), m_peer(mPeer),

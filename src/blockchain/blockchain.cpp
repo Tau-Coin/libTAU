@@ -1997,8 +1997,9 @@ namespace libTAU::blockchain {
         log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
             aux::toHex(salt).c_str(), data.to_string().c_str());
 
-        dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-                , pk->bytes, sk->bytes, data), salt, peer);
+        m_ses.dht()->send(peer, data, 1, 3, 3, nullptr);
+//        dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
+//                , pk->bytes, sk->bytes, data), salt, peer);
     }
 
 //    void blockchain::request_signal(const aux::bytes &chain_id, const dht::public_key &peer) {
@@ -2711,14 +2712,11 @@ namespace libTAU::blockchain {
         m_refresh_time = milliseconds;
     }
 
-    void blockchain::on_dht_item(const dht::item &i) {
+    void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {
         // construct mutable data wrapper from entry
-        if (!i.empty()) {
-            auto now = get_total_milliseconds();
+        auto now = get_total_milliseconds();
 
-            dht::public_key peer = i.pk();
-
-            // check protocol id
+        // check protocol id
 //            if (auto* p = const_cast<entry *>(i.value().find_key("pid")))
 //            {
 //                auto protocol_id = p->integer();
@@ -2735,217 +2733,216 @@ namespace libTAU::blockchain {
 //                    process_signal(signal, chain_id, peer);
 //                }
 //            }
-            // check data type id
-            if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type)))
-            {
-                auto data_type_id = p->integer();
-                log("---------------data type id:%ld from peer[%s]", data_type_id, aux::toHex(peer.bytes).c_str());
-                switch (data_type_id) {
-                    case common::block_request_entry::data_type_id: {
-                        common::block_request_entry blk_request_entry(i.value());
-                        auto &chain_id = blk_request_entry.m_chain_id;
+        // check data type id
+        if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
+        {
+            auto data_type_id = p->integer();
+            log("---------------data type id:%ld from peer[%s]", data_type_id, aux::toHex(peer.bytes).c_str());
+            switch (data_type_id) {
+                case common::block_request_entry::data_type_id: {
+                    common::block_request_entry blk_request_entry(payload);
+                    auto &chain_id = blk_request_entry.m_chain_id;
 
-                        kick_out_of_ban_list(chain_id, peer);
-                        // check if peer is in ban list
+                    kick_out_of_ban_list(chain_id, peer);
+                    // check if peer is in ban list
 //                        if (is_peer_banned(chain_id, peer))
 //                            break;
 
-                        auto blk = m_repository->get_block_by_hash(blk_request_entry.m_hash);
+                    auto blk = m_repository->get_block_by_hash(blk_request_entry.m_hash);
 
-                        if (!blk.empty()) {
+                    if (!blk.empty()) {
 //                            auto &chain_id = blk.chain_id();
-                            common::block_entry blockEntry(blk);
+                        common::block_entry blockEntry(blk);
 //                            send_to(blk.chain_id(), peer, blockEntry.get_entry());
-                            common::entry_task task(common::block_entry::data_type_id, peer, blockEntry.get_entry());
+                        common::entry_task task(common::block_entry::data_type_id, peer, blockEntry.get_entry());
 //                            m_tasks[blk.chain_id()].insert(task);
-                            add_entry_task_to_queue(chain_id, task);
+                        add_entry_task_to_queue(chain_id, task);
 
-                            decrease_peer_score(chain_id, peer, 3);
-                        } else {
-                            log("INFO: Cannot get block[%s] in local", aux::toHex(blk_request_entry.m_hash).c_str());
-                        }
-
-                        break;
+                        decrease_peer_score(chain_id, peer, 3);
+                    } else {
+                        log("INFO: Cannot get block[%s] in local", aux::toHex(blk_request_entry.m_hash).c_str());
                     }
-                    case common::block_entry::data_type_id: {
-                        common::block_entry blk_entry(i.value());
 
-                        // TODO: validate timestamp etc. ?
-                        if (!blk_entry.m_blk.empty()) {
-                            auto &chain_id = blk_entry.m_blk.chain_id();
+                    break;
+                }
+                case common::block_entry::data_type_id: {
+                    common::block_entry blk_entry(payload);
 
-                            kick_out_of_ban_list(chain_id, peer);
-                            // check if peer is in ban list
+                    // TODO: validate timestamp etc. ?
+                    if (!blk_entry.m_blk.empty()) {
+                        auto &chain_id = blk_entry.m_blk.chain_id();
+
+                        kick_out_of_ban_list(chain_id, peer);
+                        // check if peer is in ban list
 //                            if (is_peer_banned(chain_id, peer))
 //                                break;
 
 //                            increase_peer_score(chain_id, peer, 3);
-                            if (is_peer_in_acl(chain_id, peer)) {
-                                auto &acl = m_access_list[chain_id];
-                                auto &peerInfo = acl[peer];
-                                peerInfo.m_score += 3;
-                                peerInfo.m_requests_time.erase(common::block_request_entry::data_type_id);
-                            }
-
-                            log("INFO: Got block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
-
-                            m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
-
-                            // notify ui tx from block
-                            if (!blk_entry.m_blk.tx().empty()) {
-                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
-                            }
-
-                            try_to_update_visiting_peer(chain_id, peer);
+                        if (is_peer_in_acl(chain_id, peer)) {
+                            auto &acl = m_access_list[chain_id];
+                            auto &peerInfo = acl[peer];
+                            peerInfo.m_score += 3;
+                            peerInfo.m_requests_time.erase(common::block_request_entry::data_type_id);
                         }
 
-                        break;
-                    }
-                    case common::transaction_request_entry::data_type_id: {
-                        common::transaction_request_entry tx_request_entry(i.value());
-                        auto &chain_id = tx_request_entry.m_chain_id;
+                        log("INFO: Got block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
 
-                        kick_out_of_ban_list(chain_id, peer);
-                        // check if peer is in ban list
+                        m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
+
+                        // notify ui tx from block
+                        if (!blk_entry.m_blk.tx().empty()) {
+                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
+                        }
+
+                        try_to_update_visiting_peer(chain_id, peer);
+                    }
+
+                    break;
+                }
+                case common::transaction_request_entry::data_type_id: {
+                    common::transaction_request_entry tx_request_entry(payload);
+                    auto &chain_id = tx_request_entry.m_chain_id;
+
+                    kick_out_of_ban_list(chain_id, peer);
+                    // check if peer is in ban list
 //                        if (is_peer_banned(chain_id, peer))
 //                            break;
 
-                        decrease_peer_score(chain_id, peer, 3);
+                    decrease_peer_score(chain_id, peer, 3);
 
-                        break;
-                    }
-                    case common::transaction_entry::data_type_id: {
-                        common::transaction_entry tx_entry(i.value());
-                        if (!tx_entry.m_tx.empty()) {
-                            auto &chain_id = tx_entry.m_tx.chain_id();
-                            auto &tx = tx_entry.m_tx;
-                            log("INFO: Got transaction, hash[%s].",
-                                aux::toHex(tx.sha256().to_string()).c_str());
+                    break;
+                }
+                case common::transaction_entry::data_type_id: {
+                    common::transaction_entry tx_entry(payload);
+                    if (!tx_entry.m_tx.empty()) {
+                        auto &chain_id = tx_entry.m_tx.chain_id();
+                        auto &tx = tx_entry.m_tx;
+                        log("INFO: Got transaction, hash[%s].",
+                            aux::toHex(tx.sha256().to_string()).c_str());
 
-                            auto &pool = m_tx_pools[chain_id];
-                            if (pool.add_tx(tx)) {
-                                common::transaction_entry txEntry(tx);
-                                common::entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry());
-                                add_entry_task_to_queue(chain_id, task);
+                        auto &pool = m_tx_pools[chain_id];
+                        if (pool.add_tx(tx)) {
+                            common::transaction_entry txEntry(tx);
+                            common::entry_task task(common::transaction_entry::data_type_id, txEntry.get_entry());
+                            add_entry_task_to_queue(chain_id, task);
 
-                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
-                            }
-
-                            try_to_update_visiting_peer(chain_id, peer);
+                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
                         }
 
-                        break;
+                        try_to_update_visiting_peer(chain_id, peer);
                     }
-                    case common::vote_request_entry::data_type_id: {
-                        common::vote_request_entry voteRequestEntry(i.value());
-                        auto &chain_id = voteRequestEntry.m_chain_id;
 
-                        kick_out_of_ban_list(chain_id, peer);
-                        // check if peer is in ban list
+                    break;
+                }
+                case common::vote_request_entry::data_type_id: {
+                    common::vote_request_entry voteRequestEntry(payload);
+                    auto &chain_id = voteRequestEntry.m_chain_id;
+
+                    kick_out_of_ban_list(chain_id, peer);
+                    // check if peer is in ban list
 //                        if (is_peer_banned(chain_id, peer))
 //                            break;
 //
 //                        decrease_peer_score(chain_id, peer, 3);
 
-                        // vote for voting point
-                        auto &voting_point_block = m_voting_point_blocks[chain_id];
-                        vote consensus_point_vote;
-                        if (is_sync_completed(chain_id) && !voting_point_block.empty()) {
-                            consensus_point_vote.setBlockHash(voting_point_block.sha256());
-                            consensus_point_vote.setBlockNumber(voting_point_block.block_number());
+                    // vote for voting point
+                    auto &voting_point_block = m_voting_point_blocks[chain_id];
+                    vote consensus_point_vote;
+                    if (is_sync_completed(chain_id) && !voting_point_block.empty()) {
+                        consensus_point_vote.setBlockHash(voting_point_block.sha256());
+                        consensus_point_vote.setBlockNumber(voting_point_block.block_number());
 
-                            common::vote_entry voteEntry(chain_id, consensus_point_vote);
+                        common::vote_entry voteEntry(chain_id, consensus_point_vote);
 //                            send_to(chain_id, peer, voteEntry.get_entry());
-                            common::entry_task task(common::vote_entry::data_type_id, peer, voteEntry.get_entry());
+                        common::entry_task task(common::vote_entry::data_type_id, peer, voteEntry.get_entry());
 //                            m_tasks[chain_id].insert(task);
-                            add_entry_task_to_queue(chain_id, task);
-                        }
-
-                        try_to_update_visiting_peer(chain_id, peer);
-
-                        break;
+                        add_entry_task_to_queue(chain_id, task);
                     }
-                    case common::vote_entry::data_type_id: {
-                        common::vote_entry voteEntry(i.value());
-                        auto &chain_id = voteEntry.m_chain_id;
 
-                        log("INFO: chain[%s] valid vote[%s]",
-                            aux::toHex(chain_id).c_str(), voteEntry.m_vote.to_string().c_str());
-                        m_votes[chain_id][peer] = voteEntry.m_vote;
+                    try_to_update_visiting_peer(chain_id, peer);
 
-                        try_to_update_visiting_peer(chain_id, peer);
+                    break;
+                }
+                case common::vote_entry::data_type_id: {
+                    common::vote_entry voteEntry(payload);
+                    auto &chain_id = voteEntry.m_chain_id;
 
-                        break;
-                    }
-                    case common::head_block_request_entry::data_type_id: {
-                        common::head_block_request_entry headBlockRequestEntry(i.value());
-                        auto &chain_id = headBlockRequestEntry.m_chain_id;
+                    log("INFO: chain[%s] valid vote[%s]",
+                        aux::toHex(chain_id).c_str(), voteEntry.m_vote.to_string().c_str());
+                    m_votes[chain_id][peer] = voteEntry.m_vote;
 
-                        kick_out_of_ban_list(chain_id, peer);
-                        // check if peer is in ban list
+                    try_to_update_visiting_peer(chain_id, peer);
+
+                    break;
+                }
+                case common::head_block_request_entry::data_type_id: {
+                    common::head_block_request_entry headBlockRequestEntry(payload);
+                    auto &chain_id = headBlockRequestEntry.m_chain_id;
+
+                    kick_out_of_ban_list(chain_id, peer);
+                    // check if peer is in ban list
 //                        if (is_peer_banned(chain_id, peer))
 //                            break;
 
-                        decrease_peer_score(chain_id, peer, 3);
+                    decrease_peer_score(chain_id, peer, 3);
 
-                        auto &blk = m_head_blocks[chain_id];
+                    auto &blk = m_head_blocks[chain_id];
 
-                        if (!blk.empty()) {
-                            common::head_block_entry blockEntry(blk);
+                    if (!blk.empty()) {
+                        common::head_block_entry blockEntry(blk);
 //                            send_to(chain_id, peer, blockEntry.get_entry());
-                            common::entry_task task(common::head_block_entry::data_type_id, peer, blockEntry.get_entry());
+                        common::entry_task task(common::head_block_entry::data_type_id, peer, blockEntry.get_entry());
 //                            m_tasks[blk.chain_id()].insert(task);
-                            add_entry_task_to_queue(chain_id, task);
-                        } else {
-                            log("INFO: Cannot get head block in local");
-                        }
-
-                        try_to_update_visiting_peer(chain_id, peer);
-
-                        break;
+                        add_entry_task_to_queue(chain_id, task);
+                    } else {
+                        log("INFO: Cannot get head block in local");
                     }
-                    case common::head_block_entry::data_type_id: {
-                        common::head_block_entry blk_entry(i.value());
 
-                        // TODO: validate timestamp etc. ?
-                        if (!blk_entry.m_blk.empty()) {
-                            auto &chain_id = blk_entry.m_blk.chain_id();
+                    try_to_update_visiting_peer(chain_id, peer);
 
-                            kick_out_of_ban_list(chain_id, peer);
-                            // check if peer is in ban list
+                    break;
+                }
+                case common::head_block_entry::data_type_id: {
+                    common::head_block_entry blk_entry(payload);
+
+                    // TODO: validate timestamp etc. ?
+                    if (!blk_entry.m_blk.empty()) {
+                        auto &chain_id = blk_entry.m_blk.chain_id();
+
+                        kick_out_of_ban_list(chain_id, peer);
+                        // check if peer is in ban list
 //                            if (is_peer_banned(chain_id, peer))
 //                                break;
 
-                            add_if_peer_not_in_acl(chain_id, peer);
+                        add_if_peer_not_in_acl(chain_id, peer);
 
 //                            increase_peer_score(chain_id, peer, 3);
-                            auto &acl = m_access_list[chain_id];
-                            auto &peerInfo = acl[peer];
-                            peerInfo.m_stage = NORMAL;
-                            if (peerInfo.m_head_block.empty() || blk_entry.m_blk.cumulative_difficulty() > peerInfo.m_head_block.cumulative_difficulty()) {
-                                peerInfo.m_score += 5;
-                            } else {
-                                peerInfo.m_score += 3;
-                            }
-                            peerInfo.m_head_block = blk_entry.m_blk;
-                            peerInfo.m_requests_time.erase(common::head_block_request_entry::data_type_id);
+                        auto &acl = m_access_list[chain_id];
+                        auto &peerInfo = acl[peer];
+                        peerInfo.m_stage = NORMAL;
+                        if (peerInfo.m_head_block.empty() || blk_entry.m_blk.cumulative_difficulty() > peerInfo.m_head_block.cumulative_difficulty()) {
+                            peerInfo.m_score += 5;
+                        } else {
+                            peerInfo.m_score += 3;
+                        }
+                        peerInfo.m_head_block = blk_entry.m_blk;
+                        peerInfo.m_requests_time.erase(common::head_block_request_entry::data_type_id);
 
-                            log("INFO: Got head block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
+                        log("INFO: Got head block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
 
-                            m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
+                        m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
-                            // notify ui tx from block
-                            if (!blk_entry.m_blk.tx().empty()) {
-                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
-                            }
-
-                            try_to_update_visiting_peer(chain_id, peer);
+                        // notify ui tx from block
+                        if (!blk_entry.m_blk.tx().empty()) {
+                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
                         }
 
-                        break;
+                        try_to_update_visiting_peer(chain_id, peer);
                     }
-                    default: {
-                    }
+
+                    break;
+                }
+                default: {
                 }
             }
         }
