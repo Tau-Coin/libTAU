@@ -1988,16 +1988,22 @@ namespace libTAU::blockchain {
         return salt;
     }
 
+    namespace {
+        void send_call_back(entry const& e, int n) {
+
+        }
+    }
+
     void blockchain::send_to(const aux::bytes &chain_id, const dht::public_key &peer, const entry &data) {
-        dht::public_key * pk = m_ses.pubkey();
-        dht::secret_key * sk = m_ses.serkey();
+//        dht::public_key * pk = m_ses.pubkey();
+//        dht::secret_key * sk = m_ses.serkey();
+//
+//        auto salt = make_salt(chain_id);
+//
+//        log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
+//            aux::toHex(salt).c_str(), data.to_string().c_str());
 
-        auto salt = make_salt(chain_id);
-
-        log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
-            aux::toHex(salt).c_str(), data.to_string().c_str());
-
-        m_ses.dht()->send(peer, data, 1, 3, 3, nullptr);
+        m_ses.dht()->send(peer, data, 1, 3, 3, send_call_back);
 //        dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
 //                , pk->bytes, sk->bytes, data), salt, peer);
     }
