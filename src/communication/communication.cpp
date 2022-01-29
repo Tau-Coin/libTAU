@@ -30,6 +30,10 @@ namespace libTAU {
 
             m_stop = false;
 
+            for (auto const&peer: m_friends) {
+                request_signal(peer);
+            }
+
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
 
@@ -127,6 +131,115 @@ namespace libTAU {
             return total_milliseconds(system_clock::now().time_since_epoch());
         }
 
+        void communication::process_payload(const dht::public_key &peer, const entry &payload) {
+            auto now = get_current_time();
+
+            // check data type id
+            if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
+            {
+                auto data_type_id = p->integer();
+                switch (data_type_id) {
+                    case common::message_entry::data_type_id: {
+                        common::message_entry msg_entry(payload);
+                        log("INFO: Got message, hash[%s].",
+                            aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
+
+                        add_new_message(peer, msg_entry.m_msg, true);
+
+                        common::entry_task task(common::message_levenshtein_array_entry::data_type_id, peer, now);
+                        add_entry_task_to_queue(task);
+
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
+                        break;
+                    }
+                    case common::message_levenshtein_array_entry::data_type_id: {
+                        common::message_levenshtein_array_entry levenshtein_array_entry(payload);
+                        log("INFO: Got message levenshtein array[%s].",
+                            aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
+
+                        // find out missing messages and confirmation root
+                        std::vector<message> missing_messages;
+                        std::vector<sha256_hash> confirmation_roots;
+                        auto &message_list = m_message_list_map[peer];
+                        std::vector<message> messages(message_list.begin(), message_list.end());
+                        log("INFO: Messages size:%zu", messages.size());
+                        find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
+                                           missing_messages, confirmation_roots);
+
+                        if (!confirmation_roots.empty()) {
+                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+                                                                                                confirmation_roots,
+                                                                                                now);
+                            log("INFO: Confirmation roots:%zu", confirmation_roots.size());
+                        }
+                        log("INFO: Found missing message size %zu", missing_messages.size());
+
+                        auto size = missing_messages.size();
+                        for(auto k = 0; k < size; k++) {
+                            common::message_entry msg_entry(missing_messages[k]);
+                            common::entry_task task(1, 10, 10, common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 100 * k);
+                            add_entry_task_to_queue(task);
+                        }
+//                            for(auto k = 0; k < size; k++) {
+//                                common::message_entry msg_entry(missing_messages[k]);
+//                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 1000 + 100 * k);
+//                                m_tasks.insert(task);
+//                            }
+//                            for(auto k = 0; k < size; k++) {
+//                                common::message_entry msg_entry(missing_messages[k]);
+//                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 5000 + 100 * k);
+//                                m_tasks.insert(task);
+//                            }
+
+                        // check if local levenshtein array != remote levenshtein array
+                        aux::bytes levenshtein_array;
+                        for (auto const &message: messages) {
+                            levenshtein_array.push_back(message.sha256()[0]);
+                        }
+                        if (levenshtein_array_entry.m_levenshtein_array != levenshtein_array) {
+                            common::entry_task task(
+                                    common::message_levenshtein_array_entry::data_type_id, peer, now + 6000);
+                            add_entry_task_to_queue(task);
+                        } else {
+                            m_array_align_time[peer] = now;
+                            m_message_db->save_array_align_time(std::make_pair(*m_ses.pubkey(), peer), now);
+                        }
+
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
+                        break;
+                    }
+                    case common::friend_info_request_entry::data_type_id: {
+                        auto pubkey = *m_ses.pubkey();
+                        auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
+                        if (!friend_info.empty()) {
+                            common::friend_info_entry e(friend_info);
+                            common::entry_task task(1, 10, 10, common::friend_info_entry::data_type_id, peer, e.get_entry(), now);
+                            add_entry_task_to_queue(task);
+                        }
+
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
+                        break;
+                    }
+                    case common::friend_info_entry::data_type_id: {
+                        common::friend_info_entry e(payload);
+                        if (!e.m_friend_info.empty()) {
+                            // 通知用户新的friend info
+                            m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer, e.m_friend_info);
+                        }
+
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
+                        break;
+                    }
+                    default: {
+                    }
+                }
+            }
+        }
+
         void communication::on_dht_item(const dht::item &i) {
             // construct mutable data wrapper from entry
             if (!i.empty()) {
@@ -149,130 +262,7 @@ namespace libTAU {
 //                }
 
 
-                auto peer = i.pk();
-                auto now = get_current_time();
-
-                // check data type id
-                if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type)))
-                {
-                    auto data_type_id = p->integer();
-                    switch (data_type_id) {
-                        case common::message_entry::data_type_id: {
-                            common::message_entry msg_entry(i.value());
-                            log("INFO: Got message, hash[%s].",
-                                aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
-
-                            add_new_message(i.pk(), msg_entry.m_msg, true);
-
-                            common::entry_task levenshtein_array_task1(
-                                    common::message_levenshtein_array_entry::data_type_id, peer, now);
-                            add_entry_task_to_queue(levenshtein_array_task1);
-                            common::entry_task levenshtein_array_task2(
-                                    common::message_levenshtein_array_entry::data_type_id, peer, now + 1000);
-                            add_entry_task_to_queue(levenshtein_array_task2);
-                            common::entry_task levenshtein_array_task3(
-                                    common::message_levenshtein_array_entry::data_type_id, peer, now + 5000);
-                            add_entry_task_to_queue(levenshtein_array_task3);
-
-                            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
-                            break;
-                        }
-                        case common::message_levenshtein_array_entry::data_type_id: {
-                            common::message_levenshtein_array_entry levenshtein_array_entry(i.value());
-                            log("INFO: Got message levenshtein array[%s].",
-                                aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
-
-                            // find out missing messages and confirmation root
-                            std::vector<message> missing_messages;
-                            std::vector<sha256_hash> confirmation_roots;
-                            auto &message_list = m_message_list_map[peer];
-                            std::vector<message> messages(message_list.begin(), message_list.end());
-                            log("INFO: Messages size:%zu", messages.size());
-                            find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
-                                               missing_messages, confirmation_roots);
-
-                            if (!confirmation_roots.empty()) {
-                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
-                                                                                                    confirmation_roots,
-                                                                                                    now);
-                                log("INFO: Confirmation roots:%zu", confirmation_roots.size());
-                            }
-                            log("INFO: Found missing message size %zu", missing_messages.size());
-
-                            auto size = missing_messages.size();
-                            for(auto k = 0; k < size; k++) {
-                                common::message_entry msg_entry(missing_messages[k]);
-                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 100 * k);
-                                add_entry_task_to_queue(task);
-                            }
-//                            for(auto k = 0; k < size; k++) {
-//                                common::message_entry msg_entry(missing_messages[k]);
-//                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 1000 + 100 * k);
-//                                m_tasks.insert(task);
-//                            }
-//                            for(auto k = 0; k < size; k++) {
-//                                common::message_entry msg_entry(missing_messages[k]);
-//                                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 5000 + 100 * k);
-//                                m_tasks.insert(task);
-//                            }
-
-                            // check if local levenshtein array != remote levenshtein array
-                            aux::bytes levenshtein_array;
-                            for (auto const &message: messages) {
-                                levenshtein_array.push_back(message.sha256()[0]);
-                            }
-                            if (levenshtein_array_entry.m_levenshtein_array != levenshtein_array) {
-                                common::entry_task levenshtein_array_task1(
-                                        common::message_levenshtein_array_entry::data_type_id, peer, now + 6000);
-                                add_entry_task_to_queue(levenshtein_array_task1);
-                                common::entry_task levenshtein_array_task2(
-                                        common::message_levenshtein_array_entry::data_type_id, peer, now + 7000);
-                                add_entry_task_to_queue(levenshtein_array_task2);
-                                common::entry_task levenshtein_array_task3(
-                                        common::message_levenshtein_array_entry::data_type_id, peer, now + 9000);
-                                add_entry_task_to_queue(levenshtein_array_task3);
-                            } else {
-                                m_array_align_time[peer] = now;
-                                m_message_db->save_array_align_time(std::make_pair(*m_ses.pubkey(), peer), now);
-                            }
-
-                            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
-                            break;
-                        }
-                        case common::friend_info_request_entry::data_type_id: {
-                            auto pubkey = *m_ses.pubkey();
-                            auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
-                            if (!friend_info.empty()) {
-                                common::friend_info_entry e(friend_info);
-                                common::entry_task task1(common::friend_info_entry::data_type_id, peer, e.get_entry(), now);
-                                add_entry_task_to_queue(task1);
-                                common::entry_task task2(common::friend_info_entry::data_type_id, peer, e.get_entry(), now + 1000);
-                                add_entry_task_to_queue(task2);
-                                common::entry_task task3(common::friend_info_entry::data_type_id, peer, e.get_entry(), now + 5000);
-                                add_entry_task_to_queue(task3);
-                            }
-
-                            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
-                            break;
-                        }
-                        case common::friend_info_entry::data_type_id: {
-                            common::friend_info_entry e(i.value());
-                            if (!e.m_friend_info.empty()) {
-                                // 通知用户新的friend info
-                                m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer, e.m_friend_info);
-                            }
-
-                            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
-                            break;
-                        }
-                        default: {
-                        }
-                    }
-                }
+                process_payload(i.pk(), i.value());
             }
         }
 
@@ -335,14 +325,10 @@ namespace libTAU {
 
         void communication::request_friend_info(const dht::public_key &peer) {
             common::friend_info_request_entry friendInfoRequestEntry;
-            send_to(peer, friendInfoRequestEntry.get_entry());
-            std::int64_t now = get_current_time();
-//            common::entry_task task1(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now);
-//            m_tasks.insert(task1);
-            common::entry_task task2(common::friend_info_request_entry::data_type_id, peer, friendInfoRequestEntry.get_entry(), now + 1000);
-            add_entry_task_to_queue(task2);
-            common::entry_task task3(common::friend_info_request_entry::data_type_id, peer, friendInfoRequestEntry.get_entry(), now + 5000);
-            add_entry_task_to_queue(task3);
+            send_to(peer, friendInfoRequestEntry.get_entry(), 1, 10, 10, false);
+//            std::int64_t now = get_current_time();
+//            common::entry_task task(1, 10, 10, common::friend_info_request_entry::data_type_id, peer, friendInfoRequestEntry.get_entry(), now);
+//            add_entry_task_to_queue(task);
         }
 
         aux::bytes communication::get_friend_info(const dht::public_key &pubkey) {
@@ -378,21 +364,13 @@ namespace libTAU {
                 return false;
 
             common::message_entry msg_entry(msg);
-            send_to(msg.receiver(), msg_entry.get_entry());
+            send_to(msg.receiver(), msg_entry.get_entry(), 1, 10, 10, true);
             std::int64_t now = get_current_time();
 //            common::entry_task task1(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now);
 //            m_tasks.insert(task1);
-//            common::entry_task task2(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 1000);
-//            m_tasks.insert(task2);
-//            common::entry_task task3(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now + 5000);
-//            m_tasks.insert(task3);
 
-            common::entry_task levenshtein_array_task1(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 6000);
+            common::entry_task levenshtein_array_task1(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 100);
             add_entry_task_to_queue(levenshtein_array_task1);
-            common::entry_task levenshtein_array_task2(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 7000);
-            add_entry_task_to_queue(levenshtein_array_task2);
-            common::entry_task levenshtein_array_task3(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 9000);
-            add_entry_task_to_queue(levenshtein_array_task3);
 
 //            {
 //                // 本地消息数组为target
@@ -649,15 +627,8 @@ namespace libTAU {
 
                         m_last_greeting[peer] = now;
 
-                        common::entry_task levenshtein_array_task1(
-                                common::message_levenshtein_array_entry::data_type_id, peer, now);
-                        add_entry_task_to_queue(levenshtein_array_task1);
-                        common::entry_task levenshtein_array_task2(
-                                common::message_levenshtein_array_entry::data_type_id, peer, now + 1000);
-                        add_entry_task_to_queue(levenshtein_array_task2);
-                        common::entry_task levenshtein_array_task3(
-                                common::message_levenshtein_array_entry::data_type_id, peer, now + 5000);
-                        add_entry_task_to_queue(levenshtein_array_task3);
+                        common::entry_task task(1, 10, 10, common::message_levenshtein_array_entry::data_type_id, peer, now);
+                        add_entry_task_to_queue(task);
                     }
                 }
 
@@ -674,11 +645,19 @@ namespace libTAU {
                             }
 
                             common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array);
-//                            log("------- send peer[%s] levenshtein array", aux::toHex(it->m_peer.bytes).c_str());
-                            send_to(it->m_peer, msg_levenshtein_array.get_entry());
+
+                            // 产生随机数
+                            srand(total_microseconds(system_clock::now().time_since_epoch()));
+                            auto index = rand() % 10;
+                            send_to(it->m_peer, msg_levenshtein_array.get_entry(),
+                                    it->m_alpha, it->m_alpha, it->m_invoke_number, index < 1);
                         } else {
-//                            log("------- send peer[%s] message", aux::toHex(it->m_peer.bytes).c_str());
-                            send_to(it->m_peer, it->m_entry);
+                            if (it->m_data_type_id == common::message_entry::data_type_id ||
+                                it->m_data_type_id == common::friend_info_entry::data_type_id) {
+                                send_to(it->m_peer, it->m_entry, it->m_alpha, it->m_alpha, it->m_invoke_number, true);
+                            } else {
+                                send_to(it->m_peer, it->m_entry, it->m_alpha, it->m_alpha, it->m_invoke_number, false);
+                            }
                         }
 
                         m_tasks.erase(it);
@@ -1066,35 +1045,36 @@ namespace libTAU {
 //        }
 
         // callback for dht_mutable_get
-//        void communication::get_mutable_callback(dht::item const& i
-//                , bool const authoritative)
-//        {
-//            TORRENT_ASSERT(i.is_mutable());
+        void communication::get_mutable_callback(dht::item const& i
+                , bool const authoritative)
+        {
+            TORRENT_ASSERT(i.is_mutable());
+
+            // construct mutable data wrapper from entry
+            if (!i.empty()) {
+//                dht::public_key peer = i.pk();
 //
-//            // construct mutable data wrapper from entry
-//            if (!i.empty()) {
-////                dht::public_key peer = i.pk();
-////
-////                // update latest item timestamp
-////                if (i.ts() > m_latest_item_timestamp[peer]) {
-////                    m_latest_item_timestamp[peer] = i.ts();
-////                }
-//
+//                // update latest item timestamp
+//                if (i.ts() > m_latest_item_timestamp[peer]) {
+//                    m_latest_item_timestamp[peer] = i.ts();
+//                }
+
+                process_payload(i.pk(), i.value());
 //                online_signal onlineSignal(i.value());
 //
 //                process_signal(onlineSignal, i.pk());
-//            }
-//        }
+            }
+        }
 
         // key is a 32-byte binary string, the public key to look up.
         // the salt is optional
-//        void communication::dht_get_mutable_item(std::array<char, 32> key
-//                , std::string salt, dht::timestamp t)
-//        {
-//            if (!m_ses.dht()) return;
-//            m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
-//                    , this, _1, _2), std::move(salt), t.value);
-//        }
+        void communication::dht_get_mutable_item(std::array<char, 32> key
+                , std::string salt, dht::timestamp t)
+        {
+            if (!m_ses.dht()) return;
+            m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
+                    , this, _1, _2), std::move(salt), t.value);
+        }
 
         namespace {
 
@@ -1145,15 +1125,15 @@ namespace libTAU {
             }
         } // anonymous namespace
 
-//        void communication::request_signal(const dht::public_key &peer) {
-//            dht::public_key pubkey = *m_ses.pubkey();
-//
-//            // salt is x pubkey when request signal
-//            auto salt = make_salt(pubkey);
-//
-//            log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-//            dht_get_mutable_item(peer.bytes, salt, m_latest_item_timestamp[peer]);
-//        }
+        void communication::request_signal(const dht::public_key &peer) {
+            dht::public_key pubkey = *m_ses.pubkey();
+
+            // salt is x pubkey when request signal
+            auto salt = make_salt(pubkey);
+
+            log("INFO: Get mutable data: peer[%s], salt:[%s]", aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+            dht_get_mutable_item(peer.bytes, salt, dht::timestamp());
+        }
 
 //        void communication::publish_signal(const dht::public_key &peer) {
 ////            entry data;
@@ -1171,7 +1151,22 @@ namespace libTAU {
 //                    , pk->bytes, sk->bytes, onlineSignal.get_entry()), salt, peer);
 //        }
 
-        void communication::send_to(const dht::public_key &peer, const entry &data) {
+//        void communication::send_to(const dht::public_key &peer, const entry &data) {
+//            dht::public_key * pk = m_ses.pubkey();
+//            dht::secret_key * sk = m_ses.serkey();
+//
+//            // salt is y pubkey when publish signal
+//            auto salt = make_salt(peer);
+//
+//            log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
+//                aux::toHex(salt).c_str(), data.to_string().c_str());
+//
+//            dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
+//                    , pk->bytes, sk->bytes, data), salt, peer);
+//        }
+
+        void communication::send_to(const dht::public_key &peer, const entry &data, std::int8_t alpha, std::int8_t beta,
+                                    std::int8_t invoke_limit, bool cache) {
             dht::public_key * pk = m_ses.pubkey();
             dht::secret_key * sk = m_ses.serkey();
 
@@ -1182,7 +1177,7 @@ namespace libTAU {
                 aux::toHex(salt).c_str(), data.to_string().c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-                    , pk->bytes, sk->bytes, data), salt, peer);
+                    , pk->bytes, sk->bytes, data), alpha, beta, invoke_limit, salt, peer, cache);
         }
 
 //        void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
@@ -1198,12 +1193,14 @@ namespace libTAU {
         void communication::dht_put_mutable_item(std::array<char, 32> key
                 , std::function<void(entry&, std::array<char,64>&
                 , std::int64_t&, std::string const&)> cb
-                , std::string salt, const dht::public_key &peer)
+                , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
+                , std::string salt, const dht::public_key &peer, bool cache)
         {
             if (!m_ses.dht()) return;
             m_ses.dht()->put_item(dht::public_key(key.data())
                     , std::bind(&on_dht_put_mutable_item, std::ref(m_ses.alerts()), _1, _2)
-                    , std::bind(&put_mutable_callback, _1, std::move(cb)), salt, peer);
+                    , std::bind(&put_mutable_callback, _1, std::move(cb))
+                    , alpha, beta, invoke_limit, salt, peer, cache);
         }
 
 

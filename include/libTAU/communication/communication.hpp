@@ -147,13 +147,17 @@ namespace libTAU {
             void add_entry_task_to_queue(const common::entry_task &task);
 
             // request online/new message signal from a given peer
-//            void request_signal(const dht::public_key &peer);
+            void request_signal(const dht::public_key &peer);
 
             // publish online/new message signal to a given peer
 //            void publish_signal(const dht::public_key &peer);
 
             // send data to peer
-            void send_to(const dht::public_key &peer, entry const& data);
+//            void send_to(const dht::public_key &peer, entry const& data);
+
+            // send data to peer
+            void send_to(const dht::public_key &peer, entry const& data,
+                    std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit, bool cache);
 
             // select a friend randomly
 //            dht::public_key select_friend_randomly();
@@ -174,6 +178,8 @@ namespace libTAU {
             // make a salt on mutable channel
             static std::string make_salt(dht::public_key peer);
 
+            void process_payload(dht::public_key const& peer, entry const& payload);
+
             // make online signal
 //            online_signal make_signal(const dht::public_key &peer);
 
@@ -187,15 +193,15 @@ namespace libTAU {
 //            void get_immutable_callback(const dht::public_key &peer, sha256_hash target
 //                    , dht::item const& i);
 
-//            // mutable data callback
-//            void get_mutable_callback(dht::item const& i, bool);
+            // mutable data callback
+            void get_mutable_callback(dht::item const& i, bool);
 
             // get immutable item from dht
 //            void dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
-//            // get mutable item from dht
-//            void dht_get_mutable_item(std::array<char, 32> key
-//                    , std::string salt, dht::timestamp t);
+            // get mutable item from dht
+            void dht_get_mutable_item(std::array<char, 32> key
+                    , std::string salt, dht::timestamp t);
 
             // put immutable item to dht
 //            void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
@@ -204,7 +210,8 @@ namespace libTAU {
             void dht_put_mutable_item(std::array<char, 32> key
                     , std::function<void(entry&, std::array<char,64>&
                     , std::int64_t&, std::string const&)> cb
-                    , std::string salt, const dht::public_key &peer);
+                    , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
+                    , std::string salt, const dht::public_key &peer, bool cache);
 
             std::shared_ptr<communication> self()
             { return shared_from_this(); }
