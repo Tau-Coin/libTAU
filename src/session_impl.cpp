@@ -3514,7 +3514,7 @@ namespace {
 		return m_session_time;
 	}
 
-	void session_impl::on_dht_relay(sha256_hash const& from, entry const& payload)
+	void session_impl::on_dht_relay(dht::public_key const& from, entry const& payload)
 	{
 		// TODO: transfer payload to blockchain
 	}

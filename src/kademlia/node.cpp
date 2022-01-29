@@ -393,7 +393,8 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 				if (to == m_id)
 				{
 					// TODO: transfer payload
-					if (m_observer) m_observer->on_dht_relay(sender, payload);
+					if (m_observer) m_observer->on_dht_relay(
+						public_key(sender.data()), payload);
 				}
 				else
 				{

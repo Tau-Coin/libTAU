@@ -547,7 +547,7 @@ namespace aux {
 
 			std::int64_t get_time() override;
 
-			void on_dht_relay(sha256_hash const& from, entry const& payload) override;
+			void on_dht_relay(dht::public_key const& from, entry const& payload) override;
 
 			void set_external_address(tcp::endpoint const& local_endpoint
 				, address const& ip
