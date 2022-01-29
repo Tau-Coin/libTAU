@@ -412,6 +412,10 @@ namespace aux {
 				, std::function<void(entry&, std::array<char,64>&
 					, std::int64_t&, std::string const&)> cb
 				, std::string salt = std::string());
+            
+            void send(dht::public_key const& to , entry const& payload
+                , std::int8_t alpha , std::int8_t beta
+                , std::int8_t invoke_limit);
 
 			void dht_live_nodes(sha256_hash const& nid);
 

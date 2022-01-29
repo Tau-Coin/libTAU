@@ -1624,7 +1624,6 @@ namespace {
 		m_encrypted_udp_packet.insert(0
 			, m_account_manager->pub_key().bytes.data(), 32);
 
-/*
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
@@ -1633,7 +1632,6 @@ namespace {
 				, aux::to_hex(m_raw_send_udp_packet).c_str());
 		}
 #endif
-*/
 
 		// send to udp socket
 		send_udp_packet_listen(sock, ep, m_encrypted_udp_packet, ec, flags);
@@ -2961,7 +2959,7 @@ namespace {
 			{
 				start_dht();
 				start_communication();
-				//start_blockchain();
+				start_blockchain();
 			}
 			return;
 		}
@@ -3002,7 +3000,7 @@ namespace {
 		{
 			start_dht();
 			start_communication();
-			//start_blockchain();
+			start_blockchain();
 		}
 
 		m_alerts.emplace_alert<session_start_over_alert>(true);
@@ -3078,6 +3076,11 @@ namespace {
 			i.assign(std::move(value), salt, ts, pk, sig);
 		}
 
+		void send_callback(const entry& e, int i)
+		{
+            //TODO: current just for send api
+		}
+
 	} // anonymous namespace
 
 	void session_impl::dht_put_immutable_item(entry const& data, sha256_hash target)
@@ -3096,6 +3099,18 @@ namespace {
 		m_dht->put_item(dht::public_key(key.data())
 			, std::bind(&on_dht_put_mutable_item, std::ref(m_alerts), _1, _2)
 			, std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
+	}
+
+
+	void session_impl::send(dht::public_key const& to
+		, entry const& payload
+		, std::int8_t alpha
+		, std::int8_t beta
+		, std::int8_t invoke_limit)
+	{
+		if (!m_dht) return;
+		m_dht->send(to, payload, alpha, beta, invoke_limit
+			, std::bind(&send_callback, _1, _2));
 	}
 
 	void session_impl::dht_live_nodes(sha256_hash const& nid)
