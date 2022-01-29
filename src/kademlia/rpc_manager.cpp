@@ -439,10 +439,10 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 	{
 		auto ye = e.find_key("y");
 		std::string yt = ye->string();
-		if (yt != "h")
-		{
+		// if (yt != "h")
+		//{
 			add_our_id(a);
-		}
+		//}
 	}
 
 	std::string transaction_id;
