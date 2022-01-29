@@ -522,6 +522,24 @@ namespace libTAU::dht {
 				, _1, _2, ctx, cb), data_cb);
 	}
 
+	void dht_tracker::put_item(public_key const& key
+		, std::function<void(item const&, int)> cb
+		, std::function<void(item&)> data_cb
+		, std::int8_t alpha
+		, std::int8_t beta
+		, std::int8_t invoke_limit
+		, std::string salt
+		, public_key const& to
+		, bool cache)
+	{
+		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
+		for (auto& n : m_nodes)
+			n.second.dht.put_item(key, salt, to
+				, alpha, beta, invoke_limit, cache
+				, std::bind(&put_mutable_item_callback, _1, _2, ctx, cb)
+				, data_cb);
+	}
+
 	// relay protocol
 	void dht_tracker::send(public_key const& to
 		, entry const& payload

@@ -115,6 +115,7 @@ bool put_data::invoke(observer_ptr o)
 		a["ts"] = m_data.ts().value;
 		a["sig"] = m_data.sig().bytes;
 		a["distance"] = traversal_algorithm::allow_distance();
+		a["cache"] = m_cache ? 1 : 0;
 		if (!m_data.salt().empty())
 		{
 			a["salt"] = m_data.salt();

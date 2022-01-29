@@ -157,6 +157,16 @@ public:
 		, std::function<void(item const&, int)> f
 		, std::function<void(item&)> data_cb);
 
+	void put_item(public_key const& pk
+		, std::string const& salt
+		, public_key const& to
+		, std::int8_t alpha
+		, std::int8_t beta
+		, std::int8_t invoke_limit
+		, bool cache
+		, std::function<void(item const&, int)> f
+		, std::function<void(item&)> data_cb);
+
 	// relay protocol
 	void send(public_key const& to
 		, entry const& payload

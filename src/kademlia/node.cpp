@@ -618,6 +618,41 @@ void node::put_item(public_key const& pk
 	put_ta->start();
 }
 
+void node::put_item(public_key const& pk
+	, std::string const& salt
+	, public_key const& to
+	, std::int8_t alpha
+	, std::int8_t beta
+	, std::int8_t invoke_limit
+	, bool cache
+	, std::function<void(item const&, int)> f
+	, std::function<void(item&)> data_cb)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		char hex_key[65];
+		char hex_salt[129]; // 64*2 + 1
+		aux::to_hex(pk.bytes, hex_key);
+		aux::to_hex(salt, hex_salt);
+		m_observer->log(dht_logger::node
+			, "starting put for [ key: %s, salt:%s, beta:%d, invoke-limit:%d, cache:%s ]"
+			, hex_key, hex_salt, beta, invoke_limit, cache ? "true" : "false");
+	}
+#endif
+
+	item i(pk, salt);
+	data_cb(i);
+
+	auto put_ta = std::make_shared<dht::put_data>(*this, item_target_id(to), to, f);
+	put_ta->set_data(std::move(i));
+	put_ta->set_invoke_window(beta);
+	put_ta->set_invoke_limit(invoke_limit);
+	put_ta->set_cache(cache);
+
+	put_ta->start();
+}
+
 void node::send(public_key const& to
 	, entry const& payload
 	, std::int8_t alpha
@@ -1020,13 +1055,14 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
 			{"distance", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"to", bdecode_node::string_t, public_key::len, key_desc_t::optional},
+			{"cache", bdecode_node::int_t, 0, key_desc_t::optional},
 		};
 
 		// attempt to parse the message
 		// also reject the message if it has any non-fatal encoding errors
 		// because put messages contain a signed value they must have correct bencoding
 		// otherwise the value will not round-trip without breaking the signature
-		bdecode_node msg_keys[10];
+		bdecode_node msg_keys[11];
 		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string)
 			|| arg_ent.has_soft_error(error_string))
 		{
@@ -1123,8 +1159,9 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 
 			TORRENT_ASSERT(signature::len == msg_keys[4].string_length());
 
+			bool const cache = msg_keys[10] && msg_keys[10].int_value() != 0;
 			timestamp item_ts;
-			if (!m_storage.get_mutable_item_timestamp(target, item_ts))
+			if (!m_storage.get_mutable_item_timestamp(target, item_ts) && cache)
 			{
 				m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
 					, m.addr.address());
@@ -1152,8 +1189,11 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 					return std::make_tuple(need_response, need_push);
 				}
 
-				m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
-					, m.addr.address());
+				if (cache)
+				{
+					m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
+						, m.addr.address());
+				}
 			}
 
 			if (msg_keys[8])

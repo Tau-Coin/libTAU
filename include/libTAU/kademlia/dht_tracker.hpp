@@ -129,6 +129,19 @@ namespace libTAU::dht {
 			, std::string salt = std::string()
 			, public_key const& to = public_key());
 
+		// for mutable_item.
+		// the data_cb will be called when we get authoritative mutable_item,
+		// the cb is same as put immutable_item.
+		void put_item(public_key const& key
+			, std::function<void(item const&, int)> cb
+			, std::function<void(item&)> data_cb
+			, std::int8_t alpha
+			, std::int8_t beta
+			, std::int8_t invoke_limit
+			, std::string salt = std::string()
+			, public_key const& to = public_key()
+			, bool cache = true);
+
 		// relay protocol
 		void send(public_key const& to
 			, entry const& payload

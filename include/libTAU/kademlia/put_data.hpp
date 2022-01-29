@@ -38,6 +38,8 @@ struct put_data: traversal_algorithm
 	void set_data(item&& data) { m_data = std::move(data); }
 	void set_data(item const& data) = delete;
 
+	void set_cache(bool cache) { m_cache = cache; }
+
 protected:
 
 	void done() override;
@@ -49,6 +51,7 @@ protected:
 	put_callback m_put_callback;
 	item m_data;
 	public_key m_to;
+	bool m_cache = true;
 	bool m_done = false;
 };
 
