@@ -234,13 +234,14 @@ namespace libTAU::blockchain {
                     // acl
                     auto &acl = m_access_list[chain_id];
                     for (auto const &item: acl) {
-                        log("-----ACL: peer[%s], score[%d]", aux::toHex(item.first.bytes).c_str(), item.second.m_score);
+                        log("-----ACL: peer[%s], info[%s]", aux::toHex(item.first.bytes).c_str(),
+                            item.second.to_string().c_str());
                     }
                     // ban list
                     auto &ban_list = m_ban_list[chain_id];
                     for (auto const &item: ban_list) {
-                        log("-----Ban List: peer[%s], ban time[%ld], free time[%ld]", aux::toHex(item.first.bytes).c_str(),
-                            item.second.m_free_time > now ? item.second.m_free_time - now : 0, item.second.m_free_time);
+                        log("-----Ban List: peer[%s], info[%s]", aux::toHex(item.first.bytes).c_str(),
+                            item.second.to_string().c_str());
                     }
                 }
 
@@ -416,42 +417,42 @@ namespace libTAU::blockchain {
                         auto &acl = m_access_list[chain_id];
                         for (auto &item: acl) {
                             auto &requests_time = item.second.m_requests_time;
-                            auto it = requests_time.begin();
-                            while (it != requests_time.end()) {
+                            for (auto it = requests_time.begin(); it != requests_time.end();) {
                                 if (now > it->second + 5000) {
                                     item.second.m_score = item.second.m_score - 5;
-                                    requests_time.erase(it);
+                                    requests_time.erase(it++);
+                                } else {
+                                    it++;
                                 }
-                                it++;
                             }
                         }
 
                         // kick out bad peer from acl and add it into ban list
-//                        auto it = acl.begin();
-//                        while (it != acl.end()) {
-//                            if (it->second.m_score <= 0) {
-//                                auto &ban_list = m_ban_list[chain_id];
-//                                auto it_ban = ban_list.find(it->first);
-//                                if (it_ban != ban_list.end()) {
-//                                    it_ban->second.increase_ban_times();
-//                                    auto ban_time = 5 * 60 * 1000 * it_ban->second.m_ban_times;
-//                                    if (ban_time > 60 * 60 * 1000) {
-//                                        ban_time = 60 * 60 * 1000;
-//                                    }
-//                                    it_ban->second.set_free_time(now + ban_time);
-//                                } else {
-//                                    ban_list[it->first] = ban_info();
-//                                    auto ban_time = 5 * 60 * 1000 * ban_list[it->first].m_ban_times;
-//                                    if (ban_time > 60 * 60 * 1000) {
-//                                        ban_time = 60 * 60 * 1000;
-//                                    }
-//                                    ban_list[it->first].set_free_time(now + ban_time);
-//                                }
-//
-//                                acl.erase(it);
-//                            }
-//                            it++;
-//                        }
+                        for (auto it = acl.begin(); it != acl.end();) {
+                            if (it->second.m_score <= 0) {
+                                auto &ban_list = m_ban_list[chain_id];
+                                auto it_ban = ban_list.find(it->first);
+                                if (it_ban != ban_list.end()) {
+                                    it_ban->second.increase_ban_times();
+                                    auto ban_time = 5 * 60 * 1000 * it_ban->second.m_ban_times;
+                                    if (ban_time > 60 * 60 * 1000) {
+                                        ban_time = 60 * 60 * 1000;
+                                    }
+                                    it_ban->second.set_free_time(now + ban_time);
+                                } else {
+                                    ban_list[it->first] = ban_info();
+                                    auto ban_time = 5 * 60 * 1000 * ban_list[it->first].m_ban_times;
+                                    if (ban_time > 60 * 60 * 1000) {
+                                        ban_time = 60 * 60 * 1000;
+                                    }
+                                    ban_list[it->first].set_free_time(now + ban_time);
+                                }
+
+                                acl.erase(it++);
+                            } else {
+                                it++;
+                            }
+                        }
 
                         // remove surplus peers
                     }
@@ -655,6 +656,7 @@ namespace libTAU::blockchain {
                 auto size = tasks.size();
                 if (!tasks.empty()) {
                     auto it = tasks.begin();
+                    log("-----send task id[%ld] to peer[%s]", it->m_data_type_id, aux::toHex(it->m_peer.bytes).c_str());
                     if (it->m_peer.is_all_zeros()) {
                         auto &acl = m_access_list[chain_id];
                         auto p = acl.begin();
@@ -1391,6 +1393,10 @@ namespace libTAU::blockchain {
         auto &ban_list = m_ban_list[chain_id];
         auto it_ban = ban_list.find(peer);
         return it_ban != ban_list.end() && now < it_ban->second.m_free_time;
+    }
+
+    void blockchain::kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key &peer) {
+        m_ban_list[chain_id].erase(peer);
     }
 
     void blockchain::ban_peer(const aux::bytes &chain_id, const dht::public_key &peer) {
@@ -2739,9 +2745,10 @@ namespace libTAU::blockchain {
                         common::block_request_entry blk_request_entry(i.value());
                         auto &chain_id = blk_request_entry.m_chain_id;
 
+                        kick_out_of_ban_list(chain_id, peer);
                         // check if peer is in ban list
-                        if (is_peer_banned(chain_id, peer))
-                            break;
+//                        if (is_peer_banned(chain_id, peer))
+//                            break;
 
                         auto blk = m_repository->get_block_by_hash(blk_request_entry.m_hash);
 
@@ -2767,9 +2774,10 @@ namespace libTAU::blockchain {
                         if (!blk_entry.m_blk.empty()) {
                             auto &chain_id = blk_entry.m_blk.chain_id();
 
+                            kick_out_of_ban_list(chain_id, peer);
                             // check if peer is in ban list
-                            if (is_peer_banned(chain_id, peer))
-                                break;
+//                            if (is_peer_banned(chain_id, peer))
+//                                break;
 
 //                            increase_peer_score(chain_id, peer, 3);
                             if (is_peer_in_acl(chain_id, peer)) {
@@ -2797,9 +2805,10 @@ namespace libTAU::blockchain {
                         common::transaction_request_entry tx_request_entry(i.value());
                         auto &chain_id = tx_request_entry.m_chain_id;
 
+                        kick_out_of_ban_list(chain_id, peer);
                         // check if peer is in ban list
-                        if (is_peer_banned(chain_id, peer))
-                            break;
+//                        if (is_peer_banned(chain_id, peer))
+//                            break;
 
                         decrease_peer_score(chain_id, peer, 3);
 
@@ -2831,6 +2840,7 @@ namespace libTAU::blockchain {
                         common::vote_request_entry voteRequestEntry(i.value());
                         auto &chain_id = voteRequestEntry.m_chain_id;
 
+                        kick_out_of_ban_list(chain_id, peer);
                         // check if peer is in ban list
 //                        if (is_peer_banned(chain_id, peer))
 //                            break;
@@ -2871,18 +2881,19 @@ namespace libTAU::blockchain {
                         common::head_block_request_entry headBlockRequestEntry(i.value());
                         auto &chain_id = headBlockRequestEntry.m_chain_id;
 
+                        kick_out_of_ban_list(chain_id, peer);
                         // check if peer is in ban list
-                        if (is_peer_banned(chain_id, peer))
-                            break;
+//                        if (is_peer_banned(chain_id, peer))
+//                            break;
 
                         decrease_peer_score(chain_id, peer, 3);
 
                         auto &blk = m_head_blocks[chain_id];
 
                         if (!blk.empty()) {
-                            common::block_entry blockEntry(blk);
+                            common::head_block_entry blockEntry(blk);
 //                            send_to(chain_id, peer, blockEntry.get_entry());
-                            common::entry_task task(common::block_entry::data_type_id, peer, blockEntry.get_entry());
+                            common::entry_task task(common::head_block_entry::data_type_id, peer, blockEntry.get_entry());
 //                            m_tasks[blk.chain_id()].insert(task);
                             add_entry_task_to_queue(chain_id, task);
                         } else {
@@ -2900,9 +2911,10 @@ namespace libTAU::blockchain {
                         if (!blk_entry.m_blk.empty()) {
                             auto &chain_id = blk_entry.m_blk.chain_id();
 
+                            kick_out_of_ban_list(chain_id, peer);
                             // check if peer is in ban list
-                            if (is_peer_banned(chain_id, peer))
-                                break;
+//                            if (is_peer_banned(chain_id, peer))
+//                                break;
 
                             add_if_peer_not_in_acl(chain_id, peer);
 

@@ -226,6 +226,8 @@ namespace blockchain {
 
         bool is_peer_banned(const aux::bytes &chain_id, const dht::public_key& peer);
 
+        void kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key& peer);
+
         void ban_peer(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);

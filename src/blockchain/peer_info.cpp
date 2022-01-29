@@ -11,4 +11,29 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
+    std::string peer_info::to_string() const {
+        std::ostringstream os;
+        os << *this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const peer_info &info) {
+        os << "m_score: " << info.m_score << " m_stage: " << info.m_stage
+           << " m_head_block: " << info.m_head_block.block_number() << " m_requests_time: ";
+        for (auto const &item: info.m_requests_time) {
+            os << "key: " << item.first << " value: " << item.second;
+        }
+        return os;
+    }
+
+    std::string ban_info::to_string() const {
+        std::ostringstream os;
+        os << *this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const ban_info &info) {
+        os << "m_ban_times: " << info.m_ban_times << " m_free_time: " << info.m_free_time;
+        return os;
+    }
 }

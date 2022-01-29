@@ -16,6 +16,7 @@ see LICENSE file.
 #include "libTAU/blockchain/vote.hpp"
 #include "libTAU/common/entry_type.hpp"
 #include <libTAU/sha1_hash.hpp>
+#include <ostream>
 
 namespace libTAU::blockchain {
 
@@ -30,6 +31,10 @@ namespace libTAU::blockchain {
         void setStage(STAGE mStage) {
             m_stage = mStage;
         }
+
+        std::string to_string() const;
+
+        friend std::ostream &operator<<(std::ostream &os, const peer_info &info);
 
         int m_score = 30;
 
@@ -61,6 +66,10 @@ namespace libTAU::blockchain {
         void set_free_time(int64_t mFreeTime) {
             m_free_time = mFreeTime;
         }
+
+        std::string to_string() const;
+
+        friend std::ostream &operator<<(std::ostream &os, const ban_info &info);
 
         int m_ban_times = 0;
 
