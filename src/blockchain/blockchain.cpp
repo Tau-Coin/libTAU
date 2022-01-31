@@ -2788,6 +2788,9 @@ namespace libTAU::blockchain {
                             auto &acl = m_access_list[chain_id];
                             auto &peerInfo = acl[peer];
                             peerInfo.m_score += 3;
+                            if (peerInfo.m_score > 100) {
+                                peerInfo.m_score = 100;
+                            }
                             peerInfo.m_requests_time.erase(common::block_request_entry::data_type_id);
                         }
 
@@ -2930,6 +2933,9 @@ namespace libTAU::blockchain {
                             peerInfo.m_score += 5;
                         } else {
                             peerInfo.m_score += 3;
+                        }
+                        if (peerInfo.m_score > 100) {
+                            peerInfo.m_score = 100;
                         }
                         peerInfo.m_head_block = blk_entry.m_blk;
                         peerInfo.m_requests_time.erase(common::head_block_request_entry::data_type_id);
