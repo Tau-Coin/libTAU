@@ -44,7 +44,7 @@ namespace libTAU::blockchain {
 
 //        int m_last_request_time = 0;
 
-        std::map<std::int64_t, int> m_requests_time;
+        std::map<std::int64_t, std::int64_t> m_requests_time;
 
         block m_head_block;
 
