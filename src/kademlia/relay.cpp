@@ -73,6 +73,14 @@ void relay::start()
 		{
 			add_entry(n.id, n.ep(), observer::flag_initial);
 		}
+
+		// fill aux endpoints
+		std::vector<node_entry> aux_nodes;
+		m_node.m_storage.find_relays(target(), aux_nodes, 1, m_node.protocol());
+		for (auto& an : aux_nodes)
+		{
+			add_entry(an.id, an.ep(), observer::flag_initial);
+		}
 	}
 
 	traversal_algorithm::start();

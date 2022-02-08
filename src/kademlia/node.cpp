@@ -679,7 +679,17 @@ void node::send(public_key const& to
 
 	// find relay aux info
 	std::vector<node_entry> l;
-	m_storage.find_relays(dest, l, 1, protocol());
+	std::vector<node_entry> aux_nodes = m_table.find_node(
+		m_id, routing_table::include_pinged);
+	auto const new_end = std::remove_if(aux_nodes.begin(), aux_nodes.end()
+		, [&](node_entry const& ne) { return ne.id == dest; });
+	aux_nodes.erase(new_end, aux_nodes.end());
+	if (aux_nodes.size() > 0)
+	{
+		std::uint32_t const random_max = aux_nodes.size() - 1;
+		std::uint32_t const r = aux::random(random_max);
+		l.push_back(aux_nodes[r]);
+	}
 	ta->add_relays_nodes(l);
 
 	ta->start();

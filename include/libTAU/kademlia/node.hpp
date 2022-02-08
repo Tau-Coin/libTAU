@@ -295,6 +295,7 @@ public:
 	routing_table m_table;
 	rpc_manager m_rpc;
 	aux::listen_socket_handle const m_sock;
+	dht_storage_interface& m_storage;
 
 private:
 
@@ -329,8 +330,6 @@ private:
 	std::array<char, 4> m_secret[2];
 
 	counters& m_counters;
-
-	dht_storage_interface& m_storage;
 
 #ifndef TORRENT_DISABLE_LOGGING
 	std::uint32_t m_search_id = 0;
