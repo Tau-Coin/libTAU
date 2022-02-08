@@ -138,6 +138,7 @@ namespace libTAU {
             if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
             {
                 auto data_type_id = p->integer();
+                log("---------------Got entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                 switch (data_type_id) {
                     case common::message_entry::data_type_id: {
                         common::message_entry msg_entry(payload);
@@ -369,7 +370,7 @@ namespace libTAU {
 //            common::entry_task task1(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now);
 //            m_tasks.insert(task1);
 
-            common::entry_task levenshtein_array_task1(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 100);
+            common::entry_task levenshtein_array_task1(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 1000);
             add_entry_task_to_queue(levenshtein_array_task1);
 
 //            {

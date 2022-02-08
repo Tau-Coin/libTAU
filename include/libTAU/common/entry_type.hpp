@@ -59,29 +59,34 @@ namespace libTAU::common {
                                                               m_entry(std::move(mEntry)), m_timestamp(mTimestamp) {}
 
         bool operator<(const entry_task &rhs) const {
-            if (m_timestamp < rhs.m_timestamp)
-                return true;
-            if (m_timestamp > rhs.m_timestamp)
-                return false;
 
             if (m_data_type_id < rhs.m_data_type_id)
                 return true;
             if (m_data_type_id > rhs.m_data_type_id)
                 return false;
 
+            if (m_data_type_id != 1) {
+                if (m_timestamp < rhs.m_timestamp)
+                    return true;
+                if (m_timestamp > rhs.m_timestamp)
+                    return false;
+            }
+
             if (m_peer < rhs.m_peer)
                 return true;
             if (m_peer > rhs.m_peer)
                 return false;
 
-            std::string encode;
-            bencode(std::back_inserter(encode), m_entry);
-            std::string rhs_encode;
-            bencode(std::back_inserter(encode), rhs.m_entry);
-            if (encode < rhs_encode)
-                return true;
-            if (encode > rhs_encode)
-                return false;
+            if (m_data_type_id != 1) {
+                std::string encode;
+                bencode(std::back_inserter(encode), m_entry);
+                std::string rhs_encode;
+                bencode(std::back_inserter(encode), rhs.m_entry);
+                if (encode < rhs_encode)
+                    return true;
+                if (encode > rhs_encode)
+                    return false;
+            }
 
             return false;
         }
