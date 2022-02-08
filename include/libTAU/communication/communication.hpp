@@ -253,7 +253,7 @@ namespace libTAU {
 
             std::map<dht::public_key, std::int64_t> m_last_greeting;
 
-            std::map<dht::public_key, std::int64_t> m_array_align_time;
+//            std::map<dht::public_key, std::int64_t> m_array_align_time;
 
             // peer access time
 //            std::map<dht::public_key, std::int64_t> m_peer_access_times;

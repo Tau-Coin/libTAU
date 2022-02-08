@@ -30,9 +30,9 @@ namespace libTAU {
 
             m_stop = false;
 
-            for (auto const&peer: m_friends) {
-                request_signal(peer);
-            }
+//            for (auto const&peer: m_friends) {
+//                request_signal(peer);
+//            }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
@@ -88,7 +88,7 @@ namespace libTAU {
                     }
 
                     // get array align time
-                    m_array_align_time[peer] = m_message_db->get_array_align_time(std::make_pair(*pk, peer));
+//                    m_array_align_time[peer] = m_message_db->get_array_align_time(std::make_pair(*pk, peer));
 
                 }
             } catch (std::exception &e) {
@@ -203,8 +203,8 @@ namespace libTAU {
                                     common::message_levenshtein_array_entry::data_type_id, peer, now + 6000);
                             add_entry_task_to_queue(task);
                         } else {
-                            m_array_align_time[peer] = now;
-                            m_message_db->save_array_align_time(std::make_pair(*m_ses.pubkey(), peer), now);
+//                            m_array_align_time[peer] = now;
+//                            m_message_db->save_array_align_time(std::make_pair(*m_ses.pubkey(), peer), now);
                         }
 
                         m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
@@ -620,16 +620,13 @@ namespace libTAU {
                 auto size = m_friends.size();
                 for (auto it = m_friends.begin(); it != m_friends.end(); it++) {
                     auto peer = *it;
-                    if (now > m_last_greeting[peer] + 5 * 60 * 1000) {
-                        if (m_last_greeting[peer] > 0 && now > m_array_align_time[peer] + 24 * 60 * 60 * 1000 && peer != *m_ses.pubkey()) {
-                            m_friends.erase(it);
-                            continue;
-                        }
-
+                    if (now > m_last_greeting[peer] + 2 * 60 * 60 * 1000) {
                         m_last_greeting[peer] = now;
 
                         common::entry_task task(1, 10, 10, common::message_levenshtein_array_entry::data_type_id, peer, now);
                         add_entry_task_to_queue(task);
+
+                        request_signal(peer);
                     }
                 }
 
