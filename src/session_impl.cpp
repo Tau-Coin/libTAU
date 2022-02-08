@@ -1814,6 +1814,7 @@ namespace {
 						, buf.subspan(32).data()
 						, buf.size() - 32);
 					m_decrypted_udp_packet.clear();
+					m_decrypted_ucd_udp_packet.clear();
 
 /*
 #ifndef TORRENT_DISABLE_LOGGING
