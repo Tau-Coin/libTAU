@@ -2723,7 +2723,7 @@ namespace libTAU::blockchain {
     void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {
 
         if(payload.type() != entry::dictionary_t){
-            log("ERROR: relay data not dict. to string: %s", payload.to_string());
+            log("ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
             return;
         }
         // construct mutable data wrapper from entry
