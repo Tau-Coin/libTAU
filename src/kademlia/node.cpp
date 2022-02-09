@@ -1545,7 +1545,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 	if (m_settings.get_bool(settings_pack::dht_non_referrable)) e["nr"] = 1;
 
 	entry& reply = e["r"];
-	// m_rpc.add_our_id(reply);
+	m_rpc.add_our_id(reply);
 	// mirror back the other node's external port
 	reply["p"] = m.addr.port();
 
