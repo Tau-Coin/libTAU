@@ -14,9 +14,11 @@ see LICENSE file.
 #include <libTAU/kademlia/relay.hpp>
 #include <libTAU/kademlia/dht_observer.hpp>
 #include <libTAU/kademlia/node.hpp>
+#include <libTAU/aux_/socket_io.hpp>
 #include <libTAU/aux_/io_bytes.hpp>
 #include <libTAU/aux_/random.hpp>
 #include <libTAU/performance_counters.hpp>
+#include <libTAU/hex.hpp>
 
 namespace libTAU { namespace dht {
 
@@ -79,6 +81,11 @@ void relay::start()
 		m_node.m_storage.find_relays(target(), aux_nodes, 1, m_node.protocol());
 		for (auto& an : aux_nodes)
 		{
+#ifndef TORRENT_DISABLE_LOGGING
+			get_node().observer()->log(dht_logger::traversal, "add relay, id: %s, ep:%s"
+				, aux::to_hex(an.id).c_str()
+				, aux::print_endpoint(an.ep()).c_str());
+#endif
 			add_entry(an.id, an.ep(), observer::flag_initial);
 		}
 	}
