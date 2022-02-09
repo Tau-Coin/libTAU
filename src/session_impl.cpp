@@ -2389,7 +2389,7 @@ namespace {
         std::string const& kvdb_dir = m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
 #else
-        std::string home_dir = std::filesystem::path(getenv("HOME")).string();
+        std::string home_dir = std::filesystem::path(getenv("HOME")).string()+ "/";
         std::string const& kvdb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/kvdb";
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
 #endif
