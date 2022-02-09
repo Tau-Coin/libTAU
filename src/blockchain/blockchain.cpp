@@ -2721,6 +2721,11 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {
+
+        if(payload.type() != entry::dictionary_t){
+            log("ERROR: relay data not dict.");
+            return;
+        }
         // construct mutable data wrapper from entry
         auto now = get_total_milliseconds();
 
