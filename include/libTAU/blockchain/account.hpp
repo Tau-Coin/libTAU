@@ -10,12 +10,21 @@ see LICENSE file.
 #define LIBTAU_ACCOUNT_HPP
 
 #include "libTAU/aux_/common.h"
+#include "libTAU/aux_/export.hpp"
+#include "libTAU/entry.hpp"
+#include "libTAU/bencode.hpp"
+#include "libTAU/bdecode.hpp"
 
 namespace libTAU {
     namespace blockchain {
         class TORRENT_EXPORT account {
         public:
 			account() = default;
+
+            explicit account(const entry& e);
+
+            // @param Construct with bencode
+            explicit account(std::string encode): account(bdecode(encode)) {}
 
             account(int64_t mBalance, int64_t mNonce, int64_t mBlockNumber) : m_balance(mBalance), m_nonce(mNonce),
             m_block_number(mBlockNumber) {}
@@ -37,18 +46,25 @@ namespace libTAU {
 
             int64_t block_number() const { return m_block_number; }
 
+            // @returns the corresponding entry
+            entry get_entry() const;
+
         private:
+
+            // populate message data from entry
+            void populate(const entry& e);
+
             // balance
-            std::int64_t m_balance;
+            std::int64_t m_balance{};
 
             // nonce
-            std::int64_t m_nonce;
+            std::int64_t m_nonce{};
 
             // effective power
-            std::int64_t m_effective_power;
+            std::int64_t m_effective_power{};
 
             // block number
-            std::int64_t m_block_number;
+            std::int64_t m_block_number{};
         };
     }
 }

@@ -12,6 +12,7 @@ see LICENSE file.
 #include <utility>
 
 #include "libTAU/aux_/export.hpp"
+#include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
 #include "libTAU/blockchain/vote.hpp"
 #include "libTAU/communication/message.hpp"
@@ -410,6 +411,37 @@ namespace libTAU::common {
 
         // bytes consist of first byte of ordered messages hash
         aux::bytes m_levenshtein_array;
+    };
+
+    struct TORRENT_EXPORT state_request_entry final : entry_base {
+        // data type id
+        static inline constexpr std::int64_t data_type_id = 13;
+
+        // @param Construct with entry
+        explicit state_request_entry(const entry& e);
+
+        explicit state_request_entry(aux::bytes mChainId) : m_chain_id(std::move(mChainId)) {}
+
+        // @returns the corresponding entry
+        entry get_entry() const override;
+
+        // chain id
+        aux::bytes m_chain_id;
+    };
+
+    struct TORRENT_EXPORT state_entry final : entry_base {
+        // data type id
+        static inline constexpr std::int64_t data_type_id = 14;
+
+        // @param Construct with entry
+        explicit state_entry(const entry& e);
+
+        explicit state_entry(blockchain::account mAct) : m_act(std::move(mAct)) {}
+
+        // @returns the corresponding entry
+        entry get_entry() const override;
+
+        blockchain::account m_act;
     };
 
 }
