@@ -170,11 +170,6 @@ namespace libTAU::dht {
 			, std::function<void(item const&, bool)> cb
 			, std::string salt = std::string());
 
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-		void dht_status(session_status& s);
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif
 		std::vector<lt::dht::dht_status> dht_status() const;
 		void update_stats_counters(counters& c) const;
 

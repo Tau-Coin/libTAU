@@ -140,12 +140,6 @@ public:
 	routing_table(routing_table const&) = delete;
 	routing_table& operator=(routing_table const&) = delete;
 
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-	void status(session_status& s) const;
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif
-
 	void status(std::vector<dht_routing_bucket>& s) const;
 
 	void node_failed(node_id const& id, udp::endpoint const& ep);

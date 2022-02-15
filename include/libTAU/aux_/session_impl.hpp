@@ -495,8 +495,6 @@ namespace aux {
 			void abort_stage2() noexcept;
 
 			session_params session_state(save_state_flags_t flags) const;
-			session_status status() const;
-
 			proxy_settings proxy() const override;
 
 			bool is_dht_running() const { return (m_dht.get() != nullptr); }

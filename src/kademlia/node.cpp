@@ -889,23 +889,6 @@ std::tuple<int, int, int, std::int64_t> node::get_stats_counters() const
 			, m_rpc.num_invoked_requests());
 }
 
-#if TORRENT_ABI_VERSION == 1
-// TODO: 2 use the non deprecated function instead of this one
-void node::status(session_status& s)
-{
-	std::lock_guard<std::mutex> l(m_mutex);
-
-	m_table.status(s);
-	s.dht_total_allocations += m_rpc.num_allocated_observers();
-	for (auto const& r : m_running_requests)
-	{
-		s.active_requests.emplace_back();
-		dht_lookup& lookup = s.active_requests.back();
-		r->status(lookup);
-	}
-}
-#endif
-
 bool node::lookup_peers(sha256_hash const& info_hash, entry& reply
 	, bool noseed, bool scrape, address const& requester) const
 {

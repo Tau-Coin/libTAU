@@ -110,10 +110,6 @@ namespace libTAU {
 		// session state
 		session_params session_state(save_state_flags_t flags = save_state_flags_t::all()) const;
 
-		// returns session wide-statistics and status. For more information, see
-        // the ``session_status`` struct.
-		libTAU::session_status status() const;
-
 		// This function will post a session_stats_alert object, containing a
 		// snapshot of the performance counters from the internals of libTAU.
 		// To interpret these counters, query the session via

@@ -225,12 +225,6 @@ public:
 
 	std::tuple<int, int, int, std::int64_t> get_stats_counters() const;
 
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-	void status(libTAU::session_status& s);
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif
-
 	aux::session_settings const& settings() const { return m_settings; }
 	counters& stats_counters() const { return m_counters; }
 

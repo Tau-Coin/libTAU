@@ -278,31 +278,6 @@ void routing_table::status(std::vector<dht_routing_bucket>& s) const
 	}
 }
 
-#if TORRENT_ABI_VERSION == 1
-// TODO: 2 use the non deprecated function instead of this one
-void routing_table::status(session_status& s) const
-{
-	auto const [dht_nodes, dht_node_cache, ignore] = size();
-	s.dht_nodes += dht_nodes;
-	s.dht_node_cache += dht_node_cache;
-	// TODO: arvidn note
-	// when it's across IPv4 and IPv6, adding (dht_global_nodes) would
-	// make sense. in the future though, where we may have one DHT node
-	// per external interface (which may be multiple of the same address
-	// family), then it becomes a bit trickier
-	s.dht_global_nodes += num_global_nodes();
-
-	for (auto const& i : m_buckets)
-	{
-		dht_routing_bucket b;
-		b.num_nodes = int(i.live_nodes.size());
-		b.num_replacements = int(i.replacements.size());
-		b.last_active = 0;
-		s.dht_routing_table.push_back(b);
-	}
-}
-#endif
-
 std::tuple<int, int, int> routing_table::size() const
 {
 	int nodes = 0;

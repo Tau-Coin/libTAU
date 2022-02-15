@@ -191,23 +191,6 @@ namespace libTAU::dht {
 		m_host_resolver.cancel();
 	}
 
-#if TORRENT_ABI_VERSION == 1
-	void dht_tracker::dht_status(session_status& s)
-	{
-		s.dht_torrents = 0;
-
-		s.dht_nodes = 0;
-		s.dht_node_cache = 0;
-		s.dht_global_nodes = 0;
-		s.dht_torrents = 0;
-		s.active_requests.clear();
-		s.dht_total_allocations = 0;
-
-		for (auto& n : m_nodes)
-			n.second.dht.status(s);
-	}
-#endif
-
 	std::vector<lt::dht::dht_status> dht_tracker::dht_status() const
 	{
 		std::vector<lt::dht::dht_status> ret;
