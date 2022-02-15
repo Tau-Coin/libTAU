@@ -1622,5 +1622,21 @@ namespace {
 #endif
 	}
 
+    blockchain_state_alert::blockchain_state_alert(aux::stack_allocator&
+            , blockchain::account t)
+            : act(t)
+    {}
+
+    std::string blockchain_state_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char buffer[256];
+        std::snprintf(buffer, sizeof(buffer), "post state alert");
+        return buffer;
+#endif
+    }
+
 
 } // namespace libTAU

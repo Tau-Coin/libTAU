@@ -436,10 +436,13 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit state_entry(const entry& e);
 
-        explicit state_entry(blockchain::account mAct) : m_act(std::move(mAct)) {}
+        state_entry(aux::bytes mChainId, const blockchain::account &mAct) : m_chain_id(std::move(mChainId)), m_act(mAct) {}
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        // chain id
+        aux::bytes m_chain_id;
 
         blockchain::account m_act;
     };

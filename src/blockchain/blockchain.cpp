@@ -78,6 +78,12 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    void blockchain::request_state(const aux::bytes &chain_id) {
+        common::state_request_entry stateRequestEntry(chain_id);
+        common::entry_task task(common::state_request_entry::data_type_id, stateRequestEntry.get_entry());
+        add_entry_task_to_queue(chain_id, task);
+    }
+
     bool blockchain::followChain(const chain_url &url) {
         return followChain(url.chain_id(), url.peers());
     }
@@ -2957,6 +2963,37 @@ namespace libTAU::blockchain {
                         }
 
                         try_to_update_visiting_peer(chain_id, peer);
+                    }
+
+                    break;
+                }
+                case common::state_request_entry::data_type_id: {
+                    common::state_request_entry stateRequestEntry(payload);
+                    auto &chain_id = stateRequestEntry.m_chain_id;
+
+                    log("INFO: chain[%s] request state", aux::toHex(chain_id).c_str());
+
+                    auto act = m_repository->get_account(chain_id, peer);
+
+                    if (!act.empty()) {
+                        common::state_entry stateEntry(chain_id, act);
+                        common::entry_task task(common::state_entry::data_type_id, peer, stateEntry.get_entry());
+                        add_entry_task_to_queue(chain_id, task);
+                    }
+
+                    break;
+                }
+                case common::state_entry::data_type_id: {
+                    common::state_entry stateEntry(payload);
+                    auto &chain_id = stateEntry.m_chain_id;
+
+                    log("INFO: chain[%s] Got state",
+                        aux::toHex(chain_id).c_str());
+
+                    auto &act = stateEntry.m_act;
+
+                    if (!act.empty()) {
+                        m_ses.alerts().emplace_alert<blockchain_state_alert>(act);
                     }
 
                     break;

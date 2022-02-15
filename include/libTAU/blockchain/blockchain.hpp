@@ -132,6 +132,8 @@ namespace blockchain {
         // mutable data is pushed here
         void on_dht_relay(dht::public_key const& peer, entry const& payload);
 
+        void request_state(const aux::bytes &chain_id);
+
 
     private:
         // initialize member variables

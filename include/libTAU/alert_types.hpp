@@ -43,6 +43,7 @@ see LICENSE file.
 #include "libTAU/aux_/deprecated.hpp"
 #include "libTAU/aux_/common.h"
 #include "libTAU/communication/message.hpp"
+#include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
 #include "libTAU/blockchain/transaction.hpp"
 #include "libTAU/blockchain/vote.hpp"
@@ -1440,6 +1441,22 @@ namespace libTAU {
 
         // message found from peers.
         libTAU::blockchain::transaction tx;
+    };
+
+    // this alert is posted when get state from other peers.
+    struct TORRENT_EXPORT blockchain_state_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_state_alert(aux::stack_allocator& alloc, libTAU::blockchain::account t);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_state_alert, 46, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // state from peers.
+        libTAU::blockchain::account act;
     };
 
 
