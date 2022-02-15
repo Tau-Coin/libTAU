@@ -2852,6 +2852,12 @@ namespace {
 		}
 	}
 
+	void session_impl::request_chain_state(const aux::bytes &chain_id) {
+		if(m_blockchain) {
+			return m_blockchain->request_state(chain_id);
+		}
+	}
+
 	void session_impl::set_dht_state(dht::dht_state&& state)
 	{
 		m_dht_state = std::move(state);

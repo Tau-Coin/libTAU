@@ -620,6 +620,8 @@ namespace aux {
         	std::int64_t get_median_tx_free(const aux::bytes &chain_id);
         	blockchain::block get_block_by_number(const aux::bytes &chain_id, std::int64_t block_number);
         	blockchain::block get_block_by_hash(const aux::bytes &chain_id, sha256_hash block_hash);
+        	void request_chain_state(const aux::bytes &chain_id);
+
 			std::int64_t session_current_time_ms() const
 			{
 				return m_session_time;
