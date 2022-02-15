@@ -1311,7 +1311,7 @@ namespace {
 		"blockchain_new_tip_block_alert", "blockchain_new_tail_block_alert",
 		"blockchain_new_consensus_point_block_alert","blockchain_rollback_block_alert",
 		"blockchain_fork_point_block_alert","blockchain_top_three_votes_alert",
-		"blockchain_new_transaction_alert"
+		"blockchain_new_transaction_alert", "blockchain_state_alert"
 		}};
 
 		TORRENT_ASSERT(alert_type >= 0);

@@ -75,7 +75,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 46;
+	constexpr int num_alert_types = 47;
 
 	// internal
 	constexpr int abi_alert_count = 128;
