@@ -42,7 +42,7 @@ struct TORRENT_EXTRA_EXPORT null_observer : observer
 	null_observer(std::shared_ptr<traversal_algorithm> a
 		, udp::endpoint const& ep, node_id const& id)
 		: observer(std::move(a), ep, id) {}
-	void reply(msg const&) override { flags |= flag_done; }
+	void reply(msg const&, node_id const&) override { flags |= flag_done; }
 };
 
 class routing_table;
@@ -63,13 +63,11 @@ public:
 
 	// returns true if the node needs a refresh
 	// if so, id is assigned the node id to refresh
-	bool incoming(msg const&, node_id* id);
+	bool incoming(msg const&, node_id const& nid);
 	time_duration tick();
 
 	bool invoke(entry& e, udp::endpoint const& target
 		, observer_ptr o, bool discard_response = false);
-
-	void add_our_id(entry& e);
 
 #if TORRENT_USE_ASSERTS
 	size_t allocation_size() const;

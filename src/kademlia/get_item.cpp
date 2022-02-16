@@ -190,7 +190,7 @@ void get_item::done()
 	find_data::done();
 }
 
-void get_item_observer::reply(msg const& m)
+void get_item_observer::reply(msg const& m, node_id const& from)
 {
 	public_key pk{};
 	signature sig{};
@@ -232,7 +232,7 @@ void get_item_observer::reply(msg const& m)
 		static_cast<get_item*>(algorithm())->got_data(v, pk, ts, sig);
 	}
 
-	find_data_observer::reply(m);
+	find_data_observer::reply(m, from);
 }
 
 } } // namespace libTAU::dht

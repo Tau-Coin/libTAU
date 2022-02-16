@@ -51,7 +51,7 @@ struct TORRENT_EXTRA_EXPORT observer
 	virtual ~observer();
 
 	// this is called when a reply is received
-	virtual void reply(msg const& m) = 0;
+	virtual void reply(msg const& m, node_id const& from) = 0;
 
 	// this is called if no response has been received after
 	// a few seconds, before the request has timed out

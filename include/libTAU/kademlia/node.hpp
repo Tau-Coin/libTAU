@@ -102,8 +102,6 @@ public:
 		, find_data::nodes_callback const& f);
 	void add_router_node(node_entry const& router);
 
-	void add_our_id(entry& e);
-
 	void unreachable(udp::endpoint const& ep);
 	void incoming(aux::listen_socket_handle const& s, msg const& m, node_id const& from);
 	void incoming_decryption_error(aux::listen_socket_handle const& s
@@ -261,13 +259,13 @@ private:
 	std::set<traversal_algorithm*> m_running_requests;
 
 	std::tuple<bool, bool> incoming_request(msg const&, entry&
-		, node_id *from, node_id *to, udp::endpoint *to_ep);
+		, node_id const& id, node_id *to, udp::endpoint *to_ep);
 
-	void push(node_id const& to, udp::endpoint const& to_ep, msg const& m);
+	void push(node_id const& to, udp::endpoint const& to_ep, msg const& m, node_id const& from);
 
-	bool incoming_push(msg const& m, entry& e, node_id *from, item& i);
+	bool incoming_push(msg const& m, entry& e, node_id const& from, item& i);
 
-	void incoming_push_ourself(msg const& m);
+	void incoming_push_ourself(msg const& m, node_id const& from);
 
 	void incoming_push_error(const char* err_str);
 

@@ -221,11 +221,6 @@ void node::unreachable(udp::endpoint const& ep)
 	m_rpc.unreachable(ep);
 }
 
-void node::add_our_id(entry& e)
-{
-	e["id"] = m_id.to_string();
-}
-
 void node::incoming_decryption_error(aux::listen_socket_handle const& s
 	, udp::endpoint const& ep, sha256_hash const& pk)
 {
@@ -241,7 +236,6 @@ void node::incoming_decryption_error(aux::listen_socket_handle const& s
 	l.emplace_back(protocol_decryption_error);
 
 	entry& a = e["a"];
-	add_our_id(a);
 
 	m_sock_man->send_packet(m_sock, e, ep, pk);
 }
@@ -254,13 +248,6 @@ void node::handle_decryption_error(msg const& m)
 		return;
 	}
 
-	bdecode_node const node_id_ent = a_ent.dict_find_string("id");
-	if (!node_id_ent || node_id_ent.string_length() != 32)
-	{
-		return;
-	}
-
-	node_id const nid = node_id(node_id_ent.string_ptr());
 	// TODO: update routing table
 }
 
@@ -307,8 +294,7 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 	{
 		case 'r':
 		{
-			node_id id;
-			m_rpc.incoming(m, &id);
+			m_rpc.incoming(m, from);
 			break;
 		}
 		case 'q':
@@ -333,13 +319,12 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			 */
 
 			entry e;
-			node_id from;
 			node_id to;
 			bool need_response;
 			bool need_push;
 			udp::endpoint to_ep;
 
-			std::tie(need_response, need_push) = incoming_request(m, e, &from, &to, &to_ep);
+			std::tie(need_response, need_push) = incoming_request(m, e, from, &to, &to_ep);
 			if (need_response)
 			{
 				m_sock_man->send_packet(m_sock, e, m.addr, from);
@@ -347,7 +332,7 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			if (need_push)
 			{
 				// push message
-				push(to, to_ep, m);
+				push(to, to_ep, m, from);
 			}
 			break;
 		}
@@ -360,9 +345,8 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			if (s != m_sock) return;
 
 			entry e;
-			node_id from;
 			item i;
-			bool need_resp = incoming_push(m, e, &from, i);
+			bool need_resp = incoming_push(m, e, from, i);
 			if (need_resp)
 			{
 				m_sock_man->send_packet(m_sock, e, m.addr, from);
@@ -430,8 +414,7 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 				}
 			}
 #endif
-			node_id id;
-			m_rpc.incoming(m, &id);
+			m_rpc.incoming(m, from);
 			break;
 		}
 	}
@@ -743,7 +726,7 @@ struct ping_observer : observer
 	{}
 
 	// parses out "nodes"
-	void reply(msg const& m) override
+	void reply(msg const& m, node_id const& from) override
 	{
 		flags |= flag_done;
 
@@ -913,7 +896,7 @@ entry write_nodes_entry(std::vector<node_entry> const& nodes)
 
 // build response
 std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
-	, node_id *from, node_id *to, udp::endpoint *to_ep)
+	, node_id const& id, node_id *to, udp::endpoint *to_ep)
 {
 	bool need_response = true;
 	bool need_push = false;
@@ -928,10 +911,9 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{"ro", bdecode_node::int_t, 0, key_desc_t::optional},
 		{"nr", bdecode_node::int_t, 0, key_desc_t::optional},
 		{"a", bdecode_node::dict_t, 0, key_desc_t::parse_children},
-			{"id", bdecode_node::string_t, 32, key_desc_t::last_child},
 	};
 
-	bdecode_node top_level[5];
+	bdecode_node top_level[4];
 	char error_string[200];
 	if (!verify_message(m.message, top_desc, top_level, error_string))
 	{
@@ -944,13 +926,10 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 	bdecode_node const arg_ent = top_level[3];
 	bool const read_only = top_level[1] && top_level[1].int_value() != 0;
 	bool const non_referrable = top_level[2] && top_level[2].int_value() != 0;
-	node_id const id(top_level[4].string_ptr());
-	*from = id;
 
 	// m_table.heard_about(id, m.addr);
 
 	entry& reply = e["r"];
-	m_rpc.add_our_id(reply);
 
 	// mirror back the other node's external port
 	reply["p"] = m.addr.port();
@@ -1320,16 +1299,16 @@ struct push_observer : observer
 		: observer(std::move(algorithm), ep, id)
 	{}
 
-	void reply(msg const& m) override
+	void reply(msg const& m, node_id const& from) override
 	{}
 };
 
-void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m)
+void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m, node_id const& from)
 {
 	// don't push to ourself
 	if (to == m_id)
 	{
-		incoming_push_ourself(m);
+		incoming_push_ourself(m, from);
 		return;
 	}
 
@@ -1340,7 +1319,6 @@ void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m)
 	entry e(m.message);
 	e["y"] = "p";
 	entry& reply = e["r"];
-	m_rpc.add_our_id(reply);
 
 	// create a dummy traversal_algorithm
 	auto algo = std::make_shared<traversal_algorithm>(*this, to);
@@ -1353,17 +1331,16 @@ void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m)
 	m_rpc.invoke(e, to_ep, o);
 }
 
-void node::incoming_push_ourself(msg const& m)
+void node::incoming_push_ourself(msg const& m, node_id const& from)
 {
 	entry e;
-	node_id from;
 	item i;
 
-	incoming_push(m, e, &from, i);
+	incoming_push(m, e, from, i);
 	if (m_observer && !i.empty()) m_observer->on_dht_item(i);
 }
 
-bool node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
+bool node::incoming_push(msg const& m, entry& e, node_id const& id, item& i)
 {
 	e = entry(entry::dictionary_t);
 	e["y"] = "r";
@@ -1372,7 +1349,6 @@ bool node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 	if (m_settings.get_bool(settings_pack::dht_non_referrable)) e["nr"] = 1;
 
 	entry& reply = e["r"];
-	m_rpc.add_our_id(reply);
 	// mirror back the other node's external port
 	reply["p"] = m.addr.port();
 
@@ -1381,10 +1357,9 @@ bool node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 		{"ro", bdecode_node::int_t, 0, key_desc_t::optional},
 		{"nr", bdecode_node::int_t, 0, key_desc_t::optional},
 		{"a", bdecode_node::dict_t, 0, key_desc_t::parse_children},
-			{"id", bdecode_node::string_t, 32, key_desc_t::last_child},
 	};
 
-	bdecode_node top_level[5];
+	bdecode_node top_level[4];
 	char error_string[200];
 	if (!verify_message(m.message, top_desc, top_level, error_string))
 	{
@@ -1392,8 +1367,6 @@ bool node::incoming_push(msg const& m, entry& e, node_id *from, item& i)
 		return true;
 	}
 
-	node_id const id(top_level[4].string_ptr());
-	*from = id;
 	bool const read_only = top_level[1] && top_level[1].int_value() != 0;
 	bool const non_referrable = top_level[2] && top_level[2].int_value() != 0;
 	if (!read_only)
@@ -1528,7 +1501,6 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 	if (m_settings.get_bool(settings_pack::dht_non_referrable)) e["nr"] = 1;
 
 	entry& reply = e["r"];
-	m_rpc.add_our_id(reply);
 	// mirror back the other node's external port
 	reply["p"] = m.addr.port();
 

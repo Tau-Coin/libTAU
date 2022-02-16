@@ -179,7 +179,7 @@ struct traversal_observer : observer
 	{}
 
 	// parses out "nodes" and keeps traversing
-	void reply(msg const&) override;
+	void reply(msg const&, node_id const&) override;
 };
 
 } // namespace dht

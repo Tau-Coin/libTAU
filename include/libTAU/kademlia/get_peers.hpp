@@ -48,10 +48,10 @@ struct get_peers_observer : find_data_observer
 		: find_data_observer(std::move(algorithm), ep, id)
 	{}
 
-	void reply(msg const&) override;
+	void reply(msg const&, node_id const&) override;
 #ifndef TORRENT_DISABLE_LOGGING
 private:
-	void log_peers(msg const& m, bdecode_node const& r, int size) const;
+	void log_peers(msg const& m, bdecode_node const& r, int size, node_id const& from) const;
 #endif
 };
 

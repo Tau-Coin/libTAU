@@ -20,7 +20,7 @@ see LICENSE file.
 
 namespace libTAU { namespace dht {
 
-void put_data_observer::reply(msg const& m)
+void put_data_observer::reply(msg const& m, node_id const& from)
 {
     bdecode_node const r = m.message.dict_find_dict("r");
     if (!r)
@@ -33,19 +33,8 @@ void put_data_observer::reply(msg const& m)
         return;
     }
 
-    bdecode_node const id = r.dict_find_string("id");
-    if (!id || id.string_length() != 32)
-    {
-#ifndef TORRENT_DISABLE_LOGGING
-        get_observer()->log(dht_logger::traversal, "[%u] invalid id in response"
-            , algorithm()->id());
-#endif
-        timeout();
-        return;
-    }
-
 	// For putting mutable item, add refer nodes into routing table.
-    traversal_observer::reply(m);
+    traversal_observer::reply(m, from);
     done();
 }
 

@@ -59,7 +59,7 @@ struct find_data_observer : traversal_observer
 		: traversal_observer(std::move(algorithm), ep, id)
 	{}
 
-	void reply(msg const&) override;
+	void reply(msg const&, node_id const&) override;
 };
 
 } // namespace dht

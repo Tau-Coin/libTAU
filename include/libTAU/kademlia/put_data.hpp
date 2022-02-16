@@ -64,7 +64,7 @@ struct put_data_observer : traversal_observer
 	{
 	}
 
-	void reply(msg const&) override;
+	void reply(msg const&, node_id const&) override;
 };
 
 } // namespace dht

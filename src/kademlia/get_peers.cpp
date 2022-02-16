@@ -25,7 +25,7 @@ see LICENSE file.
 
 namespace libTAU::dht {
 
-void get_peers_observer::reply(msg const& m)
+void get_peers_observer::reply(msg const& m, node_id const& from)
 {
 	bdecode_node const r = m.message.dict_find_dict("r");
 	if (!r)
@@ -51,7 +51,7 @@ void get_peers_observer::reply(msg const& m)
 			char const* end = peers + n.list_at(0).string_length();
 
 #ifndef TORRENT_DISABLE_LOGGING
-			log_peers(m, r, int((end - peers) / 6));
+			log_peers(m, r, int((end - peers) / 6), from);
 #endif
 			while (end - peers >= 6)
 				peer_list.push_back(aux::read_v4_endpoint<tcp::endpoint>(peers));
@@ -61,33 +61,30 @@ void get_peers_observer::reply(msg const& m)
 			// assume it's uTorrent/libTAU format
 			peer_list = aux::read_endpoint_list<tcp::endpoint>(n);
 #ifndef TORRENT_DISABLE_LOGGING
-			log_peers(m, r, n.list_size());
+			log_peers(m, r, n.list_size(), from);
 #endif
 		}
 		static_cast<get_peers*>(algorithm())->got_peers(peer_list);
 	}
 
-	find_data_observer::reply(m);
+	find_data_observer::reply(m, from);
 }
 #ifndef TORRENT_DISABLE_LOGGING
-void get_peers_observer::log_peers(msg const& m, bdecode_node const& r, int const size) const
+void get_peers_observer::log_peers(msg const& m, bdecode_node const& r
+	, int const size, node_id const& from) const
 {
 			auto* logger = get_observer();
 			if (logger != nullptr && logger->should_log(dht_logger::traversal))
 			{
-				bdecode_node const id = r.dict_find_string("id");
-				if (id && id.string_length() == 32)
-				{
-					logger->log(dht_logger::traversal, "[%u] PEERS "
-						"invoke-count: %d branch-factor: %d addr: %s id: %s distance: %d p: %d"
-						, algorithm()->id()
-						, algorithm()->invoke_count()
-						, algorithm()->branch_factor()
-						, aux::print_endpoint(m.addr).c_str()
-						, aux::to_hex({id.string_ptr(), id.string_length()}).c_str()
-						, distance_exp(algorithm()->target(), node_id(id.string_ptr()))
-						, size);
-				}
+				logger->log(dht_logger::traversal, "[%u] PEERS "
+					"invoke-count: %d branch-factor: %d addr: %s id: %s distance: %d p: %d"
+					, algorithm()->id()
+					, algorithm()->invoke_count()
+					, algorithm()->branch_factor()
+					, aux::print_endpoint(m.addr).c_str()
+					, aux::to_hex({from.data(), 32}).c_str()
+					, distance_exp(algorithm()->target(), from)
+					, size);
 			}
 }
 #endif

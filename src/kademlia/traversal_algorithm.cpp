@@ -898,7 +898,7 @@ void look_for_nodes(char const* nodes_key, udp const& protocol, bdecode_node con
 	}
 }
 
-void traversal_observer::reply(msg const& m)
+void traversal_observer::reply(msg const& m, node_id const& from)
 {
 	bdecode_node const r = m.message.dict_find_dict("r");
 	if (!r)
@@ -914,8 +914,6 @@ void traversal_observer::reply(msg const& m)
 		return;
 	}
 
-	bdecode_node const id = r.dict_find_string("id");
-
 #ifndef TORRENT_DISABLE_LOGGING
 	dht_observer* logger = get_observer();
 	if (logger != nullptr && logger->should_log(dht_logger::traversal))
@@ -923,7 +921,7 @@ void traversal_observer::reply(msg const& m)
         // Because node id has 32 bytes, and corresponding hex string
         // length is 64. So here allocate 64 + 1 bytes.
 		char hex_id[65];
-		aux::to_hex({id.string_ptr(), 32}, hex_id);
+		aux::to_hex({from.data(), 32}, hex_id);
 		logger->log(dht_logger::traversal
 			, "[%u] RESPONSE id: %s invoke-count: %d addr: %s type: %s"
 			, algorithm()->id(), hex_id, algorithm()->invoke_count()
@@ -934,21 +932,9 @@ void traversal_observer::reply(msg const& m)
 	look_for_nodes(algorithm()->get_node().protocol_nodes_key(), algorithm()->get_node().protocol(), r,
 		[this](node_endpoint const& nep) { algorithm()->traverse(nep.id, nep.ep); });
 
-	if (!id || id.string_length() != 32)
-	{
-#ifndef TORRENT_DISABLE_LOGGING
-		if (get_observer() != nullptr)
-		{
-			get_observer()->log(dht_logger::traversal, "[%u] invalid id in response"
-				, algorithm()->id());
-		}
-#endif
-		return;
-	}
-
 	// in case we didn't know the id of this peer when we sent the message to
 	// it. For instance if it's a bootstrap node.
-	set_id(node_id(id.string_ptr()));
+	set_id(from);
 }
 
 } // namespace libTAU::dht

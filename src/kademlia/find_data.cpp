@@ -24,7 +24,7 @@ see LICENSE file.
 
 namespace libTAU::dht {
 
-void find_data_observer::reply(msg const& m)
+void find_data_observer::reply(msg const& m, node_id const& from)
 {
 	bdecode_node const r = m.message.dict_find_dict("r");
 	if (!r)
@@ -37,24 +37,14 @@ void find_data_observer::reply(msg const& m)
 		return;
 	}
 
-	bdecode_node const id = r.dict_find_string("id");
-	if (!id || id.string_length() != 32)
-	{
-#ifndef TORRENT_DISABLE_LOGGING
-		get_observer()->log(dht_logger::traversal, "[%u] invalid id in response"
-			, algorithm()->id());
-#endif
-		timeout();
-		return;
-	}
 	bdecode_node const token = r.dict_find_string("token");
 	if (token)
 	{
 		static_cast<find_data*>(algorithm())->got_write_token(
-			node_id(id.string_ptr()), std::string(token.string_value()));
+			from, std::string(token.string_value()));
 	}
 
-	traversal_observer::reply(m);
+	traversal_observer::reply(m, from);
 	done();
 }
 

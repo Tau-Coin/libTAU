@@ -217,7 +217,7 @@ void rpc_manager::unreachable(udp::endpoint const& ep)
 	}
 }
 
-bool rpc_manager::incoming(msg const& m, node_id* id)
+bool rpc_manager::incoming(msg const& m, node_id const& nid)
 {
 	INVARIANT_CHECK;
 
@@ -301,14 +301,14 @@ bool rpc_manager::incoming(msg const& m, node_id* id)
 			}
 		}
 #endif
-		// Logically, we should call o->reply(m) since we get a reply.
+		// Logically, we should call o->reply(m, from) since we get a reply.
 		// a reply could be "response" or "error", here the reply is an "error".
 		// if the reply is an "error", basically the observer could/will
 		// do nothing with it, especially when observer::reply() is intended to
 		// handle a "response", not an "error".
 		// A "response" should somehow call algorithm->finished(), and an error/timeout
 		// should call algorithm->failed(). From this point of view,
-		// we should call o->timeout() instead of o->reply(m) because o->reply()
+		// we should call o->timeout() instead of o->reply(m, from) because o->reply()
 		// will call algorithm->finished().
 		o->timeout();
 		return false;
@@ -321,15 +321,6 @@ bool rpc_manager::incoming(msg const& m, node_id* id)
 		return false;
 	}
 
-	bdecode_node const node_id_ent = ret_ent.dict_find_string("id");
-	if (!node_id_ent || node_id_ent.string_length() != 32)
-	{
-		o->timeout();
-		return false;
-	}
-
-	node_id const nid = node_id(node_id_ent.string_ptr());
-
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_log->should_log(dht_logger::rpc_manager))
 	{
@@ -338,8 +329,7 @@ bool rpc_manager::incoming(msg const& m, node_id* id)
 			, aux::print_endpoint(m.addr).c_str());
 	}
 #endif
-	o->reply(m);
-	*id = nid;
+	o->reply(m, nid);
 
 	int rtt = int(total_milliseconds(now - o->sent()));
 
@@ -348,7 +338,7 @@ bool rpc_manager::incoming(msg const& m, node_id* id)
 
 	// we found an observer for this reply, hence the node is not spoofing
 	// add it to the routing table
-	return m_table.node_seen(*id, m.addr, rtt, non_referrable);
+	return m_table.node_seen(nid, m.addr, rtt, non_referrable);
 }
 
 time_duration rpc_manager::tick()
@@ -417,11 +407,6 @@ time_duration rpc_manager::tick()
 	return std::max(ret, duration_cast<time_duration>(milliseconds(200)));
 }
 
-void rpc_manager::add_our_id(entry& e)
-{
-	e["id"] = m_our_id.to_string();
-}
-
 bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 	, observer_ptr o, bool discard_response)
 {
@@ -433,16 +418,6 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 	if (e.find_key("y") == nullptr)
 	{
 		e["y"] = "q";
-		add_our_id(a);
-	}
-	else
-	{
-		auto ye = e.find_key("y");
-		std::string yt = ye->string();
-		// if (yt != "h")
-		//{
-			add_our_id(a);
-		//}
 	}
 
 	std::string transaction_id;

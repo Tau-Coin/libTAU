@@ -22,7 +22,7 @@ see LICENSE file.
 
 namespace libTAU { namespace dht {
 
-void relay_observer::reply(msg const& m)
+void relay_observer::reply(msg const& m, node_id const& from)
 {
     bdecode_node const r = m.message.dict_find_dict("r");
     if (!r)
@@ -36,7 +36,7 @@ void relay_observer::reply(msg const& m)
     }
 
 	// add referred nodes into routing table.
-    traversal_observer::reply(m);
+    traversal_observer::reply(m, from);
     done();
 }
 
