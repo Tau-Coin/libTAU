@@ -908,6 +908,7 @@ COMMUNICATION_SOURCES =
 	;
 
 BLOCKCHAIN_SOURCES =
+    account
 	account_block_pointer
 	block
 	blockchain
