@@ -1447,13 +1447,15 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_state_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_state_alert(aux::stack_allocator& alloc, libTAU::blockchain::account t);
+        TORRENT_UNEXPORT blockchain_state_alert(aux::stack_allocator& alloc, aux::bytes id, libTAU::blockchain::account t);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_state_alert, 46, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::blockchain;
 
         std::string message() const override;
+
+        aux::bytes chain_id;
 
         // state from peers.
         libTAU::blockchain::account act;

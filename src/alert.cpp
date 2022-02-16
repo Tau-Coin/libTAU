@@ -1623,8 +1623,8 @@ namespace {
 	}
 
     blockchain_state_alert::blockchain_state_alert(aux::stack_allocator&
-            , blockchain::account t)
-            : act(t)
+            , aux::bytes id, blockchain::account t)
+            : chain_id(std::move(id)), act(t)
     {}
 
     std::string blockchain_state_alert::message() const
@@ -1633,7 +1633,7 @@ namespace {
         return {};
 #else
         char buffer[256];
-        std::snprintf(buffer, sizeof(buffer), "post state alert");
+        std::snprintf(buffer, sizeof(buffer), "chain[%s] post state alert", aux::toHex(chain_id).c_str());
         return buffer;
 #endif
     }

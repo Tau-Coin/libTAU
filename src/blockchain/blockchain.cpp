@@ -2993,7 +2993,7 @@ namespace libTAU::blockchain {
                     auto &act = stateEntry.m_act;
 
                     if (!act.empty()) {
-                        m_ses.alerts().emplace_alert<blockchain_state_alert>(act);
+                        m_ses.alerts().emplace_alert<blockchain_state_alert>(chain_id, act);
                     }
 
                     break;
