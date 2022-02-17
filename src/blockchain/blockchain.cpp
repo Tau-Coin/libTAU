@@ -979,8 +979,8 @@ namespace libTAU::blockchain {
             auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
             auto hit = consensus::calculate_random_hit(genSig);
             auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, power));
-            log("INFO: chain id[%s] generation signature[%s], base target[%lu], hit[%lu]",
-                aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
+//            log("INFO: chain id[%s] generation signature[%s], base target[%lu], hit[%lu]",
+//                aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
 
             std::int64_t now = get_total_milliseconds() / 1000; // second
             if (now >= head_block.timestamp() + interval) {
@@ -1028,6 +1028,8 @@ namespace libTAU::blockchain {
                           peers_balance[tx.sender()], peers_nonce[tx.sender()],
                           peers_balance[tx.receiver()], peers_nonce[tx.receiver()]);
                 b.sign(*pk, *sk);
+            } else {
+                log("INFO: chain id[%s] left time[%ld]s", aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - now);
             }
         }
 
