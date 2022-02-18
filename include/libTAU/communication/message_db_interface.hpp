@@ -56,6 +56,33 @@ namespace libTAU {
             // delete array align time by key pair<my public key, peer public key>
             virtual bool delete_array_align_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
 
+            // get last detection by key pair<my public key, peer public key>
+            virtual std::int64_t get_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
+
+            // save last detection time
+            virtual bool save_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key, std::int64_t timestamp) = 0;
+
+            // delete last detection time by key pair<my public key, peer public key>
+            virtual bool delete_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
+
+            // get last communication time by key pair<my public key, peer public key>
+            virtual std::int64_t get_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
+
+            // save last communication time
+            virtual bool save_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key, std::int64_t timestamp) = 0;
+
+            // delete last communication time by key pair<my public key, peer public key>
+            virtual bool delete_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
+
+            // get levenshtein array by key pair<my public key, peer public key>
+            virtual aux::bytes get_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key) = 0;
+
+            // save levenshtein array
+            virtual bool save_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key, aux::bytes levenshtein_array) = 0;
+
+            // delete levenshtein array by key pair<my public key, peer public key>
+            virtual bool delete_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key) = 0;
+
             // get message by hash
             virtual communication::message get_message(const sha256_hash &hash) = 0;
 

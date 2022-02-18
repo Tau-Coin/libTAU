@@ -68,6 +68,27 @@ namespace libTAU {
             // delete encode of the latest message hash list by key pair<my public key, peer public key>
             bool delete_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) override;
 
+            int64_t get_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key) override;
+
+            bool save_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key,
+                                          std::int64_t timestamp) override;
+
+            bool delete_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key) override;
+
+            int64_t get_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key) override;
+
+            bool save_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key,
+                                              std::int64_t timestamp) override;
+
+            bool delete_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key) override;
+
+            aux::bytes get_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key) override;
+
+            bool save_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key,
+                                        aux::bytes levenshtein_array) override;
+
+            bool delete_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key) override;
+
         private:
 
             // sqlite3 instance

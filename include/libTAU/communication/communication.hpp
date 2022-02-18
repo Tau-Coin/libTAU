@@ -64,6 +64,11 @@ namespace libTAU {
         // data accepted time(6h)(ms)
         constexpr std::int64_t communication_data_accepted_time = 6 * 60 * 60 * 1000;
 
+        enum PEER_STATUS {
+            DETECT,
+            SEND,
+        };
+
 //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
         // This is the basic logging and debug interface offered by the communication.
         // a release build with logging disabled (which is the default) will
@@ -178,7 +183,7 @@ namespace libTAU {
             // make a salt on mutable channel
             static std::string make_salt(dht::public_key peer);
 
-            void process_payload(dht::public_key const& peer, entry const& payload);
+            void process_payload(dht::public_key const& peer, entry const& payload, bool is_cache);
 
             // make online signal
 //            online_signal make_signal(const dht::public_key &peer);
@@ -225,6 +230,16 @@ namespace libTAU {
 
             void launch_scheduled_task(error_code const& e);
 
+            void send_one_unconfirmed_message_randomly(dht::public_key const& peer);
+
+            void send_all_unconfirmed_messages(dht::public_key const& peer);
+
+            void update_detection_time(dht::public_key const& peer, std::int64_t time);
+
+            void update_communication_time(dht::public_key const& peer, std::int64_t time);
+
+            void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array);
+
             // device id
             aux::bytes m_device_id;
 
@@ -263,6 +278,12 @@ namespace libTAU {
 
             // active friends
             std::vector<dht::public_key> m_active_friends;
+
+            std::map<dht::public_key, std::int64_t> m_last_detection_time;
+
+            std::map<dht::public_key, std::int64_t> m_last_communication_time;
+
+            std::map<dht::public_key, aux::bytes> m_levenshtein_array;
 
             // friend last seen time(map:key->peer, value->last seen signal time(ms))
 //            std::map<dht::public_key, std::int64_t> m_last_seen;
