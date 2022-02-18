@@ -19,7 +19,7 @@ see LICENSE file.
 // URL tauchain:?bs=pk1&bs=pk2&dn=chainID
 namespace libTAU {
     namespace blockchain {
-        class chain_url {
+        class TORRENT_EXPORT chain_url {
 
             const std::string URL_PREFIX = "tauchain:?";
             const std::string KEY_PEER = "bs";
