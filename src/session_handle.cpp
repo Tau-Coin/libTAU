@@ -229,6 +229,11 @@ namespace libTAU {
 		async_call(&session_impl::dht_live_nodes, nid);
 	}
 
+	void session_handle::new_account_seed(std::string& account_seed)
+	{
+		sync_call(&session_impl::new_account_seed, account_seed);
+	}
+
 	void session_handle::set_loop_time_interval(int milliseconds)
 	{
 		async_call(&session_impl::set_loop_time_interval, milliseconds);
