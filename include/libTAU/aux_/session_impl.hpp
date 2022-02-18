@@ -590,6 +590,7 @@ namespace aux {
 			void update_device_id();
 			void update_db_dir();
 			void update_account_seed();
+			void new_account_seed(std::string& account_seed);
 			void update_dht_bootstrap_nodes();
 
 			void update_socket_buffer_size();

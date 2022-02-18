@@ -2459,6 +2459,41 @@ namespace {
 
 	}
 
+	void session_impl::new_account_seed(std::string& account_seed) {
+
+		std::array<char, 32> seed;
+
+        //update account seed
+		m_settings.set_str(settings_pack::account_seed, account_seed);
+
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("start to update account seed :%s", account_seed.c_str());
+#endif
+        span<char const> hexseed(account_seed.c_str(), 64);
+        libTAU::aux::from_hex(hexseed, seed.data());
+		//1. update key pair
+		m_keypair = dht::ed25519_create_keypair(seed);
+
+		if (m_account_manager)
+		{
+			m_account_manager->update_key(hexseed);
+		}
+		else
+		{
+			m_account_manager
+				= std::make_shared<aux::account_manager>(hexseed);
+		}
+
+		//2. dht update node id
+		if(m_dht)
+			m_dht->update_node_id();
+
+		//3. communication update node id
+		if(m_communication)
+			m_communication->account_changed();
+
+	}
+
 	int session_impl::get_listen_port(transport const ssl, aux::listen_socket_handle const& s)
 	{
 		auto* socket = s.get();
