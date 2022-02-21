@@ -89,6 +89,7 @@ namespace libTAU {
 
                     m_last_detection_time[peer] = m_message_db->get_last_detection_time(std::make_pair(*pk, peer));
                     m_last_communication_time[peer] = m_message_db->get_last_communication_time(std::make_pair(*pk, peer));
+                    m_levenshtein_array_time[peer] = m_message_db->get_levenshtein_array_time(std::make_pair(*pk, peer));
                     m_levenshtein_array[peer] = m_message_db->get_levenshtein_array(std::make_pair(*pk, peer));
 
                     // get array align time
@@ -161,6 +162,10 @@ namespace libTAU {
 
                         add_new_message(peer, msg_entry.m_msg, true);
 
+                        if (timestamp > m_levenshtein_array_time[peer]) {
+                            update_levenshtein_array(peer, msg_entry.m_levenshtein_array, timestamp);
+                        }
+
                         // find out missing messages and confirmation root
                         std::vector<message> missing_messages;
                         std::vector<sha256_hash> confirmation_roots;
@@ -182,16 +187,16 @@ namespace libTAU {
 
                         m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
-                        if (timestamp >= m_last_communication_time[peer]) {
-                            update_levenshtein_array(peer, msg_entry.m_levenshtein_array);
-                        }
-
                         break;
                     }
                     case common::message_levenshtein_array_entry::data_type_id: {
                         common::message_levenshtein_array_entry levenshtein_array_entry(payload);
                         log("INFO: Got message levenshtein array[%s].",
                             aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
+
+                        if (timestamp >= m_levenshtein_array_time[peer]) {
+                            update_levenshtein_array(peer, levenshtein_array_entry.m_levenshtein_array, timestamp);
+                        }
 
                         // find out missing messages and confirmation root
                         std::vector<message> missing_messages;
@@ -232,10 +237,6 @@ namespace libTAU {
 //                        }
 
                         m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
-                        if (timestamp >= m_last_communication_time[peer]) {
-                            update_levenshtein_array(peer, levenshtein_array_entry.m_levenshtein_array);
-                        }
 
                         break;
                     }
@@ -1287,6 +1288,7 @@ namespace libTAU {
             auto &message_list = m_message_list_map[peer];
             std::vector<message> messages(message_list.begin(), message_list.end());
             log("INFO: Messages size:%zu", messages.size());
+            log("--111--send all msgs peer[%s] levenshtein ayyay:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(m_levenshtein_array[peer]).c_str());
             find_best_solution(messages, m_levenshtein_array[peer],
                                missing_messages, confirmation_roots);
 
@@ -1317,9 +1319,12 @@ namespace libTAU {
             m_message_db->save_last_communication_time(std::make_pair(*m_ses.pubkey(), peer), time);
         }
 
-        void communication::update_levenshtein_array(const dht::public_key &peer, const aux::bytes& levenshtein_array) {
+        void communication::update_levenshtein_array(const dht::public_key &peer, const aux::bytes& levenshtein_array, std::int64_t time) {
             m_levenshtein_array[peer] = levenshtein_array;
+            m_levenshtein_array_time[peer] = time;
+            log("--111--save peer[%s] levenshtein ayyay:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(levenshtein_array).c_str());
             m_message_db->save_levenshtein_array(std::make_pair(*m_ses.pubkey(), peer), levenshtein_array);
+            m_message_db->save_levenshtein_array_time(std::make_pair(*m_ses.pubkey(), peer), time);
         }
 
 

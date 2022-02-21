@@ -90,7 +90,7 @@ namespace libTAU::common {
         // message levenshtein array
         e[entry_levenshtein_array] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
         // time
-        e[entry_time] = m_timestamp;
+        e[entry_time] = entry(m_timestamp);
 
         return e;
     }
@@ -117,7 +117,7 @@ namespace libTAU::common {
         // message levenshtein array
         e[entry_value] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
         // time
-        e[entry_time] = m_timestamp;
+        e[entry_time] = entry(m_timestamp);
 
         return e;
     }
@@ -135,7 +135,7 @@ namespace libTAU::common {
         // data type id
         e[entry_type] = entry(data_type_id);
         // time
-        e[entry_time] = m_timestamp;
+        e[entry_time] = entry(m_timestamp);
 
         return e;
     }
@@ -161,7 +161,7 @@ namespace libTAU::common {
         // friend info
         e[entry_value] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
         // time
-        e[entry_time] = m_timestamp;
+        e[entry_time] = entry(m_timestamp);
 
         return e;
     }
