@@ -1210,7 +1210,8 @@ namespace {
 #endif
 		}
 
-		auto remove_iter = partition_listen_sockets(eps, m_listen_sockets);
+		//auto remove_iter = partition_listen_sockets(eps, m_listen_sockets);
+		auto remove_iter = m_listen_sockets.begin();
 
 		while (remove_iter != m_listen_sockets.end())
 		{
