@@ -82,6 +82,13 @@ namespace libTAU {
 
             bool delete_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key) override;
 
+            int64_t get_levenshtein_array_time(const std::pair<dht::public_key, dht::public_key> &key) override;
+
+            bool save_levenshtein_array_time(const std::pair<dht::public_key, dht::public_key> &key,
+                                             std::int64_t timestamp) override;
+
+            bool delete_levenshtein_array_time(const std::pair<dht::public_key, dht::public_key> &key) override;
+
             aux::bytes get_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key) override;
 
             bool save_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key,

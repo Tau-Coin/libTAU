@@ -238,7 +238,7 @@ namespace libTAU {
 
             void update_communication_time(dht::public_key const& peer, std::int64_t time);
 
-            void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array);
+            void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array, std::int64_t time);
 
             // device id
             aux::bytes m_device_id;
@@ -282,6 +282,8 @@ namespace libTAU {
             std::map<dht::public_key, std::int64_t> m_last_detection_time;
 
             std::map<dht::public_key, std::int64_t> m_last_communication_time;
+
+            std::map<dht::public_key, std::int64_t> m_levenshtein_array_time;
 
             std::map<dht::public_key, aux::bytes> m_levenshtein_array;
 
