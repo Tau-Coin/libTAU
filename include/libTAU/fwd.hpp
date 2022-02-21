@@ -71,6 +71,7 @@ struct blockchain_fork_point_block_alert;
 struct blockchain_top_three_votes_alert;
 struct blockchain_new_transaction_alert;
 struct blockchain_state_alert;
+struct blockchain_syncing_block_alert;
 
 // include/libTAU/announce_entry.hpp
 TORRENT_VERSION_NAMESPACE_2
