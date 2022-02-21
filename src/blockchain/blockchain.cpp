@@ -260,10 +260,10 @@ namespace libTAU::blockchain {
                 if (m_chain_status[chain_id] == VOTE_PREPARE) {
                     auto peers = m_repository->get_all_peers(chain_id);
                     auto size = peers.size();
-                    if (size < 100) {
+                    if (size < 20) {
                         m_vote_request_peers[chain_id] = peers;
                     } else {
-                        for (int i = 0; i < 300; i++) {
+                        for (int i = 0; i < 30; i++) {
                             auto peer = m_repository->get_peer_randomly(chain_id);
                             m_vote_request_peers[chain_id].insert(peer);
                         }
@@ -2813,6 +2813,8 @@ namespace libTAU::blockchain {
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
+                        m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(blk_entry.m_blk);
+
                         // notify ui tx from block
                         if (!blk_entry.m_blk.tx().empty()) {
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
@@ -2958,6 +2960,10 @@ namespace libTAU::blockchain {
                         log("INFO: Got head block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
+
+                        if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
+                            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk_entry.m_blk);
+                        }
 
                         // notify ui tx from block
                         if (!blk_entry.m_blk.tx().empty()) {
