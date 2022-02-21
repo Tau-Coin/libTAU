@@ -678,7 +678,7 @@ feature sqldatabase : sqldb : composite propagated ;
 feature.compose <sqldatabase>sqldb : <define>TORRENT_ABI_VERSION=3 ;
 
 feature compress : snappy : composite propagated ;
-feature.compose <compress>snappy : <define>TORRENT_ENABLE_COMPRESS ;
+#feature.compose <compress>snappy : <define>TORRENT_ENABLE_COMPRESS ;
 
 feature crypto : openssl : composite propagated ;
 feature.compose <crypto>openssl

@@ -1533,7 +1533,7 @@ namespace {
 			return;
 		}
 #else
-		m_raw_send_udp_packet.insert(0, p, p.size());
+		m_raw_send_udp_packet.insert(0, p.data(), p.size());
 #endif
 
 		std::string err_str;
@@ -1789,7 +1789,7 @@ namespace {
 #endif
 
 					auto listen_socket = ls.lock();
-					if (m_dht && m_decrypted_udp_packet.size() > 20
+					if (m_dht && m_decrypted_ucd_udp_packet.size() > 20
 						&& listen_socket)
 					{
 						m_dht->incoming_packet(listen_socket
