@@ -75,7 +75,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 48;
+	constexpr int num_alert_types = 49;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1465,13 +1465,35 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_syncing_block_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_syncing_block_alert(aux::stack_allocator& alloc, blockchain::block blk);
+        TORRENT_UNEXPORT blockchain_syncing_block_alert(aux::stack_allocator& alloc, dht::public_key p, blockchain::block blk);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_syncing_block_alert, 47, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::blockchain;
 
         std::string message() const override;
+
+        // public key
+        dht::public_key peer;
+
+        // message found from peers.
+        libTAU::blockchain::block blk;
+    };
+
+    // this alert is posted when syncing head block.
+    struct TORRENT_EXPORT blockchain_syncing_head_block_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_syncing_head_block_alert(aux::stack_allocator& alloc, dht::public_key p, blockchain::block blk);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_syncing_head_block_alert, 48, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // public key
+        dht::public_key peer;
 
         // message found from peers.
         libTAU::blockchain::block blk;

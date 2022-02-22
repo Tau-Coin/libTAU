@@ -364,7 +364,7 @@ namespace blockchain {
 
         std::map<aux::bytes, std::pair<dht::public_key, std::int64_t>> m_visiting_time;
 
-        std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_last_visiting_time;
+//        std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_last_visiting_time;
 
         std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_access_list;
 

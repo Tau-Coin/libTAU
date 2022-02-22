@@ -1312,7 +1312,7 @@ namespace {
 		"blockchain_new_consensus_point_block_alert","blockchain_rollback_block_alert",
 		"blockchain_fork_point_block_alert","blockchain_top_three_votes_alert",
 		"blockchain_new_transaction_alert", "blockchain_state_alert",
-		"blockchain_syncing_block_alert"
+		"blockchain_syncing_block_alert", "blockchain_syncing_head_block_alert"
 		}};
 
 		TORRENT_ASSERT(alert_type >= 0);
@@ -1640,8 +1640,8 @@ namespace {
     }
 
     blockchain_syncing_block_alert::blockchain_syncing_block_alert(aux::stack_allocator&
-            , blockchain::block blk)
-            : blk(std::move(blk))
+            , dht::public_key p, blockchain::block blk)
+            : peer(p), blk(std::move(blk))
     {}
 
     std::string blockchain_syncing_block_alert::message() const
@@ -1649,7 +1649,21 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: syncing block:" + blk.to_string();
+        return "Alert: peer" + aux::toHex(peer.bytes) + " syncing block:" + blk.to_string();
+#endif
+    }
+
+    blockchain_syncing_head_block_alert::blockchain_syncing_head_block_alert(aux::stack_allocator&
+            , dht::public_key p, blockchain::block blk)
+            : peer(p), blk(std::move(blk))
+    {}
+
+    std::string blockchain_syncing_head_block_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        return "Alert: peer" + aux::toHex(peer.bytes) + " syncing head block:" + blk.to_string();
 #endif
     }
 

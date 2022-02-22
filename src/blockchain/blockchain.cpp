@@ -464,43 +464,45 @@ namespace libTAU::blockchain {
                     }
 
                     if (true) {
-                        auto &acl = m_access_list[chain_id];
-                        auto size = acl.size();
-                        if (size < 3) {
-                            std::set<dht::public_key> peers;
-                            for (auto i = 5 - size; i > 0; i--) {
-                                auto peer = select_peer_randomly(chain_id);
-                                // if peer is not in acl, not been banned
-                                if (!peer.is_all_zeros() && acl.find(peer) == acl.end() & peer != *m_ses.pubkey()) {
-                                    auto &ban_list = m_ban_list[chain_id];
-                                    auto it = ban_list.find(peer);
-                                    if (it != ban_list.end()) {
-                                        if (it->second.m_free_time > now) {
-                                            // peer is still banned
-                                            continue;
+                        {
+                            auto &acl = m_access_list[chain_id];
+                            auto size = acl.size();
+                            if (size < 3) {
+                                std::set<dht::public_key> peers;
+                                for (auto i = 5 - size; i > 0; i--) {
+                                    auto peer = select_peer_randomly(chain_id);
+                                    // if peer is not in acl, not been banned
+                                    if (!peer.is_all_zeros() && acl.find(peer) == acl.end() & peer != *m_ses.pubkey()) {
+                                        auto &ban_list = m_ban_list[chain_id];
+                                        auto it = ban_list.find(peer);
+                                        if (it != ban_list.end()) {
+                                            if (it->second.m_free_time > now) {
+                                                // peer is still banned
+                                                continue;
+                                            }
                                         }
+                                        peers.insert(peer);
                                     }
-                                    peers.insert(peer);
+                                }
+
+                                // all peers those added into acl should request head block
+                                for (auto const &peer: peers) {
+                                    acl[peer] = peer_info();
                                 }
                             }
 
-                            // all peers those added into acl should request head block
-                            for (auto const &peer: peers) {
-                                acl[peer] = peer_info();
-                            }
-                        }
+                            // check if need to request on current stage
+                            for (auto &item: acl) {
+                                if (item.second.m_stage == HEAD_BLOCK &&
+                                    item.second.m_requests_time.find(common::head_block_request_entry::data_type_id)
+                                    == item.second.m_requests_time.end()) {
+                                    common::head_block_request_entry headBlockRequestEntry(chain_id);
+                                    common::entry_task task(common::head_block_request_entry::data_type_id, item.first,
+                                                            headBlockRequestEntry.get_entry());
+                                    add_entry_task_to_queue(chain_id, task);
 
-                        // check if need to request on current stage
-                        for (auto &item: acl) {
-                            if (item.second.m_stage == HEAD_BLOCK &&
-                                item.second.m_requests_time.find(common::head_block_request_entry::data_type_id)
-                                == item.second.m_requests_time.end()) {
-                                common::head_block_request_entry headBlockRequestEntry(chain_id);
-                                common::entry_task task(common::head_block_request_entry::data_type_id, item.first,
-                                                        headBlockRequestEntry.get_entry());
-                                add_entry_task_to_queue(chain_id, task);
-
-                                item.second.m_requests_time[common::head_block_request_entry::data_type_id] = now;
+                                    item.second.m_requests_time[common::head_block_request_entry::data_type_id] = now;
+                                }
                             }
                         }
 //                    }
@@ -672,16 +674,15 @@ namespace libTAU::blockchain {
                             auto &peer = p->first;
                             send_to(chain_id, peer, it->m_entry);
                         }
-
-                        tasks.erase(it);
                     } else {
 //                        if (now > m_last_visiting_time[chain_id][it->m_peer] + 1000) {
                             send_to(chain_id, it->m_peer, it->m_entry);
-                            tasks.erase(it);
 
-                            m_last_visiting_time[chain_id][it->m_peer] = now;
+//                            m_last_visiting_time[chain_id][it->m_peer] = now;
 //                        }
                     }
+
+                    tasks.erase(it);
                 }
                 log("-----------tasks size:%lu, after size:%lu", size, tasks.size());
 
@@ -1723,11 +1724,10 @@ namespace libTAU::blockchain {
             // notify rollback block
             m_ses.alerts().emplace_alert<blockchain_rollback_block_alert>(blk);
         }
-//        for (auto i = connect_blocks.size(); i > 1; i--) {
-//            auto &blk = connect_blocks[i - 2];
-//            auto &previous_block = connect_blocks[i - 1];
-//        }
-        m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(target);
+        for (auto i = connect_blocks.size(); i > 1; i--) {
+            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(connect_blocks[i - 2]);
+        }
+//        m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(target);
         m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(tail_block);
         m_ses.alerts().emplace_alert<blockchain_fork_point_block_alert>(reference_block);
 
@@ -2813,7 +2813,7 @@ namespace libTAU::blockchain {
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
-                        m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(blk_entry.m_blk);
+                        m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(peer, blk_entry.m_blk);
 
                         // notify ui tx from block
                         if (!blk_entry.m_blk.tx().empty()) {
@@ -2961,9 +2961,9 @@ namespace libTAU::blockchain {
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
-                        if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
-                            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk_entry.m_blk);
-                        }
+//                        if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
+                            m_ses.alerts().emplace_alert<blockchain_syncing_head_block_alert>(peer, blk_entry.m_blk);
+//                        }
 
                         // notify ui tx from block
                         if (!blk_entry.m_blk.tx().empty()) {
