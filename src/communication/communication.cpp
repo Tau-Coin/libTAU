@@ -680,7 +680,7 @@ namespace libTAU {
                     }
                 }
 
-                log("--------------------------- tasks size:%lu", m_tasks.size());
+//                log("--------------------------- tasks size:%lu", m_tasks.size());
                 if (!m_tasks.empty()) {
                     auto it = m_tasks.begin();
                     if (it->m_timestamp <= now) {

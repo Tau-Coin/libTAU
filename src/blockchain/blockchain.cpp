@@ -2961,9 +2961,9 @@ namespace libTAU::blockchain {
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
-//                        if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
+                        if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
                             m_ses.alerts().emplace_alert<blockchain_syncing_head_block_alert>(peer, blk_entry.m_blk);
-//                        }
+                        }
 
                         // notify ui tx from block
                         if (!blk_entry.m_blk.tx().empty()) {
