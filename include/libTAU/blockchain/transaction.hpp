@@ -79,22 +79,6 @@ namespace blockchain {
 
         bool verify_signature() const;
 
-        bool operator<(const transaction &rhs) const {
-            return m_fee < rhs.m_fee;
-        }
-
-        bool operator>(const transaction &rhs) const {
-            return rhs < *this;
-        }
-
-        bool operator<=(const transaction &rhs) const {
-            return !(rhs < *this);
-        }
-
-        bool operator>=(const transaction &rhs) const {
-            return !(*this < rhs);
-        }
-
         // @returns a pretty-printed string representation of tx structure
         std::string to_string() const;
 
