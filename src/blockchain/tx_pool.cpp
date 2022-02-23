@@ -361,13 +361,13 @@ namespace libTAU::blockchain {
         }
     }
 
-    std::set<transaction> tx_pool::get_all_transactions() {
-        std::set<transaction> txs;
-        for (auto const &item: m_all_txs_by_fee) {
-            txs.insert(item.second);
-        }
-
-        return txs;
-    }
+//    std::set<transaction> tx_pool::get_all_transactions() {
+//        std::set<transaction> txs;
+//        for (auto const &item: m_all_txs_by_fee) {
+//            txs.insert(item.second);
+//        }
+//
+//        return txs;
+//    }
 
 }

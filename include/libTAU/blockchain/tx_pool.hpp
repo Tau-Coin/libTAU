@@ -71,7 +71,7 @@ namespace libTAU::blockchain {
 
         void recheck_all_transactions();
 
-        std::set<transaction> get_all_transactions();
+//        std::set<transaction> get_all_transactions();
 
     private:
 
