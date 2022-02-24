@@ -71,7 +71,7 @@ namespace libTAU::blockchain {
 
         friend std::ostream &operator<<(std::ostream &os, const ban_info &info);
 
-        int m_ban_times = 0;
+        int m_ban_times = 1;
 
         std::int64_t m_free_time = 0;
     };

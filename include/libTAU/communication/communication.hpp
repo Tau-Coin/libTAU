@@ -20,6 +20,7 @@ see LICENSE file.
 #include <vector>
 #include <memory>
 #include <list>
+#include <queue>
 #include <unordered_set>
 
 #include "libTAU/time.hpp"
@@ -264,7 +265,8 @@ namespace libTAU {
             std::vector<dht::public_key> m_friends;
 
             // all tasks
-            std::set<common::entry_task> m_tasks;
+            std::queue<common::entry_task> m_tasks;
+            std::set<common::entry_task> m_tasks_set;
 
             std::map<dht::public_key, std::int64_t> m_last_greeting;
 

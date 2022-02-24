@@ -40,40 +40,28 @@ namespace libTAU::common {
         entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, entry mEntry)
                 : m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)) {}
 
-        entry_task(int64_t mDataTypeId, entry mEntry, int64_t mTimestamp) : m_data_type_id(mDataTypeId),
-                                                                                   m_entry(std::move(mEntry)),
-                                                                                   m_timestamp(mTimestamp) {}
+        entry_task(int64_t mDataTypeId, const dht::public_key &mPeer) : m_data_type_id(mDataTypeId),
+                                                                                            m_peer(mPeer) {}
 
-        entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, entry mEntry, int64_t mTimestamp)
-                : m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)), m_timestamp(mTimestamp) {}
-
-        entry_task(int64_t mDataTypeId, const dht::public_key &mPeer, int64_t mTimestamp) : m_data_type_id(mDataTypeId),
-                                                                                            m_peer(mPeer),
-                                                                                            m_timestamp(mTimestamp) {}
+        entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer)
+                : m_alpha(mAlpha), m_beta(mBeta), m_invoke_number(mInvokeNumber), m_data_type_id(mDataTypeId),
+                m_peer(mPeer) {}
 
         entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer,
-                   int64_t mTimestamp) : m_alpha(mAlpha), m_beta(mBeta), m_invoke_number(mInvokeNumber),
-                                         m_data_type_id(mDataTypeId), m_peer(mPeer), m_timestamp(mTimestamp) {}
+                   entry mEntry) : m_alpha(mAlpha), m_beta(mBeta), m_invoke_number(mInvokeNumber),
+                   m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)) {}
 
-        entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer,
-                   entry mEntry, int64_t mTimestamp) : m_alpha(mAlpha), m_beta(mBeta),
-                                                              m_invoke_number(mInvokeNumber),
-                                                              m_data_type_id(mDataTypeId), m_peer(mPeer),
-                                                              m_entry(std::move(mEntry)), m_timestamp(mTimestamp) {}
+        bool operator==(const entry_task &rhs) const {
+            return m_data_type_id == rhs.m_data_type_id &&
+                   m_peer == rhs.m_peer &&
+                   m_entry == rhs.m_entry;
+        }
+
+        bool operator!=(const entry_task &rhs) const {
+            return !(rhs == *this);
+        }
 
         bool operator<(const entry_task &rhs) const {
-
-            if (m_data_type_id < rhs.m_data_type_id)
-                return true;
-            if (m_data_type_id > rhs.m_data_type_id)
-                return false;
-
-            if (m_data_type_id != 1) {
-                if (m_timestamp < rhs.m_timestamp)
-                    return true;
-                if (m_timestamp > rhs.m_timestamp)
-                    return false;
-            }
 
             if (m_peer < rhs.m_peer)
                 return true;
@@ -117,8 +105,6 @@ namespace libTAU::common {
         dht::public_key m_peer;
 
         entry m_entry;
-
-        std::int64_t m_timestamp;
     };
 
     struct TORRENT_EXPORT blockchain_entry_task {
@@ -163,47 +149,47 @@ namespace libTAU::common {
         entry m_entry;
     };
 
-    struct TORRENT_EXPORT communication_entries final : entry_base {
-        // data type id
-        static inline constexpr std::int64_t protocol_id = 0;
+//    struct TORRENT_EXPORT communication_entries final : entry_base {
+//        // data type id
+//        static inline constexpr std::int64_t protocol_id = 0;
+//
+//        communication_entries() = default;
+//
+//        // @param Construct with entry
+//        explicit communication_entries(const entry& e);
+//
+//        explicit communication_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
+//
+//        void push_back(const entry& e) { m_entries.push_back(e); }
+//
+//        void pop_back() { m_entries.pop_back(); }
+//
+//        // @returns the corresponding entry
+//        entry get_entry() const override;
+//
+//        std::vector<entry> m_entries;
+//    };
 
-        communication_entries() = default;
-
-        // @param Construct with entry
-        explicit communication_entries(const entry& e);
-
-        explicit communication_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
-
-        void push_back(const entry& e) { m_entries.push_back(e); }
-
-        void pop_back() { m_entries.pop_back(); }
-
-        // @returns the corresponding entry
-        entry get_entry() const override;
-
-        std::vector<entry> m_entries;
-    };
-
-    struct TORRENT_EXPORT blockchain_entries final : entry_base {
-        // data type id
-        static inline constexpr std::int64_t protocol_id = 1;
-
-        blockchain_entries() = default;
-
-        // @param Construct with entry
-        explicit blockchain_entries(const entry& e);
-
-        explicit blockchain_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
-
-        void push_back(const entry& e) { m_entries.push_back(e); }
-
-        void pop_back() { m_entries.pop_back(); }
-
-        // @returns the corresponding entry
-        entry get_entry() const override;
-
-        std::vector<entry> m_entries;
-    };
+//    struct TORRENT_EXPORT blockchain_entries final : entry_base {
+//        // data type id
+//        static inline constexpr std::int64_t protocol_id = 1;
+//
+//        blockchain_entries() = default;
+//
+//        // @param Construct with entry
+//        explicit blockchain_entries(const entry& e);
+//
+//        explicit blockchain_entries(std::vector<entry> mEntries) : m_entries(std::move(mEntries)) {}
+//
+//        void push_back(const entry& e) { m_entries.push_back(e); }
+//
+//        void pop_back() { m_entries.pop_back(); }
+//
+//        // @returns the corresponding entry
+//        entry get_entry() const override;
+//
+//        std::vector<entry> m_entries;
+//    };
 
     struct TORRENT_EXPORT message_entry final : entry_base {
         // data type id
@@ -221,6 +207,14 @@ namespace libTAU::common {
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        bool operator<(const message_entry &rhs) const {
+            if (m_msg < rhs.m_msg)
+                return true;
+            if (rhs.m_msg < m_msg)
+                return false;
+            return m_levenshtein_array < rhs.m_levenshtein_array;
+        }
 
         communication::message m_msg;
 
@@ -244,6 +238,10 @@ namespace libTAU::common {
         // @returns the corresponding entry
         entry get_entry() const override;
 
+        bool operator<(const message_levenshtein_array_entry &rhs) const {
+            return m_levenshtein_array < rhs.m_levenshtein_array;
+        }
+
         // bytes consist of first byte of ordered messages hash
         aux::bytes m_levenshtein_array;
 
@@ -262,6 +260,10 @@ namespace libTAU::common {
         // @returns the corresponding entry
         entry get_entry() const override;
 
+        bool operator<(const friend_info_request_entry &rhs) const {
+            return false;
+        }
+
         std::int64_t m_timestamp{};
     };
 
@@ -278,6 +280,10 @@ namespace libTAU::common {
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        bool operator<(const friend_info_entry &rhs) const {
+            return m_friend_info < rhs.m_friend_info;
+        }
 
         aux::bytes m_friend_info;
 
@@ -298,6 +304,14 @@ namespace libTAU::common {
         // @returns the corresponding entry
         entry get_entry() const override;
 
+        bool operator<(const block_request_entry &rhs) const {
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (rhs.m_chain_id < m_chain_id)
+                return false;
+            return m_hash < rhs.m_hash;
+        }
+
         // chain id
         aux::bytes m_chain_id;
 
@@ -316,6 +330,10 @@ namespace libTAU::common {
         // @returns the corresponding entry
         entry get_entry() const override;
 
+        bool operator<(const block_entry &rhs) const {
+            return m_blk < rhs.m_blk;
+        }
+
         blockchain::block m_blk;
     };
 
@@ -331,6 +349,14 @@ namespace libTAU::common {
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        bool operator<(const transaction_request_entry &rhs) const {
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (rhs.m_chain_id < m_chain_id)
+                return false;
+            return m_hash < rhs.m_hash;
+        }
 
         // chain id
         aux::bytes m_chain_id;
@@ -350,6 +376,10 @@ namespace libTAU::common {
         // @returns the corresponding entry
         entry get_entry() const override;
 
+        bool operator<(const transaction_entry &rhs) const {
+            return m_tx < rhs.m_tx;
+        }
+
         blockchain::transaction m_tx;
     };
 
@@ -364,6 +394,10 @@ namespace libTAU::common {
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        bool operator<(const vote_request_entry &rhs) const {
+            return m_chain_id < rhs.m_chain_id;
+        }
 
         // chain id
         aux::bytes m_chain_id;
@@ -380,6 +414,14 @@ namespace libTAU::common {
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        bool operator<(const vote_entry &rhs) const {
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (rhs.m_chain_id < m_chain_id)
+                return false;
+            return m_vote < rhs.m_vote;
+        }
 
         // chain id
         aux::bytes m_chain_id;
@@ -399,6 +441,10 @@ namespace libTAU::common {
         // @returns the corresponding entry
         entry get_entry() const override;
 
+        bool operator<(const head_block_request_entry &rhs) const {
+            return m_chain_id < rhs.m_chain_id;
+        }
+
         // chain id
         aux::bytes m_chain_id;
     };
@@ -415,6 +461,10 @@ namespace libTAU::common {
         // @returns the corresponding entry
         entry get_entry() const override;
 
+        bool operator<(const head_block_entry &rhs) const {
+            return m_blk < rhs.m_blk;
+        }
+
         blockchain::block m_blk;
     };
 
@@ -430,6 +480,14 @@ namespace libTAU::common {
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        bool operator<(const tx_pool_entry &rhs) const {
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (rhs.m_chain_id < m_chain_id)
+                return false;
+            return m_levenshtein_array < rhs.m_levenshtein_array;
+        }
 
         // chain id
         aux::bytes m_chain_id;
@@ -450,6 +508,10 @@ namespace libTAU::common {
         // @returns the corresponding entry
         entry get_entry() const override;
 
+        bool operator<(const state_request_entry &rhs) const {
+            return m_chain_id < rhs.m_chain_id;
+        }
+
         // chain id
         aux::bytes m_chain_id;
     };
@@ -465,6 +527,10 @@ namespace libTAU::common {
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        bool operator<(const state_entry &rhs) const {
+            return m_chain_id < rhs.m_chain_id;
+        }
 
         // chain id
         aux::bytes m_chain_id;

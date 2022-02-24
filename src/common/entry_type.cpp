@@ -10,57 +10,57 @@ see LICENSE file.
 
 namespace libTAU::common {
 
-    communication_entries::communication_entries(const entry &e) {
-        // entries
-        if (auto* i = const_cast<entry *>(e.find_key(protocol_payload))) {
-            entry::list_type entries = i->list();
-            for (const auto &n: entries) {
-                m_entries.push_back(n);
-            }
-        }
-    }
+//    communication_entries::communication_entries(const entry &e) {
+//        // entries
+//        if (auto* i = const_cast<entry *>(e.find_key(protocol_payload))) {
+//            entry::list_type entries = i->list();
+//            for (const auto &n: entries) {
+//                m_entries.push_back(n);
+//            }
+//        }
+//    }
+//
+//    entry communication_entries::get_entry() const {
+//        entry e(entry::dictionary_t);
+//        // protocol id
+//        e[protocol_type] = entry(protocol_id);
+//
+//        // entries
+//        entry::list_type l;
+//        for (const auto &n: m_entries) {
+//            l.push_back(n);
+//        }
+//        // protocol payload
+//        e[protocol_payload] = l;
+//
+//        return e;
+//    }
 
-    entry communication_entries::get_entry() const {
-        entry e(entry::dictionary_t);
-        // protocol id
-        e[protocol_type] = entry(protocol_id);
-
-        // entries
-        entry::list_type l;
-        for (const auto &n: m_entries) {
-            l.push_back(n);
-        }
-        // protocol payload
-        e[protocol_payload] = l;
-
-        return e;
-    }
-
-    blockchain_entries::blockchain_entries(const entry &e) {
-        // entries
-        if (auto* i = const_cast<entry *>(e.find_key(protocol_payload))) {
-            entry::list_type entries = i->list();
-            for (const auto &n: entries) {
-                m_entries.push_back(n);
-            }
-        }
-    }
-
-    entry blockchain_entries::get_entry() const {
-        entry e(entry::dictionary_t);
-        // protocol id
-        e[protocol_type] = entry(protocol_id);
-
-        // entries
-        entry::list_type l;
-        for (const auto &n: m_entries) {
-            l.push_back(n);
-        }
-        // protocol payload
-        e[protocol_payload] = l;
-
-        return e;
-    }
+//    blockchain_entries::blockchain_entries(const entry &e) {
+//        // entries
+//        if (auto* i = const_cast<entry *>(e.find_key(protocol_payload))) {
+//            entry::list_type entries = i->list();
+//            for (const auto &n: entries) {
+//                m_entries.push_back(n);
+//            }
+//        }
+//    }
+//
+//    entry blockchain_entries::get_entry() const {
+//        entry e(entry::dictionary_t);
+//        // protocol id
+//        e[protocol_type] = entry(protocol_id);
+//
+//        // entries
+//        entry::list_type l;
+//        for (const auto &n: m_entries) {
+//            l.push_back(n);
+//        }
+//        // protocol payload
+//        e[protocol_payload] = l;
+//
+//        return e;
+//    }
 
     message_entry::message_entry(const entry &e) {
         // message
