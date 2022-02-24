@@ -494,14 +494,14 @@ namespace libTAU::blockchain {
                             // check if need to request on current stage
                             for (auto &item: acl) {
                                 if (item.second.m_stage == HEAD_BLOCK &&
-                                    item.second.m_requests_time.find(common::head_block_request_entry::data_type_id)
+                                    item.second.m_requests_time.find(new common::head_block_request_entry(chain_id))
                                     == item.second.m_requests_time.end()) {
                                     common::head_block_request_entry headBlockRequestEntry(chain_id);
                                     common::entry_task task(common::head_block_request_entry::data_type_id, item.first,
                                                             headBlockRequestEntry.get_entry());
                                     add_entry_task_to_queue(chain_id, task);
 
-                                    item.second.m_requests_time[common::head_block_request_entry::data_type_id] = now;
+                                    item.second.m_requests_time[new common::head_block_request_entry(chain_id)] = now;
                                 }
                             }
                         }
@@ -2806,7 +2806,7 @@ namespace libTAU::blockchain {
                             if (peerInfo.m_score > 100) {
                                 peerInfo.m_score = 100;
                             }
-                            peerInfo.m_requests_time.erase(common::block_request_entry::data_type_id);
+                            peerInfo.m_requests_time.erase(new common::block_request_entry(chain_id));
                         }
 
                         log("INFO: Got block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
@@ -2955,7 +2955,7 @@ namespace libTAU::blockchain {
                             peerInfo.m_score = 100;
                         }
                         peerInfo.m_head_block = blk_entry.m_blk;
-                        peerInfo.m_requests_time.erase(common::head_block_request_entry::data_type_id);
+                        peerInfo.m_requests_time.erase(new common::head_block_request_entry(chain_id));
 
                         log("INFO: Got head block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
 

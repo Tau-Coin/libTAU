@@ -168,6 +168,8 @@ namespace libTAU::common {
 
 
     block_request_entry::block_request_entry(const entry &e) {
+        m_entry = e;
+
         // chain id
         if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
         {
@@ -195,10 +197,13 @@ namespace libTAU::common {
     }
 
     block_entry::block_entry(const entry &e) {
+        m_entry = e;
+
         // block
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
             m_blk = blockchain::block(*i);
+            m_chain_id = m_blk.chain_id();
         }
     }
 
@@ -214,6 +219,8 @@ namespace libTAU::common {
 
 
     transaction_request_entry::transaction_request_entry(const entry &e) {
+        m_entry = e;
+
         // chain id
         if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
         {
@@ -241,10 +248,13 @@ namespace libTAU::common {
     }
 
     transaction_entry::transaction_entry(const entry &e) {
+        m_entry = e;
+
         // transaction
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
             m_tx = blockchain::transaction(*i);
+            m_chain_id = m_tx.chain_id();
         }
     }
 
@@ -258,9 +268,9 @@ namespace libTAU::common {
         return e;
     }
 
-
-
     vote_request_entry::vote_request_entry(const entry &e) {
+        m_entry = e;
+
         // chain id
         if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
         {
@@ -280,6 +290,8 @@ namespace libTAU::common {
     }
 
     vote_entry::vote_entry(const entry &e) {
+        m_entry = e;
+
         // vote
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
@@ -306,6 +318,8 @@ namespace libTAU::common {
     }
 
     head_block_request_entry::head_block_request_entry(const entry &e) {
+        m_entry = e;
+
         // chain id
         if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
         {
@@ -325,10 +339,13 @@ namespace libTAU::common {
     }
 
     head_block_entry::head_block_entry(const entry &e) {
+        m_entry = e;
+
         // block
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
             m_blk = blockchain::block(*i);
+            m_chain_id = m_blk.chain_id();
         }
     }
 
@@ -342,7 +359,30 @@ namespace libTAU::common {
         return e;
     }
 
+    tx_pool_request_entry::tx_pool_request_entry(const entry &e) {
+        m_entry = e;
+
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+    }
+
+    entry tx_pool_request_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+
+        return e;
+    }
+
     tx_pool_entry::tx_pool_entry(const entry &e) {
+        m_entry = e;
+
         // chain id
         if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
         {
@@ -370,6 +410,8 @@ namespace libTAU::common {
     }
 
     state_request_entry::state_request_entry(const entry &e) {
+        m_entry = e;
+
         // chain id
         if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
         {
@@ -389,6 +431,8 @@ namespace libTAU::common {
     }
 
     state_entry::state_entry(const entry &e) {
+        m_entry = e;
+
         // chain id
         if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
         {
