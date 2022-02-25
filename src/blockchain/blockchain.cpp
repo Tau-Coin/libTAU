@@ -1060,9 +1060,6 @@ namespace libTAU::blockchain {
                     peers_nonce[tx.sender()] += 1;
                     // receiver balance + amount
                     peers_balance[tx.receiver()] += tx.amount();
-                } else {
-                    // miner nonce+1
-                    peers_nonce[*pk] += 1;
                 }
                 b = block(chain_id, block_version::block_version1, (head_block.timestamp() + interval),
                           head_block.block_number() + 1, head_block.sha256(), base_target,
@@ -1158,9 +1155,6 @@ namespace libTAU::blockchain {
             auto receiver_account = repo->get_account(chain_id, tx.receiver());
             receiver_balance = receiver_account.balance() + tx.amount();
             receiver_nonce = receiver_account.nonce();
-        } else {
-            // miner nonce+1
-            miner_nonce += 1;
         }
         if (miner_balance != b.miner_balance() || miner_nonce != b.miner_nonce() ||
         sender_balance != b.sender_balance() || sender_nonce != b.sender_nonce() ||
