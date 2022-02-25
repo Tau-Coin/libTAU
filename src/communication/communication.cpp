@@ -665,6 +665,11 @@ namespace libTAU {
 //                    publish_signal(peer);
 //                }
 
+                int interval = 1000 / m_friends.size();
+                if (m_refresh_time < interval) {
+                    m_refresh_time = interval;
+                }
+
                 auto now = get_current_time();
 //                auto size = m_friends.size();
                 for (auto it = m_friends.begin(); it != m_friends.end(); it++) {

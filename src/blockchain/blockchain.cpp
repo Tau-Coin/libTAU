@@ -228,6 +228,11 @@ namespace libTAU::blockchain {
         if (e || m_stop) return;
 
         try {
+            int interval = 500 / m_chains.size();
+            if (m_refresh_time < interval) {
+                m_refresh_time = interval;
+            }
+
             // 随机挑选一条
             aux::bytes chain_id = select_chain_randomly();
             if (!chain_id.empty()) {
