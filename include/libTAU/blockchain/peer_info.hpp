@@ -17,6 +17,7 @@ see LICENSE file.
 #include "libTAU/common/entry_type.hpp"
 #include <libTAU/sha1_hash.hpp>
 #include <ostream>
+#include <utility>
 
 namespace libTAU::blockchain {
 
@@ -27,7 +28,9 @@ namespace libTAU::blockchain {
 
     struct peer_info {
         peer_info() = default;
-        
+
+        peer_info(STAGE mStage, block mHeadBlock) : m_stage(mStage), m_head_block(std::move(mHeadBlock)) {}
+
         void setStage(STAGE mStage) {
             m_stage = mStage;
         }

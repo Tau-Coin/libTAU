@@ -461,6 +461,17 @@ namespace libTAU::blockchain {
                         }
 
                         // remove surplus peers
+                        if (acl.size() > 5) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            acl.erase(min_it);
+                        }
                     }
 
                     if (true) {
@@ -573,10 +584,15 @@ namespace libTAU::blockchain {
                                                     aux::toHex(chain_id).c_str(),
                                                     aux::toHex(previous_hash.to_string()).c_str());
 
-                                                common::block_request_entry blockRequestEntry(chain_id, previous_hash);
-                                                common::entry_task task(common::block_request_entry::data_type_id,
-                                                                        peer, blockRequestEntry.get_entry());
-                                                add_entry_task_to_queue(chain_id, task);
+                                                if (it->second.m_requests_time.find(new common::block_request_entry(chain_id, previous_hash)) == it->second.m_requests_time.end()) {
+                                                    common::block_request_entry blockRequestEntry(chain_id,
+                                                                                                  previous_hash);
+                                                    common::entry_task task(common::block_request_entry::data_type_id,
+                                                                            peer, blockRequestEntry.get_entry());
+                                                    add_entry_task_to_queue(chain_id, task);
+
+                                                    it->second.m_requests_time[new common::block_request_entry(chain_id, previous_hash)] = now;
+                                                }
 
                                                 break;
                                             } else {
@@ -619,10 +635,14 @@ namespace libTAU::blockchain {
                                                 aux::toHex(chain_id).c_str(),
                                                 aux::toHex(previous_hash.to_string()).c_str());
 
-                                            common::block_request_entry blockRequestEntry(chain_id, previous_hash);
-                                            common::entry_task task(common::block_request_entry::data_type_id,
-                                                                    peer, blockRequestEntry.get_entry());
-                                            add_entry_task_to_queue(chain_id, task);
+                                            if (it->second.m_requests_time.find(new common::block_request_entry(chain_id, previous_hash)) == it->second.m_requests_time.end()) {
+                                                common::block_request_entry blockRequestEntry(chain_id, previous_hash);
+                                                common::entry_task task(common::block_request_entry::data_type_id,
+                                                                        peer, blockRequestEntry.get_entry());
+                                                add_entry_task_to_queue(chain_id, task);
+
+                                                it->second.m_requests_time[new common::block_request_entry(chain_id, previous_hash)] = now;
+                                            }
 
                                             break;
                                         } else {
@@ -650,14 +670,30 @@ namespace libTAU::blockchain {
 
                         for (auto const &hash: demand_block_hash_set) {
                             // todo: check if in acl or requested before
+                            auto &acl = m_access_list[chain_id];
+                            auto max_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  > max_it->second.m_score) {
+                                    max_it = iter;
+                                }
+                            }
                             log("INFO: ----------------chain[%s] request block hash[%s]",
                                 aux::toHex(chain_id).c_str(),
                                 aux::toHex(hash.to_string()).c_str());
 
-                            common::block_request_entry blockRequestEntry(chain_id, hash);
-                            common::entry_task task(common::block_request_entry::data_type_id,
-                                                    blockRequestEntry.get_entry());
-                            add_entry_task_to_queue(chain_id, task);
+                            if (max_it != acl.end()) {
+                                auto& peer = max_it->first;
+                                if (max_it->second.m_requests_time.find(new common::block_request_entry(chain_id, hash)) == max_it->second.m_requests_time.end()) {
+                                    common::block_request_entry blockRequestEntry(chain_id, hash);
+                                    common::entry_task task(common::block_request_entry::data_type_id, peer,
+                                                            blockRequestEntry.get_entry());
+                                    add_entry_task_to_queue(chain_id, task);
+
+                                    max_it->second.m_requests_time[new common::block_request_entry(chain_id, hash)] = now;
+                                }
+                            } else {
+                                log("INFO: ACL is empty.");
+                            }
                         }
                     }
                 }
@@ -1406,7 +1442,7 @@ namespace libTAU::blockchain {
         return it_ban != ban_list.end() && now < it_ban->second.m_free_time;
     }
 
-    void blockchain::kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key &peer) {
+    void blockchain::try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key &peer) {
         m_ban_list[chain_id].erase(peer);
     }
 
@@ -2764,10 +2800,31 @@ namespace libTAU::blockchain {
                     common::block_request_entry blk_request_entry(payload);
                     auto &chain_id = blk_request_entry.m_chain_id;
 
-                    kick_out_of_ban_list(chain_id, peer);
-                    // check if peer is in ban list
-//                        if (is_peer_banned(chain_id, peer))
-//                            break;
+                    try_to_kick_out_of_ban_list(chain_id, peer);
+
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score -= 3;
+                    } else {
+                        if (acl.size() >= 5) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info();
+                            }
+                        } else {
+                            acl[peer] = peer_info();
+                        }
+                    }
 
                     auto blk = m_repository->get_block_by_hash(blk_request_entry.m_hash);
 
@@ -2788,28 +2845,41 @@ namespace libTAU::blockchain {
                 }
                 case common::block_entry::data_type_id: {
                     common::block_entry blk_entry(payload);
+                    auto &chain_id = blk_entry.m_chain_id;
+
+                    try_to_kick_out_of_ban_list(chain_id, peer);
 
                     // TODO: validate timestamp etc. ?
                     if (!blk_entry.m_blk.empty()) {
-                        auto &chain_id = blk_entry.m_blk.chain_id();
-
-                        kick_out_of_ban_list(chain_id, peer);
-                        // check if peer is in ban list
-//                            if (is_peer_banned(chain_id, peer))
-//                                break;
-
-//                            increase_peer_score(chain_id, peer, 3);
-                        if (is_peer_in_acl(chain_id, peer)) {
-                            auto &acl = m_access_list[chain_id];
-                            auto &peerInfo = acl[peer];
-                            peerInfo.m_score += 3;
-                            if (peerInfo.m_score > 100) {
-                                peerInfo.m_score = 100;
+                        auto &acl = m_access_list[chain_id];
+                        auto it = acl.find(peer);
+                        if (it != acl.end()) {
+                            it->second.m_score += 3;
+                            if (it->second.m_score > 100) {
+                                it->second.m_score = 100;
                             }
-                            peerInfo.m_requests_time.erase(new common::block_request_entry(chain_id));
+                            it->second.m_requests_time.erase(new common::block_request_entry(chain_id, blk_entry.m_blk.sha256()));
+                        } else {
+                            if (acl.size() >= 5) {
+                                // find out min score peer
+                                auto min_it = acl.begin();
+                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                    if (iter->second.m_score  < min_it->second.m_score) {
+                                        min_it = iter;
+                                    }
+                                }
+
+                                if (min_it->second.m_score < peer_info().m_score) {
+                                    // replace min score peer with new one
+                                    acl.erase(min_it);
+                                    acl[peer] = peer_info();
+                                }
+                            } else {
+                                acl[peer] = peer_info();
+                            }
                         }
 
-                        log("INFO: Got block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
+                        log("INFO: Got block[%s].", blk_entry.m_blk.to_string().c_str());
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
@@ -2829,20 +2899,71 @@ namespace libTAU::blockchain {
                     common::transaction_request_entry tx_request_entry(payload);
                     auto &chain_id = tx_request_entry.m_chain_id;
 
-                    kick_out_of_ban_list(chain_id, peer);
-                    // check if peer is in ban list
-//                        if (is_peer_banned(chain_id, peer))
-//                            break;
+                    try_to_kick_out_of_ban_list(chain_id, peer);
 
-                    decrease_peer_score(chain_id, peer, 3);
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score -= 3;
+                    } else {
+                        if (acl.size() >= 5) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info();
+                            }
+                        } else {
+                            acl[peer] = peer_info();
+                        }
+                    }
 
                     break;
                 }
                 case common::transaction_entry::data_type_id: {
                     common::transaction_entry tx_entry(payload);
+                    auto &chain_id = tx_entry.m_chain_id;
+
+                    try_to_kick_out_of_ban_list(chain_id, peer);
+
                     if (!tx_entry.m_tx.empty()) {
-                        auto &chain_id = tx_entry.m_tx.chain_id();
                         auto &tx = tx_entry.m_tx;
+
+                        auto &acl = m_access_list[chain_id];
+                        auto it = acl.find(peer);
+                        if (it != acl.end()) {
+                            it->second.m_score += 3;
+                            if (it->second.m_score > 100) {
+                                it->second.m_score = 100;
+                            }
+                            it->second.m_requests_time.erase(new common::transaction_request_entry(chain_id, tx_entry.m_tx.sha256()));
+                        } else {
+                            if (acl.size() >= 5) {
+                                // find out min score peer
+                                auto min_it = acl.begin();
+                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                    if (iter->second.m_score  < min_it->second.m_score) {
+                                        min_it = iter;
+                                    }
+                                }
+
+                                if (min_it->second.m_score < peer_info().m_score) {
+                                    // replace min score peer with new one
+                                    acl.erase(min_it);
+                                    acl[peer] = peer_info();
+                                }
+                            } else {
+                                acl[peer] = peer_info();
+                            }
+                        }
+
                         log("INFO: Got transaction, hash[%s].",
                             aux::toHex(tx.sha256().to_string()).c_str());
 
@@ -2864,12 +2985,31 @@ namespace libTAU::blockchain {
                     common::vote_request_entry voteRequestEntry(payload);
                     auto &chain_id = voteRequestEntry.m_chain_id;
 
-                    kick_out_of_ban_list(chain_id, peer);
-                    // check if peer is in ban list
-//                        if (is_peer_banned(chain_id, peer))
-//                            break;
-//
-//                        decrease_peer_score(chain_id, peer, 3);
+                    try_to_kick_out_of_ban_list(chain_id, peer);
+
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score -= 3;
+                    } else {
+                        if (acl.size() >= 5) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info();
+                            }
+                        } else {
+                            acl[peer] = peer_info();
+                        }
+                    }
 
                     // vote for voting point
                     auto &voting_point_block = m_voting_point_blocks[chain_id];
@@ -2893,6 +3033,36 @@ namespace libTAU::blockchain {
                     common::vote_entry voteEntry(payload);
                     auto &chain_id = voteEntry.m_chain_id;
 
+                    try_to_kick_out_of_ban_list(chain_id, peer);
+
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score += 3;
+                        if (it->second.m_score > 100) {
+                            it->second.m_score = 100;
+                        }
+                        it->second.m_requests_time.erase(new common::vote_request_entry(chain_id));
+                    } else {
+                        if (acl.size() >= 5) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info();
+                            }
+                        } else {
+                            acl[peer] = peer_info();
+                        }
+                    }
+
                     log("INFO: chain[%s] valid vote[%s]",
                         aux::toHex(chain_id).c_str(), voteEntry.m_vote.to_string().c_str());
                     m_votes[chain_id][peer] = voteEntry.m_vote;
@@ -2905,12 +3075,31 @@ namespace libTAU::blockchain {
                     common::head_block_request_entry headBlockRequestEntry(payload);
                     auto &chain_id = headBlockRequestEntry.m_chain_id;
 
-                    kick_out_of_ban_list(chain_id, peer);
-                    // check if peer is in ban list
-//                        if (is_peer_banned(chain_id, peer))
-//                            break;
+                    try_to_kick_out_of_ban_list(chain_id, peer);
 
-                    decrease_peer_score(chain_id, peer, 3);
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score -= 3;
+                    } else {
+                        if (acl.size() >= 5) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info();
+                            }
+                        } else {
+                            acl[peer] = peer_info();
+                        }
+                    }
 
                     auto &blk = m_head_blocks[chain_id];
 
@@ -2935,27 +3124,41 @@ namespace libTAU::blockchain {
                     if (!blk_entry.m_blk.empty()) {
                         auto &chain_id = blk_entry.m_blk.chain_id();
 
-                        kick_out_of_ban_list(chain_id, peer);
-                        // check if peer is in ban list
-//                            if (is_peer_banned(chain_id, peer))
-//                                break;
+                        try_to_kick_out_of_ban_list(chain_id, peer);
 
-                        add_if_peer_not_in_acl(chain_id, peer);
-
-//                            increase_peer_score(chain_id, peer, 3);
                         auto &acl = m_access_list[chain_id];
-                        auto &peerInfo = acl[peer];
-                        peerInfo.m_stage = NORMAL;
-                        if (peerInfo.m_head_block.empty() || blk_entry.m_blk.cumulative_difficulty() > peerInfo.m_head_block.cumulative_difficulty()) {
-                            peerInfo.m_score += 5;
+                        auto it = acl.find(peer);
+                        if (it != acl.end()) {
+                            it->second.m_stage = NORMAL;
+                            if (it->second.m_head_block.empty() || blk_entry.m_blk.cumulative_difficulty() > it->second.m_head_block.cumulative_difficulty()) {
+                                it->second.m_score += 5;
+                            } else {
+                                it->second.m_score += 3;
+                            }
+                            if (it->second.m_score > 100) {
+                                it->second.m_score = 100;
+                            }
+                            it->second.m_head_block = blk_entry.m_blk;
+                            it->second.m_requests_time.erase(new common::head_block_request_entry(chain_id));
                         } else {
-                            peerInfo.m_score += 3;
+                            if (acl.size() >= 5) {
+                                // find out min score peer
+                                auto min_it = acl.begin();
+                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                    if (iter->second.m_score  < min_it->second.m_score) {
+                                        min_it = iter;
+                                    }
+                                }
+
+                                if (min_it->second.m_score < peer_info().m_score) {
+                                    // replace min score peer with new one
+                                    acl.erase(min_it);
+                                    acl[peer] = peer_info(NORMAL, blk_entry.m_blk);
+                                }
+                            } else {
+                                acl[peer] = peer_info(NORMAL, blk_entry.m_blk);
+                            }
                         }
-                        if (peerInfo.m_score > 100) {
-                            peerInfo.m_score = 100;
-                        }
-                        peerInfo.m_head_block = blk_entry.m_blk;
-                        peerInfo.m_requests_time.erase(new common::head_block_request_entry(chain_id));
 
                         log("INFO: Got head block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
 
@@ -2981,6 +3184,32 @@ namespace libTAU::blockchain {
 
                     log("INFO: chain[%s] request state", aux::toHex(chain_id).c_str());
 
+                    try_to_kick_out_of_ban_list(chain_id, peer);
+
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score -= 3;
+                    } else {
+                        if (acl.size() >= 5) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info();
+                            }
+                        } else {
+                            acl[peer] = peer_info();
+                        }
+                    }
+
                     auto act = m_repository->get_account(chain_id, peer);
 
                     if (!act.empty()) {
@@ -2994,6 +3223,36 @@ namespace libTAU::blockchain {
                 case common::state_entry::data_type_id: {
                     common::state_entry stateEntry(payload);
                     auto &chain_id = stateEntry.m_chain_id;
+
+                    try_to_kick_out_of_ban_list(chain_id, peer);
+
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score += 3;
+                        if (it->second.m_score > 100) {
+                            it->second.m_score = 100;
+                        }
+                        it->second.m_requests_time.erase(new common::state_request_entry(chain_id));
+                    } else {
+                        if (acl.size() >= 5) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info();
+                            }
+                        } else {
+                            acl[peer] = peer_info();
+                        }
+                    }
 
                     log("INFO: chain[%s] Got state",
                         aux::toHex(chain_id).c_str());
