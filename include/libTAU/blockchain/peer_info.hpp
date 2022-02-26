@@ -29,7 +29,12 @@ namespace libTAU::blockchain {
     struct peer_info {
         peer_info() = default;
 
+        explicit peer_info(int64_t mLastSeen) : m_last_seen(mLastSeen) {}
+
         peer_info(STAGE mStage, block mHeadBlock) : m_stage(mStage), m_head_block(std::move(mHeadBlock)) {}
+
+        peer_info(STAGE mStage, block mHeadBlock, int64_t mLastSeen) : m_stage(mStage), m_head_block(std::move(mHeadBlock)),
+                                                                              m_last_seen(mLastSeen) {}
 
         void setStage(STAGE mStage) {
             m_stage = mStage;
@@ -43,13 +48,15 @@ namespace libTAU::blockchain {
 
         STAGE m_stage = HEAD_BLOCK;
 
-//        int m_last_seen = 0;
-
 //        int m_last_request_time = 0;
 
         std::map<common::blockchain_entry_base*, std::int64_t, common::less_blockchain_entry_base> m_requests_time;
 
         block m_head_block;
+
+        std::int64_t m_last_seen = 0;
+
+        std::int64_t m_last_ping_time = 0;
 
 //        vote m_vote;
 

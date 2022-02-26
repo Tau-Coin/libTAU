@@ -611,6 +611,25 @@ namespace libTAU::common {
         blockchain::account m_act;
     };
 
+
+
+    struct TORRENT_EXPORT ping_entry final : blockchain_entry_base {
+        // data type id
+        static inline constexpr std::int64_t data_type_id = 99;
+
+        // @param Construct with entry
+        explicit ping_entry(const entry& e);
+
+        explicit ping_entry(aux::bytes mChainId) {
+            m_chain_id = std::move(mChainId);
+
+            m_entry = get_entry();
+        }
+
+        // @returns the corresponding entry
+        entry get_entry() const override;
+    };
+
 }
 
 
