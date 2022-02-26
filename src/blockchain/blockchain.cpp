@@ -2710,8 +2710,10 @@ namespace libTAU::blockchain {
 
                 auto peers = m_repository->get_all_peers(chain_id);
                 common::transaction_entry txEntry(tx);
-                // TODO:: too many tasks
-                for (auto const &peer: peers) {
+
+                auto &acl = m_access_list[chain_id];
+                for (auto const &item: acl) {
+                    auto &peer = item.first;
                     common::entry_task task(common::transaction_entry::data_type_id, peer, txEntry.get_entry());
                     add_entry_task_to_queue(chain_id, task);
                 }
