@@ -2712,7 +2712,7 @@ namespace libTAU::blockchain {
                 common::transaction_entry txEntry(tx);
                 // TODO:: too many tasks
                 for (auto const &peer: peers) {
-                    common::entry_task task(common::block_entry::data_type_id, peer, txEntry.get_entry());
+                    common::entry_task task(common::transaction_entry::data_type_id, peer, txEntry.get_entry());
                     add_entry_task_to_queue(chain_id, task);
                 }
 
@@ -2978,8 +2978,7 @@ namespace libTAU::blockchain {
                             }
                         }
 
-                        log("INFO: Got transaction, hash[%s].",
-                            aux::toHex(tx.sha256().to_string()).c_str());
+                        log("INFO: Got transaction[%s].", tx.to_string().c_str());
 
                         auto &pool = m_tx_pools[chain_id];
                         if (pool.add_tx(tx)) {
