@@ -517,9 +517,9 @@ namespace libTAU::blockchain {
                                                                 item.first,
                                                                 headBlockRequestEntry.get_entry());
                                         add_entry_task_to_queue(chain_id, task);
-                                    }
 
-                                    item.second.m_requests_time[new common::head_block_request_entry(chain_id)] = now;
+                                        item.second.m_requests_time[new common::head_block_request_entry(chain_id)] = now;
+                                    }
                                 } else if (item.second.m_stage == NORMAL) {
                                     // ping every minute
                                     if (now > item.second.m_last_ping_time + 60 * 1000) {
@@ -617,8 +617,8 @@ namespace libTAU::blockchain {
                                                 if (main_chain_hash == b.sha256()) {
                                                     break;
                                                 }
-                                                log("INFO: ----chain[%s] Got block [%s] in local",
-                                                    aux::toHex(chain_id).c_str(), b.to_string().c_str());
+//                                                log("INFO: ----chain[%s] Got block [%s] in local",
+//                                                    aux::toHex(chain_id).c_str(), b.to_string().c_str());
                                                 previous_hash = b.previous_block_hash();
                                             }
                                         }
@@ -667,8 +667,8 @@ namespace libTAU::blockchain {
                                             if (main_chain_hash == b.sha256()) {
                                                 break;
                                             }
-                                            log("INFO: ----chain[%s] Got block [%s] in local",
-                                                aux::toHex(chain_id).c_str(), b.to_string().c_str());
+//                                            log("INFO: ----chain[%s] Got block [%s] in local",
+//                                                aux::toHex(chain_id).c_str(), b.to_string().c_str());
                                             previous_hash = b.previous_block_hash();
                                         }
                                     }
