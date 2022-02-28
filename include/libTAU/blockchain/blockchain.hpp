@@ -13,6 +13,7 @@ see LICENSE file.
 #include <map>
 #include <set>
 #include <vector>
+#include <queue>
 
 #include "libTAU/time.hpp"
 #include "libTAU/aux_/alert_manager.hpp" // for alert_manager
@@ -358,7 +359,8 @@ namespace blockchain {
         std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
 
         // all tasks
-        std::map<aux::bytes, std::set<common::entry_task>> m_tasks;
+//        std::map<aux::bytes, std::set<common::entry_task>> m_tasks;
+        std::queue<common::entry_task> m_tasks;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_visiting_history;
 

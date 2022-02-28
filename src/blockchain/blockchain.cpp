@@ -713,32 +713,30 @@ namespace libTAU::blockchain {
                         }
                     }
                 }
+            }
 
-                auto &tasks = m_tasks[chain_id];
-                auto size = tasks.size();
-                if (!tasks.empty()) {
-                    auto it = tasks.begin();
-                    log("-----send task id[%ld] to peer[%s]", it->m_data_type_id, aux::toHex(it->m_peer.bytes).c_str());
-                    if (it->m_peer.is_all_zeros()) {
-                        auto &acl = m_access_list[chain_id];
-                        auto p = acl.begin();
-                        for (int i = 0; i < 3 && p != acl.end(); i++, p++) {
-                            auto &peer = p->first;
-                            send_to(chain_id, peer, it->m_entry);
-                        }
-                    } else {
+            if (!m_tasks.empty()) {
+                auto &task = m_tasks.front();
+                log("-----send task id[%ld] to peer[%s], entry[%s]", task.m_data_type_id,
+                    aux::toHex(task.m_peer.bytes).c_str(), task.m_entry.to_string(true).c_str());
+                if (task.m_peer.is_all_zeros()) {
+                    auto &acl = m_access_list[chain_id];
+                    auto p = acl.begin();
+                    for (int i = 0; i < 3 && p != acl.end(); i++, p++) {
+                        auto &peer = p->first;
+                        send_to(chain_id, peer, task.m_entry);
+                    }
+                } else {
 //                        if (now > m_last_visiting_time[chain_id][it->m_peer] + 1000) {
-                            send_to(chain_id, it->m_peer, it->m_entry);
+                    send_to(chain_id, task.m_peer, task.m_entry);
 
 //                            m_last_visiting_time[chain_id][it->m_peer] = now;
 //                        }
-                    }
-
-                    tasks.erase(it);
                 }
-                log("-----------tasks size:%lu, after size:%lu", size, tasks.size());
 
+                m_tasks.pop();
             }
+            log("-----------block chain tasks size:%lu", m_tasks.size());
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
@@ -802,8 +800,8 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::add_entry_task_to_queue(const aux::bytes &chain_id, const common::entry_task &task) {
-        if (m_tasks[chain_id].size() > blockchain_max_task_size) {
-            m_tasks[chain_id].erase(m_tasks[chain_id].begin());
+        if (m_tasks.size() > blockchain_max_task_size) {
+            m_tasks.pop();
         }
 
 //        if (!task.m_peer.is_all_zeros()) {
@@ -819,7 +817,7 @@ namespace libTAU::blockchain {
 //            }
 //        }
 
-        m_tasks[chain_id].insert(task);
+        m_tasks.push(task);
     }
 
 //    void blockchain::try_to_refresh_unchoked_peers(const aux::bytes &chain_id) {
@@ -2806,7 +2804,8 @@ namespace libTAU::blockchain {
         if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
         {
             auto data_type_id = p->integer();
-            log("---------------data type id:%ld from peer[%s]", data_type_id, aux::toHex(peer.bytes).c_str());
+            log("---------------data type id:%ld from peer[%s] entry[%s]", data_type_id,
+                aux::toHex(peer.bytes).c_str(), payload.to_string(true).c_str());
             switch (data_type_id) {
                 case common::block_request_entry::data_type_id: {
                     common::block_request_entry blk_request_entry(payload);
