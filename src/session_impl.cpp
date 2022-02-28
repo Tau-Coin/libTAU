@@ -306,19 +306,19 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
 				if(ipface_state == if_state::unknown) {
 					if(ipface.state == if_state::up) {
-						eps.pop_back();
+						//eps.pop_back();
 						eps.emplace_back(ipface.interface_address, uep.port, uep.device
 							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
 						total_bytes = tmp_bytes;
 					} else if(tmp_bytes > total_bytes) {
-						eps.pop_back();
+						//eps.pop_back();
 						eps.emplace_back(ipface.interface_address, uep.port, uep.device
 							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
 						total_bytes = tmp_bytes;
 					}
 				} else {
 					if(ipface.state == if_state::up && tmp_bytes > total_bytes) {
-						eps.pop_back();
+						//eps.pop_back();
 						eps.emplace_back(ipface.interface_address, uep.port, uep.device
 							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
 						total_bytes = tmp_bytes;
@@ -1200,6 +1200,18 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("initial listen sockets size: %d", eps.size());
 #endif
+            //delete one useless when >=2 v4 ip addresses found
+            if(ifs_tau.size() >= 2)
+            {
+                for(int i = 0 ; i < ifs_tau.size() ; i++)
+                {
+                    if(m_listen_sockets.size() > 0) {
+                        if(ifs_tau[i].name == m_listen_sockets[0]->device.c_str())
+                            ifs_tau.erase(ifs_tau.begin() + i);
+                    }
+                }
+            }
+
 			expand_unspecified_address(ifs_tau, routes, eps);
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("expand unspecified listen sockets size: %d", eps.size());
@@ -1242,14 +1254,17 @@ namespace {
 				{ return l->incoming_connection; }));
 
 		// Only 1 ep in libTAU
-		if(eps.size() > 1)
+        int eps_size = eps.size();
+		while(eps_size > 1)
 		{
 			//only contain one ep for binding
-			for(int i = 0; i < (eps.size()- 1); i++)
+			for(int i = 1; i <= eps_size - 1; i++)
 			{
+                srand((int)time(NULL));
 	    		int rand_select = rand()%eps.size();
 				eps.erase(eps.begin()+rand_select);
 			}
+            eps_size = eps.size();
 		}
 
 		// open new sockets on any endpoints that didn't match with
