@@ -734,9 +734,11 @@ namespace libTAU::blockchain {
             }
             log("-----------block chain tasks size:%lu", m_tasks.size());
 
-            int interval = 500 / m_chains.size();
-            if (m_tasks_set.size() < 5 && m_refresh_time < interval) {
-                m_refresh_time = interval;
+            if (!m_chains.empty()) {
+                int interval = 500 / m_chains.size();
+                if (m_tasks_set.size() < 5 && m_refresh_time < interval) {
+                    m_refresh_time = interval;
+                }
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
