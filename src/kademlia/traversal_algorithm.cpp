@@ -808,6 +808,10 @@ bool traversal_algorithm::add_requests()
 		{
 			o->flags |= observer::flag_failed;
 			++m_invoke_failed;
+
+			if (!(o->flags & observer::flag_no_id))
+				m_node.m_table.node_failed(o->id(), o->target_ep());
+
 			continue; // select next random node
 		}
 	}
