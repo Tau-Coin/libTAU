@@ -359,8 +359,8 @@ namespace blockchain {
         std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
 
         // all tasks
-//        std::map<aux::bytes, std::set<common::entry_task>> m_tasks;
         std::queue<common::entry_task> m_tasks;
+        std::set<common::entry_task> m_tasks_set;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_visiting_history;
 

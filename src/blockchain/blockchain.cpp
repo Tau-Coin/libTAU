@@ -228,11 +228,6 @@ namespace libTAU::blockchain {
         if (e || m_stop) return;
 
         try {
-            int interval = 500 / m_chains.size();
-            if (m_refresh_time < interval) {
-                m_refresh_time = interval;
-            }
-
             // 随机挑选一条
             aux::bytes chain_id = select_chain_randomly();
             if (!chain_id.empty()) {
@@ -734,9 +729,15 @@ namespace libTAU::blockchain {
 //                        }
                 }
 
+                m_tasks_set.erase(task);
                 m_tasks.pop();
             }
             log("-----------block chain tasks size:%lu", m_tasks.size());
+
+            int interval = 500 / m_chains.size();
+            if (m_tasks_set.size() < 5 && m_refresh_time < interval) {
+                m_refresh_time = interval;
+            }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
@@ -800,7 +801,11 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::add_entry_task_to_queue(const aux::bytes &chain_id, const common::entry_task &task) {
-        if (m_tasks.size() > blockchain_max_task_size) {
+        if (m_tasks_set.find(task) != m_tasks_set.end())
+            return;
+
+        if (m_tasks_set.size() > blockchain_max_task_size) {
+            m_tasks_set.erase(m_tasks.front());
             m_tasks.pop();
         }
 
@@ -818,6 +823,7 @@ namespace libTAU::blockchain {
 //        }
 
         m_tasks.push(task);
+        m_tasks_set.insert(task);
     }
 
 //    void blockchain::try_to_refresh_unchoked_peers(const aux::bytes &chain_id) {
@@ -2706,7 +2712,6 @@ namespace libTAU::blockchain {
             if (!tx.empty()) {
                 auto &chain_id = tx.chain_id();
 
-                auto peers = m_repository->get_all_peers(chain_id);
                 common::transaction_entry txEntry(tx);
 
                 auto &acl = m_access_list[chain_id];
