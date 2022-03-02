@@ -611,6 +611,60 @@ namespace libTAU::common {
         blockchain::account m_act;
     };
 
+    struct TORRENT_EXPORT transaction_reply_entry final : blockchain_entry_base {
+        // data type id
+        static inline constexpr std::int64_t data_type_id = 16;
+
+        // @param Construct with entry
+        explicit transaction_reply_entry(const entry& e);
+
+        transaction_reply_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_hash(mHash) {
+            m_chain_id = std::move(mChainId);
+
+            m_entry = get_entry();
+        }
+
+        // @returns the corresponding entry
+        entry get_entry() const override;
+
+        bool operator<(const transaction_reply_entry &rhs) const {
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (rhs.m_chain_id < m_chain_id)
+                return false;
+            return m_hash < rhs.m_hash;
+        }
+
+        sha256_hash m_hash;
+    };
+
+    struct TORRENT_EXPORT block_reply_entry final : blockchain_entry_base {
+        // data type id
+        static inline constexpr std::int64_t data_type_id = 17;
+
+        // @param Construct with entry
+        explicit block_reply_entry(const entry& e);
+
+        block_reply_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_hash(mHash) {
+            m_chain_id = std::move(mChainId);
+
+            m_entry = get_entry();
+        }
+
+        // @returns the corresponding entry
+        entry get_entry() const override;
+
+        bool operator<(const block_reply_entry &rhs) const {
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (rhs.m_chain_id < m_chain_id)
+                return false;
+            return m_hash < rhs.m_hash;
+        }
+
+        sha256_hash m_hash;
+    };
+
 
 
     struct TORRENT_EXPORT ping_entry final : blockchain_entry_base {

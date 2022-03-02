@@ -458,6 +458,64 @@ namespace libTAU::common {
         return e;
     }
 
+    transaction_reply_entry::transaction_reply_entry(const entry &e) {
+        m_entry = e;
+
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+        // tx hash
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            auto hash = i->string();
+            m_hash = sha256_hash(hash.data());
+        }
+    }
+
+    entry transaction_reply_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // block hash
+        e[entry_value] = entry(m_hash.to_string());
+
+        return e;
+    }
+
+    block_reply_entry::block_reply_entry(const entry &e) {
+        m_entry = e;
+
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+        // tx hash
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            auto hash = i->string();
+            m_hash = sha256_hash(hash.data());
+        }
+    }
+
+    entry block_reply_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // block hash
+        e[entry_value] = entry(m_hash.to_string());
+
+        return e;
+    }
+
 
 
     ping_entry::ping_entry(const entry &e) {

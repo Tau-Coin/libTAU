@@ -75,7 +75,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 49;
+	constexpr int num_alert_types = 50;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1497,6 +1497,28 @@ namespace libTAU {
 
         // message found from peers.
         libTAU::blockchain::block blk;
+    };
+
+    // this alert is posted when tx is confirmed.
+    struct TORRENT_EXPORT blockchain_tx_confirmation_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_tx_confirmation_alert(aux::stack_allocator& alloc, aux::bytes id, dht::public_key p, sha256_hash h);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_tx_confirmation_alert, 49, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // chain id
+        aux::bytes chain_id;
+
+        // public key
+        dht::public_key peer;
+
+        // message found from peers.
+        sha256_hash hash;
     };
 
 
