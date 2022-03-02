@@ -2988,6 +2988,12 @@ namespace libTAU::blockchain {
 
                         log("INFO: Got transaction[%s].", tx.to_string().c_str());
 
+                        if (tx.sender() == peer) {
+                            common::transaction_reply_entry txReplyEntry(chain_id, tx.sha256());
+                            common::entry_task task(common::transaction_reply_entry::data_type_id, txReplyEntry.get_entry());
+                            add_entry_task_to_queue(chain_id, task);
+                        }
+
                         auto &pool = m_tx_pools[chain_id];
                         if (pool.add_tx(tx)) {
                             common::transaction_entry txEntry(tx);
@@ -3288,6 +3294,48 @@ namespace libTAU::blockchain {
 
                     if (!act.empty()) {
                         m_ses.alerts().emplace_alert<blockchain_state_alert>(chain_id, act);
+                    }
+
+                    break;
+                }
+                case common::transaction_reply_entry::data_type_id: {
+                    common::transaction_reply_entry txReplyEntry(payload);
+                    auto &chain_id = txReplyEntry.m_chain_id;
+
+                    try_to_kick_out_of_ban_list(chain_id, peer);
+
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score += 3;
+                        if (it->second.m_score > 100) {
+                            it->second.m_score = 100;
+                        }
+                        it->second.m_last_seen = now;
+                    } else {
+                        if (acl.size() >= 5) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info(now);
+                            }
+                        } else {
+                            acl[peer] = peer_info(now);
+                        }
+                    }
+
+                    log("INFO: chain[%s] Got tx reply", aux::toHex(txReplyEntry.m_hash).c_str());
+
+                    if (!txReplyEntry.m_hash.is_all_zeros()) {
+                        m_ses.alerts().emplace_alert<blockchain_tx_confirmation_alert>(chain_id, peer, txReplyEntry.m_hash);
                     }
 
                     break;
