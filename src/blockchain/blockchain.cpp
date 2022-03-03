@@ -1792,9 +1792,35 @@ namespace libTAU::blockchain {
         return SUCCESS;
     }
 
+    namespace {
+        bool sort_votes(const vote &lhs, const vote &rhs) {
+            if (lhs.count() < rhs.count())
+                return false;
+            if (rhs.count() < lhs.count())
+                return true;
+            if (lhs.cumulative_difficulty() < rhs.cumulative_difficulty())
+                return false;
+            if (rhs.cumulative_difficulty() < lhs.cumulative_difficulty())
+                return true;
+            if (lhs.block_number() < rhs.block_number())
+                return true;
+            if (rhs.block_number() < lhs.block_number())
+                return false;
+
+            return lhs.block_hash() < rhs.block_hash();
+        }
+    }
+
     void blockchain::refresh_vote(const aux::bytes &chain_id) {
         std::set<vote> votes;
         auto & peer_votes = m_votes[chain_id];
+
+        // vote for myself
+        if (is_sync_completed(chain_id)) {
+            auto &voting_point_block = m_voting_point_blocks[chain_id];
+            peer_votes[*m_ses.pubkey()] = vote(voting_point_block.sha256(), voting_point_block.cumulative_difficulty(), voting_point_block.block_number());
+        }
+
         // count votes
         for (auto const& v: peer_votes) {
             auto it = votes.find(v.second);
@@ -1808,35 +1834,42 @@ namespace libTAU::blockchain {
             }
         }
 
-        vote best_vote;
-        // if no voting result or best vote count is 1, use local voting point block
-        if ((votes.empty() || votes.rbegin()->count() == 1) && is_sync_completed(chain_id)) {
-            auto &voting_point_block = m_voting_point_blocks[chain_id];
-            best_vote = vote(voting_point_block.sha256(), voting_point_block.block_number());
-        } else {
-            if (!votes.empty()) {
-                // use the best vote
-                best_vote = *votes.rbegin();
-            }
+        std::set<vote, decltype(sort_votes)*> sorted_votes(votes.begin(), votes.end(), sort_votes);
+
+//        vote best_vote;
+//        // if no voting result or best vote count is 1, use local voting point block
+//        if ((votes.empty() || votes.rbegin()->count() == 1) && is_sync_completed(chain_id)) {
+//            auto &voting_point_block = m_voting_point_blocks[chain_id];
+//            best_vote = vote(voting_point_block.sha256(), voting_point_block.block_number());
+//        } else {
+//            if (!votes.empty()) {
+//                // use the best vote
+//                best_vote = *votes.rbegin();
+//            }
+//        }
+
+        if (!sorted_votes.empty()) {
+            m_best_votes[chain_id] = *sorted_votes.begin();
+            log("INFO: chain[%s] best vote[%s]",
+                aux::toHex(chain_id).c_str(), sorted_votes.begin()->to_string().c_str());
         }
 
-        if (!best_vote.empty()) {
-            m_best_votes[chain_id] = best_vote;
-            log("INFO chain[%s] best vote[%s]",
-                aux::toHex(chain_id).c_str(), best_vote.to_string().c_str());
+
+        for (auto const &sorted_vote: sorted_votes) {
+            log("INFO: sorted vote:%s", sorted_vote.to_string().c_str());
         }
 
         // select top three votes
         std::vector<vote> top_three_votes;
         int i = 0;
-        for (auto it = votes.rbegin(); it != votes.rend(); ++it) {
+        for (const auto & sorted_vote : sorted_votes) {
             if (i >= 3)
                 break;
 
             log("INFO chain[%s] top three vote[%s]",
-                aux::toHex(chain_id).c_str(), it->to_string().c_str());
+                aux::toHex(chain_id).c_str(), sorted_vote.to_string().c_str());
 
-            top_three_votes.push_back(*it);
+            top_three_votes.push_back(sorted_vote);
             i++;
         }
 
@@ -3041,12 +3074,9 @@ namespace libTAU::blockchain {
 
                     // vote for voting point
                     auto &voting_point_block = m_voting_point_blocks[chain_id];
-                    vote consensus_point_vote;
                     if (is_sync_completed(chain_id) && !voting_point_block.empty()) {
-                        consensus_point_vote.setBlockHash(voting_point_block.sha256());
-                        consensus_point_vote.setBlockNumber(voting_point_block.block_number());
-
-                        common::vote_entry voteEntry(chain_id, consensus_point_vote);
+                        common::vote_entry voteEntry(chain_id,
+                                                     vote(voting_point_block.sha256(), voting_point_block.cumulative_difficulty(), voting_point_block.block_number()));
 //                            send_to(chain_id, peer, voteEntry.get_entry());
                         common::entry_task task(common::vote_entry::data_type_id, peer, voteEntry.get_entry());
 //                            m_tasks[chain_id].insert(task);
