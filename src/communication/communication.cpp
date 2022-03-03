@@ -708,13 +708,13 @@ namespace libTAU {
                         srand(total_microseconds(system_clock::now().time_since_epoch()));
                         auto index = rand() % 10;
                         send_to(task.m_peer, msg_levenshtein_array.get_entry(),
-                                task.m_alpha, task.m_alpha, task.m_invoke_number, index < 1);
+                                task.m_alpha, task.m_beta, task.m_invoke_number, index < 1);
                     } else {
                         if (task.m_data_type_id == common::message_entry::data_type_id ||
                                 task.m_data_type_id == common::friend_info_entry::data_type_id) {
-                            send_to(task.m_peer, task.m_entry, task.m_alpha, task.m_alpha, task.m_invoke_number, true);
+                            send_to(task.m_peer, task.m_entry, task.m_alpha, task.m_beta, task.m_invoke_number, true);
                         } else {
-                            send_to(task.m_peer, task.m_entry, task.m_alpha, task.m_alpha, task.m_invoke_number, false);
+                            send_to(task.m_peer, task.m_entry, task.m_alpha, task.m_beta, task.m_invoke_number, false);
                         }
                     }
 
