@@ -495,6 +495,8 @@ void node::get_item(public_key const& pk, std::string const& salt
 	auto ta = std::make_shared<dht::get_item>(*this, pk, salt, std::move(f)
 		, find_data::nodes_callback());
 	ta->set_timestamp(timestamp);
+	// TODO: removed
+	ta->set_fixed_distance(255);
 	ta->start();
 }
 
@@ -633,6 +635,8 @@ void node::put_item(public_key const& pk
 	put_ta->set_invoke_window(beta);
 	put_ta->set_invoke_limit(invoke_limit);
 	put_ta->set_cache(cache);
+	// TODO: removed
+	put_ta->set_fixed_distance(255);
 
 	put_ta->start();
 }
@@ -659,6 +663,8 @@ void node::send(public_key const& to
 	ta->set_payload(std::move(payload));
 	ta->set_invoke_window(beta);
 	ta->set_invoke_limit(invoke_limit);
+	// TODO: removed
+	ta->set_fixed_distance(255);
 
 	// find relay aux info
 	std::vector<node_entry> l;
