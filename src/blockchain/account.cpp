@@ -25,6 +25,8 @@ namespace libTAU::blockchain {
         if (m_nonce != 0) {
             e["n"] = entry(m_nonce);
         }
+        // note timestamp
+        e["t"] = entry(m_note_timestamp);
         // effective power
         if (m_effective_power != 0) {
             e["p"] = entry(m_effective_power);
@@ -47,6 +49,11 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("n")))
         {
             m_nonce = i->integer();
+        }
+        // note timestamp
+        if (auto* i = const_cast<entry *>(e.find_key("t")))
+        {
+            m_note_timestamp = i->integer();
         }
         // effective power
         if (auto* i = const_cast<entry *>(e.find_key("p")))

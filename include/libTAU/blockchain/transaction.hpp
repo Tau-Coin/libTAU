@@ -28,6 +28,12 @@ namespace blockchain {
         tx_unknown_version,
     };
 
+    enum tx_type {
+        type_transfer,
+        type_note,
+        type_unknown,
+    };
+
     class TORRENT_EXPORT transaction {
     public:
         transaction() = default;
@@ -38,15 +44,37 @@ namespace blockchain {
         // @param Construct with bencode
         explicit transaction(std::string encode): transaction(bdecode(encode)) {}
 
+        static transaction create_transfer_transaction(const aux::bytes& mChainId, tx_version mVersion, int64_t mTimestamp,
+                                                       const dht::public_key &mSender, const dht::public_key &mReceiver,
+                                                       int64_t mNonce, int64_t mAmount, int64_t mFee, const aux::bytes& mPayload) {
+            return transaction(mChainId, mVersion, mTimestamp, mSender, mReceiver, mNonce, mAmount, mFee, mPayload);
+        }
+
+        static transaction create_note_transaction(const aux::bytes& mChainId, tx_version mVersion, int64_t mTimestamp,
+                                                       const dht::public_key &mSender, int64_t mFee, const aux::bytes& mPayload) {
+            return transaction(mChainId, mVersion, mTimestamp, mSender, mFee, mPayload);
+        }
+
+        transaction(aux::bytes mChainId, tx_version mVersion, int64_t mTimestamp,
+                    const dht::public_key &mSender, int64_t mFee, aux::bytes mPayload) :
+                    m_chain_id(std::move(mChainId)), m_version(mVersion), m_timestamp(mTimestamp),
+                    m_sender(mSender), m_fee(mFee), m_payload(std::move(mPayload)) {
+            m_type = tx_type::type_note;
+        }
+
         transaction(aux::bytes mChainId, tx_version mVersion, int64_t mTimestamp, const dht::public_key &mSender,
                     const dht::public_key &mReceiver, int64_t mNonce, int64_t mAmount, int64_t mFee,
                     aux::bytes mPayload) : m_chain_id(std::move(mChainId)), m_version(mVersion),
-                    m_timestamp(mTimestamp), m_sender(mSender), m_receiver(mReceiver), m_nonce(mNonce),
-                    m_amount(mAmount), m_fee(mFee), m_payload(std::move(mPayload)) {}
+                    m_timestamp(mTimestamp), m_sender(mSender), m_receiver(mReceiver),
+                    m_nonce(mNonce), m_amount(mAmount), m_fee(mFee), m_payload(std::move(mPayload)) {
+            m_type = tx_type::type_transfer;
+        }
 
         const aux::bytes &chain_id() const { return m_chain_id; }
 
         tx_version version() const { return m_version; }
+
+        tx_type type() const { return m_type; }
 
         int64_t timestamp() const { return m_timestamp; }
 
@@ -102,6 +130,9 @@ namespace blockchain {
 
         // version
         tx_version m_version = tx_version1;
+
+        // version
+        tx_type m_type = type_transfer;
 
         // timestamp
         std::int64_t m_timestamp{};

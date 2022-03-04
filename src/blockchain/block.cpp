@@ -88,6 +88,8 @@ namespace libTAU::blockchain {
         e["mb"] = entry(m_miner_balance);
         // miner nonce
         e["mn"] = entry(m_miner_nonce);
+        // miner note timestamp
+        e["mt"] = entry(m_miner_note_timestamp);
         if (!m_tx.empty()) {
             // tx
             e["tx"] = m_tx.get_entry();
@@ -95,10 +97,14 @@ namespace libTAU::blockchain {
             e["sb"] = entry(m_sender_balance);
             // sender nonce
             e["sn"] = entry(m_sender_nonce);
+            // sender note timestamp
+            e["st"] = entry(m_sender_note_timestamp);
             // receiver balance
             e["rb"] = entry(m_receiver_balance);
             // receiver nonce
             e["rn"] = entry(m_receiver_nonce);
+            // receiver note timestamp
+            e["rt"] = entry(m_receiver_note_timestamp);
         }
 
         return e;
@@ -170,6 +176,11 @@ namespace libTAU::blockchain {
         {
             m_miner_nonce = i->integer();
         }
+        // miner note timestamp
+        if (auto* i = const_cast<entry *>(e.find_key("mt")))
+        {
+            m_miner_note_timestamp = i->integer();
+        }
         // sender balance
         if (auto* i = const_cast<entry *>(e.find_key("sb")))
         {
@@ -180,6 +191,11 @@ namespace libTAU::blockchain {
         {
             m_sender_nonce = i->integer();
         }
+        // sender note timestamp
+        if (auto* i = const_cast<entry *>(e.find_key("st")))
+        {
+            m_sender_note_timestamp = i->integer();
+        }
         // receiver balance
         if (auto* i = const_cast<entry *>(e.find_key("rb")))
         {
@@ -189,6 +205,11 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("rn")))
         {
             m_receiver_nonce = i->integer();
+        }
+        // receiver note timestamp
+        if (auto* i = const_cast<entry *>(e.find_key("rt")))
+        {
+            m_receiver_note_timestamp = i->integer();
         }
         // signature
         if (auto* i = const_cast<entry *>(e.find_key("sig")))
@@ -222,9 +243,11 @@ namespace libTAU::blockchain {
            << aux::toHex(block.m_previous_block_hash.to_string()) << " m_base_target: " << block.m_base_target << " m_cumulative_difficulty: "
            << block.m_cumulative_difficulty << " m_generation_signature: " << aux::toHex(block.m_generation_signature.to_string()) << " m_tx: "
            << block.m_tx << " m_miner: " << aux::toHex(block.m_miner.bytes) << " m_miner_balance: " << block.m_miner_balance
-           << " m_miner_nonce: " << block.m_miner_nonce << " m_sender_balance: " << block.m_sender_balance
-           << " m_sender_nonce: " << block.m_sender_nonce << " m_receiver_balance: " << block.m_receiver_balance
-           << " m_receiver_nonce: " << block.m_receiver_nonce << " m_hash: " << aux::toHex(block.m_hash.to_string());
+           << " m_miner_nonce: " << block.m_miner_nonce << " m_miner_note_timestamp: " << block.m_miner_note_timestamp
+           << " m_sender_balance: " << block.m_sender_balance << " m_sender_nonce: " << block.m_sender_nonce
+           << " m_sender_note_timestamp: " << block.m_sender_note_timestamp << " m_receiver_balance: " << block.m_receiver_balance
+           << " m_receiver_nonce: " << block.m_receiver_nonce << " m_receiver_note_timestamp: " << block.m_receiver_note_timestamp
+           << " m_hash: " << aux::toHex(block.m_hash.to_string());
         return os;
     }
 }

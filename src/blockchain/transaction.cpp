@@ -27,16 +27,20 @@ namespace libTAU::blockchain {
         e["i"] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // version
         e["v"] = entry(m_version);
+        // type
+        e["e"] = entry(m_type);
         // timestamp
         e["t"] = entry(m_timestamp);
         // sender
         e["s"] = entry(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
-        // receiver
-        e["r"] = entry(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
-        // nonce
-        e["n"] = entry(m_nonce);
-        // amount
-        e["a"] = entry(m_amount);
+        if (m_type == tx_type::type_transfer) {
+            // receiver
+            e["r"] = entry(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
+            // nonce
+            e["n"] = entry(m_nonce);
+            // amount
+            e["a"] = entry(m_amount);
+        }
         // fee
         e["f"] = entry(m_fee);
         // payload
@@ -101,6 +105,11 @@ namespace libTAU::blockchain {
         {
             m_version = static_cast<tx_version>(i->integer());
         }
+        // type
+        if (auto* i = const_cast<entry *>(e.find_key("e")))
+        {
+            m_type = static_cast<tx_type>(i->integer());
+        }
         // timestamp
         if (auto* i = const_cast<entry *>(e.find_key("t")))
         {
@@ -154,9 +163,10 @@ namespace libTAU::blockchain {
     }
 
     std::ostream &operator<<(std::ostream &os, const transaction &transaction) {
-        os << "m_chain_id: " << aux::toHex(transaction.m_chain_id) << " m_version: " << transaction.m_version << " m_timestamp: "
-           << transaction.m_timestamp << " m_sender: " << aux::toHex(transaction.m_sender.bytes) << " m_receiver: "
-           << aux::toHex(transaction.m_receiver.bytes) << " m_nonce: " << transaction.m_nonce << " m_amount: " << transaction.m_amount
+        os << "m_chain_id: " << aux::toHex(transaction.m_chain_id) << " m_version: " << transaction.m_version
+           << " m_type: " << transaction.m_type << " m_timestamp: " << transaction.m_timestamp << " m_sender: "
+           << aux::toHex(transaction.m_sender.bytes) << " m_receiver: " << aux::toHex(transaction.m_receiver.bytes)
+           << " m_nonce: " << transaction.m_nonce << " m_amount: " << transaction.m_amount
            << " m_fee: " << transaction.m_fee << " m_hash: " << aux::toHex(transaction.m_hash.to_string());
         return os;
     }

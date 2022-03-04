@@ -1053,36 +1053,49 @@ namespace libTAU::blockchain {
 
                 std::map<dht::public_key, std::int64_t> peers_balance;
                 std::map<dht::public_key, std::int64_t> peers_nonce;
+                std::map<dht::public_key, std::int64_t> peers_note_timestamp;
 
                 // get miner state
                 auto miner_account = m_repository->get_account(chain_id, *pk);
                 peers_balance[*pk] = miner_account.balance();
                 peers_nonce[*pk] = miner_account.nonce();
+                peers_note_timestamp[*pk] = miner_account.note_timestamp();
 
                 if (!tx.empty()) {
                     // get state
                     auto sender_account = m_repository->get_account(chain_id, tx.sender());
                     peers_balance[tx.sender()] = sender_account.balance();
                     peers_nonce[tx.sender()] = sender_account.nonce();
-                    auto receiver_account = m_repository->get_account(chain_id, tx.receiver());
-                    peers_balance[tx.receiver()] = receiver_account.balance();
-                    peers_nonce[tx.receiver()] = receiver_account.nonce();
+                    peers_note_timestamp[tx.sender()] = sender_account.note_timestamp();
 
                     // adjust state
                     // miner earns fee
                     peers_balance[*pk] += tx.fee();
-                    // sender balance - cost(fee + amount)
-                    peers_balance[tx.sender()] -= tx.cost();
-                    // sender nonce+1
-                    peers_nonce[tx.sender()] += 1;
-                    // receiver balance + amount
-                    peers_balance[tx.receiver()] += tx.amount();
+                    if (tx.type() == tx_type::type_transfer) {
+                        auto receiver_account = m_repository->get_account(chain_id, tx.receiver());
+                        peers_balance[tx.receiver()] = receiver_account.balance();
+                        peers_nonce[tx.receiver()] = receiver_account.nonce();
+                        peers_note_timestamp[tx.receiver()] = receiver_account.note_timestamp();
+
+                        // sender balance - cost(fee + amount)
+                        peers_balance[tx.sender()] -= tx.cost();
+                        // sender nonce+1
+                        peers_nonce[tx.sender()] += 1;
+                        // receiver balance + amount
+                        peers_balance[tx.receiver()] += tx.amount();
+                    } else if (tx.type() == tx_type::type_note) {
+                        // sender balance - fee
+                        peers_balance[tx.sender()] -= tx.fee();
+                        peers_note_timestamp[tx.sender()] = tx.timestamp();
+                    } else {
+                        return b;
+                    }
                 }
                 b = block(chain_id, block_version::block_version1, (head_block.timestamp() + interval),
-                          head_block.block_number() + 1, head_block.sha256(), base_target,
-                          cumulative_difficulty, genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk],
-                          peers_balance[tx.sender()], peers_nonce[tx.sender()],
-                          peers_balance[tx.receiver()], peers_nonce[tx.receiver()]);
+                          head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
+                          genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk], peers_note_timestamp[*pk],
+                          peers_balance[tx.sender()], peers_nonce[tx.sender()], peers_note_timestamp[tx.sender()],
+                          peers_balance[tx.receiver()], peers_nonce[tx.receiver()], peers_note_timestamp[tx.receiver()]);
                 b.sign(*pk, *sk);
             } else {
                 log("INFO: chain id[%s] left time[%ld]s", aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - now);
@@ -1157,25 +1170,39 @@ namespace libTAU::blockchain {
         auto miner_account = repo->get_account(chain_id, b.miner());
         std::int64_t miner_balance = miner_account.balance();
         std::int64_t miner_nonce = miner_account.nonce();
+        std::int64_t miner_note_timestamp = miner_account.note_timestamp();
         std::int64_t sender_balance = 0;
         std::int64_t sender_nonce = 0;
+        std::int64_t sender_note_timestamp = 0;
         std::int64_t receiver_balance = 0;
         std::int64_t receiver_nonce = 0;
+        std::int64_t receiver_note_timestamp = 0;
         auto const& tx = b.tx();
         if (!tx.empty()) {
             miner_balance += tx.fee();
 
             auto sender_account = repo->get_account(chain_id, tx.sender());
-            sender_balance = sender_account.balance() - tx.cost();
-            sender_nonce = sender_account.nonce() + 1;
 
-            auto receiver_account = repo->get_account(chain_id, tx.receiver());
-            receiver_balance = receiver_account.balance() + tx.amount();
-            receiver_nonce = receiver_account.nonce();
+            if (tx.type() == tx_type::type_transfer) {
+                sender_balance = sender_account.balance() - tx.cost();
+                sender_nonce = sender_account.nonce() + 1;
+                sender_note_timestamp = sender_account.note_timestamp();
+
+                auto receiver_account = repo->get_account(chain_id, tx.receiver());
+                receiver_balance = receiver_account.balance() + tx.amount();
+                receiver_nonce = receiver_account.nonce();
+                receiver_note_timestamp = receiver_account.note_timestamp();
+            } else if (tx.type() == tx_type::type_note) {
+                // sender balance - fee
+                sender_balance = sender_account.balance() - tx.fee();
+                sender_note_timestamp = tx.timestamp();
+            }
         }
         if (miner_balance != b.miner_balance() || miner_nonce != b.miner_nonce() ||
-        sender_balance != b.sender_balance() || sender_nonce != b.sender_nonce() ||
-        receiver_balance != b.receiver_balance() || receiver_nonce != b.receiver_nonce()) {
+        receiver_note_timestamp != b.receiver_note_timestamp() || sender_balance != b.sender_balance() ||
+        sender_nonce != b.sender_nonce() || sender_note_timestamp != b.sender_note_timestamp() ||
+        receiver_balance != b.receiver_balance() || receiver_nonce != b.receiver_nonce() ||
+        receiver_note_timestamp != b.receiver_note_timestamp()) {
             log("INFO chain[%s] block[%s] state error!",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
             return FAIL;
@@ -2663,7 +2690,7 @@ namespace libTAU::blockchain {
 
             block b = block(TAU_CHAIN_ID, block_version::block_version1, TAU_CHAIN_GENESIS_TIMESTAMP, block_number, previous_hash,
                             GENESIS_BASE_TARGET, 0, genSig, transaction(), miner, GENESIS_BLOCK_BALANCE,
-                            0, 0, 0, 0, 0);
+                            0, 0, 0, 0, 0, 0, 0, 0);
             b.sign(*pk, *sk);
 
             blocks.push_back(b);
@@ -2709,7 +2736,7 @@ namespace libTAU::blockchain {
 
             block b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
                             base_target, 0, genSig, transaction(), miner, miner_balance,
-                            0, 0, 0, 0, 0);
+                            0, 0, 0, 0, 0, 0, 0, 0);
             b.sign(*pk, *sk);
 
             blocks.push_back(b);
@@ -2725,7 +2752,7 @@ namespace libTAU::blockchain {
         std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
         block b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
                         base_target, 0, genSig, transaction(), *pk, genesis_balance,
-                        0, 0, 0, 0, 0);
+                        0, 0, 0, 0, 0, 0, 0, 0);
         b.sign(*pk, *sk);
 
         peers.insert(*pk);
