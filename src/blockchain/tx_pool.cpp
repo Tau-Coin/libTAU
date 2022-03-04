@@ -90,8 +90,15 @@ namespace libTAU::blockchain {
 
         // validate tx state
         auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
-        if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
+        if (tx.type() == tx_type::type_transfer) {
+            if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
+                return false;
+        } else if (tx.type() == tx_type::type_note) {
+            if (tx.timestamp() <= sender_account.note_timestamp() || sender_account.balance() < tx.cost())
+                return false;
+        } else {
             return false;
+        }
 
         auto it_txid = m_account_tx_by_fee.find(tx.sender());
         // find in local
