@@ -773,8 +773,8 @@ void node::tick()
 		make_id_secret(target);
 
 		auto const r = std::make_shared<dht::bootstrap>(*this, target, std::bind(&nop));
-		r->set_invoke_window(8);
-		r->set_invoke_limit(16);
+		r->set_invoke_window(4);
+		r->set_invoke_limit(8);
 		// set referrable nodes' max XOR distance into 255
 		r->set_fixed_distance(255);
 		r->start();
