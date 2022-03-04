@@ -192,7 +192,7 @@ namespace libTAU {
 		SET(dht_enforce_node_id, false, nullptr),
 		SET(dht_ignore_dark_internet, true, nullptr),
 		SET(dht_read_only, false, nullptr),
-		SET(dht_non_referrable, false, nullptr),
+		SET(dht_non_referrable, true, nullptr),
 		SET(piece_extent_affinity, false, nullptr),
 		SET(ssrf_mitigation, true, nullptr),
 		SET(allow_idna, false, nullptr),
