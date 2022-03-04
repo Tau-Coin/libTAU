@@ -44,14 +44,14 @@ namespace blockchain {
         // @param Construct with bencode
         explicit transaction(std::string encode): transaction(bdecode(encode)) {}
 
-        static transaction create_transfer_transaction(const aux::bytes& mChainId, tx_version mVersion, int64_t mTimestamp,
+        static transaction create_transfer_transaction(aux::bytes& mChainId, tx_version mVersion, int64_t mTimestamp,
                                                        const dht::public_key &mSender, const dht::public_key &mReceiver,
-                                                       int64_t mNonce, int64_t mAmount, int64_t mFee, const aux::bytes& mPayload) {
+                                                       int64_t mNonce, int64_t mAmount, int64_t mFee, aux::bytes& mPayload) {
             return transaction(mChainId, mVersion, mTimestamp, mSender, mReceiver, mNonce, mAmount, mFee, mPayload);
         }
 
-        static transaction create_note_transaction(const aux::bytes& mChainId, tx_version mVersion, int64_t mTimestamp,
-                                                       const dht::public_key &mSender, int64_t mFee, const aux::bytes& mPayload) {
+        static transaction create_note_transaction(aux::bytes& mChainId, tx_version mVersion, int64_t mTimestamp,
+                                                       const dht::public_key &mSender, int64_t mFee,  aux::bytes& mPayload) {
             return transaction(mChainId, mVersion, mTimestamp, mSender, mFee, mPayload);
         }
 
