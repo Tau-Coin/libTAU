@@ -685,7 +685,7 @@ namespace libTAU {
                         request_signal(peer);
                     }
 
-                    if (now < m_last_communication_time[peer] + 24 * 60 * 60 * 1000 && now > m_last_detection_time[peer] + 15 * 60 * 1000) {
+                    if (now < m_last_communication_time[peer] + 24 * 60 * 60 * 1000 && now > m_last_detection_time[peer] + 5 * 60 * 1000) {
                         send_one_unconfirmed_message_randomly(peer);
 
                         update_detection_time(peer, now);
