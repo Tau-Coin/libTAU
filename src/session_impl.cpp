@@ -1205,9 +1205,16 @@ namespace {
             {
                 for(int i = 0 ; i < ifs_tau.size() ; i++)
                 {
-                    if(m_listen_sockets.size() > 0) {
-                        if(ifs_tau[i].name == m_listen_sockets[0]->device.c_str())
+                    if(m_listen_sockets.size() > 0) { 
+#ifndef TORRENT_DISABLE_LOGGING
+                        session_log("ready to delete in 1st name: %s, former name: %s", ifs_tau[i].name, m_listen_sockets[0]->device.c_str());
+#endif
+                        if(ifs_tau[i].name == m_listen_sockets[0]->device.c_str()) {
+#ifndef TORRENT_DISABLE_LOGGING
+                        session_log("delete in 1st name: %s, former name: %s", ifs_tau[i].name, m_listen_sockets[0]->device.c_str());
+#endif
                             ifs_tau.erase(ifs_tau.begin() + i);
+                        }
                     }
                 }
             }
@@ -1262,6 +1269,11 @@ namespace {
 			{
                 srand((int)time(NULL));
 	    		int rand_select = rand()%eps.size();
+#ifndef TORRENT_DISABLE_LOGGING
+				session_log("delete in random ep(%s) device: %s"
+						, print_endpoint(eps[rand_select].addr, eps[rand_select].port).c_str()
+						, eps[rand_select].device.c_str());
+#endif
 				eps.erase(eps.begin()+rand_select);
 			}
             eps_size = eps.size();
