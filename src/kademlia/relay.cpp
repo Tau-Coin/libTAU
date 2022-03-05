@@ -61,7 +61,7 @@ void relay::start()
 	// for "XX" channel, set fixed allow distance into 255.
 	if (m_node.nid() == m_to)
 	{
-		set_fixed_distance(255);
+		set_fixed_distance(256);
 	}
 
 	// if the user didn't add seed-nodes manually, grab k (bucket size)

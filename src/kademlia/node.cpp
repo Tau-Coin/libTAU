@@ -496,7 +496,7 @@ void node::get_item(public_key const& pk, std::string const& salt
 		, find_data::nodes_callback());
 	ta->set_timestamp(timestamp);
 	// TODO: removed
-	ta->set_fixed_distance(255);
+	ta->set_fixed_distance(256);
 	ta->start();
 }
 
@@ -636,7 +636,7 @@ void node::put_item(public_key const& pk
 	put_ta->set_invoke_limit(invoke_limit);
 	put_ta->set_cache(cache);
 	// TODO: removed
-	put_ta->set_fixed_distance(255);
+	put_ta->set_fixed_distance(256);
 
 	put_ta->start();
 }
@@ -664,7 +664,7 @@ void node::send(public_key const& to
 	ta->set_invoke_window(beta);
 	ta->set_invoke_limit(invoke_limit);
 	// TODO: removed
-	ta->set_fixed_distance(255);
+	ta->set_fixed_distance(256);
 
 	// find relay aux info
 	std::vector<node_entry> l;
@@ -775,8 +775,8 @@ void node::tick()
 		auto const r = std::make_shared<dht::bootstrap>(*this, target, std::bind(&nop));
 		r->set_invoke_window(4);
 		r->set_invoke_limit(8);
-		// set referrable nodes' max XOR distance into 255
-		r->set_fixed_distance(255);
+		// set referrable nodes' max XOR distance into 256
+		r->set_fixed_distance(256);
 		r->start();
 		m_last_self_refresh = now;
 		return;
