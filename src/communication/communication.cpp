@@ -395,8 +395,7 @@ namespace libTAU {
         }
 
         bool communication::add_new_message(const message &msg, bool post_alert) {
-            if (!add_new_message(msg.receiver(), msg, post_alert))
-                return false;
+            add_new_message(msg.receiver(), msg, post_alert);
 
             aux::bytes levenshtein_array;
             auto& msg_list = m_message_list_map[msg.receiver()];

@@ -2840,7 +2840,7 @@ namespace {
 	bool session_impl::add_new_message(const communication::message& msg)
 	{
 		if(m_communication)
-			return m_communication->add_new_message(msg, false);
+			return m_communication->add_new_message(msg);
 		else
 			return false;
 	}	
