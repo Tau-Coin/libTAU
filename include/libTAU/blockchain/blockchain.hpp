@@ -127,6 +127,9 @@ namespace blockchain {
         // get median tx fee
         std::int64_t getMedianTxFee(const aux::bytes &chain_id);
 
+        // return mining time: -1: cannot mine block
+        std::int64_t getMiningTime(const aux::bytes &chain_id);
+
         // set blockchain main loop time interval (ms)
         void set_blockchain_loop_interval(int milliseconds);
 

@@ -2836,6 +2836,51 @@ namespace libTAU::blockchain {
         return 0;
     }
 
+    std::int64_t blockchain::getMiningTime(const aux::bytes &chain_id) {
+        dht::public_key *pk = m_ses.pubkey();
+
+        auto &head_block = m_head_blocks[chain_id];
+        if (!head_block.empty()) {
+            if (head_block.block_number() < 0) {
+                return -1;
+            }
+
+            block ancestor;
+            auto previous_hash = head_block.previous_block_hash();
+            if (head_block.block_number() > 3) {
+                int i = 3;
+                while (i > 0) {
+                    ancestor = m_repository->get_block_by_hash(previous_hash);
+                    if (ancestor.empty()) {
+                        return -1;
+                    }
+                    previous_hash = ancestor.previous_block_hash();
+
+                    i--;
+                }
+            }
+
+            auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
+            std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
+            log("INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), power);
+            if (power <= 0) {
+                return -1;
+            }
+            auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
+            auto hit = consensus::calculate_random_hit(genSig);
+            auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, power));
+
+            std::int64_t now = get_total_milliseconds() / 1000; // second
+            if (now >= head_block.timestamp() + interval) {
+                return 0;
+            } else {
+                return head_block.timestamp() + interval - now;
+            }
+        }
+
+        return -1;
+    }
+
     void blockchain::set_blockchain_loop_interval(int milliseconds) {
         log("INFO: Set block chain loop interval:%d(ms)", milliseconds);
         m_refresh_time = milliseconds;
