@@ -500,7 +500,7 @@ namespace aux {
 			bool is_dht_running() const { return (m_dht.get() != nullptr); }
 			int external_udp_port(address const& local_address) const override;
 
-			udp::endpoint external_udp_endpoint() const;
+			udp::endpoint external_udp_endpoint() const override;
 
 			void start_ip_notifier();
 			void start_natpmp();
