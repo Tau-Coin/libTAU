@@ -285,6 +285,10 @@ void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 {
 	if (m_done) return;
 
+	// TODO: exclude ourself from invoking list.
+	// This is temporay solution and it may exclude ourself on another device.
+	if (m_node.nid() == id) return;
+
 #ifndef TORRENT_DISABLE_LOGGING
 	dht_observer* logger = get_node().observer();
 	if (logger != nullptr && logger->should_log(dht_logger::traversal) && id.is_all_zeros())
