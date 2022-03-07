@@ -1207,9 +1207,9 @@ namespace {
                 {
                     if(m_listen_sockets.size() > 0) { 
 #ifndef TORRENT_DISABLE_LOGGING
-                        session_log("ready to delete in 1st name: %s, former name: %s", ifs_tau[i].name, m_listen_sockets[0]->device.c_str());
+                        session_log("ready to delete in 1st name: |%s|, former name: |%s|", ifs_tau[i].name, m_listen_sockets[0]->device.c_str());
 #endif
-                        if(ifs_tau[i].name == m_listen_sockets[0]->device.c_str()) {
+                        if(!strcmp(ifs_tau[i].name, m_listen_sockets[0]->device.c_str())) {
 #ifndef TORRENT_DISABLE_LOGGING
                         session_log("delete in 1st name: %s, former name: %s", ifs_tau[i].name, m_listen_sockets[0]->device.c_str());
 #endif
