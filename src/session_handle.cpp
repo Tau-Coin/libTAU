@@ -229,6 +229,10 @@ namespace libTAU {
 		async_call(&session_impl::dht_live_nodes, nid);
 	}
 
+	std::uint16_t session_handle::get_port_from_pubkey(const dht::public_key& pubkey) {
+		return sync_call_ret<std::uint16_t>(&session_impl::get_port_from_pubkey, pubkey);
+    }
+
 	void session_handle::new_account_seed(std::string& account_seed)
 	{
 		sync_call(&session_impl::new_account_seed, account_seed);

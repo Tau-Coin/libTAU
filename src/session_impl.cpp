@@ -663,7 +663,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 #endif
 
 		// close the listen sockets
-		for (auto const& l : m_listen_sockets)
+		for (auto const& l : m_listening_sockets)
 		{
 			// TODO: 3 closing the udp sockets here means that
 			// the uTP connections cannot be closed gracefully
@@ -1203,18 +1203,26 @@ namespace {
             //delete one useless when >=2 v4 ip addresses found
             if(ifs_tau.size() >= 2)
             {
-                for(int i = 0 ; i < ifs_tau.size() ; i++)
+                int ifs_tau_discovered = ifs_tau.size();
+
+                for(int i = 0 ; i < ifs_tau_discovered ; i++)
                 {
-                    if(m_listen_sockets.size() > 0) { 
+                    if(m_listened_sockets.size() < ifs_tau_discovered) { 
+                        if(m_listened_sockets.size() > 0) {
+                            for( int j = 0; j < m_listened_sockets.size(); j++) {
 #ifndef TORRENT_DISABLE_LOGGING
-                        session_log("ready to delete in 1st name: |%s|, former name: |%s|", ifs_tau[i].name, m_listen_sockets[0]->device.c_str());
+                                session_log("ready to delete in 1st name: |%s|, former name: |%s|", ifs_tau[i].name, m_listening_sockets[0]->device.c_str());
 #endif
-                        if(!strcmp(ifs_tau[i].name, m_listen_sockets[0]->device.c_str())) {
+                                if(!strcmp(ifs_tau[i].name, m_listened_sockets[j]->device.c_str())) {
 #ifndef TORRENT_DISABLE_LOGGING
-                        session_log("delete in 1st name: %s, former name: %s", ifs_tau[i].name, m_listen_sockets[0]->device.c_str());
+                                    session_log("delete in 1st name: %s, former name: %s", ifs_tau[i].name, m_listening_sockets[0]->device.c_str());
 #endif
-                            ifs_tau.erase(ifs_tau.begin() + i);
+                                    ifs_tau.erase(ifs_tau.begin() + i);
+                                }
+                            }
                         }
+                    } else {
+                        m_listened_sockets.clear();
                     }
                 }
             }
@@ -1229,10 +1237,10 @@ namespace {
 #endif
 		}
 
-		//auto remove_iter = partition_listen_sockets(eps, m_listen_sockets);
-		auto remove_iter = m_listen_sockets.begin();
+		//auto remove_iter = partition_listen_sockets(eps, m_listening_sockets);
+		auto remove_iter = m_listening_sockets.begin();
 
-		while (remove_iter != m_listen_sockets.end())
+		while (remove_iter != m_listening_sockets.end())
 		{
 			if (m_dht)
 				m_dht->delete_socket(*remove_iter);
@@ -1248,15 +1256,15 @@ namespace {
 			if ((*remove_iter)->udp_sock) (*remove_iter)->udp_sock->sock.close();
 			if ((*remove_iter)->natpmp_mapper) (*remove_iter)->natpmp_mapper->close();
 			if ((*remove_iter)->upnp_mapper) (*remove_iter)->upnp_mapper->close();
-			remove_iter = m_listen_sockets.erase(remove_iter);
+			remove_iter = m_listening_sockets.erase(remove_iter);
 		}
 
 		// all sockets in there stayed the same. Only sockets after this point are
 		// new and should post alerts
-		int const existing_sockets = int(m_listen_sockets.size());
+		int const existing_sockets = int(m_listening_sockets.size());
 
 		m_stats_counters.set_value(counters::has_incoming_connections
-			, std::any_of(m_listen_sockets.begin(), m_listen_sockets.end()
+			, std::any_of(m_listening_sockets.begin(), m_listening_sockets.end()
 				, [](std::shared_ptr<listen_socket_t> const& l)
 				{ return l->incoming_connection; }));
 
@@ -1287,7 +1295,7 @@ namespace {
 #endif
 		{
 			std::shared_ptr<listen_socket_t> s = setup_listener(ep, ec);
-			if (!ec && s->udp_sock && !(s->flags & listen_socket_t::local_network) && m_listen_sockets.empty())
+			if (!ec && s->udp_sock && !(s->flags & listen_socket_t::local_network) && m_listening_sockets.empty())
 			{
 #ifndef TORRENT_DISABLE_LOGGING
 				if (should_log())
@@ -1297,11 +1305,12 @@ namespace {
 						, ep.device.c_str());
 				}
 #endif // TORRENT_DISABLE_LOGGING
-				m_listen_sockets.emplace_back(s);
+				m_listening_sockets.emplace_back(s);
+				m_listened_sockets.emplace_back(s);
 				if (m_dht && s->ssl != transport::ssl)
 				{
 					m_dht->stop();
-					m_dht->new_socket(m_listen_sockets.back());
+					m_dht->new_socket(m_listening_sockets.back());
 					//TODO: get and add nodes from former node's routing table
 					for (auto const& n : m_dht_router_nodes)
 					{
@@ -1334,7 +1343,7 @@ namespace {
 		}
 #endif // BOOST_NO_EXCEPTIONS
 
-		if (m_listen_sockets.empty())
+		if (m_listening_sockets.empty())
 		{
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("giving up on binding listen sockets");
@@ -1343,7 +1352,7 @@ namespace {
 		}
 
 		auto const new_sockets = span<std::shared_ptr<listen_socket_t>>(
-			m_listen_sockets).subspan(existing_sockets);
+			m_listening_sockets).subspan(existing_sockets);
 
 		// now, send out listen_succeeded_alert for the listen sockets we are
 		// listening on
@@ -1391,7 +1400,7 @@ namespace {
 
 		if (map_ports)
 		{
-			for (auto const& s : m_listen_sockets)
+			for (auto const& s : m_listening_sockets)
 				remap_ports(remap_natpmp_and_upnp, *s);
 		}
 		else
@@ -1447,13 +1456,13 @@ namespace {
 
 	int session_impl::external_udp_port(address const& local_address) const
 	{
-		auto ls = std::find_if(m_listen_sockets.begin(), m_listen_sockets.end()
+		auto ls = std::find_if(m_listening_sockets.begin(), m_listening_sockets.end()
 			, [&](std::shared_ptr<listen_socket_t> const& e)
 		{
 			return e->local_endpoint.address() == local_address;
 		});
 
-		if (ls != m_listen_sockets.end())
+		if (ls != m_listening_sockets.end())
 			return (*ls)->udp_external_port();
 		else
 			return -1;
@@ -1462,7 +1471,7 @@ namespace {
 	udp::endpoint session_impl::external_udp_endpoint() const
 	{
 		// take the first v4 IP
-		for (auto const& i : m_listen_sockets)
+		for (auto const& i : m_listening_sockets)
 		{
 			address external_addr = i->external_address.external_address();
 			address& upnp_mapping_addr = i->udp_address_mapping[portmap_transport::upnp];
@@ -2198,10 +2207,10 @@ namespace {
 	// verify that ``addr``s interface allows incoming connections
 	bool session_impl::verify_incoming_interface(address const& addr)
 	{
-		auto const iter = std::find_if(m_listen_sockets.begin(), m_listen_sockets.end()
+		auto const iter = std::find_if(m_listening_sockets.begin(), m_listening_sockets.end()
 			, [&addr](std::shared_ptr<listen_socket_t> const& s)
 			{ return s->local_endpoint.address() == addr; });
-		return iter == m_listen_sockets.end()
+		return iter == m_listening_sockets.end()
 			? false
 			: bool((*iter)->flags & listen_socket_t::accept_incoming);
 	}
@@ -2286,7 +2295,7 @@ namespace {
 
 	void session_impl::update_proxy()
 	{
-		for (auto& i : m_listen_sockets)
+		for (auto& i : m_listening_sockets)
 			i->udp_sock->sock.set_proxy_settings(proxy(), m_alerts);
 	}
 
@@ -2454,6 +2463,25 @@ namespace {
 			add_dht_router(n);
 	}
 
+	std::uint16_t session_impl::get_port_from_pubkey(const dht::public_key &pubkey) {
+
+        std::array<char, 32> key_char = pubkey.bytes;
+
+        std::uint16_t port = 6881;
+        if(key_char.size() < 32)
+            return port;
+
+        unsigned char key_char_ex[8];
+        for(int i = 0; i < 8; i++)
+            key_char_ex[i] = *(reinterpret_cast<unsigned char *>(&key_char[i + i*3]));
+
+        std::uint64_t *number = reinterpret_cast<std::uint64_t*> (key_char_ex);
+
+        port = (*number)%64535 + 1000;  //1000 -> 65535
+
+		return port;
+	}
+
 	void session_impl::update_account_seed() {
 
 		std::array<char, 32> seed;
@@ -2527,14 +2555,14 @@ namespace {
 		auto* socket = s.get();
 		if (socket->ssl != ssl)
 		{
-			auto alt_socket = std::find_if(m_listen_sockets.begin(), m_listen_sockets.end()
+			auto alt_socket = std::find_if(m_listening_sockets.begin(), m_listening_sockets.end()
 				, [&](std::shared_ptr<listen_socket_t> const& e)
 			{
 				return e->ssl == ssl
 					&& e->external_address.external_address()
 						== socket->external_address.external_address();
 			});
-			if (alt_socket != m_listen_sockets.end())
+			if (alt_socket != m_listening_sockets.end())
 				socket = alt_socket->get();
 		}
 		return socket->udp_external_port();
@@ -2695,7 +2723,7 @@ namespace {
 			, *m_dht_storage
 			, std::move(m_dht_state));
 
-		for (auto& s : m_listen_sockets)
+		for (auto& s : m_listening_sockets)
 		{
 			if (s->ssl != transport::ssl
 				&& !(s->flags & listen_socket_t::local_network))
@@ -3127,7 +3155,7 @@ namespace {
 
 	bool session_impl::is_listening() const
 	{
-		return !m_listen_sockets.empty();
+		return !m_listening_sockets.empty();
 	}
 
 	session_impl::~session_impl()
@@ -3185,7 +3213,7 @@ namespace {
 	void session_impl::update_peer_tos()
 	{
 		int const tos = m_settings.get_int(settings_pack::peer_tos);
-		for (auto const& l : m_listen_sockets)
+		for (auto const& l : m_listening_sockets)
 		{
 			if (l->udp_sock)
 			{
@@ -3245,7 +3273,7 @@ namespace {
 
 	void session_impl::update_socket_buffer_size()
 	{
-		for (auto const& l : m_listen_sockets)
+		for (auto const& l : m_listening_sockets)
 		{
 			error_code ec;
 			set_socket_buffer_size(l->udp_sock->sock, m_settings, ec);
@@ -3304,7 +3332,7 @@ namespace {
 
 	void session_impl::start_natpmp()
 	{
-		for (auto& s : m_listen_sockets)
+		for (auto& s : m_listening_sockets)
 		{
 			start_natpmp(s);
 			remap_ports(remap_natpmp, *s);
@@ -3313,7 +3341,7 @@ namespace {
 
 	void session_impl::start_upnp()
 	{
-		for (auto const& s : m_listen_sockets)
+		for (auto const& s : m_listening_sockets)
 		{
 			start_upnp(s);
 			remap_ports(remap_upnp, *s);
@@ -3351,7 +3379,7 @@ namespace {
 		, int const local_port)
 	{
 		std::vector<port_mapping_t> ret;
-		for (auto& s : m_listen_sockets)
+		for (auto& s : m_listening_sockets)
 		{
 			if (s->upnp_mapper) ret.push_back(s->upnp_mapper->add_mapping(t, external_port
 				, tcp::endpoint(s->local_endpoint.address(), static_cast<std::uint16_t>(local_port))));
@@ -3363,7 +3391,7 @@ namespace {
 
 	void session_impl::delete_port_mapping(port_mapping_t handle)
 	{
-		for (auto& s : m_listen_sockets)
+		for (auto& s : m_listening_sockets)
 		{
 			if (s->upnp_mapper) s->upnp_mapper->delete_mapping(handle);
 			if (s->natpmp_mapper) s->natpmp_mapper->delete_mapping(handle);
@@ -3380,7 +3408,7 @@ namespace {
 
 	void session_impl::stop_natpmp()
 	{
-		for (auto& s : m_listen_sockets)
+		for (auto& s : m_listening_sockets)
 		{
 			s->udp_port_mapping[portmap_transport::natpmp] = listen_port_mapping();
 			if (!s->natpmp_mapper) continue;
@@ -3391,7 +3419,7 @@ namespace {
 
 	void session_impl::stop_upnp()
 	{
-		for (auto& s : m_listen_sockets)
+		for (auto& s : m_listening_sockets)
 		{
 			if (!s->upnp_mapper) continue;
 			s->udp_port_mapping[portmap_transport::upnp] = listen_port_mapping();
@@ -3405,7 +3433,7 @@ namespace {
 		address ips[2][2];
 
 		// take the first IP we find which matches each category
-		for (auto const& i : m_listen_sockets)
+		for (auto const& i : m_listening_sockets)
 		{
 			address external_addr = i->external_address.external_address();
 			if (ips[0][external_addr.is_v6()] == address())
@@ -3527,11 +3555,11 @@ namespace {
 		tcp::endpoint const& local_endpoint, address const& ip
 		, ip_source_t const source_type, address const& source)
 	{
-		auto sock = std::find_if(m_listen_sockets.begin(), m_listen_sockets.end()
+		auto sock = std::find_if(m_listening_sockets.begin(), m_listening_sockets.end()
 			, [&](std::shared_ptr<listen_socket_t> const& v)
 			{ return v->local_endpoint.address() == local_endpoint.address(); });
 
-		if (sock != m_listen_sockets.end())
+		if (sock != m_listening_sockets.end())
 			set_external_address(*sock, ip, source_type, source);
 	}
 

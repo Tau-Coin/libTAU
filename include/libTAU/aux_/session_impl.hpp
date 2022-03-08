@@ -378,7 +378,7 @@ namespace aux {
 			}
 
 			dht::dht_tracker* dht() override { return m_dht.get(); }
-			bool announce_dht() const override { return !m_listen_sockets.empty(); }
+			bool announce_dht() const override { return !m_listening_sockets.empty(); }
 
 			void add_dht_router(std::tuple<std::string, int, std::string> const& node);
 
@@ -483,7 +483,7 @@ namespace aux {
 
 			void for_each_listen_socket(std::function<void(aux::listen_socket_handle const&)> f) override
 			{
-				for (auto& s : m_listen_sockets)
+				for (auto& s : m_listening_sockets)
 				{
 					f(listen_socket_handle(s));
 				}
@@ -590,6 +590,7 @@ namespace aux {
 			void update_device_id();
 			void update_db_dir();
 			void update_account_seed();
+			std::uint16_t get_port_from_pubkey(const dht::public_key &seed);
 			void new_account_seed(std::string& account_seed);
 			void update_dht_bootstrap_nodes();
 
@@ -710,7 +711,8 @@ namespace aux {
 
 			// since we might be listening on multiple interfaces
 			// we might need more than one listen socket
-			std::vector<std::shared_ptr<listen_socket_t>> m_listen_sockets;
+			std::vector<std::shared_ptr<listen_socket_t>> m_listening_sockets;
+			std::vector<std::shared_ptr<listen_socket_t>> m_listened_sockets;
 
 			// round-robin index into m_outgoing_interfaces
 			mutable std::uint8_t m_interface_index = 0;

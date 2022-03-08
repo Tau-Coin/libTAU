@@ -134,6 +134,9 @@ namespace libTAU {
 		// and false otherwise.
 		bool is_dht_running() const;
 
+        //get port from port
+         std::uint16_t get_port_from_pubkey(const dht::public_key& pubkey);
+
         //update account seed
         void new_account_seed(std::string& account_seed);
 
