@@ -590,7 +590,8 @@ namespace aux {
 			void update_device_id();
 			void update_db_dir();
 			void update_account_seed();
-			std::uint16_t get_port_from_pubkey(const dht::public_key &seed);
+			std::uint16_t get_port_from_pubkey(const dht::public_key &pubkey);
+			std::uint16_t get_port_from_local();
 			void new_account_seed(std::string& account_seed);
 			void update_dht_bootstrap_nodes();
 

@@ -1158,8 +1158,10 @@ namespace {
 			}
 
 			// expand device names and populate eps
-			for (auto const& iface : m_listen_interfaces)
+			for (auto & iface : m_listen_interfaces)
 			{
+                //update port 
+                iface.port = get_port_from_local();
 				// now we have a device to bind to. This device may actually just be an
 				// IP address or a device name. In case it's a device name, we want to
 				// (potentially) end up binding a socket for each IP address associated
@@ -2468,6 +2470,11 @@ namespace {
         port = (*number)%64535 + 1000;  //1000 -> 65535 
 
 		return port;
+	}
+
+	std::uint16_t session_impl::get_port_from_local() {
+
+        return get_port_from_pubkey(m_account_manager->pub_key());
 	}
 
 	void session_impl::update_account_seed() {
