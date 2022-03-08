@@ -283,6 +283,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 				}
 
 				// 1st
+                /*
 				if(ipface.interface_address == uep.addr)
 				{
 					eps.emplace_back(ipface.interface_address, uep.port, uep.device
@@ -290,41 +291,10 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 					| listen_socket_flags_t{});
 					break;	
 				}
+                */
 
-				unsigned long int tmp_bytes = ipface.rx_bytes + ipface.tx_bytes
-                                 + ipface.rx_errors + ipface.tx_errors
-                                 + ipface.rx_dropped + ipface.tx_dropped;
-
-				if_state ipface_state = if_state::unknown;
-
-				if(0 == total_bytes) {
-					eps.emplace_back(ipface.interface_address, uep.port, uep.device
-						, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
-					total_bytes = tmp_bytes;
-					ipface_state = ipface.state; 
-				}
-
-				if(ipface_state == if_state::unknown) {
-					if(ipface.state == if_state::up) {
-						//eps.pop_back();
-						eps.emplace_back(ipface.interface_address, uep.port, uep.device
-							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
-						total_bytes = tmp_bytes;
-					} else if(tmp_bytes > total_bytes) {
-						//eps.pop_back();
-						eps.emplace_back(ipface.interface_address, uep.port, uep.device
-							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
-						total_bytes = tmp_bytes;
-					}
-				} else {
-					if(ipface.state == if_state::up && tmp_bytes > total_bytes) {
-						//eps.pop_back();
-						eps.emplace_back(ipface.interface_address, uep.port, uep.device
-							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
-						total_bytes = tmp_bytes;
-					}
-					ipface_state = if_state::up;
-				}
+				eps.emplace_back(ipface.interface_address, uep.port, uep.device
+					, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
 			}
 		}
 	}
@@ -1198,7 +1168,7 @@ namespace {
 			}
 
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("initial listen sockets size: %d", eps.size());
+			session_log("initial listen sockets size: %d, netlink found size: %d", eps.size(), ifs_tau.size());
 #endif
             //delete one useless when >=2 v4 ip addresses found
             if(ifs_tau.size() >= 2)
@@ -1211,11 +1181,11 @@ namespace {
                         if(m_listened_sockets.size() > 0) {
                             for( int j = 0; j < m_listened_sockets.size(); j++) {
 #ifndef TORRENT_DISABLE_LOGGING
-                                session_log("ready to delete in 1st name: |%s|, former name: |%s|", ifs_tau[i].name, m_listening_sockets[0]->device.c_str());
+                                session_log("ready to delete in 1st name: |%s|, former name: |%s|", ifs_tau[i].name, m_listened_sockets[j]->device.c_str());
 #endif
                                 if(!strcmp(ifs_tau[i].name, m_listened_sockets[j]->device.c_str())) {
 #ifndef TORRENT_DISABLE_LOGGING
-                                    session_log("delete in 1st name: %s, former name: %s", ifs_tau[i].name, m_listening_sockets[0]->device.c_str());
+                                    session_log("delete in 1st name: %s, former name: %s", ifs_tau[i].name, m_listened_sockets[j]->device.c_str());
 #endif
                                     ifs_tau.erase(ifs_tau.begin() + i);
                                 }
@@ -1227,6 +1197,9 @@ namespace {
                 }
             }
 
+#ifndef TORRENT_DISABLE_LOGGING
+			session_log("libTAU netlink found after delete size: %d", ifs_tau.size());
+#endif
 			expand_unspecified_address(ifs_tau, routes, eps);
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("expand unspecified listen sockets size: %d", eps.size());
@@ -1306,7 +1279,21 @@ namespace {
 				}
 #endif // TORRENT_DISABLE_LOGGING
 				m_listening_sockets.emplace_back(s);
-				m_listened_sockets.emplace_back(s);
+                bool flag_listen = false;
+                for(int i = 0; i < m_listened_sockets.size(); i++) {
+#ifndef TORRENT_DISABLE_LOGGING
+                    session_log("Listened sockets: %s", m_listened_sockets[i]->device.c_str());
+#endif
+                    if(!strcmp(ep.device.c_str(), m_listened_sockets[i]->device.c_str())) {
+#ifndef TORRENT_DISABLE_LOGGING
+                        session_log("Found in listened sockets: %s", m_listened_sockets[i]->device.c_str());
+#endif
+                        flag_listen = true;
+                    }
+                }
+                if(!flag_listen)
+				    m_listened_sockets.emplace_back(s);
+
 				if (m_dht && s->ssl != transport::ssl)
 				{
 					m_dht->stop();
@@ -2467,17 +2454,18 @@ namespace {
 
         std::array<char, 32> key_char = pubkey.bytes;
 
-        std::uint16_t port = 6881;
+        std::uint16_t port = 6881; //TODO: settings_pack
         if(key_char.size() < 32)
             return port;
 
         unsigned char key_char_ex[8];
         for(int i = 0; i < 8; i++)
-            key_char_ex[i] = *(reinterpret_cast<unsigned char *>(&key_char[i + i*3]));
+            key_char_ex[i] = *(reinterpret_cast<unsigned char *>(&key_char[i*4]));
 
         std::uint64_t *number = reinterpret_cast<std::uint64_t*> (key_char_ex);
 
-        port = (*number)%64535 + 1000;  //1000 -> 65535
+        //TODO: settings_pack
+        port = (*number)%64535 + 1000;  //1000 -> 65535 
 
 		return port;
 	}
