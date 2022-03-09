@@ -1248,11 +1248,11 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("libTAU netlink found after delete size: %d", ifs_tau.size());
 #endif
+#ifdef TORRENT_ANDROID			
             int port = get_port_from_local();
-
 			interface_to_endpoints(listen_socket_t::accept_incoming, ifs_tau, eps, port);
+#else
 			// expand device names and populate eps
-            /*
 			for (auto & iface : m_listen_interfaces)
 			{
                 //update port 
@@ -1262,14 +1262,11 @@ namespace {
 				// with that device.
 				interface_to_endpoints(iface, listen_socket_t::accept_incoming, ifs_tau, eps);
 			}
-            */
-
-/*
 			expand_unspecified_address(ifs_tau, routes, eps);
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("expand unspecified listen sockets size: %d", eps.size());
 #endif
-*/
+#endif
 			expand_devices(ifs_tau, eps);
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("expand listen sockets size: %d", eps.size());
