@@ -1224,6 +1224,7 @@ namespace {
                 // delete listened sockets
                 for(auto it = ifs_tau.begin() ; it != ifs_tau.end() ;)
                 {
+                    bool flag_delete = false;
                     if(m_listened_sockets.size() > 0) {
                         for( int j = 0; j < m_listened_sockets.size(); j++) {
 #ifndef TORRENT_DISABLE_LOGGING
@@ -1234,10 +1235,10 @@ namespace {
                                 session_log("delete in 1st name: %s, former name: %s", it->name, m_listened_sockets[j]->device.c_str());
 #endif
                                 ifs_tau.erase(it);
-                            } else {
-                                it++;
+                                flag_delete = true;
                             }
                         }
+                        if(!flag_delete) it++;
                     } else {
                         it++;
                     }
