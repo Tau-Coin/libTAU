@@ -1209,7 +1209,7 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
                             session_log("delete listened sockets, diff from netlink interfaces: %s", (*it)->device.c_str());
 #endif
-                            m_listened_sockets.erase(it);
+                            it = m_listened_sockets.erase(it);
                         } else {
                             it++;
                         }
@@ -1224,8 +1224,8 @@ namespace {
                 // delete listened sockets
                 for(auto it = ifs_tau.begin() ; it != ifs_tau.end() ;)
                 {
-                    bool flag_delete = false;
                     if(m_listened_sockets.size() > 0) {
+                        bool flag_delete = false;
                         for( int j = 0; j < m_listened_sockets.size(); j++) {
 #ifndef TORRENT_DISABLE_LOGGING
                             session_log("ready to delete in 1st name: |%s|, former name: |%s|", it->name, m_listened_sockets[j]->device.c_str());
@@ -1234,7 +1234,7 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
                                 session_log("delete in 1st name: %s, former name: %s", it->name, m_listened_sockets[j]->device.c_str());
 #endif
-                                ifs_tau.erase(it);
+                                it = ifs_tau.erase(it);
                                 flag_delete = true;
                             }
                         }
