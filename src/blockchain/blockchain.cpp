@@ -311,11 +311,16 @@ namespace libTAU::blockchain {
                         for (auto it = block_map.begin(); it != block_map.end();) {
                             if (head_block.empty() || it->second.previous_block_hash() == head_block.sha256() ||
                                 it->second.sha256() == tail_block.previous_block_hash()) {
-                                process_block(chain_id, it->second);
-                                block_map.erase(it);
-
-                                it = block_map.begin();
-                                continue;
+                                log("INFO: process block:%s", it->second.to_string().c_str());
+                                auto ret = process_block(chain_id, it->second);
+                                if (ret == SUCCESS) {
+                                    block_map.erase(it);
+                                    it = block_map.begin();
+                                    continue;
+                                } else if (ret == FAIL) {
+                                    block_map.erase(it++);
+                                    continue;
+                                }
                             }
 
                             ++it;
@@ -376,10 +381,9 @@ namespace libTAU::blockchain {
                                         // clear block cache if re-branch success/fail
                                         if (result == SUCCESS) {
                                             // clear all ancestor blocks
-                                            remove_all_same_chain_blocks_from_cache(vote_block);
+                                            remove_all_ancestor_blocks_from_cache(vote_block);
 
                                             // update consensus point block hash as best voting block
-                                            auto blk = m_repository->get_block_by_hash(best_vote.block_hash());
                                             m_consensus_point_blocks[chain_id] = vote_block;
                                             m_repository->set_consensus_point_block_hash(chain_id,
                                                                                          best_vote.block_hash());
@@ -387,7 +391,7 @@ namespace libTAU::blockchain {
                                             m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(
                                                     vote_block);
                                         } else if (result == FAIL) {
-                                            remove_all_ancestor_blocks_from_cache(vote_block);
+                                            remove_all_same_chain_blocks_from_cache(vote_block);
                                         }
                                     }
                                 } else {
@@ -505,7 +509,7 @@ namespace libTAU::blockchain {
                             // check if need to request on current stage
                             for (auto &item: acl) {
                                 if (item.second.m_stage == HEAD_BLOCK) {
-                                    if (item.second.m_requests_time.find(new common::head_block_request_entry(chain_id))
+                                    if (item.second.m_requests_time.find(std::make_unique<common::head_block_request_entry>(chain_id))
                                         == item.second.m_requests_time.end()) {
                                         common::head_block_request_entry headBlockRequestEntry(chain_id);
                                         common::entry_task task(common::head_block_request_entry::data_type_id,
@@ -513,7 +517,7 @@ namespace libTAU::blockchain {
                                                                 headBlockRequestEntry.get_entry());
                                         add_entry_task_to_queue(chain_id, task);
 
-                                        item.second.m_requests_time[new common::head_block_request_entry(chain_id)] = now;
+                                        item.second.m_requests_time[std::make_unique<common::head_block_request_entry>(chain_id)] = now;
                                     }
                                 } else if (item.second.m_stage == NORMAL) {
                                     // ping every minute
@@ -595,14 +599,14 @@ namespace libTAU::blockchain {
                                                     aux::toHex(chain_id).c_str(),
                                                     aux::toHex(previous_hash.to_string()).c_str());
 
-                                                if (it->second.m_requests_time.find(new common::block_request_entry(chain_id, previous_hash)) == it->second.m_requests_time.end()) {
+                                                if (it->second.m_requests_time.find(std::make_unique<common::block_request_entry>(chain_id, previous_hash)) == it->second.m_requests_time.end()) {
                                                     common::block_request_entry blockRequestEntry(chain_id,
                                                                                                   previous_hash);
                                                     common::entry_task task(common::block_request_entry::data_type_id,
                                                                             peer, blockRequestEntry.get_entry());
                                                     add_entry_task_to_queue(chain_id, task);
 
-                                                    it->second.m_requests_time[new common::block_request_entry(chain_id, previous_hash)] = now;
+                                                    it->second.m_requests_time[std::make_unique<common::block_request_entry>(chain_id, previous_hash)] = now;
                                                 }
 
                                                 break;
@@ -642,17 +646,17 @@ namespace libTAU::blockchain {
                                         // search until found absent or fork point block
                                         b = get_block_from_cache_or_db(chain_id, previous_hash);
                                         if (b.empty()) {
-                                            log("INFO: ----chain[%s] Cannot find demanding block hash[%s] in db/cache",
+                                            log("INFO: chain[%s] Cannot find demanding block hash[%s] in db/cache",
                                                 aux::toHex(chain_id).c_str(),
                                                 aux::toHex(previous_hash.to_string()).c_str());
 
-                                            if (it->second.m_requests_time.find(new common::block_request_entry(chain_id, previous_hash)) == it->second.m_requests_time.end()) {
+                                            if (it->second.m_requests_time.find(std::make_unique<common::block_request_entry>(chain_id, previous_hash)) == it->second.m_requests_time.end()) {
                                                 common::block_request_entry blockRequestEntry(chain_id, previous_hash);
                                                 common::entry_task task(common::block_request_entry::data_type_id,
                                                                         peer, blockRequestEntry.get_entry());
                                                 add_entry_task_to_queue(chain_id, task);
 
-                                                it->second.m_requests_time[new common::block_request_entry(chain_id, previous_hash)] = now;
+                                                it->second.m_requests_time[std::make_unique<common::block_request_entry>(chain_id, previous_hash)] = now;
                                             }
 
                                             break;
@@ -674,6 +678,7 @@ namespace libTAU::blockchain {
                             if (!is_sync_completed(chain_id)) {
                                 auto &tail_block = m_tail_blocks[chain_id];
                                 if (!tail_block.empty()) {
+                                    log("INFO: Demanding tail hash[%s].", aux::toHex(tail_block.previous_block_hash()).c_str());
                                     demand_block_hash_set.insert(tail_block.previous_block_hash());
                                 }
                             }
@@ -694,16 +699,16 @@ namespace libTAU::blockchain {
 
                             if (max_it != acl.end()) {
                                 auto& peer = max_it->first;
-                                if (max_it->second.m_requests_time.find(new common::block_request_entry(chain_id, hash)) == max_it->second.m_requests_time.end()) {
+                                if (max_it->second.m_requests_time.find(std::make_unique<common::block_request_entry>(chain_id, hash)) == max_it->second.m_requests_time.end()) {
                                     common::block_request_entry blockRequestEntry(chain_id, hash);
                                     common::entry_task task(common::block_request_entry::data_type_id, peer,
                                                             blockRequestEntry.get_entry());
                                     add_entry_task_to_queue(chain_id, task);
 
-                                    max_it->second.m_requests_time[new common::block_request_entry(chain_id, hash)] = now;
+                                    max_it->second.m_requests_time[std::make_unique<common::block_request_entry>(chain_id, hash)] = now;
                                 }
                             } else {
-                                log("INFO: ACL is empty.");
+                                log("INFO: ACL is empty, no peer to request.");
                             }
                         }
                     }
@@ -1019,7 +1024,7 @@ namespace libTAU::blockchain {
                 while (i > 0) {
                     ancestor = m_repository->get_block_by_hash(previous_hash);
                     if (ancestor.empty()) {
-                        log("INFO chain[%s] Cannot find block[%s] in db",
+                        log("INFO chain[%s] 1. Cannot find block[%s] in db",
                             aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                         return b;
                     }
@@ -1139,8 +1144,8 @@ namespace libTAU::blockchain {
             while (i > 0) {
                 ancestor = repo->get_block_by_hash(previous_hash);
                 if (ancestor.empty()) {
-                    log("INFO chain[%s] Cannot find block[%s] in db",
-                        aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
+                    log("INFO chain[%s] 2. Cannot find block[%s] in db, previous_block[%s]",
+                        aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str(), previous_block.to_string().c_str());
                     return MISSING;
                 }
                 previous_hash = ancestor.previous_block_hash();
@@ -1568,8 +1573,12 @@ namespace libTAU::blockchain {
     block blockchain::get_block_from_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
         auto &block_map = m_blocks[chain_id];
         auto it = block_map.find(hash);
-        if (it != block_map.end() && !it->second.empty()) {
-            return it->second;
+        if (it != block_map.end()) {
+            if (!it->second.empty()) {
+                return it->second;
+            } else {
+                block_map.erase(it);
+            }
         }
 
         return m_repository->get_block_by_hash(hash);
@@ -1623,7 +1632,6 @@ namespace libTAU::blockchain {
             aux::toHex(chain_id).c_str(), target.to_string().c_str());
 
         auto &head_block = m_head_blocks[chain_id];
-        auto &block_maps = m_blocks[chain_id];
 
         // re-branch, try to find out fork point block
         std::vector<block> rollback_blocks;
@@ -1637,7 +1645,6 @@ namespace libTAU::blockchain {
             if (is_block_immutable_certainly(chain_id, main_chain_block)) {
                 log("INFO chain[%s] block[%s] is immutable.",
                     aux::toHex(chain_id).c_str(), main_chain_block.to_string().c_str());
-//                m_blocks[chain_id].clear();
                 return FAIL;
             }
 
@@ -1646,7 +1653,7 @@ namespace libTAU::blockchain {
             auto previous_hash = main_chain_block.previous_block_hash();
             main_chain_block = m_repository->get_block_by_hash(previous_hash);
             if (main_chain_block.empty()) {
-                log("INFO chain[%s] Cannot find block[%s] in db",
+                log("INFO chain[%s] 3. Cannot find block[%s] in db",
                     aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 return MISSING;
             }
@@ -1661,7 +1668,7 @@ namespace libTAU::blockchain {
             reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
 
             if (reference_block.empty()) {
-                log("INFO chain[%s] Cannot find block[%s]",
+                log("INFO chain[%s] 4. Cannot find block[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 return MISSING;
             }
@@ -1673,7 +1680,6 @@ namespace libTAU::blockchain {
             if (is_block_immutable_certainly(chain_id, main_chain_block)) {
                 log("INFO chain[%s] block[%s] is immutable",
                     aux::toHex(chain_id).c_str(), main_chain_block.to_string().c_str());
-//                m_blocks[chain_id].clear();
                 return FAIL;
             }
 
@@ -1690,7 +1696,7 @@ namespace libTAU::blockchain {
             reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
 
             if (reference_block.empty()) {
-                log("INFO chain[%s] Cannot find block[%s]",
+                log("INFO chain[%s] 5. Cannot find block[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 return MISSING;
             }
@@ -2982,7 +2988,7 @@ namespace libTAU::blockchain {
                             if (it->second.m_score > 100) {
                                 it->second.m_score = 100;
                             }
-                            it->second.m_requests_time.erase(new common::block_request_entry(chain_id, blk_entry.m_blk.sha256()));
+                            it->second.m_requests_time.erase(std::make_unique<common::block_request_entry>(chain_id, blk_entry.m_blk.sha256()));
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= 5) {
@@ -3069,7 +3075,7 @@ namespace libTAU::blockchain {
                             if (it->second.m_score > 100) {
                                 it->second.m_score = 100;
                             }
-                            it->second.m_requests_time.erase(new common::transaction_request_entry(chain_id, tx_entry.m_tx.sha256()));
+                            it->second.m_requests_time.erase(std::make_unique<common::transaction_request_entry>(chain_id, tx_entry.m_tx.sha256()));
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= 5) {
@@ -3172,7 +3178,7 @@ namespace libTAU::blockchain {
                         if (it->second.m_score > 100) {
                             it->second.m_score = 100;
                         }
-                        it->second.m_requests_time.erase(new common::vote_request_entry(chain_id));
+                        it->second.m_requests_time.erase(std::make_unique<common::vote_request_entry>(chain_id));
                         it->second.m_last_seen = now;
                     } else {
                         if (acl.size() >= 5) {
@@ -3271,7 +3277,7 @@ namespace libTAU::blockchain {
                                 it->second.m_score = 100;
                             }
                             it->second.m_head_block = blk_entry.m_blk;
-                            it->second.m_requests_time.erase(new common::head_block_request_entry(chain_id));
+                            it->second.m_requests_time.erase(std::make_unique<common::head_block_request_entry>(chain_id));
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= 5) {
@@ -3367,7 +3373,7 @@ namespace libTAU::blockchain {
                         if (it->second.m_score > 100) {
                             it->second.m_score = 100;
                         }
-                        it->second.m_requests_time.erase(new common::state_request_entry(chain_id));
+                        it->second.m_requests_time.erase(std::make_unique<common::state_request_entry>(chain_id));
                         it->second.m_last_seen = now;
                     } else {
                         if (acl.size() >= 5) {

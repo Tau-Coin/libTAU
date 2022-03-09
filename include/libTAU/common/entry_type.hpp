@@ -46,7 +46,7 @@ namespace libTAU::common {
             std::string encode;
             bencode(std::back_inserter(encode), m_entry);
             std::string rhs_encode;
-            bencode(std::back_inserter(encode), rhs.m_entry);
+            bencode(std::back_inserter(rhs_encode), rhs.m_entry);
             if (encode < rhs_encode)
                 return true;
             if (encode > rhs_encode)
@@ -65,9 +65,9 @@ namespace libTAU::common {
         entry m_entry;
     };
 
-    struct less_blockchain_entry_base: std::binary_function<const blockchain_entry_base *, const blockchain_entry_base *, bool>
+    struct less_blockchain_entry_base: std::binary_function<const std::unique_ptr<blockchain_entry_base>&, const std::unique_ptr<blockchain_entry_base>&, bool>
     {
-        bool operator() (const blockchain_entry_base *lhs, const blockchain_entry_base *rhs) const { return *lhs < *rhs; }
+        bool operator() (const std::unique_ptr<blockchain_entry_base>& lhs, const std::unique_ptr<blockchain_entry_base>& rhs) const { return *lhs < *rhs; }
     };
 
     struct TORRENT_EXPORT entry_task {
@@ -109,7 +109,7 @@ namespace libTAU::common {
                 std::string encode;
                 bencode(std::back_inserter(encode), m_entry);
                 std::string rhs_encode;
-                bencode(std::back_inserter(encode), rhs.m_entry);
+                bencode(std::back_inserter(rhs_encode), rhs.m_entry);
                 if (encode < rhs_encode)
                     return true;
                 if (encode > rhs_encode)
@@ -155,7 +155,7 @@ namespace libTAU::common {
             std::string encode;
             bencode(std::back_inserter(encode), m_entry);
             std::string rhs_encode;
-            bencode(std::back_inserter(encode), rhs.m_entry);
+            bencode(std::back_inserter(rhs_encode), rhs.m_entry);
             if (encode < rhs_encode)
                 return true;
             if (encode > rhs_encode)
