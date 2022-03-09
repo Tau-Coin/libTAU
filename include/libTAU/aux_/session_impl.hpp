@@ -795,7 +795,7 @@ namespace aux {
 
 			std::int64_t m_last_tick;
 			std::int64_t m_session_time;
-			std::int64_t m_last_reopen;
+			std::int64_t m_last_reopen = 0;
 			void on_tick(error_code const& e);
 			void session_time_modification(std::int64_t time = 0);
 

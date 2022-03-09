@@ -523,7 +523,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		// apply all m_settings to this session
 		run_all_updates(*this);
 
-        if(m_session_time - m_last_reopen >= 1000) {
+        if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
 		    reopen_listen_sockets(false);
             m_last_reopen = m_session_time;
         }
@@ -836,7 +836,7 @@ namespace {
 
 		apply_pack(&pack, m_settings, this);
 
-        if(m_session_time - m_last_reopen >= 1000) {
+        if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
 		    //if(reopen_listen_port)
 		    reopen_listen_sockets(false);
             m_last_reopen = m_session_time;
@@ -1467,7 +1467,7 @@ namespace {
 
 	void session_impl::reopen_network_sockets(reopen_network_flags_t const options)
 	{
-        if(m_session_time - m_last_reopen >= 1000) {
+        if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
 		    //if(reopen_listen_port)
 		    reopen_listen_sockets(bool(options & session_handle::reopen_map_ports));
             m_last_reopen = m_session_time;
