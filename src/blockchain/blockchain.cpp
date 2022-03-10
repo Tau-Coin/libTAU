@@ -2950,6 +2950,9 @@ namespace libTAU::blockchain {
                                 // replace min score peer with new one
                                 acl.erase(min_it);
                                 acl[peer] = peer_info(now);
+                            } else {
+                                log("INFO: Too many peers in acl to response.");
+                                break;
                             }
                         } else {
                             acl[peer] = peer_info(now);
@@ -2965,8 +2968,6 @@ namespace libTAU::blockchain {
                         common::entry_task task(common::block_entry::data_type_id, peer, blockEntry.get_entry());
 //                            m_tasks[blk.chain_id()].insert(task);
                         add_entry_task_to_queue(chain_id, task);
-
-                        decrease_peer_score(chain_id, peer, 3);
                     } else {
                         log("INFO: Cannot get block[%s] in local", aux::toHex(blk_request_entry.m_hash).c_str());
                     }
@@ -3051,6 +3052,9 @@ namespace libTAU::blockchain {
                                 // replace min score peer with new one
                                 acl.erase(min_it);
                                 acl[peer] = peer_info(now);
+                            } else {
+                                log("INFO: Too many peers in acl to response.");
+                                break;
                             }
                         } else {
                             acl[peer] = peer_info(now);
@@ -3233,6 +3237,9 @@ namespace libTAU::blockchain {
                                 // replace min score peer with new one
                                 acl.erase(min_it);
                                 acl[peer] = peer_info(now);
+                            } else {
+                                log("INFO: Too many peers in acl to response.");
+                                break;
                             }
                         } else {
                             acl[peer] = peer_info(now);
@@ -3344,6 +3351,9 @@ namespace libTAU::blockchain {
                                 // replace min score peer with new one
                                 acl.erase(min_it);
                                 acl[peer] = peer_info(now);
+                            } else {
+                                log("INFO: Too many peers in acl to response.");
+                                break;
                             }
                         } else {
                             acl[peer] = peer_info(now);
