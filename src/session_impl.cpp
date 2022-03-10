@@ -283,7 +283,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 				}
 
 				// 1st
-                /*
 				if(ipface.interface_address == uep.addr)
 				{
 					eps.emplace_back(ipface.interface_address, uep.port, uep.device
@@ -291,10 +290,41 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 					| listen_socket_flags_t{});
 					break;	
 				}
-                */
 
-				eps.emplace_back(ipface.interface_address, uep.port, uep.device
-					, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+				unsigned long int tmp_bytes = ipface.rx_bytes + ipface.tx_bytes
+                                 + ipface.rx_errors + ipface.tx_errors
+                                 + ipface.rx_dropped + ipface.tx_dropped;
+
+				if_state ipface_state = if_state::unknown;
+
+				if(0 == total_bytes) {
+					eps.emplace_back(ipface.interface_address, uep.port, uep.device
+						, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+					total_bytes = tmp_bytes;
+					ipface_state = ipface.state; 
+				}
+
+				if(ipface_state == if_state::unknown) {
+					if(ipface.state == if_state::up) {
+						eps.pop_back();
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+						total_bytes = tmp_bytes;
+					} else if(tmp_bytes > total_bytes) {
+						eps.pop_back();
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+						total_bytes = tmp_bytes;
+					}
+				} else {
+					if(ipface.state == if_state::up && tmp_bytes > total_bytes) {
+						eps.pop_back();
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+						total_bytes = tmp_bytes;
+					}
+					ipface_state = if_state::up;
+				}
 			}
 		}
 	}
