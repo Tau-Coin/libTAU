@@ -283,7 +283,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 				}
 
 				// 1st
-                /*
 				if(ipface.interface_address == uep.addr)
 				{
 					eps.emplace_back(ipface.interface_address, uep.port, uep.device
@@ -291,10 +290,41 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 					| listen_socket_flags_t{});
 					break;	
 				}
-                */
 
-				eps.emplace_back(ipface.interface_address, uep.port, uep.device
-					, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+				unsigned long int tmp_bytes = ipface.rx_bytes + ipface.tx_bytes
+                                 + ipface.rx_errors + ipface.tx_errors
+                                 + ipface.rx_dropped + ipface.tx_dropped;
+
+				if_state ipface_state = if_state::unknown;
+
+				if(0 == total_bytes) {
+					eps.emplace_back(ipface.interface_address, uep.port, uep.device
+						, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+					total_bytes = tmp_bytes;
+					ipface_state = ipface.state; 
+				}
+
+				if(ipface_state == if_state::unknown) {
+					if(ipface.state == if_state::up) {
+						eps.pop_back();
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+						total_bytes = tmp_bytes;
+					} else if(tmp_bytes > total_bytes) {
+						eps.pop_back();
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+						total_bytes = tmp_bytes;
+					}
+				} else {
+					if(ipface.state == if_state::up && tmp_bytes > total_bytes) {
+						eps.pop_back();
+						eps.emplace_back(ipface.interface_address, uep.port, uep.device
+							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
+						total_bytes = tmp_bytes;
+					}
+					ipface_state = if_state::up;
+				}
 			}
 		}
 	}
@@ -523,8 +553,10 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		// apply all m_settings to this session
 		run_all_updates(*this);
 
-		reopen_listen_sockets(false);
-
+        if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
+		    reopen_listen_sockets(false);
+            m_last_reopen = m_session_time;
+        }
 	}
 
 	void session_impl::on_tick(error_code const& e)
@@ -834,8 +866,11 @@ namespace {
 
 		apply_pack(&pack, m_settings, this);
 
-		//if(reopen_listen_port)
-		reopen_listen_sockets(false);
+        if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
+		    //if(reopen_listen_port)
+		    reopen_listen_sockets(false);
+            m_last_reopen = m_session_time;
+        }
 	}
 
 	std::shared_ptr<listen_socket_t> session_impl::setup_listener(
@@ -1068,6 +1103,29 @@ namespace {
 		}
 	}
 
+    // libTAU 
+	void interface_to_endpoints(listen_socket_flags_t flags
+		, span<ip_interface const> const ifs
+		, std::vector<listen_endpoint_t>& eps
+        , int port)
+	{
+		flags |= listen_socket_flags_t{};
+		transport const ssl = transport::plaintext;
+
+		flags |= listen_socket_t::was_expanded;
+
+		// this is the case where device names a network device. We need to
+		// enumerate all IPs associated with this device
+		for (auto const& ipface : ifs)
+		{
+			bool const local = ipface.interface_address.is_loopback()
+				|| is_link_local(ipface.interface_address);
+
+			eps.emplace_back(ipface.interface_address, port, std::string{}
+				, ssl, flags | (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
+		}
+	}
+
 	void session_impl::reopen_listen_sockets(bool const map_ports)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
@@ -1157,18 +1215,6 @@ namespace {
 				ifs_tau.push_back(ipface);
 			}
 
-			// expand device names and populate eps
-			for (auto & iface : m_listen_interfaces)
-			{
-                //update port 
-                iface.port = get_port_from_local();
-				// now we have a device to bind to. This device may actually just be an
-				// IP address or a device name. In case it's a device name, we want to
-				// (potentially) end up binding a socket for each IP address associated
-				// with that device.
-				interface_to_endpoints(iface, listen_socket_t::accept_incoming, ifs_tau, eps);
-			}
-
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("initial listen sockets size: %d, netlink found size: %d", eps.size(), ifs_tau.size());
 #endif
@@ -1176,25 +1222,55 @@ namespace {
             if(ifs_tau.size() >= 2)
             {
                 int ifs_tau_discovered = ifs_tau.size();
-
-                for(int i = 0 ; i < ifs_tau_discovered ; i++)
-                {
-                    if(m_listened_sockets.size() < ifs_tau_discovered) { 
-                        if(m_listened_sockets.size() > 0) {
-                            for( int j = 0; j < m_listened_sockets.size(); j++) {
-#ifndef TORRENT_DISABLE_LOGGING
-                                session_log("ready to delete in 1st name: |%s|, former name: |%s|", ifs_tau[i].name, m_listened_sockets[j]->device.c_str());
-#endif
-                                if(!strcmp(ifs_tau[i].name, m_listened_sockets[j]->device.c_str())) {
-#ifndef TORRENT_DISABLE_LOGGING
-                                    session_log("delete in 1st name: %s, former name: %s", ifs_tau[i].name, m_listened_sockets[j]->device.c_str());
-#endif
-                                    ifs_tau.erase(ifs_tau.begin() + i);
-                                }
+                int sockets_listened = m_listened_sockets.size();
+                //process m_listened_sockets
+                if(sockets_listened > 0) {
+                    for(auto it = m_listened_sockets.begin() ; it != m_listened_sockets.end() ;)
+                    {
+                        bool flag = false;
+                        for(int j = 0 ; j < ifs_tau_discovered ; j++)
+                        {
+                            if(!strcmp(ifs_tau[j].name, (*it)->device.c_str())) {
+                                flag = true;
                             }
                         }
-                    } else {
+
+                        if(!flag) {
+#ifndef TORRENT_DISABLE_LOGGING
+                            session_log("delete listened sockets, diff from netlink interfaces: %s", (*it)->device.c_str());
+#endif
+                            it = m_listened_sockets.erase(it);
+                        } else {
+                            it++;
+                        }
+                    }
+                    if(m_listened_sockets.size() >= ifs_tau_discovered) {
+#ifndef TORRENT_DISABLE_LOGGING
+                        session_log("clear listened sockets, try each socket again");
+#endif
                         m_listened_sockets.clear();
+                    }
+                }
+                // delete listened sockets
+                for(auto it = ifs_tau.begin() ; it != ifs_tau.end() ;)
+                {
+                    if(m_listened_sockets.size() > 0) {
+                        bool flag_delete = false;
+                        for( int j = 0; j < m_listened_sockets.size(); j++) {
+#ifndef TORRENT_DISABLE_LOGGING
+                            session_log("ready to delete in 1st name: |%s|, former name: |%s|", it->name, m_listened_sockets[j]->device.c_str());
+#endif
+                            if(!strcmp(it->name, m_listened_sockets[j]->device.c_str())) {
+#ifndef TORRENT_DISABLE_LOGGING
+                                session_log("delete in 1st name: %s, former name: %s", it->name, m_listened_sockets[j]->device.c_str());
+#endif
+                                it = ifs_tau.erase(it);
+                                flag_delete = true;
+                            }
+                        }
+                        if(!flag_delete) it++;
+                    } else {
+                        it++;
                     }
                 }
             }
@@ -1202,9 +1278,24 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("libTAU netlink found after delete size: %d", ifs_tau.size());
 #endif
+#ifdef TORRENT_ANDROID			
+            int port = get_port_from_local();
+			interface_to_endpoints(listen_socket_t::accept_incoming, ifs_tau, eps, port);
+#else
+			// expand device names and populate eps
+			for (auto & iface : m_listen_interfaces)
+			{
+                //update port 
+				// now we have a device to bind to. This device may actually just be an
+				// IP address or a device name. In case it's a device name, we want to
+				// (potentially) end up binding a socket for each IP address associated
+				// with that device.
+				interface_to_endpoints(iface, listen_socket_t::accept_incoming, ifs_tau, eps);
+			}
 			expand_unspecified_address(ifs_tau, routes, eps);
 #ifndef TORRENT_DISABLE_LOGGING
 			session_log("expand unspecified listen sockets size: %d", eps.size());
+#endif
 #endif
 			expand_devices(ifs_tau, eps);
 #ifndef TORRENT_DISABLE_LOGGING
@@ -1403,7 +1494,11 @@ namespace {
 
 	void session_impl::reopen_network_sockets(reopen_network_flags_t const options)
 	{
-		reopen_listen_sockets(bool(options & session_handle::reopen_map_ports));
+        if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
+		    //if(reopen_listen_port)
+		    reopen_listen_sockets(bool(options & session_handle::reopen_map_ports));
+            m_last_reopen = m_session_time;
+        }
 	}
 
 	namespace {

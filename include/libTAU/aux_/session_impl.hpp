@@ -290,6 +290,12 @@ namespace aux {
 			, span<ip_interface const> ifs
 			, std::vector<listen_endpoint_t>& eps);
 
+		TORRENT_EXTRA_EXPORT void interface_to_endpoints(
+			listen_socket_flags_t flags
+			, span<ip_interface const> ifs
+			, std::vector<listen_endpoint_t>& eps
+            , int port);
+
 		// expand [::] to all IPv6 interfaces for BEP 45 compliance
 		TORRENT_EXTRA_EXPORT void expand_unspecified_address(
 			span<ip_interface const> ifs
@@ -789,6 +795,7 @@ namespace aux {
 
 			std::int64_t m_last_tick;
 			std::int64_t m_session_time;
+			std::int64_t m_last_reopen = 0;
 			void on_tick(error_code const& e);
 			void session_time_modification(std::int64_t time = 0);
 

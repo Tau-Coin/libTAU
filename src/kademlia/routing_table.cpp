@@ -78,10 +78,14 @@ bool ip_set::exists(address const& addr) const
 
 void ip_set::erase(address const& addr)
 {
-	if (addr.is_v6())
-		erase_one(m_ip6s, addr.to_v6().to_bytes());
-	else
-		erase_one(m_ip4s, addr.to_v4().to_bytes());
+	// NOTE: fix crush issue
+	if (exists(addr))
+	{
+		if (addr.is_v6())
+			erase_one(m_ip6s, addr.to_v6().to_bytes());
+		else
+			erase_one(m_ip4s, addr.to_v4().to_bytes());
+	}
 }
 
 bool mostly_verified_nodes(bucket_t const& b)
