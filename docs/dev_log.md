@@ -14,8 +14,14 @@
 	1. android目前的获取有如下问题：存在获取不到active ip interface的情况；在vpn网络情况下，获取的ip interface是错误的情况；
 	2. libTAU目前是linux平台，基于netlink获取可用ip interface的过程目前看是靠谱的，只不过要设定策略
 	3. 通过netlink获取可用ip interface，利用Android应用端来触发reopen机制
-	4. 兜底机制，网络中可用节点数为0，会触发reopen，这个是检测断网的最后机制，在已连接的peers很多情况下，这个机制有很大的滞后性；
+
 	```
+- reopen的触发机制
+  ```
+  1. 目前完全由ui端上层来触发，主要分为网络切换和兜底机制；
+  2. 网络切换的过程：Android端的网络有不同的类型：移动网络、WIFI、VPN网络等，每种网络对应了不同的网络类型；
+  3. 兜底机制，网络中可用节点数为0，会触发reopen，这个是检测断网的最后机制，在已连接的peers很多情况下，这个机制有很大的滞后性；
+  ```
     
 ### 2.Port选取
 - port和id建立映射关系；
@@ -28,11 +34,14 @@
     2.需要解决可用节点（Relay、Peers等）的存储；
     3.解决完存取节点的工作，需要进一步交流第一批节点的链接问题，以此和libTAU当前网络状态挂钩；
     ```
-
-## DHT Network
-
-## Communication
-
-## Blockchain
-
+    
 ## Android UI
+
+[Android-dev-log](https://github.com/Tau-Coin/libTAU/blob/master/docs/dev_log/android.md)
+## DHT Network
+[DHT-dev-log](https://github.com/Tau-Coin/libTAU/blob/master/docs/dev_log/DHT.md)
+## Communication
+[Module-communication-dev-log](https://github.com/Tau-Coin/libTAU/blob/master/docs/dev_log/communication.md)
+## Blockchain
+[Module-blockchain-dev-log](https://github.com/Tau-Coin/libTAU/blob/master/docs/dev_log/blockchain.md)
+
