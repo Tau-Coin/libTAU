@@ -27,3 +27,7 @@
 ### 5. android UPNP: android UI sets 'non-referrable' into false if UPNP is mapped.
 
 ### 6. routing table snapshot.
+
+## 2022.03.11
+
+### 1. new register protocol
