@@ -2903,6 +2903,10 @@ namespace libTAU::blockchain {
         m_refresh_time = milliseconds;
     }
 
+    void blockchain::focus_on_chain(const aux::bytes &chain_id) {
+
+    }
+
     void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {
 
         if(payload.type() != entry::dictionary_t){
