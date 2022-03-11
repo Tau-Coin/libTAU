@@ -52,6 +52,8 @@ namespace libTAU::blockchain {
 
         std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_requests_time;
 
+        std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_peer_requests_time;
+
         block m_head_block;
 
         std::int64_t m_last_seen = 0;

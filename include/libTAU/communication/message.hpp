@@ -52,7 +52,7 @@ namespace libTAU {
             const aux::bytes &payload() const { return m_payload; }
 
             // @returns the corresponding entry
-            const entry &get_entry() const { return m_entry; };
+            const entry &get_entry() const { return m_entry; }
 
             // @returns the message bencode
             const std::string &encode() const { return m_encode; }

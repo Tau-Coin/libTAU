@@ -57,6 +57,9 @@ namespace blockchain {
     // vote interval(s)
     constexpr int blockchain_vote_interval = 60 * 60;
 
+    // min response interval to the same request(ms)
+    constexpr int blockchain_same_response_interval = 4 * 1000;
+
     enum RESULT {
         SUCCESS,
         FAIL,

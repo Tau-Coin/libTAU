@@ -23,6 +23,10 @@ namespace libTAU::blockchain {
         for (auto const &item: info.m_requests_time) {
             os << "key: " << *item.first << " value: " << item.second;
         }
+        os << " m_peer_requests_time: ";
+        for (auto const &item: info.m_peer_requests_time) {
+            os << "key: " << *item.first << " value: " << item.second;
+        }
         return os;
     }
 

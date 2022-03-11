@@ -97,7 +97,7 @@ namespace blockchain {
         std::string get_encode() const;
 
         // @returns the SHA256 hash of this block
-        const sha256_hash &sha256() const { return m_hash; };
+        const sha256_hash &sha256() const { return m_hash; }
 
         void sign(dht::public_key const& pk, dht::secret_key const& sk);
 

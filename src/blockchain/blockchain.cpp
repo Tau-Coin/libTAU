@@ -237,6 +237,7 @@ namespace libTAU::blockchain {
                 auto now = get_total_milliseconds();
 
                 {
+                    // peer list log
                     // acl
                     auto &acl = m_access_list[chain_id];
                     for (auto const &item: acl) {
@@ -431,6 +432,16 @@ namespace libTAU::blockchain {
                                 if (now > it->second + 5000) {
                                     item.second.m_score = item.second.m_score - 5;
                                     requests_time.erase(it++);
+                                } else {
+                                    it++;
+                                }
+                            }
+
+                            // remove outdated requests
+                            auto &peer_requests_time = item.second.m_peer_requests_time;
+                            for (auto it = peer_requests_time.begin(); it != peer_requests_time.end();) {
+                                if (now > it->second + blockchain_same_response_interval) {
+                                    peer_requests_time.erase(it++);
                                 } else {
                                     it++;
                                 }
@@ -2936,6 +2947,17 @@ namespace libTAU::blockchain {
                     if (it != acl.end()) {
                         it->second.m_score -= 3;
                         it->second.m_last_seen = now;
+                        auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::block_request_entry>(payload));
+                        if (itor != it->second.m_peer_requests_time.end()) {
+                            if (now > itor->second + blockchain_same_response_interval) {
+                                it->second.m_peer_requests_time.erase(itor);
+                            } else {
+                                log("INFO: The same request from the same peer in 3s.");
+                                break;
+                            }
+                        } else {
+                            it->second.m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
+                        }
                     } else {
                         if (acl.size() >= 5) {
                             // find out min score peer
@@ -2950,12 +2972,14 @@ namespace libTAU::blockchain {
                                 // replace min score peer with new one
                                 acl.erase(min_it);
                                 acl[peer] = peer_info(now);
+                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
                                 break;
                             }
                         } else {
                             acl[peer] = peer_info(now);
+                            acl[peer].m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
                         }
                     }
 
@@ -3038,6 +3062,17 @@ namespace libTAU::blockchain {
                     if (it != acl.end()) {
                         it->second.m_score -= 3;
                         it->second.m_last_seen = now;
+                        auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::transaction_request_entry>(payload));
+                        if (itor != it->second.m_peer_requests_time.end()) {
+                            if (now > itor->second + blockchain_same_response_interval) {
+                                it->second.m_peer_requests_time.erase(itor);
+                            } else {
+                                log("INFO: The same request from the same peer in 3s.");
+                                break;
+                            }
+                        } else {
+                            it->second.m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
+                        }
                     } else {
                         if (acl.size() >= 5) {
                             // find out min score peer
@@ -3052,12 +3087,14 @@ namespace libTAU::blockchain {
                                 // replace min score peer with new one
                                 acl.erase(min_it);
                                 acl[peer] = peer_info(now);
+                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
                                 break;
                             }
                         } else {
                             acl[peer] = peer_info(now);
+                            acl[peer].m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
                         }
                     }
 
@@ -3134,6 +3171,17 @@ namespace libTAU::blockchain {
                     if (it != acl.end()) {
                         it->second.m_score -= 3;
                         it->second.m_last_seen = now;
+                        auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::vote_request_entry>(payload));
+                        if (itor != it->second.m_peer_requests_time.end()) {
+                            if (now > itor->second + blockchain_same_response_interval) {
+                                it->second.m_peer_requests_time.erase(itor);
+                            } else {
+                                log("INFO: The same request from the same peer in 3s.");
+                                break;
+                            }
+                        } else {
+                            it->second.m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
+                        }
                     } else {
                         if (acl.size() >= 5) {
                             // find out min score peer
@@ -3148,9 +3196,11 @@ namespace libTAU::blockchain {
                                 // replace min score peer with new one
                                 acl.erase(min_it);
                                 acl[peer] = peer_info(now);
+                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
                             }
                         } else {
                             acl[peer] = peer_info(now);
+                            acl[peer].m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
                         }
                     }
 
@@ -3223,6 +3273,17 @@ namespace libTAU::blockchain {
                     if (it != acl.end()) {
                         it->second.m_score -= 3;
                         it->second.m_last_seen = now;
+                        auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::head_block_request_entry>(payload));
+                        if (itor != it->second.m_peer_requests_time.end()) {
+                            if (now > itor->second + blockchain_same_response_interval) {
+                                it->second.m_peer_requests_time.erase(itor);
+                            } else {
+                                log("INFO: The same request from the same peer in 3s.");
+                                break;
+                            }
+                        } else {
+                            it->second.m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
+                        }
                     } else {
                         if (acl.size() >= 5) {
                             // find out min score peer
@@ -3237,12 +3298,14 @@ namespace libTAU::blockchain {
                                 // replace min score peer with new one
                                 acl.erase(min_it);
                                 acl[peer] = peer_info(now);
+                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
                                 break;
                             }
                         } else {
                             acl[peer] = peer_info(now);
+                            acl[peer].m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
                         }
                     }
 
@@ -3337,6 +3400,17 @@ namespace libTAU::blockchain {
                     if (it != acl.end()) {
                         it->second.m_score -= 3;
                         it->second.m_last_seen = now;
+                        auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::state_request_entry>(payload));
+                        if (itor != it->second.m_peer_requests_time.end()) {
+                            if (now > itor->second + blockchain_same_response_interval) {
+                                it->second.m_peer_requests_time.erase(itor);
+                            } else {
+                                log("INFO: The same request from the same peer in 3s.");
+                                break;
+                            }
+                        } else {
+                            it->second.m_peer_requests_time.emplace(std::make_unique<common::state_request_entry>(payload), now);
+                        }
                     } else {
                         if (acl.size() >= 5) {
                             // find out min score peer
@@ -3351,12 +3425,14 @@ namespace libTAU::blockchain {
                                 // replace min score peer with new one
                                 acl.erase(min_it);
                                 acl[peer] = peer_info(now);
+                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::state_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
                                 break;
                             }
                         } else {
                             acl[peer] = peer_info(now);
+                            acl[peer].m_peer_requests_time.emplace(std::make_unique<common::state_request_entry>(payload), now);
                         }
                     }
 
