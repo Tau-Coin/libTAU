@@ -345,6 +345,14 @@ namespace libTAU {
 		return sync_call_ret<std::int64_t>(&session_impl::get_median_tx_free, chain_id);
 	}
 
+	std::int64_t session_handle::get_mining_time(std::vector<char> chain_id) {
+		return sync_call_ret<std::int64_t>(&session_impl::get_mining_time, chain_id);
+	}
+
+	void session_handle::focus_on_chain(std::vector<char> chain_id) {
+		return sync_call(&session_impl::focus_on_chain, chain_id);
+	}
+
 	// get block by number
     blockchain::block session_handle::get_block_by_number(std::vector<char> chain_id, std::int64_t block_number)
 	{

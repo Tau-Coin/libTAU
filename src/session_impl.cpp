@@ -854,23 +854,7 @@ namespace {
 
 	void session_impl::apply_settings_pack_impl(settings_pack const& pack)
 	{
-		bool const reopen_listen_port
-			= setting_changed<std::string>(pack, m_settings, settings_pack::listen_interfaces)
-			|| setting_changed<int>(pack, m_settings, settings_pack::proxy_type)
-			;
-
-#ifndef TORRENT_DISABLE_LOGGING
-		session_log("applying settings pack, reopen_listen_port=%s"
-			, reopen_listen_port ? "true" : "false");
-#endif
-
 		apply_pack(&pack, m_settings, this);
-
-        if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
-		    //if(reopen_listen_port)
-		    reopen_listen_sockets(false);
-            m_last_reopen = m_session_time;
-        }
 	}
 
 	std::shared_ptr<listen_socket_t> session_impl::setup_listener(
@@ -1478,6 +1462,7 @@ namespace {
 				
 		}
 
+        /*
 		if (map_ports)
 		{
 			for (auto const& s : m_listening_sockets)
@@ -1490,12 +1475,18 @@ namespace {
 			for (auto const& s : new_sockets)
 				remap_ports(remap_natpmp_and_upnp, *s);
 		}
+        */
 	}
 
 	void session_impl::reopen_network_sockets(reopen_network_flags_t const options)
 	{
         if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
-		    //if(reopen_listen_port)
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("Reopen network from application and remap %d", bool(options & session_handle::reopen_map_ports));
+			}
+#endif
 		    reopen_listen_sockets(bool(options & session_handle::reopen_map_ports));
             m_last_reopen = m_session_time;
         }
@@ -3019,6 +3010,19 @@ namespace {
 			return m_blockchain->getMedianTxFee(chain_id);
 		}
 		return -1; //error
+	}
+
+	std::int64_t session_impl::get_mining_time(const aux::bytes &chain_id) {
+		if(m_blockchain) {
+			return m_blockchain->getMiningTime(chain_id);
+		}
+		return -1; //error
+	}
+
+	void session_impl::focus_on_chain(const aux::bytes &chain_id) {
+		if(m_blockchain) {
+			m_blockchain->focus_on_chain(chain_id);
+		}
 	}
 
 	blockchain::block session_impl::get_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) {

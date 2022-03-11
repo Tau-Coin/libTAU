@@ -356,6 +356,12 @@ namespace libTAU {
 		// get median tx fee
         std::int64_t get_median_tx_free(std::vector<char> chain_id);
 
+		// get mining time
+        std::int64_t get_mining_time(std::vector<char> chain_id);
+
+		// focus on chain
+        void focus_on_chain(std::vector<char> chain_id);
+
 		// get block by number
         blockchain::block get_block_by_number(std::vector<char> chain_id, std::int64_t block_number);
 
