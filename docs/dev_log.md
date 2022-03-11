@@ -22,7 +22,16 @@
   2. 网络切换的过程：Android端的网络有不同的类型：移动网络、WIFI、VPN网络等，每种网络对应了不同的网络类型；
   3. 兜底机制，网络中可用节点数为0，会触发reopen，这个是检测断网的最后机制，在已连接的peers很多情况下，这个机制有很大的滞后性；
   ```
-    
+- 网络切换的过程 
+
+	```
+ 	网络切换监听方案：在APP中注册监听action为android.net.conn.CONNECTIVITY_CHANGE的BroadcastReceiver广播接收器，
+    网络切换会触发一次；当网络变化时，调用ConnectivityManage.getActiveNetworkInfo();获取网络类型Type值，Type值变化
+    就直接触发一次libTAU网络的reopen; 
+    测试发现当启动VPN时，此时网络类型还是基础网络移动网络或WIFI，此时采取的方案是：getAllNetworks()获取所有的网络，
+    如果比当前active网络类型大且是isConnected的网路，直接取其网络类型作为最新网络类型。
+    ```
+ 	   
 ### 2.Port选取
 - port和id建立映射关系；
 - 在已建立映射关系的基础上，保留目前和libTorrent一致的策略，绑定不成功后进行port+1的尝试；

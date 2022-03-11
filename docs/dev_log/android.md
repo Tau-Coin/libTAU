@@ -8,9 +8,9 @@
 		<th>备注</th>
 	</tr>
 	<tr>
-    	<td>1</td>
-		<td>Airdrop分享逻辑</td>
-		<td>0</td>
+    	<td >1</td>
+		<td bgcolor="#1379D6">Airdrop分享逻辑</td>
+		<td>100</td>
 		<td>2</td>
 		<td></td>
     </tr>
@@ -23,8 +23,8 @@
     </tr>
      <tr>
     	<td>3</td>
-		<td>账户过期逻辑修改</td>
-		<td>0</td>
+		<td bgcolor="#1379D6">账户过期逻辑修改？</td>
+		<td>100</td>
 		<td>1</td>
 		<td></td>
     </tr>
@@ -32,7 +32,7 @@
     	<td>4</td>
 		<td>交易重发策略</td>
 		<td>0</td>
-		<td>1</td>
+		<td>0</td>
 		<td></td>
     </tr>
 	<tr>
@@ -44,8 +44,8 @@
     </tr>
     <tr>
     	<td>6</td>
-		<td>Balances和communities合并</td>
-		<td>0</td>
+		<td bgcolor="#1379D6">Balances和communities合并</td>
+		<td>100</td>
 		<td>1</td>
 		<td></td>
     </tr>
@@ -60,7 +60,7 @@
     	<td>8</td>
 		<td>流量策略：前台加入流量包限制</td>
 		<td>0</td>
-		<td>0</td>
+		<td>1</td>
 		<td></td>
     </tr>
     <tr>
@@ -81,7 +81,7 @@
     	<td>11</td>
 		<td>交易收藏</td>
 		<td>0</td>
-		<td>0</td>
+		<td>1</td>
 		<td></td>
     </tr>
     <tr>
@@ -96,6 +96,20 @@
 		<td>Android版本升级</td>
 		<td>0</td>
 		<td>0</td>
+		<td></td>
+    </tr>    
+    <tr>
+    	<td>14</td>
+		<td>消息发送状态：发送中，显示黄色；受到回执是绿色；失败是红色；类似路灯设计，提高用户体验。</td>
+		<td>0</td>
+		<td>1</td>
+		<td></td>
+    </tr>
+    <tr>
+    	<td>14</td>
+		<td>ready only -> notes only不上链用户可以发消息</td>
+		<td>0</td>
+		<td>1</td>
 		<td></td>
     </tr>
 </table>
