@@ -60,6 +60,9 @@ namespace blockchain {
     // min response interval to the same request(ms)
     constexpr int blockchain_same_response_interval = 4 * 1000;
 
+    // blockchain max focus time(5ms)
+    constexpr std::int64_t blockchain_max_focus_time = 5 * 1000;
+
     enum RESULT {
         SUCCESS,
         FAIL,
@@ -400,6 +403,9 @@ namespace blockchain {
 
         // votes
         std::map<aux::bytes, std::map<dht::public_key, vote>> m_votes;
+
+        // priority chain(time:ms)
+        std::pair<aux::bytes , std::int64_t> m_priority_chain = std::make_pair(aux::bytes(), 0);
 
         // blockchain signal time(map:key1->chain id, key2->peer, value->signal time(ms))(1min)
 //        std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_latest_signal_time;

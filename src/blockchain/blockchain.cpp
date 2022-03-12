@@ -863,7 +863,16 @@ namespace libTAU::blockchain {
         if (!m_chains.empty())
         {
             // 产生随机数
-            srand(get_total_milliseconds());
+            auto now = get_total_milliseconds();
+            if (now < m_priority_chain.second) {
+                srand(now);
+                auto i = rand() % 10;
+                if (i < 3) {
+                    return m_priority_chain.first;
+                }
+            }
+
+            srand(now);
             auto index = rand() % m_chains.size();
             chain_id = m_chains[index];
         }
@@ -2904,7 +2913,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::focus_on_chain(const aux::bytes &chain_id) {
-
+        m_priority_chain = std::make_pair(chain_id, get_total_milliseconds() + blockchain_max_focus_time);
     }
 
     void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {
