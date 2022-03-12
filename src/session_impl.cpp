@@ -1462,7 +1462,6 @@ namespace {
 				
 		}
 
-        /*
 		if (map_ports)
 		{
 			for (auto const& s : m_listening_sockets)
@@ -1475,7 +1474,6 @@ namespace {
 			for (auto const& s : new_sockets)
 				remap_ports(remap_natpmp_and_upnp, *s);
 		}
-        */
 	}
 
 	void session_impl::reopen_network_sockets(reopen_network_flags_t const options)
