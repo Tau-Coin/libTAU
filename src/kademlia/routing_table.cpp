@@ -151,9 +151,29 @@ routing_table::add_node_status_t replace_node_impl(node_entry const& e
 	{
 		// i points to a node that has been marked
 		// as stale. Replace it with this new one
+		print_ipset("replace_node erase before, l:159", j->addr(), ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, log
+#endif
+		);
 		ips.erase(j->addr());
+		print_ipset("replace_node erase after, l:159", j->addr(), ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, log
+#endif
+		);
 		*j = e;
+		print_ipset("replace_node insert before, l:171", e.addr(), ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, log
+#endif
+		);
 		ips.insert(e.addr());
+		print_ipset("replace_node insert after, l:171", e.addr(), ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, log
+#endif
+		);
 		return routing_table::node_added;
 	}
 
@@ -226,9 +246,30 @@ routing_table::add_node_status_t replace_node_impl(node_entry const& e
 				);
 		}
 #endif
+
+		print_ipset("replace_node erase before, l:255", j->addr(), ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, log
+#endif
+		);
 		ips.erase(j->addr());
+		print_ipset("replace_node erase after, l:255", j->addr(), ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, log
+#endif
+		);
 		*j = e;
+		print_ipset("replace_node insert before, l:267", e.addr(), ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, log
+#endif
+		);
 		ips.insert(e.addr());
+		print_ipset("replace_node insert after, l:267", e.addr(), ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, log
+#endif
+		);
 		return routing_table::node_added;
 	}
 	return routing_table::need_bucket_split;
@@ -530,7 +571,17 @@ void routing_table::remove_node(node_entry* n, bucket_t* b)
 	TORRENT_ASSERT(idx >= 0);
 	TORRENT_ASSERT(idx < intptr_t(b->size()));
 	TORRENT_ASSERT(m_ips.exists(n->addr()));
+	print_ipset("remove_node before, l:579", n->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+	, m_log
+#endif
+	);
 	m_ips.erase(n->addr());
+	print_ipset("remove_node after, l:579", n->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+	, m_log
+#endif
+	);
 	b->erase(b->begin() + idx);
 }
 
@@ -775,7 +826,17 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 			j->non_referrable = e.non_referrable;
 		}
 		e = *j;
+		print_ipset("replacements bucket erase before, l:834", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, m_log
+#endif
+		);
 		m_ips.erase(j->addr());
+		print_ipset("replacements bucket erase after, l:834", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, m_log
+#endif
+		);
 		rb.erase(j);
 	}
 
@@ -814,7 +875,17 @@ ip_ok:
 	{
 		if (b.empty()) b.reserve(bucket_size_limit);
 		b.push_back(e);
+		print_ipset("live bucket insert before, l: 883", e.addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, m_log
+#endif
+		);
 		m_ips.insert(e.addr());
+		print_ipset("live bucket insert after, l: 883", e.addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, m_log
+#endif
+		);
 		return node_added;
 	}
 
@@ -891,14 +962,34 @@ ip_ok:
 				);
 			return ret == node_added ? node_added : failed_to_add;
 		}
+		print_ipset("replacements bucket erase before, l:970", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, m_log
+#endif
+		);
 		m_ips.erase(j->addr());
+		print_ipset("replacements bucket erase after, l:970", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+		, m_log
+#endif
+		);
 		rb.erase(j);
 	}
 
 	//if (rb.empty()) rb.reserve(m_replace_bucket_size/*m_bucket_size*/);
 	if (rb.empty()) rb.reserve(1024);
 	rb.push_back(e);
+	print_ipset("replacements bucket insert before, l:987", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+	, m_log
+#endif
+	);
 	m_ips.insert(e.addr());
+	print_ipset("replacements bucket insert after, l:987", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+	, m_log
+#endif
+	);
 	return node_added;
 }
 
@@ -1080,13 +1171,33 @@ void routing_table::node_failed(node_id const& nid, udp::endpoint const& ep)
 				, int(j->pinged())
 				, int(total_seconds(aux::time_now() - j->first_seen)));
 			}
+			print_ipset("live bucket erase before, l:1179", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+			, m_log
+#endif
+			);
 			m_ips.erase(j->addr());
+			print_ipset("live bucket erase after, l:1179", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+			, m_log
+#endif
+			);
 			b.erase(j);
 		}
 		return;
 	}
 
+	print_ipset("live bucket erase before, l:1195", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+	, m_log
+#endif
+	);
 	m_ips.erase(j->addr());
+	print_ipset("live bucket erase after, l:1195", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+	, m_log
+#endif
+	);
 	b.erase(j);
 
 	fill_from_replacements(i);
@@ -1261,5 +1372,23 @@ void routing_table::log_node_failed(node_id const& nid, node_entry const& ne) co
 	}
 }
 #endif
+
+void print_ipset(const char* msg, address const& addr, ip_set& ips
+#ifndef TORRENT_DISABLE_LOGGING
+	, dht_logger* logger
+#endif
+)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (logger != nullptr && logger->should_log(dht_logger::routing_table))
+	{
+		logger->log(dht_logger::routing_table, "ipset debug: %s, addr:%s, exists:%s, size:%d"
+			, msg
+			, aux::print_address(addr).c_str()
+			, ips.exists(addr) ? "true" : "false"
+			, ips.size());
+	}
+#endif
+}
 
 } // namespace libTAU::dht

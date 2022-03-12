@@ -318,6 +318,12 @@ replace_node_impl(node_entry const& e, bucket_t& b, ip_set& ips
 #endif
 	);
 
+TORRENT_EXTRA_EXPORT void print_ipset(const char* msg, address const& addr, ip_set& ips
+#ifndef TORRENT_DISABLE_LOGGING
+	, dht_logger* log
+#endif
+	);
+
 } } // namespace libTAU::dht
 
 #endif // ROUTING_TABLE_HPP
