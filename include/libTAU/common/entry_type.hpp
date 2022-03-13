@@ -30,8 +30,35 @@ namespace libTAU::common {
     const std::string entry_time = "m";
     const std::string entry_levenshtein_array = "l";
 
-    struct entry_base {
+    struct communication_entry_base {
         virtual entry get_entry() const = 0;
+
+        bool operator<(const communication_entry_base &rhs) const {
+            if (m_timestamp < rhs.m_timestamp)
+                return true;
+            if (rhs.m_timestamp < m_timestamp)
+                return false;
+
+            std::string encode;
+            bencode(std::back_inserter(encode), m_entry);
+            std::string rhs_encode;
+            bencode(std::back_inserter(rhs_encode), rhs.m_entry);
+            if (encode < rhs_encode)
+                return true;
+            if (encode > rhs_encode)
+                return false;
+        }
+
+        // timestamp
+        std::int64_t m_timestamp{};
+
+        // entry
+        entry m_entry;
+    };
+
+    struct less_communication_entry_base: std::binary_function<const std::unique_ptr<communication_entry_base>&, const std::unique_ptr<communication_entry_base>&, bool>
+    {
+        bool operator() (const std::unique_ptr<communication_entry_base>& lhs, const std::unique_ptr<communication_entry_base>& rhs) const { return *lhs < *rhs; }
     };
 
     struct blockchain_entry_base {
@@ -228,7 +255,7 @@ namespace libTAU::common {
 //        std::vector<entry> m_entries;
 //    };
 
-    struct TORRENT_EXPORT message_entry final : entry_base {
+    struct TORRENT_EXPORT message_entry final : communication_entry_base {
         // data type id
         static inline constexpr std::int64_t data_type_id = 0;
 
@@ -240,7 +267,11 @@ namespace libTAU::common {
 //        message_entry(communication::message mMsg, int64_t mTimestamp) : m_msg(std::move(mMsg)), m_timestamp(mTimestamp) {}
 
         message_entry(communication::message mMsg, aux::bytes mLevenshteinArray, int64_t mTimestamp)
-                : m_msg(std::move(mMsg)), m_levenshtein_array(std::move(mLevenshteinArray)), m_timestamp(mTimestamp) {}
+                : m_msg(std::move(mMsg)), m_levenshtein_array(std::move(mLevenshteinArray)) {
+            m_timestamp = mTimestamp;
+
+            m_entry = get_entry();
+        }
 
         // @returns the corresponding entry
         entry get_entry() const override;
@@ -257,11 +288,9 @@ namespace libTAU::common {
 
         // bytes consist of first byte of ordered messages hash
         aux::bytes m_levenshtein_array;
-
-        std::int64_t m_timestamp{};
     };
 
-    struct TORRENT_EXPORT message_levenshtein_array_entry final : entry_base {
+    struct TORRENT_EXPORT message_levenshtein_array_entry final : communication_entry_base {
         // data type id
         static inline constexpr std::int64_t data_type_id = 1;
 
@@ -270,7 +299,11 @@ namespace libTAU::common {
 
 //        explicit message_levenshtein_array_entry(aux::bytes mLevenshteinArray) : m_levenshtein_array(std::move(mLevenshteinArray)) {}
 
-        message_levenshtein_array_entry(aux::bytes mLevenshteinArray, int64_t mTimestamp) : m_levenshtein_array(std::move(mLevenshteinArray)), m_timestamp(mTimestamp) {}
+        message_levenshtein_array_entry(aux::bytes mLevenshteinArray, int64_t mTimestamp) : m_levenshtein_array(std::move(mLevenshteinArray)) {
+            m_timestamp = mTimestamp;
+
+            m_entry = get_entry();
+        }
 
         // @returns the corresponding entry
         entry get_entry() const override;
@@ -281,18 +314,20 @@ namespace libTAU::common {
 
         // bytes consist of first byte of ordered messages hash
         aux::bytes m_levenshtein_array;
-
-        std::int64_t m_timestamp{};
     };
 
-    struct TORRENT_EXPORT friend_info_request_entry final : entry_base {
+    struct TORRENT_EXPORT friend_info_request_entry final : communication_entry_base {
         // data type id
         static inline constexpr std::int64_t data_type_id = 2;
 
         // @param Construct with entry
         explicit friend_info_request_entry(const entry& e);
 
-        explicit friend_info_request_entry(int64_t mTimestamp) : m_timestamp(mTimestamp) {}
+        explicit friend_info_request_entry(int64_t mTimestamp) {
+            m_timestamp = mTimestamp;
+
+            m_entry = get_entry();
+        }
 
         // @returns the corresponding entry
         entry get_entry() const override;
@@ -300,11 +335,9 @@ namespace libTAU::common {
         bool operator<(const friend_info_request_entry &rhs) const {
             return false;
         }
-
-        std::int64_t m_timestamp{};
     };
 
-    struct TORRENT_EXPORT friend_info_entry final : entry_base {
+    struct TORRENT_EXPORT friend_info_entry final : communication_entry_base {
         // data type id
         static inline constexpr std::int64_t data_type_id = 3;
 
@@ -313,7 +346,11 @@ namespace libTAU::common {
 
 //        explicit friend_info_entry(aux::bytes mFriendInfo) : m_friend_info(std::move(mFriendInfo)) {}
 
-        friend_info_entry(aux::bytes mFriendInfo, int64_t mTimestamp) : m_friend_info(std::move(mFriendInfo)), m_timestamp(mTimestamp) {}
+        friend_info_entry(aux::bytes mFriendInfo, int64_t mTimestamp) : m_friend_info(std::move(mFriendInfo)) {
+            m_timestamp = mTimestamp;
+
+            m_entry = get_entry();
+        }
 
         // @returns the corresponding entry
         entry get_entry() const override;
@@ -323,8 +360,6 @@ namespace libTAU::common {
         }
 
         aux::bytes m_friend_info;
-
-        std::int64_t m_timestamp{};
     };
 
 

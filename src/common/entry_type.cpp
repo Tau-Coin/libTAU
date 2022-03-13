@@ -63,6 +63,8 @@ namespace libTAU::common {
 //    }
 
     message_entry::message_entry(const entry &e) {
+        m_entry = e;
+
         // message
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
@@ -97,6 +99,8 @@ namespace libTAU::common {
 
 
     message_levenshtein_array_entry::message_levenshtein_array_entry(const entry &e) {
+        m_entry = e;
+
         // message levenshtein array
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
@@ -123,6 +127,8 @@ namespace libTAU::common {
     }
 
     friend_info_request_entry::friend_info_request_entry(const entry &e) {
+        m_entry = e;
+
         // time
         if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
         {
@@ -141,6 +147,8 @@ namespace libTAU::common {
     }
 
     friend_info_entry::friend_info_entry(const entry &e) {
+        m_entry = e;
+
         // friend info
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {

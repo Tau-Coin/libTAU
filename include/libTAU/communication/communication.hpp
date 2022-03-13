@@ -65,6 +65,9 @@ namespace libTAU {
         // data accepted time(6h)(ms)
         constexpr std::int64_t communication_data_accepted_time = 6 * 60 * 60 * 1000;
 
+        // min response interval to the same request(ms)
+        constexpr int communication_same_response_interval = 4 * 1000;
+
         enum PEER_STATUS {
             DETECT,
             SEND,
@@ -282,6 +285,8 @@ namespace libTAU {
             std::vector<dht::public_key> m_active_friends;
 
             std::map<dht::public_key, std::int64_t> m_last_detection_time;
+
+            std::map<dht::public_key, std::int64_t> m_last_request_friend_info_time;
 
             std::map<dht::public_key, std::int64_t> m_last_communication_time;
 

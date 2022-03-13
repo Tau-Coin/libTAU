@@ -241,12 +241,17 @@ namespace libTAU {
                         break;
                     }
                     case common::friend_info_request_entry::data_type_id: {
-                        auto pubkey = *m_ses.pubkey();
-                        auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
-                        if (!friend_info.empty()) {
-                            common::friend_info_entry e(friend_info, now);
-                            common::entry_task task(1, 10, 10, common::friend_info_entry::data_type_id, peer, e.get_entry());
-                            add_entry_task_to_queue(task);
+                        if (now > m_last_request_friend_info_time[peer] + communication_same_response_interval) {
+                            auto pubkey = *m_ses.pubkey();
+                            auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
+                            if (!friend_info.empty()) {
+                                common::friend_info_entry e(friend_info, now);
+                                common::entry_task task(1, 10, 10, common::friend_info_entry::data_type_id, peer,
+                                                        e.get_entry());
+                                add_entry_task_to_queue(task);
+                            }
+
+                            m_last_request_friend_info_time[peer] = now;
                         }
 
                         m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
