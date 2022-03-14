@@ -117,8 +117,15 @@ void get_item::start()
 	// nodes from routing table.
 	if (m_results.empty() && !m_direct_invoking)
 	{
-		std::vector<node_entry> const nodes = m_node.m_table.find_node(
+		std::vector<node_entry> nodes = m_node.m_table.find_node(
 				target(), routing_table::include_pinged, invoke_window());
+
+		if (nodes.size() < invoke_window())
+		{
+			nodes.clear();
+			nodes = m_node.m_table.find_node(target()
+					, routing_table::include_failed, invoke_window());
+		}
 
 		for (auto& n : nodes)
 		{
