@@ -12,12 +12,14 @@ see LICENSE file.
 #include <utility>
 #include <ostream>
 
+#include "libTAU/address.hpp"
 #include "libTAU/aux_/common.h"
 #include "libTAU/aux_/common_data.h"
 #include "libTAU/blockchain/transaction.hpp"
 #include "libTAU/entry.hpp"
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
+#include "libTAU/socket.hpp" // for tcp::endpoint
 
 namespace libTAU {
 namespace blockchain {
@@ -49,6 +51,20 @@ namespace blockchain {
               m_miner_note_timestamp(mMinerNoteTimestamp), m_sender_balance(mSenderBalance), m_sender_nonce(mSenderNonce),
               m_sender_note_timestamp(mSenderNoteTimestamp), m_receiver_balance(mReceiverBalance),
               m_receiver_nonce(mReceiverNonce), m_receiver_note_timestamp(mReceiverNoteTimestamp) {}
+
+        block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
+              const sha256_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
+              const sha256_hash &mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
+              int64_t mMinerBalance, int64_t mMinerNonce, int64_t mMinerNoteTimestamp, int64_t mSenderBalance,
+              int64_t mSenderNonce, int64_t mSenderNoteTimestamp, int64_t mReceiverBalance, int64_t mReceiverNonce,
+              int64_t mReceiverNoteTimestamp, udp::endpoint mEndpoint) :
+              m_chain_id(std::move(mChainId)), m_version(mVersion), m_timestamp(mTimestamp),
+              m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
+              m_cumulative_difficulty(mCumulativeDifficulty), m_generation_signature(mGenerationSignature),
+              m_tx(std::move(mTx)), m_miner(mMiner), m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce),
+              m_miner_note_timestamp(mMinerNoteTimestamp), m_sender_balance(mSenderBalance),
+              m_sender_nonce(mSenderNonce), m_sender_note_timestamp(mSenderNoteTimestamp), m_receiver_balance(mReceiverBalance),
+              m_receiver_nonce(mReceiverNonce), m_receiver_note_timestamp(mReceiverNoteTimestamp), m_endpoint(std::move(mEndpoint)) {}
 
         const aux::bytes &chain_id() const { return m_chain_id; }
 
@@ -87,6 +103,8 @@ namespace blockchain {
         int64_t receiver_nonce() const { return m_receiver_nonce; }
 
         int64_t receiver_note_timestamp() const { return m_sender_note_timestamp; }
+
+        const udp::endpoint &end_point() const { return m_endpoint; }
 
         const dht::signature &signature() const { return m_signature; }
 
@@ -179,6 +197,8 @@ namespace blockchain {
 
         // receiver note timestamp
         std::int64_t m_receiver_note_timestamp{};
+
+        udp::endpoint m_endpoint;
 
         // signature
         dht::signature m_signature{};

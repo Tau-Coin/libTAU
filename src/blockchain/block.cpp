@@ -107,6 +107,26 @@ namespace libTAU::blockchain {
             e["rt"] = entry(m_receiver_note_timestamp);
         }
 
+        if (m_endpoint.port() != 0) {
+            entry ne(entry::dictionary_t);
+
+            // address
+            if (m_endpoint.address().is_v4()) {
+                // ipv4
+                address_v4::bytes_type b = m_endpoint.address().to_v4().to_bytes();
+                ne["4"] = entry(std::string(b.begin(), b.end()));
+            } else {
+                // ipv6
+                address_v6::bytes_type b = m_endpoint.address().to_v6().to_bytes();
+                ne["6"] = entry(std::string(b.begin(), b.end()));
+            }
+
+            // port
+            ne["p"] = entry(m_endpoint.port());
+
+            e["ep"] = ne;
+        }
+
         return e;
     }
 
@@ -217,6 +237,44 @@ namespace libTAU::blockchain {
             auto signature = i->string();
             m_signature = dht::signature(signature.data());
         }
+        // endpoint
+        if (auto* i = const_cast<entry *>(e.find_key("ep")))
+        {
+            entry ne = entry(*i);
+
+            // ip
+            if (auto* ipv4_ptr = const_cast<entry *>(ne.find_key("4"))) {
+                // make ipv4
+                std::string ipv4 = ipv4_ptr->string();
+                address_v4::bytes_type b;
+                memcpy(&b[0], ipv4.c_str(), b.size());
+                address addr = make_address_v4(b);
+
+                // port
+                if (auto* p = const_cast<entry *>(ne.find_key("p")))
+                {
+                    u_int16_t port = p->integer();
+                    if (port != 0) {
+                        m_endpoint = udp::endpoint(addr, port);
+                    }
+                }
+            } else if (auto* ipv6_ptr = const_cast<entry *>(ne.find_key("6"))) {
+                // make ipv6
+                std::string ipv6 = ipv6_ptr->string();
+                address_v6::bytes_type b;
+                memcpy(&b[0], ipv6.c_str(), b.size());
+                address addr = make_address_v6(b);
+
+                // port
+                if (auto* p = const_cast<entry *>(ne.find_key("p")))
+                {
+                    u_int16_t port = p->integer();
+                    if (port != 0) {
+                        m_endpoint = udp::endpoint(addr, port);
+                    }
+                }
+            }
+        }
     }
 
     std::set<dht::public_key> block::get_block_peers() const {
@@ -247,6 +305,7 @@ namespace libTAU::blockchain {
            << " m_sender_balance: " << block.m_sender_balance << " m_sender_nonce: " << block.m_sender_nonce
            << " m_sender_note_timestamp: " << block.m_sender_note_timestamp << " m_receiver_balance: " << block.m_receiver_balance
            << " m_receiver_nonce: " << block.m_receiver_nonce << " m_receiver_note_timestamp: " << block.m_receiver_note_timestamp
+           << " m_end_point ip: " << block.m_endpoint.address().to_string() << " port: " << block.m_endpoint.port()
            << " m_hash: " << aux::toHex(block.m_hash.to_string());
         return os;
     }

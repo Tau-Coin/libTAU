@@ -1116,11 +1116,21 @@ namespace libTAU::blockchain {
                         return b;
                     }
                 }
-                b = block(chain_id, block_version::block_version1, (head_block.timestamp() + interval),
-                          head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
-                          genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk], peers_note_timestamp[*pk],
-                          peers_balance[tx.sender()], peers_nonce[tx.sender()], peers_note_timestamp[tx.sender()],
-                          peers_balance[tx.receiver()], peers_nonce[tx.receiver()], peers_note_timestamp[tx.receiver()]);
+                auto ep = m_ses.external_udp_endpoint();
+                if (ep.port() != 0) {
+                    b = block(chain_id, block_version::block_version1, (head_block.timestamp() + interval),
+                              head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
+                              genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk], peers_note_timestamp[*pk],
+                              peers_balance[tx.sender()], peers_nonce[tx.sender()], peers_note_timestamp[tx.sender()],
+                              peers_balance[tx.receiver()], peers_nonce[tx.receiver()], peers_note_timestamp[tx.receiver()], ep);
+                } else {
+                    b = block(chain_id, block_version::block_version1, (head_block.timestamp() + interval),
+                              head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
+                              genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk], peers_note_timestamp[*pk],
+                              peers_balance[tx.sender()], peers_nonce[tx.sender()], peers_note_timestamp[tx.sender()],
+                              peers_balance[tx.receiver()], peers_nonce[tx.receiver()], peers_note_timestamp[tx.receiver()]);
+                }
+
                 b.sign(*pk, *sk);
             } else {
                 log("INFO: chain id[%s] left time[%ld]s", aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - now);
