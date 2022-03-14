@@ -1116,6 +1116,7 @@ namespace libTAU::blockchain {
                         return b;
                     }
                 }
+
                 auto ep = m_ses.external_udp_endpoint();
                 if (ep.port() != 0) {
                     b = block(chain_id, block_version::block_version1, (head_block.timestamp() + interval),
@@ -2717,6 +2718,9 @@ namespace libTAU::blockchain {
         dht::public_key *pk = m_ses.pubkey();
         std::set<dht::public_key> peers;
         std::vector<block> blocks;
+
+        auto ep = m_ses.external_udp_endpoint();
+
         for (auto const &act: TAU_CHAIN_GENESIS_ACCOUNT) {
             auto miner = act;
             peers.insert(miner);
@@ -2724,9 +2728,18 @@ namespace libTAU::blockchain {
             std::string data(miner.bytes.begin(), miner.bytes.end());
             auto genSig = dht::item_target_id(data);
 
-            block b = block(TAU_CHAIN_ID, block_version::block_version1, TAU_CHAIN_GENESIS_TIMESTAMP, block_number, previous_hash,
-                            GENESIS_BASE_TARGET, 0, genSig, transaction(), miner, GENESIS_BLOCK_BALANCE,
-                            0, 0, 0, 0, 0, 0, 0, 0);
+            block b;
+            if (ep.port() != 0) {
+                b = block(TAU_CHAIN_ID, block_version::block_version1, TAU_CHAIN_GENESIS_TIMESTAMP, block_number,
+                                previous_hash, GENESIS_BASE_TARGET, 0, genSig, transaction(),
+                                miner, GENESIS_BLOCK_BALANCE, 0, 0, 0,
+                                0, 0, 0, 0, 0, ep);
+            } else {
+                b = block(TAU_CHAIN_ID, block_version::block_version1, TAU_CHAIN_GENESIS_TIMESTAMP, block_number,
+                                previous_hash,
+                                GENESIS_BASE_TARGET, 0, genSig, transaction(), miner, GENESIS_BLOCK_BALANCE,
+                                0, 0, 0, 0, 0, 0, 0, 0);
+            }
             b.sign(*pk, *sk);
 
             blocks.push_back(b);
@@ -2764,15 +2777,25 @@ namespace libTAU::blockchain {
         std::vector<block> blocks;
         std::int64_t total_balance = 0;
         int i = 0;
+
+        auto ep = m_ses.external_udp_endpoint();
+
         for (auto const &act: accounts) {
             auto miner = act.first;
             peers.insert(miner);
             std::int64_t miner_balance = act.second.balance();
             total_balance += miner_balance;
 
-            block b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                            base_target, 0, genSig, transaction(), miner, miner_balance,
-                            0, 0, 0, 0, 0, 0, 0, 0);
+            block b;
+            if (ep.port() != 0) {
+                b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
+                                base_target, 0, genSig, transaction(), miner, miner_balance,
+                                0, 0, 0, 0, 0, 0, 0, 0, ep);
+            } else {
+                b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
+                                base_target, 0, genSig, transaction(), miner, miner_balance,
+                                0, 0, 0, 0, 0, 0, 0, 0);
+            }
             b.sign(*pk, *sk);
 
             blocks.push_back(b);
@@ -2786,9 +2809,18 @@ namespace libTAU::blockchain {
         }
 
         std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
-        block b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                        base_target, 0, genSig, transaction(), *pk, genesis_balance,
-                        0, 0, 0, 0, 0, 0, 0, 0);
+
+        block b;
+        if (ep.port() != 0) {
+            b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
+                            base_target, 0, genSig, transaction(), *pk, genesis_balance,
+                            0, 0, 0, 0, 0, 0, 0, 0, ep);
+        } else {
+            b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
+                            base_target, 0, genSig, transaction(), *pk, genesis_balance,
+                            0, 0, 0, 0, 0, 0, 0, 0);
+        }
+
         b.sign(*pk, *sk);
 
         peers.insert(*pk);
