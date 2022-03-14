@@ -556,6 +556,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
         if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
 		    reopen_listen_sockets(false);
             m_last_reopen = m_session_time;
+            m_dht_nodes_non_zero = m_last_reopen;
         }
 	}
 
@@ -563,10 +564,31 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	{
 		TORRENT_ASSERT(is_single_thread());
 		if (!m_abort) {
+
+            //time modify 
 			session_time_modification();
         	m_timer.expires_after(seconds(1));
 			m_timer.async_wait([this](error_code const& e) {
 					this->wrap(&session_impl::on_tick, e); });
+
+            //peer check and reopen
+		    if (m_dht)
+			    m_dht->update_stats_counters(m_stats_counters);
+
+            int num_dht_nodes = m_stats_counters[counters::dht_nodes];
+
+            if(0 == num_dht_nodes) {
+                if(m_session_time - m_dht_nodes_non_zero >= 10000) {
+                    reopen_listen_sockets(false);
+                    m_dht_nodes_non_zero = m_session_time;
+                }
+            } else {
+                m_dht_nodes_non_zero = m_session_time;
+            }
+
+#ifndef TORRENT_DISABLE_LOGGING
+		    session_log("TICK, dht nodes number: %d", num_dht_nodes);
+#endif
 		}
 	}
 
@@ -1487,6 +1509,7 @@ namespace {
 #endif
 		    reopen_listen_sockets(bool(options & session_handle::reopen_map_ports));
             m_last_reopen = m_session_time;
+            m_dht_nodes_non_zero = m_last_reopen;
         }
 	}
 
