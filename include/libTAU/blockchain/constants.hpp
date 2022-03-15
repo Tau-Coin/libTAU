@@ -38,6 +38,8 @@ namespace libTAU::blockchain {
 
     constexpr int EFFECTIVE_BLOCK_NUMBER = 288 * 180;
 
+    constexpr int CHAIN_EPOCH_TIME = 180 * 24 * 60 * 60;
+
     constexpr int MAX_NEGATIVE_BLOCK_SIZE = 50000;
 
     // block time
