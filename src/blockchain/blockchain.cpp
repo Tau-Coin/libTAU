@@ -2759,7 +2759,11 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool blockchain::createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts) {
+    bool blockchain::createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account> &accounts) {
+        return createNewCommunity(chain_id, accounts, transaction());
+    }
+
+    bool blockchain::createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts, const transaction& tx) {
         std::int64_t now = get_total_milliseconds() / 1000; // second
 
         dht::secret_key *sk = m_ses.serkey();
@@ -2813,11 +2817,11 @@ namespace libTAU::blockchain {
         block b;
         if (ep.port() != 0) {
             b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                            base_target, 0, genSig, transaction(), *pk, genesis_balance,
+                            base_target, 0, genSig, tx, *pk, genesis_balance,
                             0, 0, 0, 0, 0, 0, 0, 0, ep);
         } else {
             b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                            base_target, 0, genSig, transaction(), *pk, genesis_balance,
+                            base_target, 0, genSig, tx, *pk, genesis_balance,
                             0, 0, 0, 0, 0, 0, 0, 0);
         }
 
