@@ -789,7 +789,29 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 		// update endpoint
 		if (j->addr() != e.addr() || j->port() != e.port())
 		{
+			print_ipset("live bucket update ep erase before, l:797", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+				, m_log
+#endif
+			);
+			m_ips.erase(j->addr());
+            print_ipset("live bucket update ep erase after, l:797", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+                , m_log
+#endif
+			);
 			j->update_endpoint(e.ep());
+			print_ipset("live bucket update ep insert before, l:809", e.addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+				, m_log
+#endif
+			);
+			m_ips.insert(e.addr());
+			print_ipset("live bucket update ep insert after, l:809", e.addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+				, m_log
+#endif
+			);
 		}
 
 		// we already have the node in our bucket
@@ -815,7 +837,29 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 		// update endpoint
 		if (j->addr() != e.addr() || j->port() != e.port())
 		{
+			print_ipset("replacements bucket update ep erase before, l:845", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+				, m_log
+#endif
+			);
+			m_ips.erase(j->addr());
+			print_ipset("replacements bucket update ep erase after, l:845", j->addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+				, m_log
+#endif
+			);
 			j->update_endpoint(e.ep());
+			print_ipset("replacements bucket update ep insert before, l:856", e.addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+				, m_log
+#endif
+			);
+			m_ips.insert(e.addr());
+			print_ipset("replacements bucket update ep insert after, l:856", e.addr(), m_ips
+#ifndef TORRENT_DISABLE_LOGGING
+				, m_log
+#endif
+			);
 		}
 
 		TORRENT_ASSERT(j->id == e.id && j->ep() == e.ep());
@@ -826,13 +870,13 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 			j->non_referrable = e.non_referrable;
 		}
 		e = *j;
-		print_ipset("replacements bucket erase before, l:834", j->addr(), m_ips
+		print_ipset("replacements bucket erase before, l:877", j->addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 		, m_log
 #endif
 		);
 		m_ips.erase(j->addr());
-		print_ipset("replacements bucket erase after, l:834", j->addr(), m_ips
+		print_ipset("replacements bucket erase after, l:877", j->addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 		, m_log
 #endif
@@ -875,13 +919,13 @@ ip_ok:
 	{
 		if (b.empty()) b.reserve(bucket_size_limit);
 		b.push_back(e);
-		print_ipset("live bucket insert before, l: 883", e.addr(), m_ips
+		print_ipset("live bucket insert before, l: 926", e.addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 		, m_log
 #endif
 		);
 		m_ips.insert(e.addr());
-		print_ipset("live bucket insert after, l: 883", e.addr(), m_ips
+		print_ipset("live bucket insert after, l: 926", e.addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 		, m_log
 #endif
@@ -962,13 +1006,13 @@ ip_ok:
 				);
 			return ret == node_added ? node_added : failed_to_add;
 		}
-		print_ipset("replacements bucket erase before, l:970", j->addr(), m_ips
+		print_ipset("replacements bucket erase before, l:1013", j->addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 		, m_log
 #endif
 		);
 		m_ips.erase(j->addr());
-		print_ipset("replacements bucket erase after, l:970", j->addr(), m_ips
+		print_ipset("replacements bucket erase after, l:1013", j->addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 		, m_log
 #endif
@@ -979,13 +1023,13 @@ ip_ok:
 	//if (rb.empty()) rb.reserve(m_replace_bucket_size/*m_bucket_size*/);
 	if (rb.empty()) rb.reserve(1024);
 	rb.push_back(e);
-	print_ipset("replacements bucket insert before, l:987", e.addr(), m_ips
+	print_ipset("replacements bucket insert before, l:1030", e.addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 	, m_log
 #endif
 	);
 	m_ips.insert(e.addr());
-	print_ipset("replacements bucket insert after, l:987", e.addr(), m_ips
+	print_ipset("replacements bucket insert after, l:1030", e.addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 	, m_log
 #endif
@@ -1171,13 +1215,13 @@ void routing_table::node_failed(node_id const& nid, udp::endpoint const& ep)
 				, int(j->pinged())
 				, int(total_seconds(aux::time_now() - j->first_seen)));
 			}
-			print_ipset("live bucket erase before, l:1179", j->addr(), m_ips
+			print_ipset("live bucket erase before, l:1222", j->addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 			, m_log
 #endif
 			);
 			m_ips.erase(j->addr());
-			print_ipset("live bucket erase after, l:1179", j->addr(), m_ips
+			print_ipset("live bucket erase after, l:1222", j->addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 			, m_log
 #endif
@@ -1187,13 +1231,13 @@ void routing_table::node_failed(node_id const& nid, udp::endpoint const& ep)
 		return;
 	}
 
-	print_ipset("live bucket erase before, l:1195", j->addr(), m_ips
+	print_ipset("live bucket erase before, l:1238", j->addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 	, m_log
 #endif
 	);
 	m_ips.erase(j->addr());
-	print_ipset("live bucket erase after, l:1195", j->addr(), m_ips
+	print_ipset("live bucket erase after, l:1238", j->addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 	, m_log
 #endif
