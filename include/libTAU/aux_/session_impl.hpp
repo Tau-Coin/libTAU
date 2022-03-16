@@ -620,7 +620,7 @@ namespace aux {
 
 			
         	void create_chain_id(std::string community_name, std::vector<char>* id);
-            bool create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
+            bool create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts, const blockchain::transaction& tx);
         	bool follow_chain(const blockchain::chain_url & cul);
         	bool unfollow_chain(const aux::bytes &chain_id);
         	bool submit_transaction(const blockchain::transaction & tx);

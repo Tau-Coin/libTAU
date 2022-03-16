@@ -2981,13 +2981,9 @@ namespace {
 			*id = m_blockchain->create_chain_id(community_name);
 	}
 
-	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts) {
+	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts, const blockchain::transaction& tx) {
 		if(m_blockchain) {
-			std::string id(chain_id.begin(), chain_id.end());
-			for(auto iter = accounts.begin(); iter != accounts.end(); iter++) {
-				std::string pubkey(iter->first.bytes.begin(), iter->first.bytes.end());
-			}
-			return m_blockchain->createNewCommunity(chain_id, accounts);
+			return m_blockchain->createNewCommunity(chain_id, accounts, tx);
 		}
 		return false; 
 	}
