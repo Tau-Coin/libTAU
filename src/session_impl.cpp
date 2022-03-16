@@ -2617,6 +2617,9 @@ namespace {
 		if(m_communication)
 			m_communication->account_changed();
 
+        //4. blockchain update node id
+        if(m_blockchain)
+            m_blockchain->account_changed();
 	}
 
 	void session_impl::new_account_seed(std::string& account_seed) {
@@ -2652,6 +2655,9 @@ namespace {
 		if(m_communication)
 			m_communication->account_changed();
 
+        //4. blockchain update node id
+        if(m_blockchain)
+            m_blockchain->account_changed();
 	}
 
 	int session_impl::get_listen_port(transport const ssl, aux::listen_socket_handle const& s)

@@ -78,6 +78,13 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    void blockchain::account_changed() {
+        log("INFO: Change account..");
+
+        m_access_list.clear();
+        m_ban_list.clear();
+    }
+
     void blockchain::request_state(const aux::bytes &chain_id) {
         common::state_request_entry stateRequestEntry(chain_id);
         common::entry_task task(common::state_request_entry::data_type_id, stateRequestEntry.get_entry());
@@ -188,6 +195,20 @@ namespace libTAU::blockchain {
     void blockchain::clear_all_cache() {
         m_chains.clear();
         m_tx_pools.clear();
+        m_chain_status.clear();
+        m_last_voting_time.clear();
+        m_vote_request_peers.clear();
+
+        while (!m_tasks.empty()) {
+            m_tasks.pop();
+        }
+        m_tasks_set.clear();
+
+        m_visiting_history.clear();
+        m_visiting_time.clear();
+        m_access_list.clear();
+        m_ban_list.clear();
+        m_priority_chain = std::make_pair(aux::bytes(), 0);
 //        m_chain_peers.clear();
 //        m_chain_gossip_peers.clear();
 //        m_unchoked_peers.clear();

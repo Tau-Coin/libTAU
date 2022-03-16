@@ -149,6 +149,9 @@ namespace blockchain {
 
         void request_state(const aux::bytes &chain_id);
 
+        // reset when account changed
+        void account_changed();
+
 
     private:
         // initialize member variables
