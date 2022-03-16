@@ -918,43 +918,11 @@ namespace aux {
 			// It means this node behind NAT.
 			dht_non_referrable,
 
-			// when this is true, create an affinity for downloading 4 MiB extents
-			// of adjacent pieces. This is an attempt to achieve better disk I/O
-			// throughput by downloading larger extents of bytes, for torrents with
-			// small piece sizes
-			piece_extent_affinity,
+            //start communication module
+            enable_communication,
 
-			// when enabled, tracker and web seed requests are subject to
-			// certain restrictions.
-			//
-			// An HTTP(s) tracker requests to localhost (loopback)
-			// must have the request path start with "/announce". This is the
-			// conventional bittorrent tracker request. Any other HTTP(S)
-			// tracker request to loopback will be rejected. This applies to
-			// trackers that redirect to loopback as well.
-			//
-			// Web seeds that end up on the client's local network (i.e. in a
-			// private IP address range) may not include query string arguments.
-			// This applies to web seeds redirecting to the local network as
-			// well.
-			//
-			// Web seeds on global IPs (i.e. not local network) may not redirect
-			// to a local network address
-			ssrf_mitigation,
-
-			// when disabled, any tracker or web seed with an IDNA hostname
-			// (internationalized domain name) is ignored. This is a security
-			// precaution to avoid various unicode encoding attacks that might
-			// happen at the application level.
-			allow_idna,
-
-			// when set to true, enables the attempt to use SetFileValidData()
-			// to pre-allocate disk space. This system call will only work when
-			// running with Administrator privileges on Windows, and so this
-			// setting is only relevant in that scenario. Using
-			// SetFileValidData() poses a security risk, as it may reveal
-			// previously deleted information from the disk.
-			enable_set_file_valid_data,
+            //start blockchain module
+            enable_blockchain,
 
 			max_bool_setting_internal
 		};
@@ -1938,12 +1906,11 @@ namespace aux {
 			// to clamp it in order to allow UDP packets go through
 			dht_max_infohashes_sample_count,
 
-			// ``max_piece_count`` is the maximum allowed number of pieces in
-			// metadata received via magnet links. Loading large torrents (with
-			// more pieces than the default limit) may also require passing in
-			// a higher limit to read_resume_data() and
-			// torrent_info::parse_info_section(), if those are used.
-			max_piece_count,
+			// time interval between twice reopen, unit: ms
+			reopen_time_interval,
+
+			// max no peer time, unit: ms
+			max_time_peers_zero,
 
 			max_int_setting_internal
 		};

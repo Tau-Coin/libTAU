@@ -193,10 +193,8 @@ namespace libTAU {
 		SET(dht_ignore_dark_internet, true, nullptr),
 		SET(dht_read_only, false, nullptr),
 		SET(dht_non_referrable, true, nullptr),
-		SET(piece_extent_affinity, false, nullptr),
-		SET(ssrf_mitigation, true, nullptr),
-		SET(allow_idna, false, nullptr),
-		SET(enable_set_file_valid_data, false, nullptr),
+		SET(enable_communication, true, nullptr),
+		SET(enable_blockchain, true, nullptr),
 	}});
 
 	CONSTEXPR_SETTINGS
@@ -356,7 +354,8 @@ namespace libTAU {
 		SET(dht_item_lifetime, 0, nullptr),
 		SET(dht_sample_infohashes_interval, 21600, nullptr),
 		SET(dht_max_infohashes_sample_count, 20, nullptr),
-		SET(max_piece_count, 0x200000, nullptr),
+		SET(reopen_time_interval, 1000, nullptr),
+		SET(max_time_peer_zero, 10000, nullptr),
 	}});
 
 #undef SET

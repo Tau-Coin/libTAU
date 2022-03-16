@@ -553,7 +553,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		// apply all m_settings to this session
 		run_all_updates(*this);
 
-        if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
+        if(m_last_reopen == 0) {
 		    reopen_listen_sockets(false);
             m_last_reopen = m_session_time;
             m_dht_nodes_non_zero = m_last_reopen;
@@ -578,7 +578,8 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
             int num_dht_nodes = m_stats_counters[counters::dht_nodes];
 
             if(0 == num_dht_nodes) {
-                if(m_session_time - m_dht_nodes_non_zero >= 10000) {
+                int max_time = m_settings.get_int(settings_pack::max_time_peers_zero);
+                if(m_session_time - m_dht_nodes_non_zero >= max_time) {
                     reopen_listen_sockets(false);
                     m_dht_nodes_non_zero = m_session_time;
                 }
@@ -1500,7 +1501,8 @@ namespace {
 
 	void session_impl::reopen_network_sockets(reopen_network_flags_t const options)
 	{
-        if((m_session_time - m_last_reopen >= 1000)||(m_last_reopen == 0)) {
+        int max_interval = m_settings.get_int(settings_pack::reopen_time_interval);
+        if((m_session_time - m_last_reopen >= max_interval)||(m_last_reopen == 0)) {
 #ifndef TORRENT_DISABLE_LOGGING
 			if (should_log())
 			{
@@ -3092,6 +3094,8 @@ namespace {
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("on_dht_router lookups: %d" , m_outstanding_router_lookups);
 #endif
+		bool c_enable = m_settings.get_bool(settings_pack::enable_communication);
+		bool b_enable = m_settings.get_bool(settings_pack::enable_blockchain);
 
 		if (e)
 		{
@@ -3102,8 +3106,10 @@ namespace {
 			if (m_outstanding_router_lookups == 0) 
 			{
 				start_dht();
-				start_communication();
-				start_blockchain();
+                if(c_enable)
+				    start_communication();
+                if(b_enable)
+				    start_blockchain();
 			}
 			return;
 		}
@@ -3143,8 +3149,10 @@ namespace {
 		if (m_outstanding_router_lookups == 0)
 		{
 			start_dht();
-			start_communication();
-			start_blockchain();
+            if(c_enable)
+                start_communication();
+            if(b_enable)
+                start_blockchain();
 		}
 
 		m_alerts.emplace_alert<session_start_over_alert>(true);
