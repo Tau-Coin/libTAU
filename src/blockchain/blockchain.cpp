@@ -776,6 +776,8 @@ namespace libTAU::blockchain {
                 if (m_tasks_set.size() < 5 && m_refresh_time < interval) {
                     m_refresh_time = interval;
                 }
+            } else {
+                m_refresh_time = 2000;
             }
 
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
