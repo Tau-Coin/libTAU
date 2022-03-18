@@ -228,6 +228,13 @@ namespace libTAU::blockchain {
     void blockchain::clear_chain_cache(const aux::bytes &chain_id) {
 //        m_chains.erase(chain_id);
         m_tx_pools[chain_id].clear();
+        m_chain_status.erase(chain_id);
+        m_last_voting_time.erase(chain_id);
+        m_vote_request_peers.erase(chain_id);
+        m_visiting_history.erase(chain_id);
+        m_visiting_time.erase(chain_id);
+        m_access_list.erase(chain_id);
+        m_ban_list.erase(chain_id);
 //        m_chain_peers[chain_id].clear();
 //        m_chain_gossip_peers[chain_id].clear();
 //        m_unchoked_peers[chain_id].clear();
@@ -252,7 +259,7 @@ namespace libTAU::blockchain {
             // 随机挑选一条
             aux::bytes chain_id = select_chain_randomly();
             if (!chain_id.empty()) {
-                log("INFO: Select chain:%s", aux::toHex(chain_id).c_str());
+                log("INFO: Select chain:%s, status:%d", aux::toHex(chain_id).c_str(), m_chain_status[chain_id]);
 
                 // current time
                 auto now = get_total_milliseconds();
@@ -277,6 +284,7 @@ namespace libTAU::blockchain {
                     m_chain_status[chain_id] = VOTE_PREPARE;
 
                     m_last_voting_time[chain_id] = now;
+                    log("INFO: 1. chain:%s vote status:%d, time:%ld", aux::toHex(chain_id).c_str(), m_chain_status[chain_id], now);
                 }
 
                 if (m_chain_status[chain_id] == VOTE_PREPARE) {
@@ -292,6 +300,7 @@ namespace libTAU::blockchain {
                     }
 
                     m_chain_status[chain_id] = VOTE_REQUEST;
+                    log("INFO: 2. chain:%s vote status:%d, time:%ld", aux::toHex(chain_id).c_str(), m_chain_status[chain_id], now);
                 }
 
                 if (m_chain_status[chain_id] == VOTE_REQUEST) {
@@ -303,8 +312,10 @@ namespace libTAU::blockchain {
                         send_to(chain_id, *it, voteRequestEntry.get_entry());
 
                         peers.erase(it);
+                        log("INFO: 3.1 chain:%s vote status:%d, time:%ld", aux::toHex(chain_id).c_str(), m_chain_status[chain_id], now);
                     } else {
                         m_chain_status[chain_id] = VOTE_COUNT;
+                        log("INFO: 3.2. chain:%s vote status:%d, time:%ld, ready to count cotes", aux::toHex(chain_id).c_str(), m_chain_status[chain_id], now);
 
                         m_vote_timer.expires_after(seconds(5));
                         m_vote_timer.async_wait(std::bind(&blockchain::count_votes, self(), _1, chain_id));
@@ -315,6 +326,7 @@ namespace libTAU::blockchain {
 
                     // 1. if empty chain, init chain with the best voting block
                     if (is_empty_chain(chain_id)) {
+                        log("INFO: chain[%s] is empty...", aux::toHex(chain_id).c_str());
                         auto &best_vote = m_best_votes[chain_id];
                         if (!best_vote.empty()) {
                             auto blk = get_block_from_cache_or_db(chain_id, best_vote.block_hash());
@@ -322,6 +334,7 @@ namespace libTAU::blockchain {
                                 process_block(chain_id, blk);
                             }
                         } else {
+                            log("INFO: chain[%s] vote is empty...", aux::toHex(chain_id).c_str());
                             m_chain_status[chain_id] = VOTE_PREPARE;
                         }
                     }
@@ -792,14 +805,21 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::count_votes(const error_code &e, const aux::bytes &chain_id) {
+        log("INFO: chain[%s] start to count votes", aux::toHex(chain_id).c_str());
+        if (e) {
+            log("INFO: chain[%s] error code[%d]: %s", aux::toHex(chain_id).c_str(), e.value(), e.message().c_str());
+        }
         if (e || m_stop) return;
 
         try {
             // count votes
+            log("INFO: chain[%s] count votes", aux::toHex(chain_id).c_str());
             refresh_vote(chain_id);
         } catch (std::exception &e) {
             log("Exception vote [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
+
+        log("INFO: chain[%s] stop to count votes", aux::toHex(chain_id).c_str());
 
         m_chain_status[chain_id] = MINING;
     }
