@@ -153,6 +153,10 @@ namespace libTAU::blockchain {
 
     bool blockchain::load_chain(const aux::bytes &chain_id) {
         log("INFO: load chain[%s]", aux::toHex(chain_id).c_str());
+
+        // create vote timer
+        m_vote_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
+
         // create tx pool
         m_tx_pools[chain_id] = tx_pool(m_repository.get());
 
@@ -317,8 +321,11 @@ namespace libTAU::blockchain {
                         m_chain_status[chain_id] = VOTE_COUNT;
                         log("INFO: 3.2. chain:%s vote status:%d, time:%ld, ready to count cotes", aux::toHex(chain_id).c_str(), m_chain_status[chain_id], now);
 
-                        m_vote_timer.expires_after(seconds(5));
-                        m_vote_timer.async_wait(std::bind(&blockchain::count_votes, self(), _1, chain_id));
+                        auto i = m_vote_timers.find(chain_id);
+                        if (i != m_vote_timers.end()) {
+                            i->second.expires_after(seconds(5));
+                            i->second.async_wait(std::bind(&blockchain::count_votes, self(), _1, chain_id));
+                        }
                     }
                 } else if (m_chain_status[chain_id] == MINING) {
 
@@ -824,21 +831,21 @@ namespace libTAU::blockchain {
         m_chain_status[chain_id] = MINING;
     }
 
-    void blockchain::refresh_vote_timeout(const error_code &e) {
-        if (e || m_stop) return;
-
-        try {
-            // refresh all chain votes
-            for (auto const& chain_id: m_chains) {
-                refresh_vote(chain_id);
-            }
-
-            m_vote_timer.expires_after(seconds(DEFAULT_BLOCK_TIME));
-            m_vote_timer.async_wait(std::bind(&blockchain::refresh_vote_timeout, self(), _1));
-        } catch (std::exception &e) {
-            log("Exception vote [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
-        }
-    }
+//    void blockchain::refresh_vote_timeout(const error_code &e) {
+//        if (e || m_stop) return;
+//
+//        try {
+//            // refresh all chain votes
+//            for (auto const& chain_id: m_chains) {
+//                refresh_vote(chain_id);
+//            }
+//
+//            m_vote_timer.expires_after(seconds(DEFAULT_BLOCK_TIME));
+//            m_vote_timer.async_wait(std::bind(&blockchain::refresh_vote_timeout, self(), _1));
+//        } catch (std::exception &e) {
+//            log("Exception vote [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+//        }
+//    }
 
     void blockchain::refresh_tx_timeout(const error_code &e) {
         if (e || m_stop) return;
