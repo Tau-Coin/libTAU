@@ -2821,14 +2821,14 @@ namespace libTAU::blockchain {
         std::set<dht::public_key> peers;
         std::vector<block> blocks;
 
+        std::string data(TAU_CHAIN_ID.begin(), TAU_CHAIN_ID.end());
+        auto genSig = dht::item_target_id(data);
+
         auto ep = m_ses.external_udp_endpoint();
 
         for (auto const &act: TAU_CHAIN_GENESIS_ACCOUNT) {
             auto miner = act;
             peers.insert(miner);
-
-            std::string data(miner.bytes.begin(), miner.bytes.end());
-            auto genSig = dht::item_target_id(data);
 
             block b;
             if (ep.port() != 0) {
@@ -2873,6 +2873,7 @@ namespace libTAU::blockchain {
 
         std::int64_t base_target = GENESIS_BASE_TARGET;
         std::string data(pk->bytes.begin(), pk->bytes.end());
+        data.insert(data.end(), chain_id.begin(), chain_id.end());
         auto genSig = dht::item_target_id(data);
 
         std::int64_t size = accounts.size();
