@@ -63,6 +63,21 @@ namespace blockchain {
     // blockchain max focus time(5ms)
     constexpr std::int64_t blockchain_max_focus_time = 5 * 1000;
 
+    // blockchain request timeout(5s)
+    constexpr std::int64_t blockchain_request_timeout = 5 * 1000;
+
+    // blockchain min peers in acl
+    constexpr std::int64_t blockchain_acl_min_peers = 3;
+
+    // blockchain min peers in acl
+    constexpr std::int64_t blockchain_acl_max_peers = 5;
+
+    // blockchain min ban time(1h)
+    constexpr std::int64_t blockchain_min_ban_time = 5 * 60 * 1000;
+
+    // blockchain max ban time(1h)
+    constexpr std::int64_t blockchain_max_ban_time = 60 * 60 * 1000;
+
     enum RESULT {
         SUCCESS,
         FAIL,

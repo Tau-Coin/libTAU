@@ -470,7 +470,7 @@ namespace libTAU::blockchain {
                         for (auto &item: acl) {
                             auto &requests_time = item.second.m_requests_time;
                             for (auto it = requests_time.begin(); it != requests_time.end();) {
-                                if (now > it->second + 5000) {
+                                if (now > it->second + blockchain_request_timeout) {
                                     item.second.m_score = item.second.m_score - 5;
                                     requests_time.erase(it++);
                                 } else {
@@ -496,16 +496,16 @@ namespace libTAU::blockchain {
                                 auto it_ban = ban_list.find(it->first);
                                 if (it_ban != ban_list.end()) {
                                     it_ban->second.increase_ban_times();
-                                    auto ban_time = 5 * 60 * 1000 * it_ban->second.m_ban_times;
-                                    if (ban_time > 60 * 60 * 1000) {
-                                        ban_time = 60 * 60 * 1000;
+                                    auto ban_time = blockchain_min_ban_time * it_ban->second.m_ban_times;
+                                    if (ban_time > blockchain_max_ban_time) {
+                                        ban_time = blockchain_max_ban_time;
                                     }
                                     it_ban->second.set_free_time(now + ban_time);
                                 } else {
                                     ban_list[it->first] = ban_info();
-                                    auto ban_time = 5 * 60 * 1000 * ban_list[it->first].m_ban_times;
-                                    if (ban_time > 60 * 60 * 1000) {
-                                        ban_time = 60 * 60 * 1000;
+                                    auto ban_time = blockchain_min_ban_time * ban_list[it->first].m_ban_times;
+                                    if (ban_time > blockchain_max_ban_time) {
+                                        ban_time = blockchain_max_ban_time;
                                     }
                                     ban_list[it->first].set_free_time(now + ban_time);
                                 }
@@ -517,7 +517,7 @@ namespace libTAU::blockchain {
                         }
 
                         // remove surplus peers
-                        if (acl.size() > 5) {
+                        if (acl.size() > blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -534,9 +534,9 @@ namespace libTAU::blockchain {
                         {
                             auto &acl = m_access_list[chain_id];
                             auto size = acl.size();
-                            if (size < 3) {
+                            if (size < blockchain_acl_min_peers) {
                                 std::set<dht::public_key> peers;
-                                for (auto i = 5 - size; i > 0; i--) {
+                                for (auto i = blockchain_acl_max_peers - size; i > 0; i--) {
                                     auto peer = select_peer_randomly(chain_id);
                                     // if peer is not in acl, not been banned
                                     if (!peer.is_all_zeros() && acl.find(peer) == acl.end() & peer != *m_ses.pubkey()) {
@@ -1587,16 +1587,16 @@ namespace libTAU::blockchain {
         auto it = ban_list.find(peer);
         if (it != ban_list.end()) {
             it->second.increase_ban_times();
-            auto ban_time = 5 * 60 * 1000 * it->second.m_ban_times;
-            if (ban_time > 60 * 60 * 1000) {
-                ban_time = 60 * 60 * 1000;
+            auto ban_time = blockchain_min_ban_time * it->second.m_ban_times;
+            if (ban_time > blockchain_max_ban_time) {
+                ban_time = blockchain_max_ban_time;
             }
             it->second.set_free_time(now + ban_time);
         } else {
             ban_list[peer] = ban_info();
-            auto ban_time = 5 * 60 * 1000 * ban_list[peer].m_ban_times;
-            if (ban_time > 60 * 60 * 1000) {
-                ban_time = 60 * 60 * 1000;
+            auto ban_time = blockchain_min_ban_time * ban_list[peer].m_ban_times;
+            if (ban_time > blockchain_max_ban_time) {
+                ban_time = blockchain_max_ban_time;
             }
             ban_list[peer].set_free_time(now + ban_time);
         }
@@ -1622,7 +1622,7 @@ namespace libTAU::blockchain {
                 return;
             }
 
-            if (size >= 5) {
+            if (size >= blockchain_acl_max_peers) {
                 // find out min score peer
                 auto min_it = acl.begin();
                 for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3121,7 +3121,7 @@ namespace libTAU::blockchain {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
                         }
                     } else {
-                        if (acl.size() >= 5) {
+                        if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3178,7 +3178,7 @@ namespace libTAU::blockchain {
                             it->second.m_requests_time.erase(std::make_unique<common::block_request_entry>(chain_id, blk_entry.m_blk.sha256()));
                             it->second.m_last_seen = now;
                         } else {
-                            if (acl.size() >= 5) {
+                            if (acl.size() >= blockchain_acl_max_peers) {
                                 // find out min score peer
                                 auto min_it = acl.begin();
                                 for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3236,7 +3236,7 @@ namespace libTAU::blockchain {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
                         }
                     } else {
-                        if (acl.size() >= 5) {
+                        if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3281,7 +3281,7 @@ namespace libTAU::blockchain {
                             it->second.m_requests_time.erase(std::make_unique<common::transaction_request_entry>(chain_id, tx_entry.m_tx.sha256()));
                             it->second.m_last_seen = now;
                         } else {
-                            if (acl.size() >= 5) {
+                            if (acl.size() >= blockchain_acl_max_peers) {
                                 // find out min score peer
                                 auto min_it = acl.begin();
                                 for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3345,7 +3345,7 @@ namespace libTAU::blockchain {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
                         }
                     } else {
-                        if (acl.size() >= 5) {
+                        if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3397,7 +3397,7 @@ namespace libTAU::blockchain {
                         it->second.m_requests_time.erase(std::make_unique<common::vote_request_entry>(chain_id));
                         it->second.m_last_seen = now;
                     } else {
-                        if (acl.size() >= 5) {
+                        if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3447,7 +3447,7 @@ namespace libTAU::blockchain {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
                         }
                     } else {
-                        if (acl.size() >= 5) {
+                        if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3512,7 +3512,7 @@ namespace libTAU::blockchain {
                             it->second.m_requests_time.erase(std::make_unique<common::head_block_request_entry>(chain_id));
                             it->second.m_last_seen = now;
                         } else {
-                            if (acl.size() >= 5) {
+                            if (acl.size() >= blockchain_acl_max_peers) {
                                 // find out min score peer
                                 auto min_it = acl.begin();
                                 for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3574,7 +3574,7 @@ namespace libTAU::blockchain {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::state_request_entry>(payload), now);
                         }
                     } else {
-                        if (acl.size() >= 5) {
+                        if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3624,7 +3624,7 @@ namespace libTAU::blockchain {
                         it->second.m_requests_time.erase(std::make_unique<common::state_request_entry>(chain_id));
                         it->second.m_last_seen = now;
                     } else {
-                        if (acl.size() >= 5) {
+                        if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3669,7 +3669,7 @@ namespace libTAU::blockchain {
                         }
                         it->second.m_last_seen = now;
                     } else {
-                        if (acl.size() >= 5) {
+                        if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
@@ -3707,7 +3707,7 @@ namespace libTAU::blockchain {
                     if (it != acl.end()) {
                         it->second.m_last_seen = now;
                     } else {
-                        if (acl.size() >= 5) {
+                        if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
                             auto min_it = acl.begin();
                             for (auto iter = acl.begin(); iter != acl.end(); iter++) {
