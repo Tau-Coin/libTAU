@@ -284,7 +284,7 @@ namespace libTAU::blockchain {
                     }
                 }
 
-                if (now > m_last_voting_time[chain_id] + 60 * 60 * 1000) {
+                if (now > m_last_voting_time[chain_id] + 30 * 60 * 1000) {
                     m_chain_status[chain_id] = VOTE_PREPARE;
 
                     m_last_voting_time[chain_id] = now;
