@@ -523,6 +523,17 @@ namespace libTAU::dht {
 				, data_cb);
 	}
 
+	void dht_tracker::put_item(public_key const& key
+		, std::function<void(item const&, std::vector<node_entry> const&)> cb
+		, std::function<void(item&)> data_cb
+		, std::int8_t alpha
+		, std::int8_t beta
+		, std::int8_t invoke_limit
+		, std::string salt
+		, public_key const& to
+		, bool cache)
+	{}
+
 	// relay protocol
 	void dht_tracker::send(public_key const& to
 		, entry const& payload
