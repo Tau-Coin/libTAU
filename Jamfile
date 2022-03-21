@@ -866,6 +866,7 @@ SOURCES =
 	peer_info
 	stack_allocator
 	generate_peer_id
+	generate_port
 	ssl
 	account_manager
 	crypto
@@ -890,7 +891,7 @@ KADEMLIA_SOURCES =
 	get_item
 	put_data
 	relay
-	keep
+    keep
 	ed25519
 	dht_settings
 	;
