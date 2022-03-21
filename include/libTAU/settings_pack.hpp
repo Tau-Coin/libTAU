@@ -1861,6 +1861,9 @@ namespace aux {
 			// the time interval(seconds) of ping
 			dht_ping_interval,
 
+			// the time interval(seconds) of keep alive
+			dht_keep_interval,
+
 			// the time interval(seconds) of accepting mutable item
 			dht_time_offset,
 

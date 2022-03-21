@@ -206,6 +206,7 @@ public:
 
 	int bootstrap_interval() const;
 	int ping_interval() const;
+	int keep_interval() const;
 
 	void add_traversal_algorithm(traversal_algorithm* a)
 	{
@@ -259,9 +260,10 @@ private:
 	std::set<traversal_algorithm*> m_running_requests;
 
 	std::tuple<bool, bool> incoming_request(msg const&, entry&
-		, node_id const& id, node_id *to, udp::endpoint *to_ep);
+		, node_id const& id, node_id *to, udp::endpoint *to_ep, node_id& push_candidate);
 
 	void push(node_id const& to, udp::endpoint const& to_ep, msg const& m, node_id const& from);
+	void push(node_id const& to, udp::endpoint const& to_ep, entry& item, node_id const& from);
 
 	bool incoming_push(msg const& m, entry& e, node_id const& from, item& i);
 
@@ -317,6 +319,8 @@ private:
 
 	// the last time we pinged a node.
 	time_point m_last_ping;
+
+	time_point m_last_keep;
 
 	// secret random numbers used to create write tokens
 	std::array<char, 4> m_secret[2];

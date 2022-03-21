@@ -110,6 +110,10 @@ namespace dht {
 			, timestamp ts, bool force_fill
 			, entry& item) const = 0;
 
+		// get item target by the prefix
+		virtual bool get_mutable_item_target(sha256_hash const& prefix
+			, sha256_hash& target) const = 0;
+
 		// Store the item's data. This layer is only for storage.
 		// The authentication of the item is performed by the upper layer.
 		//
@@ -125,6 +129,8 @@ namespace dht {
 			, public_key const& pk
 			, span<char const> salt
 			, address const& addr) = 0;
+
+		virtual void remove_mutable_item(sha256_hash const& target) = 0;
 
 		// Store relay endpoints.
 		virtual void relay_referred(node_id const& peer

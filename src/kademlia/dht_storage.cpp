@@ -37,6 +37,20 @@ see LICENSE file.
 namespace libTAU::dht {
 namespace {
 
+	bool compare(const char *a, const char *b, int offset)
+	{
+		int i = 0;
+
+		for (; i < offset && *(a + i) != '\0' && *(b + i) != '\0'; i++)
+		{
+			if (*(a + i) != *(b + i)) return 1;
+		}
+
+		if (i < offset) return 1;
+
+		return 0;
+	}
+
 	struct dht_immutable_item
 	{
 		// the actual value
@@ -271,7 +285,33 @@ namespace {
 				item["v"] = bdecode({f.value.get(), f.size}, ec);
 				item["sig"] = f.sig.bytes;
 				item["k"] = f.key.bytes;
+				item["salt"] = f.salt;
 			}
+			return true;
+		}
+
+		bool get_mutable_item_target(sha256_hash const& prefix
+			, sha256_hash& target) const override
+		{
+			if (m_mutable_table.empty()) return false;
+
+			std::vector<sha256_hash> candidates;
+
+			for (auto it = m_mutable_table.upper_bound(prefix);
+				it != m_mutable_table.end()
+					&& compare(prefix.data(), it->first.data(), 16) == 0;
+				it++)
+			{
+				candidates.push_back(it->first);
+			}
+
+			if (candidates.empty()) return false;
+
+			// randomly select a item target
+			std::uint32_t random_max = std::uint32_t(candidates.size() - 1);
+			std::uint32_t const r = aux::random(random_max);
+			target = candidates[r];
+
 			return true;
 		}
 
@@ -323,6 +363,13 @@ namespace {
 			}
 
 			touch_item(i->second, addr);
+		}
+
+		void remove_mutable_item(sha256_hash const& target) override
+		{
+			auto i = m_mutable_table.find(target);
+			if (i == m_mutable_table.end()) return;
+			m_mutable_table.erase(i);
 		}
 
 		void relay_referred(node_id const& peer

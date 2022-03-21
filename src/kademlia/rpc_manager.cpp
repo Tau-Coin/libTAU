@@ -22,6 +22,7 @@ see LICENSE file.
 #include <libTAU/kademlia/put_data.hpp>
 #include <libTAU/kademlia/refresh.hpp>
 #include <libTAU/kademlia/relay.hpp>
+#include <libTAU/kademlia/keep.hpp>
 #include <libTAU/kademlia/node.hpp>
 #include <libTAU/kademlia/dht_observer.hpp>
 #include <libTAU/kademlia/get_item.hpp>
@@ -116,6 +117,7 @@ namespace {
 	std::size_t const observer_storage_size = std::max(
 	{sizeof(find_data_observer)
 	, sizeof(relay_observer)
+	, sizeof(keep_observer)
 	, sizeof(put_data_observer)
 	, sizeof(get_item_observer)
 	, sizeof(get_peers_observer)
