@@ -53,6 +53,7 @@ see LICENSE file.
 #include "libTAU/socket.hpp"
 #include "libTAU/account_manager.hpp"
 #include "libTAU/crypto.hpp"
+#include "libTAU/aux_/generate_port.hpp"
 #include "libTAU/aux_/session_impl.hpp"
 
 #include "libTAU/aux_/common.h"
@@ -2562,23 +2563,7 @@ namespace {
 	}
 
 	std::uint16_t session_impl::get_port_from_pubkey(const dht::public_key &pubkey) {
-
-        std::array<char, 32> key_char = pubkey.bytes;
-
-        std::uint16_t port = 6881; //TODO: settings_pack
-        if(key_char.size() < 32)
-            return port;
-
-        unsigned char key_char_ex[8];
-        for(int i = 0; i < 8; i++)
-            key_char_ex[i] = *(reinterpret_cast<unsigned char *>(&key_char[i*4]));
-
-        std::uint64_t *number = reinterpret_cast<std::uint64_t*> (key_char_ex);
-
-        //TODO: settings_pack
-        port = (*number)%64535 + 1000;  //1000 -> 65535 
-
-		return port;
+		return aux::generate_port(pubkey.bytes);
 	}
 
 	std::uint16_t session_impl::get_port_from_local() {

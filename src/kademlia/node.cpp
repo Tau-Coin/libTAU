@@ -46,6 +46,7 @@ see LICENSE file.
 #include "libTAU/kademlia/refresh.hpp"
 #include "libTAU/kademlia/get_peers.hpp"
 #include "libTAU/kademlia/get_item.hpp"
+#include "libTAU/kademlia/keep.hpp"
 #include "libTAU/kademlia/msg.hpp"
 #include <libTAU/kademlia/put_data.hpp>
 #include <libTAU/kademlia/relay.hpp>
@@ -91,6 +92,7 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	, m_last_tracker_tick(aux::time_now())
 	, m_last_self_refresh(min_time())
 	, m_last_ping(min_time())
+	, m_last_keep(min_time())
 	, m_counters(cnt)
 	, m_storage(storage)
 {
@@ -109,6 +111,8 @@ int node::invoke_limit() const { return m_settings.get_int(settings_pack::dht_in
 int node::bootstrap_interval() const { return m_settings.get_int(settings_pack::dht_bootstrap_interval); }
 
 int node::ping_interval() const { return m_settings.get_int(settings_pack::dht_ping_interval); }
+
+int node::keep_interval() const { return m_settings.get_int(settings_pack::dht_keep_interval); }
 
 bool node::verify_token(string_view token, sha256_hash const& info_hash
 	, udp::endpoint const& addr) const
@@ -323,8 +327,11 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			bool need_response;
 			bool need_push;
 			udp::endpoint to_ep;
+			// maybe 'keep' trigger 'push' operation.
+			node_id push_candidate;
 
-			std::tie(need_response, need_push) = incoming_request(m, e, from, &to, &to_ep);
+			std::tie(need_response, need_push)
+					= incoming_request(m, e, from, &to, &to_ep, push_candidate);
 			if (need_response)
 			{
 				m_sock_man->send_packet(m_sock, e, m.addr, from);
@@ -333,6 +340,47 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			{
 				// push message
 				push(to, to_ep, m, from);
+			}
+			else if (from == push_candidate)
+			{
+				// find item from storage and push
+				node_id prefix;
+				std::memcpy(&prefix[0], &from[0], 16);
+
+				sha256_hash target;
+				bool item_exists = m_storage.get_mutable_item_target(prefix, target);
+				if (!item_exists)
+				{
+#ifndef TORRENT_DISABLE_LOGGING
+					if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+					{
+						m_observer->log(dht_logger::node, "No item pushed:%s"
+							, aux::to_hex(from).c_str());
+					}
+#endif
+				}
+				else
+				{
+					entry item;
+					bool ok = m_storage.get_mutable_item(target, timestamp(0), true, item);
+					if (ok)
+					{
+						// push item
+#ifndef TORRENT_DISABLE_LOGGING
+						if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+						{
+							m_observer->log(dht_logger::node, "Push item :%s to %s"
+								, aux::to_hex(target).c_str()
+								, aux::to_hex(from).c_str());
+						}
+#endif
+
+						push(from, m.addr, item, from);
+
+						// remove this item
+						m_storage.remove_mutable_item(target);
+					}
+				}
 			}
 			break;
 		}
@@ -349,7 +397,8 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			bool need_resp = incoming_push(m, e, from, i);
 			if (need_resp)
 			{
-				m_sock_man->send_packet(m_sock, e, m.addr, from);
+				// Don't respond to relay node
+				// m_sock_man->send_packet(m_sock, e, m.addr, from);
 			}
 			if (m_observer && !i.empty()) m_observer->on_dht_item(i);
 
@@ -370,7 +419,10 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			node_id sender;
 
 			bool need_relay = incoming_relay(m, resp, payload, &to, &to_ep, sender, from);
-			m_sock_man->send_packet(m_sock, resp, m.addr, from);
+			if (to != m_id)
+			{
+				m_sock_man->send_packet(m_sock, resp, m.addr, from);
+			}
 
 			if (need_relay)
 			{
@@ -782,6 +834,17 @@ void node::tick()
 		return;
 	}
 
+	if (m_last_keep + seconds(keep_interval()) < now)
+	{
+		auto const r = std::make_shared<dht::keep>(*this, m_id);
+		r->set_invoke_window(8);
+		r->set_invoke_limit(8);
+		r->set_discard_response(true);
+		r->start();
+		m_last_keep = now;
+		return;
+	}
+
 	if (m_last_ping + seconds(ping_interval()) > now) return;
 
 	node_entry const* ne = m_table.next_refresh();
@@ -902,7 +965,7 @@ entry write_nodes_entry(std::vector<node_entry> const& nodes)
 
 // build response
 std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
-	, node_id const& id, node_id *to, udp::endpoint *to_ep)
+	, node_id const& id, node_id *to, udp::endpoint *to_ep, node_id& push_candidate)
 {
 	bool need_response = true;
 	bool need_push = false;
@@ -1273,6 +1336,12 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 				, reply);
 		}
 	}
+	else if (query == "keep")
+	{
+		// nothing to do
+		need_response = false;
+		push_candidate = id;
+	}
 	else
 	{
 		// if we don't recognize the message but there's a
@@ -1324,7 +1393,6 @@ void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m, nod
 	// construct push protocol
 	entry e(m.message);
 	e["y"] = "p";
-	entry& reply = e["r"];
 
 	// create a dummy traversal_algorithm
 	auto algo = std::make_shared<traversal_algorithm>(*this, to);
@@ -1334,7 +1402,30 @@ void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m, nod
 	o->m_in_constructor = false;
 #endif
 
-	m_rpc.invoke(e, to_ep, o);
+	// discard target node's response
+	m_rpc.invoke(e, to_ep, o, true);
+}
+
+void node::push(node_id const& to, udp::endpoint const& to_ep, entry& item, node_id const& from)
+{
+	entry e = entry(entry::dictionary_t);
+
+	item["to"] = to.to_string();
+	item["token"] = libtau_token; // TODO: remove 'token' field
+	e["a"] = item;
+	e["y"] = "p";
+	e["q"] = "put";
+
+	// create a dummy traversal_algorithm
+	auto algo = std::make_shared<traversal_algorithm>(*this, to);
+	auto o = m_rpc.allocate_observer<push_observer>(std::move(algo), to_ep, to);
+	if (!o) return;
+#if TORRENT_USE_ASSERTS
+	o->m_in_constructor = false;
+#endif
+
+	// discard target node's response
+	m_rpc.invoke(e, to_ep, o, true);
 }
 
 void node::incoming_push_ourself(msg const& m, node_id const& from)
@@ -1634,7 +1725,8 @@ void node::relay(node_id const& to, udp::endpoint const& to_ep, msg const& m)
 	o->m_in_constructor = false;
 #endif
 
-	m_rpc.invoke(e, to_ep, o);
+	// discard target node's response
+	m_rpc.invoke(e, to_ep, o, true);
 }
 
 void node::handle_referred_relays(node_id const& peer, node_entry const& ne)
