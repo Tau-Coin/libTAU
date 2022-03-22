@@ -360,7 +360,10 @@ namespace libTAU {
         std::int64_t get_mining_time(std::vector<char> chain_id);
 
 		// focus on chain
-        void focus_on_chain(std::vector<char> chain_id);
+        void set_priority_chain(std::vector<char> chain_id);
+
+		// un-focus on chain
+        void unset_priority_chain();
 
 		// get block by number
         blockchain::block get_block_by_number(std::vector<char> chain_id, std::int64_t block_number);

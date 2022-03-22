@@ -3029,9 +3029,15 @@ namespace {
 		return -1; //error
 	}
 
-	void session_impl::focus_on_chain(const aux::bytes &chain_id) {
+	void session_impl::set_priority_chain(const aux::bytes &chain_id) {
 		if(m_blockchain) {
-			m_blockchain->focus_on_chain(chain_id);
+			m_blockchain->set_priority_chain(chain_id);
+		}
+	}
+
+	void session_impl::unset_priority_chain() {
+		if(m_blockchain) {
+			m_blockchain->unset_priority_chain();
 		}
 	}
 

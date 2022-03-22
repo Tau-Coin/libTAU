@@ -349,8 +349,12 @@ namespace libTAU {
 		return sync_call_ret<std::int64_t>(&session_impl::get_mining_time, chain_id);
 	}
 
-	void session_handle::focus_on_chain(std::vector<char> chain_id) {
-		return sync_call(&session_impl::focus_on_chain, chain_id);
+	void session_handle::set_priority_chain(std::vector<char> chain_id) {
+		return sync_call(&session_impl::set_priority_chain, chain_id);
+	}
+
+	void session_handle::unset_priority_chain() {
+		return sync_call(&session_impl::unset_priority_chain);
 	}
 
 	// get block by number
