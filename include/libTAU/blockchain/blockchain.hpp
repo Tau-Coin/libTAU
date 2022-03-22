@@ -157,7 +157,9 @@ namespace blockchain {
         // set blockchain main loop time interval (ms)
         void set_blockchain_loop_interval(int milliseconds);
 
-        void focus_on_chain(const aux::bytes &chain_id);
+        void set_priority_chain(const aux::bytes &chain_id);
+
+        void unset_priority_chain();
 
         // mutable data is pushed here
         void on_dht_relay(dht::public_key const& peer, entry const& payload);

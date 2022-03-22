@@ -3061,8 +3061,12 @@ namespace libTAU::blockchain {
         m_refresh_time = milliseconds;
     }
 
-    void blockchain::focus_on_chain(const aux::bytes &chain_id) {
+    void blockchain::set_priority_chain(const aux::bytes &chain_id) {
         m_priority_chain = std::make_pair(chain_id, get_total_milliseconds() + blockchain_max_focus_time);
+    }
+
+    void blockchain::unset_priority_chain() {
+        m_priority_chain = std::make_pair(aux::bytes(), 0);
     }
 
     void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {
