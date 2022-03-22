@@ -17,7 +17,7 @@ see LICENSE file.
 
 namespace libTAU { namespace aux {
 
-TORRENT_EXTRA_EXPORT std::uint16_t generate_port(const std::array<char, 32>& key);
+TORRENT_EXPORT std::uint16_t generate_port(const std::array<char, 32>& key);
 
 }}
 
