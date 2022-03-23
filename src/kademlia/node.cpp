@@ -693,6 +693,44 @@ void node::put_item(public_key const& pk
 	put_ta->start();
 }
 
+void node::put_item(public_key const& pk
+	, std::string const& salt
+	, public_key const& to
+	, std::int8_t alpha
+	, std::int8_t beta
+	, std::int8_t invoke_limit
+	, bool cache
+	, std::function<void(item const&, int)> f
+	, std::function<void(item&)> data_cb
+	, std::function<void(std::vector<std::pair<node_entry, bool>> const&)> ncb)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		char hex_key[65];
+		char hex_salt[129]; // 64*2 + 1
+		aux::to_hex(pk.bytes, hex_key);
+		aux::to_hex(salt, hex_salt);
+		m_observer->log(dht_logger::node
+			, "starting put for [ key: %s, salt:%s, beta:%d, invoke-limit:%d, cache:%s ]"
+			, hex_key, hex_salt, beta, invoke_limit, cache ? "true" : "false");
+	}
+#endif
+
+	item i(pk, salt);
+	data_cb(i);
+
+	auto put_ta = std::make_shared<dht::put_data>(*this, item_target_id(to), to, f, ncb);
+	put_ta->set_data(std::move(i));
+	put_ta->set_invoke_window(beta);
+	put_ta->set_invoke_limit(invoke_limit);
+	put_ta->set_cache(cache);
+	// TODO: removed
+	put_ta->set_fixed_distance(256);
+
+	put_ta->start();
+}
+
 void node::send(public_key const& to
 	, entry const& payload
 	, std::int8_t alpha
@@ -1262,11 +1300,13 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 			{
 				// push to ourself
 				need_push = true;
+				reply["hit"] = 1;
 			}
 			else if (ne != nullptr && ne->ep() != m.addr)
 			{
 				*to_ep = ne->ep();
 				need_push = true;
+				reply["hit"] = 1;
 			}
 		}
 

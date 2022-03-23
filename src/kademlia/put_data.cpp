@@ -33,16 +33,21 @@ void put_data_observer::reply(msg const& m, node_id const& from)
         return;
     }
 
+	bdecode_node const hit_ent = r.dict_find_int("hit");
+	bool const hit = hit_ent && hit_ent.int_value() != 0;
+	static_cast<put_data*>(algorithm())->on_put_success(from, m.addr, hit);
+
 	// For putting mutable item, add refer nodes into routing table.
     traversal_observer::reply(m, from);
     done();
 }
 
 put_data::put_data(node& dht_node, node_id const& target
-	, public_key const& to, put_callback callback)
+	, public_key const& to, put_callback callback, nodes_callback ncallback)
 	: traversal_algorithm(dht_node, target)
 	, m_to(to)
 	, m_put_callback(std::move(callback))
+	, m_nodes_callback(std::move(ncallback))
 {}
 
 char const* put_data::name() const { return "put_data"; }
@@ -87,6 +92,7 @@ void put_data::done()
 		, id(), name(), num_responses(), num_timeouts());
 #endif
 
+	if (m_nodes_callback) m_nodes_callback(m_success_nodes);
 	m_put_callback(m_data, num_responses());
 	traversal_algorithm::done();
 }
@@ -121,6 +127,11 @@ bool put_data::invoke(observer_ptr o)
 	m_node.stats_counters().inc_stats_counter(counters::dht_put_out);
 
 	return m_node.m_rpc.invoke(e, o->target_ep(), o, m_discard_response);
+}
+
+void put_data::on_put_success(node_id const& nid, udp::endpoint const& ep, bool hit)
+{
+	m_success_nodes.push_back(std::make_pair(node_entry(nid, ep), hit));
 }
 
 observer_ptr put_data::new_observer(udp::endpoint const& ep

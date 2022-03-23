@@ -367,6 +367,7 @@ namespace libTAU::dht {
 
 		int active_traversals;
 		int response_count;
+		std::vector<std::pair<node_entry, bool>> nodes;
 	};
 
 	struct send_ctx
@@ -394,6 +395,24 @@ namespace libTAU::dht {
 		ctx->response_count += responses;
 		if (--ctx->active_traversals == 0)
 			cb(it, ctx->response_count);
+	}
+
+	void tau_put_mutable_item_callback(item const& it, int responses
+		, std::shared_ptr<put_item_ctx> ctx
+		, std::function<void(item const&, std::vector<std::pair<node_entry, bool>> const&)> cb)
+	{
+		ctx->response_count += responses;
+		if (--ctx->active_traversals == 0)
+			cb(it, ctx->nodes);
+	}
+
+	void tau_put_mutable_item_nodes_callback(std::vector<std::pair<node_entry, bool>> const& nodes
+		, std::shared_ptr<put_item_ctx> ctx)
+	{
+		for (auto& n : nodes)
+		{
+			ctx->nodes.push_back(n);
+		}
 	}
 
 	void send_callback(entry const& it, int responses, std::shared_ptr<send_ctx> ctx
@@ -524,7 +543,8 @@ namespace libTAU::dht {
 	}
 
 	void dht_tracker::put_item(public_key const& key
-		, std::function<void(item const&, std::vector<node_entry> const&)> cb
+		, std::function<void(item const&
+			, std::vector<std::pair<node_entry, bool>> const&)> cb
 		, std::function<void(item&)> data_cb
 		, std::int8_t alpha
 		, std::int8_t beta
@@ -532,7 +552,15 @@ namespace libTAU::dht {
 		, std::string salt
 		, public_key const& to
 		, bool cache)
-	{}
+	{
+		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
+		for (auto& n : m_nodes)
+			n.second.dht.put_item(key, salt, to
+				, alpha, beta, invoke_limit, cache
+				, std::bind(&tau_put_mutable_item_callback, _1, _2, ctx, cb)
+				, data_cb
+				, std::bind(&tau_put_mutable_item_nodes_callback, _1, ctx));
+	}
 
 	// relay protocol
 	void dht_tracker::send(public_key const& to
