@@ -59,6 +59,9 @@ namespace libTAU {
         // salt length (first 16 bytes of public key)
         constexpr int communication_salt_length = 16;
 
+        // long time out(5s)
+        constexpr int communication_long_time_out = 5 * 1000;
+
         // max chatting friend time(5s)
         constexpr std::int64_t communication_max_chatting_time = 5;
 
@@ -156,7 +159,7 @@ namespace libTAU {
             void add_entry_task_to_queue(const common::entry_task &task);
 
             // request online/new message signal from a given peer
-            void request_signal(const dht::public_key &peer);
+//            void request_signal(const dht::public_key &peer);
 
             // publish online/new message signal to a given peer
 //            void publish_signal(const dht::public_key &peer);
@@ -183,6 +186,10 @@ namespace libTAU {
             // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing message和confirmation root)
             void find_best_solution(const std::vector<message>& messages, const aux::bytes& hash_prefix_array,
                                     std::vector<message> &missing_messages, std::vector<sha256_hash> &confirmation_roots);
+
+            // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing message和confirmation root)
+            void find_best_solution(const std::vector<message>& messages, const aux::bytes& hash_prefix_array,
+                                    std::vector<message> &missing_messages, std::vector<message> &confirmed_messages);
 
             // make a salt on mutable channel
             static std::string make_salt(dht::public_key peer);
@@ -238,11 +245,15 @@ namespace libTAU {
 
             void send_all_unconfirmed_messages(dht::public_key const& peer);
 
-            void update_detection_time(dht::public_key const& peer, std::int64_t time);
+            void send_one_missing_message_randomly(dht::public_key const& peer);
+
+//            void update_detection_time(dht::public_key const& peer, std::int64_t time);
 
             void update_communication_time(dht::public_key const& peer, std::int64_t time);
 
             void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array, std::int64_t time);
+
+            void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes);
 
             // device id
             aux::bytes m_device_id;
@@ -271,7 +282,7 @@ namespace libTAU {
             std::queue<common::entry_task> m_tasks;
             std::set<common::entry_task> m_tasks_set;
 
-            std::map<dht::public_key, std::int64_t> m_last_greeting;
+//            std::map<dht::public_key, std::int64_t> m_last_greeting;
 
 //            std::map<dht::public_key, std::int64_t> m_array_align_time;
 
@@ -284,7 +295,7 @@ namespace libTAU {
             // active friends
             std::vector<dht::public_key> m_active_friends;
 
-            std::map<dht::public_key, std::int64_t> m_last_detection_time;
+//            std::map<dht::public_key, std::int64_t> m_last_detection_time;
 
             std::map<dht::public_key, std::int64_t> m_last_request_friend_info_time;
 
@@ -305,6 +316,14 @@ namespace libTAU {
 
             // message list(map:key->Y public key, value->message list)
             std::map<dht::public_key, std::list<message>> m_message_list_map;
+
+//            std::map<dht::public_key, std::set<message>> m_missing_messages;
+
+            std::map<dht::public_key, std::map<message, int>> m_message_putting_times;
+
+            std::map<dht::public_key, std::map<message, std::set<dht::node_entry>>> m_message_putting_nodes;
+
+            std::map<dht::public_key, std::map<message, std::int64_t>> m_message_last_putting_time;
 
             // missing messages (map:key->peer, value->missing message list)
 //            std::map<dht::public_key, std::set<message>> m_missing_messages;
