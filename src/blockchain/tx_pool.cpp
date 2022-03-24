@@ -85,7 +85,7 @@ namespace libTAU::blockchain {
     }
 
     bool tx_pool::add_tx_to_fee_pool(const transaction &tx) {
-        if (tx.fee() <= get_min_allowed_fee())
+        if (tx.fee() < get_min_allowed_fee())
             return false;
 
         // validate tx state
