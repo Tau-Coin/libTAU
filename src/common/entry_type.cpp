@@ -376,6 +376,21 @@ namespace libTAU::common {
             auto chain_id = i->string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
         }
+        // tx pool levenshtein array
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            entry v = entry(*i);
+            if (auto* p = const_cast<entry *>(v.find_key("v1")))
+            {
+                std::string levenshtein_array = p->string();
+                m_fee_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+            }
+            if (auto* p = const_cast<entry *>(v.find_key("v2")))
+            {
+                std::string levenshtein_array = p->string();
+                m_time_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+            }
+        }
     }
 
     entry tx_pool_request_entry::get_entry() const {
@@ -384,6 +399,11 @@ namespace libTAU::common {
         e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // message levenshtein array
+        entry v(entry::dictionary_t);
+        v["v1"] = entry(std::string(m_fee_pooL_levenshtein_array.begin(), m_fee_pooL_levenshtein_array.end()));
+        v["v2"] = entry(std::string(m_time_pooL_levenshtein_array.begin(), m_time_pooL_levenshtein_array.end()));
+        e[entry_value] = v;
 
         return e;
     }
@@ -400,8 +420,17 @@ namespace libTAU::common {
         // tx pool levenshtein array
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
-            std::string levenshtein_array = i->string();
-            m_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+            entry v = entry(*i);
+            if (auto* p = const_cast<entry *>(v.find_key("v1")))
+            {
+                std::string levenshtein_array = p->string();
+                m_fee_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+            }
+            if (auto* p = const_cast<entry *>(v.find_key("v2")))
+            {
+                std::string levenshtein_array = p->string();
+                m_time_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+            }
         }
     }
 
@@ -412,7 +441,10 @@ namespace libTAU::common {
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // message levenshtein array
-        e[entry_value] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
+        entry v(entry::dictionary_t);
+        v["v1"] = entry(std::string(m_fee_pooL_levenshtein_array.begin(), m_fee_pooL_levenshtein_array.end()));
+        v["v2"] = entry(std::string(m_time_pooL_levenshtein_array.begin(), m_time_pooL_levenshtein_array.end()));
+        e[entry_value] = v;
 
         return e;
     }

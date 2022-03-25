@@ -280,10 +280,13 @@ namespace libTAU::blockchain {
     std::set<dht::public_key> block::get_block_peers() const {
         std::set<dht::public_key> peers;
         peers.insert(m_miner);
-//        auto tx = m_tx;
         if (!m_tx.empty()) {
-            peers.insert(m_tx.sender());
-            peers.insert(m_tx.receiver());
+            if (m_tx.type() == tx_type::type_transfer) {
+                peers.insert(m_tx.sender());
+                peers.insert(m_tx.receiver());
+            } else if (m_tx.type() == tx_type::type_note) {
+                peers.insert(m_tx.sender());
+            }
         }
 
         return peers;

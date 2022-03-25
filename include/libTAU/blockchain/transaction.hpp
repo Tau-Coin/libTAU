@@ -107,6 +107,14 @@ namespace blockchain {
 
         bool verify_signature() const;
 
+        bool operator==(const transaction &rhs) const {
+            return m_hash == rhs.m_hash;
+        }
+
+        bool operator!=(const transaction &rhs) const {
+            return !(rhs == *this);
+        }
+
         bool operator<(const transaction &rhs) const {
             return m_hash < rhs.m_hash;
         }

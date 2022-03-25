@@ -572,6 +572,17 @@ namespace libTAU::blockchain {
                                         item.second.m_requests_time[std::make_unique<common::head_block_request_entry>(chain_id)] = now;
                                     }
                                 } else if (item.second.m_stage == NORMAL) {
+                                    if (!item.second.m_tx_pool_sync_done && is_sync_completed(chain_id) &&
+                                        item.second.m_head_block == m_head_blocks[chain_id] &&
+                                        item.second.m_requests_time.find(std::make_unique<common::tx_pool_entry>(chain_id)) == item.second.m_requests_time.end()) {
+                                        common::tx_pool_entry txPoolEntry(chain_id,
+                                                                         m_tx_pools[chain_id].get_hash_prefix_array_by_fee(),
+                                                                         m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp());
+                                        common::entry_task task(common::tx_pool_entry::data_type_id, item.first, txPoolEntry.get_entry());
+                                        add_entry_task_to_queue(chain_id, task);
+
+                                        item.second.m_requests_time[std::make_unique<common::tx_pool_entry>(chain_id)] = now;
+                                    }
                                     // ping every minute
                                     if (now > item.second.m_last_ping_time + 60 * 1000) {
                                         common::ping_entry pingEntry(chain_id);
@@ -1126,38 +1137,38 @@ namespace libTAU::blockchain {
 
                 auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(head_block.cumulative_difficulty(), base_target);
 
+                std::set<dht::public_key> peers;
+                peers.insert(*pk);
+                if (!tx.empty()) {
+                    if (tx.type() == tx_type::type_transfer) {
+                        peers.insert(tx.sender());
+                        peers.insert(tx.receiver());
+                    } else if (tx.type() == tx_type::type_note) {
+                        peers.insert(tx.sender());
+                    }
+                }
+
                 std::map<dht::public_key, std::int64_t> peers_balance;
                 std::map<dht::public_key, std::int64_t> peers_nonce;
                 std::map<dht::public_key, std::int64_t> peers_note_timestamp;
-
-                // get miner state
-                auto miner_account = m_repository->get_account(chain_id, *pk);
-                peers_balance[*pk] = miner_account.balance();
-                peers_nonce[*pk] = miner_account.nonce();
-                peers_note_timestamp[*pk] = miner_account.note_timestamp();
+                for (auto const& peer: peers) {
+                    auto peer_account = m_repository->get_account(chain_id, peer);
+                    peers_balance[peer] = peer_account.balance();
+                    peers_nonce[peer] = peer_account.nonce();
+                    peers_note_timestamp[peer] = peer_account.note_timestamp();
+                }
 
                 if (!tx.empty()) {
-                    // get state
-                    auto sender_account = m_repository->get_account(chain_id, tx.sender());
-                    peers_balance[tx.sender()] = sender_account.balance();
-                    peers_nonce[tx.sender()] = sender_account.nonce();
-                    peers_note_timestamp[tx.sender()] = sender_account.note_timestamp();
-
                     // adjust state
                     // miner earns fee
                     peers_balance[*pk] += tx.fee();
                     if (tx.type() == tx_type::type_transfer) {
-                        auto receiver_account = m_repository->get_account(chain_id, tx.receiver());
-                        peers_balance[tx.receiver()] = receiver_account.balance();
-                        peers_nonce[tx.receiver()] = receiver_account.nonce();
-                        peers_note_timestamp[tx.receiver()] = receiver_account.note_timestamp();
-
+                        // receiver balance + amount
+                        peers_balance[tx.receiver()] += tx.amount();
                         // sender balance - cost(fee + amount)
                         peers_balance[tx.sender()] -= tx.cost();
                         // sender nonce+1
                         peers_nonce[tx.sender()] += 1;
-                        // receiver balance + amount
-                        peers_balance[tx.receiver()] += tx.amount();
                     } else if (tx.type() == tx_type::type_note) {
                         // sender balance - fee
                         peers_balance[tx.sender()] -= tx.fee();
@@ -1253,44 +1264,42 @@ namespace libTAU::blockchain {
             return FAIL;
         }
 
-        auto miner_account = repo->get_account(chain_id, b.miner());
-        std::int64_t miner_balance = miner_account.balance();
-        std::int64_t miner_nonce = miner_account.nonce();
-        std::int64_t miner_note_timestamp = miner_account.note_timestamp();
-        std::int64_t sender_balance = 0;
-        std::int64_t sender_nonce = 0;
-        std::int64_t sender_note_timestamp = 0;
-        std::int64_t receiver_balance = 0;
-        std::int64_t receiver_nonce = 0;
-        std::int64_t receiver_note_timestamp = 0;
+        std::set<dht::public_key> peers = b.get_block_peers();
+        std::map<dht::public_key, std::int64_t> peers_balance;
+        std::map<dht::public_key, std::int64_t> peers_nonce;
+        std::map<dht::public_key, std::int64_t> peers_note_timestamp;
+        for (auto const& peer: peers) {
+            auto peer_account = m_repository->get_account(chain_id, peer);
+            peers_balance[peer] = peer_account.balance();
+            peers_nonce[peer] = peer_account.nonce();
+            peers_note_timestamp[peer] = peer_account.note_timestamp();
+        }
+
         auto const& tx = b.tx();
         if (!tx.empty()) {
-            miner_balance += tx.fee();
-
-            auto sender_account = repo->get_account(chain_id, tx.sender());
-
+            // adjust state
+            // miner earns fee
+            peers_balance[b.miner()] += tx.fee();
             if (tx.type() == tx_type::type_transfer) {
-                sender_balance = sender_account.balance() - tx.cost();
-                sender_nonce = sender_account.nonce() + 1;
-                sender_note_timestamp = sender_account.note_timestamp();
-
-                auto receiver_account = repo->get_account(chain_id, tx.receiver());
-                receiver_balance = receiver_account.balance() + tx.amount();
-                receiver_nonce = receiver_account.nonce();
-                receiver_note_timestamp = receiver_account.note_timestamp();
+                // receiver balance + amount
+                peers_balance[tx.receiver()] += tx.amount();
+                // sender balance - cost(fee + amount)
+                peers_balance[tx.sender()] -= tx.cost();
+                // sender nonce+1
+                peers_nonce[tx.sender()] += 1;
             } else if (tx.type() == tx_type::type_note) {
                 // sender balance - fee
-                sender_balance = sender_account.balance() - tx.fee();
-                sender_note_timestamp = tx.timestamp();
+                peers_balance[tx.sender()] -= tx.fee();
+                peers_note_timestamp[tx.sender()] = tx.timestamp();
             }
         }
-        if (miner_balance != b.miner_balance() || miner_nonce != b.miner_nonce() ||
-        receiver_note_timestamp != b.receiver_note_timestamp() || sender_balance != b.sender_balance() ||
-        sender_nonce != b.sender_nonce() || sender_note_timestamp != b.sender_note_timestamp() ||
-        receiver_balance != b.receiver_balance() || receiver_nonce != b.receiver_nonce() ||
-        receiver_note_timestamp != b.receiver_note_timestamp()) {
-            log("INFO chain[%s] block[%s] state error!",
-                aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+
+        if (peers_balance[b.miner()] != b.miner_balance() || peers_nonce[b.miner()] != b.miner_nonce() ||
+            peers_note_timestamp[b.miner()] != b.miner_note_timestamp() || peers_balance[b.tx().sender()] != b.sender_balance() ||
+            peers_nonce[b.tx().sender()] != b.sender_nonce() || peers_note_timestamp[b.tx().sender()] != b.sender_note_timestamp() ||
+            peers_balance[b.tx().receiver()] != b.receiver_balance() || peers_nonce[b.tx().receiver()] != b.receiver_nonce() ||
+            peers_note_timestamp[b.tx().receiver()] != b.receiver_note_timestamp()) {
+            log("INFO chain[%s] block[%s] state error!", aux::toHex(chain_id).c_str(), b.to_string().c_str());
             return FAIL;
         }
 
@@ -2122,11 +2131,11 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::find_best_solution(std::vector<transaction> &txs, const aux::bytes &hash_prefix_array,
-                                        std::vector<transaction> &missing_txs) {
+                                        std::set<transaction> &missing_txs) {
         // 如果对方没有信息，则本地消息全为缺失消息
         if (hash_prefix_array.empty()) {
             log("INFO: Hash prefix array is empty");
-            missing_txs.insert(missing_txs.end(), txs.begin(), txs.end());
+            missing_txs.insert(txs.begin(), txs.end());
             return;
         }
 
@@ -2201,7 +2210,7 @@ namespace libTAU::blockchain {
                 if (0 == operations[i][j]) {
                     // 如果是替换操作，则将target对应的替换消息加入列表
                     if (source[i - 1] != target[j - 1]) {
-                        missing_txs.push_back(txs[j - 1]);
+                        missing_txs.insert(txs[j - 1]);
                     }
                     i--;
                     j--;
@@ -2210,12 +2219,12 @@ namespace libTAU::blockchain {
                     // 注意由于消息是按照时间戳从小到大排列，如果缺第一个，并且此时双方满载，则判定为被挤出去而产生的差异，并非真的缺少
                     if (1 != j || targetLength != blockchain_max_tx_list_size ||
                         sourceLength != blockchain_max_tx_list_size) {
-                        missing_txs.push_back(txs[j - 1]);
+                        missing_txs.insert(txs[j - 1]);
 
                         // 如果是插入操作，则将邻近哈希前缀一样的消息也当作缺失的消息
                         auto k = j - 1;
                         while (k + 1 < targetLength && target[k] == target[k + 1]) {
-                            missing_txs.push_back(txs[k + 1]);
+                            missing_txs.insert(txs[k + 1]);
                             k++;
                         }
                     }
@@ -3217,6 +3226,78 @@ namespace libTAU::blockchain {
 
                     break;
                 }
+                case common::tx_pool_entry::data_type_id: {
+                    common::tx_pool_entry txPoolEntry(payload);
+                    auto &chain_id = txPoolEntry.m_chain_id;
+
+                    try_to_kick_out_of_ban_list(chain_id, peer);
+
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score -= 3;
+                        it->second.m_last_seen = now;
+                        it->second.m_tx_pool_sync_done = true;
+                        it->second.m_requests_time.erase(std::make_unique<common::tx_pool_entry>(chain_id));
+                        auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::tx_pool_entry>(payload));
+                        if (itor != it->second.m_peer_requests_time.end()) {
+                            if (now > itor->second + blockchain_same_response_interval) {
+                                it->second.m_peer_requests_time.erase(itor);
+                            } else {
+                                log("INFO: The same request from the same peer in 3s.");
+                                break;
+                            }
+                        } else {
+                            it->second.m_peer_requests_time.emplace(std::make_unique<common::tx_pool_entry>(payload), now);
+                        }
+                    } else {
+                        if (acl.size() >= blockchain_acl_max_peers) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info(now);
+                                acl[peer].m_tx_pool_sync_done = true;
+                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::tx_pool_entry>(payload), now);
+                            } else {
+                                log("INFO: Too many peers in acl to response.");
+                                break;
+                            }
+                        } else {
+                            acl[peer] = peer_info(now);
+                            acl[peer].m_tx_pool_sync_done = true;
+                            acl[peer].m_peer_requests_time.emplace(std::make_unique<common::tx_pool_entry>(payload), now);
+                        }
+                    }
+
+                    auto fee_pool_txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
+                    auto time_pool_txs = m_tx_pools[chain_id].get_top_ten_timestamp_transactions();
+                    std::set<transaction> missing_txs;
+                    find_best_solution(fee_pool_txs, txPoolEntry.m_fee_pooL_levenshtein_array, missing_txs);
+                    find_best_solution(time_pool_txs, txPoolEntry.m_time_pooL_levenshtein_array, missing_txs);
+
+                    for (auto const& tx: missing_txs) {
+                        common::transaction_entry txEntry(tx);
+                        common::entry_task task(common::transaction_entry::data_type_id, peer, txEntry.get_entry());
+                        add_entry_task_to_queue(chain_id, task);
+                    }
+                    common::tx_pool_entry replyEntry(chain_id,
+                                                       m_tx_pools[chain_id].get_hash_prefix_array_by_fee(),
+                                                       m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp());
+                    common::entry_task task(common::tx_pool_entry::data_type_id, peer, replyEntry.get_entry());
+                    add_entry_task_to_queue(chain_id, task);
+
+                    try_to_update_visiting_peer(chain_id, peer);
+
+                    break;
+                }
                 case common::transaction_request_entry::data_type_id: {
                     common::transaction_request_entry tx_request_entry(payload);
                     auto &chain_id = tx_request_entry.m_chain_id;
@@ -3263,6 +3344,8 @@ namespace libTAU::blockchain {
                             acl[peer].m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
                         }
                     }
+
+                    try_to_update_visiting_peer(chain_id, peer);
 
                     break;
                 }

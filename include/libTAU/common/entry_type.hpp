@@ -563,7 +563,9 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit tx_pool_request_entry(const entry& e);
 
-        tx_pool_request_entry(aux::bytes mChainId) {
+        tx_pool_request_entry(aux::bytes mChainId, aux::bytes mFeePooLLevenshteinArray, aux::bytes mTimePooLLevenshteinArray)
+                : m_fee_pooL_levenshtein_array(std::move(mFeePooLLevenshteinArray)),
+                  m_time_pooL_levenshtein_array(std::move(mTimePooLLevenshteinArray)) {
             m_chain_id = std::move(mChainId);
 
             m_entry = get_entry();
@@ -571,6 +573,12 @@ namespace libTAU::common {
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        // bytes consist of first byte of ordered messages hash
+        aux::bytes m_fee_pooL_levenshtein_array;
+
+        // bytes consist of first byte of ordered messages hash
+        aux::bytes m_time_pooL_levenshtein_array;
     };
 
     struct TORRENT_EXPORT tx_pool_entry final : blockchain_entry_base {
@@ -580,8 +588,9 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit tx_pool_entry(const entry& e);
 
-        tx_pool_entry(aux::bytes mChainId, aux::bytes mLevenshteinArray) :
-            m_levenshtein_array(std::move(mLevenshteinArray)) {
+        tx_pool_entry(aux::bytes mChainId, aux::bytes mFeePooLLevenshteinArray, aux::bytes mTimePooLLevenshteinArray)
+        : m_fee_pooL_levenshtein_array(std::move(mFeePooLLevenshteinArray)),
+        m_time_pooL_levenshtein_array(std::move(mTimePooLLevenshteinArray)) {
             m_chain_id = std::move(mChainId);
 
             m_entry = get_entry();
@@ -590,16 +599,11 @@ namespace libTAU::common {
         // @returns the corresponding entry
         entry get_entry() const override;
 
-        bool operator<(const tx_pool_entry &rhs) const {
-            if (m_chain_id < rhs.m_chain_id)
-                return true;
-            if (rhs.m_chain_id < m_chain_id)
-                return false;
-            return m_levenshtein_array < rhs.m_levenshtein_array;
-        }
+        // bytes consist of first byte of ordered messages hash
+        aux::bytes m_fee_pooL_levenshtein_array;
 
         // bytes consist of first byte of ordered messages hash
-        aux::bytes m_levenshtein_array;
+        aux::bytes m_time_pooL_levenshtein_array;
     };
 
     struct TORRENT_EXPORT state_request_entry final : blockchain_entry_base {

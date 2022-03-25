@@ -123,6 +123,14 @@ namespace blockchain {
 
         std::set<dht::public_key> get_block_peers() const;
 
+        bool operator==(const block &rhs) const {
+            return m_hash == rhs.m_hash;
+        }
+
+        bool operator!=(const block &rhs) const {
+            return !(rhs == *this);
+        }
+
         bool operator<(const block &rhs) const {
             return m_hash < rhs.m_hash;
         }

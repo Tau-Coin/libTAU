@@ -64,7 +64,7 @@ namespace blockchain {
     constexpr std::int64_t blockchain_max_focus_time = 5 * 1000;
 
     // blockchain request timeout(5s)
-    constexpr std::int64_t blockchain_request_timeout = 5 * 1000;
+    constexpr std::int64_t blockchain_request_timeout = 8 * 1000;
 
     // blockchain min peers in acl
     constexpr std::int64_t blockchain_acl_min_peers = 3;
@@ -72,11 +72,11 @@ namespace blockchain {
     // blockchain min peers in acl
     constexpr std::int64_t blockchain_acl_max_peers = 5;
 
-    // blockchain min ban time(1h)
+    // blockchain min ban time(5min)
     constexpr std::int64_t blockchain_min_ban_time = 5 * 60 * 1000;
 
-    // blockchain max ban time(1h)
-    constexpr std::int64_t blockchain_max_ban_time = 60 * 60 * 1000;
+    // blockchain max ban time(20min)
+    constexpr std::int64_t blockchain_max_ban_time = 20 * 60 * 1000;
 
     enum RESULT {
         SUCCESS,
@@ -292,7 +292,7 @@ namespace blockchain {
 
         // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing tx)
         void find_best_solution(std::vector<transaction>& txs, const aux::bytes& hash_prefix_array,
-                                std::vector<transaction> &missing_txs);
+                                std::set<transaction> &missing_txs);
 
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id);
