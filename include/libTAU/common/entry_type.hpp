@@ -588,6 +588,12 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit tx_pool_entry(const entry& e);
 
+        explicit tx_pool_entry(aux::bytes mChainId) {
+            m_chain_id = std::move(mChainId);
+
+            m_entry = get_entry();
+        }
+
         tx_pool_entry(aux::bytes mChainId, aux::bytes mFeePooLLevenshteinArray, aux::bytes mTimePooLLevenshteinArray)
         : m_fee_pooL_levenshtein_array(std::move(mFeePooLLevenshteinArray)),
         m_time_pooL_levenshtein_array(std::move(mTimePooLLevenshteinArray)) {
