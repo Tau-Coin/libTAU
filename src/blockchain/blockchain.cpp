@@ -2956,6 +2956,9 @@ namespace libTAU::blockchain {
         try {
             log("INFO: add new tx:%s", tx.to_string().c_str());
             if (!tx.empty()) {
+                if (!tx.verify_signature())
+                    return false;
+
                 auto &chain_id = tx.chain_id();
 
                 common::transaction_entry txEntry(tx);
@@ -2967,7 +2970,8 @@ namespace libTAU::blockchain {
                     add_entry_task_to_queue(chain_id, task);
                 }
 
-                return m_tx_pools[chain_id].add_tx(tx);
+                m_tx_pools[chain_id].add_tx(tx);
+                return true;
             }
         } catch (std::exception &e) {
             log("Exception add new tx [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
