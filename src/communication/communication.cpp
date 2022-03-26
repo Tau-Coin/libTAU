@@ -1313,21 +1313,27 @@ namespace libTAU {
 
         void communication::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes) {
             auto &peer = i.pk();
-            common::message_entry msg_entry(i.value());
+            if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type)))
+            {
+                auto data_type_id = p->integer();
+                if (data_type_id == common::message_entry::data_type_id) {
+                    common::message_entry msg_entry(i.value());
 
-            bool success = false;
-            for (auto const& n: nodes) {
-                m_message_putting_nodes[peer][msg_entry.m_msg].insert(n.first);
-                if (n.second) {
-                    success = true;
-                    break;
+                    bool success = false;
+                    for (auto const& n: nodes) {
+                        m_message_putting_nodes[peer][msg_entry.m_msg].insert(n.first);
+                        if (n.second) {
+                            success = true;
+                            break;
+                        }
+                    }
+
+                    if (success || m_message_putting_nodes[peer][msg_entry.m_msg].size() >= 8) {
+                        m_message_putting_times[peer].erase(msg_entry.m_msg);
+                        m_message_putting_nodes[peer].erase(msg_entry.m_msg);
+                        m_message_last_putting_time[peer].erase(msg_entry.m_msg);
+                    }
                 }
-            }
-
-            if (success || m_message_putting_nodes[peer][msg_entry.m_msg].size() >= 8) {
-                m_message_putting_times[peer].erase(msg_entry.m_msg);
-                m_message_putting_nodes[peer].erase(msg_entry.m_msg);
-                m_message_last_putting_time[peer].erase(msg_entry.m_msg);
             }
         }
 
