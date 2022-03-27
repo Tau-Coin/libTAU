@@ -3124,8 +3124,6 @@ namespace libTAU::blockchain {
                     auto &acl = m_access_list[chain_id];
                     auto it = acl.find(peer);
                     if (it != acl.end()) {
-                        it->second.m_score -= 3;
-                        it->second.m_last_seen = now;
                         auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::block_request_entry>(payload));
                         if (itor != it->second.m_peer_requests_time.end()) {
                             if (now > itor->second + blockchain_same_response_interval) {
@@ -3137,6 +3135,8 @@ namespace libTAU::blockchain {
                         } else {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
                         }
+                        it->second.m_score -= 3;
+                        it->second.m_last_seen = now;
                     } else {
                         if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
@@ -3239,9 +3239,6 @@ namespace libTAU::blockchain {
                     auto &acl = m_access_list[chain_id];
                     auto it = acl.find(peer);
                     if (it != acl.end()) {
-                        it->second.m_score -= 3;
-                        it->second.m_last_seen = now;
-                        it->second.m_tx_pool_sync_done = true;
                         it->second.m_requests_time.erase(std::make_unique<common::tx_pool_entry>(chain_id));
                         auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::tx_pool_entry>(payload));
                         if (itor != it->second.m_peer_requests_time.end()) {
@@ -3254,6 +3251,9 @@ namespace libTAU::blockchain {
                         } else {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::tx_pool_entry>(payload), now);
                         }
+                        it->second.m_score -= 3;
+                        it->second.m_last_seen = now;
+                        it->second.m_tx_pool_sync_done = true;
                     } else {
                         if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
@@ -3311,8 +3311,6 @@ namespace libTAU::blockchain {
                     auto &acl = m_access_list[chain_id];
                     auto it = acl.find(peer);
                     if (it != acl.end()) {
-                        it->second.m_score -= 3;
-                        it->second.m_last_seen = now;
                         auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::transaction_request_entry>(payload));
                         if (itor != it->second.m_peer_requests_time.end()) {
                             if (now > itor->second + blockchain_same_response_interval) {
@@ -3324,6 +3322,8 @@ namespace libTAU::blockchain {
                         } else {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
                         }
+                        it->second.m_score -= 3;
+                        it->second.m_last_seen = now;
                     } else {
                         if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
@@ -3422,8 +3422,6 @@ namespace libTAU::blockchain {
                     auto &acl = m_access_list[chain_id];
                     auto it = acl.find(peer);
                     if (it != acl.end()) {
-                        it->second.m_score -= 3;
-                        it->second.m_last_seen = now;
                         auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::vote_request_entry>(payload));
                         if (itor != it->second.m_peer_requests_time.end()) {
                             if (now > itor->second + blockchain_same_response_interval) {
@@ -3435,6 +3433,8 @@ namespace libTAU::blockchain {
                         } else {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
                         }
+                        it->second.m_score -= 3;
+                        it->second.m_last_seen = now;
                     } else {
                         if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
@@ -3524,8 +3524,6 @@ namespace libTAU::blockchain {
                     auto &acl = m_access_list[chain_id];
                     auto it = acl.find(peer);
                     if (it != acl.end()) {
-                        it->second.m_score -= 3;
-                        it->second.m_last_seen = now;
                         auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::head_block_request_entry>(payload));
                         if (itor != it->second.m_peer_requests_time.end()) {
                             if (now > itor->second + blockchain_same_response_interval) {
@@ -3537,6 +3535,8 @@ namespace libTAU::blockchain {
                         } else {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
                         }
+                        it->second.m_score -= 3;
+                        it->second.m_last_seen = now;
                     } else {
                         if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
@@ -3651,8 +3651,6 @@ namespace libTAU::blockchain {
                     auto &acl = m_access_list[chain_id];
                     auto it = acl.find(peer);
                     if (it != acl.end()) {
-                        it->second.m_score -= 3;
-                        it->second.m_last_seen = now;
                         auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::state_request_entry>(payload));
                         if (itor != it->second.m_peer_requests_time.end()) {
                             if (now > itor->second + blockchain_same_response_interval) {
@@ -3664,6 +3662,8 @@ namespace libTAU::blockchain {
                         } else {
                             it->second.m_peer_requests_time.emplace(std::make_unique<common::state_request_entry>(payload), now);
                         }
+                        it->second.m_score -= 3;
+                        it->second.m_last_seen = now;
                     } else {
                         if (acl.size() >= blockchain_acl_max_peers) {
                             // find out min score peer
