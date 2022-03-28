@@ -748,6 +748,12 @@ namespace libTAU {
                 }
 
                 if (!m_tasks.empty()) {
+                    {
+                        for (auto const& task: m_tasks_set) {
+                            log("=======tasks set:peer[%s], entry:%s", aux::toHex(task.m_peer.bytes).c_str(), task.m_entry.to_string(true).c_str());
+                        }
+                        log("======tasks queue size:%lu", m_tasks.size());
+                    }
                     auto& task = m_tasks.front();
                     if (task.m_data_type_id == common::message_levenshtein_array_entry::data_type_id) {
                         // 本地消息数组为target
@@ -1317,18 +1323,19 @@ namespace libTAU {
             {
                 auto data_type_id = p->integer();
                 if (data_type_id == common::message_entry::data_type_id) {
+                    log("======= callback:%s", i.value().to_string(true).c_str());
+                    for (auto const& n: nodes) {
+                        log("====== nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
+                    }
                     common::message_entry msg_entry(i.value());
 
-                    bool success = false;
                     for (auto const& n: nodes) {
-                        m_message_putting_nodes[peer][msg_entry.m_msg].insert(n.first);
                         if (n.second) {
-                            success = true;
-                            break;
+                            m_message_putting_nodes[peer][msg_entry.m_msg].insert(n.first);
                         }
                     }
 
-                    if (success || m_message_putting_nodes[peer][msg_entry.m_msg].size() >= 8) {
+                    if (m_message_putting_nodes[peer][msg_entry.m_msg].size() >= 8) {
                         m_message_putting_times[peer].erase(msg_entry.m_msg);
                         m_message_putting_nodes[peer].erase(msg_entry.m_msg);
                         m_message_last_putting_time[peer].erase(msg_entry.m_msg);
@@ -1522,7 +1529,7 @@ namespace libTAU {
             auto & message_putting_times = m_message_putting_times[peer];
             if (!message_putting_times.empty()) {
                 auto it = message_putting_times.begin();
-                if (it->second >= 1000) {
+                if (it->second >= 10) {
                     m_message_putting_times[peer].erase(it->first);
                     m_message_putting_nodes[peer].erase(it->first);
                     m_message_last_putting_time[peer].erase(it->first);
