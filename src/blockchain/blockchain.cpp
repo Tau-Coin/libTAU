@@ -91,10 +91,6 @@ namespace libTAU::blockchain {
         add_entry_task_to_queue(chain_id, task);
     }
 
-    bool blockchain::followChain(const chain_url &url) {
-        return followChain(url.chain_id(), url.peers());
-    }
-
     bool blockchain::followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
         if (!chain_id.empty()) {
             log("INFO: Follow chain:%s", aux::toHex(chain_id).c_str());
