@@ -63,8 +63,6 @@ namespace libTAU::common {
 //    }
 
     message_entry::message_entry(const entry &e) {
-        m_entry = e;
-
         // message
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
@@ -81,6 +79,11 @@ namespace libTAU::common {
         {
             m_timestamp = i->integer();
         }
+
+        auto et = get_real_payload_entry();
+        std::string encode;
+        bencode(std::back_inserter(encode), et);
+        m_real_payload_hash = dht::item_target_id(encode);
     }
 
     entry message_entry::get_entry() const {
@@ -97,10 +100,18 @@ namespace libTAU::common {
         return e;
     }
 
+    entry message_entry::get_real_payload_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // message
+        e[entry_value] = m_msg.get_entry();
+
+        return e;
+    }
+
 
     message_levenshtein_array_entry::message_levenshtein_array_entry(const entry &e) {
-        m_entry = e;
-
         // message levenshtein array
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
@@ -112,6 +123,11 @@ namespace libTAU::common {
         {
             m_timestamp = i->integer();
         }
+
+        auto et = get_real_payload_entry();
+        std::string encode;
+        bencode(std::back_inserter(encode), et);
+        m_real_payload_hash = dht::item_target_id(encode);
     }
 
     entry message_levenshtein_array_entry::get_entry() const {
@@ -126,14 +142,34 @@ namespace libTAU::common {
         return e;
     }
 
-    friend_info_request_entry::friend_info_request_entry(const entry &e) {
-        m_entry = e;
+    entry message_levenshtein_array_entry::get_real_payload_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // message levenshtein array
+//        e[entry_value] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
 
+        return e;
+    }
+
+    friend_info_request_entry::friend_info_request_entry() {
+        auto et = get_real_payload_entry();
+        std::string encode;
+        bencode(std::back_inserter(encode), et);
+        m_real_payload_hash = dht::item_target_id(encode);
+    }
+
+    friend_info_request_entry::friend_info_request_entry(const entry &e) {
         // time
         if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
         {
             m_timestamp = i->integer();
         }
+
+        auto et = get_real_payload_entry();
+        std::string encode;
+        bencode(std::back_inserter(encode), et);
+        m_real_payload_hash = dht::item_target_id(encode);
     }
 
     entry friend_info_request_entry::get_entry() const {
@@ -146,9 +182,15 @@ namespace libTAU::common {
         return e;
     }
 
-    friend_info_entry::friend_info_entry(const entry &e) {
-        m_entry = e;
+    entry friend_info_request_entry::get_real_payload_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
 
+        return e;
+    }
+
+    friend_info_entry::friend_info_entry(const entry &e) {
         // friend info
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
@@ -160,6 +202,11 @@ namespace libTAU::common {
         {
             m_timestamp = i->integer();
         }
+
+        auto et = get_real_payload_entry();
+        std::string encode;
+        bencode(std::back_inserter(encode), et);
+        m_real_payload_hash = dht::item_target_id(encode);
     }
 
     entry friend_info_entry::get_entry() const {
@@ -170,6 +217,16 @@ namespace libTAU::common {
         e[entry_value] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
         // time
         e[entry_time] = entry(m_timestamp);
+
+        return e;
+    }
+
+    entry friend_info_entry::get_real_payload_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+        e[entry_type] = entry(data_type_id);
+        // friend info
+        e[entry_value] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
 
         return e;
     }

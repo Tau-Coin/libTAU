@@ -31,34 +31,27 @@ namespace libTAU::common {
     const std::string entry_levenshtein_array = "l";
 
     struct communication_entry_base {
+        virtual std::int64_t get_data_type_id() const = 0;
+
         virtual entry get_entry() const = 0;
 
-        bool operator<(const communication_entry_base &rhs) const {
-            if (m_timestamp < rhs.m_timestamp)
-                return true;
-            if (rhs.m_timestamp < m_timestamp)
-                return false;
+        virtual entry get_real_payload_entry() const = 0;
 
-            std::string encode;
-            bencode(std::back_inserter(encode), m_entry);
-            std::string rhs_encode;
-            bencode(std::back_inserter(rhs_encode), rhs.m_entry);
-            if (encode < rhs_encode)
-                return true;
-            if (encode > rhs_encode)
-                return false;
+        virtual void set_timestamp(std::int64_t t) = 0;
+
+        bool operator<(const communication_entry_base &rhs) const {
+            return m_real_payload_hash < rhs.m_real_payload_hash;
         }
 
         // timestamp
         std::int64_t m_timestamp{};
 
-        // entry
-        entry m_entry;
+        sha256_hash m_real_payload_hash;
     };
 
-    struct less_communication_entry_base: std::binary_function<const std::unique_ptr<communication_entry_base>&, const std::unique_ptr<communication_entry_base>&, bool>
+    struct less_communication_entry_base: std::binary_function<const std::shared_ptr<communication_entry_base>&, const std::shared_ptr<communication_entry_base>&, bool>
     {
-        bool operator() (const std::unique_ptr<communication_entry_base>& lhs, const std::unique_ptr<communication_entry_base>& rhs) const { return *lhs < *rhs; }
+        bool operator() (const std::shared_ptr<communication_entry_base>& lhs, const std::shared_ptr<communication_entry_base>& rhs) const { return *lhs < *rhs; }
     };
 
     struct blockchain_entry_base {
@@ -107,13 +100,13 @@ namespace libTAU::common {
         entry_task(int64_t mDataTypeId, const dht::public_key &mPeer) : m_data_type_id(mDataTypeId),
                                                                                             m_peer(mPeer) {}
 
-        entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer)
-                : m_alpha(mAlpha), m_beta(mBeta), m_invoke_number(mInvokeNumber), m_data_type_id(mDataTypeId),
-                m_peer(mPeer) {}
-
-        entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer,
-                   entry mEntry) : m_alpha(mAlpha), m_beta(mBeta), m_invoke_number(mInvokeNumber),
-                   m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)) {}
+//        entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer)
+//                : m_alpha(mAlpha), m_beta(mBeta), m_invoke_number(mInvokeNumber), m_data_type_id(mDataTypeId),
+//                m_peer(mPeer) {}
+//
+//        entry_task(int mAlpha, int mBeta, int mInvokeNumber, int64_t mDataTypeId, const dht::public_key &mPeer,
+//                   entry mEntry) : m_alpha(mAlpha), m_beta(mBeta), m_invoke_number(mInvokeNumber),
+//                   m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)) {}
 
         bool operator==(const entry_task &rhs) const {
             return m_data_type_id == rhs.m_data_type_id &&
@@ -158,11 +151,11 @@ namespace libTAU::common {
             return !(*this < rhs);
         }
 
-        int m_alpha = 1;
-
-        int m_beta = 3;
-
-        int m_invoke_number = 3;
+//        int m_alpha = 1;
+//
+//        int m_beta = 3;
+//
+//        int m_invoke_number = 3;
 
         std::int64_t m_data_type_id;
 
@@ -262,7 +255,12 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit message_entry(const entry& e);
 
-//        explicit message_entry(communication::message mMsg) : m_msg(std::move(mMsg)) {}
+        explicit message_entry(communication::message mMsg) : m_msg(std::move(mMsg)) {
+            auto et = get_real_payload_entry();
+            std::string encode;
+            bencode(std::back_inserter(encode), et);
+            m_real_payload_hash = dht::item_target_id(encode);
+        }
 
 //        message_entry(communication::message mMsg, int64_t mTimestamp) : m_msg(std::move(mMsg)), m_timestamp(mTimestamp) {}
 
@@ -270,11 +268,27 @@ namespace libTAU::common {
                 : m_msg(std::move(mMsg)), m_levenshtein_array(std::move(mLevenshteinArray)) {
             m_timestamp = mTimestamp;
 
-            m_entry = get_entry();
+            auto et = get_real_payload_entry();
+            std::string encode;
+            bencode(std::back_inserter(encode), et);
+            m_real_payload_hash = dht::item_target_id(encode);
         }
+
+        std::int64_t get_data_type_id() const override { return data_type_id; }
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        // @returns the corresponding entry
+        entry get_real_payload_entry() const override;
+
+        void set_levenshtein_array(const aux::bytes &mLevenshteinArray) {
+            m_levenshtein_array = mLevenshteinArray;
+        }
+
+        void set_timestamp(std::int64_t t) override {
+            m_timestamp = t;
+        }
 
         bool operator<(const message_entry &rhs) const {
             if (m_msg < rhs.m_msg)
@@ -302,11 +316,23 @@ namespace libTAU::common {
         message_levenshtein_array_entry(aux::bytes mLevenshteinArray, int64_t mTimestamp) : m_levenshtein_array(std::move(mLevenshteinArray)) {
             m_timestamp = mTimestamp;
 
-            m_entry = get_entry();
+            auto et = get_real_payload_entry();
+            std::string encode;
+            bencode(std::back_inserter(encode), et);
+            m_real_payload_hash = dht::item_target_id(encode);
         }
+
+        std::int64_t get_data_type_id() const override { return data_type_id; }
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        // @returns the corresponding entry
+        entry get_real_payload_entry() const override;
+
+        void set_timestamp(std::int64_t t) override {
+            m_timestamp = t;
+        }
 
         bool operator<(const message_levenshtein_array_entry &rhs) const {
             return m_levenshtein_array < rhs.m_levenshtein_array;
@@ -320,17 +346,31 @@ namespace libTAU::common {
         // data type id
         static inline constexpr std::int64_t data_type_id = 2;
 
+        friend_info_request_entry();
+
         // @param Construct with entry
         explicit friend_info_request_entry(const entry& e);
 
         explicit friend_info_request_entry(int64_t mTimestamp) {
             m_timestamp = mTimestamp;
 
-            m_entry = get_entry();
+            auto et = get_real_payload_entry();
+            std::string encode;
+            bencode(std::back_inserter(encode), et);
+            m_real_payload_hash = dht::item_target_id(encode);
         }
+
+        std::int64_t get_data_type_id() const override { return data_type_id; }
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        // @returns the corresponding entry
+        entry get_real_payload_entry() const override;
+
+        void set_timestamp(std::int64_t t) override {
+            m_timestamp = t;
+        }
 
         bool operator<(const friend_info_request_entry &rhs) const {
             return false;
@@ -344,16 +384,33 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit friend_info_entry(const entry& e);
 
-//        explicit friend_info_entry(aux::bytes mFriendInfo) : m_friend_info(std::move(mFriendInfo)) {}
+        explicit friend_info_entry(aux::bytes mFriendInfo) : m_friend_info(std::move(mFriendInfo)) {
+            auto et = get_real_payload_entry();
+            std::string encode;
+            bencode(std::back_inserter(encode), et);
+            m_real_payload_hash = dht::item_target_id(encode);
+        }
 
         friend_info_entry(aux::bytes mFriendInfo, int64_t mTimestamp) : m_friend_info(std::move(mFriendInfo)) {
             m_timestamp = mTimestamp;
 
-            m_entry = get_entry();
+            auto et = get_real_payload_entry();
+            std::string encode;
+            bencode(std::back_inserter(encode), et);
+            m_real_payload_hash = dht::item_target_id(encode);
         }
+
+        std::int64_t get_data_type_id() const override { return data_type_id; }
 
         // @returns the corresponding entry
         entry get_entry() const override;
+
+        // @returns the corresponding entry
+        entry get_real_payload_entry() const override;
+
+        void set_timestamp(std::int64_t t) override {
+            m_timestamp = t;
+        }
 
         bool operator<(const friend_info_entry &rhs) const {
             return m_friend_info < rhs.m_friend_info;

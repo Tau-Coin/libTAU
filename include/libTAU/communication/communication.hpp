@@ -245,7 +245,7 @@ namespace libTAU {
 
             void send_all_unconfirmed_messages(dht::public_key const& peer);
 
-            void send_one_missing_message_randomly(dht::public_key const& peer);
+            void send_one_missing_entry_randomly(dht::public_key const& peer);
 
 //            void update_detection_time(dht::public_key const& peer, std::int64_t time);
 
@@ -319,11 +319,11 @@ namespace libTAU {
 
 //            std::map<dht::public_key, std::set<message>> m_missing_messages;
 
-            std::map<dht::public_key, std::map<message, int>> m_message_putting_times;
+            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, int, common::less_communication_entry_base>> m_entry_putting_times;
 
-            std::map<dht::public_key, std::map<message, std::set<dht::node_entry>>> m_message_putting_nodes;
+            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, std::set<dht::node_entry>, common::less_communication_entry_base>> m_entry_putting_nodes;
 
-            std::map<dht::public_key, std::map<message, std::int64_t>> m_message_last_putting_time;
+            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, std::int64_t, common::less_communication_entry_base>> m_entry_last_putting_time;
 
             // missing messages (map:key->peer, value->missing message list)
 //            std::map<dht::public_key, std::set<message>> m_missing_messages;
