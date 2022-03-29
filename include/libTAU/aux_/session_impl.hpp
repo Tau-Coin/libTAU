@@ -69,7 +69,6 @@ see LICENSE file.
 
 #include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/blockchain.hpp"
-#include "libTAU/blockchain/chain_url.hpp"
 #include "libTAU/blockchain/block.hpp"
 #include "libTAU/blockchain/transaction.hpp"
 
@@ -621,7 +620,7 @@ namespace aux {
 			
         	void create_chain_id(std::string community_name, std::vector<char>* id);
             bool create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts, const blockchain::transaction& tx);
-        	bool follow_chain(const blockchain::chain_url & cul);
+        	bool follow_chain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
         	bool unfollow_chain(const aux::bytes &chain_id);
         	bool submit_transaction(const blockchain::transaction & tx);
         	bool get_account_info(const aux::bytes &chain_id, dht::public_key publicKey, blockchain::account* act);

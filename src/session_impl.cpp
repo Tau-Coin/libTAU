@@ -2981,9 +2981,9 @@ namespace {
 		return false; 
 	}
 
-	bool session_impl::follow_chain(const blockchain::chain_url &cul) {
+	bool session_impl::follow_chain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
 		if(m_blockchain)
-			return m_blockchain->followChain(cul);
+			return m_blockchain->followChain(chain_id, peers);
 		return false;
 	}
 

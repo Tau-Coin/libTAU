@@ -915,7 +915,6 @@ BLOCKCHAIN_SOURCES =
 	block
 	blockchain
 	blockchain_signal
-	chain_url
 	consensus
     index_key_info
     peer_info

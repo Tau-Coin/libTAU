@@ -306,9 +306,9 @@ namespace libTAU {
 	}
 
 	// follow chain
-    bool session_handle::follow_chain(const blockchain::chain_url & cul)
+    bool session_handle::follow_chain(std::vector<char> chain_id, const std::set<dht::public_key>& peers)
 	{
-		return sync_call_ret<bool>(&session_impl::follow_chain, cul);
+		return sync_call_ret<bool>(&session_impl::follow_chain, chain_id, peers);
 	}
 
 	// unfollow chain

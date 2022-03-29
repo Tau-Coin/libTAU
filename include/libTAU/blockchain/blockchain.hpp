@@ -23,7 +23,6 @@ see LICENSE file.
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
 #include "libTAU/blockchain/blockchain_signal.hpp"
-#include "libTAU/blockchain/chain_url.hpp"
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/peer_info.hpp"
 #include "libTAU/blockchain/repository.hpp"
@@ -127,8 +126,8 @@ namespace blockchain {
         // create new community
         bool createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts);
 
-        // follow a chain by url(chain id, peers)
-        bool followChain(const chain_url &url);
+        // follow a chain by chain id and peers
+        bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
         // un-follow a chain
         bool unfollowChain(const aux::bytes &chain_id);
@@ -206,8 +205,6 @@ namespace blockchain {
 
         void add_entry_task_to_queue(const aux::bytes &chain_id, const common::entry_task &task);
 
-        // follow a chain by chain id and peers
-        bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
         // load chain all info
         bool load_chain(const aux::bytes &chain_id);
