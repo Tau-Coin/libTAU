@@ -895,7 +895,8 @@ namespace {
 			"node",
 			"routing_table",
 			"rpc_manager",
-			"traversal"
+			"traversal",
+			"incoming_table"
 		};
 
 		char ret[900];

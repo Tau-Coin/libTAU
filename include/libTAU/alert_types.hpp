@@ -858,7 +858,8 @@ namespace libTAU {
 			node,
 			routing_table,
 			rpc_manager,
-			traversal
+			traversal,
+			incoming_table
 		};
 
 		// internal

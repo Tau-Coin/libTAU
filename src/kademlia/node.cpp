@@ -83,7 +83,8 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	: m_settings(settings)
 	, m_id(nid)
 	, m_table(m_id, aux::is_v4(sock.get_local_endpoint()) ? udp::v4() : udp::v6(), 8, settings, observer)
-	, m_rpc(m_id, m_settings, m_table, sock, sock_man, observer)
+	, m_incoming_table(m_id, aux::is_v4(sock.get_local_endpoint()) ? udp::v4() : udp::v6(), settings, m_table, observer)
+	, m_rpc(m_id, m_settings, m_table, m_incoming_table, sock, sock_man, observer)
 	, m_sock(sock)
 	, m_sock_man(sock_man)
 	, m_get_foreign_node(std::move(get_foreign_node))
@@ -948,6 +949,7 @@ time_duration node::connection_timeout()
 	m_last_tracker_tick = now;
 
 	m_storage.tick();
+	m_incoming_table.tick();
 
 	return d;
 }
@@ -1047,7 +1049,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 	{
 		// for multi online devices, another devices with the same node id
 		// may be in our routing table.
-		m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+		m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 	}
 
 	if (m_observer && m_observer->on_dht_request(query, m, e))
@@ -1148,7 +1150,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, error_string);
-			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+			m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -1171,7 +1173,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "message too big", 205);
-			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+			m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -1182,7 +1184,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "salt too big", 207);
-			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+			m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -1202,7 +1204,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{
 			m_counters.inc_stats_counter(counters::dht_invalid_put);
 			incoming_error(e, "invalid token");
-			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+			m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 			return std::make_tuple(need_response, need_push);
 		}
 
@@ -1224,7 +1226,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid (negative) timestamp");
-				m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+				m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 				return std::make_tuple(need_response, need_push);
 			}
 
@@ -1233,7 +1235,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 			{
 				m_counters.inc_stats_counter(counters::dht_invalid_put);
 				incoming_error(e, "invalid signature", 206);
-				m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+				m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 				return std::make_tuple(need_response, need_push);
 			}
 
@@ -1257,7 +1259,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "CAS mismatch", 301);
-					m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+					m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 					return std::make_tuple(need_response, need_push);
 				}
 
@@ -1265,7 +1267,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 				{
 					m_counters.inc_stats_counter(counters::dht_invalid_put);
 					incoming_error(e, "old timestamp", 302);
-					m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+					m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 					return std::make_tuple(need_response, need_push);
 				}
 
@@ -1295,7 +1297,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		{
 			node_id const receiver(msg_keys[9].string_ptr());
 			*to = receiver;
-			auto ne = m_table.find_node(receiver);
+			auto ne = m_incoming_table.find_node(receiver);
 			if (receiver == m_id)
 			{
 				// push to ourself
@@ -1314,7 +1316,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		// may be in our routing table.
 		if (!read_only)
 		{
-			m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+			m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 		}
 	}
 	else if (query == "get")
@@ -1508,7 +1510,7 @@ bool node::incoming_push(msg const& m, entry& e, node_id const& id, item& i)
 	bool const non_referrable = top_level[2] && top_level[2].int_value() != 0;
 	if (!read_only)
 	{
-		m_table.node_seen(id, m.addr, 0xffff, non_referrable);
+		m_incoming_table.incoming_endpoint(id, m.addr, non_referrable);
 	}
 
 	bdecode_node const arg_ent = top_level[3];
@@ -1664,7 +1666,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 	bool const non_referrable = top_level[2] && top_level[2].int_value() != 0;
 	if (!read_only)
 	{
-		m_table.node_seen(from, m.addr, 0xffff, non_referrable);
+		m_incoming_table.incoming_endpoint(from, m.addr, non_referrable);
 	}
 
 	bdecode_node const arg_ent = top_level[3];
@@ -1732,7 +1734,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 			// write referred nodes
 			write_nodes_entries(target_id, msg_keys[2], reply, min_distance_exp);
 
-			auto ne = m_table.find_node(target_id);
+			auto ne = m_incoming_table.find_node(target_id);
 			if (ne == nullptr || ne->ep() == m.addr) return false;
 			*to_ep = ne->ep();
 		}

@@ -892,6 +892,7 @@ KADEMLIA_SOURCES =
 	put_data
 	relay
     keep
+	incoming_table
 	ed25519
 	dht_settings
 	;

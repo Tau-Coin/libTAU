@@ -46,6 +46,7 @@ struct TORRENT_EXTRA_EXPORT null_observer : observer
 };
 
 class routing_table;
+class incoming_table;
 
 class TORRENT_EXTRA_EXPORT rpc_manager
 {
@@ -54,6 +55,7 @@ public:
 	rpc_manager(node_id const& our_id
 		, aux::session_settings const& settings
 		, routing_table& table
+		, incoming_table& incoming_table
 		, aux::listen_socket_handle sock
 		, socket_manager* sock_man
 		, dht_logger* log);
@@ -113,6 +115,7 @@ private:
 #endif
 	aux::session_settings const& m_settings;
 	routing_table& m_table;
+	incoming_table& m_incoming_table;
 	node_id m_our_id;
 	std::uint32_t m_allocated_observers:31;
 	std::int64_t m_invoked_requests;

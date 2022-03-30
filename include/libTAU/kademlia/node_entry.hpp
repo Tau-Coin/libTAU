@@ -72,6 +72,7 @@ struct TORRENT_EXPORT node_entry
 #endif
 
 		last_queried = min_time();
+		last_seen = min_time();
 		rtt = 0xffff;
 		timeout_count = 0xff;
 		verified = false;
@@ -86,6 +87,11 @@ struct TORRENT_EXPORT node_entry
 
 	// the time we last received a response for a request to this peer
 	time_point last_queried = min_time();
+
+	// this field is designed for non-referrable endpoint.
+	// the time we last received a response for a request to this peer
+	// or the time we last received a request from this peer
+	time_point last_seen = min_time();
 
 	node_id id{nullptr};
 

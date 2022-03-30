@@ -22,6 +22,7 @@ see LICENSE file.
 
 #include <libTAU/config.hpp>
 #include <libTAU/kademlia/dht_storage.hpp>
+#include <libTAU/kademlia/incoming_table.hpp>
 #include <libTAU/kademlia/routing_table.hpp>
 #include <libTAU/kademlia/rpc_manager.hpp>
 #include <libTAU/kademlia/node_id.hpp>
@@ -298,6 +299,7 @@ private:
 
 public:
 	routing_table m_table;
+	incoming_table m_incoming_table;
 	rpc_manager m_rpc;
 	aux::listen_socket_handle const m_sock;
 	dht_storage_interface& m_storage;

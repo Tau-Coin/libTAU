@@ -193,6 +193,8 @@ public:
 	// return a pointer the node_entry with the given node id.
 	node_entry* find_node(node_id const& nid);
 
+	bool remove_node(node_id const& nid);
+
 	// return a pointer the node_entry with the given endpoint
 	// or 0 if we don't have such a node. Both the address and the
 	// port has to match

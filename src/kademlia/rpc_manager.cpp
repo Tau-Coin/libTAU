@@ -17,6 +17,7 @@ see LICENSE file.
 #include <libTAU/aux_/random.hpp>
 #include <libTAU/aux_/invariant_check.hpp>
 #include <libTAU/kademlia/rpc_manager.hpp>
+#include <libTAU/kademlia/incoming_table.hpp>
 #include <libTAU/kademlia/routing_table.hpp>
 #include <libTAU/kademlia/find_data.hpp>
 #include <libTAU/kademlia/put_data.hpp>
@@ -128,6 +129,7 @@ namespace {
 rpc_manager::rpc_manager(node_id const& our_id
 	, aux::session_settings const& settings
 	, routing_table& table
+	, incoming_table& incoming_table
 	, aux::listen_socket_handle sock
 	, socket_manager* sock_man
 	, dht_logger* log)
@@ -139,6 +141,7 @@ rpc_manager::rpc_manager(node_id const& our_id
 #endif
 	, m_settings(settings)
 	, m_table(table)
+	, m_incoming_table(incoming_table)
 	, m_our_id(our_id)
 	, m_allocated_observers(0)
 	, m_invoked_requests(0)
@@ -340,7 +343,7 @@ bool rpc_manager::incoming(msg const& m, node_id const& nid)
 
 	// we found an observer for this reply, hence the node is not spoofing
 	// add it to the routing table
-	return m_table.node_seen(nid, m.addr, rtt, non_referrable);
+	return m_incoming_table.node_seen(nid, m.addr, rtt, non_referrable);
 }
 
 time_duration rpc_manager::tick()

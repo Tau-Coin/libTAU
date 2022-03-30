@@ -1864,6 +1864,15 @@ namespace aux {
 			// the time interval(seconds) of keep alive
 			dht_keep_interval,
 
+			// the maximum number of endpoints in coming table
+			dht_incoming_table_max_count,
+
+			// the time interval(seconds) of refreshing incoming table
+			dht_incoming_table_refresh_time,
+
+			// the life time (seconds) of endpoints incoming table
+			dht_incoming_table_lifetime,
+
 			// the time interval(seconds) of accepting mutable item
 			dht_time_offset,
 

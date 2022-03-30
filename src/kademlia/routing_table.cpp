@@ -525,12 +525,42 @@ node_entry* routing_table::find_node(node_id const& nid)
 
 	j = std::find_if(rb.begin(), rb.end()
 		, [&nid](node_entry const& ne) { return ne.id == nid; });
-	if (j != b.end())
+	if (j != rb.end())
 	{
 		return &*j;
 	}
 
 	return nullptr;
+}
+
+bool routing_table::remove_node(node_id const& nid)
+{
+	if (nid == m_id) return false;
+
+	auto const i = find_bucket(nid);
+	bucket_t& b = i->live_nodes;
+	bucket_t& rb = i->replacements;
+	bucket_t::iterator j;
+
+	j = std::find_if(b.begin(), b.end()
+		, [&nid](node_entry const& ne) { return ne.id == nid; });
+	if (j != b.end())
+	{
+		remove_node(&*j, &b);
+
+		return true;
+	}
+
+	j = std::find_if(rb.begin(), rb.end()
+		, [&nid](node_entry const& ne) { return ne.id == nid; });
+	if (j != rb.end())
+	{
+		remove_node(&*j, &rb);
+
+		return true;
+	}
+
+	return false;
 }
 
 // TODO: this need to take bucket "prefix" into account. It should be unified
