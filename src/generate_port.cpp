@@ -26,7 +26,7 @@ std::uint16_t generate_port(const std::array<char, 32>& key)
     std::uint64_t *number = reinterpret_cast<std::uint64_t*> (key_ex);
 
     //TODO: settings_pack
-    port = (*number)%64535 + 1000;  //1000 -> 65535 
+    port = (*number)%64535 + 1024;  //1024 -> 65535 
 
     return port;
 }
