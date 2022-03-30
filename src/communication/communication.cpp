@@ -830,19 +830,19 @@ namespace libTAU {
                             msg_entry.set_levenshtein_array(levenshtein_array);
                             msg_entry.set_timestamp(now);
 
-                            send_to(task.m_peer, msg_entry.get_entry(), 1, 10, 10, true);
+                            send_to(task.m_peer, msg_entry.get_entry(), 1, 10, 7, true);
                             break;
                         }
                         case common::friend_info_entry::data_type_id: {
                             common::friend_info_entry friendInfoEntry(task.m_entry);
                             friendInfoEntry.set_timestamp(now);
-                            send_to(task.m_peer, friendInfoEntry.get_entry(), 1, 10, 10, true);
+                            send_to(task.m_peer, friendInfoEntry.get_entry(), 1, 10, 7, true);
                             break;
                         }
                         case common::friend_info_request_entry::data_type_id: {
                             common::friend_info_request_entry friendInfoRequestEntry(task.m_entry);
                             friendInfoRequestEntry.set_timestamp(now);
-                            send_to(task.m_peer, friendInfoRequestEntry.get_entry(), 1, 10, 10, false);
+                            send_to(task.m_peer, friendInfoRequestEntry.get_entry(), 1, 10, 7, false);
                             break;
                         }
                         default: {
@@ -1659,7 +1659,7 @@ namespace libTAU {
             auto & entry_putting_times = m_entry_putting_times[peer];
             if (!entry_putting_times.empty()) {
                 auto it = entry_putting_times.begin();
-                if (it->second >= 10) {
+                if (it->second >= 7) {
                     m_entry_putting_times[peer].erase(it->first);
                     m_entry_putting_nodes[peer].erase(it->first);
                     m_entry_last_putting_time[peer].erase(it->first);
