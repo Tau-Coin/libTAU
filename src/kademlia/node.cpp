@@ -1435,6 +1435,8 @@ void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m, nod
 	// construct push protocol
 	entry e(m.message);
 	e["y"] = "p";
+	e["ro"] = m_settings.get_bool(settings_pack::dht_read_only) ? 1 : 0;
+	e["nr"] = m_settings.get_bool(settings_pack::dht_non_referrable) ? 1 : 0;
 
 	// create a dummy traversal_algorithm
 	auto algo = std::make_shared<traversal_algorithm>(*this, to);
@@ -1758,6 +1760,8 @@ void node::relay(node_id const& to, udp::endpoint const& to_ep, msg const& m)
 
 	// construct push protocol
 	entry e(m.message);
+	e["ro"] = m_settings.get_bool(settings_pack::dht_read_only) ? 1 : 0;
+	e["nr"] = m_settings.get_bool(settings_pack::dht_non_referrable) ? 1 : 0;
 
 	// create a dummy traversal_algorithm
 	auto algo = std::make_shared<traversal_algorithm>(*this, to);
