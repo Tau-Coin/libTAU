@@ -1887,7 +1887,6 @@ namespace {
 					m_decrypted_udp_packet.clear();
 					m_decrypted_ucd_udp_packet.clear();
 
-/*
 #ifndef TORRENT_DISABLE_LOGGING
 					if (should_log())
 					{
@@ -1897,7 +1896,6 @@ namespace {
 							, aux::to_hex(m_raw_recv_udp_packet).c_str());
 					}
 #endif
-*/
 
 					std::string err_str;
 					bool result = decrypt_udp_packet(m_raw_recv_udp_packet
