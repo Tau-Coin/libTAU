@@ -1430,30 +1430,31 @@ namespace libTAU::blockchain {
 
                 auto tail_block = m_tail_blocks[chain_id];
                 // seek tail block
-                while (b.timestamp() - tail_block.timestamp() >= CHAIN_EPOCH_TIME) {
+                while (b.block_number() - tail_block.block_number() > CHAIN_EPOCH_BLOCK_SIZE) {
 
                     // get next main chain block to be expired one by one
                     auto tail_next_block = track->get_main_chain_block_by_number(chain_id, tail_block.block_number() + 1);
 
-                    if (b.timestamp() - tail_next_block.timestamp() >= CHAIN_EPOCH_TIME) {
-                        if (!track->expire_block(tail_block)) {
-                            log("INFO chain[%s] expire block[%s] fail",
-                                aux::toHex(chain_id).c_str(), aux::toHex(tail_block.sha256().to_string()).c_str());
-                            return FAIL;
-                        }
-
-                        // chain changed, re-check block peer in pool
-                        auto tail_peers = tail_block.get_block_peers();
-                        peers.insert(tail_peers.begin(), tail_peers.end());
-
-                        // move to next block
-                        tail_block = tail_next_block;
-
-                        // set new tail
-                        track->set_tail_block_hash(chain_id, tail_block.sha256());
-                    } else {
-                        break;
+                    if (tail_next_block.empty()) {
+                        log("INFO chain[%s] Cannot get next tail block", aux::toHex(chain_id).c_str());
+                        return FAIL;
                     }
+
+                    if (!track->expire_block(tail_block)) {
+                        log("INFO chain[%s] expire block[%s] fail",
+                            aux::toHex(chain_id).c_str(), aux::toHex(tail_block.sha256().to_string()).c_str());
+                        return FAIL;
+                    }
+
+                    // chain changed, re-check block peer in pool
+                    auto tail_peers = tail_block.get_block_peers();
+                    peers.insert(tail_peers.begin(), tail_peers.end());
+
+                    // move to next block
+                    tail_block = tail_next_block;
+
+                    // set new tail
+                    track->set_tail_block_hash(chain_id, tail_block.sha256());
                 }
 
                 if (!track->commit()) {
@@ -1474,7 +1475,7 @@ namespace libTAU::blockchain {
                 m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(b);
             }
 
-            if (m_head_blocks[chain_id].timestamp() - m_tail_blocks[chain_id].timestamp() < CHAIN_EPOCH_TIME &&
+            if (m_head_blocks[chain_id].block_number() - m_tail_blocks[chain_id].block_number() < CHAIN_EPOCH_BLOCK_SIZE &&
                 b.sha256() == m_tail_blocks[chain_id].previous_block_hash()) {
                 auto track = m_repository->start_tracking();
 
@@ -1553,7 +1554,7 @@ namespace libTAU::blockchain {
             return true;
 
         // if chain length = effective block number, sync is completed
-        if (head_block.timestamp() - tail_block.timestamp() >= CHAIN_EPOCH_TIME)
+        if (head_block.block_number() - tail_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE)
             return true;
 
         return false;
@@ -1839,7 +1840,7 @@ namespace libTAU::blockchain {
         }
 
         // seek tail block
-        while (head_block.timestamp() - tail_block.timestamp() < CHAIN_EPOCH_TIME && !tail_block.previous_block_hash().is_all_zeros()) {
+        while (head_block.block_number() - tail_block.block_number() < CHAIN_EPOCH_BLOCK_SIZE && !tail_block.previous_block_hash().is_all_zeros()) {
 
             // get previous block
             auto previous_block = track->get_block_by_hash(tail_block.previous_block_hash());
@@ -1897,27 +1898,28 @@ namespace libTAU::blockchain {
         }
 
         // seek tail block
-        while (target.timestamp() - tail_block.timestamp() >= CHAIN_EPOCH_TIME) {
+        while (target.block_number() - tail_block.block_number() > CHAIN_EPOCH_BLOCK_SIZE) {
 
             // get next main chain block to be expired one by one
             auto tail_next_block = track->get_main_chain_block_by_number(chain_id, tail_block.block_number() + 1);
 
-            if (target.timestamp() - tail_next_block.timestamp() >= CHAIN_EPOCH_TIME) {
-                if (!track->expire_block(tail_block)) {
-                    log("INFO chain[%s] expire block[%s] fail",
-                        aux::toHex(chain_id).c_str(), aux::toHex(tail_block.sha256().to_string()).c_str());
-                    return FAIL;
-                }
-
-                // chain changed, re-check block peer in pool
-                auto tail_peers = tail_block.get_block_peers();
-                peers.insert(tail_peers.begin(), tail_peers.end());
-
-                // move to next block
-                tail_block = tail_next_block;
-            } else {
-                break;
+            if (tail_next_block.empty()) {
+                log("INFO chain[%s] Cannot get next tail block", aux::toHex(chain_id).c_str());
+                return FAIL;
             }
+
+            if (!track->expire_block(tail_block)) {
+                log("INFO chain[%s] expire block[%s] fail",
+                    aux::toHex(chain_id).c_str(), aux::toHex(tail_block.sha256().to_string()).c_str());
+                return FAIL;
+            }
+
+            // chain changed, re-check block peer in pool
+            auto tail_peers = tail_block.get_block_peers();
+            peers.insert(tail_peers.begin(), tail_peers.end());
+
+            // move to next block
+            tail_block = tail_next_block;
         }
 
         if (!track->set_tail_block_hash(chain_id, tail_block.sha256())) {

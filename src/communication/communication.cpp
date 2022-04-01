@@ -725,7 +725,7 @@ namespace libTAU {
                         auto const& peer = item.first;
                         auto const& entry_putting_times = item.second;
                         for (auto const& i: entry_putting_times) {
-                            log("INFO: peer[%s] entry[%s] putting times:%d", aux::toHex(peer.bytes).c_str(),
+                            log("------INFO: peer[%s] entry[%s] putting times:%d", aux::toHex(peer.bytes).c_str(),
                                 i.first->get_entry().to_string(true).c_str(), i.second);
                         }
                     }
@@ -734,7 +734,7 @@ namespace libTAU {
                         auto const& peer = item.first;
                         auto const& entry_putting_times = item.second;
                         for (auto const& i: entry_putting_times) {
-                            log("INFO: peer[%s] entry[%s] putting nodes:%lu", aux::toHex(peer.bytes).c_str(),
+                            log("------INFO: peer[%s] entry[%s] putting nodes:%lu", aux::toHex(peer.bytes).c_str(),
                                 i.first->get_entry().to_string(true).c_str(), i.second.size());
                         }
                     }
@@ -743,7 +743,7 @@ namespace libTAU {
                         auto const& peer = item.first;
                         auto const& entry_putting_times = item.second;
                         for (auto const& i: entry_putting_times) {
-                            log("INFO: peer[%s] entry[%s] last putting time:%ld", aux::toHex(peer.bytes).c_str(),
+                            log("------INFO: peer[%s] entry[%s] last putting time:%ld", aux::toHex(peer.bytes).c_str(),
                                 i.first->get_entry().to_string(true).c_str(), i.second);
                         }
                     }
