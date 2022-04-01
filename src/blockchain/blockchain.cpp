@@ -1430,7 +1430,7 @@ namespace libTAU::blockchain {
 
                 auto tail_block = m_tail_blocks[chain_id];
                 // seek tail block
-                while (b.block_number() - tail_block.block_number() > CHAIN_EPOCH_BLOCK_SIZE) {
+                while (b.block_number() - tail_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE) {
 
                     // get next main chain block to be expired one by one
                     auto tail_next_block = track->get_main_chain_block_by_number(chain_id, tail_block.block_number() + 1);
@@ -1475,7 +1475,7 @@ namespace libTAU::blockchain {
                 m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(b);
             }
 
-            if (m_head_blocks[chain_id].block_number() - m_tail_blocks[chain_id].block_number() < CHAIN_EPOCH_BLOCK_SIZE &&
+            if (m_head_blocks[chain_id].block_number() - m_tail_blocks[chain_id].block_number() < CHAIN_EPOCH_BLOCK_SIZE - 1 &&
                 b.sha256() == m_tail_blocks[chain_id].previous_block_hash()) {
                 auto track = m_repository->start_tracking();
 
@@ -1554,7 +1554,7 @@ namespace libTAU::blockchain {
             return true;
 
         // if chain length = effective block number, sync is completed
-        if (head_block.block_number() - tail_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE)
+        if (head_block.block_number() - tail_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE - 1)
             return true;
 
         return false;
@@ -1840,7 +1840,7 @@ namespace libTAU::blockchain {
         }
 
         // seek tail block
-        while (head_block.block_number() - tail_block.block_number() < CHAIN_EPOCH_BLOCK_SIZE && !tail_block.previous_block_hash().is_all_zeros()) {
+        while (head_block.block_number() - tail_block.block_number() < CHAIN_EPOCH_BLOCK_SIZE - 1 && !tail_block.previous_block_hash().is_all_zeros()) {
 
             // get previous block
             auto previous_block = track->get_block_by_hash(tail_block.previous_block_hash());
@@ -1898,7 +1898,7 @@ namespace libTAU::blockchain {
         }
 
         // seek tail block
-        while (target.block_number() - tail_block.block_number() > CHAIN_EPOCH_BLOCK_SIZE) {
+        while (target.block_number() - tail_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE) {
 
             // get next main chain block to be expired one by one
             auto tail_next_block = track->get_main_chain_block_by_number(chain_id, tail_block.block_number() + 1);
