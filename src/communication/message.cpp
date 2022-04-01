@@ -73,7 +73,7 @@ namespace libTAU {
         }
 
         std::ostream &operator<<(std::ostream &os, const message &message) {
-            os << "message m_hash: " << aux::toHex(message.m_hash.to_string()) << "m_timestamp: "
+            os << "message m_hash: " << aux::toHex(message.m_hash.to_string()) << " m_timestamp: "
                << message.m_timestamp << " m_sender: " << aux::toHex(message.m_sender.bytes) << " m_receiver: "
                << aux::toHex(message.m_receiver.bytes) << " m_payload: " << aux::toHex(message.m_payload);
             return os;
