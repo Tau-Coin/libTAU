@@ -297,7 +297,9 @@ namespace libTAU {
 
 //            std::map<dht::public_key, std::int64_t> m_last_detection_time;
 
-            std::map<dht::public_key, std::int64_t> m_last_request_friend_info_time;
+//            std::map<dht::public_key, std::int64_t> m_last_request_friend_info_time;
+
+            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, int, common::less_communication_entry_base>> m_last_same_entry_time;
 
             std::map<dht::public_key, std::int64_t> m_last_communication_time;
 

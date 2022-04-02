@@ -342,6 +342,44 @@ namespace libTAU::common {
         aux::bytes m_levenshtein_array;
     };
 
+    struct TORRENT_EXPORT message_levenshtein_array_entry2 final : communication_entry_base {
+        // data type id
+        static inline constexpr std::int64_t data_type_id = 1;
+
+        // @param Construct with entry
+        explicit message_levenshtein_array_entry2(const entry& e);
+
+//        explicit message_levenshtein_array_entry(aux::bytes mLevenshteinArray) : m_levenshtein_array(std::move(mLevenshteinArray)) {}
+
+//        message_levenshtein_array_entry2(aux::bytes mLevenshteinArray, int64_t mTimestamp) : m_levenshtein_array(std::move(mLevenshteinArray)) {
+//            m_timestamp = mTimestamp;
+//
+//            auto et = get_real_payload_entry();
+//            std::string encode;
+//            bencode(std::back_inserter(encode), et);
+//            m_real_payload_hash = dht::item_target_id(encode);
+//        }
+
+        std::int64_t get_data_type_id() const override { return data_type_id; }
+
+        // @returns the corresponding entry
+        entry get_entry() const override;
+
+        // @returns the corresponding entry
+        entry get_real_payload_entry() const override;
+
+        void set_timestamp(std::int64_t t) override {
+            m_timestamp = t;
+        }
+
+        bool operator<(const message_levenshtein_array_entry2 &rhs) const {
+            return m_levenshtein_array < rhs.m_levenshtein_array;
+        }
+
+        // bytes consist of first byte of ordered messages hash
+        aux::bytes m_levenshtein_array;
+    };
+
     struct TORRENT_EXPORT friend_info_request_entry final : communication_entry_base {
         // data type id
         static inline constexpr std::int64_t data_type_id = 2;
