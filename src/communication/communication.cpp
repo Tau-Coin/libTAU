@@ -163,16 +163,20 @@ namespace libTAU {
                         log("INFO: Got message, hash[%s].",
                             aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
 
-                        auto it = m_last_same_entry_time[peer].find(std::make_shared<common::message_entry>(payload));
-                        if (it != m_last_same_entry_time[peer].end()) {
-                            if (now > it->second + communication_same_response_interval) {
-                                m_last_same_entry_time[peer].erase(it);
+                        {
+                            auto it = m_last_same_entry_time[peer].find(
+                                    std::make_shared<common::message_entry>(payload));
+                            if (it != m_last_same_entry_time[peer].end()) {
+                                if (now > it->second + communication_same_response_interval) {
+                                    m_last_same_entry_time[peer].erase(it);
+                                } else {
+                                    log("INFO: The same request from the same peer in 4s.");
+                                    break;
+                                }
                             } else {
-                                log("INFO: The same request from the same peer in 4s.");
-                                break;
+                                m_last_same_entry_time[peer].emplace(std::make_shared<common::message_entry>(payload),
+                                                                     now);
                             }
-                        } else {
-                            m_last_same_entry_time[peer].emplace(std::make_shared<common::message_entry>(payload), now);
                         }
 
                         add_new_message(peer, msg_entry.m_msg, true);
@@ -190,12 +194,9 @@ namespace libTAU {
                                                missing_messages, confirmed_messages);
 
                             for (auto const& msg: missing_messages) {
-                                // add msg into set
-                                auto ptr = std::make_shared<common::message_entry>(msg);
-                                auto it = m_entry_putting_times[peer].find(ptr);
-                                if (it == m_entry_putting_times[peer].end()) {
-                                    m_entry_putting_times[peer][ptr] = 0;
-                                }
+                                m_entry_putting_times[peer][std::make_shared<common::message_entry>(msg)] = 0;
+                                m_entry_putting_nodes.clear();
+                                m_entry_putting_nodes[peer].clear();
                             }
 
                             for (auto const& msg: confirmed_messages) {
@@ -265,12 +266,9 @@ namespace libTAU {
                                                missing_messages, confirmed_messages);
 
                             for (auto const& msg: missing_messages) {
-                                // add msg into set
-                                auto ptr = std::make_shared<common::message_entry>(msg);
-                                auto it = m_entry_putting_times[peer].find(ptr);
-                                if (it == m_entry_putting_times[peer].end()) {
-                                    m_entry_putting_times[peer][ptr] = 0;
-                                }
+                                m_entry_putting_times[peer][std::make_shared<common::message_entry>(msg)] = 0;
+                                m_entry_putting_nodes.clear();
+                                m_entry_putting_nodes[peer].clear();
                             }
 
                             for (auto const& msg: confirmed_messages) {
@@ -476,7 +474,7 @@ namespace libTAU {
             auto ptr = std::make_shared<common::friend_info_request_entry>();
             auto it = m_entry_putting_times[peer].find(ptr);
             if (it == m_entry_putting_times[peer].end()) {
-                m_entry_putting_times[peer][ptr] = 0;
+                m_entry_putting_times[peer][ptr] = 1;
             }
         }
 
@@ -874,7 +872,7 @@ namespace libTAU {
                             auto ptr = std::make_shared<common::message_levenshtein_array_entry>(levenshtein_array, now);
                             auto it = m_entry_putting_times[task.m_peer].find(ptr);
                             if (it == m_entry_putting_times[task.m_peer].end()) {
-                                m_entry_putting_times[task.m_peer][ptr] = 0;
+                                m_entry_putting_times[task.m_peer][ptr] = 1;
                             }
 
                             // 产生随机数
