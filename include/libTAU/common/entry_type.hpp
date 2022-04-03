@@ -308,6 +308,8 @@ namespace libTAU::common {
         // data type id
         static inline constexpr std::int64_t data_type_id = 1;
 
+        message_levenshtein_array_entry();
+
         // @param Construct with entry
         explicit message_levenshtein_array_entry(const entry& e);
 

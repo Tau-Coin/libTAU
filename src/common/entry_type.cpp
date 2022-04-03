@@ -110,6 +110,12 @@ namespace libTAU::common {
         return e;
     }
 
+    message_levenshtein_array_entry::message_levenshtein_array_entry() {
+        auto et = get_real_payload_entry();
+        std::string encode;
+        bencode(std::back_inserter(encode), et);
+        m_real_payload_hash = dht::item_target_id(encode);
+    }
 
     message_levenshtein_array_entry::message_levenshtein_array_entry(const entry &e) {
         // message levenshtein array

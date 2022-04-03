@@ -195,8 +195,8 @@ namespace libTAU {
 
                             for (auto const& msg: missing_messages) {
                                 m_entry_putting_times[peer][std::make_shared<common::message_entry>(msg)] = 0;
-                                m_entry_putting_nodes.clear();
                                 m_entry_putting_nodes[peer].clear();
+                                m_entry_last_putting_time[peer].clear();
                             }
 
                             for (auto const& msg: confirmed_messages) {
@@ -226,6 +226,11 @@ namespace libTAU {
 
                         common::entry_task task(common::message_levenshtein_array_entry::data_type_id, peer);
                         add_entry_task_to_queue(task);
+
+                        auto ptr = std::make_shared<common::message_levenshtein_array_entry>();
+                        m_entry_putting_times[peer][ptr] = 1;
+                        m_entry_putting_nodes[peer].clear();
+                        m_entry_last_putting_time[peer][ptr] = now;
 
                         m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
@@ -267,8 +272,8 @@ namespace libTAU {
 
                             for (auto const& msg: missing_messages) {
                                 m_entry_putting_times[peer][std::make_shared<common::message_entry>(msg)] = 0;
-                                m_entry_putting_nodes.clear();
                                 m_entry_putting_nodes[peer].clear();
+                                m_entry_last_putting_time[peer].clear();
                             }
 
                             for (auto const& msg: confirmed_messages) {
@@ -351,6 +356,11 @@ namespace libTAU {
                             common::entry_task task(common::friend_info_entry::data_type_id, peer,
                                                     e.get_entry());
                             add_entry_task_to_queue(task);
+
+                            auto ptr = std::make_shared<common::friend_info_entry>(friend_info);
+                            m_entry_putting_times[peer][ptr] = 1;
+                            m_entry_putting_nodes[peer].clear();
+                            m_entry_last_putting_time[peer][ptr] = now;
                         }
 
                         m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
@@ -475,6 +485,7 @@ namespace libTAU {
             auto it = m_entry_putting_times[peer].find(ptr);
             if (it == m_entry_putting_times[peer].end()) {
                 m_entry_putting_times[peer][ptr] = 1;
+                m_entry_last_putting_time[peer][ptr] = get_current_time();
             }
         }
 
@@ -518,6 +529,13 @@ namespace libTAU {
             std::int64_t now = get_current_time();
             common::message_entry msg_entry(msg, levenshtein_array, now);
             send_to(msg.receiver(), msg_entry.get_entry(), 1, 10, 10, true);
+
+            auto ptr = std::make_shared<common::message_entry>(msg);
+            auto it = m_entry_putting_times[msg.receiver()].find(ptr);
+            if (it == m_entry_putting_times[msg.receiver()].end()) {
+                m_entry_putting_times[msg.receiver()][ptr] = 1;
+                m_entry_last_putting_time[msg.receiver()][ptr] = now;
+            }
 
 //            update_detection_time(msg.receiver(), now);
             update_communication_time(msg.receiver(), now);
@@ -869,11 +887,11 @@ namespace libTAU {
 
                             common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
 
-                            auto ptr = std::make_shared<common::message_levenshtein_array_entry>(levenshtein_array, now);
-                            auto it = m_entry_putting_times[task.m_peer].find(ptr);
-                            if (it == m_entry_putting_times[task.m_peer].end()) {
-                                m_entry_putting_times[task.m_peer][ptr] = 1;
-                            }
+//                            auto ptr = std::make_shared<common::message_levenshtein_array_entry>(levenshtein_array, now);
+//                            auto it = m_entry_putting_times[task.m_peer].find(ptr);
+//                            if (it == m_entry_putting_times[task.m_peer].end()) {
+//                                m_entry_putting_times[task.m_peer][ptr] = 1;
+//                            }
 
                             // 产生随机数
                             srand(total_microseconds(system_clock::now().time_since_epoch()));
