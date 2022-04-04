@@ -359,7 +359,7 @@ namespace libTAU {
 		SET(dht_sample_infohashes_interval, 21600, nullptr),
 		SET(dht_max_infohashes_sample_count, 20, nullptr),
 		SET(reopen_time_interval, 1000, nullptr),
-		SET(max_time_peer_zero, 10000, nullptr),
+		SET(max_time_peers_zero, 10000, nullptr),
 	}});
 
 #undef SET
