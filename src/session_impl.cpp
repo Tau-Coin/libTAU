@@ -581,9 +581,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
             if(0 == num_dht_nodes) {
                 int max_time = m_settings.get_int(settings_pack::max_time_peers_zero);
                 if(m_session_time - m_dht_nodes_non_zero >= max_time) {
-#ifdef TORRENT_ANDROID			
                     reopen_listen_sockets(false);
-#endif
                     m_dht_nodes_non_zero = m_session_time;
                 }
             } else {

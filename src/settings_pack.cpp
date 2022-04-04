@@ -347,7 +347,7 @@ namespace libTAU {
 		SET(dht_keep_interval, 20, nullptr),
 		SET(dht_incoming_table_max_count, 10000, nullptr),
 		SET(dht_incoming_table_refresh_time, 30, nullptr),
-		SET(dht_incoming_table_lifetime, 40, nullptr),
+		SET(dht_incoming_table_lifetime, 60, nullptr),
 		SET(dht_time_offset, 30, nullptr),
 		SET(dht_max_fail_count, 60, nullptr),
 		SET(dht_max_torrents, 2000, nullptr),
@@ -359,7 +359,7 @@ namespace libTAU {
 		SET(dht_sample_infohashes_interval, 21600, nullptr),
 		SET(dht_max_infohashes_sample_count, 20, nullptr),
 		SET(reopen_time_interval, 1000, nullptr),
-		SET(max_time_peer_zero, 10000, nullptr),
+		SET(max_time_peers_zero, 10000, nullptr),
 	}});
 
 #undef SET
