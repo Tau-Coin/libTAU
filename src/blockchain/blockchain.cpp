@@ -388,7 +388,7 @@ namespace libTAU::blockchain {
                                     remove_all_same_chain_blocks_from_cache(blk);
 
                                     acl.erase(it);
-                                    ban_peer(chain_id, it->first);
+                                    ban_peer_max_time(chain_id, it->first);
                                 } else if (result == SUCCESS) {
                                     // clear all ancestor blocks
                                     remove_all_ancestor_blocks_from_cache(blk);
@@ -1605,6 +1605,18 @@ namespace libTAU::blockchain {
                 ban_time = blockchain_max_ban_time;
             }
             ban_list[peer].set_free_time(now + ban_time);
+        }
+    }
+
+    void blockchain::ban_peer_max_time(const aux::bytes &chain_id, const dht::public_key &peer) {
+        auto now = get_total_milliseconds();
+        auto &ban_list = m_ban_list[chain_id];
+        auto it = ban_list.find(peer);
+        if (it != ban_list.end()) {
+            it->second.set_free_time(now + blockchain_max_ban_time);
+        } else {
+            ban_list[peer] = ban_info();
+            ban_list[peer].set_free_time(now + blockchain_max_ban_time);
         }
     }
 

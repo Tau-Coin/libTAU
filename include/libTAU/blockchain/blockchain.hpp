@@ -68,7 +68,7 @@ namespace blockchain {
     // blockchain min peers in acl
     constexpr std::int64_t blockchain_acl_min_peers = 3;
 
-    // blockchain min peers in acl
+    // blockchain max peers in acl
     constexpr std::int64_t blockchain_acl_max_peers = 5;
 
     // blockchain min ban time(5min)
@@ -263,6 +263,8 @@ namespace blockchain {
         void try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void ban_peer(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void ban_peer_max_time(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);
 
