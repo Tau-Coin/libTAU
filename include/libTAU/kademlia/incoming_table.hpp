@@ -57,6 +57,10 @@ public:
 
 	void tick();
 
+	void update_node_id(node_id const& id) { m_id = id; }
+
+	int size() const { return m_nr_table.size(); }
+
 private:
 
 	bool add_node(node_id const& id, udp::endpoint const& ep);

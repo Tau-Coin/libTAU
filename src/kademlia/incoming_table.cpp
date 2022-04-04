@@ -78,6 +78,17 @@ incoming_table::incoming_table(node_id const& id, udp proto
 	, m_table(table)
 	, m_last_refresh(min_time())
 {
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
+		{
+			m_log->log(dht_logger::incoming_table
+				, "config: non-referrable: %s, cap: %d, refresh: %ds, expire: %ds"
+				, m_settings.get_bool(settings_pack::dht_non_referrable) ? "true" : "false"
+				, m_settings.get_int(settings_pack::dht_incoming_table_max_count)
+				, m_settings.get_int(settings_pack::dht_incoming_table_refresh_time)
+				, m_settings.get_int(settings_pack::dht_incoming_table_lifetime));
+		}
+#endif
 }
 
 bool incoming_table::incoming_endpoint(node_id const& id
@@ -86,9 +97,16 @@ bool incoming_table::incoming_endpoint(node_id const& id
 	if (!non_referrable)
 	{
 		remove_node(id);
-		m_table.heard_about(id, ep);
+		//m_table.heard_about(id, ep);
 
-		return true;
+		//return true;
+
+		return m_table.node_seen(id, ep, 2000, non_referrable);
+	}
+
+	if (m_settings.get_bool(settings_pack::dht_non_referrable))
+	{
+		return false;
 	}
 
 	// try to remove this node from routing table
@@ -104,6 +122,11 @@ bool incoming_table::node_seen(node_id const& id
 	{
 		remove_node(id);
 		return m_table.node_seen(id, ep, rtt, non_referrable);
+	}
+
+	if (m_settings.get_bool(settings_pack::dht_non_referrable))
+	{
+		return false;
 	}
 
 	// try to remove this node from routing table
@@ -126,6 +149,8 @@ node_entry* incoming_table::find_node(node_id const& nid)
 
 void incoming_table::tick()
 {
+	if (m_settings.get_bool(settings_pack::dht_non_referrable)) return;
+
 	if (0 == endpoint_lifetime()) return;
 
 	time_point const now = aux::time_now();

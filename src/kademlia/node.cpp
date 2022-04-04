@@ -208,6 +208,7 @@ void node::update_node_id(node_id const& id)
 	m_id = id;
 	m_table.update_node_id(m_id);
 	m_rpc.update_node_id(m_id);
+	m_incoming_table.update_node_id(m_id);
 }
 
 int node::bucket_size(int bucket)
@@ -976,6 +977,7 @@ std::tuple<int, int, int, std::int64_t> node::get_stats_counters() const
 {
 	int nodes, replacements;
 	std::tie(nodes, replacements, std::ignore) = size();
+	nodes = nodes + m_incoming_table.size();
 	return std::make_tuple(nodes, replacements
 			, m_rpc.num_allocated_observers()
 			, m_rpc.num_invoked_requests());

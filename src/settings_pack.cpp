@@ -347,7 +347,7 @@ namespace libTAU {
 		SET(dht_keep_interval, 20, nullptr),
 		SET(dht_incoming_table_max_count, 10000, nullptr),
 		SET(dht_incoming_table_refresh_time, 30, nullptr),
-		SET(dht_incoming_table_lifetime, 40, nullptr),
+		SET(dht_incoming_table_lifetime, 60, nullptr),
 		SET(dht_time_offset, 30, nullptr),
 		SET(dht_max_fail_count, 60, nullptr),
 		SET(dht_max_torrents, 2000, nullptr),
