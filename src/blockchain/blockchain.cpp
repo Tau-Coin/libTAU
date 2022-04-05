@@ -781,7 +781,7 @@ namespace libTAU::blockchain {
                 if (task.m_peer.is_all_zeros()) {
                     auto &acl = m_access_list[chain_id];
                     auto p = acl.begin();
-                    for (int i = 0; i < 3 && p != acl.end(); i++, p++) {
+                    for (int i = 0; i < 5 && p != acl.end(); i++, p++) {
                         auto &peer = p->first;
                         send_to(chain_id, peer, task.m_entry);
                     }
