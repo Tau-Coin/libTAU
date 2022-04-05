@@ -977,7 +977,6 @@ std::tuple<int, int, int, std::int64_t> node::get_stats_counters() const
 {
 	int nodes, replacements;
 	std::tie(nodes, replacements, std::ignore) = size();
-	nodes = nodes + m_incoming_table.size();
 	return std::make_tuple(nodes, replacements
 			, m_rpc.num_allocated_observers()
 			, m_rpc.num_invoked_requests());
