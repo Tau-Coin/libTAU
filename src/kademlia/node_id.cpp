@@ -74,8 +74,8 @@ void make_id_secret(node_id& in)
 	hasher h(reinterpret_cast<char const*>(&secret), 4);
 	h.update(reinterpret_cast<char const*>(&rand), 4);
 	sha1_hash const secret_hash = h.final();
-	std::memcpy(&in[32 - 4], &secret_hash[0], 4);
-	std::memcpy(&in[32 - 8], &rand, 4);
+	std::memcpy(&in[32 - 12], &secret_hash[0], 12);
+	std::memcpy(&in[32 - 16], &rand, 4);
 }
 
 node_id generate_random_id()
@@ -111,9 +111,9 @@ bool verify_secret_id(node_id const& nid)
 	if (secret == 0) return false;
 
 	hasher h(reinterpret_cast<char*>(&secret), 4);
-	h.update(reinterpret_cast<char const*>(&nid[32 - 8]), 4);
+	h.update(reinterpret_cast<char const*>(&nid[32 - 16]), 4);
 	sha1_hash secret_hash = h.final();
-	return std::memcmp(&nid[32 - 4], &secret_hash[0], 4) == 0;
+	return std::memcmp(&nid[32 - 12], &secret_hash[0], 12) == 0;
 }
 
 node_id generate_prefix_mask(int const bits)
