@@ -73,6 +73,14 @@ namespace libTAU::blockchain {
         return encode;
     }
 
+    size_t transaction::get_encode_size() const {
+        std::string encode;
+        auto e = get_entry();
+        bencode(std::back_inserter(encode), e);
+
+        return encode.size();
+    }
+
 //    const sha256_hash &transaction::sha256() {
 //        if (m_hash.is_all_zeros()) {
 //            auto encode = get_encode();
