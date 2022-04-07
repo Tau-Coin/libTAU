@@ -102,7 +102,7 @@ namespace blockchain {
 
         int64_t receiver_nonce() const { return m_receiver_nonce; }
 
-        int64_t receiver_note_timestamp() const { return m_sender_note_timestamp; }
+        int64_t receiver_note_timestamp() const { return m_receiver_note_timestamp; }
 
         const udp::endpoint &end_point() const { return m_endpoint; }
 
