@@ -63,7 +63,7 @@ bootstrap::bootstrap(
 {
 	// invoke as soon as possible
 	set_invoke_window(8);
-	set_invoke_limit(30);
+	set_invoke_limit(24);
 
 	set_fixed_distance(256);
 }
