@@ -1266,6 +1266,7 @@ namespace libTAU::blockchain {
         std::map<dht::public_key, std::int64_t> peers_note_timestamp;
         for (auto const& peer: peers) {
             auto peer_account = m_repository->get_account(chain_id, peer);
+            log("INFO: ------peer[%s] account[%s]", aux::toHex(peer.bytes).c_str(), peer_account.to_string().c_str());
             peers_balance[peer] = peer_account.balance();
             peers_nonce[peer] = peer_account.nonce();
             peers_note_timestamp[peer] = peer_account.note_timestamp();
@@ -1288,6 +1289,16 @@ namespace libTAU::blockchain {
                 peers_balance[tx.sender()] -= tx.fee();
                 peers_note_timestamp[tx.sender()] = tx.timestamp();
             }
+        }
+
+        for (auto const& peer_info: peers_balance) {
+            log("INFO:------ peer[%s] balance[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
+        }
+        for (auto const& peer_info: peers_nonce) {
+            log("INFO:------ peer[%s] nonce[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
+        }
+        for (auto const& peer_info: peers_note_timestamp) {
+            log("INFO:------ peer[%s] note timestamp[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
         }
 
         if (peers_balance[b.miner()] != b.miner_balance() || peers_nonce[b.miner()] != b.miner_nonce() ||
@@ -2966,8 +2977,10 @@ namespace libTAU::blockchain {
         try {
             log("INFO: add new tx:%s", tx.to_string().c_str());
             if (!tx.empty()) {
-                if (!tx.verify_signature())
+                if (!tx.verify_signature()) {
+                    log("INFO: Bad signature.");
                     return false;
+                }
 
                 auto &chain_id = tx.chain_id();
 
@@ -3077,6 +3090,26 @@ namespace libTAU::blockchain {
         }
 
         return -1;
+    }
+
+    std::set<dht::public_key> blockchain::get_access_list(const aux::bytes &chain_id) {
+        std::set<dht::public_key> peers;
+        auto& access_list = m_access_list[chain_id];
+        for (auto const& item: access_list) {
+            peers.insert(item.first);
+        }
+
+        return peers;
+    }
+
+    std::set<dht::public_key> blockchain::get_ban_list(const aux::bytes &chain_id) {
+        std::set<dht::public_key> peers;
+        auto& ban_list = m_ban_list[chain_id];
+        for (auto const& item: ban_list) {
+            peers.insert(item.first);
+        }
+
+        return peers;
     }
 
     void blockchain::set_blockchain_loop_interval(int milliseconds) {

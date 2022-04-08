@@ -153,6 +153,12 @@ namespace blockchain {
         // return mining time: -1: cannot mine block
         std::int64_t getMiningTime(const aux::bytes &chain_id);
 
+        // return access list
+        std::set<dht::public_key> get_access_list(const aux::bytes &chain_id);
+
+        // return ban list
+        std::set<dht::public_key> get_ban_list(const aux::bytes &chain_id);
+
         // set blockchain main loop time interval (ms)
         void set_blockchain_loop_interval(int milliseconds);
 

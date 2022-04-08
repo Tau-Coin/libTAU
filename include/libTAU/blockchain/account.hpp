@@ -9,6 +9,7 @@ see LICENSE file.
 #ifndef LIBTAU_ACCOUNT_HPP
 #define LIBTAU_ACCOUNT_HPP
 
+#include <ostream>
 #include "libTAU/aux_/common.h"
 #include "libTAU/aux_/export.hpp"
 #include "libTAU/entry.hpp"
@@ -51,6 +52,11 @@ namespace libTAU {
 
             // @returns the corresponding entry
             entry get_entry() const;
+
+            // @returns a pretty-printed string representation of block structure
+            std::string to_string() const;
+
+            friend std::ostream &operator<<(std::ostream &os, const account &account);
 
         private:
 

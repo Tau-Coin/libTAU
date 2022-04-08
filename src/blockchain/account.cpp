@@ -66,4 +66,17 @@ namespace libTAU::blockchain {
             m_block_number = i->integer();
         }
     }
+
+    std::string account::to_string() const {
+        std::ostringstream os;
+        os << *this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const account &account) {
+        os << "m_balance: " << account.m_balance << " m_nonce: " << account.m_nonce
+           << " m_note_timestamp: " << account.m_note_timestamp << " m_effective_power: "
+           << account.m_effective_power << " m_block_number: " << account.m_block_number;
+        return os;
+    }
 }
