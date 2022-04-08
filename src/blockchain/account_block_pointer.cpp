@@ -46,4 +46,16 @@ namespace libTAU::blockchain {
             m_oldest_block_hash = sha256_hash(oldest_block_hash.data());
         }
     }
+
+    std::string account_block_pointer::to_string() const {
+        std::ostringstream os;
+        os << *this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const account_block_pointer &pointer) {
+        os << "m_latest_block_hash: " << aux::toHex(pointer.m_latest_block_hash) << " m_oldest_block_hash: "
+           << aux::toHex(pointer.m_oldest_block_hash);
+        return os;
+    }
 }

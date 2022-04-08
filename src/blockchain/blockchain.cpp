@@ -1265,7 +1265,7 @@ namespace libTAU::blockchain {
         std::map<dht::public_key, std::int64_t> peers_nonce;
         std::map<dht::public_key, std::int64_t> peers_note_timestamp;
         for (auto const& peer: peers) {
-            auto peer_account = m_repository->get_account(chain_id, peer);
+            auto peer_account = repo->get_account(chain_id, peer);
             log("INFO: ------peer[%s] account[%s]", aux::toHex(peer.bytes).c_str(), peer_account.to_string().c_str());
             peers_balance[peer] = peer_account.balance();
             peers_nonce[peer] = peer_account.nonce();
@@ -1830,6 +1830,7 @@ namespace libTAU::blockchain {
         bool tail_missing = false;
         // Rollback blocks
         for (auto &blk: rollback_blocks) {
+            log("INFO: try to rollback block:%s", blk.to_string().c_str());
             if (!track->rollback_block(blk)) {
                 log("INFO chain[%s] rollback block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
@@ -1889,6 +1890,7 @@ namespace libTAU::blockchain {
             auto &blk = connect_blocks[i - 2];
             auto &previous_block = connect_blocks[i - 1];
 
+            log("INFO: try to connect block:%s", blk.to_string().c_str());
             if (!tail_missing) {
                 auto result = verify_block(chain_id, blk, previous_block, track.get());
                 if (result != SUCCESS)

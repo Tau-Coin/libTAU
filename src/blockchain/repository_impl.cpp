@@ -962,6 +962,19 @@ namespace libTAU::blockchain {
         return status.ok();
     }
 
+    std::string repository_impl::get_all_cache() {
+        std::string info = "DB base:\n";
+        for (auto const& blk: m_connected_blocks) {
+            info.append(" connect block:").append(blk.to_string()).append("\n");
+        }
+
+        for (auto const& blk: m_discarded_blocks) {
+            info.append(" discard block:").append(blk.to_string()).append("\n");
+        }
+
+        return info;
+    }
+
 //    bool repository_impl::add_new_chain(const aux::bytes &chain_id) {
 //        std::set<aux::bytes> chains = get_all_chains();
 //        chains.insert(chain_id);

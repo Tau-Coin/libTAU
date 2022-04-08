@@ -185,6 +185,8 @@ namespace libTAU::blockchain {
         bool add_new_chain(const aux::bytes &chain_id);
 
         bool delete_chain(const aux::bytes &chain_id);
+
+        virtual std::string get_all_cache() = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP

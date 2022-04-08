@@ -148,6 +148,8 @@ namespace libTAU::blockchain {
 //
 //        bool delete_chain(const aux::bytes &chain_id) override;
 
+        std::string get_all_cache() override;
+
     private:
 
         repository *m_repository;

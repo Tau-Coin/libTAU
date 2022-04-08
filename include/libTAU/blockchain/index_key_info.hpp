@@ -12,9 +12,12 @@ see LICENSE file.
 
 #include <set>
 #include <utility>
+#include <ostream>
 
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
+#include "libTAU/aux_/common.h"
+#include "libTAU/aux_/common_data.h"
 #include "libTAU/sha1_hash.hpp"
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/kademlia/types.hpp"
@@ -68,6 +71,11 @@ namespace libTAU::blockchain {
         entry get_entry() const;
 
         std::string get_encode() const;
+
+        // @returns a pretty-printed string representation of block structure
+        std::string to_string() const;
+
+        friend std::ostream &operator<<(std::ostream &os, const index_key_info &info);
 
     private:
 
