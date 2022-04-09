@@ -1175,14 +1175,15 @@ namespace libTAU::blockchain {
                 }
 
                 auto ep = m_ses.external_udp_endpoint();
+                // mine block with current time instead of (head_block.timestamp() + interval)
                 if (ep.port() != 0) {
-                    b = block(chain_id, block_version::block_version1, (head_block.timestamp() + interval),
+                    b = block(chain_id, block_version::block_version1, now,
                               head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
                               genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk], peers_note_timestamp[*pk],
                               peers_balance[tx.sender()], peers_nonce[tx.sender()], peers_note_timestamp[tx.sender()],
                               peers_balance[tx.receiver()], peers_nonce[tx.receiver()], peers_note_timestamp[tx.receiver()], ep);
                 } else {
-                    b = block(chain_id, block_version::block_version1, (head_block.timestamp() + interval),
+                    b = block(chain_id, block_version::block_version1, now,
                               head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
                               genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk], peers_note_timestamp[*pk],
                               peers_balance[tx.sender()], peers_nonce[tx.sender()], peers_note_timestamp[tx.sender()],
@@ -1265,6 +1266,7 @@ namespace libTAU::blockchain {
         std::map<dht::public_key, std::int64_t> peers_nonce;
         std::map<dht::public_key, std::int64_t> peers_note_timestamp;
         for (auto const& peer: peers) {
+            // note: verify block with cache data, do not use m_repository
             auto peer_account = repo->get_account(chain_id, peer);
             log("INFO: ------peer[%s] account[%s]", aux::toHex(peer.bytes).c_str(), peer_account.to_string().c_str());
             peers_balance[peer] = peer_account.balance();

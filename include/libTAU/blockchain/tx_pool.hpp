@@ -23,7 +23,7 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    constexpr int tx_pool_max_size_by_fee = 100;
+    constexpr int tx_pool_max_size_by_fee = 200;
 
     // todo:comments
     constexpr int tx_pool_max_size_by_timestamp = 10;
