@@ -319,6 +319,9 @@ namespace libTAU {
             // message list(map:key->Y public key, value->message list)
             std::map<dht::public_key, std::list<message>> m_message_list_map;
 
+            std::map<dht::public_key, std::map<std::string, std::int64_t>> m_entry_cache;
+            std::int64_t m_last_check_time = 0;
+
 //            std::map<dht::public_key, std::set<message>> m_missing_messages;
 
             std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, int, common::less_communication_entry_base>> m_entry_putting_times;

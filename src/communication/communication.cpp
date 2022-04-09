@@ -152,6 +152,20 @@ namespace libTAU {
                 }
             }
 
+            {
+                std::string encode;
+                bencode(std::back_inserter(encode), payload);
+
+                auto& entry_cache = m_entry_cache[peer];
+                auto it = entry_cache.find(encode);
+                if (it != entry_cache.end()) {
+                    log("INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                    return;
+                } else {
+                    entry_cache[encode] = now;
+                }
+            }
+
             // check data type id
             if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
             {
@@ -811,6 +825,25 @@ namespace libTAU {
                         }
                     }
                 }
+
+                auto now = get_current_time();
+
+                // check every 5 min
+                if (now > m_last_check_time + 5 * 60 * 1000) {
+                    m_last_check_time = now;
+
+                    for (auto& entry_cache: m_entry_cache) {
+                        for (auto it = entry_cache.second.begin(); it != entry_cache.second.end();) {
+                            // remove outdated date
+                            if (now > it->second + 2 * 60 * 60 * 1000) {
+                                entry_cache.second.erase(it++);
+                            } else {
+                                it++;
+                            }
+                        }
+                    }
+                }
+
 //                // 随机挑选一个朋友put/get
 //                dht::public_key peer = select_friend_randomly();
 //                std::int64_t current_time = total_milliseconds(system_clock::now().time_since_epoch());
@@ -839,7 +872,6 @@ namespace libTAU {
                     }
                 }
 
-                auto now = get_current_time();
 //                auto size = m_friends.size();
                 for (auto const &peer : m_friends) {
                     auto& last_same_entry_time = m_last_same_entry_time[peer];
@@ -868,12 +900,13 @@ namespace libTAU {
 //                    }
                 }
 
+                log("======communication tasks queue size:%lu", m_tasks.size());
+
                 if (!m_tasks.empty()) {
                     {
                         for (auto const& task: m_tasks_set) {
                             log("=======tasks set:peer[%s], entry:%s", aux::toHex(task.m_peer.bytes).c_str(), task.m_entry.to_string(true).c_str());
                         }
-                        log("======tasks queue size:%lu", m_tasks.size());
                     }
                     auto& task = m_tasks.front();
                     switch (task.m_data_type_id) {
