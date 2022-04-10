@@ -166,6 +166,8 @@ namespace libTAU {
                 }
             }
 
+            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
             // check data type id
             if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
             {
@@ -245,8 +247,6 @@ namespace libTAU {
                         m_entry_putting_times[peer][ptr] = 1;
                         m_entry_putting_nodes[peer].clear();
                         m_entry_last_putting_time[peer][ptr] = now;
-
-                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
                         break;
                     }
@@ -346,8 +346,6 @@ namespace libTAU {
 ////                            m_message_db->save_array_align_time(std::make_pair(*m_ses.pubkey(), peer), now);
 //                        }
 
-                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
                         break;
                     }
                     case common::friend_info_request_entry::data_type_id: {
@@ -377,8 +375,6 @@ namespace libTAU {
                             m_entry_last_putting_time[peer][ptr] = now;
                         }
 
-                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
                         break;
                     }
                     case common::friend_info_entry::data_type_id: {
@@ -392,8 +388,6 @@ namespace libTAU {
                         m_entry_putting_times[peer].erase(ptr);
                         m_entry_putting_nodes[peer].erase(ptr);
                         m_entry_last_putting_time[peer].erase(ptr);
-
-                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
                         break;
                     }
