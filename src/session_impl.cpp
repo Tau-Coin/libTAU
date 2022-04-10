@@ -916,6 +916,7 @@ namespace {
 		ret->udp_sock->sock.open(udp_bind_ep.protocol(), ec);
 		if (ec)
 		{
+
 #ifndef TORRENT_DISABLE_LOGGING
 			if (should_log())
 			{
@@ -1695,6 +1696,7 @@ namespace {
 		m_encrypted_udp_packet.insert(0
 			, m_account_manager->pub_key().bytes.data(), 32);
 
+/*
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
 		{
@@ -1703,7 +1705,7 @@ namespace {
 				, aux::to_hex(m_raw_send_udp_packet).c_str());
 		}
 #endif
-
+*/
 		// send to udp socket
 		send_udp_packet_listen(sock, ep, m_encrypted_udp_packet, ec, flags);
 	}
@@ -1886,7 +1888,7 @@ namespace {
 						, buf.size() - 32);
 					m_decrypted_udp_packet.clear();
 					m_decrypted_ucd_udp_packet.clear();
-
+/*
 #ifndef TORRENT_DISABLE_LOGGING
 					if (should_log())
 					{
@@ -1896,7 +1898,7 @@ namespace {
 							, aux::to_hex(m_raw_recv_udp_packet).c_str());
 					}
 #endif
-
+*/
 					std::string err_str;
 					bool result = decrypt_udp_packet(m_raw_recv_udp_packet
 						, pk
