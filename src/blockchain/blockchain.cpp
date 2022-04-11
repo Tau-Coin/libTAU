@@ -2298,7 +2298,7 @@ namespace libTAU::blockchain {
 //        log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
 //            aux::toHex(salt).c_str(), data.to_string().c_str());
 
-        m_ses.dht()->send(peer, data, 1, 3, 3, send_call_back);
+        m_ses.dht()->send(peer, data, 1, 3, 2, send_call_back);
 //        dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
 //                , pk->bytes, sk->bytes, data), salt, peer);
     }
