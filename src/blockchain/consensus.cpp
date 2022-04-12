@@ -65,6 +65,7 @@ namespace libTAU::blockchain {
         return dht::item_target_id(data);
     }
 
+    // note: result --> data overflow
     std::uint64_t consensus::calculate_miner_target_value(uint64_t baseTarget, uint64_t power, uint64_t time) {
         return baseTarget * power * time;
     }

@@ -1120,8 +1120,8 @@ namespace libTAU::blockchain {
             auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
             auto hit = consensus::calculate_random_hit(genSig);
             auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, power));
-//            log("INFO: chain id[%s] generation signature[%s], base target[%lu], hit[%lu]",
-//                aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
+            log("INFO: chain id[%s] generation signature[%s], base target[%lu], hit[%lu]",
+                aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
 
             std::int64_t now = get_total_milliseconds() / 1000; // second
             if (now >= head_block.timestamp() + interval) {
@@ -1253,13 +1253,40 @@ namespace libTAU::blockchain {
 
         auto genSig = consensus::calculate_generation_signature(previous_block.generation_signature(), b.miner());
         auto hit = consensus::calculate_random_hit(genSig);
-        auto interval = b.timestamp() - previous_block.timestamp();
-//        log("++++++++++++++++++++++++++++++++++++++++hit:%lu, base target:%ld, interval:%ld", hit, base_target, interval);
-        if (!consensus::verify_hit(hit, base_target, power, interval)) {
-            log("INFO chain[%s] block[%s] verify hit fail",
-                aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+
+        if (genSig != b.generation_signature()) {
+            log("INFO chain[%s] generation signature[%s, %s] mismatch",
+                aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), aux::toHex(b.generation_signature().to_string()).c_str());
             return FAIL;
         }
+
+        if (base_target != b.base_target()) {
+            log("INFO chain[%s] base target[%lu, %lud] mismatch",
+                aux::toHex(chain_id).c_str(), base_target, b.base_target());
+            return FAIL;
+        }
+
+        auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(previous_block.cumulative_difficulty(), base_target);
+        if (cumulative_difficulty != b.cumulative_difficulty()) {
+            log("INFO chain[%s] cumulative difficulty[%lu, %lud] mismatch",
+                aux::toHex(chain_id).c_str(), cumulative_difficulty, b.cumulative_difficulty());
+            return FAIL;
+        }
+
+        auto necessary_interval = consensus::calculate_mining_time_interval(hit, base_target, power);
+        if (b.timestamp() - previous_block.timestamp() < necessary_interval) {
+            log("INFO: Time is too short! hit:%lu, base target:%ld, power:%ld, necessary interval:%ld, real interval:%ld",
+                hit, base_target, power, necessary_interval, b.timestamp() - previous_block.timestamp());
+            return FAIL;
+        }
+        log("hit:%lu, base target:%ld, power:%ld, interval:%ld, real interval:%ld",
+            hit, base_target, power, necessary_interval, b.timestamp() - previous_block.timestamp());
+        // notes: if use hit < base target * power * interval, data may be overflow
+//        if (!consensus::verify_hit(hit, base_target, power, interval)) {
+//            log("INFO chain[%s] block[%s] verify hit fail",
+//                aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+//            return FAIL;
+//        }
 
         std::set<dht::public_key> peers = b.get_block_peers();
         std::map<dht::public_key, std::int64_t> peers_balance;
@@ -2298,7 +2325,7 @@ namespace libTAU::blockchain {
 //        log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
 //            aux::toHex(salt).c_str(), data.to_string().c_str());
 
-        m_ses.dht()->send(peer, data, 1, 3, 2, send_call_back);
+        m_ses.dht()->send(peer, data, 1, 3, 3, send_call_back);
 //        dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
 //                , pk->bytes, sk->bytes, data), salt, peer);
     }
