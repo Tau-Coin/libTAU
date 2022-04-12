@@ -209,7 +209,7 @@ namespace blockchain {
 
         void refresh_tx_timeout(error_code const& e);
 
-        void add_entry_task_to_queue(const aux::bytes &chain_id, const common::entry_task &task);
+        void add_entry_task_to_queue(const aux::bytes &chain_id, const common::blockchain_entry_task &task);
 
 
         // load chain all info
@@ -401,8 +401,8 @@ namespace blockchain {
         std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
 
         // all tasks
-        std::queue<common::entry_task> m_tasks;
-        std::set<common::entry_task> m_tasks_set;
+        std::queue<common::blockchain_entry_task> m_tasks;
+        std::set<common::blockchain_entry_task> m_tasks_set;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_visiting_history;
 

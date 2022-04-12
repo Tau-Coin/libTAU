@@ -166,12 +166,34 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT blockchain_entry_task {
 
-        explicit blockchain_entry_task(entry mEntry) : m_entry(std::move(mEntry)) {}
+        blockchain_entry_task(aux::bytes mChainId, int64_t mDataTypeId, entry mEntry) :
+                m_chain_id(std::move(mChainId)), m_data_type_id(mDataTypeId), m_entry(std::move(mEntry)) {}
 
-        blockchain_entry_task(const dht::public_key &mPeer, entry mEntry)
-                : m_peer(mPeer), m_entry(std::move(mEntry)) {}
+        blockchain_entry_task(aux::bytes mChainId, int64_t mDataTypeId, const dht::public_key &mPeer, entry mEntry) :
+                m_chain_id(std::move(mChainId)), m_data_type_id(mDataTypeId), m_peer(mPeer), m_entry(std::move(mEntry)) {}
+
+        bool operator==(const blockchain_entry_task &rhs) const {
+            return m_data_type_id == rhs.m_data_type_id &&
+                   m_peer == rhs.m_peer &&
+                   m_entry == rhs.m_entry;
+        }
+
+        bool operator!=(const blockchain_entry_task &rhs) const {
+            return !(rhs == *this);
+        }
 
         bool operator<(const blockchain_entry_task &rhs) const {
+
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (m_chain_id > rhs.m_chain_id)
+                return false;
+
+            if (m_peer < rhs.m_peer)
+                return true;
+            if (m_peer > rhs.m_peer)
+                return false;
+
             std::string encode;
             bencode(std::back_inserter(encode), m_entry);
             std::string rhs_encode;
@@ -179,11 +201,6 @@ namespace libTAU::common {
             if (encode < rhs_encode)
                 return true;
             if (encode > rhs_encode)
-                return false;
-
-            if (m_peer < rhs.m_peer)
-                return true;
-            if (m_peer > rhs.m_peer)
                 return false;
 
             return false;
@@ -200,6 +217,10 @@ namespace libTAU::common {
         bool operator>=(const blockchain_entry_task &rhs) const {
             return !(*this < rhs);
         }
+
+        aux::bytes m_chain_id;
+
+        std::int64_t m_data_type_id;
 
         dht::public_key m_peer;
 
