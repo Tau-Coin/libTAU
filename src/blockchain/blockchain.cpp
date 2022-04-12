@@ -3216,6 +3216,23 @@ namespace libTAU::blockchain {
 //                    process_signal(signal, chain_id, peer);
 //                }
 //            }
+
+        // chain id
+        if (auto* i = const_cast<entry *>(payload.find_key(common::entry_chain_id)))
+        {
+            auto chainID = i->string();
+            aux::bytes chain_id = aux::bytes(chainID.begin(), chainID.end());
+
+            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+            if (it == m_chains.end()) {
+                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                return;
+            }
+        } else {
+            log("INFO: Invalid Data!");
+            return;
+        }
+
         // check data type id
         if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
         {
