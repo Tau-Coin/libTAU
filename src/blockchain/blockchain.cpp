@@ -3217,22 +3217,6 @@ namespace libTAU::blockchain {
 //                }
 //            }
 
-        // chain id
-        if (auto* i = const_cast<entry *>(payload.find_key(common::entry_chain_id)))
-        {
-            auto chainID = i->string();
-            aux::bytes chain_id = aux::bytes(chainID.begin(), chainID.end());
-
-            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-            if (it == m_chains.end()) {
-                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                return;
-            }
-        } else {
-            log("INFO: Invalid Data!");
-            return;
-        }
-
         // check data type id
         if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
         {
@@ -3243,6 +3227,14 @@ namespace libTAU::blockchain {
                 case common::block_request_entry::data_type_id: {
                     common::block_request_entry blk_request_entry(payload);
                     auto &chain_id = blk_request_entry.m_chain_id;
+
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
 
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
@@ -3306,6 +3298,14 @@ namespace libTAU::blockchain {
                     common::block_entry blk_entry(payload);
                     auto &chain_id = blk_entry.m_chain_id;
 
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
+
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
                     // TODO: validate timestamp etc. ?
@@ -3358,6 +3358,14 @@ namespace libTAU::blockchain {
                 case common::tx_pool_entry::data_type_id: {
                     common::tx_pool_entry txPoolEntry(payload);
                     auto &chain_id = txPoolEntry.m_chain_id;
+
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
 
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
@@ -3431,6 +3439,14 @@ namespace libTAU::blockchain {
                     common::transaction_request_entry tx_request_entry(payload);
                     auto &chain_id = tx_request_entry.m_chain_id;
 
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
+
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
                     auto &acl = m_access_list[chain_id];
@@ -3481,6 +3497,14 @@ namespace libTAU::blockchain {
                 case common::transaction_entry::data_type_id: {
                     common::transaction_entry tx_entry(payload);
                     auto &chain_id = tx_entry.m_chain_id;
+
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
 
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
@@ -3542,6 +3566,14 @@ namespace libTAU::blockchain {
                     common::vote_request_entry voteRequestEntry(payload);
                     auto &chain_id = voteRequestEntry.m_chain_id;
 
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
+
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
                     auto &acl = m_access_list[chain_id];
@@ -3601,6 +3633,14 @@ namespace libTAU::blockchain {
                     common::vote_entry voteEntry(payload);
                     auto &chain_id = voteEntry.m_chain_id;
 
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
+
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
                     auto &acl = m_access_list[chain_id];
@@ -3643,6 +3683,14 @@ namespace libTAU::blockchain {
                 case common::head_block_request_entry::data_type_id: {
                     common::head_block_request_entry headBlockRequestEntry(payload);
                     auto &chain_id = headBlockRequestEntry.m_chain_id;
+
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
 
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
@@ -3710,6 +3758,14 @@ namespace libTAU::blockchain {
                     if (!blk_entry.m_blk.empty()) {
                         auto &chain_id = blk_entry.m_blk.chain_id();
 
+                        {
+                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                            if (it == m_chains.end()) {
+                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                return;
+                            }
+                        }
+
                         try_to_kick_out_of_ban_list(chain_id, peer);
 
                         auto &acl = m_access_list[chain_id];
@@ -3768,6 +3824,14 @@ namespace libTAU::blockchain {
                 case common::state_request_entry::data_type_id: {
                     common::state_request_entry stateRequestEntry(payload);
                     auto &chain_id = stateRequestEntry.m_chain_id;
+
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
 
                     log("INFO: chain[%s] request state", aux::toHex(chain_id).c_str());
 
@@ -3828,6 +3892,14 @@ namespace libTAU::blockchain {
                     common::state_entry stateEntry(payload);
                     auto &chain_id = stateEntry.m_chain_id;
 
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
+
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
                     auto &acl = m_access_list[chain_id];
@@ -3874,6 +3946,14 @@ namespace libTAU::blockchain {
                     common::transaction_reply_entry txReplyEntry(payload);
                     auto &chain_id = txReplyEntry.m_chain_id;
 
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
+
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
                     auto &acl = m_access_list[chain_id];
@@ -3915,6 +3995,14 @@ namespace libTAU::blockchain {
                 case common::ping_entry::data_type_id: {
                     common::ping_entry pingEntry(payload);
                     auto &chain_id = pingEntry.m_chain_id;
+
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
 
                     try_to_kick_out_of_ban_list(chain_id, peer);
 
