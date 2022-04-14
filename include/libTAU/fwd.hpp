@@ -74,6 +74,7 @@ struct blockchain_state_alert;
 struct blockchain_syncing_block_alert;
 struct blockchain_syncing_head_block_alert;
 struct blockchain_tx_confirmation_alert;
+struct referred_status_alert;
 
 // include/libTAU/announce_entry.hpp
 TORRENT_VERSION_NAMESPACE_2

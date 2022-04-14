@@ -1685,5 +1685,21 @@ namespace {
 #endif
     }
 
+	referred_status_alert::referred_status_alert(aux::stack_allocator&
+		, address const& ip, int port)
+		: external_address(ip), external_port(port)
+	{}
+
+	std::string referred_status_alert::message() const
+	{
+#ifdef TORRENT_DISABLE_ALERT_MSG
+		return {};
+#else
+		char ret[200];
+		std::snprintf(ret, sizeof(ret), "libTAU successfully referred on %s"
+			, print_endpoint(external_address, external_port).c_str());
+		return ret;
+#endif
+	}
 
 } // namespace libTAU

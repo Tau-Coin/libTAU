@@ -306,6 +306,34 @@ namespace aux {
 		TORRENT_EXTRA_EXPORT void expand_devices(span<ip_interface const>
 			, std::vector<listen_endpoint_t>& eps);
 
+		// this is the switch that sets 'non-referrable' into 'false'
+		// if NAT-PMP/UPNP is connected.
+		struct TORRENT_EXTRA_EXPORT refer_switch
+		{
+
+			refer_switch(bool non_referrable) { m_non_referrable = non_referrable; }
+			bool is_enabled() const { return m_non_referrable; }
+
+			bool is_done() const { return m_done; }
+			void set_done() { m_done = true; }
+
+			void on_ip_vote() { ++m_ip_vote; }
+			int vote_count() { return m_ip_vote; }
+
+			void reset()
+			{
+				m_ip_vote = 0;
+				m_done = false;
+			}
+
+		private:
+
+			bool m_non_referrable;
+
+			int m_ip_vote = 0;
+			bool m_done = false;
+		};
+
 		// this is the link between the main thread and the
 		// thread started to run the main downloader loop
 		struct TORRENT_EXTRA_EXPORT session_impl final
@@ -954,6 +982,11 @@ namespace aux {
 			// set to true the first time post_session_stats() is
 			// called and we post the headers alert
 			bool m_posted_stats_header = false;
+
+			void reset_refer_switch();
+			void trigger_refer_switch(std::shared_ptr<listen_socket_t> const& sock
+				, address const& ip);
+			refer_switch m_refer_switch;
 		};
 
 #ifndef TORRENT_DISABLE_LOGGING

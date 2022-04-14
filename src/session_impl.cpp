@@ -55,6 +55,7 @@ see LICENSE file.
 #include "libTAU/crypto.hpp"
 #include "libTAU/aux_/generate_port.hpp"
 #include "libTAU/aux_/session_impl.hpp"
+#include "libTAU/aux_/ip_helpers.hpp" // for is_local() etc.
 
 #include "libTAU/aux_/common.h"
 
@@ -449,6 +450,8 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		, m_host_resolver(m_io_context)
 		, m_work(make_work_guard(m_io_context))
 		, m_timer(m_io_context)
+		, m_refer_switch(m_settings.get_bool(settings_pack::dht_non_referrable)
+				&& m_settings.get_bool(settings_pack::auto_referred))
 		, m_session_time(total_milliseconds(std::chrono::system_clock::now().time_since_epoch()))
 		, m_created(clock_type::now())
 		, m_last_tick(total_milliseconds(std::chrono::system_clock::now().time_since_epoch()))
@@ -1398,6 +1401,7 @@ namespace {
 
 				if (m_dht && s->ssl != transport::ssl)
 				{
+					reset_refer_switch();
 					m_dht->stop();
 					m_dht->new_socket(m_listening_sockets.back());
 					//TODO: get and add nodes from former node's routing table
@@ -2801,6 +2805,8 @@ namespace {
 			, m_dht ? "true" : "false", m_outstanding_router_lookups);
 #endif
 
+		reset_refer_switch();
+
 		// TODO: refactor, move the storage to dht_tracker
 		m_dht_storage = m_dht_storage_constructor(m_settings);
 		m_dht = std::make_shared<dht::dht_tracker>(
@@ -3682,6 +3688,8 @@ namespace {
 	void session_impl::set_external_address(std::shared_ptr<listen_socket_t> const& sock
 		, address const& ip, ip_source_t const source_type, address const& source)
 	{
+		trigger_refer_switch(sock, ip);
+
 		if (!sock->external_address.cast_vote(ip, source_type, source)) return;
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -3697,6 +3705,78 @@ namespace {
 
 		if (m_alerts.should_post<external_ip_alert>())
 			m_alerts.emplace_alert<external_ip_alert>(ip);
+	}
+
+	void session_impl::reset_refer_switch()
+	{
+		if (m_refer_switch.is_enabled())
+		{
+			m_refer_switch.reset();
+			m_settings.set_bool(settings_pack::dht_non_referrable, true);
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("reset refer switch");
+			}
+#endif
+		}
+	}
+
+	void session_impl::trigger_refer_switch(std::shared_ptr<listen_socket_t> const& sock
+		, address const& ip)
+	{
+		if (ip.is_unspecified()) return;
+
+		// try to open referrable flag
+		if (m_refer_switch.is_enabled()
+			&& !m_refer_switch.is_done()
+			&& m_settings.get_bool(settings_pack::dht_non_referrable))
+		{
+			m_refer_switch.on_ip_vote();
+			if (m_refer_switch.vote_count() >= 50)
+			{
+				m_refer_switch.set_done();
+
+#ifndef TORRENT_DISABLE_LOGGING
+				if (should_log())
+				{
+					session_log("refer switch: voted:%s, NAT-PMP:%s, UPNP:%s, now:%s"
+						, print_address(sock->external_address.external_address()).c_str()
+						, print_address(
+							sock->udp_address_mapping[portmap_transport::natpmp]).c_str()
+						, print_address(
+							sock->udp_address_mapping[portmap_transport::upnp]).c_str()
+						, print_address(ip).c_str());
+				}
+#endif
+
+				udp::endpoint ep = external_udp_endpoint();
+				if (ep.port() != 0 && !aux::is_local(ip) && !ip.is_loopback())
+				{
+					m_settings.set_bool(settings_pack::dht_non_referrable, false);
+#ifndef TORRENT_DISABLE_LOGGING
+					if (should_log())
+					{
+						session_log("open refer switch, port:%d", ep.port());
+					}
+#endif
+
+					// trigger alert
+					if (m_alerts.should_post<referred_status_alert>())
+						m_alerts.emplace_alert<referred_status_alert>(ep.address()
+							, ep.port());
+				}
+				else
+				{
+#ifndef TORRENT_DISABLE_LOGGING
+					if (should_log())
+					{
+						session_log("can't open refer switch");
+					}
+#endif
+				}
+			}
+		}
 	}
 
 #ifndef TORRENT_DISABLE_LOGGING
