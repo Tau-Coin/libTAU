@@ -790,6 +790,7 @@ namespace libTAU {
             if (e || m_stop) return;
 
             try {
+                /*
                 {
                     // log
                     for(auto const& item: m_entry_putting_times) {
@@ -819,6 +820,7 @@ namespace libTAU {
                         }
                     }
                 }
+                */
 
                 auto now = get_current_time();
 
@@ -850,6 +852,7 @@ namespace libTAU {
 //                    publish_signal(peer);
 //                }
 
+                /*
                 for(auto const& item: m_last_same_entry_time) {
                     auto const& peer = item.first;
                     auto const& entry_putting_times = item.second;
@@ -858,6 +861,7 @@ namespace libTAU {
                             i.first->get_entry().to_string(true).c_str(), i.second);
                     }
                 }
+                */
 
                 if (!m_friends.empty()) {
                     int interval = 1000 / m_friends.size();

@@ -364,9 +364,15 @@ namespace libTAU {
 	}
 
 	// get block by hash
-    blockchain::block session_handle::get_block_by_hash(std::vector<char> chain_id, sha256_hash block_hash)
+    blockchain::block session_handle::get_block_by_hash(std::vector<char> chain_id, const sha256_hash& block_hash)
 	{
 		return sync_call_ret<blockchain::block>(&session_impl::get_block_by_hash, chain_id, block_hash);
+	}
+
+	// txid in pool or not
+    bool session_handle::is_transaction_in_fee_pool(std::vector<char> chain_id, const sha256_hash& txid)
+	{
+		return sync_call_ret<bool>(&session_impl::is_transaction_in_fee_pool, chain_id, txid);
 	}
 
 	// get chain state

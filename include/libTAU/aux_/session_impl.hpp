@@ -658,7 +658,10 @@ namespace aux {
         	void set_priority_chain(const aux::bytes &chain_id);
         	void unset_priority_chain();
         	blockchain::block get_block_by_number(const aux::bytes &chain_id, std::int64_t block_number);
-        	blockchain::block get_block_by_hash(const aux::bytes &chain_id, sha256_hash block_hash);
+        	blockchain::block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash& block_hash);
+
+        	bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha256_hash& txid);
+
         	void request_chain_state(const aux::bytes &chain_id);
 
 			std::int64_t session_current_time_ms() const

@@ -3053,9 +3053,15 @@ namespace {
 		}
 	}
 
-	blockchain::block session_impl::get_block_by_hash(const aux::bytes &chain_id, sha256_hash block_hash) {
+	blockchain::block session_impl::get_block_by_hash(const aux::bytes &chain_id, const sha256_hash& block_hash) {
 		if(m_blockchain) {
 			return m_blockchain->getBlock(chain_id, block_hash);
+		}
+	}
+
+	bool session_impl::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha256_hash& txid) {
+		if(m_blockchain) {
+			return m_blockchain->is_transaction_in_fee_pool(chain_id, txid);
 		}
 	}
 
