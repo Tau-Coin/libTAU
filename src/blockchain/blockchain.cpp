@@ -1871,7 +1871,9 @@ namespace libTAU::blockchain {
             connect_blocks.push_back(reference_block);
 
             // find branch block from cache and db
-            auto &previous_hash = reference_block.previous_block_hash();
+            auto previous_hash = reference_block.previous_block_hash();
+            log("INFO chain[%s] find branch block[%s]",
+                aux::toHex(chain_id).c_str(), reference_block.to_string().c_str());
             reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
 
             if (reference_block.empty()) {
@@ -3067,6 +3069,10 @@ namespace libTAU::blockchain {
         }
 
         return false;
+    }
+
+    bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha256_hash &txid) {
+        return m_tx_pools[chain_id].is_transaction_in_fee_pool(txid);
     }
 
     account blockchain::getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey) {

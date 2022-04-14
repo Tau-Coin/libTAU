@@ -57,6 +57,8 @@ namespace libTAU::blockchain {
 
         bool recheck_account_txs(const std::set<dht::public_key> &peers);
 
+        bool is_transaction_in_fee_pool(const sha256_hash& txid) const;
+
         bool is_transaction_in_pool(const sha256_hash& txid) const;
 
         std::int64_t get_min_allowed_fee();

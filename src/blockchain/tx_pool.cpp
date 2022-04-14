@@ -283,6 +283,15 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    bool tx_pool::is_transaction_in_fee_pool(const sha256_hash &txid) const {
+        auto it = m_all_txs_by_fee.find(txid);
+        if (it != m_all_txs_by_fee.end()) {
+            return true;
+        }
+
+        return false;
+    }
+
     bool tx_pool::is_transaction_in_pool(const sha256_hash &txid) const {
         auto it = m_all_txs_by_fee.find(txid);
         if (it != m_all_txs_by_fee.end()) {
