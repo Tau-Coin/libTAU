@@ -75,7 +75,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 50;
+	constexpr int num_alert_types = 51;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1522,6 +1522,24 @@ namespace libTAU {
         sha256_hash hash;
     };
 
+	// this alert is posted when 'dht_non_referrable' is set into 'false' from 'true'
+	// and NAT-PMP/UPNP is connected
+	struct TORRENT_EXPORT referred_status_alert final : alert
+	{
+		// internal
+		TORRENT_UNEXPORT referred_status_alert(aux::stack_allocator& alloc
+			, address const& ip, int port);
+
+		TORRENT_DEFINE_ALERT_PRIO(referred_status_alert, 50, alert_priority::critical)
+
+		static inline constexpr alert_category_t static_category = alert_category::status;
+		std::string message() const override;
+
+		// the IP address that is believed to be our external IP
+		aux::noexcept_movable<address> external_address;
+
+		int external_port;
+	};
 
 #undef TORRENT_DEFINE_ALERT_IMPL
 #undef TORRENT_DEFINE_ALERT

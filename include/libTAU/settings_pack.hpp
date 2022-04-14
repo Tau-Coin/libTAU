@@ -918,6 +918,8 @@ namespace aux {
 			// It means this node behind NAT.
 			dht_non_referrable,
 
+			auto_referred,
+
             //start communication module
             enable_communication,
 
