@@ -208,7 +208,7 @@ namespace libTAU::blockchain {
         m_visiting_time.clear();
         m_access_list.clear();
         m_ban_list.clear();
-        m_priority_chain = std::make_pair(aux::bytes(), 0);
+//        m_priority_chain = std::make_pair(aux::bytes(), 0);
 //        m_chain_peers.clear();
 //        m_chain_gossip_peers.clear();
 //        m_unchoked_peers.clear();
@@ -955,13 +955,13 @@ namespace libTAU::blockchain {
         {
             // 产生随机数
             auto now = get_total_milliseconds();
-            if (now < m_priority_chain.second) {
-                srand(now);
-                auto i = rand() % 10;
-                if (i < 3) {
-                    return m_priority_chain.first;
-                }
-            }
+//            if (now < m_priority_chain.second) {
+//                srand(now);
+//                auto i = rand() % 10;
+//                if (i < 3) {
+//                    return m_priority_chain.first;
+//                }
+//            }
 
             srand(now);
             auto index = rand() % m_chains.size();
@@ -3183,11 +3183,11 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::set_priority_chain(const aux::bytes &chain_id) {
-        m_priority_chain = std::make_pair(chain_id, get_total_milliseconds() + blockchain_max_focus_time);
+//        m_priority_chain = std::make_pair(chain_id, get_total_milliseconds() + blockchain_max_focus_time);
     }
 
     void blockchain::unset_priority_chain() {
-        m_priority_chain = std::make_pair(aux::bytes(), 0);
+//        m_priority_chain = std::make_pair(aux::bytes(), 0);
     }
 
     void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {

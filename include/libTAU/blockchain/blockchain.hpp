@@ -436,7 +436,7 @@ namespace blockchain {
         std::map<aux::bytes, std::map<dht::public_key, vote>> m_votes;
 
         // priority chain(time:ms)
-        std::pair<aux::bytes , std::int64_t> m_priority_chain = std::make_pair(aux::bytes(), 0);
+//        std::pair<aux::bytes , std::int64_t> m_priority_chain = std::make_pair(aux::bytes(), 0);
 
         // blockchain signal time(map:key1->chain id, key2->peer, value->signal time(ms))(1min)
 //        std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_latest_signal_time;
