@@ -71,6 +71,8 @@ namespace libTAU::blockchain {
     {
         m_stop = true;
 
+        m_refresh_timer.cancel();
+
         clear_all_cache();
 
         log("INFO: Stop BlockChain...");
@@ -888,26 +890,26 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::refresh_tx_timeout(const error_code &e) {
-        if (e || m_stop) return;
-
-        try {
-            // refresh all chain votes
-            for (auto const& chain_id: m_chains) {
-                auto tx = m_tx_pools[chain_id].get_best_transaction();
-                if (!tx.empty()) {
-                    common::transaction_entry txEntry(tx);
-                    common::blockchain_entry_task task(chain_id, common::transaction_entry::data_type_id, txEntry.get_entry());
-                    add_entry_task_to_queue(chain_id, task);
-                }
-            }
-
-            m_exchange_tx_timer.expires_after(seconds(EXCHANGE_TX_TIME));
-            m_exchange_tx_timer.async_wait(std::bind(&blockchain::refresh_tx_timeout, self(), _1));
-        } catch (std::exception &e) {
-            log("Exception exchange tx [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
-        }
-    }
+//    void blockchain::refresh_tx_timeout(const error_code &e) {
+//        if (e || m_stop) return;
+//
+//        try {
+//            // refresh all chain votes
+//            for (auto const& chain_id: m_chains) {
+//                auto tx = m_tx_pools[chain_id].get_best_transaction();
+//                if (!tx.empty()) {
+//                    common::transaction_entry txEntry(tx);
+//                    common::blockchain_entry_task task(chain_id, common::transaction_entry::data_type_id, txEntry.get_entry());
+//                    add_entry_task_to_queue(chain_id, task);
+//                }
+//            }
+//
+//            m_exchange_tx_timer.expires_after(seconds(EXCHANGE_TX_TIME));
+//            m_exchange_tx_timer.async_wait(std::bind(&blockchain::refresh_tx_timeout, self(), _1));
+//        } catch (std::exception &e) {
+//            log("Exception exchange tx [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+//        }
+//    }
 
     void blockchain::add_entry_task_to_queue(const aux::bytes &chain_id, const common::blockchain_entry_task &task) {
         if (m_tasks_set.find(task) != m_tasks_set.end())

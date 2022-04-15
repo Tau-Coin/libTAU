@@ -108,7 +108,7 @@ namespace blockchain {
             public std::enable_shared_from_this<blockchain>, blockchain_logger  {
     public:
         blockchain(io_context& mIoc, aux::session_interface &mSes) :
-        m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc), m_exchange_tx_timer(mIoc) {
+        m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
             m_repository = std::make_shared<repository_impl>(m_ses.sqldb(), m_ses.kvdb());
         }
         // start blockchain
@@ -210,7 +210,7 @@ namespace blockchain {
 
 //        void refresh_vote_timeout(error_code const& e);
 
-        void refresh_tx_timeout(error_code const& e);
+//        void refresh_tx_timeout(error_code const& e);
 
         void add_entry_task_to_queue(const aux::bytes &chain_id, const common::blockchain_entry_task &task);
 
@@ -365,7 +365,7 @@ namespace blockchain {
         std::map<aux::bytes, aux::deadline_timer> m_vote_timers;
 
         // tx timer
-        aux::deadline_timer m_exchange_tx_timer;
+//        aux::deadline_timer m_exchange_tx_timer;
 
         // blockchain db
         std::shared_ptr<repository> m_repository;

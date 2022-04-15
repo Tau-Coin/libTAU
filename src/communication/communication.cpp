@@ -44,6 +44,8 @@ namespace libTAU {
         {
             m_stop = true;
 
+            m_refresh_timer.cancel();
+
             clear();
 
             log("INFO: Stop Communication...");
