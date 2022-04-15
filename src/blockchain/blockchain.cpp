@@ -386,7 +386,7 @@ namespace libTAU::blockchain {
 
                                 if (max_difficulty > head_block.cumulative_difficulty() && it != acl.end()) {
                                     auto blk = it->second.m_head_block;
-                                    auto result = try_to_rebranch(chain_id, blk);
+                                    auto result = try_to_rebranch(chain_id, blk, false);
                                     // clear block cache if re-branch success/fail
                                     if (result == FAIL) {
                                         // clear all blocks on the same chain
@@ -420,7 +420,7 @@ namespace libTAU::blockchain {
                                         if (!vote_block.empty()) {
                                             log("INFO chain[%s] try to re-branch to voting block[%s]",
                                                 aux::toHex(chain_id).c_str(), vote_block.to_string().c_str());
-                                            auto result = try_to_rebranch(chain_id, vote_block);
+                                            auto result = try_to_rebranch(chain_id, vote_block, true);
                                             // clear block cache if re-branch success/fail
                                             if (result == SUCCESS) {
                                                 // clear all ancestor blocks
@@ -1806,7 +1806,7 @@ namespace libTAU::blockchain {
         // todo
     }
 
-    RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, const block &target) {
+    RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute) {
         log("INFO chain[%s] try to rebranch to block[%s]",
             aux::toHex(chain_id).c_str(), target.to_string().c_str());
 
@@ -1821,10 +1821,12 @@ namespace libTAU::blockchain {
         block main_chain_block = head_block;
         while (main_chain_block.block_number() > target.block_number()) {
             // check if try to rollback voting point block
-            if (is_block_immutable_certainly(chain_id, main_chain_block)) {
-                log("INFO chain[%s] block[%s] is immutable.",
-                    aux::toHex(chain_id).c_str(), main_chain_block.to_string().c_str());
-                return FAIL;
+            if (!absolute) {
+                if (is_block_immutable_certainly(chain_id, main_chain_block)) {
+                    log("INFO chain[%s] block[%s] is immutable.",
+                        aux::toHex(chain_id).c_str(), main_chain_block.to_string().c_str());
+                    return FAIL;
+                }
             }
 
             rollback_blocks.push_back(main_chain_block);
@@ -1856,10 +1858,12 @@ namespace libTAU::blockchain {
 //        log("----1. main chain block:%s, reference block:%s", main_chain_block.to_string().c_str(), reference_block.to_string().c_str());
         // find out common ancestor
         while (main_chain_block.sha256() != reference_block.sha256()) {
-            if (is_block_immutable_certainly(chain_id, main_chain_block)) {
-                log("INFO chain[%s] block[%s] is immutable",
-                    aux::toHex(chain_id).c_str(), main_chain_block.to_string().c_str());
-                return FAIL;
+            if (!absolute) {
+                if (is_block_immutable_certainly(chain_id, main_chain_block)) {
+                    log("INFO chain[%s] block[%s] is immutable",
+                        aux::toHex(chain_id).c_str(), main_chain_block.to_string().c_str());
+                    return FAIL;
+                }
             }
 
             rollback_blocks.push_back(main_chain_block);

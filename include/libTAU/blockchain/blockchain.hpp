@@ -293,7 +293,7 @@ namespace blockchain {
         void try_to_slim_down_cache(const aux::bytes &chain_id);
 
         // try to rebranch a more difficult chain or a voting chain
-        RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target);
+        RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute);
 
         // count votes
         void refresh_vote(const aux::bytes &chain_id);
