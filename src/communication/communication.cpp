@@ -37,6 +37,8 @@ namespace libTAU {
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
 
+            m_refresh_timer.cancel();
+
             return true;
         }
 
@@ -433,6 +435,7 @@ namespace libTAU {
         void communication::set_loop_time_interval(int milliseconds) {
             log("INFO: Set loop time:%d(ms)", milliseconds);
             m_refresh_time = milliseconds;
+            m_refresh_timer.cancel();
         }
 
         bool communication::add_new_friend(const dht::public_key &pubkey) {
@@ -789,58 +792,59 @@ namespace libTAU {
 
         void communication::refresh_timeout(error_code const& e)
         {
-            if (e || m_stop) return;
+            if ((e.value() != 0 && e.value() != 125) || m_stop) return;
 
             try {
-                /*
-                {
-                    // log
-                    for(auto const& item: m_entry_putting_times) {
-                        auto const& peer = item.first;
-                        auto const& entry_putting_times = item.second;
-                        for (auto const& i: entry_putting_times) {
-                            log("------INFO: peer[%s] entry[%s] putting times:%d", aux::toHex(peer.bytes).c_str(),
-                                i.first->get_entry().to_string(true).c_str(), i.second);
+                if (e.value() != 125) {
+                    /*
+                    {
+                        // log
+                        for(auto const& item: m_entry_putting_times) {
+                            auto const& peer = item.first;
+                            auto const& entry_putting_times = item.second;
+                            for (auto const& i: entry_putting_times) {
+                                log("------INFO: peer[%s] entry[%s] putting times:%d", aux::toHex(peer.bytes).c_str(),
+                                    i.first->get_entry().to_string(true).c_str(), i.second);
+                            }
                         }
-                    }
 
-                    for(auto const& item: m_entry_putting_nodes) {
-                        auto const& peer = item.first;
-                        auto const& entry_putting_times = item.second;
-                        for (auto const& i: entry_putting_times) {
-                            log("------INFO: peer[%s] entry[%s] putting nodes:%lu", aux::toHex(peer.bytes).c_str(),
-                                i.first->get_entry().to_string(true).c_str(), i.second.size());
+                        for(auto const& item: m_entry_putting_nodes) {
+                            auto const& peer = item.first;
+                            auto const& entry_putting_times = item.second;
+                            for (auto const& i: entry_putting_times) {
+                                log("------INFO: peer[%s] entry[%s] putting nodes:%lu", aux::toHex(peer.bytes).c_str(),
+                                    i.first->get_entry().to_string(true).c_str(), i.second.size());
+                            }
                         }
-                    }
 
-                    for(auto const& item: m_entry_last_putting_time) {
-                        auto const& peer = item.first;
-                        auto const& entry_putting_times = item.second;
-                        for (auto const& i: entry_putting_times) {
-                            log("------INFO: peer[%s] entry[%s] last putting time:%ld", aux::toHex(peer.bytes).c_str(),
-                                i.first->get_entry().to_string(true).c_str(), i.second);
-                        }
-                    }
-                }
-                */
-
-                auto now = get_current_time();
-
-                // check every 5 min
-                if (now > m_last_check_time + 5 * 60 * 1000) {
-                    m_last_check_time = now;
-
-                    for (auto& entry_cache: m_entry_cache) {
-                        for (auto it = entry_cache.second.begin(); it != entry_cache.second.end();) {
-                            // remove outdated date
-                            if (now > it->second + 2 * 60 * 60 * 1000) {
-                                entry_cache.second.erase(it++);
-                            } else {
-                                it++;
+                        for(auto const& item: m_entry_last_putting_time) {
+                            auto const& peer = item.first;
+                            auto const& entry_putting_times = item.second;
+                            for (auto const& i: entry_putting_times) {
+                                log("------INFO: peer[%s] entry[%s] last putting time:%ld", aux::toHex(peer.bytes).c_str(),
+                                    i.first->get_entry().to_string(true).c_str(), i.second);
                             }
                         }
                     }
-                }
+                    */
+
+                    auto now = get_current_time();
+
+                    // check every 5 min
+                    if (now > m_last_check_time + 5 * 60 * 1000) {
+                        m_last_check_time = now;
+
+                        for (auto &entry_cache: m_entry_cache) {
+                            for (auto it = entry_cache.second.begin(); it != entry_cache.second.end();) {
+                                // remove outdated date
+                                if (now > it->second + 2 * 60 * 60 * 1000) {
+                                    entry_cache.second.erase(it++);
+                                } else {
+                                    it++;
+                                }
+                            }
+                        }
+                    }
 
 //                // 随机挑选一个朋友put/get
 //                dht::public_key peer = select_friend_randomly();
@@ -854,36 +858,29 @@ namespace libTAU {
 //                    publish_signal(peer);
 //                }
 
-                /*
-                for(auto const& item: m_last_same_entry_time) {
-                    auto const& peer = item.first;
-                    auto const& entry_putting_times = item.second;
-                    for (auto const& i: entry_putting_times) {
-                        log("------INFO: peer[%s] entry[%s] putting times:%d", aux::toHex(peer.bytes).c_str(),
-                            i.first->get_entry().to_string(true).c_str(), i.second);
-                    }
-                }
-                */
-
-                if (!m_friends.empty()) {
-                    int interval = 1000 / m_friends.size();
-                    if (m_refresh_time < interval) {
-                        m_refresh_time = interval;
-                    }
-                }
-
-//                auto size = m_friends.size();
-                for (auto const &peer : m_friends) {
-                    auto& last_same_entry_time = m_last_same_entry_time[peer];
-                    for (auto it = last_same_entry_time.begin(); it != last_same_entry_time.end();) {
-                        if (now > it->second + communication_same_response_interval) {
-                            last_same_entry_time.erase(it++);
-                        } else {
-                            ++it;
+                    /*
+                    for(auto const& item: m_last_same_entry_time) {
+                        auto const& peer = item.first;
+                        auto const& entry_putting_times = item.second;
+                        for (auto const& i: entry_putting_times) {
+                            log("------INFO: peer[%s] entry[%s] putting times:%d", aux::toHex(peer.bytes).c_str(),
+                                i.first->get_entry().to_string(true).c_str(), i.second);
                         }
                     }
+                    */
 
-                    send_one_missing_entry_randomly(peer);
+//                auto size = m_friends.size();
+                    for (auto const &peer : m_friends) {
+                        auto &last_same_entry_time = m_last_same_entry_time[peer];
+                        for (auto it = last_same_entry_time.begin(); it != last_same_entry_time.end();) {
+                            if (now > it->second + communication_same_response_interval) {
+                                last_same_entry_time.erase(it++);
+                            } else {
+                                ++it;
+                            }
+                        }
+
+                        send_one_missing_entry_randomly(peer);
 //                    if (now > m_last_greeting[peer] + 60 * 60 * 1000) {
 //                        m_last_greeting[peer] = now;
 //
@@ -898,27 +895,28 @@ namespace libTAU {
 //
 //                        update_detection_time(peer, now);
 //                    }
-                }
-
-                log("======communication tasks queue size:%lu", m_tasks.size());
-
-                if (!m_tasks.empty()) {
-                    {
-                        for (auto const& task: m_tasks_set) {
-                            log("=======tasks set:peer[%s], entry:%s", aux::toHex(task.m_peer.bytes).c_str(), task.m_entry.to_string(true).c_str());
-                        }
                     }
-                    auto& task = m_tasks.front();
-                    switch (task.m_data_type_id) {
-                        case common::message_levenshtein_array_entry::data_type_id: {
-                            // 本地消息数组为target
-                            aux::bytes levenshtein_array;
-                            auto& msg_list = m_message_list_map[task.m_peer];
-                            for (auto const &msg: msg_list) {
-                                levenshtein_array.push_back(msg.sha256()[0]);
-                            }
 
-                            common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
+                    log("======communication tasks queue size:%lu", m_tasks.size());
+
+                    if (!m_tasks.empty()) {
+                        {
+                            for (auto const &task: m_tasks_set) {
+                                log("=======tasks set:peer[%s], entry:%s", aux::toHex(task.m_peer.bytes).c_str(),
+                                    task.m_entry.to_string(true).c_str());
+                            }
+                        }
+                        auto &task = m_tasks.front();
+                        switch (task.m_data_type_id) {
+                            case common::message_levenshtein_array_entry::data_type_id: {
+                                // 本地消息数组为target
+                                aux::bytes levenshtein_array;
+                                auto &msg_list = m_message_list_map[task.m_peer];
+                                for (auto const &msg: msg_list) {
+                                    levenshtein_array.push_back(msg.sha256()[0]);
+                                }
+
+                                common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
 
 //                            auto ptr = std::make_shared<common::message_levenshtein_array_entry>(levenshtein_array, now);
 //                            auto it = m_entry_putting_times[task.m_peer].find(ptr);
@@ -926,46 +924,54 @@ namespace libTAU {
 //                                m_entry_putting_times[task.m_peer][ptr] = 1;
 //                            }
 
-                            // 产生随机数
-                            srand(total_microseconds(system_clock::now().time_since_epoch()));
-                            auto index = rand() % 10;
-                            send_to(task.m_peer, msg_levenshtein_array.get_entry(), 1, 3, 3, index < 1);
-                            break;
-                        }
-                        case common::message_entry::data_type_id: {
-                            // 本地消息数组为target
-                            aux::bytes levenshtein_array;
-                            auto& msg_list = m_message_list_map[task.m_peer];
-                            for (auto const &msg: msg_list) {
-                                levenshtein_array.push_back(msg.sha256()[0]);
+                                // 产生随机数
+                                srand(total_microseconds(system_clock::now().time_since_epoch()));
+                                auto index = rand() % 10;
+                                send_to(task.m_peer, msg_levenshtein_array.get_entry(), 1, 3, 3, index < 1);
+                                break;
                             }
+                            case common::message_entry::data_type_id: {
+                                // 本地消息数组为target
+                                aux::bytes levenshtein_array;
+                                auto &msg_list = m_message_list_map[task.m_peer];
+                                for (auto const &msg: msg_list) {
+                                    levenshtein_array.push_back(msg.sha256()[0]);
+                                }
 
-                            common::message_entry msg_entry(task.m_entry);
-                            msg_entry.set_levenshtein_array(levenshtein_array);
-                            msg_entry.set_timestamp(now);
+                                common::message_entry msg_entry(task.m_entry);
+                                msg_entry.set_levenshtein_array(levenshtein_array);
+                                msg_entry.set_timestamp(now);
 
-                            send_to(task.m_peer, msg_entry.get_entry(), 1, 10, 7, true);
-                            break;
+                                send_to(task.m_peer, msg_entry.get_entry(), 1, 10, 7, true);
+                                break;
+                            }
+                            case common::friend_info_entry::data_type_id: {
+                                common::friend_info_entry friendInfoEntry(task.m_entry);
+                                friendInfoEntry.set_timestamp(now);
+                                send_to(task.m_peer, friendInfoEntry.get_entry(), 1, 10, 7, true);
+                                break;
+                            }
+                            case common::friend_info_request_entry::data_type_id: {
+                                common::friend_info_request_entry friendInfoRequestEntry(task.m_entry);
+                                friendInfoRequestEntry.set_timestamp(now);
+                                send_to(task.m_peer, friendInfoRequestEntry.get_entry(), 1, 10, 7, false);
+                                break;
+                            }
+                            default: {
+                                break;
+                            }
                         }
-                        case common::friend_info_entry::data_type_id: {
-                            common::friend_info_entry friendInfoEntry(task.m_entry);
-                            friendInfoEntry.set_timestamp(now);
-                            send_to(task.m_peer, friendInfoEntry.get_entry(), 1, 10, 7, true);
-                            break;
-                        }
-                        case common::friend_info_request_entry::data_type_id: {
-                            common::friend_info_request_entry friendInfoRequestEntry(task.m_entry);
-                            friendInfoRequestEntry.set_timestamp(now);
-                            send_to(task.m_peer, friendInfoRequestEntry.get_entry(), 1, 10, 7, false);
-                            break;
-                        }
-                        default: {
-                            break;
-                        }
+
+                        m_tasks_set.erase(task);
+                        m_tasks.pop();
                     }
+                }
 
-                    m_tasks_set.erase(task);
-                    m_tasks.pop();
+                if (!m_friends.empty()) {
+                    int interval = 1000 / m_friends.size();
+                    if (m_refresh_time < interval) {
+                        m_refresh_time = interval;
+                    }
                 }
 
                 m_refresh_timer.expires_after(milliseconds(m_refresh_time));
