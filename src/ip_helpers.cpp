@@ -96,6 +96,20 @@ namespace aux {
 		return a == address_v4() ? address_v6() : a;
 	}
 
+	bool is_carrier_address(address const& a)
+	{
+		TORRENT_TRY {
+			if (a.is_v6())
+			{
+				// TODO: statistic carrier v6 ip
+				return false;
+			}
+
+			address_v4 a4 = a.to_v4();
+			std::uint32_t const ip = a4.to_uint();
+			return ((ip & 0xff000000) == 0x64000000); // 100.x.x.x
+		} TORRENT_CATCH(std::exception const&) { return false; }
+	}
 }
 }
 
