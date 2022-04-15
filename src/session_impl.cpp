@@ -3739,7 +3739,7 @@ namespace {
 			&& m_settings.get_bool(settings_pack::dht_non_referrable))
 		{
 			m_refer_switch.on_ip_vote();
-			if (m_refer_switch.vote_count() >= 50)
+			if (m_refer_switch.vote_count() >= 60)
 			{
 				m_refer_switch.set_done();
 

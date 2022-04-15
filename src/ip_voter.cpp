@@ -81,6 +81,8 @@ namespace libTAU::aux {
 		if (ip.is_unspecified()) return false;
 		if (aux::is_local(ip)) return false;
 		if (ip.is_loopback()) return false;
+		// Added by TAU community.
+		if (aux::is_carrier_address(ip)) return false;
 
 		// don't trust source that aren't connected to us
 		// on a different address family than the external

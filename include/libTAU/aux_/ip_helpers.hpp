@@ -24,6 +24,7 @@ namespace aux {
 	TORRENT_EXTRA_EXPORT bool is_link_local(address const& addr);
 	TORRENT_EXTRA_EXPORT bool is_teredo(address const& addr);
 	TORRENT_EXTRA_EXPORT bool is_ip_address(std::string const& host);
+	TORRENT_EXTRA_EXPORT bool is_carrier_address(address const& a);
 
 	// internal
 	template <typename Endpoint>
