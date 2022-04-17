@@ -63,6 +63,11 @@ namespace libTAU::blockchain {
 
         std::string get_encode() const;
 
+        // @returns a pretty-printed string representation of block structure
+        std::string to_string() const;
+
+        friend std::ostream &operator<<(std::ostream &os, const state_linker &stateLinker);
+
     private:
 
         // populate state linker data from entry

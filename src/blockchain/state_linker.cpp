@@ -70,4 +70,23 @@ namespace libTAU::blockchain {
         }
     }
 
+    std::string state_linker::to_string() const {
+        std::ostringstream os;
+        os << *this;
+        return os.str();
+    }
+
+    std::ostream &operator<<(std::ostream &os, const state_linker &stateLinker) {
+        os << "m_block_hash: " << aux::toHex(stateLinker.m_block_hash) << " m_next_change_block_hash_map: ";
+        for (auto const& item: stateLinker.m_next_change_block_hash_map) {
+            os << " peer:" << aux::toHex(item.first.bytes) << " next change block hash:" << aux::toHex(item.second.to_string());
+        }
+        os << " m_previous_change_block_hash_map: ";
+        for (auto const& item: stateLinker.m_previous_change_block_hash_map) {
+            os << " peer:" << aux::toHex(item.first.bytes) << " previous change block hash:" << aux::toHex(item.second.to_string());
+        }
+
+        return os;
+    }
+
 }
