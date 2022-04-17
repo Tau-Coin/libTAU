@@ -673,24 +673,61 @@ namespace libTAU::blockchain {
 
         auto& chain_id = b.chain_id();
         auto stateLinker = get_state_linker(b.sha256());
-        for (auto const& item: stateLinker.get_previous_change_block_hash_map()) {
-            auto& pubKey = item.first;
-            auto& block_hash = item.second;
-            if (block_hash.is_all_zeros()) {
-                if (!delete_account_block_pointer(chain_id, pubKey))
+        auto &block_hash_map = stateLinker.get_previous_change_block_hash_map();
+        auto peers = b.get_block_peers();
+
+        for (auto const& peer: peers) {
+            sha256_hash previous_change_block_hash;
+            auto it = block_hash_map.find(peer);
+            if (it != block_hash_map.end()) {
+                previous_change_block_hash = it->second;
+            }
+
+            if (previous_change_block_hash.is_all_zeros()) {
+                if (!delete_account_block_pointer(chain_id, peer))
                     return false;
             } else {
-                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
-                accountBlockPointer.set_latest_block_hash(block_hash);
-                if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
-                    return false;
+                auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+                // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
+                if (accountBlockPointer.oldest_block_hash() == b.sha256()) {
+                    if (!delete_account_block_pointer(chain_id, peer))
+                        return false;
+                } else {
+                    accountBlockPointer.set_latest_block_hash(previous_change_block_hash);
+                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+                        return false;
+                }
 
                 // no need to update state linker
             }
-
-            if (!delete_state_linker(b.sha256()))
-                return false;
         }
+
+        if (!delete_state_linker(b.sha256()))
+            return false;
+//        for (auto const& item: stateLinker.get_previous_change_block_hash_map()) {
+//            auto& pubKey = item.first;
+//            auto& previous_change_block_hash = item.second;
+//            if (previous_change_block_hash.is_all_zeros()) {
+//                if (!delete_account_block_pointer(chain_id, pubKey))
+//                    return false;
+//            } else {
+//                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+//                // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
+//                if (accountBlockPointer.oldest_block_hash() == b.sha256()) {
+//                    if (!delete_account_block_pointer(chain_id, pubKey))
+//                        return false;
+//                } else {
+//                    accountBlockPointer.set_latest_block_hash(previous_change_block_hash);
+//                    if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
+//                        return false;
+//                }
+//
+//                // no need to update state linker
+//            }
+//
+//            if (!delete_state_linker(b.sha256()))
+//                return false;
+//        }
 
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
@@ -707,24 +744,61 @@ namespace libTAU::blockchain {
 
         auto& chain_id = b.chain_id();
         auto stateLinker = get_state_linker(b.sha256());
-        for (auto const& item: stateLinker.get_next_change_block_hash_map()) {
-            auto& pubKey = item.first;
-            auto& block_hash = item.second;
-            if (block_hash.is_all_zeros()) {
-                if (!delete_account_block_pointer(chain_id, pubKey))
+        auto &block_hash_map = stateLinker.get_next_change_block_hash_map();
+        auto peers = b.get_block_peers();
+
+        for (auto const& peer: peers) {
+            sha256_hash next_change_block_hash;
+            auto it = block_hash_map.find(peer);
+            if (it != block_hash_map.end()) {
+                next_change_block_hash = it->second;
+            }
+
+            if (next_change_block_hash.is_all_zeros()) {
+                if (!delete_account_block_pointer(chain_id, peer))
                     return false;
             } else {
-                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
-                accountBlockPointer.set_oldest_block_hash(block_hash);
-                if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
-                    return false;
+                auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+                // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
+                if (accountBlockPointer.latest_block_hash() == b.sha256()) {
+                    if (!delete_account_block_pointer(chain_id, peer))
+                        return false;
+                } else {
+                    accountBlockPointer.set_oldest_block_hash(next_change_block_hash);
+                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+                        return false;
+                }
 
                 // no need to update state linker
             }
-
-            if (!delete_state_linker(b.sha256()))
-                return false;
         }
+
+        if (!delete_state_linker(b.sha256()))
+            return false;
+//        for (auto const& item: stateLinker.get_next_change_block_hash_map()) {
+//            auto& pubKey = item.first;
+//            auto& next_change_block_hash = item.second;
+//            if (next_change_block_hash.is_all_zeros()) {
+//                if (!delete_account_block_pointer(chain_id, pubKey))
+//                    return false;
+//            } else {
+//                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+//                // if latest block pointer point to current block, this account was on chain last once, delete it
+//                if (accountBlockPointer.latest_block_hash() == b.sha256()) {
+//                    if (!delete_account_block_pointer(chain_id, pubKey))
+//                        return false;
+//                } else {
+//                    accountBlockPointer.set_oldest_block_hash(next_change_block_hash);
+//                    if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
+//                        return false;
+//                }
+//
+//                // no need to update state linker
+//            }
+//
+//            if (!delete_state_linker(b.sha256()))
+//                return false;
+//        }
 
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.add_non_main_chain_block_hash(b.sha256());

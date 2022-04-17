@@ -645,7 +645,7 @@ namespace libTAU::blockchain {
                                                 // search until found absent or fork point block
                                                 auto blk = get_block_from_cache_or_db(chain_id, previous_hash);
                                                 if (blk.empty()) {
-                                                    log("INFO chain[%s] Cannot find demanding block[%s] in db/cache",
+                                                    log("INFO chain[%s] Cannot find demanding voting block[%s] in db/cache",
                                                         aux::toHex(chain_id).c_str(),
                                                         aux::toHex(previous_hash.to_string()).c_str());
                                                     demand_block_hash_set.insert(previous_hash);
@@ -1888,25 +1888,31 @@ namespace libTAU::blockchain {
 
             rollback_blocks.push_back(main_chain_block);
 
-            main_chain_block = m_repository->get_block_by_hash(main_chain_block.previous_block_hash());
-            if (main_chain_block.empty())
+            auto main_chain_previous_hash = main_chain_block.previous_block_hash();
+            main_chain_block = m_repository->get_block_by_hash(main_chain_previous_hash);
+            if (main_chain_block.empty()) {
+                log("INFO chain[%s] 5.1 Cannot find main chain block[%s]",
+                    aux::toHex(chain_id).c_str(), aux::toHex(main_chain_previous_hash.to_string()).c_str());
                 return MISSING;
+            }
 
             connect_blocks.push_back(reference_block);
 
             // find branch block from cache and db
             auto previous_hash = reference_block.previous_block_hash();
-            log("INFO chain[%s] find branch block[%s]",
-                aux::toHex(chain_id).c_str(), reference_block.to_string().c_str());
+//            log("INFO chain[%s] find branch block[%s]",
+//                aux::toHex(chain_id).c_str(), reference_block.to_string().c_str());
             reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
 
             if (reference_block.empty()) {
-                log("INFO chain[%s] 5. Cannot find block[%s]",
+                log("INFO chain[%s] 5.2 Cannot find block[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 return MISSING;
             }
         }
-//        log("----2. main chain block:%s, reference block:%s", main_chain_block.to_string().c_str(), reference_block.to_string().c_str());
+
+        log("INFO: ------try to rebranch from main chain block[%s] to target block[%s], fork point block:%s",
+            head_block.to_string().c_str(), target.to_string().c_str(), reference_block.to_string().c_str());
 
         // reference block is fork point block
         connect_blocks.push_back(reference_block);
@@ -1918,8 +1924,21 @@ namespace libTAU::blockchain {
         auto tail_block = m_tail_blocks[chain_id];
         bool tail_missing = false;
         // Rollback blocks
+        dht::public_key test_pubkey;
         for (auto &blk: rollback_blocks) {
-            log("INFO: try to rollback block:%s", blk.to_string().c_str());
+            if (blk.block_number() == 361) {
+                auto stateLinker = track->get_state_linker(blk.sha256());
+                test_pubkey = blk.tx().receiver();
+                auto test_act = track->get_account(chain_id, test_pubkey);
+                auto test_abp = track->get_account_block_pointer(chain_id, test_pubkey);
+                log("1--------361 block[%s]", blk.to_string().c_str());
+                log("1--------361 state linker[%s]", stateLinker.to_string().c_str());
+                auto stateLinker1 = m_repository->get_state_linker(blk.sha256());
+                log("1--------361 repo state linker[%s]", stateLinker1.to_string().c_str());
+                log("1--------block hash[%s], test act:%s, test abp:%s", aux::toHex(blk.sha256().to_string()).c_str(),
+                    test_act.to_string().c_str(), test_abp.to_string().c_str());
+            }
+//            log("INFO: try to rollback block:%s", blk.to_string().c_str());
             if (!track->rollback_block(blk)) {
                 log("INFO chain[%s] rollback block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
@@ -1974,12 +1993,16 @@ namespace libTAU::blockchain {
             }
         }
 
+        auto test_act = track->get_account(chain_id, test_pubkey);
+        auto test_abp = track->get_account_block_pointer(chain_id, test_pubkey);
+        log("2--------test act:%s, test abp:%s", test_act.to_string().c_str(), test_abp.to_string().c_str());
+
         // connect new branch blocks
         for (auto i = connect_blocks.size(); i > 1; i--) {
             auto &blk = connect_blocks[i - 2];
             auto &previous_block = connect_blocks[i - 1];
 
-            log("INFO: try to connect block:%s", blk.to_string().c_str());
+//            log("INFO: try to connect block:%s", blk.to_string().c_str());
             if (!tail_missing) {
                 auto result = verify_block(chain_id, blk, previous_block, track.get());
                 if (result != SUCCESS)
@@ -2137,13 +2160,23 @@ namespace libTAU::blockchain {
 
         if (!sorted_votes.empty()) {
             m_best_votes[chain_id] = *sorted_votes.begin();
-            log("INFO: chain[%s] best vote[%s]",
+//            // todo:test
+//            aux::bytes test_hash = aux::fromHex("764c1688912d4a4eed74fb8e7d9934addb62f85fefcb7b860fae5d6375a1a09a");
+//            std::string str_hash(test_hash.begin(), test_hash.end());
+//            sha256_hash thash(str_hash.c_str());
+//            // 764c1688912d4a4eed74fb8e7d9934addb62f85fefcb7b860fae5d6375a1a09a
+//            // 1432
+//            vote v(thash, 1000000000, 1432);
+//            m_best_votes[chain_id] = v;
+//            log("INFO: +++chain[%s] best vote[%s]",
+//                aux::toHex(chain_id).c_str(), m_best_votes[chain_id].to_string().c_str());
+            log("INFO: ===chain[%s] best vote[%s]",
                 aux::toHex(chain_id).c_str(), sorted_votes.begin()->to_string().c_str());
         }
 
 
         for (auto const &sorted_vote: sorted_votes) {
-            log("INFO: sorted vote:%s", sorted_vote.to_string().c_str());
+            log("INFO: ===sorted vote:%s", sorted_vote.to_string().c_str());
         }
 
         // select top three votes
@@ -3371,6 +3404,8 @@ namespace libTAU::blockchain {
                         }
 
                         log("INFO: Got block[%s].", blk_entry.m_blk.to_string().c_str());
+
+//                        m_repository->save_block(blk_entry.m_blk);
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
