@@ -944,7 +944,7 @@ time_duration node::connection_timeout()
 {
 	time_duration d = m_rpc.tick();
 	time_point now(aux::time_now());
-	if (now - minutes(2) < m_last_tracker_tick) return d;
+	if (now - minutes(1) < m_last_tracker_tick) return d;
 	m_last_tracker_tick = now;
 
 	m_storage.tick();
