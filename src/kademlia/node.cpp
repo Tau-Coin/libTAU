@@ -20,6 +20,7 @@ see LICENSE file.
 #include <functional>
 #include <tuple>
 #include <array>
+#include <chrono>
 
 #ifndef TORRENT_DISABLE_LOGGING
 #include "libTAU/hex.hpp" // to_hex
@@ -52,6 +53,7 @@ see LICENSE file.
 #include <libTAU/kademlia/relay.hpp>
 
 using namespace std::placeholders;
+using namespace std::chrono;
 
 namespace libTAU::dht {
 
@@ -943,8 +945,17 @@ void node::send_single_refresh(udp::endpoint const& ep, int const bucket
 time_duration node::connection_timeout()
 {
 	time_duration d = m_rpc.tick();
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		auto x = std::chrono::duration_cast<std::chrono::milliseconds>(d);
+		m_observer->log(dht_logger::node, "connection_timeout called, duration:%ld ms"
+			, x.count());
+	}
+#endif
+
 	time_point now(aux::time_now());
-	if (now - minutes(2) < m_last_tracker_tick) return d;
+	if (now - minutes(1) < m_last_tracker_tick) return d;
 	m_last_tracker_tick = now;
 
 	m_storage.tick();
