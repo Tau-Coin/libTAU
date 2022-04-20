@@ -26,7 +26,7 @@ namespace libTAU::blockchain {
         std::uint64_t previousBlockBaseTarget = previousBlock.base_target();
         std::uint64_t requiredBaseTarget;
 
-        if (timeAver > DEFAULT_BLOCK_TIME ) {
+        if (timeAver > DEFAULT_BLOCK_TIME) {
             long min;
 
             if (timeAver < MAX_RATIO) {
@@ -35,7 +35,9 @@ namespace libTAU::blockchain {
                 min = MAX_RATIO;
             }
 
-            requiredBaseTarget = previousBlockBaseTarget * min / DEFAULT_BLOCK_TIME;
+            // notes: previousBlockBaseTarget * min may be overflow
+//            requiredBaseTarget = previousBlockBaseTarget * min / DEFAULT_BLOCK_TIME;
+            requiredBaseTarget = previousBlockBaseTarget / DEFAULT_BLOCK_TIME * min;
         } else {
             long max;
 
@@ -50,8 +52,13 @@ namespace libTAU::blockchain {
             // 这里采用和公式中的顺序一样，即：
             // If 𝐼𝑛 > AverageBlockTime, 𝑇(𝑏,𝑛) = 𝑇(𝑏,𝑛−1) * (min(𝐼𝑛,𝑅𝑚𝑎𝑥) / AverageBlockTime).
             // If 𝐼𝑛 < AverageBlockTime, 𝑇(𝑏,𝑛) = 𝑇(𝑏,𝑛−1) * (1− 𝛾 * (AverageBlockTime−max(𝐼𝑛,𝑅𝑚𝑖𝑛)) / AverageBlockTime)
-            auto delta = previousBlockBaseTarget * 64 / 100 * (DEFAULT_BLOCK_TIME - max) / DEFAULT_BLOCK_TIME;
+//            auto delta = previousBlockBaseTarget * 64 / 100 * (DEFAULT_BLOCK_TIME - max) / DEFAULT_BLOCK_TIME;
+            auto delta = previousBlockBaseTarget / 100 * 64 / DEFAULT_BLOCK_TIME * (DEFAULT_BLOCK_TIME - max);
             requiredBaseTarget = previousBlockBaseTarget - delta;
+        }
+
+        if (requiredBaseTarget > MAX_BASE_TARGET) {
+            requiredBaseTarget = MAX_BASE_TARGET;
         }
 
         return requiredBaseTarget;
@@ -66,9 +73,9 @@ namespace libTAU::blockchain {
     }
 
     // note: result --> data overflow
-    std::uint64_t consensus::calculate_miner_target_value(uint64_t baseTarget, uint64_t power, uint64_t time) {
-        return baseTarget * power * time;
-    }
+//    std::uint64_t consensus::calculate_miner_target_value(uint64_t baseTarget, uint64_t power, uint64_t time) {
+//        return baseTarget * power * time;
+//    }
 
     std::uint64_t consensus::calculate_random_hit(const sha256_hash &generationSignature) {
         std::uint64_t hit = 0;
@@ -87,10 +94,14 @@ namespace libTAU::blockchain {
 
     // Note: DEFAULT_MIN_BLOCK_TIME/DEFAULT_MAX_BLOCK_TIME is different from nxt
     std::uint64_t consensus::calculate_mining_time_interval(uint64_t hit, uint64_t baseTarget, uint64_t power) {
-        auto interval = hit / (baseTarget * power);
+        auto interval = hit / baseTarget / power;
 
         // make sure target > hit
         interval++;
+
+        if (interval > MAX_VALID_BLOCK_TIME) {
+            interval = MAX_VALID_BLOCK_TIME;
+        }
 
 //        if (interval < DEFAULT_MIN_BLOCK_TIME) {
 //            interval = DEFAULT_MIN_BLOCK_TIME;
@@ -101,19 +112,19 @@ namespace libTAU::blockchain {
         return interval;
     }
 
-    bool consensus::verify_hit(uint64_t hit, uint64_t baseTarget, uint64_t power, uint64_t timeInterval) {
-//        if (timeInterval < DEFAULT_MIN_BLOCK_TIME) {
-//            return false;
-//        } else if (timeInterval >= DEFAULT_MAX_BLOCK_TIME) {
-//            return true;
-//        } else {
-            auto target = calculate_miner_target_value(baseTarget, power, timeInterval);
-            if (target <= hit) {
-                return false;
-            }
-//        }
-
-        return true;
-    }
+//    bool consensus::verify_hit(uint64_t hit, uint64_t baseTarget, uint64_t power, uint64_t timeInterval) {
+////        if (timeInterval < DEFAULT_MIN_BLOCK_TIME) {
+////            return false;
+////        } else if (timeInterval >= DEFAULT_MAX_BLOCK_TIME) {
+////            return true;
+////        } else {
+//            auto target = calculate_miner_target_value(baseTarget, power, timeInterval);
+//            if (target <= hit) {
+//                return false;
+//            }
+////        }
+//
+//        return true;
+//    }
 
 }

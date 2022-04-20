@@ -45,7 +45,8 @@ namespace libTAU::blockchain {
     // block time
     constexpr int DEFAULT_BLOCK_TIME = 300;
     constexpr int DEFAULT_MIN_BLOCK_TIME = 60;
-    constexpr int DEFAULT_MAX_BLOCK_TIME = 540;
+
+    constexpr int MAX_VALID_BLOCK_TIME = 3 * 60 * 60;
 
     constexpr int EXCHANGE_TX_TIME = 60;
 
@@ -55,8 +56,10 @@ namespace libTAU::blockchain {
     // genesis block balance
     constexpr int64_t GENESIS_BLOCK_BALANCE = 100000000000000;
 
+    constexpr uint64_t MAX_BASE_TARGET = UINT64_MAX / 2;
+
     // 0x21D0369D036978
-    constexpr int64_t GENESIS_BASE_TARGET = 39517607212509560;
+    constexpr uint64_t GENESIS_BASE_TARGET = 39517607212509560;
 
     // 2^64 = 0x010000000000000000
     const aux::bigint DiffAdjustNumerator = aux::bigint(1) << 64;

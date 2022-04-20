@@ -12,6 +12,7 @@ see LICENSE file.
 #include "libTAU/blockchain/consensus.hpp"
 #include "libTAU/common/entry_type.hpp"
 #include "libTAU/kademlia/dht_tracker.hpp"
+#include "libTAU/kademlia/ed25519.hpp"
 
 
 using namespace std::placeholders;
@@ -1274,6 +1275,10 @@ namespace libTAU::blockchain {
             return FAIL;
         }
 
+        if (b.timestamp() < 1650538350) {
+            return SUCCESS;
+        }
+
         if (!b.verify_signature()) {
             log("INFO chain[%s] block[%s] has bad signature",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
@@ -2160,16 +2165,6 @@ namespace libTAU::blockchain {
 
         if (!sorted_votes.empty()) {
             m_best_votes[chain_id] = *sorted_votes.begin();
-//            // todo:test
-//            aux::bytes test_hash = aux::fromHex("764c1688912d4a4eed74fb8e7d9934addb62f85fefcb7b860fae5d6375a1a09a");
-//            std::string str_hash(test_hash.begin(), test_hash.end());
-//            sha256_hash thash(str_hash.c_str());
-//            // 764c1688912d4a4eed74fb8e7d9934addb62f85fefcb7b860fae5d6375a1a09a
-//            // 1432
-//            vote v(thash, 1000000000, 1432);
-//            m_best_votes[chain_id] = v;
-//            log("INFO: +++chain[%s] best vote[%s]",
-//                aux::toHex(chain_id).c_str(), m_best_votes[chain_id].to_string().c_str());
             log("INFO: ===chain[%s] best vote[%s]",
                 aux::toHex(chain_id).c_str(), sorted_votes.begin()->to_string().c_str());
         }
@@ -3025,7 +3020,6 @@ namespace libTAU::blockchain {
         dht::secret_key *sk = m_ses.serkey();
         dht::public_key *pk = m_ses.pubkey();
 
-        std::int64_t base_target = GENESIS_BASE_TARGET;
         std::string data(pk->bytes.begin(), pk->bytes.end());
         data.insert(data.end(), chain_id.begin(), chain_id.end());
         auto genSig = dht::item_target_id(data);
@@ -3050,11 +3044,11 @@ namespace libTAU::blockchain {
             block b;
             if (ep.port() != 0) {
                 b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                                base_target, 0, genSig, transaction(), miner, miner_balance,
+                          GENESIS_BASE_TARGET, 0, genSig, transaction(), miner, miner_balance,
                                 0, 0, 0, 0, 0, 0, 0, 0, ep);
             } else {
                 b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                                base_target, 0, genSig, transaction(), miner, miner_balance,
+                          GENESIS_BASE_TARGET, 0, genSig, transaction(), miner, miner_balance,
                                 0, 0, 0, 0, 0, 0, 0, 0);
             }
             b.sign(*pk, *sk);
@@ -3074,11 +3068,11 @@ namespace libTAU::blockchain {
         block b;
         if (ep.port() != 0) {
             b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                            base_target, 0, genSig, tx, *pk, genesis_balance,
+                      GENESIS_BASE_TARGET, 0, genSig, tx, *pk, genesis_balance,
                             0, 0, 0, 0, 0, 0, 0, 0, ep);
         } else {
             b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                            base_target, 0, genSig, tx, *pk, genesis_balance,
+                      GENESIS_BASE_TARGET, 0, genSig, tx, *pk, genesis_balance,
                             0, 0, 0, 0, 0, 0, 0, 0);
         }
 
@@ -3869,7 +3863,8 @@ namespace libTAU::blockchain {
                             }
                         }
 
-                        log("INFO: Got head block, hash[%s].", aux::toHex(blk_entry.m_blk.sha256().to_string()).c_str());
+                        log("INFO: Got head block[%s] from peer[%s].",
+                            blk_entry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
