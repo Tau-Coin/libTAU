@@ -350,7 +350,7 @@ time_duration rpc_manager::tick()
 {
 	INVARIANT_CHECK;
 
-	constexpr auto short_timeout = seconds(1);
+	constexpr auto short_timeout = seconds(2);
 	// libtau: set timeout into 5s from 15s
 	constexpr auto timeout = seconds(5);
 
