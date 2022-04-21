@@ -1362,6 +1362,11 @@ namespace libTAU::blockchain {
 
         auto const& tx = b.tx();
         if (!tx.empty()) {
+            if (b.chain_id() != tx.chain_id()) {
+                log("INFO chain[%s] block chain id[%s] and tx chain id[%s] mismatch",
+                    aux::toHex(chain_id).c_str(), aux::toHex(b.chain_id()).c_str(), aux::toHex(tx.chain_id()).c_str());
+            }
+
             // adjust state
             // miner earns fee
             peers_balance[b.miner()] += tx.fee();
