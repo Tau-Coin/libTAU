@@ -809,21 +809,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		return m_peer_class_filter;
 	}
 
-	void session_impl::deferred_submit_jobs()
-	{
-		if (m_deferred_submit_disk_jobs) return;
-		m_deferred_submit_disk_jobs = true;
-		post(m_io_context, make_handler(
-			[this] { wrap(&session_impl::submit_disk_jobs); }
-			, m_submit_jobs_handler_storage, *this));
-	}
-
-	void session_impl::submit_disk_jobs()
-	{
-		TORRENT_ASSERT(m_deferred_submit_disk_jobs);
-		m_deferred_submit_disk_jobs = false;
-	}
-
 	// session_impl is responsible for deleting 'pack'
 	void session_impl::apply_settings_pack(std::shared_ptr<settings_pack> pack)
 	{
