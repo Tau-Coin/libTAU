@@ -63,6 +63,8 @@ namespace libTAU::blockchain {
 
         virtual bool delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
+        virtual bool delete_all_peers_in_gossip_peer_db(const aux::bytes &chain_id) = 0;
+
         virtual bool add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
         /**

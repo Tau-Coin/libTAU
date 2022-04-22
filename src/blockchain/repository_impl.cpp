@@ -272,6 +272,21 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    bool repository_impl::delete_all_peers_in_gossip_peer_db(const aux::bytes &chain_id) {
+        std::string sql = "DELETE FROM ";
+        sql.append(chain_id_to_short_hash(chain_id));
+        sql.append("GOSSIP");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
+    }
+
     bool repository_impl::add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         sqlite3_stmt * stmt;
         std::string sql = "INSERT INTO ";

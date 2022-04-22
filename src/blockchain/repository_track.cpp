@@ -74,6 +74,10 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    bool repository_track::delete_all_peers_in_gossip_peer_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
     bool repository_track::add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         return false;
     }

@@ -3253,6 +3253,12 @@ namespace libTAU::blockchain {
 //        m_priority_chain = std::make_pair(aux::bytes(), 0);
     }
 
+    void blockchain::introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers) {
+        common::gossip_peers_entry gossipPeersEntry(chain_id, peers);
+        common::blockchain_entry_task task(chain_id, common::gossip_peers_entry::data_type_id, peer, gossipPeersEntry.get_entry());
+        add_entry_task_to_queue(chain_id, task);
+    }
+
     void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {
 
         if(payload.type() != entry::dictionary_t){
@@ -3261,24 +3267,6 @@ namespace libTAU::blockchain {
         }
         // construct mutable data wrapper from entry
         auto now = get_total_milliseconds();
-
-        // check protocol id
-//            if (auto* p = const_cast<entry *>(i.value().find_key("pid")))
-//            {
-//                auto protocol_id = p->integer();
-//                if (blockchain_signal::protocol_id == protocol_id) {
-//                    blockchain_signal signal(i.value());
-//
-//                    const auto& chain_id = signal.chain_id();
-//
-//                    // update latest item timestamp
-//                    if (i.ts() > m_latest_item_timestamp[chain_id][peer]) {
-//                        m_latest_item_timestamp[chain_id][peer] = i.ts();
-//                    }
-//
-//                    process_signal(signal, chain_id, peer);
-//                }
-//            }
 
         // check data type id
         if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
@@ -3334,6 +3322,14 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
+                                std::set<dht::public_key> peers;
+                                int i = 0;
+                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
+                                    peers.insert(iter->first);
+                                }
+                                if (!peers.empty()) {
+                                    introduce_peers(chain_id, peer, peers);
+                                }
                                 break;
                             }
                         } else {
@@ -3470,6 +3466,14 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::tx_pool_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
+                                std::set<dht::public_key> peers;
+                                int i = 0;
+                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
+                                    peers.insert(iter->first);
+                                }
+                                if (!peers.empty()) {
+                                    introduce_peers(chain_id, peer, peers);
+                                }
                                 break;
                             }
                         } else {
@@ -3547,6 +3551,14 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
+                                std::set<dht::public_key> peers;
+                                int i = 0;
+                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
+                                    peers.insert(iter->first);
+                                }
+                                if (!peers.empty()) {
+                                    introduce_peers(chain_id, peer, peers);
+                                }
                                 break;
                             }
                         } else {
@@ -3792,6 +3804,14 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
+                                std::set<dht::public_key> peers;
+                                int i = 0;
+                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
+                                    peers.insert(iter->first);
+                                }
+                                if (!peers.empty()) {
+                                    introduce_peers(chain_id, peer, peers);
+                                }
                                 break;
                             }
                         } else {
@@ -3936,6 +3956,14 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::state_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
+                                std::set<dht::public_key> peers;
+                                int i = 0;
+                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
+                                    peers.insert(iter->first);
+                                }
+                                if (!peers.empty()) {
+                                    introduce_peers(chain_id, peer, peers);
+                                }
                                 break;
                             }
                         } else {
@@ -4054,6 +4082,50 @@ namespace libTAU::blockchain {
 
                     if (!txReplyEntry.m_hash.is_all_zeros()) {
                         m_ses.alerts().emplace_alert<blockchain_tx_confirmation_alert>(chain_id, peer, txReplyEntry.m_hash);
+                    }
+
+                    break;
+                }
+                case common::gossip_peers_entry::data_type_id: {
+                    common::gossip_peers_entry gossipPeersEntry(payload);
+                    auto &chain_id = gossipPeersEntry.m_chain_id;
+
+                    {
+                        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                        if (it == m_chains.end()) {
+                            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                            return;
+                        }
+                    }
+
+                    try_to_kick_out_of_ban_list(chain_id, peer);
+
+                    auto &acl = m_access_list[chain_id];
+                    auto it = acl.find(peer);
+                    if (it != acl.end()) {
+                        it->second.m_score += 3;
+                        if (it->second.m_score > 100) {
+                            it->second.m_score = 100;
+                        }
+                        it->second.m_last_seen = now;
+                    } else {
+                        if (acl.size() >= blockchain_acl_max_peers) {
+                            // find out min score peer
+                            auto min_it = acl.begin();
+                            for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                if (iter->second.m_score  < min_it->second.m_score) {
+                                    min_it = iter;
+                                }
+                            }
+
+                            if (min_it->second.m_score < peer_info().m_score) {
+                                // replace min score peer with new one
+                                acl.erase(min_it);
+                                acl[peer] = peer_info(now);
+                            }
+                        } else {
+                            acl[peer] = peer_info(now);
+                        }
                     }
 
                     break;

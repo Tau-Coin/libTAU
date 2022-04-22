@@ -47,6 +47,8 @@ namespace libTAU::blockchain {
 
         bool delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
+        bool delete_all_peers_in_gossip_peer_db(const aux::bytes &chain_id) override;
+
         bool add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
         bool is_account_exist(const aux::bytes &chain_id, const dht::public_key &pubKey) override;

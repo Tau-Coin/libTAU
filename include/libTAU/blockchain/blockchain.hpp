@@ -308,6 +308,8 @@ namespace blockchain {
         // send data to peer
         void send_to(const aux::bytes &chain_id, const dht::public_key &peer, entry const& data);
 
+        void introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers);
+
         // request signal from a given peer
 //        void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
 
