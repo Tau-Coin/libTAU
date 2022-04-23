@@ -426,26 +426,36 @@ namespace {
 			// item lifetime must >= 120 minutes.
 			if (lifetime < minutes(120)) lifetime = minutes(120);
 
-			for (auto i = m_immutable_table.begin(); i != m_immutable_table.end();)
+			// libTAU modify: if immutable table is not full, don't expire
+			if (int(m_immutable_table.size()) >= m_settings.get_int(
+					settings_pack::dht_max_dht_items))
 			{
-				if (i->second.last_seen + lifetime > now)
+				for (auto i = m_immutable_table.begin(); i != m_immutable_table.end();)
 				{
-					++i;
-					continue;
+					if (i->second.last_seen + lifetime > now)
+					{
+						++i;
+						continue;
+					}
+					i = m_immutable_table.erase(i);
+					m_counters.immutable_data -= 1;
 				}
-				i = m_immutable_table.erase(i);
-				m_counters.immutable_data -= 1;
 			}
 
-			for (auto i = m_mutable_table.begin(); i != m_mutable_table.end();)
+			// libTAU modify: if mutable table is not full, don't expire
+			if (int(m_mutable_table.size()) >= m_settings.get_int(
+					settings_pack::dht_max_dht_items))
 			{
-				if (i->second.last_seen + lifetime > now)
+				for (auto i = m_mutable_table.begin(); i != m_mutable_table.end();)
 				{
-					++i;
-					continue;
+					if (i->second.last_seen + lifetime > now)
+					{
+						++i;
+						continue;
+					}
+					i = m_mutable_table.erase(i);
+					m_counters.mutable_data -= 1;
 				}
-				i = m_mutable_table.erase(i);
-				m_counters.mutable_data -= 1;
 			}
 		}
 
