@@ -162,6 +162,9 @@ namespace blockchain {
         // return ban list
         std::set<dht::public_key> get_ban_list(const aux::bytes &chain_id);
 
+        // return access list
+        std::set<dht::public_key> get_gossip_peers(const aux::bytes &chain_id);
+
         // set blockchain main loop time interval (ms)
         void set_blockchain_loop_interval(int milliseconds);
 
@@ -310,6 +313,8 @@ namespace blockchain {
 
         void introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers);
 
+        void add_gossip_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
+
         // request signal from a given peer
 //        void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
 
@@ -408,6 +413,8 @@ namespace blockchain {
         // all tasks
         std::queue<common::blockchain_entry_task> m_tasks;
         std::set<common::blockchain_entry_task> m_tasks_set;
+
+        std::map<aux::bytes, std::set<dht::public_key>> m_gossip_peers;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_visiting_history;
 

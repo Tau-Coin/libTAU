@@ -70,6 +70,17 @@ namespace libTAU::blockchain {
 
     bool blockchain::stop()
     {
+        for (auto& item: m_gossip_peers) {
+            auto const& chain_id = item.first;
+            auto const& gossip_peers = item.second;
+            if (!gossip_peers.empty()) {
+                m_repository->delete_all_peers_in_gossip_peer_db(chain_id);
+                for (auto const&peer: gossip_peers) {
+                    m_repository->add_peer_in_gossip_peer_db(chain_id, peer);
+                }
+            }
+        }
+
         m_stop = true;
 
         m_refresh_timer.cancel();
@@ -161,7 +172,7 @@ namespace libTAU::blockchain {
 
         // get all peers
 //        m_chain_peers[chain_id] = m_repository->get_all_peers(chain_id);
-//        m_chain_gossip_peers[chain_id] = m_repository->get_all_gossip_peers(chain_id);
+        m_gossip_peers[chain_id] = m_repository->get_all_gossip_peers(chain_id);
 
         // load key point block in memory
         // load head/tail/consensus block
@@ -225,6 +236,7 @@ namespace libTAU::blockchain {
         m_voting_point_blocks.clear();
         m_best_votes.clear();
         m_votes.clear();
+        m_gossip_peers.clear();
 //        m_latest_signal_time.clear();
     }
 
@@ -251,6 +263,7 @@ namespace libTAU::blockchain {
         m_voting_point_blocks.erase(chain_id);
         m_best_votes.erase(chain_id);
         m_votes[chain_id].clear();
+        m_gossip_peers[chain_id].clear();
 //        m_latest_signal_time[chain_id].clear();
     }
 
@@ -302,6 +315,24 @@ namespace libTAU::blockchain {
                                 for (int i = 0; i < 30; i++) {
                                     auto peer = m_repository->get_peer_randomly(chain_id);
                                     m_vote_request_peers[chain_id].insert(peer);
+                                }
+                            }
+
+                            // vote with 3 gossip peers
+                            auto const& gossip_peers = m_gossip_peers[chain_id];
+                            if (!gossip_peers.empty()) {
+                                for (int k = 0; k < 3; k++) {
+                                    srand(get_total_milliseconds());
+                                    auto index = rand() % gossip_peers.size();
+
+                                    int i = 0;
+                                    for (const auto &gossip_peer : gossip_peers) {
+                                        if (i == index) {
+                                            m_vote_request_peers[chain_id].insert(gossip_peer);
+                                            break;
+                                        }
+                                        i++;
+                                    }
                                 }
                             }
 
@@ -1006,7 +1037,26 @@ namespace libTAU::blockchain {
 //        }
 //
 //        return peer;
-        return m_repository->get_peer_randomly(chain_id);
+        auto now = get_total_milliseconds();
+        srand(now);
+        auto n = rand() % 10;
+        auto& gossip_peers = m_gossip_peers[chain_id];
+        if (gossip_peers.empty() || n < 9) {
+            return m_repository->get_peer_randomly(chain_id);
+        } else {
+            srand(get_total_milliseconds());
+            auto index = rand() % gossip_peers.size();
+
+            int i = 0;
+            for (const auto & gossip_peer : gossip_peers) {
+                if (i == index) {
+                    return gossip_peer;
+                }
+                i++;
+            }
+        }
+
+        return dht::public_key();
     }
 
 //    dht::public_key blockchain::select_unchoked_peer_randomly(const aux::bytes &chain_id) {
@@ -3239,6 +3289,15 @@ namespace libTAU::blockchain {
         return peers;
     }
 
+    std::set<dht::public_key> blockchain::get_gossip_peers(const aux::bytes &chain_id) {
+        auto& gossip_peers = m_gossip_peers[chain_id];
+        if (!gossip_peers.empty()) {
+            return gossip_peers;
+        }
+
+        return m_repository->get_all_gossip_peers(chain_id);
+    }
+
     void blockchain::set_blockchain_loop_interval(int milliseconds) {
         log("INFO: Set block chain loop interval:%d(ms)", milliseconds);
         m_refresh_time = milliseconds;
@@ -3257,6 +3316,24 @@ namespace libTAU::blockchain {
         common::gossip_peers_entry gossipPeersEntry(chain_id, peers);
         common::blockchain_entry_task task(chain_id, common::gossip_peers_entry::data_type_id, peer, gossipPeersEntry.get_entry());
         add_entry_task_to_queue(chain_id, task);
+    }
+
+    void blockchain::add_gossip_peers(const aux::bytes &chain_id, const std::set<dht::public_key> &peers) {
+        m_gossip_peers[chain_id].insert(peers.begin(), peers.end());
+        auto& gossip_peers = m_gossip_peers[chain_id];
+        while (gossip_peers.size() > 10) {
+            auto now = get_total_milliseconds();
+            srand(now);
+            auto index = rand() % gossip_peers.size();
+            int i = 0;
+            for (auto it = gossip_peers.begin(); it != gossip_peers.end(); it++) {
+                if (i == index) {
+                    gossip_peers.erase(it);
+                    break;
+                }
+                i++;
+            }
+        }
     }
 
     void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {
@@ -3893,6 +3970,10 @@ namespace libTAU::blockchain {
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
+                        if (is_empty_chain(chain_id)) {
+                            add_gossip_peers(chain_id, blk_entry.m_blk.get_block_peers());
+                        }
+
                         if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
                             m_ses.alerts().emplace_alert<blockchain_syncing_head_block_alert>(peer, blk_entry.m_blk);
                         }
@@ -4126,6 +4207,10 @@ namespace libTAU::blockchain {
                         } else {
                             acl[peer] = peer_info(now);
                         }
+                    }
+
+                    if (gossipPeersEntry.m_peers.empty()) {
+                        add_gossip_peers(chain_id, gossipPeersEntry.m_peers);
                     }
 
                     break;
