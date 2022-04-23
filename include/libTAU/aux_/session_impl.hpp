@@ -549,8 +549,6 @@ namespace aux {
 
 			int next_port() const;
 
-			void deferred_submit_jobs() override;
-
 			// implements dht_observer
 			void set_external_address(aux::listen_socket_handle const& iface
 				, address const& ip, address const& source) override;
@@ -678,8 +676,6 @@ namespace aux {
 			peer_class_pool m_classes;
 
 			void init();
-
-			void submit_disk_jobs();
 
 			void start_natpmp(std::shared_ptr<aux::listen_socket_t> const&  s);
 			void start_upnp(std::shared_ptr<aux::listen_socket_t> const& s);
@@ -972,10 +968,6 @@ namespace aux {
 			bool should_log() const override;
 			void session_log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
 #endif
-
-			// this is true whenever we have posted a deferred-disk job
-			// it means we don't need to post another one
-			bool m_deferred_submit_disk_jobs = false;
 
 			// set to true when the session object
 			// is being destructed and the thread
