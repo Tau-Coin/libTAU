@@ -311,6 +311,8 @@ namespace blockchain {
         // send data to peer
         void send_to(const aux::bytes &chain_id, const dht::public_key &peer, entry const& data);
 
+        void introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer);
+
         void introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers);
 
         void add_gossip_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);

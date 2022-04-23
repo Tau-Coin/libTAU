@@ -3312,6 +3312,34 @@ namespace libTAU::blockchain {
 //        m_priority_chain = std::make_pair(aux::bytes(), 0);
     }
 
+    void blockchain::introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer) {
+        auto const& acl = m_access_list[chain_id];
+        std::set<dht::public_key> peers;
+        int i = 0;
+        for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
+            peers.insert(iter->first);
+        }
+
+        if (peers.size() < 5) {
+            auto gossip_peers = m_repository->get_all_gossip_peers(chain_id);
+            int m = 5 - peers.size();
+            int k = 0;
+            for (const auto & gossip_peer : gossip_peers) {
+                if (k < m) {
+                    peers.insert(gossip_peer);
+                } else {
+                    break;
+                }
+
+                k++;
+            }
+        }
+
+        if (!peers.empty()) {
+            introduce_peers(chain_id, peer, peers);
+        }
+    }
+
     void blockchain::introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers) {
         common::gossip_peers_entry gossipPeersEntry(chain_id, peers);
         common::blockchain_entry_task task(chain_id, common::gossip_peers_entry::data_type_id, peer, gossipPeersEntry.get_entry());
@@ -3399,14 +3427,7 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
-                                std::set<dht::public_key> peers;
-                                int i = 0;
-                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
-                                    peers.insert(iter->first);
-                                }
-                                if (!peers.empty()) {
-                                    introduce_peers(chain_id, peer, peers);
-                                }
+                                introduce_gossip_peers(chain_id, peer);
                                 break;
                             }
                         } else {
@@ -3543,14 +3564,7 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::tx_pool_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
-                                std::set<dht::public_key> peers;
-                                int i = 0;
-                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
-                                    peers.insert(iter->first);
-                                }
-                                if (!peers.empty()) {
-                                    introduce_peers(chain_id, peer, peers);
-                                }
+                                introduce_gossip_peers(chain_id, peer);
                                 break;
                             }
                         } else {
@@ -3628,14 +3642,7 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
-                                std::set<dht::public_key> peers;
-                                int i = 0;
-                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
-                                    peers.insert(iter->first);
-                                }
-                                if (!peers.empty()) {
-                                    introduce_peers(chain_id, peer, peers);
-                                }
+                                introduce_gossip_peers(chain_id, peer);
                                 break;
                             }
                         } else {
@@ -3881,14 +3888,7 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
-                                std::set<dht::public_key> peers;
-                                int i = 0;
-                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
-                                    peers.insert(iter->first);
-                                }
-                                if (!peers.empty()) {
-                                    introduce_peers(chain_id, peer, peers);
-                                }
+                                introduce_gossip_peers(chain_id, peer);
                                 break;
                             }
                         } else {
@@ -3945,6 +3945,8 @@ namespace libTAU::blockchain {
                             it->second.m_head_block = blk_entry.m_blk;
                             it->second.m_requests_time.erase(std::make_unique<common::head_block_request_entry>(chain_id));
                             it->second.m_last_seen = now;
+
+                            introduce_gossip_peers(chain_id, peer);
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
                                 // find out min score peer
@@ -3959,9 +3961,17 @@ namespace libTAU::blockchain {
                                     // replace min score peer with new one
                                     acl.erase(min_it);
                                     acl[peer] = peer_info(NORMAL, blk_entry.m_blk, now);
+
+                                    introduce_gossip_peers(chain_id, peer);
+                                } else {
+                                    log("INFO: Too many peers in acl to response.");
+                                    introduce_gossip_peers(chain_id, peer);
+                                    break;
                                 }
                             } else {
                                 acl[peer] = peer_info(NORMAL, blk_entry.m_blk, now);
+
+                                introduce_gossip_peers(chain_id, peer);
                             }
                         }
 
@@ -3971,7 +3981,11 @@ namespace libTAU::blockchain {
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
                         if (is_empty_chain(chain_id)) {
-                            add_gossip_peers(chain_id, blk_entry.m_blk.get_block_peers());
+                            auto peers = blk_entry.m_blk.get_block_peers();
+                            peers.erase(*m_ses.pubkey());
+                            if (!peers.empty()) {
+                                add_gossip_peers(chain_id, peers);
+                            }
                         }
 
                         if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
@@ -4037,14 +4051,7 @@ namespace libTAU::blockchain {
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::state_request_entry>(payload), now);
                             } else {
                                 log("INFO: Too many peers in acl to response.");
-                                std::set<dht::public_key> peers;
-                                int i = 0;
-                                for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
-                                    peers.insert(iter->first);
-                                }
-                                if (!peers.empty()) {
-                                    introduce_peers(chain_id, peer, peers);
-                                }
+                                introduce_gossip_peers(chain_id, peer);
                                 break;
                             }
                         } else {
@@ -4209,8 +4216,12 @@ namespace libTAU::blockchain {
                         }
                     }
 
-                    if (gossipPeersEntry.m_peers.empty()) {
-                        add_gossip_peers(chain_id, gossipPeersEntry.m_peers);
+                    if (!gossipPeersEntry.m_peers.empty()) {
+                        auto peers = gossipPeersEntry.m_peers;
+                        peers.erase(*m_ses.pubkey());
+                        if (!peers.empty()) {
+                            add_gossip_peers(chain_id, peers);
+                        }
                     }
 
                     break;
