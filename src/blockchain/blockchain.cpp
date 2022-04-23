@@ -3468,6 +3468,15 @@ namespace libTAU::blockchain {
                     // TODO: validate timestamp etc. ?
                     if (!blk_entry.m_blk.empty()) {
                         auto &acl = m_access_list[chain_id];
+
+                        if (acl.empty()) {
+                            auto peers = blk_entry.m_blk.get_block_peers();
+                            peers.erase(*m_ses.pubkey());
+                            if (!peers.empty()) {
+                                add_gossip_peers(chain_id, peers);
+                            }
+                        }
+
                         auto it = acl.find(peer);
                         if (it != acl.end()) {
                             it->second.m_score += 3;
@@ -3931,6 +3940,15 @@ namespace libTAU::blockchain {
                         try_to_kick_out_of_ban_list(chain_id, peer);
 
                         auto &acl = m_access_list[chain_id];
+
+                        if (acl.empty()) {
+                            auto peers = blk_entry.m_blk.get_block_peers();
+                            peers.erase(*m_ses.pubkey());
+                            if (!peers.empty()) {
+                                add_gossip_peers(chain_id, peers);
+                            }
+                        }
+
                         auto it = acl.find(peer);
                         if (it != acl.end()) {
                             it->second.m_stage = NORMAL;
@@ -3979,14 +3997,6 @@ namespace libTAU::blockchain {
                             blk_entry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
 
                         m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
-
-                        if (is_empty_chain(chain_id)) {
-                            auto peers = blk_entry.m_blk.get_block_peers();
-                            peers.erase(*m_ses.pubkey());
-                            if (!peers.empty()) {
-                                add_gossip_peers(chain_id, peers);
-                            }
-                        }
 
                         if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
                             m_ses.alerts().emplace_alert<blockchain_syncing_head_block_alert>(peer, blk_entry.m_blk);
