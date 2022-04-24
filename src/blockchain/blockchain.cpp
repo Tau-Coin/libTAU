@@ -3335,6 +3335,17 @@ namespace libTAU::blockchain {
             }
         }
 
+        if (peers.size() < 5) {
+            int m = 5 - peers.size();
+            for (int k = 0; k < m; k++) {
+                auto pubKey = m_repository->get_peer_randomly(chain_id);
+                if (!pubKey.is_all_zeros()) {
+                    peers.insert(pubKey);
+                }
+            }
+
+        }
+
         if (!peers.empty()) {
             introduce_peers(chain_id, peer, peers);
         }
