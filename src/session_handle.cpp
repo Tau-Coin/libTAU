@@ -339,6 +339,30 @@ namespace libTAU {
 		return blks;
 	}
 
+	// get access list
+    std::set<dht::public_key> session_handle::get_access_list(std::vector<char> chain_id)
+	{
+		std::set<dht::public_key> keys;
+		sync_call(&session_impl::get_access_list, chain_id, &keys);
+		return keys;
+	}
+
+	// get ban list
+    std::set<dht::public_key> session_handle::get_ban_list(std::vector<char> chain_id)
+	{
+		std::set<dht::public_key> keys;
+		sync_call(&session_impl::get_ban_list, chain_id, &keys);
+		return keys;
+	}
+
+	// get gossip list
+    std::set<dht::public_key> session_handle::get_gossip_list(std::vector<char> chain_id)
+	{
+		std::set<dht::public_key> keys;
+		sync_call(&session_impl::get_gossip_list, chain_id, &keys);
+		return keys;
+	}
+
 	// get median tx fee
     std::int64_t session_handle::get_median_tx_free(std::vector<char> chain_id)
 	{
