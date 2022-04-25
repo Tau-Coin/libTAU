@@ -352,6 +352,16 @@ namespace libTAU {
         blockchain::account get_account_info(std::vector<char> chain_id, dht::public_key publicKey);
 		// get top and tip blocks
         std::vector<blockchain::block> get_top_tip_block(std::vector<char> chain_id, int num);
+
+        // get access list
+        std::set<dht::public_key> get_access_list(std::vector<char> chain_id);
+
+        // get ban list
+        std::set<dht::public_key> get_ban_list(std::vector<char> chain_id);
+
+        // get gossip list
+        std::set<dht::public_key> get_gossip_list(std::vector<char> chain_id);
+
 		// get median tx fee
         std::int64_t get_median_tx_free(std::vector<char> chain_id);
 

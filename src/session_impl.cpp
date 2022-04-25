@@ -3006,6 +3006,30 @@ namespace {
 		return false;
 	}
 
+	bool session_impl::get_access_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys) {
+		if(m_blockchain) {
+			*keys = m_blockchain->get_access_list(chain_id);
+			return true;
+		}
+		return false;
+	}
+
+	bool session_impl::get_ban_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys) {
+		if(m_blockchain) {
+			*keys = m_blockchain->get_ban_list(chain_id);
+			return true;
+		}
+		return false;
+	}
+
+	bool session_impl::get_gossip_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys) {
+		if(m_blockchain) {
+			*keys = m_blockchain->get_gossip_peers(chain_id);
+			return true;
+		}
+		return false;
+	}
+
 	std::int64_t session_impl::get_median_tx_free(const aux::bytes &chain_id) {
 		if(m_blockchain) {
 			return m_blockchain->getMedianTxFee(chain_id);
