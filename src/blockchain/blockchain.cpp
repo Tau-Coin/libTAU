@@ -486,7 +486,7 @@ namespace libTAU::blockchain {
                                 }
 
                                 // 5. try to mine on the best chain
-                                if (is_sync_completed(chain_id)) {
+                                if (is_sync_completed(chain_id) && m_counters[counters::dht_nodes] > 0) {
                                     block blk = try_to_mine_block(chain_id);
 
                                     if (!blk.empty()) {

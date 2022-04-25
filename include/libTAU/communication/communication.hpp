@@ -96,8 +96,8 @@ namespace libTAU {
                 public std::enable_shared_from_this<communication>, communication_logger {
         public:
 
-            communication(aux::bytes device_id, io_context& mIoc, aux::session_interface &mSes) :
-            m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
+            communication(aux::bytes device_id, counters &mCounters, aux::session_interface &mSes, io_context &mIoc) :
+                    m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc) {
                 m_message_db = std::make_shared<message_db_impl>(m_ses.sqldb(), m_ses.kvdb());
             }
 
@@ -263,6 +263,8 @@ namespace libTAU {
 
             // session interface
             aux::session_interface& m_ses;
+
+            counters& m_counters;
 
             // deadline timer
             aux::deadline_timer m_refresh_timer;

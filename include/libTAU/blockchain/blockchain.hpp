@@ -108,7 +108,7 @@ namespace blockchain {
             public std::enable_shared_from_this<blockchain>, blockchain_logger  {
     public:
         blockchain(io_context& mIoc, aux::session_interface &mSes) :
-        m_ioc(mIoc), m_ses(mSes), m_refresh_timer(mIoc) {
+        m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc) {
             m_repository = std::make_shared<repository_impl>(m_ses.sqldb(), m_ses.kvdb());
         }
         // start blockchain
@@ -360,6 +360,8 @@ namespace blockchain {
 
         // session interface
         aux::session_interface& m_ses;
+
+        counters& m_counters;
 
         // refresh time interval
         int m_refresh_time = blockchain_default_refresh_time;
