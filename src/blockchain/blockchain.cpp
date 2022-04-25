@@ -1325,7 +1325,7 @@ namespace libTAU::blockchain {
             return FAIL;
         }
 
-        if (b.timestamp() < 1650538350) {
+        if (b.timestamp() < 1651075200) {
             return SUCCESS;
         }
 
@@ -1364,27 +1364,27 @@ namespace libTAU::blockchain {
         auto hit = consensus::calculate_random_hit(genSig);
 
         if (genSig != b.generation_signature()) {
-            log("INFO chain[%s] generation signature[%s, %s] mismatch",
+            log("ERROR chain[%s] generation signature[%s, %s] mismatch",
                 aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), aux::toHex(b.generation_signature().to_string()).c_str());
             return FAIL;
         }
 
         if (base_target != b.base_target()) {
-            log("INFO chain[%s] base target[%lu, %lud] mismatch",
+            log("ERROR chain[%s] base target[%lu, %lud] mismatch",
                 aux::toHex(chain_id).c_str(), base_target, b.base_target());
             return FAIL;
         }
 
         auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(previous_block.cumulative_difficulty(), base_target);
         if (cumulative_difficulty != b.cumulative_difficulty()) {
-            log("INFO chain[%s] cumulative difficulty[%lu, %lud] mismatch",
+            log("ERROR chain[%s] cumulative difficulty[%lu, %lud] mismatch",
                 aux::toHex(chain_id).c_str(), cumulative_difficulty, b.cumulative_difficulty());
             return FAIL;
         }
 
         auto necessary_interval = consensus::calculate_mining_time_interval(hit, base_target, power);
         if (b.timestamp() - previous_block.timestamp() < necessary_interval) {
-            log("INFO: Time is too short! hit:%lu, base target:%ld, power:%ld, necessary interval:%ld, real interval:%ld",
+            log("ERROR: Time is too short! hit:%lu, base target:%ld, power:%ld, necessary interval:%ld, real interval:%ld",
                 hit, base_target, power, necessary_interval, b.timestamp() - previous_block.timestamp());
             return FAIL;
         }
@@ -1449,7 +1449,7 @@ namespace libTAU::blockchain {
             peers_nonce[b.tx().sender()] != b.sender_nonce() || peers_note_timestamp[b.tx().sender()] != b.sender_note_timestamp() ||
             peers_balance[b.tx().receiver()] != b.receiver_balance() || peers_nonce[b.tx().receiver()] != b.receiver_nonce() ||
             peers_note_timestamp[b.tx().receiver()] != b.receiver_note_timestamp()) {
-            log("INFO chain[%s] block[%s] state error!", aux::toHex(chain_id).c_str(), b.to_string().c_str());
+            log("ERROR chain[%s] block[%s] state error!", aux::toHex(chain_id).c_str(), b.to_string().c_str());
             return FAIL;
         }
 

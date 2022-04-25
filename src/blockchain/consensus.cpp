@@ -94,7 +94,8 @@ namespace libTAU::blockchain {
 
     // Note: DEFAULT_MIN_BLOCK_TIME/DEFAULT_MAX_BLOCK_TIME is different from nxt
     std::uint64_t consensus::calculate_mining_time_interval(uint64_t hit, uint64_t baseTarget, uint64_t power) {
-        auto interval = hit / baseTarget / power;
+        uint64_t real_power = std::sqrt(power);
+        auto interval = hit / baseTarget / real_power;
 
         // make sure target > hit
         interval++;
