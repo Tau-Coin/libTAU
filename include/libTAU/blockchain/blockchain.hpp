@@ -107,7 +107,7 @@ namespace blockchain {
     class TORRENT_EXPORT blockchain final:
             public std::enable_shared_from_this<blockchain>, blockchain_logger  {
     public:
-        blockchain(io_context& mIoc, aux::session_interface &mSes) :
+        blockchain(io_context& mIoc, aux::session_interface &mSes, counters &mCounters) :
         m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc) {
             m_repository = std::make_shared<repository_impl>(m_ses.sqldb(), m_ses.kvdb());
         }
