@@ -2730,7 +2730,7 @@ namespace {
 			return;
 		}
 		// todo: initialize device_id
-		m_communication = std::make_shared<communication::communication>(m_device_id, m_io_context, *this); //Add m_stats_counters
+		m_communication = std::make_shared<communication::communication>(m_device_id, m_io_context, *this, m_stats_counters);
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("starting Communication");
@@ -2753,7 +2753,7 @@ namespace {
 			return;
 		}
 		// todo: initialize device_id
-		m_blockchain = std::make_shared<blockchain::blockchain>(m_io_context, *this); //Add m_stats_counters
+		m_blockchain = std::make_shared<blockchain::blockchain>(m_io_context, *this, m_stats_counters);
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("starting Blockchain");
