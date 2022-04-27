@@ -101,8 +101,24 @@ namespace libTAU::blockchain {
 
     void blockchain::request_state(const aux::bytes &chain_id) {
         common::state_request_entry stateRequestEntry(chain_id);
-        common::blockchain_entry_task task(chain_id, common::state_request_entry::data_type_id, stateRequestEntry.get_entry());
-        add_entry_task_to_queue(chain_id, task);
+
+        auto &acl = m_access_list[chain_id];
+        for (auto const &item: acl) {
+            auto &peer = item.first;
+            common::blockchain_entry_task task(chain_id, common::state_request_entry::data_type_id, peer, stateRequestEntry.get_entry());
+            log("INFO: Request state to peer[%s]", aux::toHex(peer.bytes).c_str());
+            add_entry_task_to_queue(chain_id, task);
+        }
+
+        auto size = acl.size();
+        if (size < blockchain_acl_max_peers) {
+            for (int i = 0; i < blockchain_acl_max_peers - size; i++) {
+                auto peer = m_repository->get_peer_randomly(chain_id);
+                common::blockchain_entry_task task(chain_id, common::state_request_entry::data_type_id, peer, stateRequestEntry.get_entry());
+                log("INFO: Request state to peer[%s]", aux::toHex(peer.bytes).c_str());
+                add_entry_task_to_queue(chain_id, task);
+            }
+        }
     }
 
     bool blockchain::followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
@@ -348,6 +364,7 @@ namespace libTAU::blockchain {
                                 // request vote
                                 common::vote_request_entry voteRequestEntry(chain_id);
                                 send_to(chain_id, *it, voteRequestEntry.get_entry());
+                                log("INFO: Request vote to peer[%s]", aux::toHex(it->bytes).c_str());
 
                                 peers.erase(it);
                                 log("INFO: 3.1 chain:%s vote status:%d, time:%ld", aux::toHex(chain_id).c_str(),
@@ -496,10 +513,23 @@ namespace libTAU::blockchain {
                                         process_block(chain_id, blk);
 
                                         common::head_block_entry blockEntry(blk);
-                                        common::blockchain_entry_task task(chain_id,
-                                                                           common::head_block_entry::data_type_id,
-                                                                           blockEntry.get_entry());
-                                        add_entry_task_to_queue(chain_id, task);
+                                        auto &acl = m_access_list[chain_id];
+                                        for (auto const &item: acl) {
+                                            auto &peer = item.first;
+                                            common::blockchain_entry_task task(chain_id, common::head_block_entry::data_type_id, peer, blockEntry.get_entry());
+                                            log("INFO: Send head block[%s] to peer[%s]", blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                                            add_entry_task_to_queue(chain_id, task);
+                                        }
+
+                                        auto size = acl.size();
+                                        if (size < blockchain_acl_max_peers) {
+                                            for (int i = 0; i < blockchain_acl_max_peers - size; i++) {
+                                                auto peer = m_repository->get_peer_randomly(chain_id);
+                                                common::blockchain_entry_task task(chain_id, common::head_block_entry::data_type_id, peer, blockEntry.get_entry());
+                                                log("INFO: Send head block[%s] to peer[%s]", blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                                                add_entry_task_to_queue(chain_id, task);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -3163,7 +3193,18 @@ namespace libTAU::blockchain {
                 for (auto const &item: acl) {
                     auto &peer = item.first;
                     common::blockchain_entry_task task(chain_id, common::transaction_entry::data_type_id, peer, txEntry.get_entry());
+                    log("INFO: Send tx[%s] to peer[%s]", aux::toHex(tx.sha256().to_string()).c_str(), aux::toHex(peer.bytes).c_str());
                     add_entry_task_to_queue(chain_id, task);
+                }
+
+                auto size = acl.size();
+                if (size < blockchain_acl_max_peers) {
+                    for (int i = 0; i < blockchain_acl_max_peers - size; i++) {
+                        auto peer = m_repository->get_peer_randomly(chain_id);
+                        common::blockchain_entry_task task(chain_id, common::transaction_entry::data_type_id, peer, txEntry.get_entry());
+                        log("INFO: Send tx[%s] to peer[%s]", aux::toHex(tx.sha256().to_string()).c_str(), aux::toHex(peer.bytes).c_str());
+                        add_entry_task_to_queue(chain_id, task);
+                    }
                 }
 
                 m_tx_pools[chain_id].add_tx(tx);
@@ -3290,7 +3331,7 @@ namespace libTAU::blockchain {
     }
 
     std::set<dht::public_key> blockchain::get_gossip_peers(const aux::bytes &chain_id) {
-        auto& gossip_peers = m_gossip_peers[chain_id];
+        auto gossip_peers = m_gossip_peers[chain_id];
         if (!gossip_peers.empty()) {
             return gossip_peers;
         }
@@ -4239,6 +4280,11 @@ namespace libTAU::blockchain {
 
                     if (!gossipPeersEntry.m_peers.empty()) {
                         auto peers = gossipPeersEntry.m_peers;
+                        log("----------Got gossip peer-----");
+                        for (auto const &pubkey: peers) {
+                            log("----------Got gossip peer:%s", aux::toHex(pubkey.bytes).c_str());
+                        }
+                        log("----------Got gossip peer+++++");
                         peers.erase(*m_ses.pubkey());
                         if (!peers.empty()) {
                             add_gossip_peers(chain_id, peers);
