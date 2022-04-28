@@ -2016,20 +2016,7 @@ namespace libTAU::blockchain {
         auto tail_block = m_tail_blocks[chain_id];
         bool tail_missing = false;
         // Rollback blocks
-        dht::public_key test_pubkey;
         for (auto &blk: rollback_blocks) {
-            if (blk.block_number() == 361) {
-                auto stateLinker = track->get_state_linker(blk.sha256());
-                test_pubkey = blk.tx().receiver();
-                auto test_act = track->get_account(chain_id, test_pubkey);
-                auto test_abp = track->get_account_block_pointer(chain_id, test_pubkey);
-                log("1--------361 block[%s]", blk.to_string().c_str());
-                log("1--------361 state linker[%s]", stateLinker.to_string().c_str());
-                auto stateLinker1 = m_repository->get_state_linker(blk.sha256());
-                log("1--------361 repo state linker[%s]", stateLinker1.to_string().c_str());
-                log("1--------block hash[%s], test act:%s, test abp:%s", aux::toHex(blk.sha256().to_string()).c_str(),
-                    test_act.to_string().c_str(), test_abp.to_string().c_str());
-            }
 //            log("INFO: try to rollback block:%s", blk.to_string().c_str());
             if (!track->rollback_block(blk)) {
                 log("INFO chain[%s] rollback block[%s] fail",
@@ -2082,12 +2069,9 @@ namespace libTAU::blockchain {
                 peers.insert(tail_peers.begin(), tail_peers.end());
             } else {
                 tail_missing = true;
+                break;
             }
         }
-
-        auto test_act = track->get_account(chain_id, test_pubkey);
-        auto test_abp = track->get_account_block_pointer(chain_id, test_pubkey);
-        log("2--------test act:%s, test abp:%s", test_act.to_string().c_str(), test_abp.to_string().c_str());
 
         // connect new branch blocks
         for (auto i = connect_blocks.size(); i > 1; i--) {
