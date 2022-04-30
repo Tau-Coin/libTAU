@@ -147,30 +147,6 @@ namespace libTAU {
             auto now = get_current_time();
 
             std::int64_t timestamp = 0;
-            // time
-            if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
-            {
-                timestamp = i->integer();
-                if (timestamp > m_last_communication_time[peer]) {
-                    update_communication_time(peer, timestamp);
-                }
-            }
-
-            {
-                std::string encode;
-                bencode(std::back_inserter(encode), payload);
-
-                auto& entry_cache = m_entry_cache[peer];
-                auto it = entry_cache.find(encode);
-                if (it != entry_cache.end()) {
-                    log("INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-                    return;
-                } else {
-                    entry_cache[encode] = now;
-                }
-            }
-
-            m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
             // check data type id
             if (auto* p = const_cast<entry *>(payload.find_key(common::entry_type)))
@@ -179,6 +155,31 @@ namespace libTAU {
                 log("---------------Got entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                 switch (data_type_id) {
                     case common::message_entry::data_type_id: {
+                        // time
+                        if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
+                        {
+                            timestamp = i->integer();
+                            if (timestamp > m_last_communication_time[peer]) {
+                                update_communication_time(peer, timestamp);
+                            }
+                        }
+
+                        {
+                            std::string encode;
+                            bencode(std::back_inserter(encode), payload);
+
+                            auto& entry_cache = m_entry_cache[peer];
+                            auto it = entry_cache.find(encode);
+                            if (it != entry_cache.end()) {
+                                log("INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                                return;
+                            } else {
+                                entry_cache[encode] = now;
+                            }
+                        }
+
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
                         common::message_entry msg_entry(payload);
                         log("INFO: Got message, hash[%s].",
                             aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
@@ -252,9 +253,38 @@ namespace libTAU {
                         m_entry_putting_nodes[peer].clear();
                         m_entry_last_putting_time[peer][ptr] = now;
 
+                        if (!is_cache) {
+                            send_all_unconfirmed_messages(peer);
+                        }
+
                         break;
                     }
                     case common::message_levenshtein_array_entry::data_type_id: {
+                        // time
+                        if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
+                        {
+                            timestamp = i->integer();
+                            if (timestamp > m_last_communication_time[peer]) {
+                                update_communication_time(peer, timestamp);
+                            }
+                        }
+
+                        {
+                            std::string encode;
+                            bencode(std::back_inserter(encode), payload);
+
+                            auto& entry_cache = m_entry_cache[peer];
+                            auto it = entry_cache.find(encode);
+                            if (it != entry_cache.end()) {
+                                log("INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                                return;
+                            } else {
+                                entry_cache[encode] = now;
+                            }
+                        }
+
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
                         common::message_levenshtein_array_entry levenshtein_array_entry(payload);
                         log("INFO: Got message levenshtein array[%s].",
                             aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
@@ -350,9 +380,38 @@ namespace libTAU {
 ////                            m_message_db->save_array_align_time(std::make_pair(*m_ses.pubkey(), peer), now);
 //                        }
 
+                        if (!is_cache) {
+                            send_all_unconfirmed_messages(peer);
+                        }
+
                         break;
                     }
                     case common::friend_info_request_entry::data_type_id: {
+                        // time
+                        if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
+                        {
+                            timestamp = i->integer();
+                            if (timestamp > m_last_communication_time[peer]) {
+                                update_communication_time(peer, timestamp);
+                            }
+                        }
+
+                        {
+                            std::string encode;
+                            bencode(std::back_inserter(encode), payload);
+
+                            auto& entry_cache = m_entry_cache[peer];
+                            auto it = entry_cache.find(encode);
+                            if (it != entry_cache.end()) {
+                                log("INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                                return;
+                            } else {
+                                entry_cache[encode] = now;
+                            }
+                        }
+
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
                         auto it = m_last_same_entry_time[peer].find(std::make_shared<common::friend_info_request_entry>(payload));
                         if (it != m_last_same_entry_time[peer].end()) {
                             if (now > it->second + communication_same_response_interval) {
@@ -379,9 +438,38 @@ namespace libTAU {
                             m_entry_last_putting_time[peer][ptr] = now;
                         }
 
+                        if (!is_cache) {
+                            send_all_unconfirmed_messages(peer);
+                        }
+
                         break;
                     }
                     case common::friend_info_entry::data_type_id: {
+                        // time
+                        if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
+                        {
+                            timestamp = i->integer();
+                            if (timestamp > m_last_communication_time[peer]) {
+                                update_communication_time(peer, timestamp);
+                            }
+                        }
+
+                        {
+                            std::string encode;
+                            bencode(std::back_inserter(encode), payload);
+
+                            auto& entry_cache = m_entry_cache[peer];
+                            auto it = entry_cache.find(encode);
+                            if (it != entry_cache.end()) {
+                                log("INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                                return;
+                            } else {
+                                entry_cache[encode] = now;
+                            }
+                        }
+
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+
                         common::friend_info_entry e(payload);
                         if (!e.m_friend_info.empty()) {
                             // 通知用户新的friend info
@@ -393,15 +481,15 @@ namespace libTAU {
                         m_entry_putting_nodes[peer].erase(ptr);
                         m_entry_last_putting_time[peer].erase(ptr);
 
+                        if (!is_cache) {
+                            send_all_unconfirmed_messages(peer);
+                        }
+
                         break;
                     }
                     default: {
                     }
                 }
-            }
-
-            if (!is_cache) {
-                send_all_unconfirmed_messages(peer);
             }
 
         }

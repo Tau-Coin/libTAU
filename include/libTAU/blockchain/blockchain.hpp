@@ -173,6 +173,9 @@ namespace blockchain {
         void unset_priority_chain();
 
         // mutable data is pushed here
+        void on_dht_item(dht::item const& i);
+
+        // mutable data is pushed here
         void on_dht_relay(dht::public_key const& peer, entry const& payload);
 
         void request_state(const aux::bytes &chain_id);
@@ -307,6 +310,9 @@ namespace blockchain {
 
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id);
+
+        // make a salt on mutable channel
+        static std::string make_salt(dht::public_key peer);
 
         // send data to peer
         void send_to(const aux::bytes &chain_id, const dht::public_key &peer, entry const& data);
