@@ -152,6 +152,8 @@ namespace aux {
 		// it to finish. The timeout can be set with apply_settings().
 		~session();
 
+        bool stop();
+
 		// In case you want to destruct the session asynchronously, you can
 		// request a session destruction proxy. If you don't do this, the
 		// destructor of the session object will block while the trackers are

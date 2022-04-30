@@ -293,16 +293,12 @@ namespace {
 	session::~session()
 	{
 		if (!m_impl) return;
-
-		aux::dump_call_profile();
+        //TAU useless call
+		//aux::dump_call_profile();
 
 		// capture the shared_ptr in the dispatched function
 		// to keep the session_impl alive
-		m_impl->call_abort();
-
-		std::cout << "Session Impl Abort Over 0" << std::endl;
-
-		std::cout << m_thread.use_count() << std::endl;
+		// m_impl->call_abort();
 
 		if (m_thread && m_thread.use_count() == 1)
 		{
@@ -314,6 +310,13 @@ namespace {
 
 		std::cout << "Session Impl Abort Over" << std::endl;
 	}
+
+    bool session::stop()
+    {
+        //stop session_impl;
+        m_impl->call_abort();
+        return true;
+    }
 
 	session_proxy session::abort()
 	{
