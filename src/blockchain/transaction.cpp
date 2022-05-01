@@ -38,11 +38,11 @@ namespace libTAU::blockchain {
             e["r"] = entry(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
             // nonce
             e["n"] = entry(m_nonce);
+            // fee
+            e["f"] = entry(m_fee);
             // amount
             e["a"] = entry(m_amount);
         }
-        // fee
-        e["f"] = entry(m_fee);
         // payload
         e["p"] = entry(std::string(m_payload.begin(), m_payload.end()));
 

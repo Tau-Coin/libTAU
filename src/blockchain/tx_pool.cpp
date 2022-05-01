@@ -90,15 +90,15 @@ namespace libTAU::blockchain {
 
         // validate tx state
         auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
-        if (tx.type() == tx_type::type_transfer) {
+//        if (tx.type() == tx_type::type_transfer) {
             if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
                 return false;
-        } else if (tx.type() == tx_type::type_note) {
-            if (tx.timestamp() <= sender_account.note_timestamp() || sender_account.balance() < tx.cost())
-                return false;
-        } else {
-            return false;
-        }
+//        } else if (tx.type() == tx_type::type_note) {
+//            if (tx.timestamp() <= sender_account.note_timestamp() || sender_account.balance() < tx.cost())
+//                return false;
+//        } else {
+//            return false;
+//        }
 
         auto it_txid = m_account_tx_by_fee.find(tx.sender());
         // find in local
@@ -168,21 +168,30 @@ namespace libTAU::blockchain {
         if (tx.empty())
             return false;
 
-        if (!tx.verify_signature())
-            return false;
+        // TODO: remove for test
+//        if (!tx.verify_signature())
+//            return false;
 
         m_active_peers.push(tx.sender());
         if (m_active_peers.size() > tx_pool_max_active_friends_size) {
             m_active_peers.pop();
         }
 
-        auto ret1 = add_tx_to_time_pool(tx);
-        auto ret2 = add_tx_to_fee_pool(tx);
-
-        if (!ret1 && !ret2)
+        if (tx.type() == tx_type::type_transfer) {
+            return add_tx_to_fee_pool(tx);
+        } else if (tx.type() == tx_type::type_note) {
+            return add_tx_to_time_pool(tx);
+        } else {
             return false;
+        }
 
-        return true;
+//        auto ret1 = add_tx_to_time_pool(tx);
+//        auto ret2 = add_tx_to_fee_pool(tx);
+//
+//        if (!ret1 && !ret2)
+//            return false;
+//
+//        return true;
     }
 
     bool tx_pool::send_back_block_tx_to_pool(const block &blk) {

@@ -1249,8 +1249,8 @@ namespace libTAU::blockchain {
             auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
             std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
             log("INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), power);
-            if (power <= 0) {
-                return b;
+            if (power < 1) {
+                power = 1;
             }
             auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
             auto hit = consensus::calculate_random_hit(genSig);
@@ -1386,10 +1386,10 @@ namespace libTAU::blockchain {
 
         auto base_target = consensus::calculate_required_base_target(previous_block, ancestor);
         std::int64_t power = repo->get_effective_power(chain_id, b.miner());
-        if (power <= 0) {
-            log("INFO chain[%s] Cannot get account[%s] state in db",
+        if (power < 1) {
+            log("INFO chain[%s] Cannot get account[%s] power in db",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.miner().bytes).c_str());
-            return MISSING;
+            power = 1;
         }
 
         auto genSig = consensus::calculate_generation_signature(previous_block.generation_signature(), b.miner());
@@ -1447,6 +1447,11 @@ namespace libTAU::blockchain {
             if (b.chain_id() != tx.chain_id()) {
                 log("INFO chain[%s] block chain id[%s] and tx chain id[%s] mismatch",
                     aux::toHex(chain_id).c_str(), aux::toHex(b.chain_id()).c_str(), aux::toHex(tx.chain_id()).c_str());
+            }
+
+            if (!tx.verify_signature()) {
+                log("INFO chain[%s] block tx[%s] has bad signature",
+                    aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
             }
 
             // adjust state
@@ -3245,8 +3250,8 @@ namespace libTAU::blockchain {
             auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
             std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
             log("INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), power);
-            if (power <= 0) {
-                return -1;
+            if (power < 1) {
+                power = 1;
             }
             auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
             auto hit = consensus::calculate_random_hit(genSig);

@@ -51,14 +51,14 @@ namespace blockchain {
         }
 
         static transaction create_note_transaction(aux::bytes& mChainId, tx_version mVersion, int64_t mTimestamp,
-                                                       const dht::public_key &mSender, int64_t mFee,  aux::bytes& mPayload) {
-            return transaction(mChainId, mVersion, mTimestamp, mSender, mFee, mPayload);
+                                                       const dht::public_key &mSender,  aux::bytes& mPayload) {
+            return transaction(mChainId, mVersion, mTimestamp, mSender, mPayload);
         }
 
         transaction(aux::bytes mChainId, tx_version mVersion, int64_t mTimestamp,
-                    const dht::public_key &mSender, int64_t mFee, aux::bytes mPayload) :
+                    const dht::public_key &mSender, aux::bytes mPayload) :
                     m_chain_id(std::move(mChainId)), m_version(mVersion), m_timestamp(mTimestamp),
-                    m_sender(mSender), m_fee(mFee), m_payload(std::move(mPayload)) {
+                    m_sender(mSender), m_payload(std::move(mPayload)) {
             m_type = tx_type::type_note;
         }
 
