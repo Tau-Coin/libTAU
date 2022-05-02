@@ -35,6 +35,10 @@ void relay_observer::reply(msg const& m, node_id const& from)
         return;
     }
 
+	bdecode_node const hit_ent = r.dict_find_int("hit");
+	bool const hit = hit_ent && hit_ent.int_value() != 0;
+	static_cast<relay*>(algorithm())->on_put_success(from, m.addr, hit);
+
 	// add referred nodes into routing table.
     traversal_observer::reply(m, from);
     done();
@@ -100,6 +104,11 @@ void relay::start()
 	traversal_algorithm::start();
 }
 
+bool relay::is_done() const
+{
+	return m_hits != 0 && m_hits >= m_hit_limit;
+}
+
 void relay::done()
 {
 	m_done = true;
@@ -132,6 +141,11 @@ bool relay::invoke(observer_ptr o)
 	}
 
 	return m_node.m_rpc.invoke(e, o->target_ep(), o, m_discard_response);
+}
+
+void relay::on_put_success(node_id const& nid, udp::endpoint const& ep, bool hit)
+{
+	if (hit) ++m_hits;
 }
 
 observer_ptr relay::new_observer(udp::endpoint const& ep

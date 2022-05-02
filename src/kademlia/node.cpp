@@ -729,6 +729,7 @@ void node::put_item(public_key const& pk
 	put_ta->set_invoke_window(beta);
 	put_ta->set_invoke_limit(invoke_limit);
 	put_ta->set_cache(cache);
+	put_ta->set_hit_limit(m_settings.get_int(settings_pack::dht_hit_limit));
 	// TODO: removed
 	put_ta->set_fixed_distance(256);
 
@@ -757,6 +758,7 @@ void node::send(public_key const& to
 	ta->set_payload(std::move(payload));
 	ta->set_invoke_window(beta);
 	ta->set_invoke_limit(invoke_limit);
+	ta->set_hit_limit(m_settings.get_int(settings_pack::dht_hit_limit));
 	// TODO: removed
 	ta->set_fixed_distance(256);
 
@@ -1735,6 +1737,8 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 			look_for_nodes(protocol_relay_nodes_key(), protocol(), arg_ent,
 				[this, &sender](node_endpoint const& nep)
 					{ handle_referred_relays(sender, {nep.id, nep.ep});});
+
+			reply["hit"] = 1;
 		}
 		else
 		{
@@ -1749,6 +1753,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 			auto ne = m_incoming_table.find_node(target_id);
 			if (ne == nullptr || ne->ep() == m.addr) return false;
 			*to_ep = ne->ep();
+			reply["hit"] = 1;
 		}
 
 		return true;
