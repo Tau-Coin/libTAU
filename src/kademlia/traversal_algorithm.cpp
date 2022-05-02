@@ -281,6 +281,11 @@ char const* traversal_algorithm::name() const
 	return "traversal_algorithm";
 }
 
+bool traversal_algorithm::is_done() const
+{
+	return false;
+}
+
 void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 {
 	if (m_done) return;
@@ -702,7 +707,7 @@ bool traversal_algorithm::add_requests()
 
 bool traversal_algorithm::add_requests()
 {
-	if (m_done || m_results.empty()) return true;
+	if (m_done || m_results.empty() || is_done()) return true;
 
 	// Once invoke all requests if discarding response and invoking directly.
 	if (m_discard_response && m_direct_invoking)

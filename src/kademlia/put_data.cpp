@@ -83,6 +83,11 @@ void put_data::start()
 	traversal_algorithm::start();
 }
 
+bool put_data::is_done() const
+{
+	return m_hits != 0 && m_hits >= m_hit_limit;
+}
+
 void put_data::done()
 {
 	m_done = true;
@@ -132,6 +137,7 @@ bool put_data::invoke(observer_ptr o)
 void put_data::on_put_success(node_id const& nid, udp::endpoint const& ep, bool hit)
 {
 	m_success_nodes.push_back(std::make_pair(node_entry(nid, ep), hit));
+	if (hit) ++m_hits;
 }
 
 observer_ptr put_data::new_observer(udp::endpoint const& ep

@@ -52,6 +52,9 @@ struct TORRENT_EXTRA_EXPORT traversal_algorithm
 	virtual char const* name() const;
 	virtual void start();
 
+	// added by libTAU
+	virtual bool is_done() const;
+
 	node_id const& target() const { return m_target; }
 
 	void resort_result(observer*);

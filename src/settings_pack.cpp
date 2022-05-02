@@ -343,6 +343,7 @@ namespace libTAU {
 		SET(dht_search_branching, 1, nullptr),
 		SET(dht_invoke_limit, 3, nullptr),
 		SET(dht_invoke_window, 3, nullptr),
+		SET(dht_hit_limit, 1, nullptr),
 		SET(dht_bootstrap_interval, 30, nullptr),
 		SET(dht_ping_interval, 30, nullptr),
 		SET(dht_keep_interval, 20, nullptr),

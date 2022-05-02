@@ -34,10 +34,15 @@ struct relay: traversal_algorithm
 
 	char const* name() const override;
 	void start() override;
+	bool is_done() const override;
 
 	void set_payload(entry payload) { m_payload = std::move(payload); }
 
 	void add_relays_nodes(std::vector<node_entry> const& nodes);
+
+	void set_hit_limit(int hit_limit) { m_hit_limit = hit_limit; }
+
+	void on_put_success(node_id const& nid, udp::endpoint const& ep, bool hit);
 
 protected:
 
@@ -51,6 +56,8 @@ protected:
 	entry m_payload;
 	node_id m_to;
 	std::vector<node_entry> m_relay_nodes;
+	int m_hits = 0;
+	int m_hit_limit = 0;
 	bool m_done = false;
 };
 

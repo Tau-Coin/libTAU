@@ -1857,6 +1857,9 @@ namespace aux {
 			// the request total number limit for one dht operation(etc. get_peers, get, put).
 			dht_invoke_limit,
 
+			// the request number of hitting the target endpoint point
+			dht_hit_limit,
+
 			// the time interval(seconds) of bootstrap
 			dht_bootstrap_interval,
 
