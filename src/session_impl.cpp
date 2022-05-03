@@ -2885,8 +2885,6 @@ namespace {
 
 	void session_impl::set_loop_time_interval(int milliseconds)
 	{
-		session_log("Set Loop Time: %d", milliseconds);
-
 		//m_communication
 		if(m_communication)
 			m_communication->set_loop_time_interval(milliseconds);
@@ -2934,7 +2932,6 @@ namespace {
 
 	void session_impl::unset_chatting_friend()
 	{
-		session_log("Session Unset Chatting Friend");
 		if(m_communication)
 			m_communication->unset_chatting_friend();
 	}
