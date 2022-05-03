@@ -1237,6 +1237,7 @@ void routing_table::node_failed(node_id const& nid, udp::endpoint const& ep)
 		// has never responded at all, remove it
 		if (j->fail_count() >= m_settings.get_int(settings_pack::dht_max_fail_count) || !j->pinged())
 		{
+#ifndef TORRENT_DISABLE_LOGGING
 			if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
 			{
 				m_log->log(dht_logger::routing_table, "NODE DELETE IN ROUTING TABLE id: %s ip: %s fails: %d pinged: %d up-time: %d"
@@ -1245,6 +1246,7 @@ void routing_table::node_failed(node_id const& nid, udp::endpoint const& ep)
 				, int(j->pinged())
 				, int(total_seconds(aux::time_now() - j->first_seen)));
 			}
+#endif
 			print_ipset("live bucket erase before, l:1222", j->addr(), m_ips
 #ifndef TORRENT_DISABLE_LOGGING
 			, m_log
