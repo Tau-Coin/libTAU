@@ -37,7 +37,9 @@ namespace libTAU::blockchain {
 
         explicit tx_pool(repository *mRepository) : m_repository(mRepository) {}
 
-        transaction get_best_transaction() const;
+        transaction get_best_fee_transaction() const;
+
+        transaction get_latest_note_transaction() const;
 
         aux::bytes get_hash_prefix_array_by_fee() const;
 
@@ -49,7 +51,11 @@ namespace libTAU::blockchain {
 
         bool add_tx(const transaction& tx);
 
-        bool send_back_block_tx_to_pool(const block& blk);
+//        bool rollback_block(const block& blk);
+
+//        bool connect_block(const block& blk);
+
+        void delete_tx_from_time_pool(const transaction& tx);
 
         transaction get_transaction_by_account(const dht::public_key& pubKey) const;
 

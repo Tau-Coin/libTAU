@@ -1263,7 +1263,13 @@ namespace libTAU::blockchain {
 //                log("1-----------------------------------hit:%lu, base target:%lu, interval:%lu", hit, base_target, interval);
                 transaction tx;
                 if (is_sync_completed(chain_id)) {
-                    tx = m_tx_pools[chain_id].get_best_transaction();
+                    tx = m_tx_pools[chain_id].get_best_fee_transaction();
+
+                    if (tx.empty()) {
+                        tx = m_tx_pools[chain_id].get_latest_note_transaction();
+                    }
+                } else {
+                    tx = m_tx_pools[chain_id].get_latest_note_transaction();
                 }
 
                 auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(head_block.cumulative_difficulty(), base_target);
@@ -1586,6 +1592,7 @@ namespace libTAU::blockchain {
 
             // chain changed, re-check tx pool
             m_tx_pools[chain_id].recheck_account_txs(b.get_block_peers());
+            m_tx_pools[chain_id].delete_tx_from_time_pool(b.tx());
 
             m_head_blocks[chain_id] = b;
             m_tail_blocks[chain_id] = b;
@@ -1662,6 +1669,7 @@ namespace libTAU::blockchain {
 
                 // chain changed, re-check tx pool
                 m_tx_pools[chain_id].recheck_account_txs(peers);
+                m_tx_pools[chain_id].delete_tx_from_time_pool(b.tx());
 
                 m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(b);
             }
@@ -1691,6 +1699,7 @@ namespace libTAU::blockchain {
 
                 // chain changed, re-check tx pool
                 m_tx_pools[chain_id].recheck_account_txs(b.get_block_peers());
+                m_tx_pools[chain_id].delete_tx_from_time_pool(b.tx());
 
                 m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(b);
             }
@@ -2122,24 +2131,25 @@ namespace libTAU::blockchain {
         m_head_blocks[chain_id] = target;
         m_tail_blocks[chain_id] = tail_block;
 
-        for (auto &blk: rollback_blocks) {
-            // send back rollback block tx to pool
-            m_tx_pools[chain_id].send_back_block_tx_to_pool(blk);
-            // notify rollback block
-            m_ses.alerts().emplace_alert<blockchain_rollback_block_alert>(blk);
-        }
-        for (auto i = connect_blocks.size(); i > 1; i--) {
-            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(connect_blocks[i - 2]);
-        }
-//        m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(target);
-        m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(tail_block);
-        m_ses.alerts().emplace_alert<blockchain_fork_point_block_alert>(reference_block);
-
         // chain changed, re-check tx pool
         m_tx_pools[chain_id].recheck_account_txs(peers);
 
         // re-locate consensus point block
         try_to_update_voting_point_block(chain_id);
+
+        for (auto &blk: rollback_blocks) {
+            // send back rollback block tx to pool
+            m_tx_pools[chain_id].add_tx(blk.tx());
+            // notify rollback block
+            m_ses.alerts().emplace_alert<blockchain_rollback_block_alert>(blk);
+        }
+        for (auto i = connect_blocks.size(); i > 1; i--) {
+            m_tx_pools[chain_id].delete_tx_from_time_pool(connect_blocks[i - 2].tx());
+            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(connect_blocks[i - 2]);
+        }
+//        m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(target);
+        m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(tail_block);
+        m_ses.alerts().emplace_alert<blockchain_fork_point_block_alert>(reference_block);
 
         return SUCCESS;
     }

@@ -11,11 +11,22 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    transaction tx_pool::get_best_transaction() const {
+    transaction tx_pool::get_best_fee_transaction() const {
         auto it = m_ordered_txs_by_fee.rbegin();
         if (it != m_ordered_txs_by_fee.rend()) {
             auto it_tx = m_all_txs_by_fee.find(it->txid());
             if (it_tx != m_all_txs_by_fee.end())
+                return it_tx->second;
+        }
+
+        return transaction();
+    }
+
+    transaction tx_pool::get_latest_note_transaction() const {
+        auto it = m_ordered_txs_by_timestamp.rbegin();
+        if (it != m_ordered_txs_by_timestamp.rend()) {
+            auto it_tx = m_all_txs_by_timestamp.find(it->txid());
+            if (it_tx != m_all_txs_by_timestamp.end())
                 return it_tx->second;
         }
 
@@ -194,44 +205,72 @@ namespace libTAU::blockchain {
 //        return true;
     }
 
-    bool tx_pool::send_back_block_tx_to_pool(const block &blk) {
-        auto &tx = blk.tx();
+//    bool tx_pool::rollback_block(const block &blk) {
+//        return add_tx(blk.tx());
+//        auto &tx = blk.tx();
+//        if (tx.empty())
+//            return false;
+//
+//        // validate tx state
+//        auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
+//        if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
+//            return false;
+//
+//
+//        auto it_txid = m_account_tx_by_fee.find(tx.sender());
+//        // find in local
+//        if (it_txid != m_account_tx_by_fee.end()) { // has in local
+//            auto it_tx = m_all_txs_by_fee.find(it_txid->second);
+//            if (it_tx != m_all_txs_by_fee.end()) {
+//                auto old_tx = it_tx->second;
+//                if (!old_tx.empty()) {
+//                    if (tx.fee() >= old_tx.fee()) {
+//                        // replace old tx with new one
+//                        m_all_txs_by_fee[tx.sha256()] = tx;
+//                        m_account_tx_by_fee[tx.sender()] = tx.sha256();
+//                        m_ordered_txs_by_fee.erase(tx_entry_with_fee(old_tx.sha256(), old_tx.fee()));
+//                        m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
+//                    }
+//                }
+//            }
+//        } else { // insert if cannot find in local
+//            m_all_txs_by_fee[tx.sha256()] = tx;
+//            m_account_tx_by_fee[tx.sender()] = tx.sha256();
+//            m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
+//        }
+//
+//        if (m_all_txs_by_fee.size() > tx_pool_max_size_by_fee) {
+//            remove_min_fee_tx();
+//        }
+//
+//        return true;
+//    }
+
+//    bool tx_pool::connect_block(const block &blk) {
+//        auto& tx = blk.tx();
+//        if (!tx.empty()) {
+//            if (tx.type() == tx_type::type_transfer) {
+//                return recheck_account_txs(blk.get_block_peers());
+//            } else if (tx.type() == tx_type::type_note) {
+//                delete_tx_from_time_pool(tx);
+//            } else {
+//                return false;
+//            }
+//        }
+//
+//        return true;
+//    }
+
+    void tx_pool::delete_tx_from_time_pool(const transaction &tx) {
         if (tx.empty())
-            return false;
+            return;
 
-        // validate tx state
-        auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
-        if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
-            return false;
-
-
-        auto it_txid = m_account_tx_by_fee.find(tx.sender());
-        // find in local
-        if (it_txid != m_account_tx_by_fee.end()) { // has in local
-            auto it_tx = m_all_txs_by_fee.find(it_txid->second);
-            if (it_tx != m_all_txs_by_fee.end()) {
-                auto old_tx = it_tx->second;
-                if (!old_tx.empty()) {
-                    if (tx.fee() >= old_tx.fee()) {
-                        // replace old tx with new one
-                        m_all_txs_by_fee[tx.sha256()] = tx;
-                        m_account_tx_by_fee[tx.sender()] = tx.sha256();
-                        m_ordered_txs_by_fee.erase(tx_entry_with_fee(old_tx.sha256(), old_tx.fee()));
-                        m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
-                    }
-                }
-            }
-        } else { // insert if cannot find in local
-            m_all_txs_by_fee[tx.sha256()] = tx;
-            m_account_tx_by_fee[tx.sender()] = tx.sha256();
-            m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
+        m_all_txs_by_timestamp.erase(tx.sha256());
+        m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
+        auto it = m_account_tx_by_timestamp.find(tx.sender());
+        if (it != m_account_tx_by_timestamp.end() && it->second == tx.sha256()) {
+            m_account_tx_by_timestamp.erase(it);
         }
-
-        if (m_all_txs_by_fee.size() > tx_pool_max_size_by_fee) {
-            remove_min_fee_tx();
-        }
-
-        return true;
     }
 
     void tx_pool::remove_min_fee_tx() {
@@ -282,11 +321,11 @@ namespace libTAU::blockchain {
     bool tx_pool::recheck_account_txs(const std::set<dht::public_key> &peers) {
         for (auto const& peer: peers) {
             recheck_account_tx(peer);
-            auto local_tx = get_transaction_by_account(peer);
-            if (!local_tx.empty()) {
-                delete_transaction_by_account(peer);
-                add_tx(local_tx);
-            }
+//            auto local_tx = get_transaction_by_account(peer);
+//            if (!local_tx.empty()) {
+//                delete_transaction_by_account(peer);
+//                add_tx(local_tx);
+//            }
         }
 
         return true;
