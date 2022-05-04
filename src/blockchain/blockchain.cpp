@@ -503,13 +503,14 @@ namespace libTAU::blockchain {
                                 }
 
                                 // 5. try to mine on the best chain
-                                if (is_sync_completed(chain_id) && m_counters[counters::dht_nodes] > 0) {
+                                if (m_counters[counters::dht_nodes] > 0) {
                                     block blk = try_to_mine_block(chain_id);
 
                                     if (!blk.empty()) {
                                         // process mined block
                                         log("INFO chain[%s] process mined block[%s]",
                                             aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+
                                         process_block(chain_id, blk);
 
                                         common::head_block_entry blockEntry(blk);
@@ -1258,6 +1259,8 @@ namespace libTAU::blockchain {
             log("INFO: chain id[%s] generation signature[%s], base target[%lu], hit[%lu]",
                 aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
 
+            auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(head_block.cumulative_difficulty(), base_target);
+
             std::int64_t now = get_total_milliseconds() / 1000; // second
             if (now >= head_block.timestamp() + interval) {
 //                log("1-----------------------------------hit:%lu, base target:%lu, interval:%lu", hit, base_target, interval);
@@ -1271,8 +1274,6 @@ namespace libTAU::blockchain {
                 } else {
                     tx = m_tx_pools[chain_id].get_latest_note_transaction();
                 }
-
-                auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(head_block.cumulative_difficulty(), base_target);
 
                 std::set<dht::public_key> peers;
                 peers.insert(*pk);
@@ -1288,30 +1289,27 @@ namespace libTAU::blockchain {
                 std::map<dht::public_key, std::int64_t> peers_balance;
                 std::map<dht::public_key, std::int64_t> peers_nonce;
                 std::map<dht::public_key, std::int64_t> peers_note_timestamp;
-                for (auto const& peer: peers) {
-                    auto peer_account = m_repository->get_account(chain_id, peer);
-                    peers_balance[peer] = peer_account.balance();
-                    peers_nonce[peer] = peer_account.nonce();
-                    peers_note_timestamp[peer] = peer_account.note_timestamp();
-                }
 
-                if (!tx.empty()) {
-                    // adjust state
-                    // miner earns fee
-                    peers_balance[*pk] += tx.fee();
-                    if (tx.type() == tx_type::type_transfer) {
-                        // receiver balance + amount
-                        peers_balance[tx.receiver()] += tx.amount();
-                        // sender balance - cost(fee + amount)
-                        peers_balance[tx.sender()] -= tx.cost();
-                        // sender nonce+1
-                        peers_nonce[tx.sender()] += 1;
-                    } else if (tx.type() == tx_type::type_note) {
-                        // sender balance - fee
-                        peers_balance[tx.sender()] -= tx.fee();
-                        peers_note_timestamp[tx.sender()] = tx.timestamp();
-                    } else {
-                        return b;
+                if (is_sync_completed(chain_id)) {
+                    for (auto const &peer: peers) {
+                        auto peer_account = m_repository->get_account(chain_id, peer);
+                        peers_balance[peer] = peer_account.balance();
+                        peers_nonce[peer] = peer_account.nonce();
+                        peers_note_timestamp[peer] = peer_account.note_timestamp();
+                    }
+
+                    if (!tx.empty()) {
+                        // adjust state
+                        if (tx.type() == tx_type::type_transfer) {
+                            // miner earns fee
+                            peers_balance[*pk] += tx.fee();
+                            // receiver balance + amount
+                            peers_balance[tx.receiver()] += tx.amount();
+                            // sender balance - cost(fee + amount)
+                            peers_balance[tx.sender()] -= tx.cost();
+                            // sender nonce+1
+                            peers_nonce[tx.sender()] += 1;
+                        }
                     }
                 }
 
@@ -1361,10 +1359,6 @@ namespace libTAU::blockchain {
         if (b.timestamp() <= previous_block.timestamp()) {
             log("INFO chain[%s] block timestamp error.", aux::toHex(chain_id).c_str());
             return FAIL;
-        }
-
-        if (b.timestamp() < 1651075200) {
-            return SUCCESS;
         }
 
         if (!b.verify_signature()) {
@@ -1435,20 +1429,12 @@ namespace libTAU::blockchain {
 //            return FAIL;
 //        }
 
-        std::set<dht::public_key> peers = b.get_block_peers();
         std::map<dht::public_key, std::int64_t> peers_balance;
         std::map<dht::public_key, std::int64_t> peers_nonce;
         std::map<dht::public_key, std::int64_t> peers_note_timestamp;
-        for (auto const& peer: peers) {
-            // note: verify block with cache data, do not use m_repository
-            auto peer_account = repo->get_account(chain_id, peer);
-            log("INFO: ------peer[%s] account[%s]", aux::toHex(peer.bytes).c_str(), peer_account.to_string().c_str());
-            peers_balance[peer] = peer_account.balance();
-            peers_nonce[peer] = peer_account.nonce();
-            peers_note_timestamp[peer] = peer_account.note_timestamp();
-        }
 
         auto const& tx = b.tx();
+
         if (!tx.empty()) {
             if (b.chain_id() != tx.chain_id()) {
                 log("INFO chain[%s] block chain id[%s] and tx chain id[%s] mismatch",
@@ -1459,41 +1445,50 @@ namespace libTAU::blockchain {
                 log("INFO chain[%s] block tx[%s] has bad signature",
                     aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
             }
+        }
 
-            // adjust state
-            // miner earns fee
-            peers_balance[b.miner()] += tx.fee();
-            if (tx.type() == tx_type::type_transfer) {
+        if ((!tx.empty() && tx.type() == tx_type::type_transfer) ||
+            b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
+            std::set<dht::public_key> peers = b.get_block_peers();
+            for (auto const& peer: peers) {
+                // note: verify block with cache data, do not use m_repository
+                auto peer_account = repo->get_account(chain_id, peer);
+                log("INFO: ------peer[%s] account[%s]", aux::toHex(peer.bytes).c_str(), peer_account.to_string().c_str());
+                peers_balance[peer] = peer_account.balance();
+                peers_nonce[peer] = peer_account.nonce();
+                peers_note_timestamp[peer] = peer_account.note_timestamp();
+            }
+
+            if (!tx.empty() && tx.type() == tx_type::type_transfer) {
+                // adjust state
+                // miner earns fee
+                peers_balance[b.miner()] += tx.fee();
                 // receiver balance + amount
                 peers_balance[tx.receiver()] += tx.amount();
                 // sender balance - cost(fee + amount)
                 peers_balance[tx.sender()] -= tx.cost();
                 // sender nonce+1
                 peers_nonce[tx.sender()] += 1;
-            } else if (tx.type() == tx_type::type_note) {
-                // sender balance - fee
-                peers_balance[tx.sender()] -= tx.fee();
-                peers_note_timestamp[tx.sender()] = tx.timestamp();
             }
-        }
 
-        for (auto const& peer_info: peers_balance) {
-            log("INFO:------ peer[%s] balance[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
-        }
-        for (auto const& peer_info: peers_nonce) {
-            log("INFO:------ peer[%s] nonce[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
-        }
-        for (auto const& peer_info: peers_note_timestamp) {
-            log("INFO:------ peer[%s] note timestamp[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
-        }
+            for (auto const& peer_info: peers_balance) {
+                log("INFO:------ peer[%s] balance[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
+            }
+            for (auto const& peer_info: peers_nonce) {
+                log("INFO:------ peer[%s] nonce[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
+            }
+            for (auto const& peer_info: peers_note_timestamp) {
+                log("INFO:------ peer[%s] note timestamp[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
+            }
 
-        if (peers_balance[b.miner()] != b.miner_balance() || peers_nonce[b.miner()] != b.miner_nonce() ||
-            peers_note_timestamp[b.miner()] != b.miner_note_timestamp() || peers_balance[b.tx().sender()] != b.sender_balance() ||
-            peers_nonce[b.tx().sender()] != b.sender_nonce() || peers_note_timestamp[b.tx().sender()] != b.sender_note_timestamp() ||
-            peers_balance[b.tx().receiver()] != b.receiver_balance() || peers_nonce[b.tx().receiver()] != b.receiver_nonce() ||
-            peers_note_timestamp[b.tx().receiver()] != b.receiver_note_timestamp()) {
-            log("ERROR chain[%s] block[%s] state error!", aux::toHex(chain_id).c_str(), b.to_string().c_str());
-            return FAIL;
+            if (peers_balance[b.miner()] != b.miner_balance() || peers_nonce[b.miner()] != b.miner_nonce() ||
+                peers_note_timestamp[b.miner()] != b.miner_note_timestamp() || peers_balance[b.tx().sender()] != b.sender_balance() ||
+                peers_nonce[b.tx().sender()] != b.sender_nonce() || peers_note_timestamp[b.tx().sender()] != b.sender_note_timestamp() ||
+                peers_balance[b.tx().receiver()] != b.receiver_balance() || peers_nonce[b.tx().receiver()] != b.receiver_nonce() ||
+                peers_note_timestamp[b.tx().receiver()] != b.receiver_note_timestamp()) {
+                log("ERROR chain[%s] block[%s] state error!", aux::toHex(chain_id).c_str(), b.to_string().c_str());
+                return FAIL;
+            }
         }
 
         return SUCCESS;

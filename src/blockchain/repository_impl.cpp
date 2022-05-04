@@ -610,33 +610,34 @@ namespace libTAU::blockchain {
         if (!save_block(b))
             return false;
 
-        std::set<dht::public_key> peers = b.get_block_peers();
-
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.set_main_chain_block_hash(b.sha256());
 
-        state_linker stateLinker(b.sha256());
-        auto& chain_id = b.chain_id();
+        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
+            state_linker stateLinker(b.sha256());
+            auto &chain_id = b.chain_id();
 
-        for (auto const& peer: peers) {
-            indexKeyInfo.add_associated_peer(peer);
+            std::set<dht::public_key> peers = b.get_block_peers();
+            for (auto const &peer: peers) {
+                indexKeyInfo.add_associated_peer(peer);
 
-            // update state linker
-            if (!forward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
-                return false;
-            // update state pointer
-            auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-            if (accountBlockPointer.empty()) {
-                accountBlockPointer.set_initial_block_hash(b.sha256());
-            } else {
-                accountBlockPointer.set_latest_block_hash(b.sha256());
+                // update state linker
+                if (!forward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
+                    return false;
+                // update state pointer
+                auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+                if (accountBlockPointer.empty()) {
+                    accountBlockPointer.set_initial_block_hash(b.sha256());
+                } else {
+                    accountBlockPointer.set_latest_block_hash(b.sha256());
+                }
+                if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+                    return false;
             }
-            if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+
+            if (!save_state_linker(stateLinker))
                 return false;
         }
-
-        if (!save_state_linker(stateLinker))
-            return false;
 
         return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
@@ -648,33 +649,34 @@ namespace libTAU::blockchain {
         if (!save_block(b))
             return false;
 
-        std::set<dht::public_key> peers = b.get_block_peers();
-
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.set_main_chain_block_hash(b.sha256());
 
-        state_linker stateLinker(b.sha256());
-        auto& chain_id = b.chain_id();
+        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
+            state_linker stateLinker(b.sha256());
+            auto &chain_id = b.chain_id();
 
-        for (auto const& peer: peers) {
-            indexKeyInfo.add_associated_peer(peer);
+            std::set<dht::public_key> peers = b.get_block_peers();
+            for (auto const &peer: peers) {
+                indexKeyInfo.add_associated_peer(peer);
 
-            // update state linker
-            if (!backward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
-                return false;
-            // update state pointer
-            auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-            if (accountBlockPointer.empty()) {
-                accountBlockPointer.set_initial_block_hash(b.sha256());
-            } else {
-                accountBlockPointer.set_oldest_block_hash(b.sha256());
+                // update state linker
+                if (!backward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
+                    return false;
+                // update state pointer
+                auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+                if (accountBlockPointer.empty()) {
+                    accountBlockPointer.set_initial_block_hash(b.sha256());
+                } else {
+                    accountBlockPointer.set_oldest_block_hash(b.sha256());
+                }
+                if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+                    return false;
             }
-            if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+
+            if (!save_state_linker(stateLinker))
                 return false;
         }
-
-        if (!save_state_linker(stateLinker))
-            return false;
 
         return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
@@ -686,39 +688,40 @@ namespace libTAU::blockchain {
 
         m_discarded_blocks.push_back(b);
 
-        auto& chain_id = b.chain_id();
-        auto stateLinker = get_state_linker(b.sha256());
-        auto &block_hash_map = stateLinker.get_previous_change_block_hash_map();
-        auto peers = b.get_block_peers();
+        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
+            auto &chain_id = b.chain_id();
+            auto stateLinker = get_state_linker(b.sha256());
+            auto &block_hash_map = stateLinker.get_previous_change_block_hash_map();
+            auto peers = b.get_block_peers();
 
-        for (auto const& peer: peers) {
-            sha256_hash previous_change_block_hash;
-            auto it = block_hash_map.find(peer);
-            if (it != block_hash_map.end()) {
-                previous_change_block_hash = it->second;
-            }
+            for (auto const &peer: peers) {
+                sha256_hash previous_change_block_hash;
+                auto it = block_hash_map.find(peer);
+                if (it != block_hash_map.end()) {
+                    previous_change_block_hash = it->second;
+                }
 
-            if (previous_change_block_hash.is_all_zeros()) {
-                if (!delete_account_block_pointer(chain_id, peer))
-                    return false;
-            } else {
-                auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-                // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
-                if (accountBlockPointer.oldest_block_hash() == b.sha256()) {
+                if (previous_change_block_hash.is_all_zeros()) {
                     if (!delete_account_block_pointer(chain_id, peer))
                         return false;
                 } else {
-                    accountBlockPointer.set_latest_block_hash(previous_change_block_hash);
-                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
-                        return false;
+                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+                    // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
+                    if (accountBlockPointer.oldest_block_hash() == b.sha256()) {
+                        if (!delete_account_block_pointer(chain_id, peer))
+                            return false;
+                    } else {
+                        accountBlockPointer.set_latest_block_hash(previous_change_block_hash);
+                        if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+                            return false;
+                    }
+
+                    // no need to update state linker
                 }
-
-                // no need to update state linker
             }
-        }
 
-        if (!delete_state_linker(b.sha256()))
-            return false;
+            if (!delete_state_linker(b.sha256()))
+                return false;
 //        for (auto const& item: stateLinker.get_previous_change_block_hash_map()) {
 //            auto& pubKey = item.first;
 //            auto& previous_change_block_hash = item.second;
@@ -743,6 +746,7 @@ namespace libTAU::blockchain {
 //            if (!delete_state_linker(b.sha256()))
 //                return false;
 //        }
+        }
 
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
@@ -757,39 +761,40 @@ namespace libTAU::blockchain {
 
         m_discarded_blocks.push_back(b);
 
-        auto& chain_id = b.chain_id();
-        auto stateLinker = get_state_linker(b.sha256());
-        auto &block_hash_map = stateLinker.get_next_change_block_hash_map();
-        auto peers = b.get_block_peers();
+        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
+            auto &chain_id = b.chain_id();
+            auto stateLinker = get_state_linker(b.sha256());
+            auto &block_hash_map = stateLinker.get_next_change_block_hash_map();
+            auto peers = b.get_block_peers();
 
-        for (auto const& peer: peers) {
-            sha256_hash next_change_block_hash;
-            auto it = block_hash_map.find(peer);
-            if (it != block_hash_map.end()) {
-                next_change_block_hash = it->second;
-            }
+            for (auto const &peer: peers) {
+                sha256_hash next_change_block_hash;
+                auto it = block_hash_map.find(peer);
+                if (it != block_hash_map.end()) {
+                    next_change_block_hash = it->second;
+                }
 
-            if (next_change_block_hash.is_all_zeros()) {
-                if (!delete_account_block_pointer(chain_id, peer))
-                    return false;
-            } else {
-                auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-                // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
-                if (accountBlockPointer.latest_block_hash() == b.sha256()) {
+                if (next_change_block_hash.is_all_zeros()) {
                     if (!delete_account_block_pointer(chain_id, peer))
                         return false;
                 } else {
-                    accountBlockPointer.set_oldest_block_hash(next_change_block_hash);
-                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
-                        return false;
+                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+                    // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
+                    if (accountBlockPointer.latest_block_hash() == b.sha256()) {
+                        if (!delete_account_block_pointer(chain_id, peer))
+                            return false;
+                    } else {
+                        accountBlockPointer.set_oldest_block_hash(next_change_block_hash);
+                        if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+                            return false;
+                    }
+
+                    // no need to update state linker
                 }
-
-                // no need to update state linker
             }
-        }
 
-        if (!delete_state_linker(b.sha256()))
-            return false;
+            if (!delete_state_linker(b.sha256()))
+                return false;
 //        for (auto const& item: stateLinker.get_next_change_block_hash_map()) {
 //            auto& pubKey = item.first;
 //            auto& next_change_block_hash = item.second;
@@ -814,6 +819,7 @@ namespace libTAU::blockchain {
 //            if (!delete_state_linker(b.sha256()))
 //                return false;
 //        }
+        }
 
         index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
         indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
