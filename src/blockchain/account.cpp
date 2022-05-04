@@ -25,8 +25,6 @@ namespace libTAU::blockchain {
         if (m_nonce != 0) {
             e["n"] = entry(m_nonce);
         }
-        // note timestamp
-        e["t"] = entry(m_note_timestamp);
         // effective power
         if (m_effective_power != 0) {
             e["p"] = entry(m_effective_power);
@@ -50,11 +48,6 @@ namespace libTAU::blockchain {
         {
             m_nonce = i->integer();
         }
-        // note timestamp
-        if (auto* i = const_cast<entry *>(e.find_key("t")))
-        {
-            m_note_timestamp = i->integer();
-        }
         // effective power
         if (auto* i = const_cast<entry *>(e.find_key("p")))
         {
@@ -74,9 +67,8 @@ namespace libTAU::blockchain {
     }
 
     std::ostream &operator<<(std::ostream &os, const account &account) {
-        os << "m_balance: " << account.m_balance << " m_nonce: " << account.m_nonce
-           << " m_note_timestamp: " << account.m_note_timestamp << " m_effective_power: "
-           << account.m_effective_power << " m_block_number: " << account.m_block_number;
+        os << "m_balance: " << account.m_balance << " m_nonce: " << account.m_nonce << " m_effective_power: "
+            << account.m_effective_power << " m_block_number: " << account.m_block_number;
         return os;
     }
 }
