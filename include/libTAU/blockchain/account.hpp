@@ -27,12 +27,11 @@ namespace libTAU {
             // @param Construct with bencode
             explicit account(std::string encode): account(bdecode(encode)) {}
 
-            account(int64_t mBalance, int64_t mNonce, int64_t mNoteTimestamp, int64_t mBlockNumber) : m_balance(
-                    mBalance), m_nonce(mNonce), m_note_timestamp(mNoteTimestamp), m_block_number(mBlockNumber) {}
+            account(int64_t mBalance, int64_t mNonce, int64_t mBlockNumber) :
+                m_balance(mBalance), m_nonce(mNonce), m_block_number(mBlockNumber) {}
 
-            account(int64_t mBalance, int64_t mNonce, int64_t mNoteTimestamp, int64_t mEffectivePower,
-                    int64_t mBlockNumber) : m_balance(mBalance), m_nonce(mNonce), m_note_timestamp(mNoteTimestamp),
-                                            m_effective_power(mEffectivePower), m_block_number(mBlockNumber) {}
+            account(int64_t mBalance, int64_t mNonce, int64_t mEffectivePower, int64_t mBlockNumber) :
+                m_balance(mBalance), m_nonce(mNonce), m_effective_power(mEffectivePower), m_block_number(mBlockNumber) {}
 
             bool empty() const { return m_balance == 0 && m_nonce == 0; }
 
@@ -41,8 +40,6 @@ namespace libTAU {
 //            void set_balance(int64_t mBalance) { m_balance = mBalance; }
 
             int64_t nonce() const { return m_nonce; }
-
-            int64_t note_timestamp() const { return m_note_timestamp; }
 
             void set_effective_power(int64_t mEffectivePower) { m_effective_power = mEffectivePower; }
 
@@ -68,9 +65,6 @@ namespace libTAU {
 
             // nonce
             std::int64_t m_nonce{};
-
-            // note timestamp
-            std::int64_t m_note_timestamp{};
 
             // effective power
             std::int64_t m_effective_power{};

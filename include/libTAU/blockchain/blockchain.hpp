@@ -121,9 +121,6 @@ namespace blockchain {
         aux::bytes create_chain_id(std::string community_name);
 
         // create new community with tx
-        bool createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts, const transaction& tx);
-
-        // create new community
         bool createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts);
 
         // follow a chain by chain id and peers

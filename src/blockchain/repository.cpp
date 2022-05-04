@@ -51,7 +51,7 @@ namespace libTAU::blockchain {
             }
         }
 
-        return account(0, 0, 0, 0);
+        return account(0, 0, 0);
     }
 
     account repository::get_account_with_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
@@ -98,14 +98,14 @@ namespace libTAU::blockchain {
 
     account repository::find_state_from_block(const dht::public_key &pubKey, const block &b) {
         if (pubKey == b.miner()) {
-            return account(b.miner_balance(), b.miner_nonce(), b.miner_note_timestamp(), b.block_number());
+            return account(b.miner_balance(), b.miner_nonce(), b.block_number());
         } else if (pubKey == b.tx().sender()) {
-            return account(b.sender_balance(), b.sender_nonce(), b.sender_note_timestamp(), b.block_number());
+            return account(b.sender_balance(), b.sender_nonce(), b.block_number());
         } else if (pubKey == b.tx().receiver()) {
-            return account(b.receiver_balance(), b.receiver_nonce(), b.receiver_note_timestamp(), b.block_number());
+            return account(b.receiver_balance(), b.receiver_nonce(), b.block_number());
         }
 
-        return account(0, 0, 0, 0);
+        return account(0, 0, 0);
     }
 
     bool repository::save_non_main_chain_block(block &b) {

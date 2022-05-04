@@ -1288,14 +1288,12 @@ namespace libTAU::blockchain {
 
                 std::map<dht::public_key, std::int64_t> peers_balance;
                 std::map<dht::public_key, std::int64_t> peers_nonce;
-                std::map<dht::public_key, std::int64_t> peers_note_timestamp;
 
                 if (is_sync_completed(chain_id)) {
                     for (auto const &peer: peers) {
                         auto peer_account = m_repository->get_account(chain_id, peer);
                         peers_balance[peer] = peer_account.balance();
                         peers_nonce[peer] = peer_account.nonce();
-                        peers_note_timestamp[peer] = peer_account.note_timestamp();
                     }
 
                     if (!tx.empty()) {
@@ -1318,15 +1316,15 @@ namespace libTAU::blockchain {
                 if (ep.port() != 0) {
                     b = block(chain_id, block_version::block_version1, now,
                               head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
-                              genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk], peers_note_timestamp[*pk],
-                              peers_balance[tx.sender()], peers_nonce[tx.sender()], peers_note_timestamp[tx.sender()],
-                              peers_balance[tx.receiver()], peers_nonce[tx.receiver()], peers_note_timestamp[tx.receiver()], ep);
+                              genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk],
+                              peers_balance[tx.sender()], peers_nonce[tx.sender()],
+                              peers_balance[tx.receiver()], peers_nonce[tx.receiver()], ep);
                 } else {
                     b = block(chain_id, block_version::block_version1, now,
                               head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
-                              genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk], peers_note_timestamp[*pk],
-                              peers_balance[tx.sender()], peers_nonce[tx.sender()], peers_note_timestamp[tx.sender()],
-                              peers_balance[tx.receiver()], peers_nonce[tx.receiver()], peers_note_timestamp[tx.receiver()]);
+                              genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk],
+                              peers_balance[tx.sender()], peers_nonce[tx.sender()],
+                              peers_balance[tx.receiver()], peers_nonce[tx.receiver()]);
                 }
 
                 b.sign(*pk, *sk);
@@ -1431,7 +1429,6 @@ namespace libTAU::blockchain {
 
         std::map<dht::public_key, std::int64_t> peers_balance;
         std::map<dht::public_key, std::int64_t> peers_nonce;
-        std::map<dht::public_key, std::int64_t> peers_note_timestamp;
 
         auto const& tx = b.tx();
 
@@ -1456,7 +1453,6 @@ namespace libTAU::blockchain {
                 log("INFO: ------peer[%s] account[%s]", aux::toHex(peer.bytes).c_str(), peer_account.to_string().c_str());
                 peers_balance[peer] = peer_account.balance();
                 peers_nonce[peer] = peer_account.nonce();
-                peers_note_timestamp[peer] = peer_account.note_timestamp();
             }
 
             if (!tx.empty() && tx.type() == tx_type::type_transfer) {
@@ -1477,15 +1473,10 @@ namespace libTAU::blockchain {
             for (auto const& peer_info: peers_nonce) {
                 log("INFO:------ peer[%s] nonce[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
             }
-            for (auto const& peer_info: peers_note_timestamp) {
-                log("INFO:------ peer[%s] note timestamp[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
-            }
 
             if (peers_balance[b.miner()] != b.miner_balance() || peers_nonce[b.miner()] != b.miner_nonce() ||
-                peers_note_timestamp[b.miner()] != b.miner_note_timestamp() || peers_balance[b.tx().sender()] != b.sender_balance() ||
-                peers_nonce[b.tx().sender()] != b.sender_nonce() || peers_note_timestamp[b.tx().sender()] != b.sender_note_timestamp() ||
-                peers_balance[b.tx().receiver()] != b.receiver_balance() || peers_nonce[b.tx().receiver()] != b.receiver_nonce() ||
-                peers_note_timestamp[b.tx().receiver()] != b.receiver_note_timestamp()) {
+                peers_balance[b.tx().sender()] != b.sender_balance() || peers_nonce[b.tx().sender()] != b.sender_nonce() ||
+                peers_balance[b.tx().receiver()] != b.receiver_balance() || peers_nonce[b.tx().receiver()] != b.receiver_nonce()) {
                 log("ERROR chain[%s] block[%s] state error!", aux::toHex(chain_id).c_str(), b.to_string().c_str());
                 return FAIL;
             }
@@ -3031,13 +3022,11 @@ namespace libTAU::blockchain {
             if (ep.port() != 0) {
                 b = block(TAU_CHAIN_ID, block_version::block_version1, TAU_CHAIN_GENESIS_TIMESTAMP, block_number,
                                 previous_hash, GENESIS_BASE_TARGET, 0, genSig, transaction(),
-                                miner, GENESIS_BLOCK_BALANCE, 0, 0, 0,
-                                0, 0, 0, 0, 0, ep);
+                                miner, GENESIS_BLOCK_BALANCE, 0, 0, 0, 0, 0, ep);
             } else {
                 b = block(TAU_CHAIN_ID, block_version::block_version1, TAU_CHAIN_GENESIS_TIMESTAMP, block_number,
-                                previous_hash,
-                                GENESIS_BASE_TARGET, 0, genSig, transaction(), miner, GENESIS_BLOCK_BALANCE,
-                                0, 0, 0, 0, 0, 0, 0, 0);
+                                previous_hash, GENESIS_BASE_TARGET, 0, genSig, transaction(), miner,
+                                GENESIS_BLOCK_BALANCE, 0, 0, 0, 0, 0);
             }
             b.sign(*pk, *sk);
 
@@ -3058,11 +3047,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool blockchain::createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account> &accounts) {
-        return createNewCommunity(chain_id, accounts, transaction());
-    }
-
-    bool blockchain::createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts, const transaction& tx) {
+    bool blockchain::createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts) {
         std::int64_t now = get_total_milliseconds() / 1000; // second
 
         dht::secret_key *sk = m_ses.serkey();
@@ -3093,11 +3078,11 @@ namespace libTAU::blockchain {
             if (ep.port() != 0) {
                 b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
                           GENESIS_BASE_TARGET, 0, genSig, transaction(), miner, miner_balance,
-                                0, 0, 0, 0, 0, 0, 0, 0, ep);
+                                0, 0, 0, 0, 0, ep);
             } else {
                 b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
                           GENESIS_BASE_TARGET, 0, genSig, transaction(), miner, miner_balance,
-                                0, 0, 0, 0, 0, 0, 0, 0);
+                                0, 0, 0, 0, 0);
             }
             b.sign(*pk, *sk);
 
@@ -3116,12 +3101,12 @@ namespace libTAU::blockchain {
         block b;
         if (ep.port() != 0) {
             b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                      GENESIS_BASE_TARGET, 0, genSig, tx, *pk, genesis_balance,
-                            0, 0, 0, 0, 0, 0, 0, 0, ep);
+                      GENESIS_BASE_TARGET, 0, genSig, transaction(), *pk, genesis_balance,
+                            0, 0, 0, 0, 0, ep);
         } else {
             b = block(chain_id, block_version::block_version1, now, block_number, previous_hash,
-                      GENESIS_BASE_TARGET, 0, genSig, tx, *pk, genesis_balance,
-                            0, 0, 0, 0, 0, 0, 0, 0);
+                      GENESIS_BASE_TARGET, 0, genSig, transaction(), *pk, genesis_balance,
+                            0, 0, 0, 0, 0);
         }
 
         b.sign(*pk, *sk);
