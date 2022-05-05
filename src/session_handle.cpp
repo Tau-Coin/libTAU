@@ -300,9 +300,9 @@ namespace libTAU {
 	}
 
 	// create new community
-    bool session_handle::create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts, const blockchain::transaction& tx)
+    bool session_handle::create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts)
 	{
-		return sync_call_ret<bool>(&session_impl::create_new_community, chain_id, accounts, tx);
+		return sync_call_ret<bool>(&session_impl::create_new_community, chain_id, accounts);
 	}
 
 	// follow chain

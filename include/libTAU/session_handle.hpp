@@ -341,7 +341,7 @@ namespace libTAU {
 		// create chain id
 		std::vector<char> create_chain_id(std::vector<char> community_name);
 		// create new community
-        bool create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts, const blockchain::transaction& tx);
+        bool create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
 		// follow chain
         bool follow_chain(std::vector<char> chain_id, const std::set<dht::public_key>& peers);
 		// unfollow chain
