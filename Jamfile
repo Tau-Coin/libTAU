@@ -676,7 +676,7 @@ feature compress : snappy : composite propagated ;
 #feature.compose <compress>snappy : <define>TORRENT_ENABLE_UDP_COMPRESS ;
 
 feature udp-encryption : on off : composite propagated link-incompatible ;
-#feature.compose <udp-encryption>on : <define>TORRENT_ENABLE_UDP_ENCRYPTION ;
+feature.compose <udp-encryption>on : <define>TORRENT_ENABLE_UDP_ENCRYPTION ;
 
 feature crypto : openssl : composite propagated ;
 feature.compose <crypto>openssl
@@ -1008,8 +1008,9 @@ lib TAU
 headers = [ path.glob-tree include/libTAU : *.hpp  *h ] ;
 
 package.install install
-	: <install-source-root>libTAU
-	:
-	: TAU
+#    : <install-default-prefix>libTAU-build/libTAU <install-source-root>libTAU
+    : <install-source-root>libTAU
+    :
+    : TAU
 	: $(headers)
 	;

@@ -2996,6 +2996,12 @@ namespace {
 		return false;
 	}
 
+	bool session_impl::add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
+		if(m_blockchain)
+			return m_blockchain->add_new_bootstrap_peers(chain_id, peers);
+		return false;
+	}
+
 	bool session_impl::unfollow_chain(const aux::bytes &chain_id) {
 		if(m_blockchain)
 			return m_blockchain->unfollowChain(chain_id);

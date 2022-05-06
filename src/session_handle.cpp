@@ -311,6 +311,12 @@ namespace libTAU {
 		return sync_call_ret<bool>(&session_impl::follow_chain, chain_id, peers);
 	}
 
+	// add new bs peers
+    bool session_handle::add_new_bootstrap_peers(std::vector<char> chain_id, const std::set<dht::public_key>& peers)
+	{
+		return sync_call_ret<bool>(&session_impl::add_new_bootstrap_peers, chain_id, peers);
+	}
+
 	// unfollow chain
     bool session_handle::unfollow_chain(std::vector<char> chain_id)
 	{
