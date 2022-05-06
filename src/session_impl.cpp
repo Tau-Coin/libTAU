@@ -3691,6 +3691,10 @@ namespace {
 		{
 			m_communication->on_dht_item(i);
 		}
+        if (m_blockchain)
+        {
+            m_blockchain->on_dht_item(i);
+        }
 	}
 
 	std::int64_t session_impl::get_time()
@@ -3700,10 +3704,10 @@ namespace {
 
 	void session_impl::on_dht_relay(dht::public_key const& from, entry const& payload)
 	{
-        if (m_blockchain)
-        {
-            m_blockchain->on_dht_relay(from, payload);
-        }
+//        if (m_blockchain)
+//        {
+//            m_blockchain->on_dht_relay(from, payload);
+//        }
 	}
 
 	void session_impl::set_external_address(

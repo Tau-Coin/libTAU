@@ -89,7 +89,7 @@ namespace libTAU::common {
     entry message_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // message
         e[entry_value] = m_msg.get_entry();
         // message levenshtein array
@@ -139,7 +139,7 @@ namespace libTAU::common {
     entry message_levenshtein_array_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // message levenshtein array
         e[entry_value] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
         // time
@@ -180,7 +180,7 @@ namespace libTAU::common {
     entry message_levenshtein_array_entry2::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // message levenshtein array
         e[entry_value] = entry(std::string(m_levenshtein_array.begin(), m_levenshtein_array.end()));
         // time
@@ -222,7 +222,7 @@ namespace libTAU::common {
     entry friend_info_request_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // time
         e[entry_time] = entry(m_timestamp);
 
@@ -259,7 +259,7 @@ namespace libTAU::common {
     entry friend_info_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // friend info
         e[entry_value] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
         // time
@@ -299,7 +299,7 @@ namespace libTAU::common {
     entry block_request_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // block hash
@@ -322,7 +322,7 @@ namespace libTAU::common {
     entry block_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // block
         e[entry_value] = m_blk.get_entry();
 
@@ -350,7 +350,7 @@ namespace libTAU::common {
     entry transaction_request_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // block hash
@@ -373,7 +373,7 @@ namespace libTAU::common {
     entry transaction_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // transaction
         e[entry_value] = m_tx.get_entry();
 
@@ -394,7 +394,7 @@ namespace libTAU::common {
     entry vote_request_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
 
@@ -420,7 +420,7 @@ namespace libTAU::common {
     entry vote_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // vote
@@ -443,7 +443,7 @@ namespace libTAU::common {
     entry head_block_request_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
 
@@ -464,14 +464,55 @@ namespace libTAU::common {
     entry head_block_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // block
         e[entry_value] = m_blk.get_entry();
 
         return e;
     }
 
-    tx_pool_request_entry::tx_pool_request_entry(const entry &e) {
+//    tx_pool_request_entry::tx_pool_request_entry(const entry &e) {
+//        m_entry = e;
+//
+//        // chain id
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+//        {
+//            auto chain_id = i->string();
+//            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+//        }
+//        // tx pool levenshtein array
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+//        {
+//            entry v = entry(*i);
+//            if (auto* p = const_cast<entry *>(v.find_key("v1")))
+//            {
+//                std::string levenshtein_array = p->string();
+//                m_fee_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+//            }
+//            if (auto* p = const_cast<entry *>(v.find_key("v2")))
+//            {
+//                std::string levenshtein_array = p->string();
+//                m_time_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+//            }
+//        }
+//    }
+//
+//    entry tx_pool_request_entry::get_entry() const {
+//        entry e(entry::dictionary_t);
+//        // data type id
+//        e[entry_type] = entry(data_type_id);
+//        // chain id
+//        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+//        // message levenshtein array
+//        entry v(entry::dictionary_t);
+//        v["v1"] = entry(std::string(m_fee_pooL_levenshtein_array.begin(), m_fee_pooL_levenshtein_array.end()));
+//        v["v2"] = entry(std::string(m_time_pooL_levenshtein_array.begin(), m_time_pooL_levenshtein_array.end()));
+//        e[entry_value] = v;
+//
+//        return e;
+//    }
+
+    state_request_entry::state_request_entry(const entry &e) {
         m_entry = e;
 
         // chain id
@@ -480,37 +521,104 @@ namespace libTAU::common {
             auto chain_id = i->string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
         }
-        // tx pool levenshtein array
-        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
-        {
-            entry v = entry(*i);
-            if (auto* p = const_cast<entry *>(v.find_key("v1")))
-            {
-                std::string levenshtein_array = p->string();
-                m_fee_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
-            }
-            if (auto* p = const_cast<entry *>(v.find_key("v2")))
-            {
-                std::string levenshtein_array = p->string();
-                m_time_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
-            }
-        }
     }
 
-    entry tx_pool_request_entry::get_entry() const {
+    entry state_request_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
-        // message levenshtein array
-        entry v(entry::dictionary_t);
-        v["v1"] = entry(std::string(m_fee_pooL_levenshtein_array.begin(), m_fee_pooL_levenshtein_array.end()));
-        v["v2"] = entry(std::string(m_time_pooL_levenshtein_array.begin(), m_time_pooL_levenshtein_array.end()));
-        e[entry_value] = v;
 
         return e;
     }
+
+    state_entry::state_entry(const entry &e) {
+        m_entry = e;
+
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+        // state
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            m_act = blockchain::account(*i);
+        }
+    }
+
+    entry state_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+//        e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // state
+        e[entry_value] = m_act.get_entry();
+
+        return e;
+    }
+
+    transaction_reply_entry::transaction_reply_entry(const entry &e) {
+        m_entry = e;
+
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+        // tx hash
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            auto hash = i->string();
+            m_hash = sha256_hash(hash.data());
+        }
+    }
+
+    entry transaction_reply_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+//        e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // block hash
+        e[entry_value] = entry(m_hash.to_string());
+
+        return e;
+    }
+
+    block_reply_entry::block_reply_entry(const entry &e) {
+        m_entry = e;
+
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+        // tx hash
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            auto hash = i->string();
+            m_hash = sha256_hash(hash.data());
+        }
+    }
+
+    entry block_reply_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+//        e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // block hash
+        e[entry_value] = entry(m_hash.to_string());
+
+        return e;
+    }
+
 
     tx_pool_entry::tx_pool_entry(const entry &e) {
         m_entry = e;
@@ -541,7 +649,7 @@ namespace libTAU::common {
     entry tx_pool_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // message levenshtein array
@@ -549,113 +657,6 @@ namespace libTAU::common {
         v["v1"] = entry(std::string(m_fee_pooL_levenshtein_array.begin(), m_fee_pooL_levenshtein_array.end()));
         v["v2"] = entry(std::string(m_time_pooL_levenshtein_array.begin(), m_time_pooL_levenshtein_array.end()));
         e[entry_value] = v;
-
-        return e;
-    }
-
-    state_request_entry::state_request_entry(const entry &e) {
-        m_entry = e;
-
-        // chain id
-        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
-        {
-            auto chain_id = i->string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-        }
-    }
-
-    entry state_request_entry::get_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-        e[entry_type] = entry(data_type_id);
-        // chain id
-        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
-
-        return e;
-    }
-
-    state_entry::state_entry(const entry &e) {
-        m_entry = e;
-
-        // chain id
-        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
-        {
-            auto chain_id = i->string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-        }
-        // state
-        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
-        {
-            m_act = blockchain::account(*i);
-        }
-    }
-
-    entry state_entry::get_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-        e[entry_type] = entry(data_type_id);
-        // chain id
-        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
-        // state
-        e[entry_value] = m_act.get_entry();
-
-        return e;
-    }
-
-    transaction_reply_entry::transaction_reply_entry(const entry &e) {
-        m_entry = e;
-
-        // chain id
-        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
-        {
-            auto chain_id = i->string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-        }
-        // tx hash
-        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
-        {
-            auto hash = i->string();
-            m_hash = sha256_hash(hash.data());
-        }
-    }
-
-    entry transaction_reply_entry::get_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-        e[entry_type] = entry(data_type_id);
-        // chain id
-        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
-        // block hash
-        e[entry_value] = entry(m_hash.to_string());
-
-        return e;
-    }
-
-    block_reply_entry::block_reply_entry(const entry &e) {
-        m_entry = e;
-
-        // chain id
-        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
-        {
-            auto chain_id = i->string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-        }
-        // tx hash
-        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
-        {
-            auto hash = i->string();
-            m_hash = sha256_hash(hash.data());
-        }
-    }
-
-    entry block_reply_entry::get_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-        e[entry_type] = entry(data_type_id);
-        // chain id
-        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
-        // block hash
-        e[entry_value] = entry(m_hash.to_string());
 
         return e;
     }
@@ -683,7 +684,7 @@ namespace libTAU::common {
     entry gossip_peers_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // gossip peers
@@ -711,7 +712,7 @@ namespace libTAU::common {
     entry ping_entry::get_entry() const {
         entry e(entry::dictionary_t);
         // data type id
-        e[entry_type] = entry(data_type_id);
+//        e[entry_type] = entry(data_type_id);
         // chain id
         e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
 

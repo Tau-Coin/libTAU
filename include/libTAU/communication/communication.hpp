@@ -56,8 +56,8 @@ namespace libTAU {
         // short address(public key) length
         constexpr int communication_short_address_length = 4;
 
-        // salt length (first 16 bytes of public key)
-        constexpr int communication_salt_length = 16;
+        // salt length (first 12 bytes of public key)
+        constexpr int communication_salt_pubkey_length = 12;
 
         // long time out(5s)
         constexpr int communication_long_time_out = 5 * 1000;
@@ -168,7 +168,7 @@ namespace libTAU {
 //            void send_to(const dht::public_key &peer, entry const& data);
 
             // send data to peer
-            void send_to(const dht::public_key &peer, entry const& data,
+            void send_to(const dht::public_key &peer, std::int64_t data_type_id, entry const& data,
                     std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit, bool cache);
 
             // select a friend randomly
@@ -192,9 +192,9 @@ namespace libTAU {
                                     std::vector<message> &missing_messages, std::vector<message> &confirmed_messages);
 
             // make a salt on mutable channel
-            static std::string make_salt(dht::public_key peer);
+            static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
 
-            void process_payload(dht::public_key const& peer, entry const& payload, bool is_cache);
+            void process_payload(dht::public_key const& peer, std::int64_t data_type_id, entry const& payload, bool is_cache);
 
             // make online signal
 //            online_signal make_signal(const dht::public_key &peer);

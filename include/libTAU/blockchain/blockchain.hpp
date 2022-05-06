@@ -45,8 +45,8 @@ namespace blockchain {
     // max access peer frequency(interval: 3000 ms)
     constexpr int blockchain_max_access_peer_interval = 3000;
 
-    // salt length (first 16 bytes of public key)
-    constexpr int blockchain_salt_length = 16;
+    // salt length (first 12 bytes of public key)
+    constexpr int blockchain_salt_pubkey_length = 12;
 
     // max tx list size
     constexpr int blockchain_max_tx_list_size = 10;
@@ -171,9 +171,6 @@ namespace blockchain {
 
         // mutable data is pushed here
         void on_dht_item(dht::item const& i);
-
-        // mutable data is pushed here
-        void on_dht_relay(dht::public_key const& peer, entry const& payload);
 
         void request_state(const aux::bytes &chain_id);
 
@@ -309,10 +306,10 @@ namespace blockchain {
         static std::string make_salt(const aux::bytes &chain_id);
 
         // make a salt on mutable channel
-        static std::string make_salt(dht::public_key peer);
+        static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
 
         // send data to peer
-        void send_to(const aux::bytes &chain_id, const dht::public_key &peer, entry const& data);
+        void send_to(const aux::bytes &chain_id, const dht::public_key &peer, std::int64_t data_type_id, entry const& data, bool cache);
 
         void introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer);
 
@@ -355,8 +352,9 @@ namespace blockchain {
         // put mutable item to dht
         void dht_put_mutable_item(std::array<char, 32> key
                                   , std::function<void(entry&, std::array<char,64>&
-                                          , std::int64_t&, std::string const&)> cb
-                                          , std::string salt, const dht::public_key &peer);
+                                          , std::int64_t&, std::string const&)> cb,
+                                          std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
+                                          , std::string salt, const dht::public_key &peer, bool cache);
 
         // io context
         io_context& m_ioc;
