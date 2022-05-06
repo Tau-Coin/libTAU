@@ -299,7 +299,7 @@ namespace {
 
 			for (auto it = m_mutable_table.upper_bound(prefix);
 				it != m_mutable_table.end()
-					&& compare(prefix.data(), it->first.data(), 16) == 0;
+					&& compare(prefix.data(), it->first.data(), 12) == 0;
 				it++)
 			{
 				candidates.push_back(it->first);
