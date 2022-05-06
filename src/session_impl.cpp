@@ -1645,9 +1645,8 @@ namespace {
 		, udp_send_flags_t const flags)
 	{
 		m_raw_send_udp_packet.clear();
-		m_encrypted_udp_packet.clear();
 
-#ifdef TORRENT_ENABLE_COMPRESS
+#ifdef TORRENT_ENABLE_UDP_COMPRESS
 		bool c_result = compress_udp_packet(p, m_raw_send_udp_packet);
 		if(!c_result){
 #ifndef TORRENT_DISABLE_LOGGING
@@ -1662,6 +1661,8 @@ namespace {
 		m_raw_send_udp_packet.insert(0, p.data(), p.size());
 #endif
 
+#ifdef TORRENT_ENABLE_UDP_ENCRYPTION
+		m_encrypted_udp_packet.clear();
 		std::string err_str;
 		bool result = encrypt_udp_packet(pk
 			, m_raw_send_udp_packet
@@ -1685,6 +1686,12 @@ namespace {
 		m_encrypted_udp_packet.insert(0
 			, m_account_manager->pub_key().bytes.data(), 32);
 
+		send_udp_packet_listen(sock, ep, m_encrypted_udp_packet, ec, flags);
+
+#else
+		send_udp_packet_listen(sock, ep, m_raw_send_udp_packet, ec, flags);
+#endif
+
 /*
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log())
@@ -1696,10 +1703,9 @@ namespace {
 #endif
 */
 		// send to udp socket
-		send_udp_packet_listen(sock, ep, m_encrypted_udp_packet, ec, flags);
 	}
 
-#ifdef TORRENT_ENABLE_COMPRESS
+#ifdef TORRENT_ENABLE_UDP_COMPRESS
 	bool session_impl::compress_udp_packet(span<char const> p, std::string& out)
 	{
 		//compress
@@ -1773,7 +1779,6 @@ namespace {
 		}
 #endif
 */
-
 		return ret;
 	}
 
@@ -1870,13 +1875,7 @@ namespace {
 
 				if (buf.size() >= 64) // 32 public key bytes and encrypted data
 				{
-					sha256_hash pk(buf);
-					m_raw_recv_udp_packet.clear();
-					m_raw_recv_udp_packet.insert(0
-						, buf.subspan(32).data()
-						, buf.size() - 32);
 					m_decrypted_udp_packet.clear();
-					m_decrypted_ucd_udp_packet.clear();
 /*
 #ifndef TORRENT_DISABLE_LOGGING
 					if (should_log())
@@ -1888,6 +1887,12 @@ namespace {
 					}
 #endif
 */
+#ifdef TORRENT_ENABLE_UDP_ENCRYPTION
+					sha256_hash pk(buf);
+					m_raw_recv_udp_packet.clear();
+					m_raw_recv_udp_packet.insert(0
+						, buf.subspan(32).data()
+						, buf.size() - 32);
 					std::string err_str;
 					bool result = decrypt_udp_packet(m_raw_recv_udp_packet
 						, pk
@@ -1898,7 +1903,14 @@ namespace {
 						continue;
 					}
 
-#ifdef TORRENT_ENABLE_COMPRESS
+#else
+					m_decrypted_udp_packet.insert(0
+						, buf.subspan(0).data()
+						, buf.size());
+#endif
+
+#ifdef TORRENT_ENABLE_UDP_COMPRESS
+					m_decrypted_ucd_udp_packet.clear();
 					bool c_result = uncompress_udp_packet(m_decrypted_udp_packet, m_decrypted_ucd_udp_packet);
 					if(!c_result){
 #ifndef TORRENT_DISABLE_LOGGING
@@ -1909,9 +1921,6 @@ namespace {
 #endif
 						continue;
 					}
-#else
-					m_decrypted_ucd_udp_packet.assign(m_decrypted_udp_packet);
-#endif
 
 					auto listen_socket = ls.lock();
 					if (m_dht && m_decrypted_ucd_udp_packet.size() > 20
@@ -1922,6 +1931,17 @@ namespace {
 							, m_decrypted_ucd_udp_packet
 							, pk);
 					}
+#else
+					auto listen_socket = ls.lock();
+					if (m_dht && m_decrypted_udp_packet.size() > 20
+						&& listen_socket)
+					{
+						m_dht->incoming_packet(listen_socket
+							, packet.from
+							, m_decrypted_udp_packet
+							, pk);
+					}
+#endif
 				}
 			}
 
