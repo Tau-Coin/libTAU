@@ -347,42 +347,52 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			}
 			else if (from == push_candidate)
 			{
+				// max items number pushed once 'keep'
+				constexpr int max_items_once = 8;
+
 				// find item from storage and push
 				node_id prefix;
 				std::memcpy(&prefix[0], &from[0], 16);
 
 				sha256_hash target;
-				bool item_exists = m_storage.get_mutable_item_target(prefix, target);
-				if (!item_exists)
+				bool item_exists = false;
+
+				for (int i = 0; i < max_items_once; i++)
 				{
-#ifndef TORRENT_DISABLE_LOGGING
-					if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+					target.clear();
+					item_exists = m_storage.get_mutable_item_target(prefix, target);
+					if (!item_exists)
 					{
-						m_observer->log(dht_logger::node, "No item pushed:%s"
-							, aux::to_hex(from).c_str());
-					}
-#endif
-				}
-				else
-				{
-					entry item;
-					bool ok = m_storage.get_mutable_item(target, timestamp(0), true, item);
-					if (ok)
-					{
-						// push item
 #ifndef TORRENT_DISABLE_LOGGING
 						if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 						{
-							m_observer->log(dht_logger::node, "Push item :%s to %s"
-								, aux::to_hex(target).c_str()
-								, aux::to_hex(from).c_str());
+							m_observer->log(dht_logger::node, "No item pushed(%d):%s"
+								, i , aux::to_hex(from).c_str());
 						}
 #endif
+						break;
+					}
+					else
+					{
+						entry item;
+						bool ok = m_storage.get_mutable_item(target, timestamp(0), true, item);
+						if (ok)
+						{
+							// push item
+#ifndef TORRENT_DISABLE_LOGGING
+							if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+							{
+								m_observer->log(dht_logger::node, "Push item(%d) :%s to %s"
+									, i , aux::to_hex(target).c_str()
+									, aux::to_hex(from).c_str());
+							}
+#endif
 
-						push(from, m.addr, item, from);
+							push(from, m.addr, item, from);
 
-						// remove this item
-						m_storage.remove_mutable_item(target);
+							// remove this item
+							m_storage.remove_mutable_item(target);
+						}
 					}
 				}
 			}
