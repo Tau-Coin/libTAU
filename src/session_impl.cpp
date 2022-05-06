@@ -1689,6 +1689,9 @@ namespace {
 		send_udp_packet_listen(sock, ep, m_encrypted_udp_packet, ec, flags);
 
 #else
+		m_raw_send_udp_packet.insert(0
+			, m_account_manager->pub_key().bytes.data(), 32);
+
 		send_udp_packet_listen(sock, ep, m_raw_send_udp_packet, ec, flags);
 #endif
 
@@ -1875,6 +1878,11 @@ namespace {
 
 				if (buf.size() >= 64) // 32 public key bytes and encrypted data
 				{
+					sha256_hash pk(buf);
+					m_raw_recv_udp_packet.clear();
+					m_raw_recv_udp_packet.insert(0
+						, buf.subspan(32).data()
+						, buf.size() - 32);
 					m_decrypted_udp_packet.clear();
 /*
 #ifndef TORRENT_DISABLE_LOGGING
@@ -1888,11 +1896,6 @@ namespace {
 #endif
 */
 #ifdef TORRENT_ENABLE_UDP_ENCRYPTION
-					sha256_hash pk(buf);
-					m_raw_recv_udp_packet.clear();
-					m_raw_recv_udp_packet.insert(0
-						, buf.subspan(32).data()
-						, buf.size() - 32);
 					std::string err_str;
 					bool result = decrypt_udp_packet(m_raw_recv_udp_packet
 						, pk
@@ -1904,9 +1907,7 @@ namespace {
 					}
 
 #else
-					m_decrypted_udp_packet.insert(0
-						, buf.subspan(0).data()
-						, buf.size());
+					m_decrypted_udp_packet.insert(0 , m_raw_recv_udp_packet.data(), m_raw_recv_udp_packet.size());
 #endif
 
 #ifdef TORRENT_ENABLE_UDP_COMPRESS
