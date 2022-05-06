@@ -157,6 +157,21 @@ namespace libTAU::blockchain {
         }
     }
 
+    bool blockchain::add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key> &peers) {
+        // add peer into db
+        for (auto const &peer: peers) {
+            log("INFO: chain:%s, add peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+            if (!m_repository->add_peer_in_peer_db(chain_id, peer)) {
+                log("INFO: chain:%s, insert peer:%s fail in peer db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+            }
+            if (!m_repository->add_peer_in_gossip_peer_db(chain_id, peer)) {
+                log("INFO: chain:%s, insert gossip peer:%s fail in gossip db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+            }
+        }
+
+        return true;
+    }
+
     bool blockchain::unfollowChain(const aux::bytes &chain_id) {
         log("INFO: Unfollow chain:%s", aux::toHex(chain_id).c_str());
 

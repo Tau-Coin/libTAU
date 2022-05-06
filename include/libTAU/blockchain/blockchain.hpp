@@ -75,7 +75,7 @@ namespace blockchain {
     constexpr std::int64_t blockchain_min_ban_time = 5 * 60 * 1000;
 
     // blockchain max ban time(20min)
-    constexpr std::int64_t blockchain_max_ban_time = 20 * 60 * 1000;
+    constexpr std::int64_t blockchain_max_ban_time = 10 * 60 * 1000;
 
     enum RESULT {
         SUCCESS,
@@ -125,6 +125,9 @@ namespace blockchain {
 
         // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
+
+        // add new bootstrp peers
+        bool add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
         // un-follow a chain
         bool unfollowChain(const aux::bytes &chain_id);
