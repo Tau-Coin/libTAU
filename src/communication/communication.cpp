@@ -512,9 +512,11 @@ namespace libTAU {
 
 
                 auto salt = i.salt();
-                std::string id(salt.begin() + communication_salt_pubkey_length, salt.end());
-                std::int64_t data_type_id = std::strtol(id.c_str(), nullptr, 10);
-                process_payload(i.pk(), data_type_id, i.value(), false);
+                std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
+                common::protocol_entry protocolEntry(encode);
+                if (protocolEntry.m_pid == common::protocol_put) {
+                    process_payload(i.pk(), protocolEntry.m_data_type_id, i.value(), false);
+                }
             }
         }
 
@@ -940,7 +942,7 @@ namespace libTAU {
 //                    log("INFO: Select peer:%s", aux::toHex(peer.bytes).c_str());
 //                    m_peer_access_times[peer] = current_time;
 //
-////                    request_signal(peer);
+////                    get_gossip_peers(peer);
 //                    publish_signal(peer);
 //                }
 
@@ -1449,9 +1451,10 @@ namespace libTAU {
         }
 
         std::string communication::make_salt(dht::public_key peer, std::int64_t data_type_id) {
-            std::string salt(peer.bytes.begin(), peer.bytes.begin() + communication_salt_pubkey_length);
-            std::string id = std::to_string(data_type_id);
-            salt.insert(salt.end(), id.begin(), id.end());
+            std::string salt(peer.bytes.begin(), peer.bytes.begin() + common::salt_pubkey_length);
+            common::protocol_entry protocolEntry(data_type_id);
+            std::string encode = protocolEntry.get_encode();
+            salt.insert(salt.end(), encode.begin(), encode.end());
 
             return salt;
         }
@@ -1565,39 +1568,39 @@ namespace libTAU {
 //        }
 
         // callback for dht_mutable_get
-        void communication::get_mutable_callback(dht::item const& i
-                , bool const authoritative)
-        {
-            TORRENT_ASSERT(i.is_mutable());
-
-            // construct mutable data wrapper from entry
-            if (!i.empty()) {
-//                dht::public_key peer = i.pk();
+//        void communication::get_mutable_callback(dht::item const& i
+//                , bool const authoritative)
+//        {
+//            TORRENT_ASSERT(i.is_mutable());
 //
-//                // update latest item timestamp
-//                if (i.ts() > m_latest_item_timestamp[peer]) {
-//                    m_latest_item_timestamp[peer] = i.ts();
-//                }
-
-                auto salt = i.salt();
-                std::string id(salt.begin() + communication_salt_pubkey_length, salt.end());
-                std::int64_t data_type_id = std::strtol(id.c_str(), nullptr, 10);
-                process_payload(i.pk(), data_type_id, i.value(), true);
-//                online_signal onlineSignal(i.value());
+//            // construct mutable data wrapper from entry
+//            if (!i.empty()) {
+////                dht::public_key peer = i.pk();
+////
+////                // update latest item timestamp
+////                if (i.ts() > m_latest_item_timestamp[peer]) {
+////                    m_latest_item_timestamp[peer] = i.ts();
+////                }
 //
-//                process_signal(onlineSignal, i.pk());
-            }
-        }
+//                auto salt = i.salt();
+//                std::string id(salt.begin() + communication_salt_pubkey_length, salt.end());
+//                std::int64_t data_type_id = std::strtol(id.c_str(), nullptr, 10);
+//                process_payload(i.pk(), data_type_id, i.value(), true);
+////                online_signal onlineSignal(i.value());
+////
+////                process_signal(onlineSignal, i.pk());
+//            }
+//        }
 
         // key is a 32-byte binary string, the public key to look up.
         // the salt is optional
-        void communication::dht_get_mutable_item(std::array<char, 32> key
-                , std::string salt, dht::timestamp t)
-        {
-            if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
-                    , this, _1, _2), std::move(salt), t.value);
-        }
+//        void communication::dht_get_mutable_item(std::array<char, 32> key
+//                , std::string salt, dht::timestamp t)
+//        {
+//            if (!m_ses.dht()) return;
+//            m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&communication::get_mutable_callback
+//                    , this, _1, _2), std::move(salt), t.value);
+//        }
 
         void communication::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes) {
             auto &peer = i.pk();

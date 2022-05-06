@@ -21,14 +21,63 @@ see LICENSE file.
 
 namespace libTAU::common {
 
+    // salt length (first 12 bytes of public key)
+    constexpr int salt_pubkey_length = 12;
+    constexpr int salt_short_chain_id_length = 8;
+
     // TODO:: tlv
-    const std::string protocol_type = "pid";
-    const std::string protocol_payload = "p";
+    const std::string protocol_type = "p";
     const std::string entry_type = "t";
+    const std::string entry_short_chain_id = "s";
     const std::string entry_value = "v";
     const std::string entry_chain_id = "i";
     const std::string entry_time = "m";
     const std::string entry_levenshtein_array = "l";
+
+    enum protocol_id {
+        protocol_put,
+        protocol_gossip,
+    };
+
+    struct TORRENT_EXPORT protocol_entry {
+        // @param Construct with entry
+        explicit protocol_entry(const entry& e);
+
+        // @param Construct with bencode
+        explicit protocol_entry(std::string encode): protocol_entry(bdecode(encode)) {}
+
+        explicit protocol_entry(int64_t mDataTypeId) : m_data_type_id(mDataTypeId) { m_pid = protocol_put; }
+
+        explicit protocol_entry(aux::bytes mChainId) : m_short_chain_id(std::move(mChainId)) { m_pid = protocol_gossip; }
+
+        entry get_entry();
+
+        std::string get_encode();
+
+        // protocol id
+        protocol_id m_pid;
+
+        // data type id
+        std::int64_t m_data_type_id{};
+
+        // data type id
+        aux::bytes m_short_chain_id;
+    };
+
+    struct TORRENT_EXPORT gossip_cache_peers_entry {
+        // @param Construct with entry
+        explicit gossip_cache_peers_entry(const entry& e);
+
+        // @param Construct with bencode
+        explicit gossip_cache_peers_entry(std::string encode): gossip_cache_peers_entry(bdecode(encode)) {}
+
+        explicit gossip_cache_peers_entry(std::set<dht::public_key> mPeers) : m_peers(std::move(mPeers)) {}
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+
+        std::set<dht::public_key> m_peers;
+    };
 
     struct communication_entry_base {
         virtual std::int64_t get_data_type_id() const = 0;

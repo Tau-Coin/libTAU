@@ -45,9 +45,6 @@ namespace blockchain {
     // max access peer frequency(interval: 3000 ms)
     constexpr int blockchain_max_access_peer_interval = 3000;
 
-    // salt length (first 12 bytes of public key)
-    constexpr int blockchain_salt_pubkey_length = 12;
-
     // max tx list size
     constexpr int blockchain_max_tx_list_size = 10;
 
@@ -126,7 +123,7 @@ namespace blockchain {
         // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
-        // add new bootstrp peers
+        // add new bootstrap peers
         bool add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
         // un-follow a chain
@@ -278,9 +275,9 @@ namespace blockchain {
 
         void ban_peer_max_time(const aux::bytes &chain_id, const dht::public_key& peer);
 
-        void add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);
 
-        void increase_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
+//        void increase_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
 
         void decrease_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
 
@@ -306,7 +303,7 @@ namespace blockchain {
                                 std::set<transaction> &missing_txs);
 
         // make a salt on mutable channel
-        static std::string make_salt(const aux::bytes &chain_id);
+        static std::string make_salt(dht::public_key peer, const aux::bytes &chain_id);
 
         // make a salt on mutable channel
         static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
@@ -318,10 +315,12 @@ namespace blockchain {
 
         void introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers);
 
+        void put_gossip_peers_to_cache(const aux::bytes &chain_id);
+
         void add_gossip_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
         // request signal from a given peer
-//        void request_signal(const aux::bytes &chain_id, const dht::public_key& peer);
+        void get_gossip_peers(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // publish online/new message signal to a given peer
 //        void publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
@@ -343,11 +342,10 @@ namespace blockchain {
 //        void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
         // mutable data callback
-//        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool);
+        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool);
 
-//        // get mutable item from dht
-//        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key
-//                                  , std::string salt, dht::timestamp t);
+        // get mutable item from dht
+        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
 
         // put immutable item to dht
 //        void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
@@ -409,8 +407,8 @@ namespace blockchain {
 //        // update un-choked peers time(s)
 //        std::map<aux::bytes, std::int64_t> m_update_peer_time;
 
-        // the time that last got data from dht(ms)
-//        std::map<aux::bytes, std::int64_t> m_last_got_data_time;
+        // the time that last cache gossip peers(ms)
+        std::map<aux::bytes, std::int64_t> m_last_cache_gossip_peers_time;
 
         std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 

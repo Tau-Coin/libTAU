@@ -10,6 +10,81 @@ see LICENSE file.
 
 namespace libTAU::common {
 
+    protocol_entry::protocol_entry(const entry &e) {
+        // protocol id
+        if (auto* i = const_cast<entry *>(e.find_key(protocol_type)))
+        {
+            m_pid = static_cast<protocol_id>(i->integer());
+        }
+
+        // data type id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_type)))
+        {
+            m_data_type_id = i->integer();
+        }
+
+        // short chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_short_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+    }
+
+    entry protocol_entry::get_entry() {
+        entry e(entry::dictionary_t);
+
+        // protocol id
+        e[protocol_type] = entry(m_pid);
+
+        if (m_pid == protocol_put) {
+            // data type id
+            e[entry_type] = entry(m_data_type_id);
+        } else if (m_pid == protocol_gossip) {
+            // short chain id
+            if (m_short_chain_id.size() > salt_short_chain_id_length) {
+                e[entry_short_chain_id] = entry(
+                        std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + salt_short_chain_id_length));
+            } else {
+                e[entry_short_chain_id] = entry(
+                        std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
+            }
+        }
+
+        return e;
+    }
+
+    std::string protocol_entry::get_encode() {
+        std::string encode;
+        auto e = get_entry();
+        bencode(std::back_inserter(encode), e);
+
+        return encode;
+    }
+
+    gossip_cache_peers_entry::gossip_cache_peers_entry(const entry &e) {
+        // gossip peers
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            entry::list_type lst = i->list();
+            for (const auto& n: lst) {
+                m_peers.insert(dht::public_key(n.string().data()));
+            }
+        }
+    }
+
+    entry gossip_cache_peers_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // gossip peers
+        entry::list_type l;
+        for (auto const& peer: m_peers) {
+            l.push_back(entry(std::string(peer.bytes.begin(), peer.bytes.end())));
+        }
+        e[entry_value] = l;
+
+        return e;
+    }
+
 //    communication_entries::communication_entries(const entry &e) {
 //        // entries
 //        if (auto* i = const_cast<entry *>(e.find_key(protocol_payload))) {
