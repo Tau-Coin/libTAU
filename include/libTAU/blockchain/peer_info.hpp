@@ -71,11 +71,13 @@ namespace libTAU::blockchain {
 
         ban_info() = default;
 
-        ban_info(int mBanTimes, int64_t mFreeTime) : m_ban_times(mBanTimes), m_free_time(mFreeTime) {}
+        explicit ban_info(int64_t mFreeTime) : m_free_time(mFreeTime) {}
 
-        void increase_ban_times() {
-            m_ban_times++;
-        }
+//        ban_info(int mBanTimes, int64_t mFreeTime) : m_ban_times(mBanTimes), m_free_time(mFreeTime) {}
+//
+//        void increase_ban_times() {
+//            m_ban_times++;
+//        }
 
         void set_free_time(int64_t mFreeTime) {
             m_free_time = mFreeTime;
@@ -85,7 +87,7 @@ namespace libTAU::blockchain {
 
         friend std::ostream &operator<<(std::ostream &os, const ban_info &info);
 
-        int m_ban_times = 1;
+//        int m_ban_times = 1;
 
         std::int64_t m_free_time = 0;
     };

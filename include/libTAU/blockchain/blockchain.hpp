@@ -71,8 +71,8 @@ namespace blockchain {
     // blockchain min ban time(5min)
     constexpr std::int64_t blockchain_min_ban_time = 5 * 60 * 1000;
 
-    // blockchain max ban time(20min)
-    constexpr std::int64_t blockchain_max_ban_time = 10 * 60 * 1000;
+    // blockchain max ban time(30min)
+    constexpr std::int64_t blockchain_max_ban_time = 30 * 60 * 1000;
 
     enum RESULT {
         SUCCESS,
@@ -271,9 +271,9 @@ namespace blockchain {
 
         void try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key& peer);
 
-        void ban_peer(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void ban_peer(const aux::bytes &chain_id, const dht::public_key& peer);
 
-        void ban_peer_max_time(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void ban_peer_max_time(const aux::bytes &chain_id, const dht::public_key& peer);
 
 //        void add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);
 

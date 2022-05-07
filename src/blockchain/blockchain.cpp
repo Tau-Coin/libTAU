@@ -465,7 +465,8 @@ namespace libTAU::blockchain {
                                             remove_all_same_chain_blocks_from_cache(blk);
 
                                             acl.erase(it);
-                                            ban_peer_max_time(chain_id, it->first);
+                                            auto &ban_list = m_ban_list[chain_id];
+                                            ban_list[it->first] = ban_info(now + blockchain_max_ban_time);
                                         } else if (result == SUCCESS) {
                                             // clear all ancestor blocks
                                             remove_all_ancestor_blocks_from_cache(blk);
@@ -585,22 +586,7 @@ namespace libTAU::blockchain {
                                     if (it->second.m_score <= 0 ||
                                         (it->second.m_stage == NORMAL && now > it->second.m_last_seen + 210 * 1000)) {
                                         auto &ban_list = m_ban_list[chain_id];
-                                        auto it_ban = ban_list.find(it->first);
-                                        if (it_ban != ban_list.end()) {
-                                            it_ban->second.increase_ban_times();
-                                            auto ban_time = blockchain_min_ban_time * it_ban->second.m_ban_times;
-                                            if (ban_time > blockchain_max_ban_time) {
-                                                ban_time = blockchain_max_ban_time;
-                                            }
-                                            it_ban->second.set_free_time(now + ban_time);
-                                        } else {
-                                            ban_list[it->first] = ban_info();
-                                            auto ban_time = blockchain_min_ban_time * ban_list[it->first].m_ban_times;
-                                            if (ban_time > blockchain_max_ban_time) {
-                                                ban_time = blockchain_max_ban_time;
-                                            }
-                                            ban_list[it->first].set_free_time(now + ban_time);
-                                        }
+                                        ban_list[it->first] = ban_info(now + blockchain_min_ban_time);
 
                                         acl.erase(it++);
                                     } else {
@@ -628,7 +614,7 @@ namespace libTAU::blockchain {
                                     auto size = acl.size();
                                     if (size < blockchain_acl_min_peers) {
                                         std::set<dht::public_key> peers;
-                                        for (auto i = blockchain_acl_max_peers - size; i > 0; i--) {
+                                        for (auto i = blockchain_acl_min_peers - size; i > 0; i--) {
                                             auto peer = select_peer_randomly(chain_id);
                                             // if peer is not in acl, not been banned
                                             if (!peer.is_all_zeros() &&
@@ -639,6 +625,8 @@ namespace libTAU::blockchain {
                                                     if (it->second.m_free_time > now) {
                                                         // peer is still banned
                                                         continue;
+                                                    } else {
+                                                        ban_list.erase(it);
                                                     }
                                                 }
                                                 peers.insert(peer);
@@ -1788,39 +1776,6 @@ namespace libTAU::blockchain {
 
     void blockchain::try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key &peer) {
         m_ban_list[chain_id].erase(peer);
-    }
-
-    void blockchain::ban_peer(const aux::bytes &chain_id, const dht::public_key &peer) {
-        auto now = get_total_milliseconds();
-        auto &ban_list = m_ban_list[chain_id];
-        auto it = ban_list.find(peer);
-        if (it != ban_list.end()) {
-            it->second.increase_ban_times();
-            auto ban_time = blockchain_min_ban_time * it->second.m_ban_times;
-            if (ban_time > blockchain_max_ban_time) {
-                ban_time = blockchain_max_ban_time;
-            }
-            it->second.set_free_time(now + ban_time);
-        } else {
-            ban_list[peer] = ban_info();
-            auto ban_time = blockchain_min_ban_time * ban_list[peer].m_ban_times;
-            if (ban_time > blockchain_max_ban_time) {
-                ban_time = blockchain_max_ban_time;
-            }
-            ban_list[peer].set_free_time(now + ban_time);
-        }
-    }
-
-    void blockchain::ban_peer_max_time(const aux::bytes &chain_id, const dht::public_key &peer) {
-        auto now = get_total_milliseconds();
-        auto &ban_list = m_ban_list[chain_id];
-        auto it = ban_list.find(peer);
-        if (it != ban_list.end()) {
-            it->second.set_free_time(now + blockchain_max_ban_time);
-        } else {
-            ban_list[peer] = ban_info();
-            ban_list[peer].set_free_time(now + blockchain_max_ban_time);
-        }
     }
 
 //    void blockchain::add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key &peer) {

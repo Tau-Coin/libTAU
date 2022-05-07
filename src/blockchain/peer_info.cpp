@@ -38,7 +38,7 @@ namespace libTAU::blockchain {
     }
 
     std::ostream &operator<<(std::ostream &os, const ban_info &info) {
-        os << "m_ban_times: " << info.m_ban_times << " m_free_time: " << info.m_free_time;
+        os << "m_free_time: " << info.m_free_time;
         return os;
     }
 }
