@@ -279,7 +279,7 @@ namespace blockchain {
 
 //        void increase_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
 
-        void decrease_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
+//        void decrease_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
 
         // get block from block cache or db
         block get_block_from_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);

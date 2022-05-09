@@ -1652,6 +1652,18 @@ namespace libTAU::blockchain {
                 }
                 m_repository->flush(chain_id);
 
+                // todo: test
+//                for (auto const& peer: peers) {
+//                    auto abp = m_repository->get_account_block_pointer(chain_id, peer);
+//                    log("+++++++++++++++++++:peer[%s], account block pointer[%s]", aux::toHex(peer.bytes).c_str(), abp.to_string().c_str());
+//                }
+//
+//                auto sl = m_repository->get_state_linker(b.sha256());
+//                log("+++++++++++++++++++:state linker:%s", sl.to_string().c_str());
+//
+//                auto iki = m_repository->get_index_info(chain_id, b.block_number());
+//                log("+++++++++++++++++++:index key info:%s", iki.to_string().c_str());
+
                 m_head_blocks[chain_id] = b;
                 if (!tail_block.empty()) {
                     m_tail_blocks[chain_id] = tail_block;
@@ -1818,20 +1830,20 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::decrease_peer_score(const aux::bytes &chain_id, const dht::public_key &peer, int score) {
-        auto &acl = m_access_list[chain_id];
-//        auto size = acl.size();
-        auto it = acl.find(peer);
-        if (it != acl.end()) {
-            // in acl
-            it->second.m_score = it->second.m_score - score;
-        } else {
-            if (is_peer_banned(chain_id, peer)) {
-                // TODO: increase ban time?
-                return;
-            }
-        }
-    }
+//    void blockchain::decrease_peer_score(const aux::bytes &chain_id, const dht::public_key &peer, int score) {
+//        auto &acl = m_access_list[chain_id];
+////        auto size = acl.size();
+//        auto it = acl.find(peer);
+//        if (it != acl.end()) {
+//            // in acl
+//            it->second.m_score = it->second.m_score - score;
+//        } else {
+//            if (is_peer_banned(chain_id, peer)) {
+//                // TODO: increase ban time?
+//                return;
+//            }
+//        }
+//    }
 
     block blockchain::get_block_from_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
         auto &block_map = m_blocks[chain_id];
