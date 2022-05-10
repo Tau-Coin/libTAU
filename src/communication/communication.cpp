@@ -510,12 +510,15 @@ namespace libTAU {
 //                    }
 //                }
 
-
-                auto salt = i.salt();
-                std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
-                common::protocol_entry protocolEntry(encode);
-                if (protocolEntry.m_pid == common::protocol_put) {
-                    process_payload(i.pk(), protocolEntry.m_data_type_id, i.value(), false);
+                try {
+                    auto salt = i.salt();
+                    std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
+                    common::protocol_entry protocolEntry(encode);
+                    if (protocolEntry.m_pid == common::protocol_put) {
+                        process_payload(i.pk(), protocolEntry.m_data_type_id, i.value(), false);
+                    }
+                } catch (std::exception &e) {
+                    log("ERROR: Receive exception data.");
                 }
             }
         }
