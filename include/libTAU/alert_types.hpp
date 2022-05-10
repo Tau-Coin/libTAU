@@ -55,18 +55,9 @@ see LICENSE file.
 #include <bitset>
 #include <cstdarg> // for va_list
 
-#if TORRENT_ABI_VERSION == 1
-#define PROGRESS_NOTIFICATION | alert::progress_notification
-#else
 #define PROGRESS_NOTIFICATION
-#endif
-
 
 namespace libTAU {
-
-#if TORRENT_ABI_VERSION == 1
-	TORRENT_DEPRECATED_EXPORT char const* operation_name(int op);
-#endif
 
 	// internal
 	TORRENT_EXPORT char const* alert_name(int alert_type);
@@ -180,18 +171,6 @@ namespace libTAU {
 	// listen on it.
 	struct TORRENT_EXPORT listen_failed_alert final : alert
 	{
-#if TORRENT_ABI_VERSION == 1
-		enum socket_type_t : std::uint8_t
-		{
-			tcp TORRENT_DEPRECATED_ENUM,
-			tcp_ssl TORRENT_DEPRECATED_ENUM,
-			udp TORRENT_DEPRECATED_ENUM,
-			i2p TORRENT_DEPRECATED_ENUM,
-			socks5 TORRENT_DEPRECATED_ENUM,
-			utp_ssl TORRENT_DEPRECATED_ENUM
-		};
-#endif
-
 		// internal
 		TORRENT_UNEXPORT listen_failed_alert(aux::stack_allocator& alloc, string_view iface
 			, lt::address const& listen_addr, int listen_port
@@ -233,29 +212,6 @@ namespace libTAU {
 	private:
 		std::reference_wrapper<aux::stack_allocator const> m_alloc;
 		aux::allocation_slot m_interface_idx;
-#if TORRENT_ABI_VERSION == 1
-	public:
-		enum TORRENT_DEPRECATED_ENUM op_t
-		{
-			parse_addr TORRENT_DEPRECATED_ENUM,
-			open TORRENT_DEPRECATED_ENUM,
-			bind TORRENT_DEPRECATED_ENUM,
-			listen TORRENT_DEPRECATED_ENUM,
-			get_socket_name TORRENT_DEPRECATED_ENUM,
-			accept TORRENT_DEPRECATED_ENUM,
-			enum_if TORRENT_DEPRECATED_ENUM,
-			bind_to_device TORRENT_DEPRECATED_ENUM
-		};
-
-		// the specific low level operation that failed. See op_t.
-		TORRENT_DEPRECATED int const operation;
-
-		// the address and port libTAU attempted to listen on
-		TORRENT_DEPRECATED aux::noexcept_movable<tcp::endpoint> endpoint;
-
-		// the type of listen socket this alert refers to.
-		TORRENT_DEPRECATED socket_type_t sock_type;
-#endif
 	};
 
 	// This alert is posted when the listen port succeeds to be opened on a
@@ -263,18 +219,6 @@ namespace libTAU {
 	// successfully was opened for listening.
 	struct TORRENT_EXPORT listen_succeeded_alert final : alert
 	{
-#if TORRENT_ABI_VERSION == 1
-		enum socket_type_t : std::uint8_t
-		{
-			tcp TORRENT_DEPRECATED_ENUM,
-			tcp_ssl TORRENT_DEPRECATED_ENUM,
-			udp TORRENT_DEPRECATED_ENUM,
-			i2p TORRENT_DEPRECATED_ENUM,
-			socks5 TORRENT_DEPRECATED_ENUM,
-			utp_ssl TORRENT_DEPRECATED_ENUM
-		};
-#endif
-
 		// internal
 		TORRENT_UNEXPORT listen_succeeded_alert(aux::stack_allocator& alloc
 			, lt::address const& listen_addr
@@ -301,15 +245,6 @@ namespace libTAU {
 
 		// the type of listen socket this alert refers to.
 		lt::socket_type_t const socket_type;
-
-#if TORRENT_ABI_VERSION == 1
-		// the endpoint libTAU ended up listening on. The address
-		// refers to the local interface and the port is the listen port.
-		TORRENT_DEPRECATED aux::noexcept_movable<tcp::endpoint> endpoint;
-
-		// the type of listen socket this alert refers to.
-		TORRENT_DEPRECATED socket_type_t sock_type;
-#endif
 	};
 
 	// This alert is generated when a NAT router was successfully found but some
@@ -342,12 +277,6 @@ namespace libTAU {
 
 		// tells you what failed.
 		error_code const error;
-#if TORRENT_ABI_VERSION == 1
-		// is 0 for NAT-PMP and 1 for UPnP.
-		TORRENT_DEPRECATED int const map_type;
-
-		TORRENT_DEPRECATED std::string msg;
-#endif
 	};
 
 	// This alert is generated when a NAT router was successfully found and
@@ -378,20 +307,6 @@ namespace libTAU {
 
 		// the local network the port mapper is running on
 		aux::noexcept_movable<address> local_address;
-
-#if TORRENT_ABI_VERSION == 1
-		enum TORRENT_DEPRECATED_ENUM protocol_t
-		{
-			tcp,
-			udp
-		};
-
-		// the protocol this mapping was for. one of protocol_t enums
-		TORRENT_DEPRECATED int const protocol;
-
-		// 0 for NAT-PMP and 1 for UPnP.
-		TORRENT_DEPRECATED int const map_type;
-#endif
 	};
 
 	// This alert is generated to log informational events related to either
@@ -424,12 +339,6 @@ namespace libTAU {
 		std::reference_wrapper<aux::stack_allocator const> m_alloc;
 
 		aux::allocation_slot m_log_idx;
-#if TORRENT_ABI_VERSION == 1
-	public:
-		TORRENT_DEPRECATED int const map_type;
-		TORRENT_DEPRECATED std::string msg;
-#endif
-
 	};
 
 	// This alert is generated when a DHT node announces to an info-hash on our
@@ -464,12 +373,6 @@ namespace libTAU {
 
 		sha256_hash info_hash;
 	};
-
-#if TORRENT_ABI_VERSION <= 2
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-
-#endif // TORRENT_ABI_VERSION
 
 	// This alert is posted when the initial DHT bootstrap is done.
 	struct TORRENT_EXPORT dht_bootstrap_alert final : alert
@@ -521,10 +424,6 @@ namespace libTAU {
 		// is the IP address and port the connection came from.
 		aux::noexcept_movable<tcp::endpoint> endpoint;
 
-#if TORRENT_ABI_VERSION == 1
-		// is the IP address and port the connection came from.
-		TORRENT_DEPRECATED aux::noexcept_movable<tcp::endpoint> ip;
-#endif
 	};
 
 	struct TORRENT_EXPORT session_stop_over_alert final : alert
@@ -554,15 +453,7 @@ namespace libTAU {
 		// internal
 		TORRENT_UNEXPORT session_stats_alert(aux::stack_allocator& alloc, counters const& cnt);
 
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/aux_/disable_deprecation_warnings_push.hpp"
-#endif
-
 		TORRENT_DEFINE_ALERT_PRIO(session_stats_alert, 13, alert_priority::critical)
-
-#if TORRENT_ABI_VERSION == 1
-#include "libTAU/aux_/disable_warnings_pop.hpp"
-#endif
 
 		static inline constexpr alert_category_t static_category = {};
 		std::string message() const override;
@@ -578,13 +469,9 @@ namespace libTAU {
 		// For more information, see the session-statistics_ section.
 		span<std::int64_t const> counters() const;
 
-#if TORRENT_ABI_VERSION == 1
-		TORRENT_DEPRECATED std::array<std::int64_t, counters::num_counters> const values;
-#else
 	private:
 		std::reference_wrapper<aux::stack_allocator const> m_alloc;
 		aux::allocation_slot m_counters_idx;
-#endif
 	};
 
 	// posted when something fails in the DHT. This is not necessarily a fatal
@@ -605,17 +492,6 @@ namespace libTAU {
 
 		// the operation that failed
 		operation_t op;
-
-#if TORRENT_ABI_VERSION == 1
-		enum op_t
-		{
-			unknown TORRENT_DEPRECATED_ENUM,
-			hostname_lookup TORRENT_DEPRECATED_ENUM
-		};
-
-		// the operation that failed
-		TORRENT_DEPRECATED op_t const operation;
-#endif
 	};
 
 	// this alert is posted as a response to a call to session::get_item(),
@@ -736,11 +612,6 @@ namespace libTAU {
 
 		// the endpoint we're sending this query to
 		aux::noexcept_movable<udp::endpoint> endpoint;
-
-#if TORRENT_ABI_VERSION == 1
-		// the endpoint we're sending this query to
-		TORRENT_DEPRECATED aux::noexcept_movable<udp::endpoint> ip;
-#endif
 	};
 
 	// This alert is posted by some session wide event. Its main purpose is
@@ -760,12 +631,6 @@ namespace libTAU {
 
 		// returns the log message
 		char const* log_message() const;
-
-#if TORRENT_ABI_VERSION == 1
-		// returns the log message
-		TORRENT_DEPRECATED
-		char const* msg() const;
-#endif
 
 	private:
 		std::reference_wrapper<aux::stack_allocator const> m_alloc;
@@ -916,11 +781,6 @@ namespace libTAU {
 		std::reference_wrapper<aux::stack_allocator> m_alloc;
 		aux::allocation_slot m_msg_idx;
 		int const m_size;
-#if TORRENT_ABI_VERSION == 1
-	public:
-		TORRENT_DEPRECATED direction_t dir;
-#endif
-
 	};
 
 	// Posted when we receive a response to a DHT get_peers request.
@@ -940,10 +800,6 @@ namespace libTAU {
 
 		int num_peers() const;
 
-#if TORRENT_ABI_VERSION == 1
-		TORRENT_DEPRECATED
-		void peers(std::vector<tcp::endpoint>& v) const;
-#endif
 		std::vector<tcp::endpoint> peers() const;
 
 	private:
@@ -981,10 +837,6 @@ namespace libTAU {
 		std::reference_wrapper<aux::stack_allocator> m_alloc;
 		aux::allocation_slot m_response_idx;
 		int const m_response_size;
-#if TORRENT_ABI_VERSION == 1
-	public:
-		TORRENT_DEPRECATED aux::noexcept_movable<udp::endpoint> addr;
-#endif
 	};
 
 	// this alert is posted when the session encounters a serious error,
@@ -1271,12 +1123,6 @@ namespace libTAU {
         // returns the log message
         char const* log_message() const;
 
-#if TORRENT_ABI_VERSION == 1
-        // returns the log message
-        TORRENT_DEPRECATED
-        char const* msg() const;
-#endif
-
     private:
         std::reference_wrapper<aux::stack_allocator const> m_alloc;
         aux::allocation_slot m_str_idx;
@@ -1318,12 +1164,6 @@ namespace libTAU {
 
         // returns the log message
         char const* log_message() const;
-
-#if TORRENT_ABI_VERSION == 1
-        // returns the log message
-        TORRENT_DEPRECATED
-        char const* msg() const;
-#endif
 
     private:
         std::reference_wrapper<aux::stack_allocator const> m_alloc;
