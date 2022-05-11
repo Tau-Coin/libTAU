@@ -1104,7 +1104,7 @@ namespace libTAU::blockchain {
             auto index = rand() % gossip_peers.size();
 
             int i = 0;
-            log("=============================:n = %d, index = %lu, size:%lu", n, index, gossip_peers.size());
+//            log("=============================:n = %d, index = %lu, size:%lu", n, index, gossip_peers.size());
             for (const auto & gossip_peer : gossip_peers) {
                 if (i == index) {
                     return gossip_peer;
