@@ -120,6 +120,8 @@ namespace blockchain {
         // create new community with tx
         bool createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts);
 
+        std::set<aux::bytes> get_all_chains();
+
         // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 

@@ -100,6 +100,12 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::request_state(const aux::bytes &chain_id) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+            return;
+        }
+
         common::state_request_entry stateRequestEntry(chain_id);
 
         auto &acl = m_access_list[chain_id];
@@ -158,6 +164,12 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key> &peers) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return false;
+        }
+
         // add peer into db
         for (auto const &peer: peers) {
             log("INFO: chain:%s, add peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
@@ -175,19 +187,16 @@ namespace libTAU::blockchain {
     bool blockchain::unfollowChain(const aux::bytes &chain_id) {
         log("INFO: Unfollow chain:%s", aux::toHex(chain_id).c_str());
 
-        // remove chain id from memory
-        for (auto it = m_chains.begin(); it != m_chains.end(); ++it) {
-            if (chain_id == *it) {
-                m_chains.erase(it);
-                break;
-            }
-        }
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it != m_chains.end()) {
+            m_chains.erase(it);
 
-        // remove chain id from db
-        m_repository->delete_chain(chain_id);
-        // remove chain cache
-        clear_chain_cache(chain_id);
-        // todo: clear data in db?
+            // remove chain id from db
+            m_repository->delete_chain(chain_id);
+            // remove chain cache
+            clear_chain_cache(chain_id);
+            // todo: clear data in db?
+        }
 
         return true;
     }
@@ -616,6 +625,7 @@ namespace libTAU::blockchain {
                                         std::set<dht::public_key> peers;
                                         for (auto i = blockchain_acl_min_peers - size; i > 0; i--) {
                                             auto peer = select_peer_randomly(chain_id);
+//                                            log("INFO: Chain[%s] select peer[%s]", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                                             // if peer is not in acl, not been banned
                                             if (!peer.is_all_zeros() &&
                                                 acl.find(peer) == acl.end() & peer != *m_ses.pubkey()) {
@@ -624,6 +634,7 @@ namespace libTAU::blockchain {
                                                 if (it != ban_list.end()) {
                                                     if (it->second.m_free_time > now) {
                                                         // peer is still banned
+//                                                        log("INFO: Chain[%s] peer[%s] is in ban list", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                                                         continue;
                                                     } else {
                                                         ban_list.erase(it);
@@ -1090,6 +1101,7 @@ namespace libTAU::blockchain {
             auto index = rand() % gossip_peers.size();
 
             int i = 0;
+//            log("=============================:n = %d, index = %lu, size:%lu", n, index, gossip_peers.size());
             for (const auto & gossip_peer : gossip_peers) {
                 if (i == index) {
                     return gossip_peer;
@@ -3116,6 +3128,10 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    std::set<aux::bytes> blockchain::get_all_chains() {
+        return m_repository->get_all_chains();
+    }
+
     bool blockchain::submitTransaction(const transaction& tx) {
         try {
             log("INFO: add new tx:%s", tx.to_string().c_str());
@@ -3126,6 +3142,12 @@ namespace libTAU::blockchain {
                 }
 
                 auto &chain_id = tx.chain_id();
+
+                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                if (it == m_chains.end()) {
+                    log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+                    return false;
+                }
 
                 common::transaction_entry txEntry(tx);
 
@@ -3159,6 +3181,12 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha256_hash &txid) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return false;
+        }
+
         return m_tx_pools[chain_id].is_transaction_in_fee_pool(txid);
     }
 
@@ -3175,6 +3203,12 @@ namespace libTAU::blockchain {
     }
 
     std::vector<block> blockchain::getTopTipBlocks(const aux::bytes &chain_id, int topNum) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return std::vector<block>();
+        }
+
         std::vector<block> blocks;
         if (topNum > 0) {
             auto head_block = m_head_blocks[chain_id];
@@ -3196,6 +3230,12 @@ namespace libTAU::blockchain {
     }
 
     std::int64_t blockchain::getMedianTxFee(const aux::bytes &chain_id) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return 0;
+        }
+
         std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
         auto size = txs.size();
         if (size > 0) {
@@ -3206,6 +3246,12 @@ namespace libTAU::blockchain {
     }
 
     std::int64_t blockchain::getMiningTime(const aux::bytes &chain_id) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return -1;
+        }
+
         dht::public_key *pk = m_ses.pubkey();
 
         auto &head_block = m_head_blocks[chain_id];
@@ -3248,6 +3294,12 @@ namespace libTAU::blockchain {
     }
 
     std::set<dht::public_key> blockchain::get_access_list(const aux::bytes &chain_id) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return std::set<dht::public_key>();
+        }
+
         std::set<dht::public_key> peers;
         auto& access_list = m_access_list[chain_id];
         for (auto const& item: access_list) {
@@ -3258,6 +3310,12 @@ namespace libTAU::blockchain {
     }
 
     std::set<dht::public_key> blockchain::get_ban_list(const aux::bytes &chain_id) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return std::set<dht::public_key>();
+        }
+
         std::set<dht::public_key> peers;
         auto& ban_list = m_ban_list[chain_id];
         for (auto const& item: ban_list) {
@@ -3268,6 +3326,12 @@ namespace libTAU::blockchain {
     }
 
     std::set<dht::public_key> blockchain::get_gossip_peers(const aux::bytes &chain_id) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return std::set<dht::public_key>();
+        }
+
         auto gossip_peers = m_gossip_peers[chain_id];
         if (!gossip_peers.empty()) {
             return gossip_peers;
@@ -3283,6 +3347,11 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::set_priority_chain(const aux::bytes &chain_id) {
+        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+        if (it == m_chains.end()) {
+            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return;
+        }
 //        m_priority_chain = std::make_pair(chain_id, get_total_milliseconds() + blockchain_max_focus_time);
     }
 
