@@ -645,6 +645,7 @@ namespace aux {
 
 			
         	void create_chain_id(std::string community_name, std::vector<char>* id);
+            void get_all_chains(std::set<std::vector<char>>* cids);
             bool create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
         	bool follow_chain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
         	bool add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);

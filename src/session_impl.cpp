@@ -2983,6 +2983,12 @@ namespace {
 			*id = m_blockchain->create_chain_id(community_name);
 	}
 
+	void session_impl::get_all_chains(std::set<std::vector<char>>* cids)
+	{
+		if(m_blockchain)
+			*cids = m_blockchain->get_all_chains();
+	}
+
 	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts) {
 		if(m_blockchain) {
 			return m_blockchain->createNewCommunity(chain_id, accounts);

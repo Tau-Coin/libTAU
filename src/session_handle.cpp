@@ -299,6 +299,13 @@ namespace libTAU {
 		return id;
 	}
 
+	std::set<std::vector<char>> session_handle::get_all_chains()
+	{
+		std::set<std::vector<char>> cids;
+		sync_call(&session_impl::get_all_chains, &cids); 
+		return cids;
+	}
+
 	// create new community
     bool session_handle::create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts)
 	{
