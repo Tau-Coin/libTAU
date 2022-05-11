@@ -246,6 +246,10 @@ namespace libTAU::blockchain {
         return total_milliseconds(system_clock::now().time_since_epoch());
     }
 
+    std::int64_t blockchain::get_total_microseconds() {
+        return total_microseconds(system_clock::now().time_since_epoch());
+    }
+
     void blockchain::clear_all_cache() {
         m_chains.clear();
         m_tx_pools.clear();
@@ -367,7 +371,7 @@ namespace libTAU::blockchain {
                             auto const& gossip_peers = m_gossip_peers[chain_id];
                             if (!gossip_peers.empty()) {
                                 for (int k = 0; k < 3; k++) {
-                                    srand(get_total_milliseconds());
+                                    srand(get_total_microseconds());
                                     auto index = rand() % gossip_peers.size();
 
                                     int i = 0;
@@ -1090,18 +1094,17 @@ namespace libTAU::blockchain {
 //        }
 //
 //        return peer;
-        auto now = get_total_milliseconds();
-        srand(now);
+        srand(get_total_microseconds());
         auto n = rand() % 10;
         auto& gossip_peers = m_gossip_peers[chain_id];
         if (gossip_peers.empty() || n < 9) {
             return m_repository->get_peer_randomly(chain_id);
         } else {
-            srand(get_total_milliseconds());
+            srand(get_total_microseconds());
             auto index = rand() % gossip_peers.size();
 
             int i = 0;
-//            log("=============================:n = %d, index = %lu, size:%lu", n, index, gossip_peers.size());
+            log("=============================:n = %d, index = %lu, size:%lu", n, index, gossip_peers.size());
             for (const auto & gossip_peer : gossip_peers) {
                 if (i == index) {
                     return gossip_peer;
@@ -3458,8 +3461,7 @@ namespace libTAU::blockchain {
         m_gossip_peers[chain_id].insert(peers.begin(), peers.end());
         auto& gossip_peers = m_gossip_peers[chain_id];
         while (gossip_peers.size() > 10) {
-            auto now = get_total_milliseconds();
-            srand(now);
+            srand(get_total_microseconds());
             auto index = rand() % gossip_peers.size();
             int i = 0;
             for (auto it = gossip_peers.begin(); it != gossip_peers.end(); it++) {
