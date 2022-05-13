@@ -100,6 +100,7 @@ see LICENSE file.
 #include <leveldb/db.h>
 #include <sqlite3.h>
 #include <snappy-c.h>
+#include <breakpad/client/linux/handler/exception_handler.h>
 
 // for logging the size of DHT structures
 #include <libTAU/kademlia/find_data.hpp>
@@ -485,6 +486,10 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	// post it to the io_context?
 	void session_impl::start_session()
 	{
+
+        google_breakpad::MinidumpDescriptor descriptor("./data");
+        google_breakpad::ExceptionHandler eh(descriptor, NULL, NULL, NULL, true, -1);
+
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("start session");
 #endif
