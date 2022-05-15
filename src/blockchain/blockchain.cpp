@@ -414,79 +414,7 @@ namespace libTAU::blockchain {
                                 }
                             }
                         } else if (m_chain_status[chain_id] == MINING) {
-
-                            auto &block_map = m_blocks[chain_id];
-
-                            // 1. if empty chain, init chain with the best voting block
-                            if (is_empty_chain(chain_id)) {
-                                log("INFO: chain[%s] is empty...", aux::toHex(chain_id).c_str());
-                                auto &best_vote = m_best_votes[chain_id];
-                                if (!best_vote.empty()) {
-                                    auto blk = get_block_from_cache_or_db(chain_id, best_vote.block_hash());
-                                    if (!blk.empty()) {
-                                        process_block(chain_id, blk);
-                                    }
-                                } else {
-                                    log("INFO: chain[%s] vote is empty...", aux::toHex(chain_id).c_str());
-                                    m_chain_status[chain_id] = VOTE_PREPARE;
-                                }
-                            }
-
                             if (!is_empty_chain(chain_id)) {
-                                // 2. try to connect head/tail block
-                                auto &head_block = m_head_blocks[chain_id];
-                                auto &tail_block = m_tail_blocks[chain_id];
-                                for (auto it = block_map.begin(); it != block_map.end();) {
-                                    if (head_block.empty() || it->second.previous_block_hash() == head_block.sha256() ||
-                                        it->second.sha256() == tail_block.previous_block_hash()) {
-                                        log("INFO: process block:%s", it->second.to_string().c_str());
-                                        auto ret = process_block(chain_id, it->second);
-                                        if (ret == SUCCESS) {
-                                            block_map.erase(it);
-                                            it = block_map.begin();
-                                            continue;
-                                        } else if (ret == FAIL) {
-                                            block_map.erase(it++);
-                                            continue;
-                                        }
-                                    }
-
-                                    ++it;
-                                }
-
-                                // 3. try to re-branch to a more difficult chain
-                                {
-                                    auto &acl = m_access_list[chain_id];
-
-                                    // find out the most difficult chain
-                                    auto it = acl.end();
-                                    std::uint64_t max_difficulty = 0;
-                                    for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                        if (!iter->second.m_head_block.empty() &&
-                                            iter->second.m_head_block.cumulative_difficulty() > max_difficulty) {
-                                            max_difficulty = iter->second.m_head_block.cumulative_difficulty();
-                                            it = iter;
-                                        }
-                                    }
-
-                                    if (max_difficulty > head_block.cumulative_difficulty() && it != acl.end()) {
-                                        auto blk = it->second.m_head_block;
-                                        auto result = try_to_rebranch(chain_id, blk, false);
-                                        // clear block cache if re-branch success/fail
-                                        if (result == FAIL) {
-                                            // clear all blocks on the same chain
-                                            remove_all_same_chain_blocks_from_cache(blk);
-
-                                            acl.erase(it);
-                                            auto &ban_list = m_ban_list[chain_id];
-                                            ban_list[it->first] = ban_info(now + blockchain_max_ban_time);
-                                        } else if (result == SUCCESS) {
-                                            // clear all ancestor blocks
-                                            remove_all_ancestor_blocks_from_cache(blk);
-                                        }
-                                    }
-                                }
-
                                 // 4. check if need to re-branch to the best vote
                                 auto &best_vote = m_best_votes[chain_id];
                                 if (!best_vote.empty()) {
@@ -1727,6 +1655,85 @@ namespace libTAU::blockchain {
         try_to_update_voting_point_block(chain_id);
 
         return SUCCESS;
+    }
+
+    void blockchain::block_reception_event(const aux::bytes &chain_id) {
+        if (m_chain_status[chain_id] == MINING) {
+            auto now = get_total_milliseconds();
+
+            auto &block_map = m_blocks[chain_id];
+
+            // 1. if empty chain, init chain with the best voting block
+            if (is_empty_chain(chain_id)) {
+                log("INFO: chain[%s] is empty...", aux::toHex(chain_id).c_str());
+                auto &best_vote = m_best_votes[chain_id];
+                if (!best_vote.empty()) {
+                    auto blk = get_block_from_cache_or_db(chain_id, best_vote.block_hash());
+                    if (!blk.empty()) {
+                        process_block(chain_id, blk);
+                    }
+                } else {
+                    log("INFO: chain[%s] vote is empty...", aux::toHex(chain_id).c_str());
+                    m_chain_status[chain_id] = VOTE_PREPARE;
+                }
+            }
+
+            if (!is_empty_chain(chain_id)) {
+                // 2. try to connect head/tail block
+                auto &head_block = m_head_blocks[chain_id];
+                auto &tail_block = m_tail_blocks[chain_id];
+                for (auto it = block_map.begin(); it != block_map.end();) {
+                    if (head_block.empty() || it->second.previous_block_hash() == head_block.sha256() ||
+                        it->second.sha256() == tail_block.previous_block_hash()) {
+                        log("INFO: process block:%s", it->second.to_string().c_str());
+                        auto ret = process_block(chain_id, it->second);
+                        if (ret == SUCCESS) {
+                            block_map.erase(it);
+                            it = block_map.begin();
+                            continue;
+                        } else if (ret == FAIL) {
+                            block_map.erase(it++);
+                            continue;
+                        }
+                    }
+
+                    ++it;
+                }
+
+                // 3. try to re-branch to a more difficult chain
+                {
+                    auto &acl = m_access_list[chain_id];
+
+                    // find out the most difficult chain
+                    auto it = acl.end();
+                    std::uint64_t max_difficulty = 0;
+                    for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                        if (!iter->second.m_head_block.empty() &&
+                            iter->second.m_head_block.cumulative_difficulty() > max_difficulty) {
+                            max_difficulty = iter->second.m_head_block.cumulative_difficulty();
+                            it = iter;
+                        }
+                    }
+
+                    if (max_difficulty > head_block.cumulative_difficulty() && it != acl.end()) {
+                        auto blk = it->second.m_head_block;
+                        auto result = try_to_rebranch(chain_id, blk, false);
+                        // clear block cache if re-branch success/fail
+                        if (result == FAIL) {
+                            // clear all blocks on the same chain
+                            remove_all_same_chain_blocks_from_cache(blk);
+
+                            acl.erase(it);
+                            auto &ban_list = m_ban_list[chain_id];
+                            ban_list[it->first] = ban_info(now + blockchain_max_ban_time);
+                        } else if (result == SUCCESS) {
+                            // clear all ancestor blocks
+                            remove_all_ancestor_blocks_from_cache(blk);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     bool blockchain::is_empty_chain(const aux::bytes &chain_id) {
@@ -3646,6 +3653,8 @@ namespace libTAU::blockchain {
                             }
 
                             try_to_update_visiting_peer(chain_id, peer);
+
+                            block_reception_event(chain_id);
                         }
 
                         break;
@@ -4178,6 +4187,8 @@ namespace libTAU::blockchain {
                             }
 
                             try_to_update_visiting_peer(chain_id, peer);
+
+                            block_reception_event(chain_id);
                         }
 
                         break;

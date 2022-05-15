@@ -255,6 +255,8 @@ namespace blockchain {
         // process block
         RESULT process_block(const aux::bytes &chain_id, block &b);
 
+        void block_reception_event(const aux::bytes &chain_id);
+
         // check if a chain is empty, true if has no info, false otherwise
         bool is_empty_chain(const aux::bytes &chain_id);
 
