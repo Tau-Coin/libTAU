@@ -213,6 +213,8 @@ namespace blockchain {
 
         void count_votes(error_code const&, const aux::bytes &chain_id);
 
+        void refresh_mining_timeout(error_code const&, const aux::bytes &chain_id);
+
 //        void refresh_vote_timeout(error_code const& e);
 
 //        void refresh_tx_timeout(error_code const& e);
@@ -222,6 +224,9 @@ namespace blockchain {
 
         // load chain all info
         bool load_chain(const aux::bytes &chain_id);
+
+        // start chain
+        bool start_chain(const aux::bytes &chain_id);
 
         // refresh unchoked peers if timeout
 //        void try_to_refresh_unchoked_peers(const aux::bytes &chain_id);
@@ -377,6 +382,9 @@ namespace blockchain {
 
         // deadline timer
         aux::deadline_timer m_refresh_timer;
+
+        // chain timers
+        std::map<aux::bytes, aux::deadline_timer> m_chain_timers;
 
         // vote timer
 //        aux::deadline_timer m_vote_timer;

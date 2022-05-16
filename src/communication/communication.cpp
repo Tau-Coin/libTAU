@@ -883,10 +883,10 @@ namespace libTAU {
 
         void communication::refresh_timeout(error_code const& e)
         {
-            if ((e.value() != 0 && e.value() != 125) || m_stop) return;
+            if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
 
             try {
-                if (e.value() != 125) {
+                if (e.value() != boost::asio::error::operation_aborted) {
                     /*
                     {
                         // log
