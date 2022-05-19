@@ -211,7 +211,9 @@ namespace blockchain {
 
         void refresh_count_votes(error_code const& e);
 
-        void count_votes(error_code const&, const aux::bytes &chain_id);
+        void refresh_voting(error_code const &e, const aux::bytes &chain_id);
+
+        void refresh_votes(error_code const &e, const aux::bytes &chain_id);
 
         void refresh_mining_timeout(error_code const&, const aux::bytes &chain_id);
 
@@ -227,6 +229,10 @@ namespace blockchain {
 
         // start chain
         bool start_chain(const aux::bytes &chain_id);
+
+        void manage_peers_in_acl_ban_list(const aux::bytes &chain_id);
+
+        void add_and_access_peers_in_acl(const aux::bytes &chain_id);
 
         // refresh unchoked peers if timeout
 //        void try_to_refresh_unchoked_peers(const aux::bytes &chain_id);
@@ -304,11 +310,13 @@ namespace blockchain {
 
         void try_to_slim_down_cache(const aux::bytes &chain_id);
 
+        void try_to_rebranch_to_best_vote(const aux::bytes &chain_id);
+
         // try to rebranch a more difficult chain or a voting chain
         RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute);
 
         // count votes
-        void refresh_vote(const aux::bytes &chain_id);
+        void count_votes(const aux::bytes &chain_id);
 
         // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing tx)
         void find_best_solution(std::vector<transaction>& txs, const aux::bytes& hash_prefix_array,
@@ -322,6 +330,8 @@ namespace blockchain {
 
         // send data to peer
         void send_to(const aux::bytes &chain_id, const dht::public_key &peer, std::int64_t data_type_id, entry const& data, bool cache);
+
+        void transfer_to_acl_peers(const aux::bytes &chain_id, std::int64_t data_type_id, entry const& data, bool cache = true);
 
         void introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer);
 
@@ -368,6 +378,8 @@ namespace blockchain {
                                           , std::int64_t&, std::string const&)> cb,
                                           std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
                                           , std::string salt, const dht::public_key &peer, bool cache);
+
+        void print_acl_ban_list_info(aux::bytes const& chain_id);
 
         // io context
         io_context& m_ioc;
@@ -428,6 +440,8 @@ namespace blockchain {
         std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
         std::map<aux::bytes, std::int64_t> m_last_voting_time;
+
+        std::map<aux::bytes, std::int64_t> m_count_votes_time;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
 

@@ -16,7 +16,7 @@ see LICENSE file.
 namespace libTAU::blockchain {
     struct consensus {
 
-        static std::uint64_t calculate_required_base_target(block &previousBlock, block &ancestor3);
+        static std::uint64_t calculate_required_base_target(const block &previousBlock, block &ancestor3);
 
         static sha256_hash calculate_generation_signature(const sha256_hash &preGenerationSignature, const dht::public_key& pubkey);
 

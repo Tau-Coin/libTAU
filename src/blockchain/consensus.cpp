@@ -11,7 +11,7 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    std::uint64_t consensus::calculate_required_base_target(block &previousBlock, block &ancestor3) {
+    std::uint64_t consensus::calculate_required_base_target(const block &previousBlock, block &ancestor3) {
         if (previousBlock.block_number() <= 3) {
             return GENESIS_BASE_TARGET;
         }
