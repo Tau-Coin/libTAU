@@ -66,7 +66,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 51;
+	constexpr int num_alert_types = 52;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1380,6 +1380,28 @@ namespace libTAU {
 
 		int external_port;
 	};
+
+    // this alert is posted when a message is sent.
+    struct TORRENT_EXPORT communication_message_sent_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_message_sent_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_message_sent_alert, 51, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // public key
+        dht::public_key peer;
+
+        // message sent hash
+        sha256_hash msg_sent_hash;
+
+        // syncing msg time
+        std::int64_t time;
+    };
 
 #undef TORRENT_DEFINE_ALERT_IMPL
 #undef TORRENT_DEFINE_ALERT

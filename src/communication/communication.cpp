@@ -120,9 +120,9 @@ namespace libTAU {
 //            m_latest_signal_time.clear();
 //            m_latest_hash_prefix_array.clear();
 //            m_missing_messages.clear();
-            m_entry_putting_times.clear();
-            m_entry_putting_nodes.clear();
-            m_entry_last_putting_time.clear();
+//            m_entry_putting_times.clear();
+//            m_entry_putting_nodes.clear();
+//            m_entry_last_putting_time.clear();
         }
 
         void communication::account_changed() {
@@ -201,57 +201,69 @@ namespace libTAU {
                     if (timestamp > m_levenshtein_array_time[peer]) {
                         update_levenshtein_array(peer, msg_entry.m_levenshtein_array, timestamp);
 
+//                        // find out missing messages and confirmation root
+//                        std::vector<message> missing_messages;
+//                        std::vector<message> confirmed_messages;
+//                        auto &message_list = m_message_list_map[peer];
+//                        std::vector<message> messages(message_list.begin(), message_list.end());
+//                        log("INFO: Messages size:%zu", messages.size());
+//                        find_best_solution(messages, msg_entry.m_levenshtein_array,
+//                                           missing_messages, confirmed_messages);
+//
+//                        for (auto const& msg: missing_messages) {
+//                            m_entry_putting_times[peer][std::make_shared<common::message_entry>(msg)] = 0;
+//                            m_entry_putting_nodes[peer].clear();
+//                            m_entry_last_putting_time[peer].clear();
+//                        }
+//
+//                        for (auto const& msg: confirmed_messages) {
+//                            // remove msg from set
+//                            auto ptr = std::make_shared<common::message_entry>(msg);
+//                            m_entry_putting_times[peer].erase(ptr);
+//                            m_entry_putting_nodes[peer].erase(ptr);
+//                            m_entry_last_putting_time[peer].erase(ptr);
+//                        }
+
                         // find out missing messages and confirmation root
                         std::vector<message> missing_messages;
-                        std::vector<message> confirmed_messages;
+                        std::vector<sha256_hash> confirmation_roots;
                         auto &message_list = m_message_list_map[peer];
                         std::vector<message> messages(message_list.begin(), message_list.end());
                         log("INFO: Messages size:%zu", messages.size());
                         find_best_solution(messages, msg_entry.m_levenshtein_array,
-                                           missing_messages, confirmed_messages);
+                                           missing_messages, confirmation_roots);
 
-                        for (auto const& msg: missing_messages) {
-                            m_entry_putting_times[peer][std::make_shared<common::message_entry>(msg)] = 0;
-                            m_entry_putting_nodes[peer].clear();
-                            m_entry_last_putting_time[peer].clear();
+                        if (!confirmation_roots.empty()) {
+                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+                                                                                                confirmation_roots,
+                                                                                                now);
+                            log("INFO: Confirmation roots:%zu", confirmation_roots.size());
                         }
 
-                        for (auto const& msg: confirmed_messages) {
-                            // remove msg from set
-                            auto ptr = std::make_shared<common::message_entry>(msg);
-                            m_entry_putting_times[peer].erase(ptr);
-                            m_entry_putting_nodes[peer].erase(ptr);
-                            m_entry_last_putting_time[peer].erase(ptr);
+                        aux::bytes levenshtein_array;
+                        auto &msg_list = m_message_list_map[peer];
+                        for (auto const &msg: msg_list) {
+                            levenshtein_array.push_back(msg.sha256()[0]);
                         }
+
+                        auto size = missing_messages.size();
+                        for(auto k = 0; k < size; k++) {
+                            common::message_entry messageEntry(missing_messages[k], levenshtein_array, get_current_time());
+                            send_to(peer, common::message_entry::data_type_id, messageEntry.get_entry(), 1, 8, 100, true);
+                        }
+
+                        common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
+                        send_to(peer, common::message_levenshtein_array_entry::data_type_id, msg_levenshtein_array.get_entry(), 1, 8, 100, false);
+
+//                    auto ptr = std::make_shared<common::message_levenshtein_array_entry>();
+//                    m_entry_putting_times[peer][ptr] = 1;
+//                    m_entry_putting_nodes[peer].clear();
+//                    m_entry_last_putting_time[peer][ptr] = now;
                     }
 
-                    // find out missing messages and confirmation root
-                    std::vector<message> missing_messages;
-                    std::vector<sha256_hash> confirmation_roots;
-                    auto &message_list = m_message_list_map[peer];
-                    std::vector<message> messages(message_list.begin(), message_list.end());
-                    log("INFO: Messages size:%zu", messages.size());
-                    find_best_solution(messages, msg_entry.m_levenshtein_array,
-                                       missing_messages, confirmation_roots);
-
-                    if (!confirmation_roots.empty()) {
-                        m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
-                                                                                            confirmation_roots,
-                                                                                            now);
-                        log("INFO: Confirmation roots:%zu", confirmation_roots.size());
-                    }
-
-                    common::entry_task task(common::message_levenshtein_array_entry::data_type_id, peer);
-                    add_entry_task_to_queue(task);
-
-                    auto ptr = std::make_shared<common::message_levenshtein_array_entry>();
-                    m_entry_putting_times[peer][ptr] = 1;
-                    m_entry_putting_nodes[peer].clear();
-                    m_entry_last_putting_time[peer][ptr] = now;
-
-                    if (!is_cache) {
-                        send_all_unconfirmed_messages(peer);
-                    }
+//                    if (!is_cache) {
+//                        send_all_unconfirmed_messages(peer);
+//                    }
 
                     break;
                 }
@@ -306,29 +318,12 @@ namespace libTAU {
 
                         // find out missing messages and confirmation root
                         std::vector<message> missing_messages;
-                        std::vector<message> confirmed_messages;
                         std::vector<sha256_hash> confirmation_roots;
                         auto &message_list = m_message_list_map[peer];
                         std::vector<message> messages(message_list.begin(), message_list.end());
                         log("INFO: Messages size:%zu", messages.size());
                         find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
-                                           missing_messages, confirmed_messages);
-
-                        for (auto const& msg: missing_messages) {
-                            m_entry_putting_times[peer][std::make_shared<common::message_entry>(msg)] = 0;
-                            m_entry_putting_nodes[peer].clear();
-                            m_entry_last_putting_time[peer].clear();
-                        }
-
-                        for (auto const& msg: confirmed_messages) {
-                            // remove msg from set
-                            auto ptr = std::make_shared<common::message_entry>(msg);
-                            m_entry_putting_times[peer].erase(ptr);
-                            m_entry_putting_nodes[peer].erase(ptr);
-                            m_entry_last_putting_time[peer].erase(ptr);
-
-                            confirmation_roots.push_back(msg.sha256());
-                        }
+                                           missing_messages, confirmation_roots);
 
                         if (!confirmation_roots.empty()) {
                             m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
@@ -336,48 +331,19 @@ namespace libTAU {
                                                                                                 now);
                             log("INFO: Confirmation roots:%zu", confirmation_roots.size());
                         }
-                    }
 
-//                        // find out missing messages and confirmation root
-//                        std::vector<message> missing_messages;
-//                        std::vector<sha256_hash> confirmation_roots;
-//                        auto &message_list = m_message_list_map[peer];
-//                        std::vector<message> messages(message_list.begin(), message_list.end());
-//                        log("INFO: Messages size:%zu", messages.size());
-//                        find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
-//                                           missing_messages, confirmation_roots);
-//
-//                        if (!confirmation_roots.empty()) {
-//                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
-//                                                                                                confirmation_roots,
-//                                                                                                now);
-//                            log("INFO: Confirmation roots:%zu", confirmation_roots.size());
-//                        }
-//                        log("INFO: Found missing message size %zu", missing_messages.size());
-//
-//                        auto size = missing_messages.size();
-//                        for(auto k = 0; k < size; k++) {
-//                            common::message_entry msg_entry(missing_messages[k], get_current_time());
-//                            common::entry_task task(1, 10, 10, common::message_entry::data_type_id, peer, msg_entry.get_entry(), now + 100 * k);
-//                            add_entry_task_to_queue(task);
-//                        }
-//
-//                        // check if local levenshtein array != remote levenshtein array
-//                        aux::bytes levenshtein_array;
-//                        for (auto const &message: messages) {
-//                            levenshtein_array.push_back(message.sha256()[0]);
-//                        }
-//                        if (levenshtein_array_entry.m_levenshtein_array != levenshtein_array) {
-//                            common::entry_task task(
-//                                    common::message_levenshtein_array_entry::data_type_id, peer, now + 6000);
-//                            add_entry_task_to_queue(task);
-//                        } else {
-////                            m_array_align_time[peer] = now;
-////                            m_message_db->save_array_align_time(std::make_pair(*m_ses.pubkey(), peer), now);
-//                        }
+                        log("INFO: Found missing message size %zu", missing_messages.size());
+                        aux::bytes levenshtein_array;
+                        auto &msg_list = m_message_list_map[peer];
+                        for (auto const &msg: msg_list) {
+                            levenshtein_array.push_back(msg.sha256()[0]);
+                        }
 
-                    if (!is_cache) {
-                        send_all_unconfirmed_messages(peer);
+                        auto size = missing_messages.size();
+                        for(auto k = 0; k < size; k++) {
+                            common::message_entry msg_entry(missing_messages[k], levenshtein_array, get_current_time());
+                            send_to(peer, common::message_entry::data_type_id, msg_entry.get_entry(), 1, 8, 100, true);
+                        }
                     }
 
                     break;
@@ -424,14 +390,12 @@ namespace libTAU {
                     auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
                     if (!friend_info.empty()) {
                         common::friend_info_entry e(friend_info);
-                        common::entry_task task(common::friend_info_entry::data_type_id, peer,
-                                                e.get_entry());
-                        add_entry_task_to_queue(task);
+                        send_to(peer, common::friend_info_entry::data_type_id, e.get_entry(), 1, 8, 100, true);
 
-                        auto ptr = std::make_shared<common::friend_info_entry>(friend_info);
-                        m_entry_putting_times[peer][ptr] = 1;
-                        m_entry_putting_nodes[peer].clear();
-                        m_entry_last_putting_time[peer][ptr] = now;
+//                        auto ptr = std::make_shared<common::friend_info_entry>(friend_info);
+//                        m_entry_putting_times[peer][ptr] = 1;
+//                        m_entry_putting_nodes[peer].clear();
+//                        m_entry_last_putting_time[peer][ptr] = now;
                     }
 
                     if (!is_cache) {
@@ -472,10 +436,10 @@ namespace libTAU {
                         m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer, e.m_friend_info);
                     }
 
-                    auto ptr = std::make_shared<common::friend_info_request_entry>();
-                    m_entry_putting_times[peer].erase(ptr);
-                    m_entry_putting_nodes[peer].erase(ptr);
-                    m_entry_last_putting_time[peer].erase(ptr);
+//                    auto ptr = std::make_shared<common::friend_info_request_entry>();
+//                    m_entry_putting_times[peer].erase(ptr);
+//                    m_entry_putting_nodes[peer].erase(ptr);
+//                    m_entry_last_putting_time[peer].erase(ptr);
 
                     if (!is_cache) {
                         send_all_unconfirmed_messages(peer);
@@ -585,12 +549,12 @@ namespace libTAU {
             common::friend_info_request_entry friendInfoRequestEntry(get_current_time());
             send_to(peer, common::friend_info_request_entry::data_type_id, friendInfoRequestEntry.get_entry(), 1, 10, 10, false);
 
-            auto ptr = std::make_shared<common::friend_info_request_entry>();
-            auto it = m_entry_putting_times[peer].find(ptr);
-            if (it == m_entry_putting_times[peer].end()) {
-                m_entry_putting_times[peer][ptr] = 1;
-                m_entry_last_putting_time[peer][ptr] = get_current_time();
-            }
+//            auto ptr = std::make_shared<common::friend_info_request_entry>();
+//            auto it = m_entry_putting_times[peer].find(ptr);
+//            if (it == m_entry_putting_times[peer].end()) {
+//                m_entry_putting_times[peer][ptr] = 1;
+//                m_entry_last_putting_time[peer][ptr] = get_current_time();
+//            }
         }
 
         aux::bytes communication::get_friend_info(const dht::public_key &pubkey) {
@@ -632,14 +596,14 @@ namespace libTAU {
 
             std::int64_t now = get_current_time();
             common::message_entry msg_entry(msg, levenshtein_array, now);
-            send_to(msg.receiver(), common::message_entry::data_type_id, msg_entry.get_entry(), 1, 10, 10, true);
+            send_to(msg.receiver(), common::message_entry::data_type_id, msg_entry.get_entry(), 1, 8, 100, true);
 
-            auto ptr = std::make_shared<common::message_entry>(msg);
-            auto it = m_entry_putting_times[msg.receiver()].find(ptr);
-            if (it == m_entry_putting_times[msg.receiver()].end()) {
-                m_entry_putting_times[msg.receiver()][ptr] = 1;
-                m_entry_last_putting_time[msg.receiver()][ptr] = now;
-            }
+//            auto ptr = std::make_shared<common::message_entry>(msg);
+//            auto it = m_entry_putting_times[msg.receiver()].find(ptr);
+//            if (it == m_entry_putting_times[msg.receiver()].end()) {
+//                m_entry_putting_times[msg.receiver()][ptr] = 1;
+//                m_entry_last_putting_time[msg.receiver()][ptr] = now;
+//            }
 
 //            update_detection_time(msg.receiver(), now);
             update_communication_time(msg.receiver(), now);
@@ -707,18 +671,18 @@ namespace libTAU {
             return try_to_update_Latest_message_list(peer, msg, post_alert);
         }
 
-        void communication::add_entry_task_to_queue(const common::entry_task &task) {
-            if (m_tasks_set.find(task) != m_tasks_set.end())
-                return;
-
-            if (m_tasks_set.size() > communication_max_task_size) {
-                m_tasks_set.erase(m_tasks.front());
-                m_tasks.pop();
-            }
-
-            m_tasks.push(task);
-            m_tasks_set.insert(task);
-        }
+//        void communication::add_entry_task_to_queue(const common::entry_task &task) {
+//            if (m_tasks_set.find(task) != m_tasks_set.end())
+//                return;
+//
+//            if (m_tasks_set.size() > communication_max_task_size) {
+//                m_tasks_set.erase(m_tasks.front());
+//                m_tasks.pop();
+//            }
+//
+//            m_tasks.push(task);
+//            m_tasks_set.insert(task);
+//        }
 
         bool communication::validate_message(const message& msg) {
             if (msg.encode().size() > 1000) {
@@ -971,7 +935,7 @@ namespace libTAU {
                             }
                         }
 
-                        send_one_missing_entry_randomly(peer);
+//                        send_one_missing_entry_randomly(peer);
 //                    if (now > m_last_greeting[peer] + 60 * 60 * 1000) {
 //                        m_last_greeting[peer] = now;
 //
@@ -988,74 +952,74 @@ namespace libTAU {
 //                    }
                     }
 
-                    log("======communication tasks queue size:%lu", m_tasks.size());
+//                    log("======communication tasks queue size:%lu", m_tasks.size());
 
-                    if (!m_tasks.empty()) {
-                        {
-                            for (auto const &task: m_tasks_set) {
-                                log("=======tasks set:peer[%s], entry:%s", aux::toHex(task.m_peer.bytes).c_str(),
-                                    task.m_entry.to_string(true).c_str());
-                            }
-                        }
-                        auto &task = m_tasks.front();
-                        switch (task.m_data_type_id) {
-                            case common::message_levenshtein_array_entry::data_type_id: {
-                                // 本地消息数组为target
-                                aux::bytes levenshtein_array;
-                                auto &msg_list = m_message_list_map[task.m_peer];
-                                for (auto const &msg: msg_list) {
-                                    levenshtein_array.push_back(msg.sha256()[0]);
-                                }
-
-                                common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
-
-//                            auto ptr = std::make_shared<common::message_levenshtein_array_entry>(levenshtein_array, now);
-//                            auto it = m_entry_putting_times[task.m_peer].find(ptr);
-//                            if (it == m_entry_putting_times[task.m_peer].end()) {
-//                                m_entry_putting_times[task.m_peer][ptr] = 1;
+//                    if (!m_tasks.empty()) {
+//                        {
+//                            for (auto const &task: m_tasks_set) {
+//                                log("=======tasks set:peer[%s], entry:%s", aux::toHex(task.m_peer.bytes).c_str(),
+//                                    task.m_entry.to_string(true).c_str());
 //                            }
-
-                                // 产生随机数
-                                srand(total_microseconds(system_clock::now().time_since_epoch()));
-                                auto index = rand() % 10;
-                                send_to(task.m_peer, task.m_data_type_id, msg_levenshtein_array.get_entry(), 1, 3, 3, index < 1);
-                                break;
-                            }
-                            case common::message_entry::data_type_id: {
-                                // 本地消息数组为target
-                                aux::bytes levenshtein_array;
-                                auto &msg_list = m_message_list_map[task.m_peer];
-                                for (auto const &msg: msg_list) {
-                                    levenshtein_array.push_back(msg.sha256()[0]);
-                                }
-
-                                common::message_entry msg_entry(task.m_entry);
-                                msg_entry.set_levenshtein_array(levenshtein_array);
-                                msg_entry.set_timestamp(now);
-
-                                send_to(task.m_peer, task.m_data_type_id, msg_entry.get_entry(), 1, 10, 7, true);
-                                break;
-                            }
-                            case common::friend_info_entry::data_type_id: {
-                                common::friend_info_entry friendInfoEntry(task.m_entry);
-                                friendInfoEntry.set_timestamp(now);
-                                send_to(task.m_peer, task.m_data_type_id, friendInfoEntry.get_entry(), 1, 10, 7, true);
-                                break;
-                            }
-                            case common::friend_info_request_entry::data_type_id: {
-                                common::friend_info_request_entry friendInfoRequestEntry(task.m_entry);
-                                friendInfoRequestEntry.set_timestamp(now);
-                                send_to(task.m_peer, task.m_data_type_id, friendInfoRequestEntry.get_entry(), 1, 10, 7, false);
-                                break;
-                            }
-                            default: {
-                                break;
-                            }
-                        }
-
-                        m_tasks_set.erase(task);
-                        m_tasks.pop();
-                    }
+//                        }
+//                        auto &task = m_tasks.front();
+//                        switch (task.m_data_type_id) {
+//                            case common::message_levenshtein_array_entry::data_type_id: {
+//                                // 本地消息数组为target
+//                                aux::bytes levenshtein_array;
+//                                auto &msg_list = m_message_list_map[task.m_peer];
+//                                for (auto const &msg: msg_list) {
+//                                    levenshtein_array.push_back(msg.sha256()[0]);
+//                                }
+//
+//                                common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
+//
+////                            auto ptr = std::make_shared<common::message_levenshtein_array_entry>(levenshtein_array, now);
+////                            auto it = m_entry_putting_times[task.m_peer].find(ptr);
+////                            if (it == m_entry_putting_times[task.m_peer].end()) {
+////                                m_entry_putting_times[task.m_peer][ptr] = 1;
+////                            }
+//
+//                                // 产生随机数
+//                                srand(total_microseconds(system_clock::now().time_since_epoch()));
+//                                auto index = rand() % 10;
+//                                send_to(task.m_peer, task.m_data_type_id, msg_levenshtein_array.get_entry(), 1, 3, 3, index < 1);
+//                                break;
+//                            }
+//                            case common::message_entry::data_type_id: {
+//                                // 本地消息数组为target
+//                                aux::bytes levenshtein_array;
+//                                auto &msg_list = m_message_list_map[task.m_peer];
+//                                for (auto const &msg: msg_list) {
+//                                    levenshtein_array.push_back(msg.sha256()[0]);
+//                                }
+//
+//                                common::message_entry msg_entry(task.m_entry);
+//                                msg_entry.set_levenshtein_array(levenshtein_array);
+//                                msg_entry.set_timestamp(now);
+//
+//                                send_to(task.m_peer, task.m_data_type_id, msg_entry.get_entry(), 1, 10, 7, true);
+//                                break;
+//                            }
+//                            case common::friend_info_entry::data_type_id: {
+//                                common::friend_info_entry friendInfoEntry(task.m_entry);
+//                                friendInfoEntry.set_timestamp(now);
+//                                send_to(task.m_peer, task.m_data_type_id, friendInfoEntry.get_entry(), 1, 10, 7, true);
+//                                break;
+//                            }
+//                            case common::friend_info_request_entry::data_type_id: {
+//                                common::friend_info_request_entry friendInfoRequestEntry(task.m_entry);
+//                                friendInfoRequestEntry.set_timestamp(now);
+//                                send_to(task.m_peer, task.m_data_type_id, friendInfoRequestEntry.get_entry(), 1, 10, 7, false);
+//                                break;
+//                            }
+//                            default: {
+//                                break;
+//                            }
+//                        }
+//
+//                        m_tasks_set.erase(task);
+//                        m_tasks.pop();
+//                    }
                 }
 
                 if (!m_friends.empty()) {
@@ -1621,69 +1585,78 @@ namespace libTAU {
                 auto data_type_id = p->integer();
                 switch (data_type_id) {
                     case common::message_entry::data_type_id: {
-                        auto ptr = std::make_shared<common::message_entry>(i.value());
-
+                        common::message_entry msgEntry(i.value());
+                        auto now = get_current_time();
+                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, msgEntry.m_msg.sha256(), now);
                         for (auto const& n: nodes) {
                             if (n.second) {
-                                m_entry_putting_nodes[peer][ptr].insert(n.first);
+                                m_ses.alerts().emplace_alert<communication_message_sent_alert>(peer, msgEntry.m_msg.sha256(), now);
+                                break;
                             }
                         }
-
-                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
-                            m_entry_putting_times[peer].erase(ptr);
-                            m_entry_putting_nodes[peer].erase(ptr);
-                            m_entry_last_putting_time[peer].erase(ptr);
-                        }
+//                        auto ptr = std::make_shared<common::message_entry>(i.value());
+//
+//                        for (auto const& n: nodes) {
+//                            if (n.second) {
+//                                m_entry_putting_nodes[peer][ptr].insert(n.first);
+//                            }
+//                        }
+//
+//                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
+//                            m_entry_putting_times[peer].erase(ptr);
+//                            m_entry_putting_nodes[peer].erase(ptr);
+//                            m_entry_last_putting_time[peer].erase(ptr);
+//                        }
                         break;
                     }
-                    case common::message_levenshtein_array_entry::data_type_id: {
-                        auto ptr = std::make_shared<common::message_levenshtein_array_entry>(i.value());
-
-                        for (auto const& n: nodes) {
-                            if (n.second) {
-                                m_entry_putting_nodes[peer][ptr].insert(n.first);
-                            }
-                        }
-
-                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
-                            m_entry_putting_times[peer].erase(ptr);
-                            m_entry_putting_nodes[peer].erase(ptr);
-                            m_entry_last_putting_time[peer].erase(ptr);
-                        }
-                        break;
-                    }
-                    case common::friend_info_entry::data_type_id: {
-                        auto ptr = std::make_shared<common::friend_info_entry>(i.value());
-
-                        for (auto const& n: nodes) {
-                            if (n.second) {
-                                m_entry_putting_nodes[peer][ptr].insert(n.first);
-                            }
-                        }
-
-                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
-                            m_entry_putting_times[peer].erase(ptr);
-                            m_entry_putting_nodes[peer].erase(ptr);
-                            m_entry_last_putting_time[peer].erase(ptr);
-                        }
-                        break;
-                    }
-                    case common::friend_info_request_entry::data_type_id: {
-                        auto ptr = std::make_shared<common::friend_info_request_entry>(i.value());
-
-                        for (auto const& n: nodes) {
-                            if (n.second) {
-                                m_entry_putting_nodes[peer][ptr].insert(n.first);
-                            }
-                        }
-
-                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
-                            m_entry_putting_times[peer].erase(ptr);
-                            m_entry_putting_nodes[peer].erase(ptr);
-                            m_entry_last_putting_time[peer].erase(ptr);
-                        }
-                        break;
-                    }
+//                    case common::message_levenshtein_array_entry::data_type_id: {
+//                        auto ptr = std::make_shared<common::message_levenshtein_array_entry>(i.value());
+//
+//                        for (auto const& n: nodes) {
+//                            if (n.second) {
+//                                m_entry_putting_nodes[peer][ptr].insert(n.first);
+//                            }
+//                        }
+//
+//                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
+//                            m_entry_putting_times[peer].erase(ptr);
+//                            m_entry_putting_nodes[peer].erase(ptr);
+//                            m_entry_last_putting_time[peer].erase(ptr);
+//                        }
+//                        break;
+//                    }
+//                    case common::friend_info_entry::data_type_id: {
+//                        auto ptr = std::make_shared<common::friend_info_entry>(i.value());
+//
+//                        for (auto const& n: nodes) {
+//                            if (n.second) {
+//                                m_entry_putting_nodes[peer][ptr].insert(n.first);
+//                            }
+//                        }
+//
+//                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
+//                            m_entry_putting_times[peer].erase(ptr);
+//                            m_entry_putting_nodes[peer].erase(ptr);
+//                            m_entry_last_putting_time[peer].erase(ptr);
+//                        }
+//                        break;
+//                    }
+//                    case common::friend_info_request_entry::data_type_id: {
+//                        auto ptr = std::make_shared<common::friend_info_request_entry>(i.value());
+//
+//                        for (auto const& n: nodes) {
+//                            if (n.second) {
+//                                m_entry_putting_nodes[peer][ptr].insert(n.first);
+//                            }
+//                        }
+//
+//                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
+//                            m_entry_putting_times[peer].erase(ptr);
+//                            m_entry_putting_nodes[peer].erase(ptr);
+//                            m_entry_last_putting_time[peer].erase(ptr);
+//                        }
+//                        break;
+//                    }
                     default: {
                         break;
                     }
@@ -1814,35 +1787,35 @@ namespace libTAU {
                     , alpha, beta, invoke_limit, salt, peer, cache);
         }
 
-        void communication::send_one_unconfirmed_message_randomly(const dht::public_key &peer) {
-            // find out missing messages and confirmation root
-            std::vector<message> missing_messages;
-            std::vector<sha256_hash> confirmation_roots;
-            auto &message_list = m_message_list_map[peer];
-            std::vector<message> messages(message_list.begin(), message_list.end());
-            log("INFO: Messages size:%zu", messages.size());
-            find_best_solution(messages, m_levenshtein_array[peer],
-                               missing_messages, confirmation_roots);
-
-            log("INFO: Found missing message size %zu", missing_messages.size());
-
-            auto now = get_current_time();
-
-            aux::bytes levenshtein_array;
-            for (auto const &message: messages) {
-                levenshtein_array.push_back(message.sha256()[0]);
-            }
-
-            auto size = missing_messages.size();
-            // 产生随机数
-            if (size > 0) {
-                srand(now);
-                auto index = rand() % missing_messages.size();
-                common::message_entry msg_entry(missing_messages[index], levenshtein_array, now);
-                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry());
-                add_entry_task_to_queue(task);
-            }
-        }
+//        void communication::send_one_unconfirmed_message_randomly(const dht::public_key &peer) {
+//            // find out missing messages and confirmation root
+//            std::vector<message> missing_messages;
+//            std::vector<sha256_hash> confirmation_roots;
+//            auto &message_list = m_message_list_map[peer];
+//            std::vector<message> messages(message_list.begin(), message_list.end());
+//            log("INFO: Messages size:%zu", messages.size());
+//            find_best_solution(messages, m_levenshtein_array[peer],
+//                               missing_messages, confirmation_roots);
+//
+//            log("INFO: Found missing message size %zu", missing_messages.size());
+//
+//            auto now = get_current_time();
+//
+//            aux::bytes levenshtein_array;
+//            for (auto const &message: messages) {
+//                levenshtein_array.push_back(message.sha256()[0]);
+//            }
+//
+//            auto size = missing_messages.size();
+//            // 产生随机数
+//            if (size > 0) {
+//                srand(now);
+//                auto index = rand() % missing_messages.size();
+//                common::message_entry msg_entry(missing_messages[index], levenshtein_array, now);
+//                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry());
+//                add_entry_task_to_queue(task);
+//            }
+//        }
 
         void communication::send_all_unconfirmed_messages(const dht::public_key &peer) {
             // find out missing messages and confirmation root
@@ -1851,7 +1824,7 @@ namespace libTAU {
             auto &message_list = m_message_list_map[peer];
             std::vector<message> messages(message_list.begin(), message_list.end());
             log("INFO: Messages size:%zu", messages.size());
-            log("--111--send all msgs peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(m_levenshtein_array[peer]).c_str());
+            log("INFO: Send all msgs peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(m_levenshtein_array[peer]).c_str());
             find_best_solution(messages, m_levenshtein_array[peer],
                                missing_messages, confirmation_roots);
 
@@ -1867,32 +1840,33 @@ namespace libTAU {
             auto size = missing_messages.size();
             for(auto k = 0; k < size; k++) {
                 common::message_entry msg_entry(missing_messages[k], levenshtein_array, now);
-                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry());
-                add_entry_task_to_queue(task);
+                send_to(peer, common::message_entry::data_type_id, msg_entry.get_entry(), 1, 8, 100, true);
+//                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry());
+//                add_entry_task_to_queue(task);
             }
         }
 
-        void communication::send_one_missing_entry_randomly(const dht::public_key &peer) {
-            auto & entry_putting_times = m_entry_putting_times[peer];
-            if (!entry_putting_times.empty()) {
-                auto it = entry_putting_times.begin();
-                if (it->second >= 7) {
-                    m_entry_putting_times[peer].erase(it->first);
-                    m_entry_putting_nodes[peer].erase(it->first);
-                    m_entry_last_putting_time[peer].erase(it->first);
-                } else {
-                    auto now = get_current_time();
-                    if (now > m_entry_last_putting_time[peer][it->first] + communication_long_time_out) {
-//                        common::message_entry msg_entry(it->first, levenshtein_array, now);
-                        common::entry_task task(it->first->get_data_type_id(), peer, it->first->get_entry());
-                        add_entry_task_to_queue(task);
-
-                        m_entry_putting_times[peer][it->first]++;
-                        m_entry_last_putting_time[peer][it->first] = now;
-                    }
-                }
-            }
-        }
+//        void communication::send_one_missing_entry_randomly(const dht::public_key &peer) {
+//            auto & entry_putting_times = m_entry_putting_times[peer];
+//            if (!entry_putting_times.empty()) {
+//                auto it = entry_putting_times.begin();
+//                if (it->second >= 7) {
+//                    m_entry_putting_times[peer].erase(it->first);
+//                    m_entry_putting_nodes[peer].erase(it->first);
+//                    m_entry_last_putting_time[peer].erase(it->first);
+//                } else {
+//                    auto now = get_current_time();
+//                    if (now > m_entry_last_putting_time[peer][it->first] + communication_long_time_out) {
+////                        common::message_entry msg_entry(it->first, levenshtein_array, now);
+//                        common::entry_task task(it->first->get_data_type_id(), peer, it->first->get_entry());
+//                        add_entry_task_to_queue(task);
+//
+//                        m_entry_putting_times[peer][it->first]++;
+//                        m_entry_last_putting_time[peer][it->first] = now;
+//                    }
+//                }
+//            }
+//        }
 
 //        void communication::update_detection_time(const dht::public_key &peer, std::int64_t time) {
 //            m_last_detection_time[peer] = time;
@@ -1907,7 +1881,7 @@ namespace libTAU {
         void communication::update_levenshtein_array(const dht::public_key &peer, const aux::bytes& levenshtein_array, std::int64_t time) {
             m_levenshtein_array[peer] = levenshtein_array;
             m_levenshtein_array_time[peer] = time;
-            log("--111--save peer[%s] levenshtein ayyay:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(levenshtein_array).c_str());
+            log("--111--save peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(levenshtein_array).c_str());
             m_message_db->save_levenshtein_array(std::make_pair(*m_ses.pubkey(), peer), levenshtein_array);
             m_message_db->save_levenshtein_array_time(std::make_pair(*m_ses.pubkey(), peer), time);
         }

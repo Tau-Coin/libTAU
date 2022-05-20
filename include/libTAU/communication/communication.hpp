@@ -153,7 +153,7 @@ namespace libTAU {
             // add a new message
             bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
 
-            void add_entry_task_to_queue(const common::entry_task &task);
+//            void add_entry_task_to_queue(const common::entry_task &task);
 
             // request online/new message signal from a given peer
 //            void request_signal(const dht::public_key &peer);
@@ -238,11 +238,11 @@ namespace libTAU {
 
             void launch_scheduled_task(error_code const& e);
 
-            void send_one_unconfirmed_message_randomly(dht::public_key const& peer);
+//            void send_one_unconfirmed_message_randomly(dht::public_key const& peer);
 
             void send_all_unconfirmed_messages(dht::public_key const& peer);
 
-            void send_one_missing_entry_randomly(dht::public_key const& peer);
+//            void send_one_missing_entry_randomly(dht::public_key const& peer);
 
 //            void update_detection_time(dht::public_key const& peer, std::int64_t time);
 
@@ -278,8 +278,8 @@ namespace libTAU {
             std::vector<dht::public_key> m_friends;
 
             // all tasks
-            std::queue<common::entry_task> m_tasks;
-            std::set<common::entry_task> m_tasks_set;
+//            std::queue<common::entry_task> m_tasks;
+//            std::set<common::entry_task> m_tasks_set;
 
 //            std::map<dht::public_key, std::int64_t> m_last_greeting;
 
@@ -323,11 +323,11 @@ namespace libTAU {
 
 //            std::map<dht::public_key, std::set<message>> m_missing_messages;
 
-            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, int, common::less_communication_entry_base>> m_entry_putting_times;
-
-            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, std::set<dht::node_entry>, common::less_communication_entry_base>> m_entry_putting_nodes;
-
-            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, std::int64_t, common::less_communication_entry_base>> m_entry_last_putting_time;
+//            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, int, common::less_communication_entry_base>> m_entry_putting_times;
+//
+//            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, std::set<dht::node_entry>, common::less_communication_entry_base>> m_entry_putting_nodes;
+//
+//            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, std::int64_t, common::less_communication_entry_base>> m_entry_last_putting_time;
 
             // missing messages (map:key->peer, value->missing message list)
 //            std::map<dht::public_key, std::set<message>> m_missing_messages;
