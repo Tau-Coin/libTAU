@@ -1382,12 +1382,12 @@ namespace libTAU {
 	};
 
     // this alert is posted when a message is sent.
-    struct TORRENT_EXPORT communication_message_sent_alert final : alert
+    struct TORRENT_EXPORT communication_message_arrived_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_message_sent_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
+        TORRENT_UNEXPORT communication_message_arrived_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
 
-        TORRENT_DEFINE_ALERT_PRIO(communication_message_sent_alert, 51, alert_priority::critical)
+        TORRENT_DEFINE_ALERT_PRIO(communication_message_arrived_alert, 51, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::communication;
 
@@ -1397,7 +1397,7 @@ namespace libTAU {
         dht::public_key peer;
 
         // message sent hash
-        sha256_hash msg_sent_hash;
+        sha256_hash msg_arrived_hash;
 
         // syncing msg time
         std::int64_t time;

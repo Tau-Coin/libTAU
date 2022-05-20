@@ -1702,19 +1702,19 @@ namespace {
 #endif
 	}
 
-    communication_message_sent_alert::communication_message_sent_alert(aux::stack_allocator&
+    communication_message_arrived_alert::communication_message_arrived_alert(aux::stack_allocator&
             , dht::public_key p, sha256_hash s, std::int64_t t)
-            : peer(p), msg_sent_hash(s), time(t)
+            : peer(p), msg_arrived_hash(s), time(t)
     {}
 
-    std::string communication_message_sent_alert::message() const
+    std::string communication_message_arrived_alert::message() const
     {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] sent message hash %s, time:%ld", aux::toHex(peer.bytes).c_str()
-                , aux::toHex(msg_sent_hash.to_string()).c_str(), time);
+        std::snprintf(msg, sizeof(msg), "peer[%s] arrived message hash %s, time:%ld", aux::toHex(peer.bytes).c_str()
+                , aux::toHex(msg_arrived_hash.to_string()).c_str(), time);
 
         return msg;
 #endif

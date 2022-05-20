@@ -1590,7 +1590,7 @@ namespace libTAU {
                         m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, msgEntry.m_msg.sha256(), now);
                         for (auto const& n: nodes) {
                             if (n.second) {
-                                m_ses.alerts().emplace_alert<communication_message_sent_alert>(peer, msgEntry.m_msg.sha256(), now);
+                                m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer, msgEntry.m_msg.sha256(), now);
                                 break;
                             }
                         }
