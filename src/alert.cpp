@@ -1720,4 +1720,40 @@ namespace {
 #endif
     }
 
+    blockchain_tx_sent_alert::blockchain_tx_sent_alert(aux::stack_allocator&
+            , dht::public_key p, sha256_hash s, std::int64_t t)
+            : peer(p), tx_sent_hash(s), time(t)
+    {}
+
+    std::string blockchain_tx_sent_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char msg[256];
+        std::snprintf(msg, sizeof(msg), "peer[%s] sent tx hash %s, time:%ld", aux::toHex(peer.bytes).c_str()
+                , aux::toHex(tx_sent_hash.to_string()).c_str(), time);
+
+        return msg;
+#endif
+    }
+
+    blockchain_tx_arrived_alert::blockchain_tx_arrived_alert(aux::stack_allocator&
+            , dht::public_key p, sha256_hash s, std::int64_t t)
+            : peer(p), tx_arrived_hash(s), time(t)
+    {}
+
+    std::string blockchain_tx_arrived_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char msg[256];
+        std::snprintf(msg, sizeof(msg), "peer[%s] arrived tx hash %s, time:%ld", aux::toHex(peer.bytes).c_str()
+                , aux::toHex(tx_arrived_hash.to_string()).c_str(), time);
+
+        return msg;
+#endif
+    }
+
 } // namespace libTAU

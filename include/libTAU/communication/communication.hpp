@@ -45,7 +45,7 @@ namespace libTAU {
         using system_clock = std::chrono::system_clock;
 
         // default refresh time of main task(100ms)(ms)
-        constexpr int communication_default_refresh_time = 100;
+        constexpr int communication_default_refresh_time = 300;
 
         // max task size
         constexpr int communication_max_task_size = 10000;
@@ -105,7 +105,7 @@ namespace libTAU {
             bool stop();
 
             // set main loop time interval (ms)
-            void set_loop_time_interval(int milliseconds);
+//            void set_loop_time_interval(int milliseconds);
 
             // add new friend in memory & db
             bool add_new_friend(const dht::public_key &pubkey);
@@ -122,14 +122,14 @@ namespace libTAU {
             // save friend info
             bool update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info);
 
-            // set chatting friends
-            void set_chatting_friend(dht::public_key chatting_friend);
-
-            // unset chatting friends
-            void unset_chatting_friend();
+//            // set chatting friends
+//            void set_chatting_friend(dht::public_key chatting_friend);
+//
+//            // unset chatting friends
+//            void unset_chatting_friend();
 
             // set active friends
-            void set_active_friends(std::vector<dht::public_key> active_friends);
+//            void set_active_friends(std::vector<dht::public_key> active_friends);
 
             // add a new message
             bool add_new_message(const message& msg, bool post_alert = false);
@@ -289,10 +289,10 @@ namespace libTAU {
 //            std::map<dht::public_key, std::int64_t> m_peer_access_times;
 
             // chatting friend(time:s)
-            std::pair<dht::public_key, std::int64_t> m_chatting_friend = std::make_pair(dht::public_key(), 0);
+//            std::pair<dht::public_key, std::int64_t> m_chatting_friend = std::make_pair(dht::public_key(), 0);
 
             // active friends
-            std::vector<dht::public_key> m_active_friends;
+//            std::vector<dht::public_key> m_active_friends;
 
 //            std::map<dht::public_key, std::int64_t> m_last_detection_time;
 

@@ -165,11 +165,11 @@ namespace blockchain {
         std::set<dht::public_key> get_gossip_peers(const aux::bytes &chain_id);
 
         // set blockchain main loop time interval (ms)
-        void set_blockchain_loop_interval(int milliseconds);
+//        void set_blockchain_loop_interval(int milliseconds);
 
-        void set_priority_chain(const aux::bytes &chain_id);
+//        void set_priority_chain(const aux::bytes &chain_id);
 
-        void unset_priority_chain();
+//        void unset_priority_chain();
 
         // mutable data is pushed here
         void on_dht_item(dht::item const& i);
@@ -369,6 +369,8 @@ namespace blockchain {
         // get mutable item from dht
         void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
 
+        void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes);
+
         // put immutable item to dht
 //        void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
 
@@ -439,7 +441,7 @@ namespace blockchain {
 
         std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
-        std::map<aux::bytes, std::int64_t> m_last_voting_time;
+//        std::map<aux::bytes, std::int64_t> m_last_voting_time;
 
         std::map<aux::bytes, std::int64_t> m_count_votes_time;
 

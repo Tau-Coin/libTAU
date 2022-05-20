@@ -114,8 +114,8 @@ namespace libTAU {
 //            m_last_greeting.clear();
 //            m_peer_access_times.clear();
             m_message_list_map.clear();
-            m_chatting_friend = std::make_pair(dht::public_key(), 0);
-            m_active_friends.clear();
+//            m_chatting_friend = std::make_pair(dht::public_key(), 0);
+//            m_active_friends.clear();
 //            m_last_seen.clear();
 //            m_latest_signal_time.clear();
 //            m_latest_hash_prefix_array.clear();
@@ -487,11 +487,11 @@ namespace libTAU {
             }
         }
 
-        void communication::set_loop_time_interval(int milliseconds) {
-            log("INFO: Set loop time:%d(ms)", milliseconds);
-            m_refresh_time = milliseconds;
-            m_refresh_timer.cancel();
-        }
+//        void communication::set_loop_time_interval(int milliseconds) {
+//            log("INFO: Set loop time:%d(ms)", milliseconds);
+//            m_refresh_time = milliseconds;
+//            m_refresh_timer.cancel();
+//        }
 
         bool communication::add_new_friend(const dht::public_key &pubkey) {
             if (pubkey == dht::public_key()) {
@@ -568,22 +568,22 @@ namespace libTAU {
             return m_message_db->save_friend_info(std::make_pair(*pk, pubkey), friend_info);
         }
 
-        void communication::set_chatting_friend(dht::public_key chatting_friend) {
-            log("INFO: Set chatting friend:%s", aux::toHex(chatting_friend.bytes).c_str());
-            m_chatting_friend = std::make_pair(chatting_friend, total_seconds(system_clock::now().time_since_epoch()));
-        }
+//        void communication::set_chatting_friend(dht::public_key chatting_friend) {
+//            log("INFO: Set chatting friend:%s", aux::toHex(chatting_friend.bytes).c_str());
+//            m_chatting_friend = std::make_pair(chatting_friend, total_seconds(system_clock::now().time_since_epoch()));
+//        }
+//
+//        void communication::unset_chatting_friend() {
+//            if (m_chatting_friend.first != dht::public_key()) {
+//                log("INFO: Unset chatting friend.");
+//                m_chatting_friend = std::make_pair(dht::public_key(), 0);
+//            }
+//        }
 
-        void communication::unset_chatting_friend() {
-            if (m_chatting_friend.first != dht::public_key()) {
-                log("INFO: Unset chatting friend.");
-                m_chatting_friend = std::make_pair(dht::public_key(), 0);
-            }
-        }
-
-        void communication::set_active_friends(std::vector<dht::public_key> active_friends) {
-//            log("INFO: Set active friends[%zu].", active_friends.size());
-            m_active_friends = std::move(active_friends);
-        }
+//        void communication::set_active_friends(std::vector<dht::public_key> active_friends) {
+////            log("INFO: Set active friends[%zu].", active_friends.size());
+//            m_active_friends = std::move(active_friends);
+//        }
 
         bool communication::add_new_message(const message &msg, bool post_alert) {
             add_new_message(msg.receiver(), msg, post_alert);

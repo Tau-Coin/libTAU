@@ -66,7 +66,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 52;
+	constexpr int num_alert_types = 54;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1381,7 +1381,7 @@ namespace libTAU {
 		int external_port;
 	};
 
-    // this alert is posted when a message is sent.
+    // this alert is posted when a message is arrived.
     struct TORRENT_EXPORT communication_message_arrived_alert final : alert
     {
         // internal
@@ -1398,6 +1398,50 @@ namespace libTAU {
 
         // message sent hash
         sha256_hash msg_arrived_hash;
+
+        // syncing msg time
+        std::int64_t time;
+    };
+
+    // this alert is posted when a tx is sent.
+    struct TORRENT_EXPORT blockchain_tx_sent_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_tx_sent_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_tx_sent_alert, 52, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // public key
+        dht::public_key peer;
+
+        // message sent hash
+        sha256_hash tx_sent_hash;
+
+        // syncing msg time
+        std::int64_t time;
+    };
+
+    // this alert is posted when a tx is arrived.
+    struct TORRENT_EXPORT blockchain_tx_arrived_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_tx_arrived_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_tx_arrived_alert, 53, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // public key
+        dht::public_key peer;
+
+        // message sent hash
+        sha256_hash tx_arrived_hash;
 
         // syncing msg time
         std::int64_t time;
