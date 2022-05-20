@@ -18,13 +18,14 @@
 
 ### 设置主循环频率
 ```    
+    // 事件触发方案下已废弃
     // set main loop time interval (ms)
-    std::uint8_t set_loop_time_interval(int milliseconds);
-    1) 0: 时间间隔设置正常
-    2) >0: 时间间隔设置非正常(session_impl来控制管理)
-       1: communication设置异常
-       2: blockchain设置异常
-       3: communication && blockchain设置异常
+    //std::uint8_t set_loop_time_interval(int milliseconds);
+    //1) 0: 时间间隔设置正常
+    //2) >0: 时间间隔设置非正常(session_impl来控制管理)
+    //   1: communication设置异常
+    //   2: blockchain设置异常
+    //   3: communication && blockchain设置异常
 ```
 
 ### 朋友操作
@@ -61,17 +62,19 @@
         1: pubkey解析异常
         2: pubkey不存在
     
+    // 事件触发方案下已废弃
     // set chatting friends
-    std::uint8_t set_chatting_friend(std::array<char, 32> pubkey);
-    1) 0: 聊天朋友设置正常
-    2) >0: 聊天朋友设置非正常(具体错误代码后续再添加)
-        1: pubkey解析异常
-        2: pubkey不存在
+    //std::uint8_t set_chatting_friend(std::array<char, 32> pubkey);
+    //1) 0: 聊天朋友设置正常
+    //2) >0: 聊天朋友设置非正常(具体错误代码后续再添加)
+    //    1: pubkey解析异常
+    //    2: pubkey不存在
 
+    // 事件触发方案下已废弃
     // unset chatting friends
-    std::uint8_t unset_chatting_friend();
-    1) 0: 聊天朋友取消正常
-    2) >0: 聊天朋友取消非正常(具体错误代码后续再添加)
+    //std::uint8_t unset_chatting_friend();
+    //1) 0: 聊天朋友取消正常
+    //2) >0: 聊天朋友取消非正常(具体错误代码后续再添加)
 ```
 ### 信息操作
     // add a new message
@@ -91,6 +94,9 @@
 
     // 消息被同步
     communication_syncing_message_alert
+
+    // 消息被送达
+    communication_message_arrived_alert
 
     // 消息被确认
     communication_confirmation_root_alert
@@ -233,17 +239,19 @@
     2) == -1: chain_id解析异常
     2) >= 0: 正常中值交易费获取正常
     
+    // 事件触发方案下已废弃
     // focus on chain
-    std::uint8_t set_priority_chain(std::vector<char> chain_id);
-    1) 0: 设置优先链正常
-    2) > 0: 设置优先链非正常(具体错误代码后续再更新)
-        1: chain_id解析异常
-        2: chain_id不存在
+    //std::uint8_t set_priority_chain(std::vector<char> chain_id);
+    //1) 0: 设置优先链正常
+    //2) > 0: 设置优先链非正常(具体错误代码后续再更新)
+    //    1: chain_id解析异常
+    //    2: chain_id不存在
 
+    // 事件触发方案下已废弃
     // un-focus on chain
-    std::uint8_t unset_priority_chain();
-    1) 0: 取消优先链正常
-    2) > 0: 取消优先链非正常(具体错误代码后续再更新)
+    // std::uint8_t unset_priority_chain();
+    // 1) 0: 取消优先链正常
+    // 2) > 0: 取消优先链非正常(具体错误代码后续再更新)
     
     //请求链状态，以alert上报
     std::uint8_t request_chain_state(const aux::bytes &chain_id)
@@ -281,5 +289,12 @@
     // this alert is posted when syncing head block.
     blockchain_syncing_head_block_alert
     
-    交易确认
-    blockchain_tx_confirmation_alert
+    // 暂未使用
+    //交易确认
+    //blockchain_tx_confirmation_alert
+
+    // 交易被发送
+    blockchain_tx_sent_alert
+
+    // 交易被送达
+    blockchain_tx_arrived_alert
