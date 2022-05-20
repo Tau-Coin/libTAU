@@ -18,6 +18,7 @@ BOOST_ROOT = [ modules.peek : BOOST_ROOT ] ;
 OPENSSL_ROOT = [ modules.peek : OPENSSL_ROOT ] ;
 LEVELDB_ROOT = [ modules.peek : LEVELDB_ROOT ] ;
 SNAPPY_ROOT = [ modules.peek : SNAPPY_ROOT ] ;
+BREAKPAD_ROOT = [ modules.peek : BREAKPAD_ROOT ] ;
 SQLITE_ROOT = [ modules.peek : SQLITE_ROOT ] ;
 
 ECHO "OS =" [ os.name ] ;
@@ -85,6 +86,12 @@ rule linking ( properties * )
     if <compress>snappy in $(properties)
     {
         result += <library>snappy ;
+    }
+
+    if <crashdump>breakpad in $(properties)
+    {
+        result += <library>breakpad ;
+        result += <library>breakpad_client ;
     }
 
 	# gcrypt libraries, if enabled
@@ -583,6 +590,24 @@ rule snappy-include-path ( properties * )
     return $(result) ;
 }
 
+# the search path to pick up the sqlite libraries from. This is the <search>
+# property of those libraries
+rule breakpad-lib-path ( properties * )
+{
+    local result ;
+    result += <search>$(BREAKPAD_ROOT)/lib ;
+    return $(result) ;
+}
+
+# the include path to pick up sqlite headers from. This is the
+# usage-requirement for the sqlite-related libraries
+rule breakpad-include-path ( properties * )
+{
+    local result ;
+    result += <include>$(BREAKPAD_ROOT)/include ;
+    return $(result) ;
+}
+
 path-constant blacklist-file : tools/sanitizer-blacklist.txt ;
 
 feature openssl-lib : : free path ;
@@ -593,6 +618,9 @@ feature sqlite-include : : free path ;
 
 feature snappy-lib : : free path ;
 feature snappy-include : : free path ;
+
+feature breakpad-lib : : free path ;
+feature breakpad-include : : free path ;
 
 feature gnutls-lib : : free path ;
 feature gnutls-include : : free path ;
@@ -675,6 +703,9 @@ feature.compose <sqldatabase>sqldb : <define>TORRENT_ABI_VERSION=3 ;
 feature compress : snappy : composite propagated ;
 #feature.compose <compress>snappy : <define>TORRENT_ENABLE_UDP_COMPRESS ;
 
+feature crashdump : breakpad : composite propagated ;
+feature.compose <crashdump>breakpad : <define>TORRENT_ENABLE_CRASH_ANA ;
+
 feature udp-encryption : on off : composite propagated link-incompatible ;
 feature.compose <udp-encryption>on : <define>TORRENT_ENABLE_UDP_ENCRYPTION ;
 
@@ -734,6 +765,12 @@ lib sqlite3 : : <name>sqlite3 <conditional>@sqlite-lib-path : :
 
 lib snappy : : <name>snappy <conditional>@snappy-lib-path : :
     <conditional>@snappy-include-path ;
+
+lib breakpad : : <name>breakpad <conditional>@breakpad-lib-path : :
+    <conditional>@breakpad-include-path ;
+
+lib breakpad_client : : <name>breakpad_client <conditional>@breakpad-lib-path : :
+    <conditional>@breakpad-include-path ;
 
 # openssl libraries on windows
 # technically, crypt32 is not an OpenSSL dependency, but libTAU needs it on
