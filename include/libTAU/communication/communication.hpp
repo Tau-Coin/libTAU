@@ -65,6 +65,9 @@ namespace libTAU {
         // data accepted time(6h)(ms)
         constexpr std::int64_t communication_data_accepted_time = 6 * 60 * 60 * 1000;
 
+        // max entry cache time(ms)
+        constexpr int communication_max_entry_cache_time = 2 * 60 * 60 * 1000;
+
         // min response interval to the same request(ms)
         constexpr int communication_same_response_interval = 4 * 1000;
 
@@ -94,7 +97,7 @@ namespace libTAU {
         public:
 
             communication(aux::bytes device_id, aux::session_interface &mSes, io_context &mIoc, counters &mCounters) :
-                    m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc) {
+                    m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_counters(mCounters) {
                 m_message_db = std::make_shared<message_db_impl>(m_ses.sqldb(), m_ses.kvdb());
             }
 
@@ -234,9 +237,7 @@ namespace libTAU {
             void log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
 //#endif
 
-            void refresh_timeout(error_code const& e);
-
-            void launch_scheduled_task(error_code const& e);
+//            void refresh_timeout(error_code const& e);
 
 //            void send_one_unconfirmed_message_randomly(dht::public_key const& peer);
 
@@ -264,15 +265,15 @@ namespace libTAU {
             counters& m_counters;
 
             // deadline timer
-            aux::deadline_timer m_refresh_timer;
+//            aux::deadline_timer m_refresh_timer;
 
             // refresh time interval
-            int m_refresh_time = communication_default_refresh_time;
+//            int m_refresh_time = communication_default_refresh_time;
 
             // message db
             std::shared_ptr<message_db_interface> m_message_db;
 
-            bool m_stop = false;
+//            bool m_stop = false;
 
             // all friends
             std::vector<dht::public_key> m_friends;
@@ -319,7 +320,7 @@ namespace libTAU {
             std::map<dht::public_key, std::list<message>> m_message_list_map;
 
             std::map<dht::public_key, std::map<std::string, std::int64_t>> m_entry_cache;
-            std::int64_t m_last_check_time = 0;
+//            std::int64_t m_last_check_time = 0;
 
 //            std::map<dht::public_key, std::set<message>> m_missing_messages;
 
