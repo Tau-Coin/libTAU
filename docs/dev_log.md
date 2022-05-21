@@ -54,3 +54,44 @@
 ## Blockchain
 [Module-blockchain-dev-log](https://github.com/Tau-Coin/libTAU/blob/master/docs/dev_log/blockchain.md)
 
+
+## Crash分析日志
+### Android
+1. Quantity为空引发的crash
+
+```
+已修复   git log: 1fcbd10155415805207f9886a78437a2e5c8f247
+```
+### libTAU
+<b>libTAU-Blockchain协议升级问题引发的crash</b>
+
+```
+协议升级后，数据字段解析存在问题，引发crash
+已修复   git log: 710699799d3352978fd5f4d7608459ae98549245
+```
+解决方法：
+```
+1) 协议升级后，字段作兼容处理，包括上线测试，先验证旧数据
+```
+
+<b>Android UI端和libTAU数据一致性引发的crash</b>
+
+```
+一个在android端显示存在的新建链，但是libTAU不存在该链，进而不存在该链对应的交易池，发送交易发生crash
+已修复   git log: 322b9e6235b360e37e0ec7a2b93878b67d409a49
+```
+解决方法：
+```
+1) android启动libTAU之后，调用获取follow 社区接口，统一两层已follow的chains
+
+2) 接口上考虑兼容，libTAU兼容UI端传入的异常参数，UI端兼容libTAU返回的异常值，详见docs/libTAU_APIS.md
+```
+
+ <b>Crash兜底策略</b>
+ ```
+ 在考虑代码正确性、协议升级、数据一致性后如果仍在存在不可预料的crash问题，可利用用户反馈机制来解决。
+ 
+ 目前libTAU中集成了breakpad crash dump分析工具，可以抓取一定的未知情况下的crash问题，产生dump文件存在设定的手机路径上。
+ 
+ APK启动后会扫描该路径是否存在新的dump文件，否则认定为之前为非正常退出情况，经用户确认，可以进行异常日志的发送和收集工作，后续服务器可以接收，并进行一定的分析工作，删除已传输国的dump文件。
+ ```
