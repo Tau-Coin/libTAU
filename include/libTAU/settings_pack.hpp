@@ -355,6 +355,9 @@ namespace aux {
             // Now using leveldb and sqlite3.
 			db_dir,
 
+			// The directory for storing crash dump file.
+			dump_dir,
+
 			// User's seed.
             // since session constructor and given from apply layer.
 			account_seed,

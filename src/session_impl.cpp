@@ -361,6 +361,15 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		}
 	}
 
+#ifdef TORRENT_ENABLE_CRASH_ANA
+	bool crash_dump_call_before(void* context)
+    {
+        alert_manager* ma = static_cast<alert_manager*>(context);
+        ma->emplace_alert<session_error_alert>(error_code(), "Crashed ERROR");
+        return true;
+    }
+#endif
+
 	bool listen_socket_t::can_route(address const& addr) const
 	{
 		// if this is a proxy, we assume it can reach everything
@@ -486,9 +495,9 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	// post it to the io_context?
 	void session_impl::start_session()
 	{
-
-        google_breakpad::MinidumpDescriptor descriptor("./data");
-        google_breakpad::ExceptionHandler eh(descriptor, NULL, NULL, NULL, true, -1);
+#ifdef TORRENT_ENABLE_CRASH_ANA
+        crash_dump_initial();
+#endif
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("start session");
@@ -572,6 +581,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	void session_impl::on_tick(error_code const& e)
 	{
 		TORRENT_ASSERT(is_single_thread());
+
 		if (!m_abort) {
 
             //time modify 
@@ -622,6 +632,32 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		}
 
 	}
+
+#ifdef TORRENT_ENABLE_CRASH_ANA
+	void session_impl::crash_dump_initial()
+	{
+        std::string dump_file_dir = "";
+#ifdef TORRENT_ANDROID			
+        dump_file_dir = m_settings.get_str(settings_pack::dump_dir);
+#else
+        dump_file_dir = std::filesystem::path(getenv("HOME")).string();
+#endif
+        // create the directory for storing dump data
+ 		if(!std::filesystem::is_directory(dump_file_dir)) {
+			if(!std::filesystem::create_directories(dump_file_dir)){
+#ifndef TORRENT_DISABLE_LOGGING
+				session_log("failed create directory for storing dump data: %s", dump_file_dir.c_str());
+#endif
+				TORRENT_ASSERT(!std::filesystem::create_directories(dump_file_dir));
+				m_abort = true;	
+			}
+		}
+
+        google_breakpad::MinidumpDescriptor descriptor(dump_file_dir);
+        //google_breakpad::ExceptionHandler eh(descriptor, crash_dump_call_before, NULL, static_cast<void*>(&m_alerts), true, -1);
+        google_breakpad::ExceptionHandler eh(descriptor, NULL, NULL, NULL, true, -1);
+	}
+#endif
 
 	session_params session_impl::session_state(save_state_flags_t const flags) const
 	{
@@ -2911,6 +2947,7 @@ namespace {
 
 	void session_impl::set_loop_time_interval(int milliseconds)
 	{
+        /*
 		//m_communication
 		if(m_communication)
 			m_communication->set_loop_time_interval(milliseconds);
@@ -2918,6 +2955,7 @@ namespace {
 		//blockchain
 		if(m_blockchain)
 			m_blockchain->set_blockchain_loop_interval(milliseconds);
+        */
 	}
 
 	bool session_impl::add_new_friend(const dht::public_key& pubkey)
@@ -2958,20 +2996,26 @@ namespace {
 
 	void session_impl::unset_chatting_friend()
 	{
+        /*
 		if(m_communication)
 			m_communication->unset_chatting_friend();
+        */
 	}
 	
 	void session_impl::set_chatting_friend(const dht::public_key& chatting_friend)
 	{
+        /*
 		if(m_communication)
 			m_communication->set_chatting_friend(chatting_friend);
+        */
 	}
 
 	void session_impl::set_active_friends(std::vector<dht::public_key> active_friends)
 	{
+        /*
 		if(m_communication)
 			m_communication->set_active_friends(active_friends);
+        */
 	}
 
 	bool session_impl::add_new_message(const communication::message& msg)
@@ -3080,15 +3124,19 @@ namespace {
 	}
 
 	void session_impl::set_priority_chain(const aux::bytes &chain_id) {
+        /*
 		if(m_blockchain) {
 			m_blockchain->set_priority_chain(chain_id);
 		}
+        */
 	}
 
 	void session_impl::unset_priority_chain() {
+        /*
 		if(m_blockchain) {
 			m_blockchain->unset_priority_chain();
 		}
+        */
 	}
 
 	blockchain::block session_impl::get_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) {

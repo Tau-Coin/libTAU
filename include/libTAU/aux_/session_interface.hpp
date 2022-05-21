@@ -129,6 +129,7 @@ namespace libTAU::aux {
 		virtual void ban_ip(address addr) = 0;
 
 		virtual std::uint16_t session_time() const = 0;
+		//virtual void crash_dump_initial() = 0;
 		virtual time_point session_start_time() const = 0;
 
 		virtual bool is_aborted() const = 0;

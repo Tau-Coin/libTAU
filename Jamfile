@@ -90,7 +90,7 @@ rule linking ( properties * )
 
     if <crashdump>breakpad in $(properties)
     {
-        result += <library>breakpad ;
+#        result += <library>breakpad ;
         result += <library>breakpad_client ;
     }
 
@@ -704,7 +704,7 @@ feature compress : snappy : composite propagated ;
 #feature.compose <compress>snappy : <define>TORRENT_ENABLE_UDP_COMPRESS ;
 
 feature crashdump : breakpad : composite propagated ;
-feature.compose <crashdump>breakpad : <define>TORRENT_ENABLE_CRASH_ANA ;
+#feature.compose <crashdump>breakpad : <define>TORRENT_ENABLE_CRASH_ANA ;
 
 feature udp-encryption : on off : composite propagated link-incompatible ;
 feature.compose <udp-encryption>on : <define>TORRENT_ENABLE_UDP_ENCRYPTION ;

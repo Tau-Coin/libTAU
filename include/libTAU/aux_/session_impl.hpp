@@ -306,6 +306,10 @@ namespace aux {
 		TORRENT_EXTRA_EXPORT void expand_devices(span<ip_interface const>
 			, std::vector<listen_endpoint_t>& eps);
 
+#ifdef TORRENT_ENABLE_CRASH_ANA
+        TORRENT_EXTRA_EXPORT bool crash_dump_call_before(void* context);
+#endif
+
 		// this is the switch that sets 'non-referrable' into 'false'
 		// if NAT-PMP/UPNP is connected.
 		struct TORRENT_EXTRA_EXPORT refer_switch
@@ -835,6 +839,9 @@ namespace aux {
 			void on_tick(error_code const& e);
 			void session_time_modification(std::int64_t time = 0);
 
+#ifdef TORRENT_ENABLE_CRASH_ANA
+			void crash_dump_initial() override;
+#endif
 			// when outgoing_ports is configured, this is the
 			// port we'll bind the next outgoing socket to
 			mutable int m_next_port = 0;
