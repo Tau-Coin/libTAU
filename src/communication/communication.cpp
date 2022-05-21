@@ -28,25 +28,23 @@ namespace libTAU {
                 return false;
             }
 
-//            m_stop = false;
+            m_stop = false;
 
 //            for (auto const&peer: m_friends) {
 //                request_signal(peer);
 //            }
 
-//            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
-//            m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
-
-//            m_refresh_timer.cancel();
+            m_refresh_timer.expires_after(milliseconds(100));
+            m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
 
             return true;
         }
 
         bool communication::stop()
         {
-//            m_stop = true;
+            m_stop = true;
 
-//            m_refresh_timer.cancel();
+            m_refresh_timer.cancel();
 
             clear();
 
@@ -149,31 +147,6 @@ namespace libTAU {
             std::int64_t timestamp = 0;
 
             log("---------------Got entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-
-            {
-                auto i = std::find(m_friends.begin(), m_friends.end(), peer);
-                if (i != m_friends.end()) {
-                    auto &last_same_entry_time = m_last_same_entry_time[peer];
-                    for (auto it = last_same_entry_time.begin(); it != last_same_entry_time.end();) {
-                        if (now > it->second + communication_same_response_interval) {
-                            last_same_entry_time.erase(it++);
-                        } else {
-                            ++it;
-                        }
-                    }
-
-                    auto &entry_cache = m_entry_cache[peer];
-                    for (auto it = entry_cache.begin(); it != entry_cache.end();) {
-                        // remove outdated date
-                        if (now > it->second + communication_max_entry_cache_time) {
-                            entry_cache.erase(it++);
-                        } else {
-                            it++;
-                        }
-                    }
-                }
-            }
-
             switch (data_type_id) {
                 case common::message_entry::data_type_id: {
                     // time
@@ -870,12 +843,12 @@ namespace libTAU {
 //            return peer;
 //        }
 
-//        void communication::refresh_timeout(error_code const& e)
-//        {
-//            if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
-//
-//            try {
-//                if (e.value() != boost::asio::error::operation_aborted) {
+        void communication::refresh_timeout(error_code const& e)
+        {
+            if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
+
+            try {
+                if (e.value() != boost::asio::error::operation_aborted) {
                     /*
                     {
                         // log
@@ -908,23 +881,29 @@ namespace libTAU {
                     }
                     */
 
-//                    auto now = get_current_time();
+                    auto now = get_current_time();
 
-                    // check every 5 min
-//                    if (now > m_last_check_time + 5 * 60 * 1000) {
-//                        m_last_check_time = now;
-//
-//                        for (auto &entry_cache: m_entry_cache) {
-//                            for (auto it = entry_cache.second.begin(); it != entry_cache.second.end();) {
-//                                // remove outdated date
-//                                if (now > it->second + 2 * 60 * 60 * 1000) {
-//                                    entry_cache.second.erase(it++);
-//                                } else {
-//                                    it++;
-//                                }
-//                            }
-//                        }
-//                    }
+                    for (auto &entry_cache: m_entry_cache) {
+                        for (auto it = entry_cache.second.begin(); it != entry_cache.second.end();) {
+                            // remove outdated date
+                            if (now > it->second + communication_max_entry_cache_time) {
+                                entry_cache.second.erase(it++);
+                            } else {
+                                it++;
+                            }
+                        }
+                    }
+
+                    for (auto &last_same_entry_time: m_last_same_entry_time) {
+                        for (auto it = last_same_entry_time.second.begin(); it != last_same_entry_time.second.end();) {
+                            // remove outdated date
+                            if (now > it->second + communication_same_response_interval) {
+                                last_same_entry_time.second.erase(it++);
+                            } else {
+                                it++;
+                            }
+                        }
+                    }
 
 //                // 随机挑选一个朋友put/get
 //                dht::public_key peer = select_friend_randomly();
@@ -1052,14 +1031,14 @@ namespace libTAU {
 //                    if (m_refresh_time < interval) {
 //                        m_refresh_time = interval;
 //                    }
-//                }
-//
-//                m_refresh_timer.expires_after(milliseconds(m_refresh_time));
-//                m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
-//            } catch (std::exception &e) {
-//                log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
-//            }
-//        }
+                }
+
+                m_refresh_timer.expires_after(seconds(communication_default_refresh_time));
+                m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
+            } catch (std::exception &e) {
+                log("Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            }
+        }
 
         void communication::save_friend_latest_message_hash_list(const dht::public_key &peer) {
             auto message_list = m_message_list_map.at(peer);

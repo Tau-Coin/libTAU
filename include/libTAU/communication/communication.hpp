@@ -44,7 +44,7 @@ namespace libTAU {
 
         using system_clock = std::chrono::system_clock;
 
-        // default refresh time of main task(100ms)(ms)
+        // default refresh time of main task(300)(s)
         constexpr int communication_default_refresh_time = 300;
 
         // max task size
@@ -97,7 +97,7 @@ namespace libTAU {
         public:
 
             communication(aux::bytes device_id, aux::session_interface &mSes, io_context &mIoc, counters &mCounters) :
-                    m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_counters(mCounters) {
+                    m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc) {
                 m_message_db = std::make_shared<message_db_impl>(m_ses.sqldb(), m_ses.kvdb());
             }
 
@@ -237,7 +237,7 @@ namespace libTAU {
             void log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
 //#endif
 
-//            void refresh_timeout(error_code const& e);
+            void refresh_timeout(error_code const& e);
 
 //            void send_one_unconfirmed_message_randomly(dht::public_key const& peer);
 
@@ -265,7 +265,7 @@ namespace libTAU {
             counters& m_counters;
 
             // deadline timer
-//            aux::deadline_timer m_refresh_timer;
+            aux::deadline_timer m_refresh_timer;
 
             // refresh time interval
 //            int m_refresh_time = communication_default_refresh_time;
@@ -273,7 +273,7 @@ namespace libTAU {
             // message db
             std::shared_ptr<message_db_interface> m_message_db;
 
-//            bool m_stop = false;
+            bool m_stop = false;
 
             // all friends
             std::vector<dht::public_key> m_friends;
