@@ -824,28 +824,28 @@ namespace libTAU::blockchain {
                 auto size = peers.size();
                 if (size < 20) {
                     m_vote_request_peers[chain_id] = peers;
+
+                    // vote with gossip peers
+                    auto const& gossip_peers = m_gossip_peers[chain_id];
+                    if (!gossip_peers.empty()) {
+                        for (int k = 0; k < 20 - size; k++) {
+                            srand(get_total_microseconds());
+                            auto index = rand() % gossip_peers.size();
+
+                            int i = 0;
+                            for (const auto &gossip_peer : gossip_peers) {
+                                if (i == index) {
+                                    m_vote_request_peers[chain_id].insert(gossip_peer);
+                                    break;
+                                }
+                                i++;
+                            }
+                        }
+                    }
                 } else {
                     for (int i = 0; i < 30; i++) {
                         auto peer = m_repository->get_peer_randomly(chain_id);
                         m_vote_request_peers[chain_id].insert(peer);
-                    }
-                }
-
-                // vote with 3 gossip peers
-                auto const& gossip_peers = m_gossip_peers[chain_id];
-                if (!gossip_peers.empty()) {
-                    for (int k = 0; k < 3; k++) {
-                        srand(get_total_microseconds());
-                        auto index = rand() % gossip_peers.size();
-
-                        int i = 0;
-                        for (const auto &gossip_peer : gossip_peers) {
-                            if (i == index) {
-                                m_vote_request_peers[chain_id].insert(gossip_peer);
-                                break;
-                            }
-                            i++;
-                        }
                     }
                 }
 
