@@ -108,7 +108,7 @@ namespace libTAU::blockchain {
         return account(0, 0, 0);
     }
 
-    bool repository::save_non_main_chain_block(block &b) {
+    bool repository::save_non_main_chain_block(const block &b) {
         // save block
         if (!save_block(b))
             return false;

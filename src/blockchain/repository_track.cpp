@@ -230,7 +230,7 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_track::connect_head_block(block &b) {
+    bool repository_track::connect_head_block(const block &b) {
         m_connected_blocks.push_back(b);
 
         // save block
@@ -269,7 +269,7 @@ namespace libTAU::blockchain {
         return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
-    bool repository_track::connect_tail_block(block &b) {
+    bool repository_track::connect_tail_block(const block &b) {
         m_connected_blocks.push_back(b);
 
         // save block
@@ -308,7 +308,7 @@ namespace libTAU::blockchain {
         return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
-    bool repository_track::rollback_block(block &b) {
+    bool repository_track::rollback_block(const block &b) {
         if (b.empty())
             return false;
 
@@ -381,7 +381,7 @@ namespace libTAU::blockchain {
         return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
-    bool repository_track::expire_block(block &b) {
+    bool repository_track::expire_block(const block &b) {
         if (b.empty())
             return false;
 
@@ -669,7 +669,7 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_track::save_block(block &b) {
+    bool repository_track::save_block(const block &b) {
         if (b.empty())
             return false;
 

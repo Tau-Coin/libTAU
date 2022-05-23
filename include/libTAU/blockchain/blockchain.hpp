@@ -261,10 +261,10 @@ namespace blockchain {
         void try_to_update_visiting_peer(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // verify block
-        RESULT verify_block(const aux::bytes &chain_id, block &b, block &previous_block, repository *repo);
+        RESULT verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block, repository *repo);
 
         // process block
-        RESULT process_block(const aux::bytes &chain_id, block &b);
+        RESULT process_block(const aux::bytes &chain_id, const block &b);
 
         void block_reception_event(const aux::bytes &chain_id);
 
@@ -323,7 +323,7 @@ namespace blockchain {
                                 std::set<transaction> &missing_txs);
 
         // make a salt on mutable channel
-        static std::string make_salt(dht::public_key peer, const aux::bytes &chain_id);
+        static std::string make_salt(dht::public_key peer, const aux::bytes &chain_id, std::int64_t data_type_id);
 
         // make a salt on mutable channel
         static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
@@ -343,6 +343,11 @@ namespace blockchain {
 
         // request signal from a given peer
         void get_gossip_peers(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        // request signal from a given peer
+        void get_voting_block(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void put_voting_block(const aux::bytes &chain_id, const block &blk);
 
         // publish online/new message signal to a given peer
 //        void publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,

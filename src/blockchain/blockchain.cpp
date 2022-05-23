@@ -521,23 +521,16 @@ namespace libTAU::blockchain {
                             std::set<sha256_hash> demand_block_hash_set;
                             auto &best_vote = m_best_votes[chain_id];
                             // voting demand block first
-                            if (is_empty_chain(chain_id)) {
-                                if (!best_vote.empty()) {
-                                    log("INFO chain[%s] request best vote block[%s]",
-                                        aux::toHex(chain_id).c_str(),
-                                        aux::toHex(best_vote.block_hash().to_string()).c_str());
-                                    demand_block_hash_set.insert(best_vote.block_hash());
-                                }
-                            } else {
+                            if (!is_empty_chain(chain_id)) {
                                 // not empty chain
 
                                 if (!best_vote.empty()) {
                                     // check if best vote match main chain block
                                     auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id,
-                                                                                                  best_vote.block_number());
-                                    if (hash != best_vote.block_hash()) {
+                                                                                                  best_vote.voting_block().block_number());
+                                    if (hash != best_vote.voting_block().sha256()) {
                                         // if not match, request blocks on best vote branch
-                                        auto previous_hash = best_vote.block_hash();
+                                        auto previous_hash = best_vote.voting_block().previous_block_hash();
                                         while (true) {
                                             // search until found absent or fork point block
                                             auto blk = get_block_from_cache_or_db(chain_id, previous_hash);
@@ -859,15 +852,14 @@ namespace libTAU::blockchain {
                 auto it = peers.begin();
                 if (it != peers.end()) {
                     // request vote
-                    common::vote_request_entry voteRequestEntry(chain_id);
-                    send_to(chain_id, *it, common::vote_request_entry::data_type_id, voteRequestEntry.get_entry(), false);
+                    get_voting_block(chain_id, *it);
                     log("INFO: Request vote to peer[%s]", aux::toHex(it->bytes).c_str());
 
                     peers.erase(it);
                     log("INFO: 3.1 chain:%s vote status:%d, time:%ld", aux::toHex(chain_id).c_str(),
                         m_chain_status[chain_id], now);
 
-                    refresh_time = 500;
+                    refresh_time = 3000;
                 } else {
                     m_chain_status[chain_id] = VOTE_COUNT;
                     log("INFO: 3.2. chain:%s vote status:%d, time:%ld, ready to count cotes",
@@ -1414,7 +1406,7 @@ namespace libTAU::blockchain {
         return b;
     }
 
-    RESULT blockchain::verify_block(const aux::bytes &chain_id, block &b, block &previous_block, repository *repo) {
+    RESULT blockchain::verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block, repository *repo) {
         return SUCCESS;
 
         if (b.empty()) {
@@ -1611,7 +1603,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    RESULT blockchain::process_block(const aux::bytes &chain_id, block &b) {
+    RESULT blockchain::process_block(const aux::bytes &chain_id, const block &b) {
         if (b.empty())
             return FAIL;
 //        log("=================== block length:%lu, tx length:%lu, block:%s",
@@ -1795,10 +1787,7 @@ namespace libTAU::blockchain {
                 log("INFO: chain[%s] is empty...", aux::toHex(chain_id).c_str());
                 auto &best_vote = m_best_votes[chain_id];
                 if (!best_vote.empty()) {
-                    auto blk = get_block_from_cache_or_db(chain_id, best_vote.block_hash());
-                    if (!blk.empty()) {
-                        process_block(chain_id, blk);
-                    }
+                    process_block(chain_id, best_vote.voting_block());
                 } else {
                     log("INFO: chain[%s] vote is empty...", aux::toHex(chain_id).c_str());
                     m_chain_status[chain_id] = VOTE_PREPARE;
@@ -2292,16 +2281,15 @@ namespace libTAU::blockchain {
                         best_vote.to_string().c_str());
 
                     auto &consensus_point_block = m_consensus_point_blocks[chain_id];
-                    if (consensus_point_block.sha256() != best_vote.block_hash()) {
+                    if (consensus_point_block != best_vote.voting_block()) {
                         auto hash = m_repository->get_main_chain_block_hash_by_number(chain_id,
-                                                                                      best_vote.block_number());
+                                                                                      best_vote.voting_block().block_number());
                         // if current main chain block hash and voting block hash mismatch
-                        if (hash != best_vote.block_hash()) {
+                        if (hash != best_vote.voting_block().sha256()) {
                             log("INFO chain[%s] main chain block[%s] mismatch the best vote",
                                 aux::toHex(chain_id).c_str(), aux::toHex(hash.to_string()).c_str());
                             // re-branch
-                            auto vote_block = get_block_from_cache_or_db(chain_id,
-                                                                         best_vote.block_hash());
+                            auto vote_block = get_block_from_cache_or_db(chain_id, best_vote.voting_block().sha256());
                             if (!vote_block.empty()) {
                                 log("INFO chain[%s] try to re-branch to voting block[%s]",
                                     aux::toHex(chain_id).c_str(), vote_block.to_string().c_str());
@@ -2313,11 +2301,9 @@ namespace libTAU::blockchain {
 
                                     // update consensus point block hash as best voting block
                                     m_consensus_point_blocks[chain_id] = vote_block;
-                                    m_repository->set_consensus_point_block_hash(chain_id,
-                                                                                 best_vote.block_hash());
+                                    m_repository->set_consensus_point_block_hash(chain_id, best_vote.voting_block().sha256());
 
-                                    m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(
-                                            vote_block);
+                                    m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(vote_block);
                                 } else if (result == FAIL) {
                                     remove_all_same_chain_blocks_from_cache(vote_block);
                                 }
@@ -2328,8 +2314,7 @@ namespace libTAU::blockchain {
                             m_consensus_point_blocks[chain_id] = blk;
                             m_repository->set_consensus_point_block_hash(chain_id, hash);
 
-                            m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(
-                                    blk);
+                            m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(blk);
                         }
                     }
                 }
@@ -2343,16 +2328,16 @@ namespace libTAU::blockchain {
                 return false;
             if (rhs.count() < lhs.count())
                 return true;
-            if (lhs.cumulative_difficulty() < rhs.cumulative_difficulty())
+            if (lhs.voting_block().cumulative_difficulty() < rhs.voting_block().cumulative_difficulty())
                 return false;
-            if (rhs.cumulative_difficulty() < lhs.cumulative_difficulty())
+            if (rhs.voting_block().cumulative_difficulty() < lhs.voting_block().cumulative_difficulty())
                 return true;
-            if (lhs.block_number() < rhs.block_number())
+            if (lhs.voting_block().block_number() < rhs.voting_block().block_number())
                 return true;
-            if (rhs.block_number() < lhs.block_number())
+            if (rhs.voting_block().block_number() < lhs.voting_block().block_number())
                 return false;
 
-            return lhs.block_hash() < rhs.block_hash();
+            return lhs.voting_block().sha256()< rhs.voting_block().sha256();
         }
     }
 
@@ -2363,7 +2348,7 @@ namespace libTAU::blockchain {
         // vote for myself
         if (is_sync_completed(chain_id)) {
             auto &voting_point_block = m_voting_point_blocks[chain_id];
-            peer_votes[*m_ses.pubkey()] = vote(voting_point_block.sha256(), voting_point_block.cumulative_difficulty(), voting_point_block.block_number());
+            peer_votes[*m_ses.pubkey()] = vote(voting_point_block);
         }
 
         // count votes
@@ -2652,9 +2637,9 @@ namespace libTAU::blockchain {
         }
     }
 
-    std::string blockchain::make_salt(dht::public_key peer, const aux::bytes &chain_id) {
+    std::string blockchain::make_salt(dht::public_key peer, const aux::bytes &chain_id, std::int64_t data_type_id) {
         std::string salt(peer.bytes.begin(), peer.bytes.begin() + common::salt_pubkey_length);
-        common::protocol_entry protocolEntry(chain_id);
+        common::protocol_entry protocolEntry(chain_id, data_type_id);
         std::string encode = protocolEntry.get_encode();
         salt.insert(salt.end(), encode.begin(), encode.end());
 
@@ -2716,11 +2701,37 @@ namespace libTAU::blockchain {
 
     void blockchain::get_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer) {
         // salt is x pubkey when request signal
-        auto salt = make_salt(peer, chain_id);
+        auto salt = make_salt(peer, chain_id, common::gossip_cache_peers_entry::data_type_id);
 
         log("INFO: Request gossip peers from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         dht_get_mutable_item(chain_id, peer.bytes, salt);
+    }
+
+    void blockchain::get_voting_block(const aux::bytes &chain_id, const dht::public_key &peer) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(peer, chain_id, common::voting_block_cache_entry::data_type_id);
+
+        log("INFO: Request voting block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        dht_get_mutable_item(chain_id, peer.bytes, salt);
+    }
+
+    void blockchain::put_voting_block(const aux::bytes &chain_id, const block &blk) {
+        if (!blk.empty()) {
+            common::voting_block_cache_entry votingBlockCacheEntry(blk);
+
+            dht::public_key * pk = m_ses.pubkey();
+            dht::secret_key * sk = m_ses.serkey();
+
+            // salt is y pubkey when publish signal
+            auto salt = make_salt(*pk, chain_id, common::voting_block_cache_entry::data_type_id);
+
+            log("INFO: Chain id[%s] Cache voting block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+
+            dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
+                    , pk->bytes, sk->bytes, votingBlockCacheEntry.get_entry()), 1, 8, 100, salt, *pk, true);
+        }
     }
 
 //    void blockchain::publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
@@ -3170,9 +3181,29 @@ namespace libTAU::blockchain {
         // construct mutable data wrapper from entry
         if (!i.empty()) {
             auto peer = i.pk();
+            auto salt = i.salt();
+            std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
+            common::protocol_entry protocolEntry(encode);
+            if (protocolEntry.m_pid == common::protocol_gossip) {
 
-            common::gossip_cache_peers_entry gossipCachePeersEntry(i.value());
-            add_gossip_peers(chain_id, gossipCachePeersEntry.m_peers);
+                switch (protocolEntry.m_data_type_id) {
+                    case common::voting_block_cache_entry::data_type_id: {
+                        common::voting_block_cache_entry votingBlockCacheEntry(i.value());
+                        if (!votingBlockCacheEntry.m_blk.empty()) {
+                            m_votes[chain_id][peer] = vote(votingBlockCacheEntry.m_blk);
+                        }
+                        break;
+                    }
+                    case common::gossip_cache_peers_entry::data_type_id: {
+                        common::gossip_cache_peers_entry gossipCachePeersEntry(i.value());
+                        add_gossip_peers(chain_id, gossipCachePeersEntry.m_peers);
+                        break;
+                    }
+                    default: {
+
+                    }
+                }
+            }
         }
     }
 
@@ -3678,7 +3709,7 @@ namespace libTAU::blockchain {
             dht::secret_key * sk = m_ses.serkey();
 
             // salt is y pubkey when publish signal
-            auto salt = make_salt(*pk, chain_id);
+            auto salt = make_salt(*pk, chain_id, common::gossip_cache_peers_entry::data_type_id);
 
             log("INFO: Chain id[%s] Cache gossip peers salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
 
@@ -4101,134 +4132,134 @@ namespace libTAU::blockchain {
 
                         break;
                     }
-                    case common::vote_request_entry::data_type_id: {
-                        common::vote_request_entry voteRequestEntry(payload);
-                        auto &chain_id = voteRequestEntry.m_chain_id;
-
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
-                            }
-                        }
-
-                        try_to_kick_out_of_ban_list(chain_id, peer);
-
-                        auto &acl = m_access_list[chain_id];
-                        auto it = acl.find(peer);
-                        if (it != acl.end()) {
-                            auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::vote_request_entry>(payload));
-                            if (itor != it->second.m_peer_requests_time.end()) {
-                                if (now > itor->second + blockchain_same_response_interval) {
-                                    it->second.m_peer_requests_time.erase(itor);
-                                } else {
-                                    log("INFO: The same request from the same peer in 3s.");
-                                    break;
-                                }
-                            } else {
-                                it->second.m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
-                            }
-                            it->second.m_score -= 3;
-                            it->second.m_last_seen = now;
-                        } else {
-                            if (acl.size() >= blockchain_acl_max_peers) {
-                                // find out min score peer
-                                auto min_it = acl.begin();
-                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                    if (iter->second.m_score  < min_it->second.m_score) {
-                                        min_it = iter;
-                                    }
-                                }
-
-                                if (min_it->second.m_score < peer_info().m_score) {
-                                    // replace min score peer with new one
-                                    acl.erase(min_it);
-                                    acl[peer] = peer_info(now);
-                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
-
-                                    introduce_gossip_peers(chain_id, peer);
-                                    get_gossip_peers(chain_id, peer);
-                                }
-                            } else {
-                                acl[peer] = peer_info(now);
-                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
-
-                                introduce_gossip_peers(chain_id, peer);
-                                get_gossip_peers(chain_id, peer);
-                            }
-                        }
-
-                        // vote for voting point
-                        auto &voting_point_block = m_voting_point_blocks[chain_id];
-                        if (is_sync_completed(chain_id) && !voting_point_block.empty()) {
-                            common::vote_entry voteEntry(chain_id,vote(voting_point_block.sha256(),
-                                                                       voting_point_block.cumulative_difficulty(),
-                                                                       voting_point_block.block_number()));
-                            send_to(chain_id, peer, common::vote_entry::data_type_id, voteEntry.get_entry(), true);
-                        }
-
-                        try_to_update_visiting_peer(chain_id, peer);
-
-                        break;
-                    }
-                    case common::vote_entry::data_type_id: {
-                        common::vote_entry voteEntry(payload);
-                        auto &chain_id = voteEntry.m_chain_id;
-
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
-                            }
-                        }
-
-                        try_to_kick_out_of_ban_list(chain_id, peer);
-
-                        auto &acl = m_access_list[chain_id];
-                        auto it = acl.find(peer);
-                        if (it != acl.end()) {
-                            it->second.m_score += 3;
-                            if (it->second.m_score > 100) {
-                                it->second.m_score = 100;
-                            }
-                            it->second.m_requests_time.erase(std::make_unique<common::vote_request_entry>(chain_id));
-                            it->second.m_last_seen = now;
-                        } else {
-                            if (acl.size() >= blockchain_acl_max_peers) {
-                                // find out min score peer
-                                auto min_it = acl.begin();
-                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                    if (iter->second.m_score  < min_it->second.m_score) {
-                                        min_it = iter;
-                                    }
-                                }
-
-                                if (min_it->second.m_score < peer_info().m_score) {
-                                    // replace min score peer with new one
-                                    acl.erase(min_it);
-                                    acl[peer] = peer_info(now);
-
-                                    introduce_gossip_peers(chain_id, peer);
-                                    get_gossip_peers(chain_id, peer);
-                                }
-                            } else {
-                                acl[peer] = peer_info(now);
-
-                                introduce_gossip_peers(chain_id, peer);
-                                get_gossip_peers(chain_id, peer);
-                            }
-                        }
-
-                        log("INFO: chain[%s] valid vote[%s]",
-                            aux::toHex(chain_id).c_str(), voteEntry.m_vote.to_string().c_str());
-                        m_votes[chain_id][peer] = voteEntry.m_vote;
-
-                        try_to_update_visiting_peer(chain_id, peer);
-
-                        break;
-                    }
+//                    case common::vote_request_entry::data_type_id: {
+//                        common::vote_request_entry voteRequestEntry(payload);
+//                        auto &chain_id = voteRequestEntry.m_chain_id;
+//
+//                        {
+//                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+//                            if (it == m_chains.end()) {
+//                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+//                                return;
+//                            }
+//                        }
+//
+//                        try_to_kick_out_of_ban_list(chain_id, peer);
+//
+//                        auto &acl = m_access_list[chain_id];
+//                        auto it = acl.find(peer);
+//                        if (it != acl.end()) {
+//                            auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::vote_request_entry>(payload));
+//                            if (itor != it->second.m_peer_requests_time.end()) {
+//                                if (now > itor->second + blockchain_same_response_interval) {
+//                                    it->second.m_peer_requests_time.erase(itor);
+//                                } else {
+//                                    log("INFO: The same request from the same peer in 3s.");
+//                                    break;
+//                                }
+//                            } else {
+//                                it->second.m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
+//                            }
+//                            it->second.m_score -= 3;
+//                            it->second.m_last_seen = now;
+//                        } else {
+//                            if (acl.size() >= blockchain_acl_max_peers) {
+//                                // find out min score peer
+//                                auto min_it = acl.begin();
+//                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+//                                    if (iter->second.m_score  < min_it->second.m_score) {
+//                                        min_it = iter;
+//                                    }
+//                                }
+//
+//                                if (min_it->second.m_score < peer_info().m_score) {
+//                                    // replace min score peer with new one
+//                                    acl.erase(min_it);
+//                                    acl[peer] = peer_info(now);
+//                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
+//
+//                                    introduce_gossip_peers(chain_id, peer);
+//                                    get_gossip_peers(chain_id, peer);
+//                                }
+//                            } else {
+//                                acl[peer] = peer_info(now);
+//                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
+//
+//                                introduce_gossip_peers(chain_id, peer);
+//                                get_gossip_peers(chain_id, peer);
+//                            }
+//                        }
+//
+//                        // vote for voting point
+//                        auto &voting_point_block = m_voting_point_blocks[chain_id];
+//                        if (is_sync_completed(chain_id) && !voting_point_block.empty()) {
+//                            common::vote_entry voteEntry(chain_id,vote(voting_point_block.sha256(),
+//                                                                       voting_point_block.cumulative_difficulty(),
+//                                                                       voting_point_block.block_number()));
+//                            send_to(chain_id, peer, common::vote_entry::data_type_id, voteEntry.get_entry(), true);
+//                        }
+//
+//                        try_to_update_visiting_peer(chain_id, peer);
+//
+//                        break;
+//                    }
+//                    case common::vote_entry::data_type_id: {
+//                        common::vote_entry voteEntry(payload);
+//                        auto &chain_id = voteEntry.m_chain_id;
+//
+//                        {
+//                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+//                            if (it == m_chains.end()) {
+//                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+//                                return;
+//                            }
+//                        }
+//
+//                        try_to_kick_out_of_ban_list(chain_id, peer);
+//
+//                        auto &acl = m_access_list[chain_id];
+//                        auto it = acl.find(peer);
+//                        if (it != acl.end()) {
+//                            it->second.m_score += 3;
+//                            if (it->second.m_score > 100) {
+//                                it->second.m_score = 100;
+//                            }
+//                            it->second.m_requests_time.erase(std::make_unique<common::vote_request_entry>(chain_id));
+//                            it->second.m_last_seen = now;
+//                        } else {
+//                            if (acl.size() >= blockchain_acl_max_peers) {
+//                                // find out min score peer
+//                                auto min_it = acl.begin();
+//                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+//                                    if (iter->second.m_score  < min_it->second.m_score) {
+//                                        min_it = iter;
+//                                    }
+//                                }
+//
+//                                if (min_it->second.m_score < peer_info().m_score) {
+//                                    // replace min score peer with new one
+//                                    acl.erase(min_it);
+//                                    acl[peer] = peer_info(now);
+//
+//                                    introduce_gossip_peers(chain_id, peer);
+//                                    get_gossip_peers(chain_id, peer);
+//                                }
+//                            } else {
+//                                acl[peer] = peer_info(now);
+//
+//                                introduce_gossip_peers(chain_id, peer);
+//                                get_gossip_peers(chain_id, peer);
+//                            }
+//                        }
+//
+//                        log("INFO: chain[%s] valid vote[%s]",
+//                            aux::toHex(chain_id).c_str(), voteEntry.m_vote.to_string().c_str());
+//                        m_votes[chain_id][peer] = voteEntry.m_vote;
+//
+//                        try_to_update_visiting_peer(chain_id, peer);
+//
+//                        break;
+//                    }
                     case common::head_block_request_entry::data_type_id: {
                         common::head_block_request_entry headBlockRequestEntry(payload);
                         auto &chain_id = headBlockRequestEntry.m_chain_id;

@@ -37,10 +37,10 @@ namespace libTAU::common {
         // protocol id
         e[protocol_type] = entry(m_pid);
 
-        if (m_pid == protocol_put) {
-            // data type id
-            e[entry_type] = entry(m_data_type_id);
-        } else if (m_pid == protocol_gossip) {
+        // data type id
+        e[entry_type] = entry(m_data_type_id);
+
+        if (m_pid == protocol_gossip) {
             // short chain id
             if (m_short_chain_id.size() > salt_short_chain_id_length) {
                 e[entry_short_chain_id] = entry(
@@ -81,6 +81,22 @@ namespace libTAU::common {
             l.push_back(entry(std::string(peer.bytes.begin(), peer.bytes.end())));
         }
         e[entry_value] = l;
+
+        return e;
+    }
+
+    voting_block_cache_entry::voting_block_cache_entry(const entry &e) {
+        // block
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            m_blk = blockchain::block(*i);
+        }
+    }
+
+    entry voting_block_cache_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // block
+        e[entry_value] = m_blk.get_entry();
 
         return e;
     }

@@ -48,7 +48,10 @@ namespace libTAU::common {
 
         explicit protocol_entry(int64_t mDataTypeId) : m_data_type_id(mDataTypeId) { m_pid = protocol_put; }
 
-        explicit protocol_entry(aux::bytes mChainId) : m_short_chain_id(std::move(mChainId)) { m_pid = protocol_gossip; }
+        protocol_entry(aux::bytes mShortChainId, int64_t mDataTypeId) : m_short_chain_id(std::move(mShortChainId)),
+                                                                               m_data_type_id(mDataTypeId) {
+            m_pid = protocol_gossip;
+        }
 
         entry get_entry();
 
@@ -58,13 +61,16 @@ namespace libTAU::common {
         protocol_id m_pid;
 
         // data type id
-        std::int64_t m_data_type_id{};
+        aux::bytes m_short_chain_id;
 
         // data type id
-        aux::bytes m_short_chain_id;
+        std::int64_t m_data_type_id{};
     };
 
     struct TORRENT_EXPORT gossip_cache_peers_entry {
+        // data type id
+        static inline constexpr std::int64_t data_type_id = 1;
+
         // @param Construct with entry
         explicit gossip_cache_peers_entry(const entry& e);
 
@@ -77,6 +83,24 @@ namespace libTAU::common {
         entry get_entry() const;
 
         std::set<dht::public_key> m_peers;
+    };
+
+    struct TORRENT_EXPORT voting_block_cache_entry {
+        // data type id
+        static inline constexpr std::int64_t data_type_id = 2;
+
+        // @param Construct with entry
+        explicit voting_block_cache_entry(const entry& e);
+
+        // @param Construct with bencode
+        explicit voting_block_cache_entry(std::string encode): voting_block_cache_entry(bdecode(encode)) {}
+
+        explicit voting_block_cache_entry(blockchain::block mBlk) : m_blk(std::move(mBlk)) {}
+
+        // @returns the corresponding entry
+        entry get_entry() const;
+
+        blockchain::block m_blk;
     };
 
     struct communication_entry_base {

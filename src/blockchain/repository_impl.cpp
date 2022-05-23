@@ -507,7 +507,7 @@ namespace libTAU::blockchain {
         return status.ok();
     }
 
-    bool repository_impl::save_block(block &b) {
+    bool repository_impl::save_block(const block &b) {
         if (b.empty())
             return false;
 
@@ -603,7 +603,7 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_impl::connect_head_block(block &b) {
+    bool repository_impl::connect_head_block(const block &b) {
         m_connected_blocks.push_back(b);
 
         // save block
@@ -642,7 +642,7 @@ namespace libTAU::blockchain {
         return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
-    bool repository_impl::connect_tail_block(block &b) {
+    bool repository_impl::connect_tail_block(const block &b) {
         m_connected_blocks.push_back(b);
 
         // save block
@@ -682,7 +682,7 @@ namespace libTAU::blockchain {
     }
 
     // validate peer
-    bool repository_impl::rollback_block(block &b) {
+    bool repository_impl::rollback_block(const block &b) {
         if (b.empty())
             return false;
 
@@ -755,7 +755,7 @@ namespace libTAU::blockchain {
         return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
     }
 
-    bool repository_impl::expire_block(block &b) {
+    bool repository_impl::expire_block(const block &b) {
         if (b.empty())
             return false;
 

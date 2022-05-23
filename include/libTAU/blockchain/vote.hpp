@@ -11,6 +11,10 @@ see LICENSE file.
 
 
 #include <ostream>
+#include <utility>
+
+#include "blockchain/block.hpp"
+
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
 #include "libTAU/sha1_hash.hpp"
@@ -25,47 +29,43 @@ namespace libTAU {
             vote() = default;
 
             // @param Construct with entry
-            explicit vote(const entry& e);
+//            explicit vote(const entry& e);
 
             // @param Construct with bencode
-            explicit vote(std::string encode): vote(bdecode(encode)) {}
+//            explicit vote(std::string encode): vote(bdecode(encode)) {}
+
+            explicit vote(block mBlock) : m_voting_block(std::move(mBlock)) {}
 
 //            vote(const sha256_hash &mBlockHash, int64_t mBlockNumber) : m_block_hash(mBlockHash),
 //            m_block_number(mBlockNumber) {}
 
-            vote(const sha256_hash &mBlockHash, uint64_t mCumulativeDifficulty, int64_t mBlockNumber) : m_block_hash(
-                    mBlockHash), m_cumulative_difficulty(mCumulativeDifficulty), m_block_number(mBlockNumber) {}
+//            vote(const sha256_hash &mBlockHash, uint64_t mCumulativeDifficulty, int64_t mBlockNumber) : m_block_hash(
+//                    mBlockHash), m_cumulative_difficulty(mCumulativeDifficulty), m_block_number(mBlockNumber) {}
 
-            const sha256_hash &block_hash() const { return m_block_hash; }
+//            const sha256_hash &block_hash() const { return m_block_hash; }
 
 //            void setBlockHash(const sha256_hash &mBlockHash) { m_block_hash = mBlockHash; }
 
-            int64_t block_number() const { return m_block_number; }
+//            int64_t block_number() const { return m_block_number; }
 
 //            void setBlockNumber(int64_t mBlockNumber) { m_block_number = mBlockNumber; }
 
-            uint64_t cumulative_difficulty() const { return m_cumulative_difficulty; }
+//            uint64_t cumulative_difficulty() const { return m_cumulative_difficulty; }
+
+            const block &voting_block() const { return m_voting_block; }
 
             int count() const { return m_count; }
 
             void vote_up() { m_count++; }
 
-            bool empty() { return m_block_hash.is_all_zeros(); }
+            bool empty() { return m_voting_block.sha256().is_all_zeros(); }
 
-            entry get_entry() const;
-
-            std::string get_encode() const;
+//            entry get_entry() const;
+//
+//            std::string get_encode() const;
 
             bool operator<(const vote &rhs) const {
-                if (m_block_hash < rhs.m_block_hash)
-                    return true;
-                if (rhs.m_block_hash < m_block_hash)
-                    return false;
-                if (m_cumulative_difficulty < rhs.m_cumulative_difficulty)
-                    return true;
-                if (rhs.m_cumulative_difficulty < m_cumulative_difficulty)
-                    return false;
-                return m_block_number < rhs.m_block_number;
+                return m_voting_block < rhs.m_voting_block;
             }
 
             bool operator>(const vote &rhs) const {
@@ -87,14 +87,16 @@ namespace libTAU {
 
         private:
             // populate block chain signal info from entry
-            void populate(const entry& e);
+//            void populate(const entry& e);
 
-            sha256_hash m_block_hash;
+//            sha256_hash m_block_hash;
+//
+//            // cumulative difficulty
+//            std::uint64_t m_cumulative_difficulty{};
+//
+//            std::int64_t m_block_number{};
 
-            // cumulative difficulty
-            std::uint64_t m_cumulative_difficulty{};
-
-            std::int64_t m_block_number{};
+            block m_voting_block;
 
             int m_count = 1;
         };

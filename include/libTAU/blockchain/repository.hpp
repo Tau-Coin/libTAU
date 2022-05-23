@@ -101,13 +101,13 @@ namespace libTAU::blockchain {
         bool backward_update_state_linker(const aux::bytes &chain_id, const dht::public_key& pubKey,
                                                   state_linker& stateLinker, const sha256_hash &current_block_hash);
 
-        virtual bool connect_head_block(block &b) = 0;
+        virtual bool connect_head_block(const block &b) = 0;
 
-        virtual bool connect_tail_block(block &b) = 0;
+        virtual bool connect_tail_block(const block &b) = 0;
 
-        virtual bool rollback_block(block &b) = 0;
+        virtual bool rollback_block(const block &b) = 0;
 
-        virtual bool expire_block(block &b) = 0;
+        virtual bool expire_block(const block &b) = 0;
 
         virtual bool delete_block(const sha256_hash &hash) = 0;
 
@@ -168,9 +168,9 @@ namespace libTAU::blockchain {
 
         virtual bool delete_state_linker(const sha256_hash &block_hash) = 0;
 
-        virtual bool save_block(block &b) = 0;
+        virtual bool save_block(const block &b) = 0;
 
-        bool save_non_main_chain_block(block &b);
+        bool save_non_main_chain_block(const block &b);
 
         virtual bool delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) = 0;
 
