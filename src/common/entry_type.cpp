@@ -471,54 +471,54 @@ namespace libTAU::common {
         return e;
     }
 
-    vote_request_entry::vote_request_entry(const entry &e) {
-        m_entry = e;
-
-        // chain id
-        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
-        {
-            auto chain_id = i->string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-        }
-    }
-
-    entry vote_request_entry::get_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-//        e[entry_type] = entry(data_type_id);
-        // chain id
-        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
-
-        return e;
-    }
-
-    vote_entry::vote_entry(const entry &e) {
-        m_entry = e;
-
-        // vote
-        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
-        {
-            m_vote = blockchain::vote(*i);
-        }
-        // chain id
-        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
-        {
-            auto chain_id = i->string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-        }
-    }
-
-    entry vote_entry::get_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-//        e[entry_type] = entry(data_type_id);
-        // chain id
-        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
-        // vote
-        e[entry_value] = m_vote.get_entry();
-
-        return e;
-    }
+//    vote_request_entry::vote_request_entry(const entry &e) {
+//        m_entry = e;
+//
+//        // chain id
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+//        {
+//            auto chain_id = i->string();
+//            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+//        }
+//    }
+//
+//    entry vote_request_entry::get_entry() const {
+//        entry e(entry::dictionary_t);
+//        // data type id
+////        e[entry_type] = entry(data_type_id);
+//        // chain id
+//        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+//
+//        return e;
+//    }
+//
+//    vote_entry::vote_entry(const entry &e) {
+//        m_entry = e;
+//
+//        // vote
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+//        {
+//            m_vote = blockchain::vote(*i);
+//        }
+//        // chain id
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+//        {
+//            auto chain_id = i->string();
+//            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+//        }
+//    }
+//
+//    entry vote_entry::get_entry() const {
+//        entry e(entry::dictionary_t);
+//        // data type id
+////        e[entry_type] = entry(data_type_id);
+//        // chain id
+//        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+//        // vote
+//        e[entry_value] = m_vote.get_entry();
+//
+//        return e;
+//    }
 
     head_block_request_entry::head_block_request_entry(const entry &e) {
         m_entry = e;
@@ -788,6 +788,63 @@ namespace libTAU::common {
         return e;
     }
 
+    fee_tx_pool_entry::fee_tx_pool_entry(const entry &e) {
+        m_entry = e;
+
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+        // tx pool levenshtein array
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            std::string levenshtein_array = i->string();
+            m_fee_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+        }
+    }
+
+    entry fee_tx_pool_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+//        e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // message levenshtein array
+        e[entry_value] = entry(std::string(m_fee_pooL_levenshtein_array.begin(), m_fee_pooL_levenshtein_array.end()));
+
+        return e;
+    }
+
+    time_tx_pool_entry::time_tx_pool_entry(const entry &e) {
+        m_entry = e;
+
+        // chain id
+        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+        {
+            auto chain_id = i->string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        }
+        // tx pool levenshtein array
+        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+        {
+            std::string levenshtein_array = i->string();
+            m_time_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+        }
+    }
+
+    entry time_tx_pool_entry::get_entry() const {
+        entry e(entry::dictionary_t);
+        // data type id
+//        e[entry_type] = entry(data_type_id);
+        // chain id
+        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        // message levenshtein array
+        e[entry_value] = entry(std::string(m_time_pooL_levenshtein_array.begin(), m_time_pooL_levenshtein_array.end()));
+
+        return e;
+    }
 
     ping_entry::ping_entry(const entry &e) {
         m_entry = e;
