@@ -870,36 +870,36 @@ namespace libTAU::common {
         sha256_hash m_hash;
     };
 
-    struct TORRENT_EXPORT tx_pool_entry final : blockchain_entry_base {
-        // data type id
-        static inline constexpr std::int64_t data_type_id = 313;
-
-        // @param Construct with entry
-        explicit tx_pool_entry(const entry& e);
-
-        explicit tx_pool_entry(aux::bytes mChainId) {
-            m_chain_id = std::move(mChainId);
-
-            m_entry = get_entry();
-        }
-
-        tx_pool_entry(aux::bytes mChainId, aux::bytes mFeePooLLevenshteinArray, aux::bytes mTimePooLLevenshteinArray)
-                : m_fee_pooL_levenshtein_array(std::move(mFeePooLLevenshteinArray)),
-                  m_time_pooL_levenshtein_array(std::move(mTimePooLLevenshteinArray)) {
-            m_chain_id = std::move(mChainId);
-
-            m_entry = get_entry();
-        }
-
-        // @returns the corresponding entry
-        entry get_entry() const override;
-
-        // bytes consist of first byte of ordered messages hash
-        aux::bytes m_fee_pooL_levenshtein_array;
-
-        // bytes consist of first byte of ordered messages hash
-        aux::bytes m_time_pooL_levenshtein_array;
-    };
+//    struct TORRENT_EXPORT tx_pool_entry final : blockchain_entry_base {
+//        // data type id
+//        static inline constexpr std::int64_t data_type_id = 313;
+//
+//        // @param Construct with entry
+//        explicit tx_pool_entry(const entry& e);
+//
+//        explicit tx_pool_entry(aux::bytes mChainId) {
+//            m_chain_id = std::move(mChainId);
+//
+//            m_entry = get_entry();
+//        }
+//
+//        tx_pool_entry(aux::bytes mChainId, aux::bytes mFeePooLLevenshteinArray, aux::bytes mTimePooLLevenshteinArray)
+//                : m_fee_pooL_levenshtein_array(std::move(mFeePooLLevenshteinArray)),
+//                  m_time_pooL_levenshtein_array(std::move(mTimePooLLevenshteinArray)) {
+//            m_chain_id = std::move(mChainId);
+//
+//            m_entry = get_entry();
+//        }
+//
+//        // @returns the corresponding entry
+//        entry get_entry() const override;
+//
+//        // bytes consist of first byte of ordered messages hash
+//        aux::bytes m_fee_pooL_levenshtein_array;
+//
+//        // bytes consist of first byte of ordered messages hash
+//        aux::bytes m_time_pooL_levenshtein_array;
+//    };
 
     struct TORRENT_EXPORT gossip_peers_entry final : blockchain_entry_base {
         // data type id

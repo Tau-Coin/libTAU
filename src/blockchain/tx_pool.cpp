@@ -23,12 +23,17 @@ namespace libTAU::blockchain {
     }
 
     transaction tx_pool::get_latest_note_transaction() const {
-        auto it = m_ordered_txs_by_timestamp.rbegin();
-        if (it != m_ordered_txs_by_timestamp.rend()) {
+        for (auto it = m_ordered_txs_by_timestamp.rbegin(); it != m_ordered_txs_by_timestamp.rend(); it++) {
             auto it_tx = m_all_txs_by_timestamp.find(it->txid());
-            if (it_tx != m_all_txs_by_timestamp.end())
+            if (it_tx != m_all_txs_by_timestamp.end() && it_tx->second.type() == tx_type::type_note)
                 return it_tx->second;
         }
+//        auto it = m_ordered_txs_by_timestamp.rbegin();
+//        if (it != m_ordered_txs_by_timestamp.rend()) {
+//            auto it_tx = m_all_txs_by_timestamp.find(it->txid());
+//            if (it_tx != m_all_txs_by_timestamp.end())
+//                return it_tx->second;
+//        }
 
         return transaction();
     }
@@ -188,21 +193,19 @@ namespace libTAU::blockchain {
             m_active_peers.pop();
         }
 
+        auto ret1 = false;
         if (tx.type() == tx_type::type_transfer) {
-            return add_tx_to_fee_pool(tx);
-        } else if (tx.type() == tx_type::type_note) {
-            return add_tx_to_time_pool(tx);
-        } else {
-            return false;
+            ret1 = add_tx_to_fee_pool(tx);
         }
+        auto ret2 = add_tx_to_time_pool(tx);
 
 //        auto ret1 = add_tx_to_time_pool(tx);
 //        auto ret2 = add_tx_to_fee_pool(tx);
-//
-//        if (!ret1 && !ret2)
-//            return false;
-//
-//        return true;
+
+        if (!ret1 && !ret2)
+            return false;
+
+        return true;
     }
 
 //    bool tx_pool::rollback_block(const block &blk) {
