@@ -415,7 +415,6 @@ namespace libTAU::blockchain {
                 }
             } else if (item.second.m_stage == NORMAL) {
                 if (!item.second.m_fee_tx_pool_sync_done && is_sync_completed(chain_id) &&
-                    item.second.m_head_block == m_head_blocks[chain_id] &&
                     item.second.m_requests_time.find(std::make_unique<common::fee_tx_pool_entry>(chain_id))
                     == item.second.m_requests_time.end()) {
                     common::fee_tx_pool_entry feeTxPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_fee());
@@ -3918,7 +3917,7 @@ namespace libTAU::blockchain {
 
                             log("INFO: Got block[%s].", blk_entry.m_blk.to_string().c_str());
 
-//                        m_repository->save_block(blk_entry.m_blk);
+                            m_repository->save_block(blk_entry.m_blk);
 
                             m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
@@ -4516,6 +4515,8 @@ namespace libTAU::blockchain {
 
                             log("INFO: Got head block[%s] from peer[%s].",
                                 blk_entry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+
+                            m_repository->save_block(blk_entry.m_blk);
 
                             m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
