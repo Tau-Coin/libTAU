@@ -2457,6 +2457,11 @@ namespace {
 			stop_ip_notifier();
 	}
 
+	void session_impl::enable_debug_log()
+	{
+		m_logged = m_settings.get_bool(settings_pack::enable_debug_log);
+	}
+
 	void session_impl::update_upnp()
 	{
 		if (m_settings.get_bool(settings_pack::enable_upnp))
