@@ -34,7 +34,7 @@ namespace libTAU {
             // @param Construct with bencode
 //            explicit vote(std::string encode): vote(bdecode(encode)) {}
 
-            explicit vote(block mBlock) : m_voting_block(std::move(mBlock)) {}
+            explicit vote(blockchain::block mBlock) : m_voting_block(std::move(mBlock)) {}
 
 //            vote(const sha256_hash &mBlockHash, int64_t mBlockNumber) : m_block_hash(mBlockHash),
 //            m_block_number(mBlockNumber) {}
@@ -52,7 +52,7 @@ namespace libTAU {
 
 //            uint64_t cumulative_difficulty() const { return m_cumulative_difficulty; }
 
-            const block &voting_block() const { return m_voting_block; }
+            const blockchain::block &voting_block() const { return m_voting_block; }
 
             int count() const { return m_count; }
 
@@ -96,7 +96,7 @@ namespace libTAU {
 //
 //            std::int64_t m_block_number{};
 
-            block m_voting_block;
+            blockchain::block m_voting_block;
 
             int m_count = 1;
         };
