@@ -711,46 +711,46 @@ namespace libTAU::common {
     }
 
 
-    tx_pool_entry::tx_pool_entry(const entry &e) {
-        m_entry = e;
-
-        // chain id
-        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
-        {
-            auto chain_id = i->string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-        }
-        // tx pool levenshtein array
-        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
-        {
-            entry v = entry(*i);
-            if (auto* p = const_cast<entry *>(v.find_key("v1")))
-            {
-                std::string levenshtein_array = p->string();
-                m_fee_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
-            }
-            if (auto* p = const_cast<entry *>(v.find_key("v2")))
-            {
-                std::string levenshtein_array = p->string();
-                m_time_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
-            }
-        }
-    }
-
-    entry tx_pool_entry::get_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-//        e[entry_type] = entry(data_type_id);
-        // chain id
-        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
-        // message levenshtein array
-        entry v(entry::dictionary_t);
-        v["v1"] = entry(std::string(m_fee_pooL_levenshtein_array.begin(), m_fee_pooL_levenshtein_array.end()));
-        v["v2"] = entry(std::string(m_time_pooL_levenshtein_array.begin(), m_time_pooL_levenshtein_array.end()));
-        e[entry_value] = v;
-
-        return e;
-    }
+//    tx_pool_entry::tx_pool_entry(const entry &e) {
+//        m_entry = e;
+//
+//        // chain id
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_chain_id)))
+//        {
+//            auto chain_id = i->string();
+//            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+//        }
+//        // tx pool levenshtein array
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+//        {
+//            entry v = entry(*i);
+//            if (auto* p = const_cast<entry *>(v.find_key("v1")))
+//            {
+//                std::string levenshtein_array = p->string();
+//                m_fee_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+//            }
+//            if (auto* p = const_cast<entry *>(v.find_key("v2")))
+//            {
+//                std::string levenshtein_array = p->string();
+//                m_time_pooL_levenshtein_array = aux::bytes(levenshtein_array.begin(), levenshtein_array.end());
+//            }
+//        }
+//    }
+//
+//    entry tx_pool_entry::get_entry() const {
+//        entry e(entry::dictionary_t);
+//        // data type id
+////        e[entry_type] = entry(data_type_id);
+//        // chain id
+//        e[entry_chain_id] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+//        // message levenshtein array
+//        entry v(entry::dictionary_t);
+//        v["v1"] = entry(std::string(m_fee_pooL_levenshtein_array.begin(), m_fee_pooL_levenshtein_array.end()));
+//        v["v2"] = entry(std::string(m_time_pooL_levenshtein_array.begin(), m_time_pooL_levenshtein_array.end()));
+//        e[entry_value] = v;
+//
+//        return e;
+//    }
 
 
     gossip_peers_entry::gossip_peers_entry(const entry &e) {

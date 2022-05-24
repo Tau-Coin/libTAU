@@ -396,17 +396,22 @@ namespace libTAU::blockchain {
                     item.second.m_requests_time[std::make_unique<common::head_block_request_entry>(chain_id)] = now;
                 }
             } else if (item.second.m_stage == NORMAL) {
-                if (!item.second.m_tx_pool_sync_done && is_sync_completed(chain_id) &&
+                if (!item.second.m_fee_tx_pool_sync_done && is_sync_completed(chain_id) &&
                     item.second.m_head_block == m_head_blocks[chain_id] &&
-                    item.second.m_requests_time.find(
-                            std::make_unique<common::tx_pool_entry>(chain_id)) ==
-                    item.second.m_requests_time.end()) {
-                    common::tx_pool_entry txPoolEntry(chain_id,
-                                                      m_tx_pools[chain_id].get_hash_prefix_array_by_fee(),
-                                                      m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp());
-                    send_to(chain_id, item.first, common::tx_pool_entry::data_type_id, txPoolEntry.get_entry(), false);
+                    item.second.m_requests_time.find(std::make_unique<common::fee_tx_pool_entry>(chain_id))
+                    == item.second.m_requests_time.end()) {
+                    common::fee_tx_pool_entry feeTxPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_fee());
+                    send_to(chain_id, item.first, common::fee_tx_pool_entry::data_type_id, feeTxPoolEntry.get_entry(), false);
 
-                    item.second.m_requests_time[std::make_unique<common::tx_pool_entry>(chain_id)] = now;
+                    item.second.m_requests_time[std::make_unique<common::fee_tx_pool_entry>(chain_id)] = now;
+                }
+                if (!item.second.m_time_tx_pool_sync_done &&
+                    item.second.m_requests_time.find(std::make_unique<common::time_tx_pool_entry>(chain_id))
+                    == item.second.m_requests_time.end()) {
+                    common::time_tx_pool_entry txPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp());
+                    send_to(chain_id, item.first, common::time_tx_pool_entry::data_type_id, txPoolEntry.get_entry(), false);
+
+                    item.second.m_requests_time[std::make_unique<common::time_tx_pool_entry>(chain_id)] = now;
                 }
                 // ping every minute
                 if (now > item.second.m_last_ping_time + 60 * 1000) {
@@ -3909,8 +3914,8 @@ namespace libTAU::blockchain {
 
                         break;
                     }
-                    case common::tx_pool_entry::data_type_id: {
-                        common::tx_pool_entry txPoolEntry(payload);
+                    case common::fee_tx_pool_entry::data_type_id: {
+                        common::fee_tx_pool_entry txPoolEntry(payload);
                         auto &chain_id = txPoolEntry.m_chain_id;
 
                         {
@@ -3926,8 +3931,8 @@ namespace libTAU::blockchain {
                         auto &acl = m_access_list[chain_id];
                         auto it = acl.find(peer);
                         if (it != acl.end()) {
-                            it->second.m_requests_time.erase(std::make_unique<common::tx_pool_entry>(chain_id));
-                            auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::tx_pool_entry>(payload));
+                            it->second.m_requests_time.erase(std::make_unique<common::fee_tx_pool_entry>(chain_id));
+                            auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::fee_tx_pool_entry>(payload));
                             if (itor != it->second.m_peer_requests_time.end()) {
                                 if (now > itor->second + blockchain_same_response_interval) {
                                     it->second.m_peer_requests_time.erase(itor);
@@ -3936,11 +3941,11 @@ namespace libTAU::blockchain {
                                     break;
                                 }
                             } else {
-                                it->second.m_peer_requests_time.emplace(std::make_unique<common::tx_pool_entry>(payload), now);
+                                it->second.m_peer_requests_time.emplace(std::make_unique<common::fee_tx_pool_entry>(payload), now);
                             }
                             it->second.m_score -= 3;
                             it->second.m_last_seen = now;
-                            it->second.m_tx_pool_sync_done = true;
+                            it->second.m_fee_tx_pool_sync_done = true;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
                                 // find out min score peer
@@ -3955,8 +3960,8 @@ namespace libTAU::blockchain {
                                     // replace min score peer with new one
                                     acl.erase(min_it);
                                     acl[peer] = peer_info(now);
-                                    acl[peer].m_tx_pool_sync_done = true;
-                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::tx_pool_entry>(payload), now);
+                                    acl[peer].m_fee_tx_pool_sync_done = true;
+                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::fee_tx_pool_entry>(payload), now);
 
                                     introduce_gossip_peers(chain_id, peer);
                                     get_gossip_peers(chain_id, peer);
@@ -3967,8 +3972,8 @@ namespace libTAU::blockchain {
                                 }
                             } else {
                                 acl[peer] = peer_info(now);
-                                acl[peer].m_tx_pool_sync_done = true;
-                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::tx_pool_entry>(payload), now);
+                                acl[peer].m_fee_tx_pool_sync_done = true;
+                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::fee_tx_pool_entry>(payload), now);
 
                                 introduce_gossip_peers(chain_id, peer);
                                 get_gossip_peers(chain_id, peer);
@@ -3976,19 +3981,96 @@ namespace libTAU::blockchain {
                         }
 
                         auto fee_pool_txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
-                        auto time_pool_txs = m_tx_pools[chain_id].get_top_ten_timestamp_transactions();
                         std::set<transaction> missing_txs;
                         find_best_solution(fee_pool_txs, txPoolEntry.m_fee_pooL_levenshtein_array, missing_txs);
+
+                        for (auto const& tx: missing_txs) {
+                            common::transaction_entry txEntry(tx);
+                            send_to(chain_id, peer,  common::transaction_entry::data_type_id, txEntry.get_entry(), true);
+                        }
+//                        common::fee_tx_pool_entry replyEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_fee());
+//                        send_to(chain_id, peer, common::fee_tx_pool_entry::data_type_id, replyEntry.get_entry(), false);
+
+                        try_to_update_visiting_peer(chain_id, peer);
+
+                        break;
+                    }
+                    case common::time_tx_pool_entry::data_type_id: {
+                        common::time_tx_pool_entry txPoolEntry(payload);
+                        auto &chain_id = txPoolEntry.m_chain_id;
+
+                        {
+                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                            if (it == m_chains.end()) {
+                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                return;
+                            }
+                        }
+
+                        try_to_kick_out_of_ban_list(chain_id, peer);
+
+                        auto &acl = m_access_list[chain_id];
+                        auto it = acl.find(peer);
+                        if (it != acl.end()) {
+                            it->second.m_requests_time.erase(std::make_unique<common::time_tx_pool_entry>(chain_id));
+                            auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::time_tx_pool_entry>(payload));
+                            if (itor != it->second.m_peer_requests_time.end()) {
+                                if (now > itor->second + blockchain_same_response_interval) {
+                                    it->second.m_peer_requests_time.erase(itor);
+                                } else {
+                                    log("INFO: The same request from the same peer in 3s.");
+                                    break;
+                                }
+                            } else {
+                                it->second.m_peer_requests_time.emplace(std::make_unique<common::time_tx_pool_entry>(payload), now);
+                            }
+                            it->second.m_score -= 3;
+                            it->second.m_last_seen = now;
+                            it->second.m_time_tx_pool_sync_done = true;
+                        } else {
+                            if (acl.size() >= blockchain_acl_max_peers) {
+                                // find out min score peer
+                                auto min_it = acl.begin();
+                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+                                    if (iter->second.m_score  < min_it->second.m_score) {
+                                        min_it = iter;
+                                    }
+                                }
+
+                                if (min_it->second.m_score < peer_info().m_score) {
+                                    // replace min score peer with new one
+                                    acl.erase(min_it);
+                                    acl[peer] = peer_info(now);
+                                    acl[peer].m_time_tx_pool_sync_done = true;
+                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::time_tx_pool_entry>(payload), now);
+
+                                    introduce_gossip_peers(chain_id, peer);
+                                    get_gossip_peers(chain_id, peer);
+                                } else {
+                                    log("INFO: Too many peers in acl to response.");
+                                    introduce_gossip_peers(chain_id, peer);
+                                    break;
+                                }
+                            } else {
+                                acl[peer] = peer_info(now);
+                                acl[peer].m_time_tx_pool_sync_done = true;
+                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::time_tx_pool_entry>(payload), now);
+
+                                introduce_gossip_peers(chain_id, peer);
+                                get_gossip_peers(chain_id, peer);
+                            }
+                        }
+
+                        auto time_pool_txs = m_tx_pools[chain_id].get_top_ten_timestamp_transactions();
+                        std::set<transaction> missing_txs;
                         find_best_solution(time_pool_txs, txPoolEntry.m_time_pooL_levenshtein_array, missing_txs);
 
                         for (auto const& tx: missing_txs) {
                             common::transaction_entry txEntry(tx);
                             send_to(chain_id, peer,  common::transaction_entry::data_type_id, txEntry.get_entry(), true);
                         }
-                        common::tx_pool_entry replyEntry(chain_id,
-                                                         m_tx_pools[chain_id].get_hash_prefix_array_by_fee(),
-                                                         m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp());
-                        send_to(chain_id, peer, common::tx_pool_entry::data_type_id, replyEntry.get_entry(), false);
+//                        common::time_tx_pool_entry replyEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp());
+//                        send_to(chain_id, peer, common::time_tx_pool_entry::data_type_id, replyEntry.get_entry(), false);
 
                         try_to_update_visiting_peer(chain_id, peer);
 
@@ -4114,6 +4196,8 @@ namespace libTAU::blockchain {
 
                             log("INFO: Got transaction[%s].", tx.to_string().c_str());
 
+                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
+
 //                            if (tx.sender() == peer) {
 //                                common::transaction_reply_entry txReplyEntry(chain_id, tx.sha256());
 //                                send_to(chain_id, peer, common::transaction_reply_entry::data_type_id, txReplyEntry.get_entry(), true);
@@ -4122,9 +4206,8 @@ namespace libTAU::blockchain {
                             auto &pool = m_tx_pools[chain_id];
                             if (pool.add_tx(tx)) {
                                 common::transaction_entry txEntry(tx);
-                                transfer_to_acl_peers(chain_id, common::transaction_entry::data_type_id, txEntry.get_entry(), true);
-
-                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
+                                transfer_to_acl_peers(chain_id, common::transaction_entry::data_type_id,
+                                                      txEntry.get_entry(), true);
                             }
 
                             try_to_update_visiting_peer(chain_id, peer);
