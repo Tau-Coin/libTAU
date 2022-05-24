@@ -2315,23 +2315,23 @@ namespace libTAU::blockchain {
                             log("INFO chain[%s] main chain block[%s] mismatch the best vote",
                                 aux::toHex(chain_id).c_str(), aux::toHex(hash.to_string()).c_str());
                             // re-branch
-                            auto vote_block = get_block_from_cache_or_db(chain_id, best_vote.voting_block().sha256());
-                            if (!vote_block.empty()) {
-                                log("INFO chain[%s] try to re-branch to voting block[%s]",
-                                    aux::toHex(chain_id).c_str(), vote_block.to_string().c_str());
-                                auto result = try_to_rebranch(chain_id, vote_block, true);
+                            const auto& best_voting_block = best_vote.voting_block();
+                            if (!best_voting_block.empty()) {
+                                log("INFO chain[%s] try to re-branch to best voting block[%s]",
+                                    aux::toHex(chain_id).c_str(), best_voting_block.to_string().c_str());
+                                auto result = try_to_rebranch(chain_id, best_voting_block, true);
                                 // clear block cache if re-branch success/fail
                                 if (result == SUCCESS) {
                                     // clear all ancestor blocks
-                                    remove_all_ancestor_blocks_from_cache(vote_block);
+                                    remove_all_ancestor_blocks_from_cache(best_voting_block);
 
                                     // update consensus point block hash as best voting block
-                                    m_consensus_point_blocks[chain_id] = vote_block;
+                                    m_consensus_point_blocks[chain_id] = best_voting_block;
                                     m_repository->set_consensus_point_block_hash(chain_id, best_vote.voting_block().sha256());
 
-                                    m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(vote_block);
+                                    m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(best_voting_block);
                                 } else if (result == FAIL) {
-                                    remove_all_same_chain_blocks_from_cache(vote_block);
+                                    remove_all_same_chain_blocks_from_cache(best_voting_block);
                                 }
                             }
                         } else {
