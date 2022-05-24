@@ -30,11 +30,6 @@ namespace {
 #define METRIC(category, name) { #category "." #name, counters:: name },
 	aux::array<stats_metric_impl, counters::num_counters> const metrics
 	({{
-		METRIC(peer, connection_attempts)
-		METRIC(peer, connection_attempt_loops)
-		METRIC(peer, boost_connection_attempts)
-		METRIC(peer, missed_connection_attempts)
-		METRIC(peer, no_peer_connection_attempts)
 		METRIC(peer, incoming_connections)
 
 		// These counters count the number of times the
@@ -45,11 +40,7 @@ namespace {
 		// mitigate it by increasing buffers and limits
 		// for the specific trigger that wakes up the
 		// thread.
-		METRIC(net, on_read_counter)
-		METRIC(net, on_write_counter)
 		METRIC(net, on_tick_counter)
-		METRIC(net, on_lsd_counter)
-		METRIC(net, on_lsd_peer_counter)
 		METRIC(net, on_udp_counter)
 		METRIC(net, on_accept_counter)
 
@@ -166,41 +157,7 @@ namespace {
 		// 16384, 32768, 65536, 131072, 262144, 524288, 1048576
 		// bytes
 		METRIC(sock_bufs, socket_send_size3)
-		METRIC(sock_bufs, socket_send_size4)
-		METRIC(sock_bufs, socket_send_size5)
-		METRIC(sock_bufs, socket_send_size6)
-		METRIC(sock_bufs, socket_send_size7)
-		METRIC(sock_bufs, socket_send_size8)
-		METRIC(sock_bufs, socket_send_size9)
-		METRIC(sock_bufs, socket_send_size10)
-		METRIC(sock_bufs, socket_send_size11)
-		METRIC(sock_bufs, socket_send_size12)
-		METRIC(sock_bufs, socket_send_size13)
-		METRIC(sock_bufs, socket_send_size14)
-		METRIC(sock_bufs, socket_send_size15)
-		METRIC(sock_bufs, socket_send_size16)
-		METRIC(sock_bufs, socket_send_size17)
-		METRIC(sock_bufs, socket_send_size18)
-		METRIC(sock_bufs, socket_send_size19)
-		METRIC(sock_bufs, socket_send_size20)
 		METRIC(sock_bufs, socket_recv_size3)
-		METRIC(sock_bufs, socket_recv_size4)
-		METRIC(sock_bufs, socket_recv_size5)
-		METRIC(sock_bufs, socket_recv_size6)
-		METRIC(sock_bufs, socket_recv_size7)
-		METRIC(sock_bufs, socket_recv_size8)
-		METRIC(sock_bufs, socket_recv_size9)
-		METRIC(sock_bufs, socket_recv_size10)
-		METRIC(sock_bufs, socket_recv_size11)
-		METRIC(sock_bufs, socket_recv_size12)
-		METRIC(sock_bufs, socket_recv_size13)
-		METRIC(sock_bufs, socket_recv_size14)
-		METRIC(sock_bufs, socket_recv_size15)
-		METRIC(sock_bufs, socket_recv_size16)
-		METRIC(sock_bufs, socket_recv_size17)
-		METRIC(sock_bufs, socket_recv_size18)
-		METRIC(sock_bufs, socket_recv_size19)
-		METRIC(sock_bufs, socket_recv_size20)
 
 		// if the outstanding tracker announce limit is reached, tracker
 		// announces are queued, to be issued when an announce slot opens up.

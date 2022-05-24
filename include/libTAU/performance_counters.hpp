@@ -26,34 +26,12 @@ namespace libTAU {
 		// internal
 		enum stats_counter_t
 		{
-
-			// connection attempts (not necessarily successful)
-			connection_attempts,
-			// the number of iterations over the peer list when finding
-			// a connect candidate
-			connection_attempt_loops,
-
-			// the number of peer connection attempts made as high
-			// priority connections for new torrents
-			boost_connection_attempts,
-
-			// calls to torrent::connect_to_peer() that failed
-			missed_connection_attempts,
-
-			// calls to peer_list::connect_one_peer() resulting in
-			// no peer candidate being found
-			no_peer_connection_attempts,
-
 			// successful incoming connections (not rejected for any reason)
 			incoming_connections,
 
 			// counts events where the network
 			// thread wakes up
-			on_read_counter,
-			on_write_counter,
 			on_tick_counter,
-			on_lsd_counter,
-			on_lsd_peer_counter,
 			on_udp_counter,
 			on_accept_counter,
 
@@ -122,23 +100,6 @@ namespace libTAU {
 			// 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192,
 			// 16384, 32768, 65536, 131072, 262144, 524288, 1048576
 			socket_send_size3,
-			socket_send_size4,
-			socket_send_size5,
-			socket_send_size6,
-			socket_send_size7,
-			socket_send_size8,
-			socket_send_size9,
-			socket_send_size10,
-			socket_send_size11,
-			socket_send_size12,
-			socket_send_size13,
-			socket_send_size14,
-			socket_send_size15,
-			socket_send_size16,
-			socket_send_size17,
-			socket_send_size18,
-			socket_send_size19,
-			socket_send_size20,
 
 			// the buffer sizes returned by
 			// socket recv calls. The larger
@@ -149,23 +110,6 @@ namespace libTAU {
 			// 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192,
 			// 16384, 32768, 65536, 131072, 262144, 524288, 1048576
 			socket_recv_size3,
-			socket_recv_size4,
-			socket_recv_size5,
-			socket_recv_size6,
-			socket_recv_size7,
-			socket_recv_size8,
-			socket_recv_size9,
-			socket_recv_size10,
-			socket_recv_size11,
-			socket_recv_size12,
-			socket_recv_size13,
-			socket_recv_size14,
-			socket_recv_size15,
-			socket_recv_size16,
-			socket_recv_size17,
-			socket_recv_size18,
-			socket_recv_size19,
-			socket_recv_size20,
 
 			num_stats_counters
 		};

@@ -929,6 +929,9 @@ namespace aux {
             //start blockchain module
             enable_blockchain,
 
+            //enable debug log
+            enable_debug_log,
+
 			max_bool_setting_internal
 		};
 

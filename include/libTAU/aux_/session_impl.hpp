@@ -469,6 +469,8 @@ namespace aux {
 
 			bool is_aborted() const override { return m_abort; }
 
+			bool is_logged() const override { return m_logged; }
+
 			void set_ip_filter(std::shared_ptr<ip_filter> f);
 			ip_filter const& get_ip_filter();
 
@@ -600,7 +602,6 @@ namespace aux {
 			void inc_boost_connections() override
 			{
 				++m_boost_connections;
-				m_stats_counters.inc_stats_counter(counters::boost_connection_attempts);
 			}
 
 			// the settings for the client
@@ -619,6 +620,7 @@ namespace aux {
 			void update_resolver_cache_timeout();
 
 			void update_ip_notifier();
+			void enable_debug_log();
 			void update_upnp();
 			void update_natpmp();
 			void update_dht();
@@ -987,6 +989,8 @@ namespace aux {
 			// is being destructed and the thread
 			// should exit
 			bool m_abort = false;
+
+			bool m_logged = true;
 
 			// set to true the first time post_session_stats() is
 			// called and we post the headers alert

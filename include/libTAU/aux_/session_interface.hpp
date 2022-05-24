@@ -133,6 +133,7 @@ namespace libTAU::aux {
 		virtual time_point session_start_time() const = 0;
 
 		virtual bool is_aborted() const = 0;
+		virtual bool is_logged() const = 0;
 		virtual void trigger_optimistic_unchoke() noexcept = 0;
 		virtual void trigger_unchoke() noexcept = 0;
 

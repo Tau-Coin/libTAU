@@ -197,6 +197,7 @@ namespace libTAU {
 		SET(auto_referred, false, nullptr),
 		SET(enable_communication, true, nullptr),
 		SET(enable_blockchain, true, nullptr),
+		SET(enable_debug_log, true, &session_impl::enable_debug_log),
 	}});
 
 	CONSTEXPR_SETTINGS
