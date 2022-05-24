@@ -90,6 +90,14 @@ namespace libTAU::blockchain {
 
         m_refresh_timer.cancel();
 
+        for (auto& timer: m_chain_timers) {
+            timer.second.cancel();
+        }
+
+        for (auto& timer: m_vote_timers) {
+            timer.second.cancel();
+        }
+
         clear_all_cache();
 
         log("INFO: Stop BlockChain...");
@@ -187,6 +195,16 @@ namespace libTAU::blockchain {
 
             // remove chain id from db
             m_repository->delete_chain(chain_id);
+
+            // cancel
+            auto it_chain_timer = m_chain_timers.find(chain_id);
+            if (it_chain_timer != m_chain_timers.end()) {
+                it_chain_timer->second.cancel();
+            }
+            auto it_vote_timer = m_vote_timers.find(chain_id);
+            if (it_vote_timer != m_vote_timers.end()) {
+                it_vote_timer->second.cancel();
+            }
             // remove chain cache
             clear_chain_cache(chain_id);
             // todo: clear data in db?
@@ -436,6 +454,8 @@ namespace libTAU::blockchain {
         m_chains.clear();
         m_tx_pools.clear();
         m_chain_status.clear();
+        m_chain_timers.clear();
+        m_vote_timers.clear();
 //        m_last_voting_time.clear();
         m_vote_request_peers.clear();
 
@@ -470,6 +490,8 @@ namespace libTAU::blockchain {
 //        m_chains.erase(chain_id);
         m_tx_pools[chain_id].clear();
         m_chain_status.erase(chain_id);
+        m_chain_timers.erase(chain_id);
+        m_vote_timers.erase(chain_id);
 //        m_last_voting_time.erase(chain_id);
         m_vote_request_peers.erase(chain_id);
         m_visiting_history.erase(chain_id);
