@@ -703,7 +703,7 @@ feature.compose <sqldatabase>sqldb : <define>TORRENT_ABI_VERSION=3 ;
 feature compress : snappy : composite propagated ;
 #feature.compose <compress>snappy : <define>TORRENT_ENABLE_UDP_COMPRESS ;
 
-feature crashdump : breakpad : composite propagated ;
+#feature crashdump : breakpad : composite propagated ;
 #feature.compose <crashdump>breakpad : <define>TORRENT_ENABLE_CRASH_ANA ;
 
 feature udp-encryption : on off : composite propagated link-incompatible ;
