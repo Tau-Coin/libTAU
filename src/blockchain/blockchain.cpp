@@ -474,7 +474,7 @@ namespace libTAU::blockchain {
 //        m_unchoked_peer_signal.clear();
 //        m_update_peer_time.clear();
 //        m_last_got_data_time.clear();
-        m_blocks.clear();
+//        m_blocks.clear();
         m_head_blocks.clear();
         m_tail_blocks.clear();
         m_consensus_point_blocks.clear();
@@ -503,7 +503,7 @@ namespace libTAU::blockchain {
 //        m_unchoked_peer_signal[chain_id].clear();
 //        m_update_peer_time.erase(chain_id);
 //        m_last_got_data_time.erase(chain_id);
-        m_blocks[chain_id].clear();
+//        m_blocks[chain_id].clear();
         m_head_blocks.erase(chain_id);
         m_tail_blocks.erase(chain_id);
         m_consensus_point_blocks.erase(chain_id);
@@ -1802,11 +1802,11 @@ namespace libTAU::blockchain {
         return SUCCESS;
     }
 
-    void blockchain::block_reception_event(const aux::bytes &chain_id) {
+    void blockchain::block_reception_event(const aux::bytes &chain_id, const block &blk) {
 //        if (m_chain_status[chain_id] == MINING) {
             auto now = get_total_milliseconds();
 
-            auto &block_map = m_blocks[chain_id];
+//            auto &block_map = m_blocks[chain_id];
 
             // 1. if empty chain, init chain with the best voting block
             if (is_empty_chain(chain_id)) {
@@ -1824,23 +1824,31 @@ namespace libTAU::blockchain {
                 // 2. try to connect head/tail block
                 auto &head_block = m_head_blocks[chain_id];
                 auto &tail_block = m_tail_blocks[chain_id];
-                for (auto it = block_map.begin(); it != block_map.end();) {
-                    if (head_block.empty() || it->second.previous_block_hash() == head_block.sha256() ||
-                        it->second.sha256() == tail_block.previous_block_hash()) {
-                        log("INFO: process block:%s", it->second.to_string().c_str());
-                        auto ret = process_block(chain_id, it->second);
-                        if (ret == SUCCESS) {
-                            block_map.erase(it);
-                            it = block_map.begin();
-                            continue;
-                        } else if (ret == FAIL) {
-                            block_map.erase(it++);
-                            continue;
-                        }
+                if (head_block.empty() || blk.previous_block_hash() == head_block.sha256() ||
+                    blk.sha256() == tail_block.previous_block_hash()) {
+                    log("INFO: process block:%s", blk.to_string().c_str());
+                    auto ret = process_block(chain_id, blk);
+                    if (ret == FAIL) {
+                        log("ERROR: process block fail!");
                     }
-
-                    ++it;
                 }
+//                for (auto it = block_map.begin(); it != block_map.end();) {
+//                    if (head_block.empty() || it->second.previous_block_hash() == head_block.sha256() ||
+//                        it->second.sha256() == tail_block.previous_block_hash()) {
+//                        log("INFO: process block:%s", it->second.to_string().c_str());
+//                        auto ret = process_block(chain_id, it->second);
+//                        if (ret == SUCCESS) {
+//                            block_map.erase(it);
+//                            it = block_map.begin();
+//                            continue;
+//                        } else if (ret == FAIL) {
+//                            block_map.erase(it++);
+//                            continue;
+//                        }
+//                    }
+//
+//                    ++it;
+//                }
 
                 // 3. try to re-branch to a more difficult chain
                 {
@@ -1937,11 +1945,11 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
-        auto &block_map = m_blocks[chain_id];
-        auto it = block_map.find(hash);
-        if (it != block_map.end() && !it->second.empty()) {
-            return true;
-        }
+//        auto &block_map = m_blocks[chain_id];
+//        auto it = block_map.find(hash);
+//        if (it != block_map.end() && !it->second.empty()) {
+//            return true;
+//        }
 
         return m_repository->is_block_exist(hash);
     }
@@ -2019,56 +2027,56 @@ namespace libTAU::blockchain {
 //    }
 
     block blockchain::get_block_from_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
-        auto &block_map = m_blocks[chain_id];
-        auto it = block_map.find(hash);
-        if (it != block_map.end()) {
-            if (!it->second.empty()) {
-                return it->second;
-            } else {
-                block_map.erase(it);
-            }
-        }
+//        auto &block_map = m_blocks[chain_id];
+//        auto it = block_map.find(hash);
+//        if (it != block_map.end()) {
+//            if (!it->second.empty()) {
+//                return it->second;
+//            } else {
+//                block_map.erase(it);
+//            }
+//        }
 
         return m_repository->get_block_by_hash(hash);
     }
 
     void blockchain::remove_all_same_chain_blocks_from_cache(const block &blk) {
-        auto& block_map = m_blocks[blk.chain_id()];
-        auto previous_hash = blk.previous_block_hash();
-        auto it = block_map.find(previous_hash);
-        while (it != block_map.end()) {
-            previous_hash = it->second.previous_block_hash();
-            block_map.erase(it);
-            it = block_map.find(previous_hash);
-        }
-
-        previous_hash = blk.sha256();
-        for (it = block_map.begin(); it != block_map.end();) {
-            if (it->second.previous_block_hash() == previous_hash) {
-                previous_hash = it->second.sha256();
-                block_map.erase(it);
-
-                it = block_map.begin();
-                continue;
-            }
-
-            ++it;
-        }
-
-        block_map.erase(blk.sha256());
+//        auto& block_map = m_blocks[blk.chain_id()];
+//        auto previous_hash = blk.previous_block_hash();
+//        auto it = block_map.find(previous_hash);
+//        while (it != block_map.end()) {
+//            previous_hash = it->second.previous_block_hash();
+//            block_map.erase(it);
+//            it = block_map.find(previous_hash);
+//        }
+//
+//        previous_hash = blk.sha256();
+//        for (it = block_map.begin(); it != block_map.end();) {
+//            if (it->second.previous_block_hash() == previous_hash) {
+//                previous_hash = it->second.sha256();
+//                block_map.erase(it);
+//
+//                it = block_map.begin();
+//                continue;
+//            }
+//
+//            ++it;
+//        }
+//
+//        block_map.erase(blk.sha256());
     }
 
     void blockchain::remove_all_ancestor_blocks_from_cache(const block &blk) {
-        auto& block_map = m_blocks[blk.chain_id()];
-        auto previous_hash = blk.previous_block_hash();
-        auto it = block_map.find(previous_hash);
-        while (it != block_map.end()) {
-            previous_hash = it->second.previous_block_hash();
-            block_map.erase(it);
-            it = block_map.find(previous_hash);
-        }
-
-        block_map.erase(blk.sha256());
+//        auto& block_map = m_blocks[blk.chain_id()];
+//        auto previous_hash = blk.previous_block_hash();
+//        auto it = block_map.find(previous_hash);
+//        while (it != block_map.end()) {
+//            previous_hash = it->second.previous_block_hash();
+//            block_map.erase(it);
+//            it = block_map.find(previous_hash);
+//        }
+//
+//        block_map.erase(blk.sha256());
     }
 
     void blockchain::try_to_slim_down_cache(const aux::bytes &chain_id) {
@@ -3919,7 +3927,7 @@ namespace libTAU::blockchain {
 
                             m_repository->save_block(blk_entry.m_blk);
 
-                            m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
+//                            m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
                             m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(peer, blk_entry.m_blk);
 
@@ -3930,7 +3938,7 @@ namespace libTAU::blockchain {
 
                             try_to_update_visiting_peer(chain_id, peer);
 
-                            block_reception_event(chain_id);
+                            block_reception_event(chain_id, blk_entry.m_blk);
                         }
 
                         break;
@@ -4518,7 +4526,7 @@ namespace libTAU::blockchain {
 
                             m_repository->save_block(blk_entry.m_blk);
 
-                            m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
+//                            m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
                             if (is_empty_chain(chain_id)) {
                                 process_block(chain_id, blk_entry.m_blk);
@@ -4535,7 +4543,7 @@ namespace libTAU::blockchain {
 
                             try_to_update_visiting_peer(chain_id, peer);
 
-                            block_reception_event(chain_id);
+                            block_reception_event(chain_id, blk_entry.m_blk);
                         }
 
                         break;

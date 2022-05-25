@@ -266,7 +266,7 @@ namespace blockchain {
         // process block
         RESULT process_block(const aux::bytes &chain_id, const block &b);
 
-        void block_reception_event(const aux::bytes &chain_id);
+        void block_reception_event(const aux::bytes &chain_id, const block &blk);
 
         // check if a chain is empty, true if has no info, false otherwise
         bool is_empty_chain(const aux::bytes &chain_id);
@@ -469,7 +469,7 @@ namespace blockchain {
         std::map<aux::bytes, std::map<dht::public_key, ban_info>> m_ban_list;
 
         // block cache todo:100000?
-        std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;
+//        std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;
 
         // head blocks
         std::map<aux::bytes, block> m_head_blocks;
