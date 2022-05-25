@@ -1545,6 +1545,8 @@ namespace libTAU::blockchain {
             if (!blk.empty()) {
                 log("INFO chain[%s] Voting point block[%s]", aux::toHex(chain_id).c_str(), blk.to_string().c_str());
                 m_voting_point_blocks[chain_id] = blk;
+
+                put_voting_block(chain_id, blk);
             } else {
                 log("INFO chain[%s] Cannot find voting point block", aux::toHex(chain_id).c_str());
             }
