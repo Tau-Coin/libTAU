@@ -100,7 +100,9 @@ see LICENSE file.
 #include <leveldb/db.h>
 #include <sqlite3.h>
 #include <snappy-c.h>
+#ifdef TORRENT_ENABLE_CRASH_ANA
 #include <breakpad/client/linux/handler/exception_handler.h>
+#endif
 
 // for logging the size of DHT structures
 #include <libTAU/kademlia/find_data.hpp>
