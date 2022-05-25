@@ -59,8 +59,8 @@ namespace blockchain {
     // blockchain max focus time(5ms)
     constexpr std::int64_t blockchain_max_focus_time = 5 * 1000;
 
-    // blockchain request timeout(5s)
-    constexpr std::int64_t blockchain_request_timeout = 8 * 1000;
+    // blockchain request timeout(3s)
+    constexpr std::int64_t blockchain_request_timeout = 3 * 1000;
 
     // blockchain min peers in acl
     constexpr std::int64_t blockchain_acl_min_peers = 3;
