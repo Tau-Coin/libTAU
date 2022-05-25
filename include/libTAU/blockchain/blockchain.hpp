@@ -36,8 +36,8 @@ namespace blockchain {
 
     using system_clock = std::chrono::system_clock;
 
-    // default refresh time of main task(100)(ms)
-    constexpr int blockchain_default_refresh_time = 500;
+    // default refresh time of main task(2000)(ms)
+    constexpr int blockchain_default_refresh_time = 2000;
 
     // max task size
     constexpr int blockchain_max_task_size = 10000;
@@ -312,8 +312,12 @@ namespace blockchain {
 
         void try_to_rebranch_to_best_vote(const aux::bytes &chain_id);
 
-        // try to rebranch a more difficult chain or a voting chain
+        void try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id);
+
+        // try to rebranch the most difficult chain, or a voting chain
         RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute, dht::public_key peer = dht::public_key());
+
+        void try_to_sync_block(const aux::bytes &chain_id);
 
         // count votes
         void count_votes(const aux::bytes &chain_id);
