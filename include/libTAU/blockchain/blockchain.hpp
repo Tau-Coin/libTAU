@@ -221,7 +221,7 @@ namespace blockchain {
 
 //        void refresh_tx_timeout(error_code const& e);
 
-        void add_entry_task_to_queue(const aux::bytes &chain_id, const common::blockchain_entry_task &task);
+//        void add_entry_task_to_queue(const aux::bytes &chain_id, const common::blockchain_entry_task &task);
 
 
         // load chain all info
@@ -313,7 +313,7 @@ namespace blockchain {
         void try_to_rebranch_to_best_vote(const aux::bytes &chain_id);
 
         // try to rebranch a more difficult chain or a voting chain
-        RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute);
+        RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute, dht::public_key peer = dht::public_key());
 
         // count votes
         void count_votes(const aux::bytes &chain_id);
@@ -330,6 +330,10 @@ namespace blockchain {
 
         // send data to peer
         void send_to(const aux::bytes &chain_id, const dht::public_key &peer, std::int64_t data_type_id, entry const& data, bool cache);
+
+        void request_block(const aux::bytes &chain_id, const sha256_hash& hash);
+
+        void request_block(const aux::bytes &chain_id, const dht::public_key &peer, const sha256_hash& hash);
 
         void transfer_to_acl_peers(const aux::bytes &chain_id, std::int64_t data_type_id, entry const& data, bool cache = true);
 
@@ -453,8 +457,8 @@ namespace blockchain {
         std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
 
         // all tasks
-        std::queue<common::blockchain_entry_task> m_tasks;
-        std::set<common::blockchain_entry_task> m_tasks_set;
+//        std::queue<common::blockchain_entry_task> m_tasks;
+//        std::set<common::blockchain_entry_task> m_tasks_set;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_gossip_peers;
 
