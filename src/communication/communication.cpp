@@ -1680,8 +1680,8 @@ namespace libTAU {
             // salt is y pubkey when publish signal
             auto salt = make_salt(peer, data_type_id);
 
-            log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
-                aux::toHex(salt).c_str(), data.to_string().c_str());
+            log("INFO: Send to peer[%s], data type id[%ld], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
+                data_type_id, aux::toHex(salt).c_str(), data.to_string().c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
                     , pk->bytes, sk->bytes, data), alpha, beta, invoke_limit, salt, peer, cache);

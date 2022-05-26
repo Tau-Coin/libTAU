@@ -414,21 +414,17 @@ namespace libTAU::blockchain {
                     item.second.m_requests_time[std::make_unique<common::head_block_request_entry>(chain_id)] = now;
                 }
             } else if (item.second.m_stage == NORMAL) {
-                if (!item.second.m_fee_tx_pool_sync_done && is_sync_completed(chain_id) &&
-                    item.second.m_requests_time.find(std::make_unique<common::fee_tx_pool_entry>(chain_id))
-                    == item.second.m_requests_time.end()) {
+                if (!item.second.m_fee_tx_pool_sync_done && is_sync_completed(chain_id)) {
                     common::fee_tx_pool_entry feeTxPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_fee());
                     send_to(chain_id, item.first, common::fee_tx_pool_entry::data_type_id, feeTxPoolEntry.get_entry(), false);
 
-                    item.second.m_requests_time[std::make_unique<common::fee_tx_pool_entry>(chain_id)] = now;
+                    item.second.m_fee_tx_pool_sync_done = true;
                 }
-                if (!item.second.m_time_tx_pool_sync_done &&
-                    item.second.m_requests_time.find(std::make_unique<common::time_tx_pool_entry>(chain_id))
-                    == item.second.m_requests_time.end()) {
+                if (!item.second.m_time_tx_pool_sync_done) {
                     common::time_tx_pool_entry txPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp());
                     send_to(chain_id, item.first, common::time_tx_pool_entry::data_type_id, txPoolEntry.get_entry(), false);
 
-                    item.second.m_requests_time[std::make_unique<common::time_tx_pool_entry>(chain_id)] = now;
+                    item.second.m_time_tx_pool_sync_done = true;
                 }
                 // ping every minute
                 if (now > item.second.m_last_ping_time + 60 * 1000) {
@@ -2490,12 +2486,6 @@ namespace libTAU::blockchain {
         return salt;
     }
 
-    namespace {
-        void send_call_back(entry const& e, int n) {
-
-        }
-    }
-
     void blockchain::send_to(const aux::bytes &chain_id, const dht::public_key &peer, std::int64_t data_type_id, const entry &data, bool cache) {
         dht::public_key * pk = m_ses.pubkey();
         dht::secret_key * sk = m_ses.serkey();
@@ -2503,8 +2493,8 @@ namespace libTAU::blockchain {
         // salt is y pubkey when publish signal
         auto salt = make_salt(peer, data_type_id);
 
-        log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
-            aux::toHex(salt).c_str(), data.to_string().c_str());
+        log("INFO: Send to peer[%s], data type id[%ld], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
+            data_type_id, aux::toHex(salt).c_str(), data.to_string().c_str());
 
 //        m_ses.dht()->send(peer, data, 1, 3, 3, send_call_back);
 //        dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
@@ -3674,7 +3664,7 @@ namespace libTAU::blockchain {
                             } else {
                                 it->second.m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
                             }
-                            it->second.m_score -= 3;
+                            it->second.m_score -= 1;
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
@@ -3816,7 +3806,6 @@ namespace libTAU::blockchain {
                         auto &acl = m_access_list[chain_id];
                         auto it = acl.find(peer);
                         if (it != acl.end()) {
-                            it->second.m_requests_time.erase(std::make_unique<common::fee_tx_pool_entry>(chain_id));
                             auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::fee_tx_pool_entry>(payload));
                             if (itor != it->second.m_peer_requests_time.end()) {
                                 if (now > itor->second + blockchain_same_response_interval) {
@@ -3828,9 +3817,8 @@ namespace libTAU::blockchain {
                             } else {
                                 it->second.m_peer_requests_time.emplace(std::make_unique<common::fee_tx_pool_entry>(payload), now);
                             }
-                            it->second.m_score -= 3;
+                            it->second.m_score -= 1;
                             it->second.m_last_seen = now;
-                            it->second.m_fee_tx_pool_sync_done = true;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
                                 // find out min score peer
@@ -3845,7 +3833,6 @@ namespace libTAU::blockchain {
                                     // replace min score peer with new one
                                     acl.erase(min_it);
                                     acl[peer] = peer_info(now);
-                                    acl[peer].m_fee_tx_pool_sync_done = true;
                                     acl[peer].m_peer_requests_time.emplace(std::make_unique<common::fee_tx_pool_entry>(payload), now);
 
                                     introduce_gossip_peers(chain_id, peer);
@@ -3857,7 +3844,6 @@ namespace libTAU::blockchain {
                                 }
                             } else {
                                 acl[peer] = peer_info(now);
-                                acl[peer].m_fee_tx_pool_sync_done = true;
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::fee_tx_pool_entry>(payload), now);
 
                                 introduce_gossip_peers(chain_id, peer);
@@ -3897,7 +3883,6 @@ namespace libTAU::blockchain {
                         auto &acl = m_access_list[chain_id];
                         auto it = acl.find(peer);
                         if (it != acl.end()) {
-                            it->second.m_requests_time.erase(std::make_unique<common::time_tx_pool_entry>(chain_id));
                             auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::time_tx_pool_entry>(payload));
                             if (itor != it->second.m_peer_requests_time.end()) {
                                 if (now > itor->second + blockchain_same_response_interval) {
@@ -3909,9 +3894,8 @@ namespace libTAU::blockchain {
                             } else {
                                 it->second.m_peer_requests_time.emplace(std::make_unique<common::time_tx_pool_entry>(payload), now);
                             }
-                            it->second.m_score -= 3;
+                            it->second.m_score -= 1;
                             it->second.m_last_seen = now;
-                            it->second.m_time_tx_pool_sync_done = true;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
                                 // find out min score peer
@@ -3926,7 +3910,6 @@ namespace libTAU::blockchain {
                                     // replace min score peer with new one
                                     acl.erase(min_it);
                                     acl[peer] = peer_info(now);
-                                    acl[peer].m_time_tx_pool_sync_done = true;
                                     acl[peer].m_peer_requests_time.emplace(std::make_unique<common::time_tx_pool_entry>(payload), now);
 
                                     introduce_gossip_peers(chain_id, peer);
@@ -3938,7 +3921,6 @@ namespace libTAU::blockchain {
                                 }
                             } else {
                                 acl[peer] = peer_info(now);
-                                acl[peer].m_time_tx_pool_sync_done = true;
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::time_tx_pool_entry>(payload), now);
 
                                 introduce_gossip_peers(chain_id, peer);
@@ -3989,7 +3971,7 @@ namespace libTAU::blockchain {
                             } else {
                                 it->second.m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
                             }
-                            it->second.m_score -= 3;
+                            it->second.m_score -= 1;
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
@@ -4256,7 +4238,7 @@ namespace libTAU::blockchain {
                             } else {
                                 it->second.m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
                             }
-                            it->second.m_score -= 3;
+                            it->second.m_score -= 1;
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
@@ -4334,7 +4316,7 @@ namespace libTAU::blockchain {
                             if (it != acl.end()) {
                                 it->second.m_stage = NORMAL;
                                 if (it->second.m_head_block.empty() || blk_entry.m_blk.cumulative_difficulty() > it->second.m_head_block.cumulative_difficulty()) {
-                                    it->second.m_score += 5;
+                                    it->second.m_score += 30;
                                 } else {
                                     it->second.m_score += 3;
                                 }
@@ -4643,11 +4625,9 @@ namespace libTAU::blockchain {
 
                         if (!gossipPeersEntry.m_peers.empty()) {
                             auto peers = gossipPeersEntry.m_peers;
-                            log("----------Got gossip peer-----");
                             for (auto const &pubkey: peers) {
                                 log("----------Got gossip peer:%s", aux::toHex(pubkey.bytes).c_str());
                             }
-                            log("----------Got gossip peer+++++");
                             peers.erase(*m_ses.pubkey());
                             if (!peers.empty()) {
                                 add_gossip_peers(chain_id, peers);
@@ -4683,6 +4663,7 @@ namespace libTAU::blockchain {
                         auto it = acl.find(peer);
                         if (it != acl.end()) {
                             it->second.m_last_seen = now;
+                            it->second.m_score += 5;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
                                 // find out min score peer
