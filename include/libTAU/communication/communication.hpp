@@ -251,7 +251,7 @@ namespace libTAU {
 
             void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array, std::int64_t time);
 
-            void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes);
+            void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
 
             // device id
             aux::bytes m_device_id;

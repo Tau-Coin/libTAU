@@ -2255,35 +2255,26 @@ namespace libTAU::blockchain {
         m_votes[chain_id].clear();
     }
 
-    void blockchain::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes) {
-        auto &peer = i.pk();
-        if (peer == *m_ses.pubkey()) {
-            return;
-        }
+    void blockchain::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes, dht::public_key const& peer) {
+        log("INFO: peer[%s], value[%s]", aux::toHex(peer.bytes).c_str(), i.value().to_string().c_str());
 
-        if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type)))
-        {
-            log("INFO: callback:%s", i.value().to_string(true).c_str());
-            for (auto const& n: nodes) {
-                log("INFO: nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
-            }
-
-            auto data_type_id = p->integer();
-            switch (data_type_id) {
-                case common::transaction_entry::data_type_id: {
-                    common::transaction_entry txEntry(i.value());
-                    auto now = get_total_milliseconds();
-                    m_ses.alerts().emplace_alert<blockchain_tx_sent_alert>(peer, txEntry.m_tx.sha256(), now);
-                    for (auto const& n: nodes) {
-                        if (n.second) {
-                            m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(peer, txEntry.m_tx.sha256(), now);
-                            break;
-                        }
-                    }
-                    break;
+        auto salt = i.salt();
+        std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
+        common::protocol_entry protocolEntry(encode);
+        if (protocolEntry.m_pid == common::protocol_put) {
+            if (protocolEntry.m_data_type_id == common::transaction_entry::data_type_id) {
+                for (auto const& n: nodes) {
+                    log("INFO: nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
                 }
-                default: {
-                    break;
+
+                common::transaction_entry txEntry(i.value());
+                auto now = get_total_milliseconds();
+                m_ses.alerts().emplace_alert<blockchain_tx_sent_alert>(peer, txEntry.m_tx.sha256(), now);
+                for (auto const& n: nodes) {
+                    if (n.second) {
+                        m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(peer, txEntry.m_tx.sha256(), now);
+                        break;
+                    }
                 }
             }
         }
@@ -3129,7 +3120,7 @@ namespace libTAU::blockchain {
 //                , std::bind(&on_dht_put_mutable_item, std::ref(m_ses.alerts()), _1, _2)
 //                , std::bind(&put_mutable_callback, _1, std::move(cb)), std::move(salt), peer);
         m_ses.dht()->put_item(dht::public_key(key.data())
-                , std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2)
+                , std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2, peer)
                 , std::bind(&put_mutable_callback, _1, std::move(cb))
                 , alpha, beta, invoke_limit, salt, peer, cache);
     }

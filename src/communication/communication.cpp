@@ -1562,96 +1562,26 @@ namespace libTAU {
 //                    , this, _1, _2), std::move(salt), t.value);
 //        }
 
-        void communication::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes) {
-            auto &peer = i.pk();
-            if (peer == *m_ses.pubkey()) {
-                return;
-            }
+        void communication::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes, dht::public_key const& peer) {
+            log("INFO: peer[%s], value[%s]", aux::toHex(peer.bytes).c_str(), i.value().to_string().c_str());
 
-            if (auto* p = const_cast<entry *>(i.value().find_key(common::entry_type)))
-            {
-                log("======= callback:%s", i.value().to_string(true).c_str());
-                for (auto const& n: nodes) {
-                    log("====== nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
-                }
-
-                auto data_type_id = p->integer();
-                switch (data_type_id) {
-                    case common::message_entry::data_type_id: {
-                        common::message_entry msgEntry(i.value());
-                        auto now = get_current_time();
-                        m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, msgEntry.m_msg.sha256(), now);
-                        for (auto const& n: nodes) {
-                            if (n.second) {
-                                m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer, msgEntry.m_msg.sha256(), now);
-                                break;
-                            }
-                        }
-//                        auto ptr = std::make_shared<common::message_entry>(i.value());
-//
-//                        for (auto const& n: nodes) {
-//                            if (n.second) {
-//                                m_entry_putting_nodes[peer][ptr].insert(n.first);
-//                            }
-//                        }
-//
-//                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
-//                            m_entry_putting_times[peer].erase(ptr);
-//                            m_entry_putting_nodes[peer].erase(ptr);
-//                            m_entry_last_putting_time[peer].erase(ptr);
-//                        }
-                        break;
+            auto salt = i.salt();
+            std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
+            common::protocol_entry protocolEntry(encode);
+            if (protocolEntry.m_pid == common::protocol_put) {
+                if (protocolEntry.m_data_type_id == common::message_entry::data_type_id) {
+                    for (auto const& n: nodes) {
+                        log("====== nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
                     }
-//                    case common::message_levenshtein_array_entry::data_type_id: {
-//                        auto ptr = std::make_shared<common::message_levenshtein_array_entry>(i.value());
-//
-//                        for (auto const& n: nodes) {
-//                            if (n.second) {
-//                                m_entry_putting_nodes[peer][ptr].insert(n.first);
-//                            }
-//                        }
-//
-//                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
-//                            m_entry_putting_times[peer].erase(ptr);
-//                            m_entry_putting_nodes[peer].erase(ptr);
-//                            m_entry_last_putting_time[peer].erase(ptr);
-//                        }
-//                        break;
-//                    }
-//                    case common::friend_info_entry::data_type_id: {
-//                        auto ptr = std::make_shared<common::friend_info_entry>(i.value());
-//
-//                        for (auto const& n: nodes) {
-//                            if (n.second) {
-//                                m_entry_putting_nodes[peer][ptr].insert(n.first);
-//                            }
-//                        }
-//
-//                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
-//                            m_entry_putting_times[peer].erase(ptr);
-//                            m_entry_putting_nodes[peer].erase(ptr);
-//                            m_entry_last_putting_time[peer].erase(ptr);
-//                        }
-//                        break;
-//                    }
-//                    case common::friend_info_request_entry::data_type_id: {
-//                        auto ptr = std::make_shared<common::friend_info_request_entry>(i.value());
-//
-//                        for (auto const& n: nodes) {
-//                            if (n.second) {
-//                                m_entry_putting_nodes[peer][ptr].insert(n.first);
-//                            }
-//                        }
-//
-//                        if (m_entry_putting_nodes[peer][ptr].size() >= 3) {
-//                            m_entry_putting_times[peer].erase(ptr);
-//                            m_entry_putting_nodes[peer].erase(ptr);
-//                            m_entry_last_putting_time[peer].erase(ptr);
-//                        }
-//                        break;
-//                    }
-                    default: {
-                        break;
+
+                    common::message_entry msgEntry(i.value());
+                    auto now = get_current_time();
+                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, msgEntry.m_msg.sha256(), now);
+                    for (auto const& n: nodes) {
+                        if (n.second) {
+                            m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer, msgEntry.m_msg.sha256(), now);
+                            break;
+                        }
                     }
                 }
             }
@@ -1775,7 +1705,7 @@ namespace libTAU {
         {
             if (!m_ses.dht()) return;
             m_ses.dht()->put_item(dht::public_key(key.data())
-                    , std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2)
+                    , std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2, peer)
                     , std::bind(&put_mutable_callback, _1, std::move(cb))
                     , alpha, beta, invoke_limit, salt, peer, cache);
         }

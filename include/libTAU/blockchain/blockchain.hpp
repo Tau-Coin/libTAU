@@ -382,7 +382,7 @@ namespace blockchain {
         // get mutable item from dht
         void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
 
-        void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes);
+        void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
 
         // put immutable item to dht
 //        void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
