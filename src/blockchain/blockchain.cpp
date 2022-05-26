@@ -2077,10 +2077,11 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::try_to_rebranch_to_best_vote(const aux::bytes &chain_id) {
-//        if (m_chain_status[chain_id] == MINING) {
+        auto &best_vote = m_best_votes[chain_id];
+        if (!best_vote.empty()) {
             if (!is_empty_chain(chain_id)) {
                 // 4. check if need to re-branch to the best vote
-                auto &best_vote = m_best_votes[chain_id];
+
                 if (!best_vote.empty()) {
                     log("INFO chain[%s] current best vote[%s]", aux::toHex(chain_id).c_str(),
                         best_vote.to_string().c_str());
@@ -2094,7 +2095,7 @@ namespace libTAU::blockchain {
                             log("INFO chain[%s] main chain block[%s] mismatch the best vote",
                                 aux::toHex(chain_id).c_str(), aux::toHex(hash.to_string()).c_str());
                             // re-branch
-                            const auto& best_voting_block = best_vote.voting_block();
+                            const auto &best_voting_block = best_vote.voting_block();
                             if (!best_voting_block.empty()) {
                                 log("INFO chain[%s] try to re-branch to best voting block[%s]",
                                     aux::toHex(chain_id).c_str(), best_voting_block.to_string().c_str());
@@ -2106,9 +2107,11 @@ namespace libTAU::blockchain {
 
                                     // update consensus point block hash as best voting block
                                     m_consensus_point_blocks[chain_id] = best_voting_block;
-                                    m_repository->set_consensus_point_block_hash(chain_id, best_vote.voting_block().sha256());
+                                    m_repository->set_consensus_point_block_hash(chain_id,
+                                                                                 best_vote.voting_block().sha256());
 
-                                    m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(best_voting_block);
+                                    m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(
+                                            best_voting_block);
                                 } else if (result == FAIL) {
                                     remove_all_same_chain_blocks_from_cache(best_voting_block);
                                 }
@@ -2123,8 +2126,10 @@ namespace libTAU::blockchain {
                         }
                     }
                 }
+            } else {
+                process_block(chain_id, best_vote.voting_block());
             }
-//        }
+        }
     }
 
     void blockchain::try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id) {
@@ -2585,7 +2590,7 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(peer, chain_id, common::voting_block_cache_entry::data_type_id);
 
-        log("INFO: Request voting block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log("INFO: Request vote from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         dht_get_mutable_item(chain_id, peer.bytes, salt);
     }
@@ -3063,12 +3068,16 @@ namespace libTAU::blockchain {
                     case common::voting_block_cache_entry::data_type_id: {
                         common::voting_block_cache_entry votingBlockCacheEntry(i.value());
                         if (!votingBlockCacheEntry.m_blk.empty()) {
+                            log("INFO: chain[%s] get vote[%s] from peer[%s]", aux::toHex(chain_id).c_str(),
+                                votingBlockCacheEntry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                             m_votes[chain_id][peer] = vote(votingBlockCacheEntry.m_blk);
                         }
                         break;
                     }
                     case common::gossip_cache_peers_entry::data_type_id: {
                         common::gossip_cache_peers_entry gossipCachePeersEntry(i.value());
+                        log("INFO: chain[%s] get %lu gossip peers from peer[%s]", aux::toHex(chain_id).c_str(),
+                            gossipCachePeersEntry.m_peers.size(), aux::toHex(peer.bytes).c_str());
                         add_gossip_peers(chain_id, gossipCachePeersEntry.m_peers);
                         break;
                     }
