@@ -770,6 +770,11 @@ namespace libTAU::common {
                 m_peers.insert(dht::public_key(n.string().data()));
             }
         }
+        // balance
+        if (auto* i = const_cast<entry *>(e.find_key("b")))
+        {
+            m_balance = i->integer();
+        }
     }
 
     entry gossip_peers_entry::get_entry() const {
@@ -784,6 +789,8 @@ namespace libTAU::common {
             l.push_back(entry(std::string(peer.bytes.begin(), peer.bytes.end())));
         }
         e[entry_value] = l;
+        // balance
+        e["b"] = entry(m_balance);
 
         return e;
     }

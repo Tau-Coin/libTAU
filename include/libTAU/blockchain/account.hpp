@@ -27,6 +27,8 @@ namespace libTAU {
             // @param Construct with bencode
             explicit account(std::string encode): account(bdecode(encode)) {}
 
+            explicit account(int64_t mBalance) : m_balance(mBalance) {}
+
             account(int64_t mBalance, int64_t mNonce, int64_t mBlockNumber) :
                 m_balance(mBalance), m_nonce(mNonce), m_block_number(mBlockNumber) {}
 

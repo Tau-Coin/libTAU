@@ -914,18 +914,19 @@ namespace libTAU::common {
             m_entry = get_entry();
         }
 
+        gossip_peers_entry(aux::bytes mChainId, std::set<dht::public_key> mPeers, int64_t mBalance) :
+            m_peers(std::move(mPeers)), m_balance(mBalance) {
+            m_chain_id = std::move(mChainId);
+
+            m_entry = get_entry();
+        }
+
         // @returns the corresponding entry
         entry get_entry() const override;
 
-        bool operator<(const gossip_peers_entry &rhs) const {
-            if (m_chain_id < rhs.m_chain_id)
-                return true;
-            if (rhs.m_chain_id < m_chain_id)
-                return false;
-            return m_peers < rhs.m_peers;
-        }
-
         std::set<dht::public_key> m_peers;
+
+        std::int64_t m_balance;
     };
 
     struct TORRENT_EXPORT fee_tx_pool_entry final : blockchain_entry_base {
