@@ -13,7 +13,7 @@ see LICENSE file.
 #include <ostream>
 #include <utility>
 
-#include "blockchain/block.hpp"
+#include "libTAU/blockchain/block.hpp"
 
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
