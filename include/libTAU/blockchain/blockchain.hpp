@@ -264,7 +264,7 @@ namespace blockchain {
         RESULT verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block, repository *repo);
 
         // process block
-        RESULT process_block(const aux::bytes &chain_id, const block &b);
+        RESULT process_block(const aux::bytes &chain_id, const block &blk);
 
         void block_reception_event(const aux::bytes &chain_id, const block &blk);
 
@@ -339,7 +339,8 @@ namespace blockchain {
 
         void request_block(const aux::bytes &chain_id, const dht::public_key &peer, const sha256_hash& hash);
 
-        void transfer_to_acl_peers(const aux::bytes &chain_id, std::int64_t data_type_id, entry const& data, bool cache = true);
+        void transfer_to_acl_peers(const aux::bytes &chain_id, std::int64_t data_type_id, entry const& data,
+                                   bool cache = true, const dht::public_key &incoming_peer = dht::public_key());
 
         void introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer);
 

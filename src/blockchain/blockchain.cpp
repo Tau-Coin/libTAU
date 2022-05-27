@@ -1410,8 +1410,8 @@ namespace libTAU::blockchain {
         }
     }
 
-    RESULT blockchain::process_block(const aux::bytes &chain_id, const block &b) {
-        if (b.empty())
+    RESULT blockchain::process_block(const aux::bytes &chain_id, const block &blk) {
+        if (blk.empty())
             return FAIL;
 //        log("=================== block length:%lu, tx length:%lu, block:%s",
 //            b.get_encode().length(), b.tx().get_encode().length(), b.to_string().c_str());
@@ -1420,24 +1420,24 @@ namespace libTAU::blockchain {
         if (head_block.empty()) {
             auto track = m_repository->start_tracking();
 
-            if (!track->connect_head_block(b)) {
+            if (!track->connect_head_block(blk)) {
                 log("INFO chain[%s] connect head block[%s] fail",
-                    aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
-            if (!track->set_head_block_hash(chain_id, b.sha256())) {
+            if (!track->set_head_block_hash(chain_id, blk.sha256())) {
                 log("INFO chain[%s] set head block[%s] fail",
-                    aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
-            if (!track->set_tail_block_hash(chain_id, b.sha256())) {
+            if (!track->set_tail_block_hash(chain_id, blk.sha256())) {
                 log("INFO chain[%s] set tail block[%s] fail",
-                    aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
-            if (!track->set_consensus_point_block_hash(chain_id, b.sha256())) {
+            if (!track->set_consensus_point_block_hash(chain_id, blk.sha256())) {
                 log("INFO chain[%s] set consensus point block[%s] fail",
-                    aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+                    aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
 
@@ -1451,44 +1451,44 @@ namespace libTAU::blockchain {
             }
 
             // chain changed, re-check tx pool
-            m_tx_pools[chain_id].recheck_account_txs(b.get_block_peers());
-            m_tx_pools[chain_id].delete_tx_from_time_pool(b.tx());
+            m_tx_pools[chain_id].recheck_account_txs(blk.get_block_peers());
+            m_tx_pools[chain_id].delete_tx_from_time_pool(blk.tx());
 
-            m_head_blocks[chain_id] = b;
-            m_tail_blocks[chain_id] = b;
-            m_consensus_point_blocks[chain_id] = b;
+            m_head_blocks[chain_id] = blk;
+            m_tail_blocks[chain_id] = blk;
+            m_consensus_point_blocks[chain_id] = blk;
 
-            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(b);
-            m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(b);
-            m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(b);
+            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
+            m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(blk);
+            m_ses.alerts().emplace_alert<blockchain_new_consensus_point_block_alert>(blk);
         } else {
-            if (b.previous_block_hash() == head_block.sha256()) {
-                std::set<dht::public_key> peers = b.get_block_peers();
+            if (blk.previous_block_hash() == head_block.sha256()) {
+                std::set<dht::public_key> peers = blk.get_block_peers();
 
                 auto track = m_repository->start_tracking();
 
                 // no need to verify block if not sync completed
                 if (!is_sync_completed(chain_id)) {
-                    auto result = verify_block(chain_id, b, head_block, track.get());
+                    auto result = verify_block(chain_id, blk, head_block, track.get());
                     if (result != SUCCESS)
                         return result;
                 }
 
-                if (!track->connect_head_block(b)) {
+                if (!track->connect_head_block(blk)) {
                     log("INFO chain[%s] connect head block[%s] fail",
-                        aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+                        aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                     return FAIL;
                 }
 
-                if (!track->set_head_block_hash(chain_id, b.sha256())) {
+                if (!track->set_head_block_hash(chain_id, blk.sha256())) {
                     log("INFO chain[%s] set head block[%s] fail",
-                        aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+                        aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                     return FAIL;
                 }
 
                 auto tail_block = m_tail_blocks[chain_id];
                 // seek tail block
-                while (b.block_number() - tail_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE) {
+                while (blk.block_number() - tail_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE) {
 
                     // get next main chain block to be expired one by one
                     auto tail_next_block = track->get_main_chain_block_by_number(chain_id, tail_block.block_number() + 1);
@@ -1533,7 +1533,7 @@ namespace libTAU::blockchain {
 //                auto iki = m_repository->get_index_info(chain_id, b.block_number());
 //                log("+++++++++++++++++++:index key info:%s", iki.to_string().c_str());
 
-                m_head_blocks[chain_id] = b;
+                m_head_blocks[chain_id] = blk;
                 if (!tail_block.empty()) {
                     m_tail_blocks[chain_id] = tail_block;
                     m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(tail_block);
@@ -1541,23 +1541,23 @@ namespace libTAU::blockchain {
 
                 // chain changed, re-check tx pool
                 m_tx_pools[chain_id].recheck_account_txs(peers);
-                m_tx_pools[chain_id].delete_tx_from_time_pool(b.tx());
+                m_tx_pools[chain_id].delete_tx_from_time_pool(blk.tx());
 
-                m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(b);
+                m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
             }
 
             if (m_head_blocks[chain_id].block_number() - m_tail_blocks[chain_id].block_number() < CHAIN_EPOCH_BLOCK_SIZE - 1 &&
-                b.sha256() == m_tail_blocks[chain_id].previous_block_hash()) {
+                blk.sha256() == m_tail_blocks[chain_id].previous_block_hash()) {
                 auto track = m_repository->start_tracking();
 
-                if (!track->connect_tail_block(b)) {
+                if (!track->connect_tail_block(blk)) {
                     log("INFO chain[%s] connect tail block[%s] fail",
-                        aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+                        aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                     return FAIL;
                 }
-                if (!track->set_tail_block_hash(chain_id, b.sha256())) {
+                if (!track->set_tail_block_hash(chain_id, blk.sha256())) {
                     log("INFO chain[%s] set tail block[%s] fail",
-                        aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
+                        aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                     return FAIL;
                 }
 
@@ -1567,13 +1567,13 @@ namespace libTAU::blockchain {
                 }
                 m_repository->flush(chain_id);
 
-                m_tail_blocks[chain_id] = b;
+                m_tail_blocks[chain_id] = blk;
 
                 // chain changed, re-check tx pool
-                m_tx_pools[chain_id].recheck_account_txs(b.get_block_peers());
-                m_tx_pools[chain_id].delete_tx_from_time_pool(b.tx());
+                m_tx_pools[chain_id].recheck_account_txs(blk.get_block_peers());
+                m_tx_pools[chain_id].delete_tx_from_time_pool(blk.tx());
 
-                m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(b);
+                m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(blk);
             }
         }
 
@@ -2557,7 +2557,8 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::transfer_to_acl_peers(const aux::bytes &chain_id, std::int64_t data_type_id, const entry &data, bool cache) {
+    void blockchain::transfer_to_acl_peers(const aux::bytes &chain_id, std::int64_t data_type_id, const entry &data,
+                                           bool cache, const dht::public_key &incoming_peer) {
         std::set<dht::public_key> peers;
         auto &acl = m_access_list[chain_id];
         for (auto const &item: acl) {
@@ -2571,6 +2572,8 @@ namespace libTAU::blockchain {
                 peers.insert(peer);
             }
         }
+
+        peers.erase(incoming_peer);
 
         for (auto const& peer: peers) {
             send_to(chain_id, peer, data_type_id, data, true);
@@ -4083,7 +4086,7 @@ namespace libTAU::blockchain {
                             if (pool.add_tx(tx)) {
                                 common::transaction_entry txEntry(tx);
                                 transfer_to_acl_peers(chain_id, common::transaction_entry::data_type_id,
-                                                      txEntry.get_entry(), true);
+                                                      txEntry.get_entry(), true, peer);
                             }
 
                             try_to_update_visiting_peer(chain_id, peer);
