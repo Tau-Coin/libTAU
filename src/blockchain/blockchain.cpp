@@ -622,6 +622,8 @@ namespace libTAU::blockchain {
                     peers.insert(peer);
                 }
 
+                peers.erase(*m_ses.pubkey());
+
                 for (auto const& peer: peers) {
                     // get gossip peers
                     get_gossip_peers(chain_id, peer);
@@ -667,6 +669,8 @@ namespace libTAU::blockchain {
                         peers.insert(peer);
                     }
                 }
+
+                peers.erase(*m_ses.pubkey());
 
                 for (auto const& peer: peers) {
                     // request vote
@@ -4655,6 +4659,9 @@ namespace libTAU::blockchain {
                         if (it != acl.end()) {
                             it->second.m_last_seen = now;
                             it->second.m_score += 5;
+                            if (it->second.m_score > 100) {
+                                it->second.m_score = 100;
+                            }
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
                                 // find out min score peer
