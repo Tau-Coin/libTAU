@@ -81,10 +81,11 @@ namespace blockchain {
     };
 
     enum CHAIN_STATUS {
-        VOTE_PREPARE,
-        VOTE_REQUEST,
-        VOTE_COUNT,
-        MINING,
+        GET_GOSSIP_PEERS,
+        COLLECT_GOSSIP_PEERS,
+        VOTE,
+        COUNT_VOTES,
+        MINE,
     };
 
     //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
@@ -209,9 +210,7 @@ namespace blockchain {
 
         void refresh_timeout(error_code const& e);
 
-        void refresh_count_votes(error_code const& e);
-
-        void refresh_voting(error_code const &e, const aux::bytes &chain_id);
+        void refresh_chain_status(error_code const &e, const aux::bytes &chain_id);
 
         void refresh_votes(error_code const &e, const aux::bytes &chain_id);
 
@@ -229,6 +228,9 @@ namespace blockchain {
 
         // start chain
         bool start_chain(const aux::bytes &chain_id);
+
+        // reset chain status
+        void reset_chain_status(const aux::bytes &chain_id);
 
         void manage_peers_in_acl_ban_list(const aux::bytes &chain_id);
 
@@ -417,8 +419,8 @@ namespace blockchain {
         // vote timer
 //        aux::deadline_timer m_vote_timer;
 
-        // vote timers
-        std::map<aux::bytes, aux::deadline_timer> m_vote_timers;
+        // chain status timers
+        std::map<aux::bytes, aux::deadline_timer> m_chain_status_timers;
 
         // tx timer
 //        aux::deadline_timer m_exchange_tx_timer;
@@ -459,7 +461,9 @@ namespace blockchain {
 
         std::map<aux::bytes, std::int64_t> m_count_votes_time;
 
-        std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
+        std::map<aux::bytes, std::int64_t> m_collect_gossip_peers_time;
+
+//        std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
 
         // all tasks
 //        std::queue<common::blockchain_entry_task> m_tasks;
