@@ -310,8 +310,6 @@ namespace blockchain {
         // remove all relevant blocks those on the same chain from cache
         void remove_all_ancestor_blocks_from_cache(const block &blk);
 
-        void try_to_slim_down_cache(const aux::bytes &chain_id);
-
         void try_to_rebranch_to_best_vote(const aux::bytes &chain_id);
 
         void try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id);

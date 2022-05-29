@@ -642,8 +642,12 @@ namespace libTAU::blockchain {
             }
 
             if (m_chain_status[chain_id] == VOTE) {
-                // todo: get size
-                auto peers = m_repository->get_all_peers(chain_id);
+                std::set<dht::public_key> peers;
+                for (int i = 0; i < 30; i++) {
+                    auto peer = m_repository->get_peer_randomly(chain_id);
+                    peers.insert(peer);
+                }
+
                 auto size = peers.size();
                 if (size < 20) {
                     // vote with gossip peers
@@ -662,11 +666,6 @@ namespace libTAU::blockchain {
                                 i++;
                             }
                         }
-                    }
-                } else {
-                    for (int i = 0; i < 30; i++) {
-                        auto peer = m_repository->get_peer_randomly(chain_id);
-                        peers.insert(peer);
                     }
                 }
 
@@ -1841,10 +1840,6 @@ namespace libTAU::blockchain {
 //        block_map.erase(blk.sha256());
     }
 
-    void blockchain::try_to_slim_down_cache(const aux::bytes &chain_id) {
-        // todo
-    }
-
     RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute, dht::public_key peer) {
         log("INFO chain[%s] try to rebranch to block[%s]",
             aux::toHex(chain_id).c_str(), target.to_string().c_str());
@@ -2090,8 +2085,8 @@ namespace libTAU::blockchain {
                 // 4. check if need to re-branch to the best vote
 
                 if (!best_vote.empty()) {
-                    log("INFO chain[%s] current best vote[%s]", aux::toHex(chain_id).c_str(),
-                        best_vote.to_string().c_str());
+//                    log("INFO chain[%s] current best vote[%s]", aux::toHex(chain_id).c_str(),
+//                        best_vote.to_string().c_str());
 
                     auto &consensus_point_block = m_consensus_point_blocks[chain_id];
                     if (consensus_point_block != best_vote.voting_block()) {
@@ -2232,7 +2227,7 @@ namespace libTAU::blockchain {
 
         if (!sorted_votes.empty()) {
             m_best_votes[chain_id] = *sorted_votes.begin();
-            log("INFO: ===chain[%s] best vote[%s]",
+            log("INFO: chain[%s] best vote[%s]",
                 aux::toHex(chain_id).c_str(), sorted_votes.begin()->to_string().c_str());
         }
 
