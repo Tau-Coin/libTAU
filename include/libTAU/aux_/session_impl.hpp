@@ -407,6 +407,8 @@ namespace aux {
 			leveldb::DB* kvdb() override {return m_kvdb;}
 			sqlite3* sqldb() override {return m_sqldb;}
 
+			std::int64_t timer_coe() override {return m_timer_coe;}
+
 			dht::public_key* pubkey() override {return &(std::get<dht::public_key>(m_keypair));}
 			dht::secret_key* serkey() override {return &(std::get<dht::secret_key>(m_keypair));}
 			std::tuple<dht::public_key*, dht::secret_key*> pskeys() {
@@ -418,6 +420,11 @@ namespace aux {
 			bool announce_dht() const override { return !m_listening_sockets.empty(); }
 
 			void add_dht_router(std::tuple<std::string, int, std::string> const& node);
+
+            //io_context
+            void stop_service();
+
+            void restart_service();
 
 			//communicaiton
 			void start_communication();
@@ -678,6 +685,8 @@ namespace aux {
 				return m_session_time;
 			}
 
+            void crash_test();
+
 		private:
 
 			// return the settings value for int setting "n", if the value is
@@ -771,6 +780,8 @@ namespace aux {
 
             leveldb::DB* m_kvdb;
             sqlite3* m_sqldb;
+
+            std::int64_t m_timer_coe = 1;
 			
 	 		std::tuple<dht::public_key, dht::secret_key> m_keypair;
 
@@ -842,7 +853,7 @@ namespace aux {
 			void session_time_modification(std::int64_t time = 0);
 
 #ifdef TORRENT_ENABLE_CRASH_ANA
-			void crash_dump_initial() override;
+			void crash_dump_initial();
 #endif
 			// when outgoing_ports is configured, this is the
 			// port we'll bind the next outgoing socket to

@@ -200,6 +200,8 @@ namespace libTAU::aux {
 		virtual leveldb::DB* kvdb() = 0;
 		virtual sqlite3* sqldb() = 0;
 
+		virtual std::int64_t timer_coe() = 0;
+
 		virtual dht::public_key* pubkey() = 0;
 		virtual dht::secret_key* serkey() = 0;
 

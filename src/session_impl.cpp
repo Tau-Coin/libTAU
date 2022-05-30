@@ -497,9 +497,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 	// post it to the io_context?
 	void session_impl::start_session()
 	{
-#ifdef TORRENT_ENABLE_CRASH_ANA
-        crash_dump_initial();
-#endif
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("start session");
@@ -642,7 +639,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 #ifdef TORRENT_ANDROID			
         dump_file_dir = m_settings.get_str(settings_pack::dump_dir);
 #else
-        dump_file_dir = std::filesystem::path(getenv("HOME")).string();
+        dump_file_dir = std::filesystem::path(getenv("HOME")).string() + "/"+ m_settings.get_str(settings_pack::dump_dir);
 #endif
         // create the directory for storing dump data
  		if(!std::filesystem::is_directory(dump_file_dir)) {
@@ -660,6 +657,34 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
         google_breakpad::ExceptionHandler eh(descriptor, NULL, NULL, NULL, true, -1);
 	}
 #endif
+
+    void session_impl::crash_test()
+    {
+#ifdef TORRENT_ENABLE_CRASH_ANA
+        std::string dump_file_dir = "";
+#ifdef TORRENT_ANDROID			
+        dump_file_dir = m_settings.get_str(settings_pack::dump_dir);
+#else
+        dump_file_dir = std::filesystem::path(getenv("HOME")).string() + "/"+ m_settings.get_str(settings_pack::dump_dir);
+#endif
+        // create the directory for storing dump data
+ 		if(!std::filesystem::is_directory(dump_file_dir)) {
+			if(!std::filesystem::create_directories(dump_file_dir)){
+#ifndef TORRENT_DISABLE_LOGGING
+				session_log("failed create directory for storing dump data: %s", dump_file_dir.c_str());
+#endif
+				TORRENT_ASSERT(!std::filesystem::create_directories(dump_file_dir));
+				m_abort = true;	
+			}
+		}
+
+        google_breakpad::MinidumpDescriptor descriptor(dump_file_dir);
+        //google_breakpad::ExceptionHandler eh(descriptor, crash_dump_call_before, NULL, static_cast<void*>(&m_alerts), true, -1);
+        google_breakpad::ExceptionHandler eh(descriptor, NULL, NULL, NULL, true, -1);
+        volatile int* a = (int*)(NULL);
+        *a = 1; 
+#endif
+    }
 
 	session_params session_impl::session_state(save_state_flags_t const flags) const
 	{
@@ -2785,6 +2810,21 @@ namespace {
 				, transport, proto, listen_socket->local_endpoint.address());
 		}
 	}
+
+    void session_impl::stop_service()
+    {
+        //m_io_context.stop();
+        //std::this_thread::sleep_for(std::chrono::seconds(30));
+        // TODO: coe to control timer interval when in 'doze' model
+    }
+
+    void session_impl::restart_service()
+    {
+        //m_io_context.restart();
+        //m_io_context.run();
+        // TODO: coe to control timer interval when in 'doze' model
+        // restart in dht, communication, blockchain, to timer cancel, make coe valid
+    }
 
 	void session_impl::start_communication()
 	{

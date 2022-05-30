@@ -424,6 +424,23 @@ namespace libTAU {
 		return sync_call_ret<std::int64_t>(&session_impl::session_current_time_ms);
 	}
 
+	// stop service
+	void session_handle::stop_service()
+	{
+		return sync_call(&session_impl::stop_service);
+	}
+
+	// restart service
+	void session_handle::restart_service()
+	{
+		return sync_call(&session_impl::restart_service);
+	}
+
+    void session_handle::crash_test()
+    {
+		return sync_call(&session_impl::crash_test);
+    }
+
 	void session_handle::set_ip_filter(ip_filter f)
 	{
 		std::shared_ptr<ip_filter> copy = std::make_shared<ip_filter>(std::move(f));

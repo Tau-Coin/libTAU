@@ -396,6 +396,11 @@ namespace libTAU {
 		// get current session system time
         std::int64_t get_session_time();
 
+        void stop_service();
+
+        void restart_service();
+
+        void crash_test();
 
 		// This call dereferences the reference count of the specified peer
 		// class. When creating a peer class it's automatically referenced by 1.
