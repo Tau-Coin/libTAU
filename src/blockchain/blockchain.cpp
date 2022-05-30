@@ -3634,6 +3634,47 @@ namespace libTAU::blockchain {
         }
     }
 
+    void blockchain::data_received_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, int score) {
+//        auto now = get_total_milliseconds();
+//        auto &acl = m_access_list[chain_id];
+//
+//        auto it = acl.find(peer);
+//        if (it != acl.end()) {
+//            it->second.m_score += 3;
+//            if (it->second.m_score > 100) {
+//                it->second.m_score = 100;
+//            }
+//            it->second.m_requests_time.erase(std::make_unique<common::block_request_entry>(chain_id, blk_entry.m_blk.sha256()));
+//            it->second.m_last_seen = now;
+//        } else {
+//            if (acl.size() >= blockchain_acl_max_peers) {
+//                // find out min score peer
+//                auto min_it = acl.begin();
+//                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
+//                    if (iter->second.m_score  < min_it->second.m_score) {
+//                        min_it = iter;
+//                    }
+//                }
+//
+//                if (min_it->second.m_score < peer_info().m_score) {
+//                    // replace min score peer with new one
+//                    acl.erase(min_it);
+//                    acl[peer] = peer_info(now);
+//
+//                    introduce_gossip_peers(chain_id, peer);
+//                }
+//            } else {
+//                acl[peer] = peer_info(now);
+//
+//                introduce_gossip_peers(chain_id, peer);
+//            }
+//        }
+    }
+
+    void blockchain::request_received_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, int score) {
+
+    }
+
     void blockchain::on_dht_item(const dht::item &i) {
         auto& peer = i.pk();
         auto& payload = i.value();
@@ -3687,26 +3728,9 @@ namespace libTAU::blockchain {
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
-                                // find out min score peer
-                                auto min_it = acl.begin();
-                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                    if (iter->second.m_score  < min_it->second.m_score) {
-                                        min_it = iter;
-                                    }
-                                }
-
-                                if (min_it->second.m_score < peer_info().m_score) {
-                                    // replace min score peer with new one
-                                    acl.erase(min_it);
-                                    acl[peer] = peer_info(now);
-                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
-
-                                    introduce_gossip_peers(chain_id, peer);
-                                } else {
-                                    log("INFO: Too many peers in acl to response.");
-                                    introduce_gossip_peers(chain_id, peer);
-                                    break;
-                                }
+                                log("INFO: Too many peers in acl to response.");
+                                introduce_gossip_peers(chain_id, peer);
+                                break;
                             } else {
                                 acl[peer] = peer_info(now);
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::block_request_entry>(payload), now);
@@ -3761,23 +3785,7 @@ namespace libTAU::blockchain {
                                 it->second.m_requests_time.erase(std::make_unique<common::block_request_entry>(chain_id, blk_entry.m_blk.sha256()));
                                 it->second.m_last_seen = now;
                             } else {
-                                if (acl.size() >= blockchain_acl_max_peers) {
-                                    // find out min score peer
-                                    auto min_it = acl.begin();
-                                    for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                        if (iter->second.m_score  < min_it->second.m_score) {
-                                            min_it = iter;
-                                        }
-                                    }
-
-                                    if (min_it->second.m_score < peer_info().m_score) {
-                                        // replace min score peer with new one
-                                        acl.erase(min_it);
-                                        acl[peer] = peer_info(now);
-
-                                        introduce_gossip_peers(chain_id, peer);
-                                    }
-                                } else {
+                                if (acl.size() < blockchain_acl_max_peers) {
                                     acl[peer] = peer_info(now);
 
                                     introduce_gossip_peers(chain_id, peer);
@@ -3836,26 +3844,9 @@ namespace libTAU::blockchain {
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
-                                // find out min score peer
-                                auto min_it = acl.begin();
-                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                    if (iter->second.m_score  < min_it->second.m_score) {
-                                        min_it = iter;
-                                    }
-                                }
-
-                                if (min_it->second.m_score < peer_info().m_score) {
-                                    // replace min score peer with new one
-                                    acl.erase(min_it);
-                                    acl[peer] = peer_info(now);
-                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::fee_tx_pool_entry>(payload), now);
-
-                                    introduce_gossip_peers(chain_id, peer);
-                                } else {
-                                    log("INFO: Too many peers in acl to response.");
-                                    introduce_gossip_peers(chain_id, peer);
-                                    break;
-                                }
+                                log("INFO: Too many peers in acl to response.");
+                                introduce_gossip_peers(chain_id, peer);
+                                break;
                             } else {
                                 acl[peer] = peer_info(now);
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::fee_tx_pool_entry>(payload), now);
@@ -3911,26 +3902,9 @@ namespace libTAU::blockchain {
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
-                                // find out min score peer
-                                auto min_it = acl.begin();
-                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                    if (iter->second.m_score  < min_it->second.m_score) {
-                                        min_it = iter;
-                                    }
-                                }
-
-                                if (min_it->second.m_score < peer_info().m_score) {
-                                    // replace min score peer with new one
-                                    acl.erase(min_it);
-                                    acl[peer] = peer_info(now);
-                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::time_tx_pool_entry>(payload), now);
-
-                                    introduce_gossip_peers(chain_id, peer);
-                                } else {
-                                    log("INFO: Too many peers in acl to response.");
-                                    introduce_gossip_peers(chain_id, peer);
-                                    break;
-                                }
+                                log("INFO: Too many peers in acl to response.");
+                                introduce_gossip_peers(chain_id, peer);
+                                break;
                             } else {
                                 acl[peer] = peer_info(now);
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::time_tx_pool_entry>(payload), now);
@@ -3986,26 +3960,9 @@ namespace libTAU::blockchain {
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
-                                // find out min score peer
-                                auto min_it = acl.begin();
-                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                    if (iter->second.m_score  < min_it->second.m_score) {
-                                        min_it = iter;
-                                    }
-                                }
-
-                                if (min_it->second.m_score < peer_info().m_score) {
-                                    // replace min score peer with new one
-                                    acl.erase(min_it);
-                                    acl[peer] = peer_info(now);
-                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
-
-                                    introduce_gossip_peers(chain_id, peer);
-                                } else {
-                                    log("INFO: Too many peers in acl to response.");
-                                    introduce_gossip_peers(chain_id, peer);
-                                    break;
-                                }
+                                log("INFO: Too many peers in acl to response.");
+                                introduce_gossip_peers(chain_id, peer);
+                                break;
                             } else {
                                 acl[peer] = peer_info(now);
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::transaction_request_entry>(payload), now);
@@ -4045,23 +4002,7 @@ namespace libTAU::blockchain {
                                 it->second.m_requests_time.erase(std::make_unique<common::transaction_request_entry>(chain_id, tx_entry.m_tx.sha256()));
                                 it->second.m_last_seen = now;
                             } else {
-                                if (acl.size() >= blockchain_acl_max_peers) {
-                                    // find out min score peer
-                                    auto min_it = acl.begin();
-                                    for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                        if (iter->second.m_score  < min_it->second.m_score) {
-                                            min_it = iter;
-                                        }
-                                    }
-
-                                    if (min_it->second.m_score < peer_info().m_score) {
-                                        // replace min score peer with new one
-                                        acl.erase(min_it);
-                                        acl[peer] = peer_info(now);
-
-                                        introduce_gossip_peers(chain_id, peer);
-                                    }
-                                } else {
+                                if (acl.size() < blockchain_acl_max_peers) {
                                     acl[peer] = peer_info(now);
 
                                     introduce_gossip_peers(chain_id, peer);
@@ -4245,26 +4186,9 @@ namespace libTAU::blockchain {
                             it->second.m_last_seen = now;
                         } else {
                             if (acl.size() >= blockchain_acl_max_peers) {
-                                // find out min score peer
-                                auto min_it = acl.begin();
-                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                    if (iter->second.m_score  < min_it->second.m_score) {
-                                        min_it = iter;
-                                    }
-                                }
-
-                                if (min_it->second.m_score < peer_info().m_score) {
-                                    // replace min score peer with new one
-                                    acl.erase(min_it);
-                                    acl[peer] = peer_info(now);
-                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
-
-                                    introduce_gossip_peers(chain_id, peer);
-                                } else {
-                                    log("INFO: Too many peers in acl to response.");
-                                    introduce_gossip_peers(chain_id, peer);
-                                    break;
-                                }
+                                log("INFO: Too many peers in acl to response.");
+                                introduce_gossip_peers(chain_id, peer);
+                                break;
                             } else {
                                 acl[peer] = peer_info(now);
                                 acl[peer].m_peer_requests_time.emplace(std::make_unique<common::head_block_request_entry>(payload), now);
@@ -4330,27 +4254,7 @@ namespace libTAU::blockchain {
 
                                 introduce_gossip_peers(chain_id, peer);
                             } else {
-                                if (acl.size() >= blockchain_acl_max_peers) {
-                                    // find out min score peer
-                                    auto min_it = acl.begin();
-                                    for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                        if (iter->second.m_score  < min_it->second.m_score) {
-                                            min_it = iter;
-                                        }
-                                    }
-
-                                    if (min_it->second.m_score < peer_info().m_score) {
-                                        // replace min score peer with new one
-                                        acl.erase(min_it);
-                                        acl[peer] = peer_info(NORMAL, blk_entry.m_blk, now);
-
-                                        introduce_gossip_peers(chain_id, peer);
-                                    } else {
-                                        log("INFO: Too many peers in acl to response.");
-                                        introduce_gossip_peers(chain_id, peer);
-                                        break;
-                                    }
-                                } else {
+                                if (acl.size() < blockchain_acl_max_peers) {
                                     acl[peer] = peer_info(NORMAL, blk_entry.m_blk, now);
 
                                     introduce_gossip_peers(chain_id, peer);
@@ -4590,23 +4494,7 @@ namespace libTAU::blockchain {
                             }
                             it->second.m_last_seen = now;
                         } else {
-                            if (acl.size() >= blockchain_acl_max_peers) {
-                                // find out min score peer
-                                auto min_it = acl.begin();
-                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                    if (iter->second.m_score  < min_it->second.m_score) {
-                                        min_it = iter;
-                                    }
-                                }
-
-                                if (min_it->second.m_score < peer_info().m_score) {
-                                    // replace min score peer with new one
-                                    acl.erase(min_it);
-                                    acl[peer] = peer_info(now);
-
-                                    introduce_gossip_peers(chain_id, peer);
-                                }
-                            } else {
+                            if (acl.size() < blockchain_acl_max_peers) {
                                 acl[peer] = peer_info(now);
 
                                 introduce_gossip_peers(chain_id, peer);
@@ -4658,23 +4546,7 @@ namespace libTAU::blockchain {
                                 it->second.m_score = 100;
                             }
                         } else {
-                            if (acl.size() >= blockchain_acl_max_peers) {
-                                // find out min score peer
-                                auto min_it = acl.begin();
-                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-                                    if (iter->second.m_score  < min_it->second.m_score) {
-                                        min_it = iter;
-                                    }
-                                }
-
-                                if (min_it->second.m_score < peer_info().m_score) {
-                                    // replace min score peer with new one
-                                    acl.erase(min_it);
-                                    acl[peer] = peer_info(now);
-
-                                    introduce_gossip_peers(chain_id, peer);
-                                }
-                            } else {
+                            if (acl.size() < blockchain_acl_max_peers) {
                                 acl[peer] = peer_info(now);
 
                                 introduce_gossip_peers(chain_id, peer);

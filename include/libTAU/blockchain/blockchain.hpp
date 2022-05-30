@@ -397,6 +397,10 @@ namespace blockchain {
 
         void print_acl_ban_list_info(aux::bytes const& chain_id);
 
+        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score);
+
+        void request_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score);
+
         // io context
         io_context& m_ioc;
 
