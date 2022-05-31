@@ -399,7 +399,14 @@ namespace blockchain {
 
         void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score);
 
-        void request_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score);
+        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score,
+                                     const std::unique_ptr<common::blockchain_entry_base>& ptr);
+
+        void head_block_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, const block &blk);
+
+        // @return true: response, false: not response
+        bool request_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer,
+                                        const std::unique_ptr<common::blockchain_entry_base>& ptr);
 
         // io context
         io_context& m_ioc;
