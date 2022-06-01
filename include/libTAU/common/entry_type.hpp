@@ -926,7 +926,7 @@ namespace libTAU::common {
 
         std::set<dht::public_key> m_peers;
 
-        std::int64_t m_balance;
+        std::int64_t m_balance{};
     };
 
     struct TORRENT_EXPORT fee_tx_pool_entry final : blockchain_entry_base {

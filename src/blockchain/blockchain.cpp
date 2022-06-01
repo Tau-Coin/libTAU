@@ -4382,6 +4382,7 @@ namespace libTAU::blockchain {
                         }
 
                         if (gossipPeersEntry.m_balance > 0) {
+                            log("Chain[%s] gossip state[%ld]", aux::toHex(chain_id).c_str(), gossipPeersEntry.m_balance);
                             account act(gossipPeersEntry.m_balance);
                             if (now > m_last_balance_alert_time[chain_id] + 60 * 1000) {
                                 m_ses.alerts().emplace_alert<blockchain_state_alert>(chain_id, act);

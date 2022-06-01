@@ -1635,9 +1635,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        char buffer[256];
-        std::snprintf(buffer, sizeof(buffer), "chain[%s] post state alert", aux::toHex(chain_id).c_str());
-        return buffer;
+        return "Alert: chain:" + aux::toHex(chain_id) + " post state:" + act.to_string();
 #endif
     }
 
