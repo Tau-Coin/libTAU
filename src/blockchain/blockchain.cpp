@@ -3702,7 +3702,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::request_received_from_peer(const aux::bytes &chain_id, const dht::public_key& peer,
-                                                const std::unique_ptr<common::blockchain_entry_base>& ptr) {
+                                                std::unique_ptr<common::blockchain_entry_base>& ptr) {
         auto now = get_total_milliseconds();
         auto &acl = m_access_list[chain_id];
         auto it = acl.find(peer);
@@ -3716,7 +3716,7 @@ namespace libTAU::blockchain {
                     return false;
                 }
             } else {
-                it->second.m_peer_requests_time.emplace(ptr.get(), now);
+                it->second.m_peer_requests_time.emplace(std::move(ptr), now);
             }
             it->second.m_last_seen = now;
             it->second.m_score -= 1;
@@ -3730,7 +3730,7 @@ namespace libTAU::blockchain {
                 return false;
             } else {
                 acl[peer] = peer_info(now);
-                acl[peer].m_peer_requests_time.emplace(ptr.get(), now);
+                acl[peer].m_peer_requests_time.emplace(std::move(ptr), now);
 
                 introduce_gossip_peers(chain_id, peer);
             }
@@ -3774,7 +3774,8 @@ namespace libTAU::blockchain {
 
                         try_to_kick_out_of_ban_list(chain_id, peer);
 
-                        if (!request_received_from_peer(chain_id, peer, std::make_unique<common::block_request_entry>(payload))) {
+                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::block_request_entry>(payload);
+                        if (!request_received_from_peer(chain_id, peer, ptr)) {
                             break;
                         }
 
@@ -3851,7 +3852,8 @@ namespace libTAU::blockchain {
 
                         try_to_kick_out_of_ban_list(chain_id, peer);
 
-                        if (!request_received_from_peer(chain_id, peer, std::make_unique<common::fee_tx_pool_entry>(payload))) {
+                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::fee_tx_pool_entry>(payload);
+                        if (!request_received_from_peer(chain_id, peer, ptr)) {
                             break;
                         }
 
@@ -3882,7 +3884,8 @@ namespace libTAU::blockchain {
 
                         try_to_kick_out_of_ban_list(chain_id, peer);
 
-                        if (!request_received_from_peer(chain_id, peer, std::make_unique<common::time_tx_pool_entry>(payload))) {
+                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::time_tx_pool_entry>(payload);
+                        if (!request_received_from_peer(chain_id, peer, ptr)) {
                             break;
                         }
 
@@ -3913,7 +3916,8 @@ namespace libTAU::blockchain {
 
                         try_to_kick_out_of_ban_list(chain_id, peer);
 
-                        if (!request_received_from_peer(chain_id, peer, std::make_unique<common::transaction_request_entry>(payload))) {
+                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::transaction_request_entry>(payload);
+                        if (!request_received_from_peer(chain_id, peer, ptr)) {
                             break;
                         }
 
@@ -4098,7 +4102,8 @@ namespace libTAU::blockchain {
 
                         try_to_kick_out_of_ban_list(chain_id, peer);
 
-                        if (!request_received_from_peer(chain_id, peer, std::make_unique<common::head_block_request_entry>(payload))) {
+                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::head_block_request_entry>(payload);
+                        if (!request_received_from_peer(chain_id, peer, ptr)) {
                             break;
                         }
 
