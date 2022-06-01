@@ -39,7 +39,7 @@ namespace libTAU::blockchain {
 //                create_TAU_chain();
 //            }
         } catch (std::exception &e) {
-            log("Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            log(true, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             return false;
         }
 
@@ -48,9 +48,9 @@ namespace libTAU::blockchain {
 
     bool blockchain::start()
     {
-        log("INFO: Start BlockChain...");
+        log(true, "INFO: Start BlockChain...");
         if (!init()) {
-            log("ERROR: Init fail.");
+            log(true, "ERROR: Init fail.");
             return false;
         }
 
@@ -100,13 +100,13 @@ namespace libTAU::blockchain {
 
         clear_all_cache();
 
-        log("INFO: Stop BlockChain...");
+        log(true, "INFO: Stop BlockChain...");
 
         return true;
     }
 
     void blockchain::account_changed() {
-        log("INFO: Change account..");
+        log(true, "INFO: Change account..");
 
         m_access_list.clear();
         m_ban_list.clear();
@@ -115,7 +115,7 @@ namespace libTAU::blockchain {
     void blockchain::request_state(const aux::bytes &chain_id) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
-            log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
             return;
         }
 
@@ -126,29 +126,29 @@ namespace libTAU::blockchain {
     bool blockchain::followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it != m_chains.end()) {
-            log("INFO: Already followed chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Already followed chain[%s]", aux::toHex(chain_id).c_str());
             return true;
         }
 
         if (!chain_id.empty()) {
-            log("INFO: Follow chain:%s", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Follow chain:%s", aux::toHex(chain_id).c_str());
 
             // create sqlite peer db
             if (!m_repository->create_peer_db(chain_id)) {
-                log("INFO: chain:%s, create peer db fail.", aux::toHex(chain_id).c_str());
+                log(true, "INFO: chain:%s, create peer db fail.", aux::toHex(chain_id).c_str());
             }
             if (!m_repository->create_gossip_peer_db(chain_id)) {
-                log("INFO: chain:%s, create gossip peer db fail.", aux::toHex(chain_id).c_str());
+                log(true, "INFO: chain:%s, create gossip peer db fail.", aux::toHex(chain_id).c_str());
             }
 
             // add peer into db
             for (auto const &peer: peers) {
-                log("INFO: chain:%s, initial peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                log(true, "INFO: chain:%s, initial peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 if (!m_repository->add_peer_in_peer_db(chain_id, peer)) {
-                    log("INFO: chain:%s, insert peer:%s fail in peer db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                    log(true, "INFO: chain:%s, insert peer:%s fail in peer db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 }
                 if (!m_repository->add_peer_in_gossip_peer_db(chain_id, peer)) {
-                    log("INFO: chain:%s, insert gossip peer:%s fail in gossip db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                    log(true, "INFO: chain:%s, insert gossip peer:%s fail in gossip db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 }
             }
 
@@ -168,18 +168,18 @@ namespace libTAU::blockchain {
     bool blockchain::add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key> &peers) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
-            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return false;
         }
 
         // add peer into db
         for (auto const &peer: peers) {
-            log("INFO: chain:%s, add peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+            log(true, "INFO: chain:%s, add peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
             if (!m_repository->add_peer_in_peer_db(chain_id, peer)) {
-                log("INFO: chain:%s, insert peer:%s fail in peer db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                log(true, "INFO: chain:%s, insert peer:%s fail in peer db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
             }
             if (!m_repository->add_peer_in_gossip_peer_db(chain_id, peer)) {
-                log("INFO: chain:%s, insert gossip peer:%s fail in gossip db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                log(true, "INFO: chain:%s, insert gossip peer:%s fail in gossip db.", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
             }
         }
 
@@ -187,7 +187,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::unfollowChain(const aux::bytes &chain_id) {
-        log("INFO: Unfollow chain:%s", aux::toHex(chain_id).c_str());
+        log(true, "INFO: Unfollow chain:%s", aux::toHex(chain_id).c_str());
 
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it != m_chains.end()) {
@@ -214,7 +214,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::load_chain(const aux::bytes &chain_id) {
-        log("INFO: load chain[%s]", aux::toHex(chain_id).c_str());
+        log(true, "INFO: load chain[%s]", aux::toHex(chain_id).c_str());
 
         // create vote timer
         m_chain_status_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
@@ -231,7 +231,7 @@ namespace libTAU::blockchain {
         auto head_block_hash = m_repository->get_head_block_hash(chain_id);
         auto tail_block_hash = m_repository->get_tail_block_hash(chain_id);
         auto consensus_point_block_hash = m_repository->get_consensus_point_block_hash(chain_id);
-        log("INFO chain id[%s], head block hash[%s], tail block hash[%s], consensus point block hash[%s]",
+        log(true, "INFO chain id[%s], head block hash[%s], tail block hash[%s], consensus point block hash[%s]",
             aux::toHex(chain_id).c_str(), aux::toHex(head_block_hash.to_string()).c_str(),
             aux::toHex(tail_block_hash.to_string()).c_str(), aux::toHex(consensus_point_block_hash.to_string()).c_str());
         if (!head_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros() && !consensus_point_block_hash.is_all_zeros()) {
@@ -242,9 +242,9 @@ namespace libTAU::blockchain {
                 m_head_blocks[chain_id] = head_block;
                 m_tail_blocks[chain_id] = tail_block;
                 m_consensus_point_blocks[chain_id] = consensus_point_block;
-                log("INFO: Head block: %s", head_block.to_string().c_str());
-                log("INFO: Tail block: %s", tail_block.to_string().c_str());
-                log("INFO: Consensus point block: %s", consensus_point_block.to_string().c_str());
+                log(true, "INFO: Head block: %s", head_block.to_string().c_str());
+                log(true, "INFO: Tail block: %s", tail_block.to_string().c_str());
+                log(true, "INFO: Consensus point block: %s", consensus_point_block.to_string().c_str());
 
                 // try to update voting point block
                 try_to_update_voting_point_block(chain_id);
@@ -255,7 +255,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::start_chain(const aux::bytes &chain_id) {
-        log("INFO: start chain[%s]", aux::toHex(chain_id).c_str());
+        log(true, "INFO: start chain[%s]", aux::toHex(chain_id).c_str());
 
         // create tx pool
         m_tx_pools[chain_id] = tx_pool(m_repository.get());
@@ -269,7 +269,7 @@ namespace libTAU::blockchain {
         auto head_block_hash = m_repository->get_head_block_hash(chain_id);
         auto tail_block_hash = m_repository->get_tail_block_hash(chain_id);
         auto consensus_point_block_hash = m_repository->get_consensus_point_block_hash(chain_id);
-        log("INFO chain id[%s], head block hash[%s], tail block hash[%s], consensus point block hash[%s]",
+        log(true, "INFO chain id[%s], head block hash[%s], tail block hash[%s], consensus point block hash[%s]",
             aux::toHex(chain_id).c_str(), aux::toHex(head_block_hash.to_string()).c_str(),
             aux::toHex(tail_block_hash.to_string()).c_str(), aux::toHex(consensus_point_block_hash.to_string()).c_str());
         if (!head_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros() && !consensus_point_block_hash.is_all_zeros()) {
@@ -280,9 +280,9 @@ namespace libTAU::blockchain {
                 m_head_blocks[chain_id] = head_block;
                 m_tail_blocks[chain_id] = tail_block;
                 m_consensus_point_blocks[chain_id] = consensus_point_block;
-                log("INFO: Head block: %s", head_block.to_string().c_str());
-                log("INFO: Tail block: %s", tail_block.to_string().c_str());
-                log("INFO: Consensus point block: %s", consensus_point_block.to_string().c_str());
+                log(true, "INFO: Head block: %s", head_block.to_string().c_str());
+                log(true, "INFO: Tail block: %s", tail_block.to_string().c_str());
+                log(true, "INFO: Consensus point block: %s", consensus_point_block.to_string().c_str());
 
                 // try to update voting point block
                 try_to_update_voting_point_block(chain_id);
@@ -373,7 +373,7 @@ namespace libTAU::blockchain {
             std::set<dht::public_key> peers;
             for (auto i = blockchain_acl_min_peers - size; i > 0; i--) {
                 auto peer = select_peer_randomly(chain_id);
-//                                            log("INFO: Chain[%s] select peer[%s]", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+//              log("INFO: Chain[%s] select peer[%s]", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 // if peer is not in acl, not been banned
                 if (!peer.is_all_zeros() &&
                     acl.find(peer) == acl.end() & peer != *m_ses.pubkey()) {
@@ -382,7 +382,7 @@ namespace libTAU::blockchain {
                     if (it != ban_list.end()) {
                         if (it->second.m_free_time > now) {
                             // peer is still banned
-//                                                        log("INFO: Chain[%s] peer[%s] is in ban list", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+//                          log("INFO: Chain[%s] peer[%s] is in ban list", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                             continue;
                         } else {
                             ban_list.erase(it);
@@ -555,7 +555,7 @@ namespace libTAU::blockchain {
             m_refresh_timer.expires_after(milliseconds(m_refresh_time));
             m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
         } catch (std::exception &e) {
-            log("Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            log(true, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
     }
 
@@ -568,7 +568,7 @@ namespace libTAU::blockchain {
 
         try {
             // reset chain status
-            log("INFO: reset chain[%s] status", aux::toHex(chain_id).c_str());
+            log(true, "INFO: reset chain[%s] status", aux::toHex(chain_id).c_str());
             reset_chain_status(chain_id);
 
             auto i = m_chain_status_timers.find(chain_id);
@@ -577,38 +577,38 @@ namespace libTAU::blockchain {
                 i->second.async_wait(std::bind(&blockchain::refresh_chain_status, self(), _1, chain_id));
             }
         } catch (std::exception &e) {
-            log("Exception vote [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            log(true, "Exception vote [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
     }
 
     void blockchain::refresh_votes(const error_code &e, const aux::bytes &chain_id) {
-        log("INFO: chain[%s] start to count votes", aux::toHex(chain_id).c_str());
+        log(true, "INFO: chain[%s] start to count votes", aux::toHex(chain_id).c_str());
         if (e) {
-            log("INFO: chain[%s] error code[%d]: %s", aux::toHex(chain_id).c_str(), e.value(), e.message().c_str());
+            log(true, "INFO: chain[%s] error code[%d]: %s", aux::toHex(chain_id).c_str(), e.value(), e.message().c_str());
         }
         if (e || m_stop) return;
 
         try {
             // count votes
-            log("INFO: chain[%s] count votes", aux::toHex(chain_id).c_str());
+            log(true, "INFO: chain[%s] count votes", aux::toHex(chain_id).c_str());
             count_votes(chain_id);
         } catch (std::exception &e) {
-            log("Exception vote [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            log(true, "Exception vote [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
 
-        log("INFO: chain[%s] stop to count votes", aux::toHex(chain_id).c_str());
+        log(true, "INFO: chain[%s] stop to count votes", aux::toHex(chain_id).c_str());
 
         m_chain_status[chain_id] = MINE;
     }
 
     void blockchain::refresh_mining_timeout(const error_code &e, const aux::bytes &chain_id) {
         if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) {
-            log("ERROR: refresh_mining_timeout:%d", e.value());
+            log(true, "ERROR: refresh_mining_timeout:%d", e.value());
             return;
         }
 
         try {
-            log("INFO: 1. Chain[%s] status[%d]", aux::toHex(chain_id).c_str(), m_chain_status[chain_id]);
+            log(true, "INFO: 1. Chain[%s] status[%d]", aux::toHex(chain_id).c_str(), m_chain_status[chain_id]);
 
             long refresh_time = DEFAULT_BLOCK_TIME * 1000;
 
@@ -677,7 +677,7 @@ namespace libTAU::blockchain {
                 }
 
                 m_chain_status[chain_id] = COUNT_VOTES;
-                log("INFO: 2. chain:%s vote status:%d, time:%ld, ready to count cotes",
+                log(true, "INFO: 2. chain:%s vote status:%d, time:%ld, ready to count cotes",
                     aux::toHex(chain_id).c_str(), m_chain_status[chain_id], now);
 
                 refresh_time = 3000;
@@ -710,7 +710,7 @@ namespace libTAU::blockchain {
                             while (i > 0) {
                                 ancestor = m_repository->get_block_by_hash(previous_hash);
                                 if (ancestor.empty()) {
-                                    log("INFO chain[%s] 1. Cannot find block[%s] in db",
+                                    log(true, "INFO chain[%s] 1. Cannot find block[%s] in db",
                                         aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                                     missing = true;
                                     request_block(chain_id, previous_hash);
@@ -725,7 +725,7 @@ namespace libTAU::blockchain {
                         if (!missing) {
                             auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
                             std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
-                            log("INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(),
+                            log(true, "INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(),
                                 aux::toHex(pk->bytes).c_str(), power);
                             auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(),
                                                                                     *pk);
@@ -733,7 +733,7 @@ namespace libTAU::blockchain {
                             auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit,
                                                                                                                 base_target,
                                                                                                                 power));
-                            log("INFO: chain id[%s] generation signature[%s], base target[%lu], hit[%lu]",
+                            log(true, "INFO: chain id[%s] generation signature[%s], base target[%lu], hit[%lu]",
                                 aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
 
                             auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(
@@ -811,7 +811,7 @@ namespace libTAU::blockchain {
                                 b.sign(*pk, *sk);
 
                                 // process mined block
-                                log("INFO chain[%s] process mined block[%s]",
+                                log(true, "INFO chain[%s] process mined block[%s]",
                                     aux::toHex(chain_id).c_str(), b.to_string().c_str());
 
                                 process_block(chain_id, b);
@@ -821,7 +821,7 @@ namespace libTAU::blockchain {
 
                                 refresh_time = 100;
                             } else {
-                                log("INFO: chain id[%s] left time[%ld]s", aux::toHex(chain_id).c_str(),
+                                log(true, "INFO: chain id[%s] left time[%ld]s", aux::toHex(chain_id).c_str(),
                                     head_block.timestamp() + interval - current_time);
                                 refresh_time = (head_block.timestamp() + interval - current_time) * 1000;
                             }
@@ -830,14 +830,14 @@ namespace libTAU::blockchain {
                 }
             }
 
-            log("++++++++++++++ refresh time:%ld", refresh_time);
+            log(true, "refresh time:%ld", refresh_time);
             auto it = m_chain_timers.find(chain_id);
             if (it != m_chain_timers.end()) {
                 it->second.expires_after(milliseconds(refresh_time));
                 it->second.async_wait(std::bind(&blockchain::refresh_mining_timeout, self(), _1, chain_id));
             }
         } catch (std::exception &e) {
-            log("Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            log(true, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
     }
 
@@ -1032,7 +1032,7 @@ namespace libTAU::blockchain {
                 if (r_iterator == hashes.end()) {
                     r_iterator = hashes.begin();
                 }
-                log("INFO chain[%s] right unchoked peer[%s]",
+                log(true, "INFO chain[%s] right unchoked peer[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(hash_peer_map[*r_iterator].bytes).c_str());
                 peers.insert(hash_peer_map[*r_iterator]);
 
@@ -1040,7 +1040,7 @@ namespace libTAU::blockchain {
                     l_iterator = hashes.end();
                 }
                 l_iterator--;
-                log("INFO chain[%s] left unchoked peer[%s]",
+                log(true, "INFO chain[%s] left unchoked peer[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(hash_peer_map[*l_iterator].bytes).c_str());
                 peers.insert(hash_peer_map[*l_iterator]);
 //            }
@@ -1053,7 +1053,7 @@ namespace libTAU::blockchain {
             if (r_iterator == hashes.end()) {
                 r_iterator = hashes.begin();
             }
-            log("INFO chain[%s] right third unchoked peer[%s]",
+            log(true, "INFO chain[%s] right third unchoked peer[%s]",
                 aux::toHex(chain_id).c_str(), aux::toHex(hash_peer_map[*r_iterator].bytes).c_str());
             peers.insert(hash_peer_map[*r_iterator]);
 
@@ -1065,7 +1065,7 @@ namespace libTAU::blockchain {
                 l_iterator = hashes.end();
             }
             l_iterator--;
-            log("INFO chain[%s] left third unchoked peer[%s]",
+            log(true, "INFO chain[%s] left third unchoked peer[%s]",
                 aux::toHex(chain_id).c_str(), aux::toHex(hash_peer_map[*l_iterator].bytes).c_str());
             peers.insert(hash_peer_map[*l_iterator]);
 
@@ -1112,7 +1112,7 @@ namespace libTAU::blockchain {
         auto &head_block = m_head_blocks[chain_id];
         if (!head_block.empty()) {
             if (head_block.block_number() < 0) {
-                log("INFO chain[%s] Negative and genesis block cannot be mined", aux::toHex(chain_id).c_str());
+                log(true, "INFO chain[%s] Negative and genesis block cannot be mined", aux::toHex(chain_id).c_str());
                 return b;
             }
 
@@ -1123,7 +1123,7 @@ namespace libTAU::blockchain {
                 while (i > 0) {
                     ancestor = m_repository->get_block_by_hash(previous_hash);
                     if (ancestor.empty()) {
-                        log("INFO chain[%s] 1. Cannot find block[%s] in db",
+                        log(true, "INFO chain[%s] 1. Cannot find block[%s] in db",
                             aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                         return b;
                     }
@@ -1135,11 +1135,11 @@ namespace libTAU::blockchain {
 
             auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
             std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
-            log("INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), power);
+            log(true, "INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), power);
             auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
             auto hit = consensus::calculate_random_hit(genSig);
             auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, power));
-            log("INFO: chain id[%s] generation signature[%s], base target[%lu], hit[%lu]",
+            log(true, "INFO: chain id[%s] generation signature[%s], base target[%lu], hit[%lu]",
                 aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
 
             auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(head_block.cumulative_difficulty(), base_target);
@@ -1212,7 +1212,7 @@ namespace libTAU::blockchain {
 
                 b.sign(*pk, *sk);
             } else {
-                log("INFO: chain id[%s] left time[%ld]s", aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - now);
+                log(true, "INFO: chain id[%s] left time[%ld]s", aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - now);
             }
         }
 
@@ -1223,27 +1223,27 @@ namespace libTAU::blockchain {
         return SUCCESS;
 
         if (b.empty()) {
-            log("INFO chain[%s] block is empty", aux::toHex(chain_id).c_str());
+            log(true, "INFO chain[%s] block is empty", aux::toHex(chain_id).c_str());
             return FAIL;
         }
 
         if (previous_block.block_number() + 1 != b.block_number()) {
-            log("INFO chain[%s] block number error.", aux::toHex(chain_id).c_str());
+            log(true, "INFO chain[%s] block number error.", aux::toHex(chain_id).c_str());
             return FAIL;
         }
 
         if (b.block_number() <= 0) {
-            log("INFO chain[%s] Negative and genesis block is always true", aux::toHex(chain_id).c_str());
+            log(true, "INFO chain[%s] Negative and genesis block is always true", aux::toHex(chain_id).c_str());
             return SUCCESS;
         }
 
         if (b.timestamp() <= previous_block.timestamp()) {
-            log("INFO chain[%s] block timestamp error.", aux::toHex(chain_id).c_str());
+            log(true, "INFO chain[%s] block timestamp error.", aux::toHex(chain_id).c_str());
             return FAIL;
         }
 
         if (!b.verify_signature()) {
-            log("INFO chain[%s] block[%s] has bad signature",
+            log(true, "INFO chain[%s] block[%s] has bad signature",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
             return FAIL;
         }
@@ -1255,7 +1255,7 @@ namespace libTAU::blockchain {
             while (i > 0) {
                 ancestor = repo->get_block_by_hash(previous_hash);
                 if (ancestor.empty()) {
-                    log("INFO chain[%s] 2. Cannot find block[%s] in db, previous_block[%s]",
+                    log(true, "INFO chain[%s] 2. Cannot find block[%s] in db, previous_block[%s]",
                         aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str(), previous_block.to_string().c_str());
                     request_block(chain_id, previous_hash);
                     return MISSING;
@@ -1269,37 +1269,37 @@ namespace libTAU::blockchain {
         auto base_target = consensus::calculate_required_base_target(previous_block, ancestor);
         std::int64_t power = repo->get_effective_power(chain_id, b.miner());
 
-        log("INFO chain[%s] Account[%s] power[%ld] in db",aux::toHex(chain_id).c_str(), aux::toHex(b.miner().bytes).c_str(), power);
+        log(true, "INFO chain[%s] Account[%s] power[%ld] in db",aux::toHex(chain_id).c_str(), aux::toHex(b.miner().bytes).c_str(), power);
 
         auto genSig = consensus::calculate_generation_signature(previous_block.generation_signature(), b.miner());
         auto hit = consensus::calculate_random_hit(genSig);
 
         if (genSig != b.generation_signature()) {
-            log("ERROR chain[%s] generation signature[%s, %s] mismatch",
+            log(true, "ERROR chain[%s] generation signature[%s, %s] mismatch",
                 aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), aux::toHex(b.generation_signature().to_string()).c_str());
             return FAIL;
         }
 
         if (base_target != b.base_target()) {
-            log("ERROR chain[%s] base target[%lu, %lud] mismatch",
+            log(true, "ERROR chain[%s] base target[%lu, %lud] mismatch",
                 aux::toHex(chain_id).c_str(), base_target, b.base_target());
             return FAIL;
         }
 
         auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(previous_block.cumulative_difficulty(), base_target);
         if (cumulative_difficulty != b.cumulative_difficulty()) {
-            log("ERROR chain[%s] cumulative difficulty[%lu, %lud] mismatch",
+            log(true, "ERROR chain[%s] cumulative difficulty[%lu, %lud] mismatch",
                 aux::toHex(chain_id).c_str(), cumulative_difficulty, b.cumulative_difficulty());
             return FAIL;
         }
 
         auto necessary_interval = consensus::calculate_mining_time_interval(hit, base_target, power);
         if (b.timestamp() - previous_block.timestamp() < necessary_interval) {
-            log("ERROR: Time is too short! hit:%lu, base target:%ld, power:%ld, necessary interval:%ld, real interval:%ld",
+            log(true, "ERROR: Time is too short! hit:%lu, base target:%ld, power:%ld, necessary interval:%ld, real interval:%ld",
                 hit, base_target, power, necessary_interval, b.timestamp() - previous_block.timestamp());
             return FAIL;
         }
-        log("hit:%lu, base target:%ld, power:%ld, interval:%ld, real interval:%ld",
+        log(true, "hit:%lu, base target:%ld, power:%ld, interval:%ld, real interval:%ld",
             hit, base_target, power, necessary_interval, b.timestamp() - previous_block.timestamp());
         // notes: if use hit < base target * power * interval, data may be overflow
 //        if (!consensus::verify_hit(hit, base_target, power, interval)) {
@@ -1315,12 +1315,12 @@ namespace libTAU::blockchain {
 
         if (!tx.empty()) {
             if (b.chain_id() != tx.chain_id()) {
-                log("INFO chain[%s] block chain id[%s] and tx chain id[%s] mismatch",
+                log(true, "INFO chain[%s] block chain id[%s] and tx chain id[%s] mismatch",
                     aux::toHex(chain_id).c_str(), aux::toHex(b.chain_id()).c_str(), aux::toHex(tx.chain_id()).c_str());
             }
 
             if (!tx.verify_signature()) {
-                log("INFO chain[%s] block tx[%s] has bad signature",
+                log(true, "INFO chain[%s] block tx[%s] has bad signature",
                     aux::toHex(chain_id).c_str(), aux::toHex(b.sha256().to_string()).c_str());
             }
         }
@@ -1331,7 +1331,7 @@ namespace libTAU::blockchain {
             for (auto const& peer: peers) {
                 // note: verify block with cache data, do not use m_repository
                 auto peer_account = repo->get_account(chain_id, peer);
-                log("INFO: ------peer[%s] account[%s]", aux::toHex(peer.bytes).c_str(), peer_account.to_string().c_str());
+                log(true, "INFO: ------peer[%s] account[%s]", aux::toHex(peer.bytes).c_str(), peer_account.to_string().c_str());
                 peers_balance[peer] = peer_account.balance();
                 peers_nonce[peer] = peer_account.nonce();
             }
@@ -1349,16 +1349,16 @@ namespace libTAU::blockchain {
             }
 
             for (auto const& peer_info: peers_balance) {
-                log("INFO:------ peer[%s] balance[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
+                log(true, "INFO:------ peer[%s] balance[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
             }
             for (auto const& peer_info: peers_nonce) {
-                log("INFO:------ peer[%s] nonce[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
+                log(true, "INFO:------ peer[%s] nonce[%ld]", aux::toHex(peer_info.first.bytes).c_str(), peer_info.second);
             }
 
             if (peers_balance[b.miner()] != b.miner_balance() || peers_nonce[b.miner()] != b.miner_nonce() ||
                 peers_balance[b.tx().sender()] != b.sender_balance() || peers_nonce[b.tx().sender()] != b.sender_nonce() ||
                 peers_balance[b.tx().receiver()] != b.receiver_balance() || peers_nonce[b.tx().receiver()] != b.receiver_nonce()) {
-                log("ERROR chain[%s] block[%s] state error!", aux::toHex(chain_id).c_str(), b.to_string().c_str());
+                log(true, "ERROR chain[%s] block[%s] state error!", aux::toHex(chain_id).c_str(), b.to_string().c_str());
                 return FAIL;
             }
         }
@@ -1394,12 +1394,12 @@ namespace libTAU::blockchain {
         if (voting_point_block.empty() || voting_point_block.block_number() != block_number) {
             auto blk = m_repository->get_main_chain_block_by_number(chain_id, block_number);
             if (!blk.empty()) {
-                log("INFO chain[%s] Voting point block[%s]", aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                log(true, "INFO chain[%s] Voting point block[%s]", aux::toHex(chain_id).c_str(), blk.to_string().c_str());
                 m_voting_point_blocks[chain_id] = blk;
 
                 put_voting_block(chain_id, blk);
             } else {
-                log("INFO chain[%s] Cannot find voting point block", aux::toHex(chain_id).c_str());
+                log(true, "INFO chain[%s] Cannot find voting point block", aux::toHex(chain_id).c_str());
             }
         }
     }
@@ -1430,32 +1430,32 @@ namespace libTAU::blockchain {
             auto track = m_repository->start_tracking();
 
             if (!track->connect_head_block(blk)) {
-                log("INFO chain[%s] connect head block[%s] fail",
+                log(true, "INFO chain[%s] connect head block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
             if (!track->set_head_block_hash(chain_id, blk.sha256())) {
-                log("INFO chain[%s] set head block[%s] fail",
+                log(true, "INFO chain[%s] set head block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
             if (!track->set_tail_block_hash(chain_id, blk.sha256())) {
-                log("INFO chain[%s] set tail block[%s] fail",
+                log(true, "INFO chain[%s] set tail block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
             if (!track->set_consensus_point_block_hash(chain_id, blk.sha256())) {
-                log("INFO chain[%s] set consensus point block[%s] fail",
+                log(true, "INFO chain[%s] set consensus point block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
 
             if (!track->commit()) {
-                log("INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
+                log(true, "INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
                 return FAIL;
             }
             if (!m_repository->flush(chain_id)) {
-                log("INFO chain[%s] flush fail", aux::toHex(chain_id).c_str());
+                log(true, "INFO chain[%s] flush fail", aux::toHex(chain_id).c_str());
                 return FAIL;
             }
 
@@ -1484,13 +1484,13 @@ namespace libTAU::blockchain {
                 }
 
                 if (!track->connect_head_block(blk)) {
-                    log("INFO chain[%s] connect head block[%s] fail",
+                    log(true, "INFO chain[%s] connect head block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                     return FAIL;
                 }
 
                 if (!track->set_head_block_hash(chain_id, blk.sha256())) {
-                    log("INFO chain[%s] set head block[%s] fail",
+                    log(true, "INFO chain[%s] set head block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                     return FAIL;
                 }
@@ -1503,12 +1503,12 @@ namespace libTAU::blockchain {
                     auto tail_next_block = track->get_main_chain_block_by_number(chain_id, tail_block.block_number() + 1);
 
                     if (tail_next_block.empty()) {
-                        log("INFO chain[%s] Cannot get next tail block", aux::toHex(chain_id).c_str());
+                        log(true, "INFO chain[%s] Cannot get next tail block", aux::toHex(chain_id).c_str());
                         return FAIL;
                     }
 
                     if (!track->expire_block(tail_block)) {
-                        log("INFO chain[%s] expire block[%s] fail",
+                        log(true, "INFO chain[%s] expire block[%s] fail",
                             aux::toHex(chain_id).c_str(), aux::toHex(tail_block.sha256().to_string()).c_str());
                         return FAIL;
                     }
@@ -1525,7 +1525,7 @@ namespace libTAU::blockchain {
                 }
 
                 if (!track->commit()) {
-                    log("INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
+                    log(true, "INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
                     return FAIL;
                 }
                 m_repository->flush(chain_id);
@@ -1560,18 +1560,18 @@ namespace libTAU::blockchain {
                 auto track = m_repository->start_tracking();
 
                 if (!track->connect_tail_block(blk)) {
-                    log("INFO chain[%s] connect tail block[%s] fail",
+                    log(true, "INFO chain[%s] connect tail block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                     return FAIL;
                 }
                 if (!track->set_tail_block_hash(chain_id, blk.sha256())) {
-                    log("INFO chain[%s] set tail block[%s] fail",
+                    log(true, "INFO chain[%s] set tail block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                     return FAIL;
                 }
 
                 if (!track->commit()) {
-                    log("INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
+                    log(true, "INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
                     return FAIL;
                 }
                 m_repository->flush(chain_id);
@@ -1600,7 +1600,7 @@ namespace libTAU::blockchain {
 
             // 1. if empty chain, init chain with the best voting block
             if (is_empty_chain(chain_id)) {
-                log("INFO: chain[%s] is empty...", aux::toHex(chain_id).c_str());
+                log(true, "INFO: chain[%s] is empty...", aux::toHex(chain_id).c_str());
                 auto &best_vote = m_best_votes[chain_id];
                 if (!best_vote.empty()) {
                     process_block(chain_id, best_vote.voting_block());
@@ -1613,10 +1613,10 @@ namespace libTAU::blockchain {
                 auto &tail_block = m_tail_blocks[chain_id];
                 if (head_block.empty() || blk.previous_block_hash() == head_block.sha256() ||
                     blk.sha256() == tail_block.previous_block_hash()) {
-                    log("INFO: process block:%s", blk.to_string().c_str());
+                    log(true, "INFO: process block:%s", blk.to_string().c_str());
                     auto ret = process_block(chain_id, blk);
                     if (ret == FAIL) {
-                        log("ERROR: process block fail!");
+                        log(true, "ERROR: process block fail!");
                     }
                 }
 
@@ -1841,7 +1841,7 @@ namespace libTAU::blockchain {
     }
 
     RESULT blockchain::try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute, dht::public_key peer) {
-        log("INFO chain[%s] try to rebranch to block[%s]",
+        log(true, "INFO chain[%s] try to rebranch to block[%s]",
             aux::toHex(chain_id).c_str(), target.to_string().c_str());
 
         auto const& head_block = m_head_blocks[chain_id];
@@ -1857,7 +1857,7 @@ namespace libTAU::blockchain {
             // check if try to rollback voting point block
             if (!absolute) {
                 if (is_block_immutable_certainly(chain_id, main_chain_block)) {
-                    log("INFO chain[%s] block[%s] is immutable.",
+                    log(true, "INFO chain[%s] block[%s] is immutable.",
                         aux::toHex(chain_id).c_str(), main_chain_block.to_string().c_str());
                     return FAIL;
                 }
@@ -1868,7 +1868,7 @@ namespace libTAU::blockchain {
             auto previous_hash = main_chain_block.previous_block_hash();
             main_chain_block = m_repository->get_block_by_hash(previous_hash);
             if (main_chain_block.empty()) {
-                log("INFO chain[%s] 3. Cannot find block[%s] in db",
+                log(true, "INFO chain[%s] 3. Cannot find block[%s] in db",
                     aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 request_block(chain_id, previous_hash);
                 return MISSING;
@@ -1884,7 +1884,7 @@ namespace libTAU::blockchain {
             reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
 
             if (reference_block.empty()) {
-                log("INFO chain[%s] 4. Cannot find block[%s]",
+                log(true, "INFO chain[%s] 4. Cannot find block[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 request_block(chain_id, peer, previous_hash);
                 return MISSING;
@@ -1896,7 +1896,7 @@ namespace libTAU::blockchain {
         while (main_chain_block.sha256() != reference_block.sha256()) {
             if (!absolute) {
                 if (is_block_immutable_certainly(chain_id, main_chain_block)) {
-                    log("INFO chain[%s] block[%s] is immutable",
+                    log(true, "INFO chain[%s] block[%s] is immutable",
                         aux::toHex(chain_id).c_str(), main_chain_block.to_string().c_str());
                     return FAIL;
                 }
@@ -1907,7 +1907,7 @@ namespace libTAU::blockchain {
             auto main_chain_previous_hash = main_chain_block.previous_block_hash();
             main_chain_block = m_repository->get_block_by_hash(main_chain_previous_hash);
             if (main_chain_block.empty()) {
-                log("INFO chain[%s] 5.1 Cannot find main chain block[%s]",
+                log(true, "INFO chain[%s] 5.1 Cannot find main chain block[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_previous_hash.to_string()).c_str());
                 request_block(chain_id, main_chain_previous_hash);
                 return MISSING;
@@ -1922,14 +1922,14 @@ namespace libTAU::blockchain {
             reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
 
             if (reference_block.empty()) {
-                log("INFO chain[%s] 5.2 Cannot find block[%s]",
+                log(true, "INFO chain[%s] 5.2 Cannot find block[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 request_block(chain_id, peer, previous_hash);
                 return MISSING;
             }
         }
 
-        log("INFO: ------try to rebranch from main chain block[%s] to target block[%s], fork point block:%s",
+        log(true, "INFO: ------try to rebranch from main chain block[%s] to target block[%s], fork point block:%s",
             head_block.to_string().c_str(), target.to_string().c_str(), reference_block.to_string().c_str());
 
         // reference block is fork point block
@@ -1945,7 +1945,7 @@ namespace libTAU::blockchain {
         for (auto &blk: rollback_blocks) {
 //            log("INFO: try to rollback block:%s", blk.to_string().c_str());
             if (!track->rollback_block(blk)) {
-                log("INFO chain[%s] rollback block[%s] fail",
+                log(true, "INFO chain[%s] rollback block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
@@ -1958,7 +1958,7 @@ namespace libTAU::blockchain {
                 if (!previous_block.empty()) {
                     tail_block = previous_block;
                     if (!track->connect_tail_block(previous_block)) {
-                        log("INFO chain[%s] connect tail block[%s] fail",
+                        log(true, "INFO chain[%s] connect tail block[%s] fail",
                             aux::toHex(chain_id).c_str(), aux::toHex(previous_block.sha256().to_string()).c_str());
                         return FAIL;
                     }
@@ -1989,7 +1989,7 @@ namespace libTAU::blockchain {
             }
 
             if (!track->connect_head_block(blk)) {
-                log("INFO chain[%s] connect head block[%s] fail",
+                log(true, "INFO chain[%s] connect head block[%s] fail",
                     aux::toHex(chain_id).c_str(), aux::toHex(blk.sha256().to_string()).c_str());
                 return FAIL;
             }
@@ -2000,12 +2000,12 @@ namespace libTAU::blockchain {
                 auto tail_next_block = track->get_main_chain_block_by_number(chain_id, tail_block.block_number() + 1);
 
                 if (tail_next_block.empty()) {
-                    log("INFO chain[%s] Cannot get next tail block", aux::toHex(chain_id).c_str());
+                    log(true, "INFO chain[%s] Cannot get next tail block", aux::toHex(chain_id).c_str());
                     return FAIL;
                 }
 
                 if (!track->expire_block(tail_block)) {
-                    log("INFO chain[%s] expire block[%s] fail",
+                    log(true, "INFO chain[%s] expire block[%s] fail",
                         aux::toHex(chain_id).c_str(), aux::toHex(tail_block.sha256().to_string()).c_str());
                     return FAIL;
                 }
@@ -2023,18 +2023,18 @@ namespace libTAU::blockchain {
         }
 
         if (!track->set_tail_block_hash(chain_id, tail_block.sha256())) {
-            log("INFO chain[%s] set tail block[%s] fail",
+            log(true, "INFO chain[%s] set tail block[%s] fail",
                 aux::toHex(chain_id).c_str(), aux::toHex(tail_block.sha256().to_string()).c_str());
             return FAIL;
         }
         if (!track->set_head_block_hash(chain_id, target.sha256())) {
-            log("INFO chain[%s] set head block[%s] fail",
+            log(true, "INFO chain[%s] set head block[%s] fail",
                 aux::toHex(chain_id).c_str(), aux::toHex(target.sha256().to_string()).c_str());
             return FAIL;
         }
 
         if (!track->commit()) {
-            log("INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
+            log(true, "INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
             return FAIL;
         }
         m_repository->flush(chain_id);
@@ -2071,7 +2071,7 @@ namespace libTAU::blockchain {
         if (!is_sync_completed(chain_id)) {
             auto &tail_block = m_tail_blocks[chain_id];
             if (!tail_block.empty()) {
-                log("INFO: Demanding tail hash[%s].",
+                log(true, "INFO: Demanding tail hash[%s].",
                     aux::toHex(tail_block.previous_block_hash()).c_str());
                 request_block(chain_id, tail_block.previous_block_hash());
             }
@@ -2094,12 +2094,12 @@ namespace libTAU::blockchain {
                                                                                       best_vote.voting_block().block_number());
                         // if current main chain block hash and voting block hash mismatch
                         if (hash != best_vote.voting_block().sha256()) {
-                            log("INFO chain[%s] main chain block[%s] mismatch the best vote",
+                            log(true, "INFO chain[%s] main chain block[%s] mismatch the best vote",
                                 aux::toHex(chain_id).c_str(), aux::toHex(hash.to_string()).c_str());
                             // re-branch
                             const auto &best_voting_block = best_vote.voting_block();
                             if (!best_voting_block.empty()) {
-                                log("INFO chain[%s] try to re-branch to best voting block[%s]",
+                                log(true, "INFO chain[%s] try to re-branch to best voting block[%s]",
                                     aux::toHex(chain_id).c_str(), best_voting_block.to_string().c_str());
                                 auto result = try_to_rebranch(chain_id, best_voting_block, true);
                                 // clear block cache if re-branch success/fail
@@ -2227,13 +2227,13 @@ namespace libTAU::blockchain {
 
         if (!sorted_votes.empty()) {
             m_best_votes[chain_id] = *sorted_votes.begin();
-            log("INFO: chain[%s] best vote[%s]",
+            log(true, "INFO: chain[%s] best vote[%s]",
                 aux::toHex(chain_id).c_str(), sorted_votes.begin()->to_string().c_str());
         }
 
 
         for (auto const &sorted_vote: sorted_votes) {
-            log("INFO: ===sorted vote:%s", sorted_vote.to_string().c_str());
+            log(true, "INFO: ===sorted vote:%s", sorted_vote.to_string().c_str());
         }
 
         // select top three votes
@@ -2243,7 +2243,7 @@ namespace libTAU::blockchain {
             if (i >= 3)
                 break;
 
-            log("INFO chain[%s] top three vote[%s]",
+            log(true, "INFO chain[%s] top three vote[%s]",
                 aux::toHex(chain_id).c_str(), sorted_vote.to_string().c_str());
 
             top_three_votes.push_back(sorted_vote);
@@ -2264,7 +2264,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes, dht::public_key const& peer) {
-        log("INFO: peer[%s], value[%s]", aux::toHex(peer.bytes).c_str(), i.value().to_string().c_str());
+        log(true, "INFO: peer[%s], value[%s]", aux::toHex(peer.bytes).c_str(), i.value().to_string().c_str());
 
         auto salt = i.salt();
         std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
@@ -2272,7 +2272,7 @@ namespace libTAU::blockchain {
         if (protocolEntry.m_pid == common::protocol_put) {
             if (protocolEntry.m_data_type_id == common::transaction_entry::data_type_id) {
                 for (auto const& n: nodes) {
-                    log("INFO: nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
+                    log(true, "INFO: nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
                 }
 
                 common::transaction_entry txEntry(i.value());
@@ -2366,7 +2366,7 @@ namespace libTAU::blockchain {
                                         std::set<transaction> &missing_txs) {
         // 如果对方没有信息，则本地消息全为缺失消息
         if (hash_prefix_array.empty()) {
-            log("INFO: Hash prefix array is empty");
+            log(true, "INFO: Hash prefix array is empty");
             missing_txs.insert(txs.begin(), txs.end());
             return;
         }
@@ -2384,7 +2384,7 @@ namespace libTAU::blockchain {
             const size_t sourceLength = source.size();
             const size_t targetLength = size;
 
-            log("INFO: tx array: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
+            log(true, "INFO: tx array: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
             // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
             if (source == target) {
 //                for (auto const&tx: txs) {
@@ -2505,7 +2505,7 @@ namespace libTAU::blockchain {
         // salt is y pubkey when publish signal
         auto salt = make_salt(peer, data_type_id);
 
-        log("INFO: Send to peer[%s], data type id[%ld], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
+        log(true, "INFO: Send to peer[%s], data type id[%ld], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
             data_type_id, aux::toHex(salt).c_str(), data.to_string().c_str());
 
 //        m_ses.dht()->send(peer, data, 1, 3, 3, send_call_back);
@@ -2526,7 +2526,7 @@ namespace libTAU::blockchain {
                 max_it = iter;
             }
         }
-        log("INFO: ----------------chain[%s] request block hash[%s]", aux::toHex(chain_id).c_str(),
+        log(true, "INFO: chain[%s] request block hash[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(hash.to_string()).c_str());
 
         if (max_it != acl.end()) {
@@ -2539,7 +2539,7 @@ namespace libTAU::blockchain {
                 max_it->second.m_requests_time[std::make_unique<common::block_request_entry>(chain_id, hash)] = now;
             }
         } else {
-            log("INFO: ACL is empty, no peer to request.");
+            log(true, "INFO: ACL is empty, no peer to request.");
         }
     }
 
@@ -2591,7 +2591,7 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(peer, chain_id, common::gossip_cache_peers_entry::data_type_id);
 
-        log("INFO: Request gossip peers from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(true, "INFO: Request gossip peers from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         dht_get_mutable_item(chain_id, peer.bytes, salt);
     }
@@ -2600,7 +2600,7 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(peer, chain_id, common::voting_block_cache_entry::data_type_id);
 
-        log("INFO: Request vote from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(true, "INFO: Request vote from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         dht_get_mutable_item(chain_id, peer.bytes, salt);
     }
@@ -2615,7 +2615,7 @@ namespace libTAU::blockchain {
             // salt is y pubkey when publish signal
             auto salt = make_salt(*pk, chain_id, common::voting_block_cache_entry::data_type_id);
 
-            log("INFO: Chain id[%s] Cache voting block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(true, "INFO: Chain id[%s] Cache voting block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
                     , pk->bytes, sk->bytes, votingBlockCacheEntry.get_entry()), 1, 8, 100, salt, *pk, true);
@@ -3078,7 +3078,7 @@ namespace libTAU::blockchain {
                     case common::voting_block_cache_entry::data_type_id: {
                         common::voting_block_cache_entry votingBlockCacheEntry(i.value());
                         if (!votingBlockCacheEntry.m_blk.empty()) {
-                            log("INFO: chain[%s] get vote[%s] from peer[%s]", aux::toHex(chain_id).c_str(),
+                            log(true, "INFO: chain[%s] get vote[%s] from peer[%s]", aux::toHex(chain_id).c_str(),
                                 votingBlockCacheEntry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                             m_votes[chain_id][peer] = vote(votingBlockCacheEntry.m_blk);
                         }
@@ -3086,7 +3086,7 @@ namespace libTAU::blockchain {
                     }
                     case common::gossip_cache_peers_entry::data_type_id: {
                         common::gossip_cache_peers_entry gossipCachePeersEntry(i.value());
-                        log("INFO: chain[%s] get %lu gossip peers from peer[%s]", aux::toHex(chain_id).c_str(),
+                        log(true, "INFO: chain[%s] get %lu gossip peers from peer[%s]", aux::toHex(chain_id).c_str(),
                             gossipCachePeersEntry.m_peers.size(), aux::toHex(peer.bytes).c_str());
                         add_gossip_peers(chain_id, gossipCachePeersEntry.m_peers);
                         break;
@@ -3139,8 +3139,8 @@ namespace libTAU::blockchain {
         return m_ses.alerts().should_post<blockchain_log_alert>();
     }
 
-    TORRENT_FORMAT(2,3)
-    void blockchain::log(char const* fmt, ...) const noexcept try
+    TORRENT_FORMAT(3,4)
+    void blockchain::log(bool is_logged, char const* fmt, ...) const noexcept try
     {
 #ifndef TORRENT_DISABLE_LOGGING
         if (!should_log()) return;
@@ -3171,13 +3171,13 @@ namespace libTAU::blockchain {
             chain_id.insert(chain_id.end(), community_name.begin(), community_name.end());
         }
 
-        log("INFO Create chain id[%s] with community name[%s]", aux::toHex(chain_id).c_str(), community_name.c_str());
+        log(true, "INFO Create chain id[%s] with community name[%s]", aux::toHex(chain_id).c_str(), community_name.c_str());
 
         return chain_id;
     }
 
     bool blockchain::create_TAU_chain() {
-        log("INFO: create tau chain.");
+        log(true, "INFO: create tau chain.");
         std::int64_t size = TAU_CHAIN_GENESIS_ACCOUNT.size();
         std::int64_t block_number = -1 * size + 1;
         sha256_hash previous_hash;
@@ -3218,7 +3218,7 @@ namespace libTAU::blockchain {
         followChain(TAU_CHAIN_ID, peers);
 
         for (auto it = blocks.rbegin(); it != blocks.rend(); ++it) {
-            log("Process tau chain block:%s", it->to_string().c_str());
+            log(true, "Process tau chain block:%s", it->to_string().c_str());
             process_block(TAU_CHAIN_ID, *it);
         }
 
@@ -3308,10 +3308,10 @@ namespace libTAU::blockchain {
 
     bool blockchain::submitTransaction(const transaction& tx) {
         try {
-            log("INFO: add new tx:%s", tx.to_string().c_str());
+            log(true, "INFO: add new tx:%s", tx.to_string().c_str());
             if (!tx.empty()) {
                 if (!tx.verify_signature()) {
-                    log("INFO: Bad signature.");
+                    log(true, "INFO: Bad signature.");
                     return false;
                 }
 
@@ -3319,7 +3319,7 @@ namespace libTAU::blockchain {
 
                 auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                 if (it == m_chains.end()) {
-                    log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+                    log(true, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
                     return false;
                 }
 
@@ -3330,7 +3330,7 @@ namespace libTAU::blockchain {
                 return true;
             }
         } catch (std::exception &e) {
-            log("Exception add new tx [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            log(true, "Exception add new tx [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             return false;
         }
 
@@ -3340,7 +3340,7 @@ namespace libTAU::blockchain {
     bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha256_hash &txid) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
-            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return false;
         }
 
@@ -3362,7 +3362,7 @@ namespace libTAU::blockchain {
     std::vector<block> blockchain::getTopTipBlocks(const aux::bytes &chain_id, int topNum) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
-            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return std::vector<block>();
         }
 
@@ -3389,7 +3389,7 @@ namespace libTAU::blockchain {
     std::int64_t blockchain::getMedianTxFee(const aux::bytes &chain_id) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
-            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return 0;
         }
 
@@ -3405,7 +3405,7 @@ namespace libTAU::blockchain {
     std::int64_t blockchain::getMiningTime(const aux::bytes &chain_id) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
-            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return -1;
         }
 
@@ -3434,7 +3434,7 @@ namespace libTAU::blockchain {
 
             auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
             std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
-            log("INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), power);
+            log(true, "INFO: chain id[%s] public key[%s] power[%ld]", aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), power);
             auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
             auto hit = consensus::calculate_random_hit(genSig);
             auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, power));
@@ -3453,7 +3453,7 @@ namespace libTAU::blockchain {
     std::set<dht::public_key> blockchain::get_access_list(const aux::bytes &chain_id) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
-            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return std::set<dht::public_key>();
         }
 
@@ -3469,7 +3469,7 @@ namespace libTAU::blockchain {
     std::set<dht::public_key> blockchain::get_ban_list(const aux::bytes &chain_id) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
-            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return std::set<dht::public_key>();
         }
 
@@ -3485,7 +3485,7 @@ namespace libTAU::blockchain {
     std::set<dht::public_key> blockchain::get_gossip_peers(const aux::bytes &chain_id) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
-            log("INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            log(true, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return std::set<dht::public_key>();
         }
 
@@ -3610,7 +3610,7 @@ namespace libTAU::blockchain {
             // salt is y pubkey when publish signal
             auto salt = make_salt(*pk, chain_id, common::gossip_cache_peers_entry::data_type_id);
 
-            log("INFO: Chain id[%s] Cache gossip peers salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(true, "INFO: Chain id[%s] Cache gossip peers salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
                     , pk->bytes, sk->bytes, gossipCachePeersEntry.get_entry()), 1, 8, 100, salt, *pk, true);
@@ -3712,7 +3712,7 @@ namespace libTAU::blockchain {
                 if (now > itor->second + blockchain_same_response_interval) {
                     it->second.m_peer_requests_time.erase(itor);
                 } else {
-                    log("INFO: The same request from the same peer in 3s.");
+                    log(true, "INFO: The same request from the same peer in 4s.");
                     return false;
                 }
             } else {
@@ -3725,7 +3725,7 @@ namespace libTAU::blockchain {
             }
         } else {
             if (acl.size() >= blockchain_acl_max_peers) {
-                log("INFO: Too many peers in acl to response.");
+                log(true, "INFO: Too many peers in acl to response.");
                 introduce_gossip_peers(chain_id, peer);
                 return false;
             } else {
@@ -3744,7 +3744,7 @@ namespace libTAU::blockchain {
         auto& payload = i.value();
 
         if(payload.type() != entry::dictionary_t){
-            log("ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
+            log(true, "ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
             return;
         }
         // construct mutable data wrapper from entry
@@ -3757,7 +3757,7 @@ namespace libTAU::blockchain {
             if (protocolEntry.m_pid == common::protocol_put) {
                 std::int64_t data_type_id = protocolEntry.m_data_type_id;
 
-                log("---------------data type id:%ld from peer[%s] entry[%s]", data_type_id,
+                log(true, "data type id:%ld from peer[%s] entry[%s]", data_type_id,
                     aux::toHex(peer.bytes).c_str(), payload.to_string(true).c_str());
                 switch (data_type_id) {
                     case common::block_request_entry::data_type_id: {
@@ -3767,7 +3767,7 @@ namespace libTAU::blockchain {
                         {
                             auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                             if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                 return;
                             }
                         }
@@ -3785,7 +3785,7 @@ namespace libTAU::blockchain {
                             common::block_entry blockEntry(blk);
                             send_to(chain_id, peer, common::block_entry::data_type_id, blockEntry.get_entry(), true);
                         } else {
-                            log("INFO: Cannot get block[%s] in local", aux::toHex(blk_request_entry.m_hash).c_str());
+                            log(true, "INFO: Cannot get block[%s] in local", aux::toHex(blk_request_entry.m_hash).c_str());
                         }
 
                         break;
@@ -3797,7 +3797,7 @@ namespace libTAU::blockchain {
                         {
                             auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                             if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                 return;
                             }
                         }
@@ -3818,7 +3818,7 @@ namespace libTAU::blockchain {
 
                             data_received_from_peer(chain_id, peer, 3, std::make_unique<common::block_request_entry>(chain_id, blk_entry.m_blk.sha256()));
 
-                            log("INFO: Got block[%s].", blk_entry.m_blk.to_string().c_str());
+                            log(true, "INFO: Got block[%s].", blk_entry.m_blk.to_string().c_str());
 
                             m_repository->save_block(blk_entry.m_blk);
 
@@ -3845,7 +3845,7 @@ namespace libTAU::blockchain {
                         {
                             auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                             if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                 return;
                             }
                         }
@@ -3877,7 +3877,7 @@ namespace libTAU::blockchain {
                         {
                             auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                             if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                 return;
                             }
                         }
@@ -3909,7 +3909,7 @@ namespace libTAU::blockchain {
                         {
                             auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                             if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                 return;
                             }
                         }
@@ -3932,7 +3932,7 @@ namespace libTAU::blockchain {
                         {
                             auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                             if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                 return;
                             }
                         }
@@ -3941,7 +3941,7 @@ namespace libTAU::blockchain {
 
                         if (!tx_entry.m_tx.empty()) {
                             auto &tx = tx_entry.m_tx;
-                            log("INFO: Got transaction[%s].", tx.to_string().c_str());
+                            log(true, "INFO: Got transaction[%s].", tx.to_string().c_str());
 
                             data_received_from_peer(chain_id, peer, 3, std::make_unique<common::transaction_request_entry>(chain_id, tx_entry.m_tx.sha256()));
 
@@ -4095,7 +4095,7 @@ namespace libTAU::blockchain {
                         {
                             auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                             if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                 return;
                             }
                         }
@@ -4113,7 +4113,7 @@ namespace libTAU::blockchain {
                             common::head_block_entry blockEntry(blk);
                             send_to(chain_id, peer, common::head_block_entry::data_type_id, blockEntry.get_entry(), true);
                         } else {
-                            log("INFO: Cannot get head block in local");
+                            log(true, "INFO: Cannot get head block in local");
                         }
 
                         try_to_update_visiting_peer(chain_id, peer);
@@ -4130,7 +4130,7 @@ namespace libTAU::blockchain {
                             {
                                 auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                                 if (it == m_chains.end()) {
-                                    log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                    log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                     return;
                                 }
                             }
@@ -4149,7 +4149,7 @@ namespace libTAU::blockchain {
 
                             head_block_received_from_peer(chain_id, peer, blk_entry.m_blk);
 
-                            log("INFO: Got head block[%s] from peer[%s].",
+                            log(true, "INFO: Got head block[%s] from peer[%s].",
                                 blk_entry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
 
                             m_repository->save_block(blk_entry.m_blk);
@@ -4366,7 +4366,7 @@ namespace libTAU::blockchain {
                         {
                             auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                             if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                 return;
                             }
                         }
@@ -4378,7 +4378,7 @@ namespace libTAU::blockchain {
                         if (!gossipPeersEntry.m_peers.empty()) {
                             auto peers = gossipPeersEntry.m_peers;
                             for (auto const &pubkey: peers) {
-                                log("----------Got gossip peer:%s", aux::toHex(pubkey.bytes).c_str());
+                                log(true, "Got gossip peer:%s", aux::toHex(pubkey.bytes).c_str());
                             }
                             peers.erase(*m_ses.pubkey());
                             if (!peers.empty()) {
@@ -4387,7 +4387,7 @@ namespace libTAU::blockchain {
                         }
 
                         if (gossipPeersEntry.m_balance > 0) {
-                            log("Chain[%s] gossip state[%ld]", aux::toHex(chain_id).c_str(), gossipPeersEntry.m_balance);
+                            log(true, "Chain[%s] gossip state[%ld]", aux::toHex(chain_id).c_str(), gossipPeersEntry.m_balance);
                             account act(gossipPeersEntry.m_balance);
                             if (now > m_last_balance_alert_time[chain_id] + 60 * 1000) {
                                 m_ses.alerts().emplace_alert<blockchain_state_alert>(chain_id, act);
@@ -4405,7 +4405,7 @@ namespace libTAU::blockchain {
                         {
                             auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
                             if (it == m_chains.end()) {
-                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                                 return;
                             }
                         }
@@ -4414,7 +4414,7 @@ namespace libTAU::blockchain {
 
                         data_received_from_peer(chain_id, peer, 5);
 
-                        log("INFO: chain[%s] Got ping", aux::toHex(chain_id).c_str());
+                        log(true, "INFO: chain[%s] Got ping", aux::toHex(chain_id).c_str());
 
                         break;
                     }
@@ -4423,7 +4423,7 @@ namespace libTAU::blockchain {
                 }
             }
         } catch (std::exception &e) {
-            log("ERROR: Receive exception data.");
+            log(true, "ERROR: Receive exception data.");
         }
 
     }
@@ -4433,13 +4433,13 @@ namespace libTAU::blockchain {
         // acl
         auto &acl = m_access_list[chain_id];
         for (auto const &item: acl) {
-            log("-----ACL: peer[%s], info[%s]", aux::toHex(item.first.bytes).c_str(),
+            log(true, "-----ACL: peer[%s], info[%s]", aux::toHex(item.first.bytes).c_str(),
                 item.second.to_string().c_str());
         }
         // ban list
         auto &ban_list = m_ban_list[chain_id];
         for (auto const &item: ban_list) {
-            log("-----Ban List: peer[%s], info[%s]", aux::toHex(item.first.bytes).c_str(),
+            log(true, "-----Ban List: peer[%s], info[%s]", aux::toHex(item.first.bytes).c_str(),
                 item.second.to_string().c_str());
         }
     }

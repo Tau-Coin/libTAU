@@ -84,7 +84,7 @@ namespace libTAU {
         {
 //#ifndef TORRENT_DISABLE_LOGGING
             virtual bool should_log() const = 0;
-            virtual void log(char const* fmt, ...) const TORRENT_FORMAT(2,3) = 0;
+            virtual void log(bool is_logged, char const* fmt, ...) const TORRENT_FORMAT(3,4) = 0;
 //#endif
         protected:
             ~communication_logger() {}
@@ -234,7 +234,7 @@ namespace libTAU {
 
 //#ifndef TORRENT_DISABLE_LOGGING
             bool should_log() const override;
-            void log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
+            void log(bool is_logged, char const* fmt, ...) const noexcept override TORRENT_FORMAT(3,4);
 //#endif
 
             void refresh_timeout(error_code const& e);
