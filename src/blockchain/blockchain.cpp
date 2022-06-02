@@ -457,9 +457,6 @@ namespace libTAU::blockchain {
 //            m_tasks.pop();
 //        }
 //        m_tasks_set.clear();
-
-        m_visiting_history.clear();
-        m_visiting_time.clear();
         m_access_list.clear();
         m_ban_list.clear();
 //        m_priority_chain = std::make_pair(aux::bytes(), 0);
@@ -488,8 +485,6 @@ namespace libTAU::blockchain {
         m_chain_status_timers.erase(chain_id);
 //        m_last_voting_time.erase(chain_id);
 //        m_vote_request_peers.erase(chain_id);
-        m_visiting_history.erase(chain_id);
-        m_visiting_time.erase(chain_id);
         m_access_list.erase(chain_id);
         m_ban_list.erase(chain_id);
 //        m_chain_peers[chain_id].clear();
@@ -827,6 +822,9 @@ namespace libTAU::blockchain {
                             }
                         }
                     }
+                } else {
+                    log(true, "Chain[%s] stop mining", aux::toHex(chain_id).c_str());
+                    refresh_time = 3000;
                 }
             }
 
@@ -1400,21 +1398,6 @@ namespace libTAU::blockchain {
                 put_voting_block(chain_id, blk);
             } else {
                 log(true, "INFO chain[%s] Cannot find voting point block", aux::toHex(chain_id).c_str());
-            }
-        }
-    }
-
-    void blockchain::try_to_update_visiting_peer(const aux::bytes &chain_id, const dht::public_key &peer) {
-        auto now = get_total_milliseconds();
-        if (peer != m_visiting_time[chain_id].first) {
-            if (m_visiting_history[chain_id].find(peer) != m_visiting_history[chain_id].end()) {
-                m_visiting_history[chain_id].clear();
-                m_visiting_time[chain_id] = std::make_pair(peer, now);
-            }
-        } else {
-            if (now - m_visiting_time[chain_id].second > 60 * 1000) {
-                m_visiting_history[chain_id].clear();
-                m_visiting_time[chain_id] = std::make_pair(peer, now);
             }
         }
     }
@@ -3831,8 +3814,6 @@ namespace libTAU::blockchain {
                                 m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
                             }
 
-                            try_to_update_visiting_peer(chain_id, peer);
-
                             block_reception_event(chain_id, blk_entry.m_blk);
                         }
 
@@ -3866,8 +3847,6 @@ namespace libTAU::blockchain {
                             send_to(chain_id, peer,  common::transaction_entry::data_type_id, txEntry.get_entry(), true);
                         }
 
-                        try_to_update_visiting_peer(chain_id, peer);
-
                         break;
                     }
                     case common::time_tx_pool_entry::data_type_id: {
@@ -3898,8 +3877,6 @@ namespace libTAU::blockchain {
                             send_to(chain_id, peer,  common::transaction_entry::data_type_id, txEntry.get_entry(), true);
                         }
 
-                        try_to_update_visiting_peer(chain_id, peer);
-
                         break;
                     }
                     case common::transaction_request_entry::data_type_id: {
@@ -3920,8 +3897,6 @@ namespace libTAU::blockchain {
                         if (!request_received_from_peer(chain_id, peer, ptr)) {
                             break;
                         }
-
-                        try_to_update_visiting_peer(chain_id, peer);
 
                         break;
                     }
@@ -3958,8 +3933,6 @@ namespace libTAU::blockchain {
                                 transfer_to_acl_peers(chain_id, common::transaction_entry::data_type_id,
                                                       txEntry.get_entry(), true, peer);
                             }
-
-                            try_to_update_visiting_peer(chain_id, peer);
                         }
 
                         break;
@@ -4029,8 +4002,6 @@ namespace libTAU::blockchain {
 //                            send_to(chain_id, peer, common::vote_entry::data_type_id, voteEntry.get_entry(), true);
 //                        }
 //
-//                        try_to_update_visiting_peer(chain_id, peer);
-//
 //                        break;
 //                    }
 //                    case common::vote_entry::data_type_id: {
@@ -4084,8 +4055,6 @@ namespace libTAU::blockchain {
 //                            aux::toHex(chain_id).c_str(), voteEntry.m_vote.to_string().c_str());
 //                        m_votes[chain_id][peer] = voteEntry.m_vote;
 //
-//                        try_to_update_visiting_peer(chain_id, peer);
-//
 //                        break;
 //                    }
                     case common::head_block_request_entry::data_type_id: {
@@ -4115,8 +4084,6 @@ namespace libTAU::blockchain {
                         } else {
                             log(true, "INFO: Cannot get head block in local");
                         }
-
-                        try_to_update_visiting_peer(chain_id, peer);
 
                         break;
                     }
@@ -4168,8 +4135,6 @@ namespace libTAU::blockchain {
                             if (!blk_entry.m_blk.tx().empty()) {
                                 m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
                             }
-
-                            try_to_update_visiting_peer(chain_id, peer);
 
                             block_reception_event(chain_id, blk_entry.m_blk);
                         }

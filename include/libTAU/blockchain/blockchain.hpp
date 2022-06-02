@@ -260,8 +260,6 @@ namespace blockchain {
         // try to update voting point block if chain changed
         void try_to_update_voting_point_block(const aux::bytes &chain_id);
 
-        void try_to_update_visiting_peer(const aux::bytes &chain_id, const dht::public_key& peer);
-
         // verify block
         RESULT verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block, repository *repo);
 
@@ -479,10 +477,6 @@ namespace blockchain {
 //        std::set<common::blockchain_entry_task> m_tasks_set;
 
         std::map<aux::bytes, std::set<dht::public_key>> m_gossip_peers;
-
-        std::map<aux::bytes, std::set<dht::public_key>> m_visiting_history;
-
-        std::map<aux::bytes, std::pair<dht::public_key, std::int64_t>> m_visiting_time;
 
 //        std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_last_visiting_time;
 
