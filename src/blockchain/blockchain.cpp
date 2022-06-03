@@ -3507,32 +3507,6 @@ namespace libTAU::blockchain {
             peers.insert(iter->first);
         }
 
-        if (peers.size() < 5) {
-            auto gossip_peers = m_repository->get_all_gossip_peers(chain_id);
-            int m = 5 - peers.size();
-            int k = 0;
-            for (const auto & gossip_peer : gossip_peers) {
-                if (k < m) {
-                    peers.insert(gossip_peer);
-                } else {
-                    break;
-                }
-
-                k++;
-            }
-        }
-
-        if (peers.size() < 5) {
-            int m = 5 - peers.size();
-            for (int k = 0; k < m; k++) {
-                auto pubKey = m_repository->get_peer_randomly(chain_id);
-                if (!pubKey.is_all_zeros()) {
-                    peers.insert(pubKey);
-                }
-            }
-
-        }
-
         if (!peers.empty()) {
             introduce_peers(chain_id, peer, peers);
         }
