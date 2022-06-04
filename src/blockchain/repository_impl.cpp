@@ -618,21 +618,22 @@ namespace libTAU::blockchain {
             auto &chain_id = b.chain_id();
 
             std::set<dht::public_key> peers = b.get_block_peers();
-            for (auto const &peer: peers) {
-                indexKeyInfo.add_associated_peer(peer);
-
-                // update state linker
-                if (!forward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
-                    return false;
-                // update state pointer
-                auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-                if (accountBlockPointer.empty()) {
-                    accountBlockPointer.set_initial_block_hash(b.sha256());
-                } else {
-                    accountBlockPointer.set_latest_block_hash(b.sha256());
+            if (!peers.empty()) {
+                indexKeyInfo.set_associated_peers(peers);
+                for (auto const &peer: peers) {
+                    // update state linker
+                    if (!forward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
+                        return false;
+                    // update state pointer
+                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+                    if (accountBlockPointer.empty()) {
+                        accountBlockPointer.set_initial_block_hash(b.sha256());
+                    } else {
+                        accountBlockPointer.set_latest_block_hash(b.sha256());
+                    }
+                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+                        return false;
                 }
-                if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
-                    return false;
             }
 
             if (!save_state_linker(stateLinker))
@@ -657,21 +658,23 @@ namespace libTAU::blockchain {
             auto &chain_id = b.chain_id();
 
             std::set<dht::public_key> peers = b.get_block_peers();
-            for (auto const &peer: peers) {
-                indexKeyInfo.add_associated_peer(peer);
+            if (!peers.empty()) {
+                indexKeyInfo.set_associated_peers(peers);
 
-                // update state linker
-                if (!backward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
-                    return false;
-                // update state pointer
-                auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-                if (accountBlockPointer.empty()) {
-                    accountBlockPointer.set_initial_block_hash(b.sha256());
-                } else {
-                    accountBlockPointer.set_oldest_block_hash(b.sha256());
+                for (auto const &peer: peers) {
+                    // update state linker
+                    if (!backward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
+                        return false;
+                    // update state pointer
+                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+                    if (accountBlockPointer.empty()) {
+                        accountBlockPointer.set_initial_block_hash(b.sha256());
+                    } else {
+                        accountBlockPointer.set_oldest_block_hash(b.sha256());
+                    }
+                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+                        return false;
                 }
-                if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
-                    return false;
             }
 
             if (!save_state_linker(stateLinker))
