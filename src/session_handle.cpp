@@ -238,6 +238,11 @@ namespace libTAU {
 		sync_call(&session_impl::new_account_seed, account_seed);
 	}
 
+	void session_handle::enable_debug_log(bool logged)
+	{
+		sync_call(&session_impl::enable_debug_log, logged);
+	}
+
 	void session_handle::set_loop_time_interval(int milliseconds)
 	{
 		async_call(&session_impl::set_loop_time_interval, milliseconds);

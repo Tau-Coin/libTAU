@@ -2484,9 +2484,15 @@ namespace {
 			stop_ip_notifier();
 	}
 
-	void session_impl::enable_debug_log()
+	void session_impl::update_debug_log()
 	{
 		m_logged = m_settings.get_bool(settings_pack::enable_debug_log);
+	}
+
+	void session_impl::enable_debug_log(bool logged)
+	{
+		m_settings.set_bool(settings_pack::enable_debug_log, logged);
+        m_logged = logged;
 	}
 
 	void session_impl::update_upnp()
@@ -2624,10 +2630,8 @@ namespace {
 			nodes_list = nodes_from_settings;
 		}
 
-		if (nodes_list.empty())
-		{
-			nodes_list = nodes_from_settings;
-		}
+        //TODO: 100% use bs nodes in settings
+		nodes_list = nodes_from_settings;
 
 		std::vector<std::tuple<std::string, int, std::string>> nodes;
 		parse_comma_separated_string_port_key(nodes_list, nodes);

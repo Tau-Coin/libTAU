@@ -627,7 +627,8 @@ namespace aux {
 			void update_resolver_cache_timeout();
 
 			void update_ip_notifier();
-			void enable_debug_log();
+			void update_debug_log();
+			void enable_debug_log(bool logged);
 			void update_upnp();
 			void update_natpmp();
 			void update_dht();

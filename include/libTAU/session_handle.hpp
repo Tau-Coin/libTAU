@@ -139,6 +139,9 @@ namespace libTAU {
         //update account seed
         void new_account_seed(std::string& account_seed);
 
+        //update account seed
+        void enable_debug_log(bool logged);
+
 		// ``set_dht_storage`` set a dht custom storage constructor function
 		// to be used internally when the dht is created.
 		//
