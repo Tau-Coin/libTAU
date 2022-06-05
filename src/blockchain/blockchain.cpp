@@ -1688,6 +1688,10 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    bool blockchain::clear_chain_all_state(const aux::bytes &chain_id) {
+        return false;
+    }
+
     bool blockchain::is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
 //        auto &block_map = m_blocks[chain_id];
 //        auto it = block_map.find(hash);
