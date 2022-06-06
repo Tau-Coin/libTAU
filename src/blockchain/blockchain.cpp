@@ -692,12 +692,13 @@ namespace libTAU::blockchain {
             if (m_chain_status[chain_id] == MINE) {
                 // try to mine on the best chain
                 if (m_counters[counters::dht_nodes] > 0) {
-                    dht::secret_key *sk = m_ses.serkey();
-                    dht::public_key *pk = m_ses.pubkey();
+                    if (!is_empty_chain(chain_id)) {
+                        dht::secret_key *sk = m_ses.serkey();
+                        dht::public_key *pk = m_ses.pubkey();
 
-                    bool missing = false;
-                    const auto &head_block = m_head_blocks[chain_id];
-                    if (!head_block.empty() && head_block.block_number() >= 0) {
+                        bool missing = false;
+                        const auto &head_block = m_head_blocks[chain_id];
+
                         block ancestor;
                         auto previous_hash = head_block.previous_block_hash();
                         if (head_block.block_number() > 3) {
@@ -821,10 +822,16 @@ namespace libTAU::blockchain {
                                 refresh_time = (head_block.timestamp() + interval - current_time) * 1000;
                             }
                         }
+                    } else {
+                        // continue to vote if chain is empty
+                        reset_chain_status(chain_id);
+
+                        log(true, "Chain[%s] re-vote after 15s", aux::toHex(chain_id).c_str());
+                        refresh_time = 15000;
                     }
                 } else {
                     log(true, "Chain[%s] stop mining", aux::toHex(chain_id).c_str());
-                    refresh_time = 3000;
+                    refresh_time = 5000;
                 }
             }
 
@@ -2243,11 +2250,6 @@ namespace libTAU::blockchain {
 
         // clear history votes for next round
         m_votes[chain_id].clear();
-
-        // continue to vote if chain is empty
-        if (is_empty_chain(chain_id)) {
-            reset_chain_status(chain_id);
-        }
     }
 
     void blockchain::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes, dht::public_key const& peer) {
