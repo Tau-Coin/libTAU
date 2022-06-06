@@ -2254,24 +2254,28 @@ namespace libTAU::blockchain {
         log(true, "INFO: peer[%s], value[%s]", aux::toHex(peer.bytes).c_str(), i.value().to_string().c_str());
 
         auto salt = i.salt();
-        std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
-        common::protocol_entry protocolEntry(encode);
-        if (protocolEntry.m_pid == common::protocol_put) {
-            if (protocolEntry.m_data_type_id == common::transaction_entry::data_type_id) {
-                for (auto const& n: nodes) {
-                    log(true, "INFO: nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
-                }
+        if (salt.length() > common::salt_pubkey_length) {
+            std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
+            common::protocol_entry protocolEntry(encode);
+            if (protocolEntry.m_pid == common::protocol_put) {
+                if (protocolEntry.m_data_type_id == common::transaction_entry::data_type_id) {
+                    for (auto const &n: nodes) {
+                        log(true, "INFO: nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
+                    }
 
-                common::transaction_entry txEntry(i.value());
-                auto now = get_total_milliseconds();
-                m_ses.alerts().emplace_alert<blockchain_tx_sent_alert>(peer, txEntry.m_tx.sha256(), now);
-                for (auto const& n: nodes) {
-                    if (n.second) {
-                        m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(peer, txEntry.m_tx.sha256(), now);
-                        break;
+                    common::transaction_entry txEntry(i.value());
+                    auto now = get_total_milliseconds();
+                    m_ses.alerts().emplace_alert<blockchain_tx_sent_alert>(peer, txEntry.m_tx.sha256(), now);
+                    for (auto const &n: nodes) {
+                        if (n.second) {
+                            m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(peer, txEntry.m_tx.sha256(), now);
+                            break;
+                        }
                     }
                 }
             }
+        } else {
+            log(true, "ERROR: Invalid salt on dht put mutable item!");
         }
     }
 
@@ -2482,6 +2486,7 @@ namespace libTAU::blockchain {
         std::string encode = protocolEntry.get_encode();
         salt.insert(salt.end(), encode.begin(), encode.end());
 
+        log(true, "---------- make salt:peer[%s], data type id[%ld], salt[%s]", aux::toHex(peer.bytes).c_str(), data_type_id, aux::toHex(salt).c_str());
         return salt;
     }
 
@@ -3057,31 +3062,35 @@ namespace libTAU::blockchain {
         if (!i.empty()) {
             auto peer = i.pk();
             auto salt = i.salt();
-            std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
-            common::protocol_entry protocolEntry(encode);
-            if (protocolEntry.m_pid == common::protocol_gossip) {
+            if (salt.length() > common::salt_pubkey_length) {
+                std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
+                common::protocol_entry protocolEntry(encode);
+                if (protocolEntry.m_pid == common::protocol_gossip) {
 
-                switch (protocolEntry.m_data_type_id) {
-                    case common::voting_block_cache_entry::data_type_id: {
-                        common::voting_block_cache_entry votingBlockCacheEntry(i.value());
-                        if (!votingBlockCacheEntry.m_blk.empty()) {
-                            log(true, "INFO: chain[%s] get vote[%s] from peer[%s]", aux::toHex(chain_id).c_str(),
-                                votingBlockCacheEntry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-                            m_votes[chain_id][peer] = vote(votingBlockCacheEntry.m_blk);
+                    switch (protocolEntry.m_data_type_id) {
+                        case common::voting_block_cache_entry::data_type_id: {
+                            common::voting_block_cache_entry votingBlockCacheEntry(i.value());
+                            if (!votingBlockCacheEntry.m_blk.empty()) {
+                                log(true, "INFO: chain[%s] get vote[%s] from peer[%s]", aux::toHex(chain_id).c_str(),
+                                    votingBlockCacheEntry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                                m_votes[chain_id][peer] = vote(votingBlockCacheEntry.m_blk);
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case common::gossip_cache_peers_entry::data_type_id: {
-                        common::gossip_cache_peers_entry gossipCachePeersEntry(i.value());
-                        log(true, "INFO: chain[%s] get %lu gossip peers from peer[%s]", aux::toHex(chain_id).c_str(),
-                            gossipCachePeersEntry.m_peers.size(), aux::toHex(peer.bytes).c_str());
-                        add_gossip_peers(chain_id, gossipCachePeersEntry.m_peers);
-                        break;
-                    }
-                    default: {
+                        case common::gossip_cache_peers_entry::data_type_id: {
+                            common::gossip_cache_peers_entry gossipCachePeersEntry(i.value());
+                            log(true, "INFO: chain[%s] get %lu gossip peers from peer[%s]", aux::toHex(chain_id).c_str(),
+                                gossipCachePeersEntry.m_peers.size(), aux::toHex(peer.bytes).c_str());
+                            add_gossip_peers(chain_id, gossipCachePeersEntry.m_peers);
+                            break;
+                        }
+                        default: {
 
+                        }
                     }
                 }
+            } else {
+                log(true, "ERROR: Invalid salt in getting callback!");
             }
         }
     }
@@ -3713,208 +3722,209 @@ namespace libTAU::blockchain {
 
         try {
             auto salt = i.salt();
-            std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
-            common::protocol_entry protocolEntry(encode);
-            if (protocolEntry.m_pid == common::protocol_put) {
-                std::int64_t data_type_id = protocolEntry.m_data_type_id;
+            if (salt.length() > common::salt_pubkey_length) {
+                std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
+                common::protocol_entry protocolEntry(encode);
+                if (protocolEntry.m_pid == common::protocol_put) {
+                    std::int64_t data_type_id = protocolEntry.m_data_type_id;
 
-                log(true, "data type id:%ld from peer[%s] entry[%s]", data_type_id,
-                    aux::toHex(peer.bytes).c_str(), payload.to_string(true).c_str());
-                switch (data_type_id) {
-                    case common::block_request_entry::data_type_id: {
-                        common::block_request_entry blk_request_entry(payload);
-                        auto &chain_id = blk_request_entry.m_chain_id;
+                    log(true, "data type id:%ld from peer[%s] entry[%s]", data_type_id,
+                        aux::toHex(peer.bytes).c_str(), payload.to_string(true).c_str());
+                    switch (data_type_id) {
+                        case common::block_request_entry::data_type_id: {
+                            common::block_request_entry blk_request_entry(payload);
+                            auto &chain_id = blk_request_entry.m_chain_id;
 
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
-                            }
-                        }
-
-                        try_to_kick_out_of_ban_list(chain_id, peer);
-
-                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::block_request_entry>(payload);
-                        if (!request_received_from_peer(chain_id, peer, ptr)) {
-                            break;
-                        }
-
-                        auto blk = m_repository->get_block_by_hash(blk_request_entry.m_hash);
-
-                        if (!blk.empty()) {
-                            common::block_entry blockEntry(blk);
-                            send_to(chain_id, peer, common::block_entry::data_type_id, blockEntry.get_entry(), true);
-                        } else {
-                            log(true, "INFO: Cannot get block[%s] in local", aux::toHex(blk_request_entry.m_hash).c_str());
-                        }
-
-                        break;
-                    }
-                    case common::block_entry::data_type_id: {
-                        common::block_entry blk_entry(payload);
-                        auto &chain_id = blk_entry.m_chain_id;
-
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
-                            }
-                        }
-
-                        try_to_kick_out_of_ban_list(chain_id, peer);
-
-                        // TODO: validate timestamp etc. ?
-                        if (!blk_entry.m_blk.empty()) {
-                            auto &acl = m_access_list[chain_id];
-
-                            if (acl.empty()) {
-                                auto peers = blk_entry.m_blk.get_block_peers();
-                                peers.erase(*m_ses.pubkey());
-                                if (!peers.empty()) {
-                                    add_gossip_peers(chain_id, peers);
+                            {
+                                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                                if (it == m_chains.end()) {
+                                    log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                    return;
                                 }
                             }
 
-                            data_received_from_peer(chain_id, peer, 3, std::make_unique<common::block_request_entry>(chain_id, blk_entry.m_blk.sha256()));
+                            try_to_kick_out_of_ban_list(chain_id, peer);
 
-                            log(true, "INFO: Got block[%s].", blk_entry.m_blk.to_string().c_str());
+                            std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::block_request_entry>(payload);
+                            if (!request_received_from_peer(chain_id, peer, ptr)) {
+                                break;
+                            }
 
-                            m_repository->save_block(blk_entry.m_blk);
+                            auto blk = m_repository->get_block_by_hash(blk_request_entry.m_hash);
+
+                            if (!blk.empty()) {
+                                common::block_entry blockEntry(blk);
+                                send_to(chain_id, peer, common::block_entry::data_type_id, blockEntry.get_entry(), true);
+                            } else {
+                                log(true, "INFO: Cannot get block[%s] in local", aux::toHex(blk_request_entry.m_hash).c_str());
+                            }
+
+                            break;
+                        }
+                        case common::block_entry::data_type_id: {
+                            common::block_entry blk_entry(payload);
+                            auto &chain_id = blk_entry.m_chain_id;
+
+                            {
+                                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                                if (it == m_chains.end()) {
+                                    log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                    return;
+                                }
+                            }
+
+                            try_to_kick_out_of_ban_list(chain_id, peer);
+
+                            // TODO: validate timestamp etc. ?
+                            if (!blk_entry.m_blk.empty()) {
+                                auto &acl = m_access_list[chain_id];
+
+                                if (acl.empty()) {
+                                    auto peers = blk_entry.m_blk.get_block_peers();
+                                    peers.erase(*m_ses.pubkey());
+                                    if (!peers.empty()) {
+                                        add_gossip_peers(chain_id, peers);
+                                    }
+                                }
+
+                                data_received_from_peer(chain_id, peer, 3, std::make_unique<common::block_request_entry>(chain_id, blk_entry.m_blk.sha256()));
+
+                                log(true, "INFO: Got block[%s].", blk_entry.m_blk.to_string().c_str());
+
+                                m_repository->save_block(blk_entry.m_blk);
 
 //                            m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
-                            m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(peer, blk_entry.m_blk);
+                                m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(peer, blk_entry.m_blk);
 
-                            // notify ui tx from block
-                            if (!blk_entry.m_blk.tx().empty()) {
-                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
+                                // notify ui tx from block
+                                if (!blk_entry.m_blk.tx().empty()) {
+                                    m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
+                                }
+
+                                block_reception_event(chain_id, blk_entry.m_blk);
                             }
 
-                            block_reception_event(chain_id, blk_entry.m_blk);
-                        }
-
-                        break;
-                    }
-                    case common::fee_tx_pool_entry::data_type_id: {
-                        common::fee_tx_pool_entry txPoolEntry(payload);
-                        auto &chain_id = txPoolEntry.m_chain_id;
-
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
-                            }
-                        }
-
-                        try_to_kick_out_of_ban_list(chain_id, peer);
-
-                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::fee_tx_pool_entry>(payload);
-                        if (!request_received_from_peer(chain_id, peer, ptr)) {
                             break;
                         }
+                        case common::fee_tx_pool_entry::data_type_id: {
+                            common::fee_tx_pool_entry txPoolEntry(payload);
+                            auto &chain_id = txPoolEntry.m_chain_id;
 
-                        auto fee_pool_txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
-                        std::set<transaction> missing_txs;
-                        find_best_solution(fee_pool_txs, txPoolEntry.m_fee_pooL_levenshtein_array, missing_txs);
-
-                        for (auto const& tx: missing_txs) {
-                            common::transaction_entry txEntry(tx);
-                            send_to(chain_id, peer,  common::transaction_entry::data_type_id, txEntry.get_entry(), true);
-                        }
-
-                        break;
-                    }
-                    case common::time_tx_pool_entry::data_type_id: {
-                        common::time_tx_pool_entry txPoolEntry(payload);
-                        auto &chain_id = txPoolEntry.m_chain_id;
-
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
+                            {
+                                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                                if (it == m_chains.end()) {
+                                    log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                    return;
+                                }
                             }
-                        }
 
-                        try_to_kick_out_of_ban_list(chain_id, peer);
+                            try_to_kick_out_of_ban_list(chain_id, peer);
 
-                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::time_tx_pool_entry>(payload);
-                        if (!request_received_from_peer(chain_id, peer, ptr)) {
+                            std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::fee_tx_pool_entry>(payload);
+                            if (!request_received_from_peer(chain_id, peer, ptr)) {
+                                break;
+                            }
+
+                            auto fee_pool_txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
+                            std::set<transaction> missing_txs;
+                            find_best_solution(fee_pool_txs, txPoolEntry.m_fee_pooL_levenshtein_array, missing_txs);
+
+                            for (auto const& tx: missing_txs) {
+                                common::transaction_entry txEntry(tx);
+                                send_to(chain_id, peer,  common::transaction_entry::data_type_id, txEntry.get_entry(), true);
+                            }
+
                             break;
                         }
+                        case common::time_tx_pool_entry::data_type_id: {
+                            common::time_tx_pool_entry txPoolEntry(payload);
+                            auto &chain_id = txPoolEntry.m_chain_id;
 
-                        auto time_pool_txs = m_tx_pools[chain_id].get_top_ten_timestamp_transactions();
-                        std::set<transaction> missing_txs;
-                        find_best_solution(time_pool_txs, txPoolEntry.m_time_pooL_levenshtein_array, missing_txs);
-
-                        for (auto const& tx: missing_txs) {
-                            common::transaction_entry txEntry(tx);
-                            send_to(chain_id, peer,  common::transaction_entry::data_type_id, txEntry.get_entry(), true);
-                        }
-
-                        break;
-                    }
-                    case common::transaction_request_entry::data_type_id: {
-                        common::transaction_request_entry tx_request_entry(payload);
-                        auto &chain_id = tx_request_entry.m_chain_id;
-
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
+                            {
+                                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                                if (it == m_chains.end()) {
+                                    log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                    return;
+                                }
                             }
-                        }
 
-                        try_to_kick_out_of_ban_list(chain_id, peer);
+                            try_to_kick_out_of_ban_list(chain_id, peer);
 
-                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::transaction_request_entry>(payload);
-                        if (!request_received_from_peer(chain_id, peer, ptr)) {
+                            std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::time_tx_pool_entry>(payload);
+                            if (!request_received_from_peer(chain_id, peer, ptr)) {
+                                break;
+                            }
+
+                            auto time_pool_txs = m_tx_pools[chain_id].get_top_ten_timestamp_transactions();
+                            std::set<transaction> missing_txs;
+                            find_best_solution(time_pool_txs, txPoolEntry.m_time_pooL_levenshtein_array, missing_txs);
+
+                            for (auto const& tx: missing_txs) {
+                                common::transaction_entry txEntry(tx);
+                                send_to(chain_id, peer,  common::transaction_entry::data_type_id, txEntry.get_entry(), true);
+                            }
+
                             break;
                         }
+                        case common::transaction_request_entry::data_type_id: {
+                            common::transaction_request_entry tx_request_entry(payload);
+                            auto &chain_id = tx_request_entry.m_chain_id;
 
-                        break;
-                    }
-                    case common::transaction_entry::data_type_id: {
-                        common::transaction_entry tx_entry(payload);
-                        auto &chain_id = tx_entry.m_chain_id;
-
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
+                            {
+                                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                                if (it == m_chains.end()) {
+                                    log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                    return;
+                                }
                             }
+
+                            try_to_kick_out_of_ban_list(chain_id, peer);
+
+                            std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::transaction_request_entry>(payload);
+                            if (!request_received_from_peer(chain_id, peer, ptr)) {
+                                break;
+                            }
+
+                            break;
                         }
+                        case common::transaction_entry::data_type_id: {
+                            common::transaction_entry tx_entry(payload);
+                            auto &chain_id = tx_entry.m_chain_id;
 
-                        try_to_kick_out_of_ban_list(chain_id, peer);
+                            {
+                                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                                if (it == m_chains.end()) {
+                                    log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                    return;
+                                }
+                            }
 
-                        if (!tx_entry.m_tx.empty()) {
-                            auto &tx = tx_entry.m_tx;
-                            log(true, "INFO: Got transaction[%s].", tx.to_string().c_str());
+                            try_to_kick_out_of_ban_list(chain_id, peer);
 
-                            data_received_from_peer(chain_id, peer, 3, std::make_unique<common::transaction_request_entry>(chain_id, tx_entry.m_tx.sha256()));
+                            if (!tx_entry.m_tx.empty()) {
+                                auto &tx = tx_entry.m_tx;
+                                log(true, "INFO: Got transaction[%s].", tx.to_string().c_str());
 
-                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
+                                data_received_from_peer(chain_id, peer, 3, std::make_unique<common::transaction_request_entry>(chain_id, tx_entry.m_tx.sha256()));
+
+                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
 
 //                            if (tx.sender() == peer) {
 //                                common::transaction_reply_entry txReplyEntry(chain_id, tx.sha256());
 //                                send_to(chain_id, peer, common::transaction_reply_entry::data_type_id, txReplyEntry.get_entry(), true);
 //                            }
 
-                            auto &pool = m_tx_pools[chain_id];
-                            if (pool.add_tx(tx)) {
-                                common::transaction_entry txEntry(tx);
-                                transfer_to_acl_peers(chain_id, common::transaction_entry::data_type_id,
-                                                      txEntry.get_entry(), true, peer);
+                                auto &pool = m_tx_pools[chain_id];
+                                if (pool.add_tx(tx)) {
+                                    common::transaction_entry txEntry(tx);
+                                    transfer_to_acl_peers(chain_id, common::transaction_entry::data_type_id,
+                                                          txEntry.get_entry(), true, peer);
+                                }
                             }
-                        }
 
-                        break;
-                    }
+                            break;
+                        }
 //                    case common::vote_request_entry::data_type_id: {
 //                        common::vote_request_entry voteRequestEntry(payload);
 //                        auto &chain_id = voteRequestEntry.m_chain_id;
@@ -4035,42 +4045,9 @@ namespace libTAU::blockchain {
 //
 //                        break;
 //                    }
-                    case common::head_block_request_entry::data_type_id: {
-                        common::head_block_request_entry headBlockRequestEntry(payload);
-                        auto &chain_id = headBlockRequestEntry.m_chain_id;
-
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
-                            }
-                        }
-
-                        try_to_kick_out_of_ban_list(chain_id, peer);
-
-                        std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::head_block_request_entry>(payload);
-                        if (!request_received_from_peer(chain_id, peer, ptr)) {
-                            break;
-                        }
-
-                        auto &blk = m_head_blocks[chain_id];
-
-                        if (!blk.empty()) {
-                            common::head_block_entry blockEntry(blk);
-                            send_to(chain_id, peer, common::head_block_entry::data_type_id, blockEntry.get_entry(), true);
-                        } else {
-                            log(true, "INFO: Cannot get head block in local");
-                        }
-
-                        break;
-                    }
-                    case common::head_block_entry::data_type_id: {
-                        common::head_block_entry blk_entry(payload);
-
-                        // TODO: validate timestamp etc. ?
-                        if (!blk_entry.m_blk.empty()) {
-                            auto &chain_id = blk_entry.m_blk.chain_id();
+                        case common::head_block_request_entry::data_type_id: {
+                            common::head_block_request_entry headBlockRequestEntry(payload);
+                            auto &chain_id = headBlockRequestEntry.m_chain_id;
 
                             {
                                 auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
@@ -4082,43 +4059,76 @@ namespace libTAU::blockchain {
 
                             try_to_kick_out_of_ban_list(chain_id, peer);
 
-                            auto &acl = m_access_list[chain_id];
-
-                            if (acl.empty()) {
-                                auto peers = blk_entry.m_blk.get_block_peers();
-                                peers.erase(*m_ses.pubkey());
-                                if (!peers.empty()) {
-                                    add_gossip_peers(chain_id, peers);
-                                }
+                            std::unique_ptr<common::blockchain_entry_base> ptr = std::make_unique<common::head_block_request_entry>(payload);
+                            if (!request_received_from_peer(chain_id, peer, ptr)) {
+                                break;
                             }
 
-                            head_block_received_from_peer(chain_id, peer, blk_entry.m_blk);
+                            auto &blk = m_head_blocks[chain_id];
 
-                            log(true, "INFO: Got head block[%s] from peer[%s].",
-                                blk_entry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                            if (!blk.empty()) {
+                                common::head_block_entry blockEntry(blk);
+                                send_to(chain_id, peer, common::head_block_entry::data_type_id, blockEntry.get_entry(), true);
+                            } else {
+                                log(true, "INFO: Cannot get head block in local");
+                            }
 
-                            m_repository->save_block(blk_entry.m_blk);
+                            break;
+                        }
+                        case common::head_block_entry::data_type_id: {
+                            common::head_block_entry blk_entry(payload);
+
+                            // TODO: validate timestamp etc. ?
+                            if (!blk_entry.m_blk.empty()) {
+                                auto &chain_id = blk_entry.m_blk.chain_id();
+
+                                {
+                                    auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                                    if (it == m_chains.end()) {
+                                        log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                        return;
+                                    }
+                                }
+
+                                try_to_kick_out_of_ban_list(chain_id, peer);
+
+                                auto &acl = m_access_list[chain_id];
+
+                                if (acl.empty()) {
+                                    auto peers = blk_entry.m_blk.get_block_peers();
+                                    peers.erase(*m_ses.pubkey());
+                                    if (!peers.empty()) {
+                                        add_gossip_peers(chain_id, peers);
+                                    }
+                                }
+
+                                head_block_received_from_peer(chain_id, peer, blk_entry.m_blk);
+
+                                log(true, "INFO: Got head block[%s] from peer[%s].",
+                                    blk_entry.m_blk.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+
+                                m_repository->save_block(blk_entry.m_blk);
 
 //                            m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
-                            if (is_empty_chain(chain_id)) {
-                                process_block(chain_id, blk_entry.m_blk);
+                                if (is_empty_chain(chain_id)) {
+                                    process_block(chain_id, blk_entry.m_blk);
+                                }
+
+                                if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
+                                    m_ses.alerts().emplace_alert<blockchain_syncing_head_block_alert>(peer, blk_entry.m_blk);
+                                }
+
+                                // notify ui tx from block
+                                if (!blk_entry.m_blk.tx().empty()) {
+                                    m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
+                                }
+
+                                block_reception_event(chain_id, blk_entry.m_blk);
                             }
 
-                            if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
-                                m_ses.alerts().emplace_alert<blockchain_syncing_head_block_alert>(peer, blk_entry.m_blk);
-                            }
-
-                            // notify ui tx from block
-                            if (!blk_entry.m_blk.tx().empty()) {
-                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk_entry.m_blk.tx());
-                            }
-
-                            block_reception_event(chain_id, blk_entry.m_blk);
+                            break;
                         }
-
-                        break;
-                    }
 //                    case common::state_request_entry::data_type_id: {
 //                        common::state_request_entry stateRequestEntry(payload);
 //                        auto &chain_id = stateRequestEntry.m_chain_id;
@@ -4302,68 +4312,71 @@ namespace libTAU::blockchain {
 //
 //                        break;
 //                    }
-                    case common::gossip_peers_entry::data_type_id: {
-                        common::gossip_peers_entry gossipPeersEntry(payload);
-                        auto &chain_id = gossipPeersEntry.m_chain_id;
+                        case common::gossip_peers_entry::data_type_id: {
+                            common::gossip_peers_entry gossipPeersEntry(payload);
+                            auto &chain_id = gossipPeersEntry.m_chain_id;
 
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
+                            {
+                                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                                if (it == m_chains.end()) {
+                                    log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                    return;
+                                }
                             }
+
+                            try_to_kick_out_of_ban_list(chain_id, peer);
+
+                            data_received_from_peer(chain_id, peer, 3);
+
+                            if (!gossipPeersEntry.m_peers.empty()) {
+                                auto peers = gossipPeersEntry.m_peers;
+                                for (auto const &pubkey: peers) {
+                                    log(true, "Got gossip peer:%s", aux::toHex(pubkey.bytes).c_str());
+                                }
+                                peers.erase(*m_ses.pubkey());
+                                if (!peers.empty()) {
+                                    add_gossip_peers(chain_id, peers);
+                                }
+                            }
+
+                            if (gossipPeersEntry.m_balance > 0) {
+                                log(true, "Chain[%s] gossip state[%ld]", aux::toHex(chain_id).c_str(), gossipPeersEntry.m_balance);
+                                account act(gossipPeersEntry.m_balance);
+                                if (now > m_last_balance_alert_time[chain_id] + 60 * 1000) {
+                                    m_ses.alerts().emplace_alert<blockchain_state_alert>(chain_id, act);
+
+                                    m_last_balance_alert_time[chain_id] = now;
+                                }
+                            }
+
+                            break;
                         }
+                        case common::ping_entry::data_type_id: {
+                            common::ping_entry pingEntry(payload);
+                            auto &chain_id = pingEntry.m_chain_id;
 
-                        try_to_kick_out_of_ban_list(chain_id, peer);
-
-                        data_received_from_peer(chain_id, peer, 3);
-
-                        if (!gossipPeersEntry.m_peers.empty()) {
-                            auto peers = gossipPeersEntry.m_peers;
-                            for (auto const &pubkey: peers) {
-                                log(true, "Got gossip peer:%s", aux::toHex(pubkey.bytes).c_str());
+                            {
+                                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                                if (it == m_chains.end()) {
+                                    log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                                    return;
+                                }
                             }
-                            peers.erase(*m_ses.pubkey());
-                            if (!peers.empty()) {
-                                add_gossip_peers(chain_id, peers);
-                            }
+
+                            try_to_kick_out_of_ban_list(chain_id, peer);
+
+                            data_received_from_peer(chain_id, peer, 5);
+
+                            log(true, "INFO: chain[%s] Got ping", aux::toHex(chain_id).c_str());
+
+                            break;
                         }
-
-                        if (gossipPeersEntry.m_balance > 0) {
-                            log(true, "Chain[%s] gossip state[%ld]", aux::toHex(chain_id).c_str(), gossipPeersEntry.m_balance);
-                            account act(gossipPeersEntry.m_balance);
-                            if (now > m_last_balance_alert_time[chain_id] + 60 * 1000) {
-                                m_ses.alerts().emplace_alert<blockchain_state_alert>(chain_id, act);
-
-                                m_last_balance_alert_time[chain_id] = now;
-                            }
+                        default: {
                         }
-
-                        break;
-                    }
-                    case common::ping_entry::data_type_id: {
-                        common::ping_entry pingEntry(payload);
-                        auto &chain_id = pingEntry.m_chain_id;
-
-                        {
-                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                            if (it == m_chains.end()) {
-                                log(true, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                                return;
-                            }
-                        }
-
-                        try_to_kick_out_of_ban_list(chain_id, peer);
-
-                        data_received_from_peer(chain_id, peer, 5);
-
-                        log(true, "INFO: chain[%s] Got ping", aux::toHex(chain_id).c_str());
-
-                        break;
-                    }
-                    default: {
                     }
                 }
+            } else {
+                log(true, "ERROR: Invalid salt on dht item!");
             }
         } catch (std::exception &e) {
             log(true, "ERROR: Receive exception data.");
