@@ -40,6 +40,8 @@ namespace libTAU::blockchain {
 
     constexpr int CHAIN_EPOCH_BLOCK_SIZE = 30 * 288;
 
+    constexpr int OUTDATED_BLOCK_NUMBER = 2 * 30 * 288;
+
     constexpr int MAX_NEGATIVE_BLOCK_SIZE = 50000;
 
     // block time

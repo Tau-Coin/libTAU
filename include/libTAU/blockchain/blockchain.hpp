@@ -200,6 +200,8 @@ namespace blockchain {
         // clear chain cache
         void clear_chain_cache(const aux::bytes &chain_id);
 
+        void try_to_clear_outdated_data_in_db(const aux::bytes &chain_id);
+
         std::shared_ptr<blockchain> self()
         { return shared_from_this(); }
 
@@ -331,7 +333,7 @@ namespace blockchain {
         static std::string make_salt(dht::public_key peer, const aux::bytes &chain_id, std::int64_t data_type_id);
 
         // make a salt on mutable channel
-        std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
+        static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
 
         // send data to peer
         void send_to(const aux::bytes &chain_id, const dht::public_key &peer, std::int64_t data_type_id, entry const& data, bool cache);

@@ -286,6 +286,9 @@ namespace libTAU::blockchain {
 
                 // try to update voting point block
                 try_to_update_voting_point_block(chain_id);
+
+                // try to clear outdated data in db
+                try_to_clear_outdated_data_in_db(chain_id);
             }
         }
 
@@ -502,6 +505,14 @@ namespace libTAU::blockchain {
         m_votes[chain_id].clear();
         m_gossip_peers[chain_id].clear();
 //        m_latest_signal_time[chain_id].clear();
+    }
+
+    void blockchain::try_to_clear_outdated_data_in_db(const aux::bytes &chain_id) {
+        auto const& head_block = m_head_blocks[chain_id];
+        if (!head_block.empty() && head_block.block_number() > OUTDATED_BLOCK_NUMBER) {
+            // remove outdated data from db
+            m_repository->delete_all_outdated_data(chain_id, head_block.block_number() - OUTDATED_BLOCK_NUMBER);
+        }
     }
 
 
@@ -2488,7 +2499,6 @@ namespace libTAU::blockchain {
         std::string encode = protocolEntry.get_encode();
         salt.insert(salt.end(), encode.begin(), encode.end());
 
-        log(true, "---------- make salt:peer[%s], data type id[%ld], salt[%s]", aux::toHex(peer.bytes).c_str(), data_type_id, aux::toHex(salt).c_str());
         return salt;
     }
 

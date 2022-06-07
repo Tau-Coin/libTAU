@@ -180,6 +180,8 @@ namespace libTAU::blockchain {
 
         bool delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number);
 
+        virtual bool delete_all_outdated_data(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+
         virtual std::set<aux::bytes> get_all_chains() = 0;
 
         virtual bool save_chains(const std::set<aux::bytes> &chains) = 0;

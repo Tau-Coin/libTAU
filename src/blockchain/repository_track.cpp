@@ -768,6 +768,10 @@ namespace libTAU::blockchain {
 //        return delete_index_info(chain_id, block_number);
 //    }
 
+    bool repository_track::delete_all_outdated_data(const aux::bytes &chain_id, std::int64_t block_number) {
+        return false;
+    }
+
     std::set<aux::bytes> repository_track::get_all_chains() {
         return m_repository->get_all_chains();
     }
