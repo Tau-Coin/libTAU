@@ -30,6 +30,7 @@ see LICENSE file.
 #include <libTAU/kademlia/item.hpp>
 #include <libTAU/kademlia/announce_flags.hpp>
 
+#include <libTAU/account_manager.hpp>
 #include <libTAU/fwd.hpp>
 #include <libTAU/socket.hpp> // for udp::endpoint
 #include <libTAU/string_view.hpp>
@@ -37,6 +38,8 @@ see LICENSE file.
 
 // for dht_lookup and dht_routing_bucket
 #include <libTAU/alert_types.hpp>
+
+using libTAU::aux::account_manager;
 
 namespace libTAU {
 	struct counters;
@@ -89,7 +92,8 @@ public:
 		, node_id const& nid
 		, dht_observer* observer, counters& cnt
 		, get_foreign_node_t get_foreign_node
-		, dht_storage_interface& storage);
+		, dht_storage_interface& storage
+		, std::shared_ptr<account_manager> account_manager);
 
 	~node();
 
@@ -185,6 +189,15 @@ public:
 		, std::int8_t invoke_limit
 		, std::function<void(entry const&, int)> cb);
 
+	void send(public_key const& to
+		, entry const& payload
+		, std::int8_t alpha
+		, std::int8_t beta
+		, std::int8_t invoke_limit
+		, std::int8_t hit_limit
+		, std::function<void(entry const& payload
+			, std::vector<std::pair<node_entry, bool>> const& nodes)> cb);
+
 	void get_peers(public_key const& pk, std::string const& salt);
 
 	// fills the vector with the count nodes from routing table buckets that
@@ -275,7 +288,7 @@ private:
 		, node_id const& id, node_id *to, udp::endpoint *to_ep, node_id& push_candidate);
 
 	void push(node_id const& to, udp::endpoint const& to_ep, msg const& m, node_id const& from);
-	void push(node_id const& to, udp::endpoint const& to_ep, entry& item, node_id const& from);
+	void push(node_id const& to, udp::endpoint const& to_ep, entry& relay_entry);
 
 	bool incoming_push(msg const& m, entry& e, node_id const& from, item& i);
 
@@ -284,9 +297,11 @@ private:
 	void incoming_push_error(const char* err_str);
 
 	bool incoming_relay(msg const& m, entry& e, entry& payload
-		, node_id *to, udp::endpoint *to_ep, node_id& sender, node_id const& from);
+		, node_id *to, udp::endpoint *to_ep, node_id& sender
+		, node_id const& from, std::string& decrypted_pl);
 
-	void relay(node_id const& to, udp::endpoint const& to_ep, msg const& m);
+	void relay(node_id const& to, udp::endpoint const& to_ep
+		, msg const& m, node_id const& from);
 
 	void handle_referred_relays(node_id const& peer, node_entry const& ne);
 
@@ -294,6 +309,12 @@ private:
 
 	void write_nodes_entries(sha256_hash const& info_hash
 		, bdecode_node const& want, entry& r, int min_distance_exp = -1);
+
+	bool encrypt(dht::public_key const& dht_pk, const std::string& in
+		, std::string& out, std::string& err_str);
+
+	bool decrypt(dht::public_key const& dht_pk, const std::string& in
+		, std::string& out, std::string& err_str);
 
 	node_id m_id;
 
@@ -339,6 +360,8 @@ private:
 	std::array<char, 4> m_secret[2];
 
 	counters& m_counters;
+
+	std::shared_ptr<account_manager> m_account_manager;
 
 #ifndef TORRENT_DISABLE_LOGGING
 	std::uint32_t m_search_id = 0;

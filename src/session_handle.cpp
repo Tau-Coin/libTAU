@@ -219,9 +219,11 @@ namespace libTAU {
 	}
 
 	void session_handle::send(dht::public_key const& to , entry const& payload
-		, std::int8_t alpha , std::int8_t beta , std::int8_t invoke_limit)
+		, std::int8_t alpha , std::int8_t beta , std::int8_t invoke_limit
+		, std::int8_t hit_limit)
 	{
-		async_call(&session_impl::send, to, payload, alpha, beta, invoke_limit);
+		async_call(&session_impl::send, to, payload, alpha, beta
+			, invoke_limit, hit_limit);
 	}
 
 	void session_handle::dht_live_nodes(sha256_hash const& nid)

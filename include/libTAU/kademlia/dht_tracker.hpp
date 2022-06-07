@@ -22,6 +22,7 @@ see LICENSE file.
 #include <libTAU/kademlia/dht_state.hpp>
 
 #include <libTAU/aux_/listen_socket_handle.hpp>
+#include "libTAU/account_manager.hpp"
 #include <libTAU/sha1_hash.hpp>
 #include <libTAU/socket.hpp>
 #include <libTAU/aux_/deadline_timer.hpp>
@@ -29,6 +30,8 @@ see LICENSE file.
 #include <libTAU/io_context.hpp>
 #include <libTAU/aux_/udp_socket.hpp>
 #include <libTAU/entry.hpp>
+
+using libTAU::aux::account_manager;
 
 namespace libTAU {
 
@@ -58,7 +61,8 @@ namespace libTAU::dht {
 			, aux::session_settings const& settings
 			, counters& cnt
 			, dht_storage_interface& storage
-			, dht_state&& state);
+			, dht_state&& state
+			, std::shared_ptr<account_manager> account_manager);
 
 		// the dht_state must be moved in!
 		dht_tracker(dht_observer* observer
@@ -164,6 +168,16 @@ namespace libTAU::dht {
 			, std::int8_t invoke_limit
 			, std::function<void(entry const&, int)> cb);
 
+		// relay protocol
+		void send(public_key const& to
+			, entry const& payload
+			, std::int8_t alpha
+			, std::int8_t beta
+			, std::int8_t invoke_limit
+			, std::int8_t hit_limit
+			, std::function<void(entry const& payload
+				, std::vector<std::pair<node_entry, bool>> const& nodes)> cb);
+
 		void get_peers(public_key const& pk, std::string salt = std::string());
 
 		// fills the vector with the count nodes from routing table buckets that
@@ -204,7 +218,8 @@ namespace libTAU::dht {
 				, node_id const& nid
 				, dht_observer* observer, counters& cnt
 				, get_foreign_node_t get_foreign_node
-				, dht_storage_interface& storage);
+				, dht_storage_interface& storage
+				, std::shared_ptr<account_manager> account_manager);
 			tracker_node(tracker_node const&) = delete;
 			tracker_node(tracker_node&&) = delete;
 
@@ -259,6 +274,8 @@ namespace libTAU::dht {
 
 		// public key as node id
 		libTAU::sha256_hash m_public_key;
+
+		std::shared_ptr<account_manager> m_account_manager;
 	};
 } // namespace libTAU::dht
 

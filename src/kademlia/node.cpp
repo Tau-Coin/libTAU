@@ -29,6 +29,7 @@ see LICENSE file.
 #include <libTAU/aux_/socket_io.hpp>
 #include <libTAU/session_status.hpp>
 #include "libTAU/bencode.hpp"
+#include "libTAU/crypto.hpp"
 #include "libTAU/hasher.hpp"
 #include "libTAU/aux_/random.hpp"
 #include <libTAU/assert.hpp>
@@ -81,7 +82,8 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	, dht_observer* observer
 	, counters& cnt
 	, get_foreign_node_t get_foreign_node
-	, dht_storage_interface& storage)
+	, dht_storage_interface& storage
+	, std::shared_ptr<account_manager> account_manager)
 	: m_settings(settings)
 	, m_id(nid)
 	, m_table(m_id, aux::is_v4(sock.get_local_endpoint()) ? udp::v4() : udp::v6(), 8, settings, observer)
@@ -98,6 +100,7 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	, m_last_keep(min_time())
 	, m_counters(cnt)
 	, m_storage(storage)
+	, m_account_manager(std::move(account_manager))
 {
 	aux::crypto_random_bytes(m_secret[0]);
 	aux::crypto_random_bytes(m_secret[1]);
@@ -350,23 +353,20 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 				// max items number pushed once 'keep'
 				constexpr int max_items_once = 8;
 
-				// find item from storage and push
-				node_id prefix;
-				std::memcpy(&prefix[0], &from[0], 16);
-
-				sha256_hash target;
+				// find relay from storage and push
+				sha256_hash key;
 				bool item_exists = false;
 
 				for (int i = 0; i < max_items_once; i++)
 				{
-					target.clear();
-					item_exists = m_storage.get_mutable_item_target(prefix, target);
+					key.clear();
+					item_exists = m_storage.get_random_relay_entry(from, key);
 					if (!item_exists)
 					{
 #ifndef TORRENT_DISABLE_LOGGING
 						if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 						{
-							m_observer->log(dht_logger::node, "No item pushed(%d):%s"
+							m_observer->log(dht_logger::node, "No relay entry pushed(%d):%s"
 								, i , aux::to_hex(from).c_str());
 						}
 #endif
@@ -374,24 +374,24 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 					}
 					else
 					{
-						entry item;
-						bool ok = m_storage.get_mutable_item(target, timestamp(0), true, item);
+						entry re;
+						bool ok = m_storage.get_relay_entry(key, re);
 						if (ok)
 						{
 							// push item
 #ifndef TORRENT_DISABLE_LOGGING
 							if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 							{
-								m_observer->log(dht_logger::node, "Push item(%d) :%s to %s"
-									, i , aux::to_hex(target).c_str()
+								m_observer->log(dht_logger::node, "Push relay entry(%d) :%s to %s"
+									, i , aux::to_hex(key).c_str()
 									, aux::to_hex(from).c_str());
 							}
 #endif
 
-							push(from, m.addr, item, from);
+							push(from, m.addr, re);
 
 							// remove this item
-							m_storage.remove_mutable_item(target);
+							m_storage.remove_relay_entry(key);
 						}
 					}
 				}
@@ -431,8 +431,10 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			node_id to;
 			udp::endpoint to_ep;
 			node_id sender;
+			std::string decrypted_payload;
 
-			bool need_relay = incoming_relay(m, resp, payload, &to, &to_ep, sender, from);
+			bool need_relay = incoming_relay(m, resp, payload, &to,
+					&to_ep, sender, from, decrypted_payload);
 			if (to != m_id)
 			{
 				m_sock_man->send_packet(m_sock, resp, m.addr, from);
@@ -448,7 +450,7 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 				}
 				else
 				{
-					relay(to, to_ep, m);
+					relay(to, to_ep, m, from);
 				}
 			}
 
@@ -762,6 +764,7 @@ void node::send(public_key const& to
     }
 #endif
 
+	/*
 	sha256_hash const& dest = item_target_id(to);
 	auto ta = std::make_shared<dht::relay>(*this, dest, cb);
 
@@ -786,6 +789,99 @@ void node::send(public_key const& to
 		l.push_back(aux_nodes[r]);
 	}
 	ta->add_relays_nodes(l);
+
+	ta->start();
+	*/
+}
+
+void node::send(public_key const& to
+	, entry const& payload
+	, std::int8_t alpha
+	, std::int8_t beta
+	, std::int8_t invoke_limit
+	, std::int8_t hit_limit
+	, std::function<void(entry const& payload
+		, std::vector<std::pair<node_entry, bool>> const& nodes)> cb)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		char hex_to[65];
+		aux::to_hex(to.bytes, hex_to);
+		m_observer->log(dht_logger::node, "starting sending to: %s", hex_to);
+	}
+#endif
+
+	sha256_hash const& dest = item_target_id(to);
+
+	// find relay aux info
+	std::vector<node_entry> l;
+	std::vector<node_entry> aux_nodes = m_table.find_node(
+		m_id, routing_table::include_pinged);
+	auto const new_end = std::remove_if(aux_nodes.begin(), aux_nodes.end()
+		, [&](node_entry const& ne) { return ne.id == dest; });
+	aux_nodes.erase(new_end, aux_nodes.end());
+	if (aux_nodes.size() > 0)
+	{
+		std::uint32_t const random_max = aux_nodes.size() - 1;
+		std::uint32_t const r = aux::random(random_max);
+		l.push_back(aux_nodes[r]);
+	}
+
+	entry aux_nodes_entry;
+	std::string encoding_aux_nodes;
+	if (!l.empty())
+	{
+		aux_nodes_entry = write_nodes_entry(l);
+		bencode(std::back_inserter(encoding_aux_nodes), aux_nodes_entry);
+	}
+
+	// encoding payload
+	std::string encoding_payload;
+	bencode(std::back_inserter(encoding_payload), payload);
+	if (encoding_payload.size() > 1000)
+	{
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+		{
+			m_observer->log(dht_logger::node, "payload is too large: %d", encoding_payload.size());
+		}
+#endif
+
+		std::vector<std::pair<node_entry, bool>> empty_nodes;
+		cb(payload, empty_nodes);
+		return;
+	}
+
+	// sign relay payload and aux_nodes
+	relay_hmac hmac = gen_relay_hmac(encoding_payload, encoding_aux_nodes);
+
+	auto ta = std::make_shared<dht::relay>(*this, dest, payload
+			, aux_nodes_entry, hmac, cb);
+
+	// encypt payload
+	std::string encypt_err;
+	bool result = encrypt(to, encoding_payload, ta->encrypted_payload(), encypt_err);
+	if (!result)
+	{
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+		{
+			m_observer->log(dht_logger::node, "send encryption err: %s", encypt_err.c_str());
+		}
+#endif
+
+		std::vector<std::pair<node_entry, bool>> empty_nodes;
+		cb(payload, empty_nodes);
+
+		return;
+	}
+
+	ta->set_invoke_window(beta);
+	ta->set_invoke_limit(invoke_limit);
+	ta->set_hit_limit(hit_limit);
+	// TODO: removed
+	ta->set_fixed_distance(256);
 
 	ta->start();
 }
@@ -957,6 +1053,7 @@ void node::send_single_refresh(udp::endpoint const& ep, int const bucket
 time_duration node::connection_timeout()
 {
 	time_duration d = m_rpc.tick();
+/*
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 	{
@@ -965,6 +1062,7 @@ time_duration node::connection_timeout()
 			, x.count());
 	}
 #endif
+*/
 
 	time_point now(aux::time_now());
 	if (now - minutes(1) < m_last_tracker_tick) return d;
@@ -1472,15 +1570,13 @@ void node::push(node_id const& to, udp::endpoint const& to_ep, msg const& m, nod
 	m_rpc.invoke(e, to_ep, o, true);
 }
 
-void node::push(node_id const& to, udp::endpoint const& to_ep, entry& item, node_id const& from)
+void node::push(node_id const& to, udp::endpoint const& to_ep, entry& re)
 {
 	entry e = entry(entry::dictionary_t);
 
-	item["to"] = to.to_string();
-	item["token"] = libtau_token; // TODO: remove 'token' field
-	e["a"] = item;
-	e["y"] = "p";
-	e["q"] = "put";
+	e["a"] = re;
+	e["y"] = "h";
+	e["q"] = "relay";
 
 	// create a dummy traversal_algorithm
 	auto algo = std::make_shared<traversal_algorithm>(*this, to);
@@ -1655,7 +1751,8 @@ void node::incoming_push_error(const char *err_str)
 }
 
 bool node::incoming_relay(msg const& m, entry& e, entry& payload
-		, node_id *to, udp::endpoint *to_ep, node_id& sender, node_id const& from)
+		, node_id *to, udp::endpoint *to_ep, node_id& sender
+		, node_id const& from, std::string& decrypted_pl)
 {
 	e = entry(entry::dictionary_t);
 	e["y"] = "r";
@@ -1701,14 +1798,19 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 		static key_desc_t const msg_desc[] = {
 			// from: sender public key
 			{"f", bdecode_node::string_t, public_key::len, key_desc_t::optional},
-			{"pl", bdecode_node::none_t, 0, 0},
+			{"pl", bdecode_node::string_t, 0, 0},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
 			{"dis", bdecode_node::int_t, 0, key_desc_t::optional},
+			// ipv4 aux nodes
+			{"rn", bdecode_node::none_t, 0, key_desc_t::optional},
+			// ipv6 aux nodes
+			{"rn6", bdecode_node::none_t, 0, key_desc_t::optional},
+			{"hmac", bdecode_node::string_t, relay_hmac::len, 0},
 		};
 
 		// attempt to parse the message
 		// also reject the message if it has any non-fatal encoding errors
-		bdecode_node msg_keys[4];
+		bdecode_node msg_keys[7];
 		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string)
 			|| arg_ent.has_soft_error(error_string))
 		{
@@ -1724,25 +1826,89 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 		}
 		else
 		{
-			incoming_relay_error("from key error");
+			sender = from;
+		}
+
+		// parse payload
+		// pointer and length to the whole entry
+		// for 'relay' protocol, tha max size of decrypted 'payload' is 1000 bytes.
+		// and the encyption algorithm is AES(encryption block size is 16 bytes).
+		// so here the max size of encrypted 'payload' is 1008 bytes.
+		span<char const> buffer = msg_keys[1].data_section();
+		if (buffer.size() > 1008 || buffer.empty())
+		{
+			incoming_relay_error("message too big");
 			return false;
 		}
+
+		// parse aux nodes
+		span<char const> aux_buf;
+		udp proto = udp::v4();
+
+		if (msg_keys[4])
+		{
+			aux_buf = msg_keys[4].data_section();
+		}
+		else if (msg_keys[5])
+		{
+			aux_buf = msg_keys[5].data_section();
+			proto = udp::v6();
+		}
+		// the max size of aux info is 400:
+		// 8 ipv6 endpoints: 8 * 50 (node id 32 + ipv6 16 + port 2).
+		if (aux_buf.size() > 400)
+		{
+			incoming_relay_error("aux nodes too big");
+			return false;
+		}
+
+		// parse hmac
+		if (!msg_keys[6])
+		{
+			incoming_relay_error("empty hmac");
+			return false;
+		}
+
+		relay_hmac hmac(msg_keys[6].string_ptr());
 
 		// push to ourself
 		if (target_id == m_id)
 		{
-			// parse payload
-			// pointer and length to the whole entry
-			span<char const> buf = msg_keys[1].data_section();
-			if (buf.size() > 1000 || buf.empty())
+			error_code errc;
+			entry pl_entry = bdecode(buffer.first(buffer.size()), errc);
+			std::string payload_buf;
+			payload_buf.assign(pl_entry.string());
+			// decrypt payload
+			std::string decrypt_err;
+			dht::public_key dht_pk(sender.data());
+			bool result = decrypt(dht_pk, payload_buf, decrypted_pl, decrypt_err);
+			if (!result)
 			{
-				incoming_relay_error("message too big");
+				incoming_relay_error(decrypt_err.c_str());
+#ifndef TORRENT_DISABLE_LOGGING
+				if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+				{
+					m_observer->log(dht_logger::node, "payload size:%ld", payload_buf.size());
+				}
+#endif
 				return false;
 			}
 
-			error_code errc;
-			payload = bdecode(buf.first(buf.size()), errc);
+			if (!verify_relay_hmac(hmac, decrypted_pl, aux_buf))
+			{
+				incoming_relay_error("hmac verification error");
+				return false;
+			}
 
+			span<char const> buf = decrypted_pl;
+			payload = bdecode(buf.first(buf.size()), errc);
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+			{
+				m_observer->log(dht_logger::node, "relay payload: %s"
+					, payload.to_string(true).c_str());
+			}
+#endif
 			// handle referred relay nodes
 			look_for_nodes(protocol_relay_nodes_key(), protocol(), arg_ent,
 				[this, &sender](node_endpoint const& nep)
@@ -1764,6 +1930,9 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 			if (ne == nullptr || ne->ep() == m.addr) return false;
 			*to_ep = ne->ep();
 			reply["hit"] = 1;
+
+			m_storage.put_relay_entry(from, target_id, buffer
+					, aux_buf, proto, hmac);
 		}
 
 		return true;
@@ -1772,7 +1941,8 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 	return false;
 }
 
-void node::relay(node_id const& to, udp::endpoint const& to_ep, msg const& m)
+void node::relay(node_id const& to, udp::endpoint const& to_ep
+	, msg const& m, node_id const& from)
 {
     // don't relay to ourself
 	if (to == m_id)
@@ -1785,8 +1955,11 @@ void node::relay(node_id const& to, udp::endpoint const& to_ep, msg const& m)
 
 	// construct push protocol
 	entry e(m.message);
+	entry& a = e["a"];
 	e["ro"] = m_settings.get_bool(settings_pack::dht_read_only) ? 1 : 0;
 	e["nr"] = m_settings.get_bool(settings_pack::dht_non_referrable) ? 1 : 0;
+	public_key pk(from.data());
+	a["f"] = pk.bytes;
 
 	// create a dummy traversal_algorithm
 	auto algo = std::make_shared<traversal_algorithm>(*this, to);
@@ -1893,6 +2066,28 @@ node::protocol_descriptor const& node::map_protocol_to_descriptor(udp const prot
 	}
 
 	return *iter;
+}
+
+bool node::encrypt(dht::public_key const& dht_pk, const std::string& in
+	, std::string& out, std::string& err_str)
+{
+	// generate serect key
+	std::array<char, 32> key = m_account_manager->key_exchange(dht_pk);
+	std::string keystr;
+	keystr.insert(0, key.data(), 32);
+
+	return aux::aes_encrypt(in, out, keystr, err_str);
+}
+
+bool node::decrypt(dht::public_key const& dht_pk, const std::string& in
+	, std::string& out, std::string& err_str)
+{
+	// generate secret key
+	std::array<char, 32> key = m_account_manager->key_exchange(dht_pk);
+	std::string keystr;
+	keystr.insert(0, key.data(), 32);
+
+	return aux::aes_decrypt(in, out, keystr, err_str);
 }
 
 } // namespace libTAU::dht

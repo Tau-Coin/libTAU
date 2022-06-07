@@ -2920,7 +2920,8 @@ namespace {
 			, m_settings
 			, m_stats_counters
 			, *m_dht_storage
-			, std::move(m_dht_state));
+			, std::move(m_dht_state)
+			, m_account_manager);
 
 		for (auto& s : m_listening_sockets)
 		{
@@ -3380,7 +3381,8 @@ namespace {
 			i.assign(std::move(value), salt, ts, pk, sig);
 		}
 
-		void send_callback(const entry& e, int i)
+		void send_callback(const entry& e
+			, std::vector<std::pair<dht::node_entry, bool>> const& nodes)
 		{
             //TODO: current just for send api
 		}
@@ -3410,11 +3412,12 @@ namespace {
 		, entry const& payload
 		, std::int8_t alpha
 		, std::int8_t beta
-		, std::int8_t invoke_limit)
+		, std::int8_t invoke_limit
+		, std::int8_t hit_limit)
 	{
 		if (!m_dht) return;
 		m_dht->send(to, payload, alpha, beta, invoke_limit
-			, std::bind(&send_callback, _1, _2));
+			, hit_limit, std::bind(&send_callback, _1, _2));
 	}
 
 	void session_impl::dht_live_nodes(sha256_hash const& nid)

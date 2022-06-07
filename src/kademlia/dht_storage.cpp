@@ -15,6 +15,7 @@ see LICENSE file.
 
 #include "libTAU/kademlia/dht_storage.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
+#include "libTAU/kademlia/relay.hpp"
 #include "libTAU/settings_pack.hpp"
 
 #include <tuple>
@@ -33,6 +34,15 @@ see LICENSE file.
 #include <libTAU/aux_/numeric_cast.hpp>
 #include <libTAU/aux_/ip_helpers.hpp> // for is_v4
 #include <libTAU/bdecode.hpp>
+#include <libTAU/hasher.hpp>
+
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/identity.hpp>
+#include <boost/multi_index/member.hpp>
+
+using boost::multi_index_container;
+using namespace boost::multi_index;
 
 namespace libTAU::dht {
 namespace {
@@ -197,6 +207,112 @@ namespace {
 			l.push_back({it->id, it->ep()});
 		}
 	};
+
+	// relay protocol cache
+
+	struct relay_entry
+	{
+
+		sha256_hash key;
+
+		sha256_hash sender;
+
+		sha256_hash receiver;
+
+		std::unique_ptr<char[]> payload;
+
+		int payload_size = 0;
+
+		std::unique_ptr<char[]> aux;
+
+		int aux_size = 0;
+
+		udp protocol = udp::v4();
+
+		relay_hmac hmac{};
+
+		time_point last_seen = aux::time_now();
+	};
+
+	sha256_hash relay_entry_key(sha256_hash const& sender
+			, sha256_hash const& receiver
+			, sha256_hash const& payload_hash)
+	{
+		sha256_hash key;
+
+		std::memcpy(&key[0], receiver.data(), 12);
+		std::memcpy(&key[12], payload_hash.data(), 8);
+		std::memcpy(&key[20], sender.data(), 12);
+
+		return key;
+	}
+
+	void set_payload(relay_entry& entry, span<char const> buf)
+	{
+		int const size = int(buf.size());
+		if (size == 0) return;
+		if (entry.payload_size != size)
+		{
+			entry.payload.reset(new char[std::size_t(size)]);
+			entry.payload_size = size;
+		}
+		std::copy(buf.begin(), buf.end(), entry.payload.get());
+	}
+
+	void set_aux(relay_entry& entry, span<char const> buf, udp pro)
+	{
+		int const size = int(buf.size());
+		if (size == 0) return;
+		if (entry.aux_size != size)
+		{
+			entry.aux.reset(new char[std::size_t(size)]);
+			entry.aux_size = size;
+		}
+		std::copy(buf.begin(), buf.end(), entry.aux.get());
+
+		entry.protocol = pro;
+	}
+
+	struct touch_relay_entry
+	{
+		touch_relay_entry() {}
+
+		void operator()(relay_entry& entry)
+		{
+			entry.last_seen = aux::time_now();
+		}
+	};
+
+	struct key{};
+	struct time{};
+	struct receiver{};
+
+	typedef multi_index_container<
+		relay_entry,
+
+		indexed_by<
+			ordered_unique<
+				tag<key>,
+				member<relay_entry, sha256_hash, &relay_entry::key>
+			>,
+
+			ordered_non_unique<
+				tag<time>,
+				member<relay_entry, time_point, &relay_entry::last_seen>,
+				std::greater<time_point>
+			>,
+
+			ordered_non_unique<
+				tag<receiver>,
+				member<relay_entry, sha256_hash, &relay_entry::receiver>,
+				std::less<sha256_hash>
+			>
+		>
+	> relay_table;
+
+	typedef relay_table::index<key>::type relay_table_by_key;
+	typedef relay_table::index<time>::type relay_table_by_time;
+	typedef relay_table::index<receiver>::type relay_table_by_receiver;
 
 	class dht_default_storage final : public dht_storage_interface
 	{
@@ -417,44 +533,158 @@ namespace {
 			rb.find_node(l, count);
 		}
 
-		void tick() override
+		void put_relay_entry(sha256_hash const& sender
+			, sha256_hash const& receiver
+			, span<char const> payload
+			, span<char const> aux_nodes
+			, udp protocol
+			, relay_hmac const& hmac) override
 		{
-			if (0 == m_settings.get_int(settings_pack::dht_item_lifetime)) return;
+			hasher256 h(payload);
+			sha256_hash pl_hash = h.final();
+			sha256_hash k = relay_entry_key(sender, receiver, pl_hash);
 
-			time_point const now = aux::time_now();
-			time_duration lifetime = seconds(m_settings.get_int(settings_pack::dht_item_lifetime));
-			// item lifetime must >= 120 minutes.
-			if (lifetime < minutes(120)) lifetime = minutes(120);
-
-			// libTAU modify: if immutable table is not full, don't expire
-			if (int(m_immutable_table.size()) >= m_settings.get_int(
-					settings_pack::dht_max_dht_items))
+			relay_table_by_key& key_index = m_relay_entries_table.get<key>();
+			relay_table_by_key::iterator it = key_index.find(k);
+			if (it != key_index.end())
 			{
-				for (auto i = m_immutable_table.begin(); i != m_immutable_table.end();)
+				key_index.modify(it, touch_relay_entry{});
+				return;
+			}
+
+			if (int(m_relay_entries_table.size())
+					>= m_settings.get_int(settings_pack::dht_relay_entry_max_count))
+			{
+				remove_least_important_relay_entry();
+			}
+
+			relay_entry to_add;
+			to_add.key.assign(k.data());
+			to_add.sender.assign(sender.data());
+			to_add.receiver.assign(receiver.data());
+			to_add.hmac = hmac;
+			set_payload(to_add, payload);
+			set_aux(to_add, aux_nodes, protocol);
+
+			m_relay_entries_table.insert(std::move(to_add));
+		}
+
+		bool get_relay_entry(sha256_hash const& k, entry& re) const override
+		{
+			const relay_table_by_key& key_index = m_relay_entries_table.get<key>();
+			relay_table_by_key::iterator it = key_index.find(k);
+			if (it == key_index.end())
+			{
+				return false;
+			}
+
+			re["f"] = std::string(it->sender.data(), 32);
+			re["t"] = std::string(it->receiver.data(), 32);
+			re["hmac"] = it->hmac.bytes;
+
+			error_code ec;
+			if (it->payload_size > 0)
+			{
+				re["pl"] = bdecode({it->payload.get(), it->payload_size}, ec);
+			}
+
+			if (it->aux_size > 0)
+			{
+				if (it->protocol == udp::v4())
 				{
-					if (i->second.last_seen + lifetime > now)
-					{
-						++i;
-						continue;
-					}
-					i = m_immutable_table.erase(i);
-					m_counters.immutable_data -= 1;
+					re["rn"] = bdecode({it->aux.get(), it->aux_size}, ec);
+				}
+				else if (it->protocol == udp::v6())
+				{
+					re["rn6"] = bdecode({it->aux.get(), it->aux_size}, ec);
 				}
 			}
 
-			// libTAU modify: if mutable table is not full, don't expire
-			if (int(m_mutable_table.size()) >= m_settings.get_int(
-					settings_pack::dht_max_dht_items))
+			return true;
+		}
+
+		bool get_random_relay_entry(sha256_hash const& recver
+			, sha256_hash& key) const override
+		{
+			const relay_table_by_receiver& receiver_index = m_relay_entries_table.get<receiver>();
+			relay_table_by_receiver::iterator it = receiver_index.find(recver);
+			if (it != receiver_index.end())
 			{
-				for (auto i = m_mutable_table.begin(); i != m_mutable_table.end();)
+				key = it->key;
+				return true;
+			}
+
+			return false;
+		}
+
+		void remove_relay_entry(sha256_hash const& k)
+		{
+			relay_table_by_key& key_index = m_relay_entries_table.get<key>();
+			relay_table_by_key::iterator it = key_index.find(k);
+			if (it != key_index.end())
+			{
+				key_index.erase(it);
+			}
+		}
+
+		void tick() override
+		{
+			if (m_settings.get_int(settings_pack::dht_item_lifetime) > 0)
+			{
+				time_point const now = aux::time_now();
+				time_duration lifetime
+					= seconds(m_settings.get_int(settings_pack::dht_item_lifetime));
+				// item lifetime must >= 120 minutes.
+				if (lifetime < minutes(120)) lifetime = minutes(120);
+
+				// libTAU modify: if immutable table is not full, don't expire
+				if (int(m_immutable_table.size()) >= m_settings.get_int(
+					settings_pack::dht_max_dht_items))
 				{
-					if (i->second.last_seen + lifetime > now)
+					for (auto i = m_immutable_table.begin(); i != m_immutable_table.end();)
 					{
-						++i;
-						continue;
+						if (i->second.last_seen + lifetime > now)
+						{
+							++i;
+							continue;
+						}
+						i = m_immutable_table.erase(i);
+						m_counters.immutable_data -= 1;
 					}
-					i = m_mutable_table.erase(i);
-					m_counters.mutable_data -= 1;
+				}
+
+				// libTAU modify: if mutable table is not full, don't expire
+				if (int(m_mutable_table.size()) >= m_settings.get_int(
+					settings_pack::dht_max_dht_items))
+				{
+					for (auto i = m_mutable_table.begin(); i != m_mutable_table.end();)
+					{
+						if (i->second.last_seen + lifetime > now)
+						{
+							++i;
+							continue;
+						}
+						i = m_mutable_table.erase(i);
+						m_counters.mutable_data -= 1;
+					}
+				}
+			}
+
+			if (m_settings.get_int(settings_pack::dht_relay_entry_lifetime) > 0)
+			{
+				time_point const now = aux::time_now();
+				time_duration lifetime
+					= seconds(m_settings.get_int(settings_pack::dht_relay_entry_lifetime));
+				relay_table_by_time& time_index = m_relay_entries_table.get<time>();
+
+				for (relay_table_by_time::reverse_iterator i = time_index.rbegin()
+					; i != time_index.rend();)
+				{
+					if (i->last_seen + lifetime > now)
+					{
+						break;
+					}
+					i = decltype(i)(time_index.erase(std::next(i).base()));
 				}
 			}
 		}
@@ -472,6 +702,18 @@ namespace {
 		std::map<node_id, dht_immutable_item> m_immutable_table;
 		std::map<node_id, dht_mutable_item> m_mutable_table;
 		std::map<node_id, relays_bucket> m_relays_table;
+
+		relay_table m_relay_entries_table;
+
+		void remove_least_important_relay_entry()
+		{
+			if (m_relay_entries_table.size() == 0) return;
+
+			relay_table_by_time& time_index = m_relay_entries_table.get<time>();
+			relay_table_by_time::iterator it = time_index.end();
+			--it;
+			time_index.erase(it);
+		}
 	};
 }
 
