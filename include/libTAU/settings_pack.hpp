@@ -1884,6 +1884,12 @@ namespace aux {
 			// the life time (seconds) of endpoints incoming table
 			dht_incoming_table_lifetime,
 
+			// the maximum number of relay cache entries
+			dht_relay_entry_max_count,
+
+			// the life time (seconds) of relay cache entry
+			dht_relay_entry_lifetime,
+
 			// the time interval(seconds) of accepting mutable item
 			dht_time_offset,
 

@@ -18,6 +18,7 @@ see LICENSE file.
 #include <libTAU/kademlia/node_id.hpp>
 #include <libTAU/kademlia/types.hpp>
 #include <libTAU/kademlia/node_entry.hpp>
+#include <libTAU/kademlia/relay.hpp>
 
 #include <libTAU/socket.hpp>
 #include <libTAU/address.hpp>
@@ -140,6 +141,22 @@ namespace dht {
 		virtual void find_relays(node_id const& peer
 			, std::vector<node_entry>& l
 			, int count, udp protocol) = 0;
+
+		virtual void put_relay_entry(sha256_hash const& sender
+			, sha256_hash const& receiver
+			, span<char const> payload
+			, span<char const> aux_nodes
+			, udp protocol
+			, relay_hmac const& hmac) = 0;
+
+		virtual bool get_relay_entry(sha256_hash const& key
+			, entry& re) const = 0;
+
+		// get random relay entry key by receiver
+		virtual bool get_random_relay_entry(sha256_hash const& receiver
+			, sha256_hash& key) const = 0;
+
+		virtual void remove_relay_entry(sha256_hash const& key) = 0;
 
 		// This function is called periodically (non-constant frequency).
 		//

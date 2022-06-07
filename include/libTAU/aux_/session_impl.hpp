@@ -459,7 +459,7 @@ namespace aux {
             
             void send(dht::public_key const& to , entry const& payload
                 , std::int8_t alpha , std::int8_t beta
-                , std::int8_t invoke_limit);
+                , std::int8_t invoke_limit, std::int8_t hit_limit);
 
 			void dht_live_nodes(sha256_hash const& nid);
 

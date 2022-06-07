@@ -220,7 +220,7 @@ namespace libTAU {
 
         void send(dht::public_key const& to , entry const& payload
             , std::int8_t alpha , std::int8_t beta
-            , std::int8_t invoke_limit);
+            , std::int8_t invoke_limit, std::int8_t hit_limit);
 
 		// Retrieve all the live DHT (identified by ``nid``) nodes. All the
 		// nodes id and endpoint will be returned in the list of nodes in the

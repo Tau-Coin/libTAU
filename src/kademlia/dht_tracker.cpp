@@ -75,7 +75,8 @@ namespace libTAU::dht {
 		, aux::session_settings const& settings
 		, counters& cnt
 		, dht_storage_interface& storage
-		, dht_state&& state)
+		, dht_state&& state
+		, std::shared_ptr<account_manager> account_manager)
 		: m_counters(cnt)
 		, m_storage(storage)
 		, m_state(std::move(state))
@@ -90,6 +91,7 @@ namespace libTAU::dht {
 		, m_send_quota(settings.get_int(settings_pack::dht_upload_rate_limit))
 		, m_last_tick(aux::time_now())
 		, m_ioc(ios)
+		, m_account_manager(std::move(account_manager))
 	{
 		m_blocker.set_block_timer(m_settings.get_int(settings_pack::dht_block_timeout));
 		m_blocker.set_rate_limit(m_settings.get_int(settings_pack::dht_block_ratelimit));
@@ -125,7 +127,7 @@ namespace libTAU::dht {
 			, std::forward_as_tuple(m_ioc
 			, s, this, m_settings, nid, m_log, m_counters
 			, std::bind(&dht_tracker::get_node, this, _1, _2)
-			, m_storage));
+			, m_storage, m_account_manager));
 
 		update_storage_node_ids();
 
@@ -374,11 +376,10 @@ namespace libTAU::dht {
 	{
 		explicit send_ctx(int traversals)
 			: active_traversals(traversals)
-			, response_count(0)
 		{}
 
 		int active_traversals;
-		int response_count;
+		std::vector<std::pair<node_entry, bool>> nodes;
 	};
 
 	void put_immutable_item_callback(int responses, std::shared_ptr<put_item_ctx> ctx
@@ -415,12 +416,19 @@ namespace libTAU::dht {
 		}
 	}
 
-	void send_callback(entry const& it, int responses, std::shared_ptr<send_ctx> ctx
-		, std::function<void(entry const&, int)> cb)
+	void send_callback(entry const& it
+		, std::vector<std::pair<node_entry, bool>> const& success_nodes
+		, std::shared_ptr<send_ctx> ctx
+		, std::function<void(entry const&
+                , std::vector<std::pair<node_entry, bool>> const&)> cb)
 	{
-		ctx->response_count += responses;
+		for (auto& n : success_nodes)
+		{
+			ctx->nodes.push_back(n);
+		}
+
 		if (--ctx->active_traversals == 0)
-			cb(it, ctx->response_count);
+			cb(it, ctx->nodes);
 	}
 
 	} // anonymous namespace
@@ -570,12 +578,30 @@ namespace libTAU::dht {
 		, std::int8_t invoke_limit
 		, std::function<void(entry const&, int)> cb)
 	{
+		/*
 		auto ctx = std::make_shared<send_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
 			n.second.dht.send(to, payload, alpha, beta, invoke_limit
 				, std::bind(&send_callback, _1, _2, ctx, cb));
+		*/
 	}
 
+	// relay protocol
+	void dht_tracker::send(public_key const& to
+		, entry const& payload
+		, std::int8_t alpha
+		, std::int8_t beta
+		, std::int8_t invoke_limit
+		, std::int8_t hit_limit
+		, std::function<void(entry const& payload
+			, std::vector<std::pair<node_entry, bool>> const& nodes)> cb)
+	{
+		auto ctx = std::make_shared<send_ctx>(int(m_nodes.size()));
+		for (auto& n : m_nodes)
+			n.second.dht.send(to, payload, alpha
+				, beta, invoke_limit, hit_limit
+				, std::bind(&send_callback, _1, _2, ctx, cb));
+	}
 
 	void dht_tracker::get_peers(public_key const& pk, std::string salt)
 	{
@@ -823,8 +849,10 @@ namespace libTAU::dht {
 		, node_id const& nid
 		, dht_observer* observer, counters& cnt
 		, get_foreign_node_t get_foreign_node
-		, dht_storage_interface& storage)
-		: dht(s, sock, settings, nid, observer, cnt, std::move(get_foreign_node), storage)
+		, dht_storage_interface& storage
+		, std::shared_ptr<account_manager> account_manager)
+		: dht(s, sock, settings, nid, observer, cnt
+				, std::move(get_foreign_node), storage, account_manager)
 		, connection_timer(ios)
 	{}
 

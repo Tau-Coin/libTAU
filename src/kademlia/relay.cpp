@@ -18,9 +18,27 @@ see LICENSE file.
 #include <libTAU/aux_/io_bytes.hpp>
 #include <libTAU/aux_/random.hpp>
 #include <libTAU/performance_counters.hpp>
+#include <libTAU/hasher.hpp>
 #include <libTAU/hex.hpp>
 
 namespace libTAU { namespace dht {
+
+relay_hmac gen_relay_hmac(span<char const> payload
+		, span<char const> aux_nodes)
+{
+	hasher256 h(payload);
+	if (!aux_nodes.empty()) h.update(aux_nodes);
+	sha256_hash hash = h.final();
+	return relay_hmac(hash.data());
+}
+
+bool verify_relay_hmac(relay_hmac const& hmac
+		, span<char const> payload
+		, span<char const> aux_nodes)
+{
+	relay_hmac h = gen_relay_hmac(payload, aux_nodes);
+	return h == hmac;
+}
 
 void relay_observer::reply(msg const& m, node_id const& from)
 {
@@ -44,19 +62,19 @@ void relay_observer::reply(msg const& m, node_id const& from)
     done();
 }
 
-relay::relay(node& dht_node, node_id const& to, completed_callback callback)
+relay::relay(node& dht_node
+	, node_id const& to
+	, entry payload
+	, entry aux_nodes
+	, relay_hmac const& hmac
+	, completed_callback callback)
 	: traversal_algorithm(dht_node, to)
 	, m_to(to)
+	, m_payload(std::move(payload))
+	, m_aux_nodes(std::move(aux_nodes))
+	, m_hmac(hmac)
 	, m_completed_callback(std::move(callback))
 {}
-
-void relay::add_relays_nodes(std::vector<node_entry> const& nodes)
-{
-	for (auto& n : nodes)
-	{
-		m_relay_nodes.push_back({n.id, n.endpoint});
-	}
-}
 
 char const* relay::name() const { return "relay"; }
 
@@ -118,7 +136,7 @@ void relay::done()
 		, id(), name(), num_responses(), num_timeouts());
 #endif
 
-	m_completed_callback(m_payload, num_responses());
+	m_completed_callback(m_payload, m_success_nodes);
 	traversal_algorithm::done();
 }
 
@@ -130,15 +148,16 @@ bool relay::invoke(observer_ptr o)
 	e["y"] = "h"; // hop
 	e["q"] = "relay";
 	entry& a = e["a"];
-	a["pl"] = m_payload; // payload
-	a["f"] = m_node.nid().to_string(); // from
+	a["pl"] = m_encrypted_payload; // payload
+	// a["f"] = m_node.nid().to_string(); // from
 	a["t"] = m_to.to_string(); // to
 	a["dis"] = traversal_algorithm::allow_distance();
-	if (!m_relay_nodes.empty())
+	if (m_aux_nodes.type() != entry::data_type::undefined_t)
 	{
 		// relay nodes
-		a[m_node.protocol_relay_nodes_key()] = write_nodes_entry(m_relay_nodes);;
+		a[m_node.protocol_relay_nodes_key()] = m_aux_nodes;
 	}
+	a["hmac"] = m_hmac.bytes;
 
 	return m_node.m_rpc.invoke(e, o->target_ep(), o, m_discard_response);
 }
@@ -146,6 +165,7 @@ bool relay::invoke(observer_ptr o)
 void relay::on_put_success(node_id const& nid, udp::endpoint const& ep, bool hit)
 {
 	if (hit) ++m_hits;
+	m_success_nodes.push_back(std::make_pair(node_entry(nid, ep), hit));
 }
 
 observer_ptr relay::new_observer(udp::endpoint const& ep
