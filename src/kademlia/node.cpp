@@ -530,7 +530,7 @@ void node::get_item(sha256_hash const& target
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 	{
-		m_observer->log(dht_logger::node, "starting get for [ hash: %s, target endpoints:%ld ]"
+		m_observer->log(dht_logger::node, "starting get for [ hash: %s, target endpoints:%" PRId64 " ]"
 			, aux::to_hex(target).c_str(), eps.size());
 	}
 #endif
@@ -630,7 +630,7 @@ void node::put_item(sha256_hash const& target
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 	{
-		m_observer->log(dht_logger::node, "starting put for [ hash: %s, target endpoints:%ld ]"
+		m_observer->log(dht_logger::node, "starting put for [ hash: %s, target endpoints:%" PRId64 " ]"
 			, aux::to_hex(target).c_str(), eps.size());
 	}
 #endif
@@ -1058,7 +1058,7 @@ time_duration node::connection_timeout()
 	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 	{
 		auto x = std::chrono::duration_cast<std::chrono::milliseconds>(d);
-		m_observer->log(dht_logger::node, "connection_timeout called, duration:%ld ms"
+		m_observer->log(dht_logger::node, "connection_timeout called, duration:%" PRId64 " ms"
 			, x.count());
 	}
 #endif
@@ -1888,7 +1888,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 #ifndef TORRENT_DISABLE_LOGGING
 				if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
 				{
-					m_observer->log(dht_logger::node, "payload size:%ld", payload_buf.size());
+					m_observer->log(dht_logger::node, "payload size:%" PRId64, payload_buf.size());
 				}
 #endif
 				return false;

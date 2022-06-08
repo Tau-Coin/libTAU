@@ -17,6 +17,7 @@ see LICENSE file.
 #include "libTAU/string_view.hpp"
 #include "libTAU/kademlia/msg.hpp"
 #include "libTAU/kademlia/item.hpp"
+#include "libTAU/aux_/common.h" // for transport
 #include "libTAU/aux_/session_udp_sockets.hpp" // for transport
 
 namespace libTAU {
@@ -49,6 +50,7 @@ namespace dht {
 		};
 
 		virtual bool should_log(module_t m) const = 0;
+		virtual bool should_log(module_t m, aux::LOG_LEVEL log_level) const = 0;
 		virtual void log(module_t m, char const* fmt, ...) TORRENT_FORMAT(3,4) = 0;
 		virtual void log_packet(message_direction_t dir, span<char const> pkt
 			, udp::endpoint const& node) = 0;

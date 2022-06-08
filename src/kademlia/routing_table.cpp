@@ -1458,7 +1458,7 @@ void print_ipset(const char* msg, address const& addr, ip_set& ips
 #ifndef TORRENT_DISABLE_LOGGING
 	if (logger != nullptr && logger->should_log(dht_logger::routing_table))
 	{
-		logger->log(dht_logger::routing_table, "ipset debug: %s, addr:%s, exists:%s, size:%ld"
+		logger->log(dht_logger::routing_table, "ipset debug: %s, addr:%s, exists:%s, size:%" PRId64
 			, msg
 			, aux::print_address(addr).c_str()
 			, ips.exists(addr) ? "true" : "false"

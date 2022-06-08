@@ -15,6 +15,7 @@ see LICENSE file.
 #include "libTAU/config.hpp"
 #include "libTAU/assert.hpp"
 #include "libTAU/settings_pack.hpp"
+#include "libTAU/aux_/common_data.h"
 #include "libTAU/aux_/session_impl.hpp"
 #include "libTAU/aux_/array.hpp"
 #include "libTAU/aux_/session_settings.hpp"
@@ -197,7 +198,6 @@ namespace libTAU {
 		SET(auto_referred, false, nullptr),
 		SET(enable_communication, true, nullptr),
 		SET(enable_blockchain, true, nullptr),
-		SET(enable_debug_log, true, &session_impl::update_debug_log),
 	}});
 
 	CONSTEXPR_SETTINGS
@@ -366,6 +366,7 @@ namespace libTAU {
 		SET(dht_max_infohashes_sample_count, 20, nullptr),
 		SET(reopen_time_interval, 1000, nullptr),
 		SET(max_time_peers_zero, 10000, nullptr),
+		SET(log_level, aux::LOG_LEVEL::LOG_DEBUG, &session_impl::update_log_level),
 	}});
 
 #undef SET

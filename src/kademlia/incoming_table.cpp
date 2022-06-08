@@ -8,6 +8,7 @@ see LICENSE file.
 */
 
 #include <algorithm>
+#include <cinttypes> // for PRId64 et.al.
 #include <map>
 
 #include <libTAU/kademlia/incoming_table.hpp>
@@ -169,7 +170,7 @@ void incoming_table::tick()
 		if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
 		{
 			m_log->log(dht_logger::incoming_table
-				, "expire endpoint id: %s, addr: %s:%d, size:%ld"
+				, "expire endpoint id: %s, addr: %s:%d, size:%" PRId64
 				, aux::to_hex(i->second.id).c_str()
 				, aux::print_address(i->second.addr()).c_str()
 				, i->second.port()
@@ -193,7 +194,7 @@ bool incoming_table::add_node(node_id const& id, udp::endpoint const& ep)
 			if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
 			{
 				m_log->log(dht_logger::incoming_table
-					, "update endpoint id: %s, new: %s:%d, old: %s:%d, size:%ld"
+					, "update endpoint id: %s, new: %s:%d, old: %s:%d, size:%" PRId64
 					, aux::to_hex(i->second.id).c_str()
 					, aux::print_address(ep.address()).c_str()
 					, ep.port()
@@ -219,7 +220,7 @@ bool incoming_table::add_node(node_id const& id, udp::endpoint const& ep)
 		if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
 		{
 			m_log->log(dht_logger::incoming_table
-				, "erase endpoint id: %s, addr: %s:%d, size: %ld"
+				, "erase endpoint id: %s, addr: %s:%d, size: %" PRId64
 				, aux::to_hex(j->second.id).c_str()
 				, aux::print_address(j->second.addr()).c_str()
 				, j->second.port()
@@ -238,7 +239,7 @@ bool incoming_table::add_node(node_id const& id, udp::endpoint const& ep)
 #ifndef TORRENT_DISABLE_LOGGING
 	if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
 	{
-		m_log->log(dht_logger::incoming_table, "new endpoint id: %s, addr: %s:%d, size: %ld"
+		m_log->log(dht_logger::incoming_table, "new endpoint id: %s, addr: %s:%d, size: %" PRId64
 			, aux::to_hex(id).c_str()
 			, aux::print_address(ep.address()).c_str()
 			, ep.port()
@@ -258,7 +259,7 @@ void incoming_table::remove_node(node_id const& id)
 	if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
 	{
 		m_log->log(dht_logger::incoming_table
-			, "erase endpoint id: %s, addr: %s:%d, size:%ld"
+			, "erase endpoint id: %s, addr: %s:%d, size:%" PRId64
 			, aux::to_hex(i->second.id).c_str()
 			, aux::print_address(i->second.addr()).c_str()
 			, i->second.port()

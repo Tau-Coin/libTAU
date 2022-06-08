@@ -929,9 +929,6 @@ namespace aux {
             //start blockchain module
             enable_blockchain,
 
-            //enable debug log
-            enable_debug_log,
-
 			max_bool_setting_internal
 		};
 
@@ -1940,6 +1937,9 @@ namespace aux {
 
 			// max no peer time, unit: ms
 			max_time_peers_zero,
+
+            //log level
+            log_level,
 
 			max_int_setting_internal
 		};

@@ -476,7 +476,7 @@ namespace aux {
 
 			bool is_aborted() const override { return m_abort; }
 
-			bool is_logged() const override { return m_logged; }
+			int get_log_level() const override { return m_logged; }
 
 			void set_ip_filter(std::shared_ptr<ip_filter> f);
 			ip_filter const& get_ip_filter();
@@ -572,6 +572,7 @@ namespace aux {
 
 #ifndef TORRENT_DISABLE_LOGGING
 			bool should_log(module_t m) const override;
+			bool should_log(module_t m, aux::LOG_LEVEL log_level) const override;
 			void log(module_t m, char const* fmt, ...)
 				override TORRENT_FORMAT(3,4);
 			void log_packet(message_direction_t dir, span<char const> pkt
@@ -627,8 +628,8 @@ namespace aux {
 			void update_resolver_cache_timeout();
 
 			void update_ip_notifier();
-			void update_debug_log();
-			void enable_debug_log(bool logged);
+			void update_log_level();
+			void set_log_level(int logged);
 			void update_upnp();
 			void update_natpmp();
 			void update_dht();
@@ -994,6 +995,7 @@ namespace aux {
 
 #ifndef TORRENT_DISABLE_LOGGING
 			bool should_log() const override;
+			bool should_log(aux::LOG_LEVEL log_level) const override;
 			void session_log(char const* fmt, ...) const noexcept override TORRENT_FORMAT(2,3);
 #endif
 
@@ -1002,7 +1004,7 @@ namespace aux {
 			// should exit
 			bool m_abort = false;
 
-			bool m_logged = true;
+			int m_logged = aux::LOG_LEVEL::LOG_DEBUG;
 
 			// set to true the first time post_session_stats() is
 			// called and we post the headers alert

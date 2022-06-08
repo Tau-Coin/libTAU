@@ -1405,7 +1405,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] confirmation root size %zu, time:%ld", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "peer[%s] confirmation root size %zu, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
                 , confirmation_roots.size(), time);
         return msg;
 #endif
@@ -1422,7 +1422,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] sync message hash %s, time:%ld", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "peer[%s] sync message hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
                 , aux::toHex(syncing_msg_hash.to_string()).c_str(), time);
 
         return msg;
@@ -1487,7 +1487,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] last seen time %ld", aux::toHex(peer.bytes).c_str(), last_seen);
+        std::snprintf(msg, sizeof(msg), "peer[%s] last seen time %" PRId64 "", aux::toHex(peer.bytes).c_str(), last_seen);
         return msg;
 #endif
     }
@@ -1711,7 +1711,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] arrived message hash %s, time:%ld", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "peer[%s] arrived message hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
                 , aux::toHex(msg_arrived_hash.to_string()).c_str(), time);
 
         return msg;
@@ -1729,7 +1729,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] sent tx hash %s, time:%ld", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "peer[%s] sent tx hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
                 , aux::toHex(tx_sent_hash.to_string()).c_str(), time);
 
         return msg;
@@ -1747,7 +1747,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] arrived tx hash %s, time:%ld", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "peer[%s] arrived tx hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
                 , aux::toHex(tx_arrived_hash.to_string()).c_str(), time);
 
         return msg;
