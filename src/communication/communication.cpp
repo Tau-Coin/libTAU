@@ -247,11 +247,11 @@ namespace libTAU {
                         auto size = missing_messages.size();
                         for(auto k = 0; k < size; k++) {
                             common::message_entry messageEntry(missing_messages[k], levenshtein_array, get_current_time());
-                            send_to(peer, common::message_entry::data_type_id, messageEntry.get_entry(), 1, 8, 100, true);
+                            send_to(peer, messageEntry.get_entry());
                         }
 
                         common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
-                        send_to(peer, common::message_levenshtein_array_entry::data_type_id, msg_levenshtein_array.get_entry(), 1, 8, 100, false);
+                        send_to(peer, msg_levenshtein_array.get_entry());
 
 //                    auto ptr = std::make_shared<common::message_levenshtein_array_entry>();
 //                    m_entry_putting_times[peer][ptr] = 1;
@@ -340,7 +340,7 @@ namespace libTAU {
                         auto size = missing_messages.size();
                         for(auto k = 0; k < size; k++) {
                             common::message_entry msg_entry(missing_messages[k], levenshtein_array, get_current_time());
-                            send_to(peer, common::message_entry::data_type_id, msg_entry.get_entry(), 1, 8, 100, true);
+                            send_to(peer, msg_entry.get_entry());
                         }
                     }
 
@@ -388,7 +388,7 @@ namespace libTAU {
                     auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
                     if (!friend_info.empty()) {
                         common::friend_info_entry e(friend_info);
-                        send_to(peer, common::friend_info_entry::data_type_id, e.get_entry(), 1, 8, 100, true);
+                        send_to(peer, e.get_entry());
 
 //                        auto ptr = std::make_shared<common::friend_info_entry>(friend_info);
 //                        m_entry_putting_times[peer][ptr] = 1;
@@ -451,37 +451,21 @@ namespace libTAU {
 
         }
 
-        void communication::on_dht_item(const dht::item &i) {
+        void communication::on_dht_relay(dht::public_key const& peer, entry const& payload) {
+            if(payload.type() != entry::dictionary_t){
+                log(true, "ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
+                return;
+            }
+
             // construct mutable data wrapper from entry
-            if (!i.empty()) {
-//                dht::public_key peer = i.pk();
-
-                // update latest item timestamp
-//                if (i.ts() > m_latest_item_timestamp[peer]) {
-//                    m_latest_item_timestamp[peer] = i.ts();
-//                }
-
-                // check protocol id
-//                if (auto* p = const_cast<entry *>(i.value().find_key("pid")))
-//                {
-//                    auto protocol_id = p->integer();
-//                    if (online_signal::protocol_id == protocol_id) {
-//                        online_signal onlineSignal(i.value());
-//
-//                        process_signal(onlineSignal, i.pk());
-//                    }
-//                }
-
-                try {
-                    auto salt = i.salt();
-                    std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
-                    common::protocol_entry protocolEntry(encode);
-                    if (protocolEntry.m_pid == common::protocol_put) {
-                        process_payload(i.pk(), protocolEntry.m_data_type_id, i.value(), false);
-                    }
-                } catch (std::exception &e) {
-                    log(true, "ERROR: Receive exception data.");
+            try {
+                // data type id
+                if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type))) {
+                    auto data_type_id = i->integer();
+                    process_payload(peer, data_type_id, payload, false);
                 }
+            } catch (std::exception &e) {
+                log(true, "ERROR: Receive exception data.");
             }
         }
 
@@ -545,7 +529,7 @@ namespace libTAU {
 
         void communication::request_friend_info(const dht::public_key &peer) {
             common::friend_info_request_entry friendInfoRequestEntry(get_current_time());
-            send_to(peer, common::friend_info_request_entry::data_type_id, friendInfoRequestEntry.get_entry(), 1, 10, 10, false);
+            send_to(peer, friendInfoRequestEntry.get_entry());
 
 //            auto ptr = std::make_shared<common::friend_info_request_entry>();
 //            auto it = m_entry_putting_times[peer].find(ptr);
@@ -594,7 +578,7 @@ namespace libTAU {
 
             std::int64_t now = get_current_time();
             common::message_entry msg_entry(msg, levenshtein_array, now);
-            send_to(msg.receiver(), common::message_entry::data_type_id, msg_entry.get_entry(), 1, 8, 100, true);
+            send_to(msg.receiver(), msg_entry.get_entry());
 
 //            auto ptr = std::make_shared<common::message_entry>(msg);
 //            auto it = m_entry_putting_times[msg.receiver()].find(ptr);
@@ -1411,14 +1395,14 @@ namespace libTAU {
             }
         }
 
-        std::string communication::make_salt(dht::public_key peer, std::int64_t data_type_id) {
-            std::string salt(peer.bytes.begin(), peer.bytes.begin() + common::salt_pubkey_length);
-            common::protocol_entry protocolEntry(data_type_id);
-            std::string encode = protocolEntry.get_encode();
-            salt.insert(salt.end(), encode.begin(), encode.end());
-
-            return salt;
-        }
+//        std::string communication::make_salt(dht::public_key peer, std::int64_t data_type_id) {
+//            std::string salt(peer.bytes.begin(), peer.bytes.begin() + common::salt_pubkey_length);
+//            common::protocol_entry protocolEntry(data_type_id);
+//            std::string encode = protocolEntry.get_encode();
+//            salt.insert(salt.end(), encode.begin(), encode.end());
+//
+//            return salt;
+//        }
 
 //        online_signal communication::make_signal(const dht::public_key &peer) {
 //            auto now = total_milliseconds(system_clock::now().time_since_epoch());
@@ -1563,19 +1547,44 @@ namespace libTAU {
 //                    , this, _1, _2), std::move(salt), t.value);
 //        }
 
-        void communication::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes, dht::public_key const& peer) {
-            log(true, "INFO: peer[%s], value[%s]", aux::toHex(peer.bytes).c_str(), i.value().to_string().c_str());
+//        void communication::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes, dht::public_key const& peer) {
+//            log(true, "INFO: peer[%s], value[%s]", aux::toHex(peer.bytes).c_str(), i.value().to_string().c_str());
+//
+//            auto salt = i.salt();
+//            std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
+//            common::protocol_entry protocolEntry(encode);
+//            if (protocolEntry.m_pid == common::protocol_put) {
+//                if (protocolEntry.m_data_type_id == common::message_entry::data_type_id) {
+//                    for (auto const& n: nodes) {
+//                        log(true, "====== nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
+//                    }
+//
+//                    common::message_entry msgEntry(i.value());
+//                    auto now = get_current_time();
+//                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, msgEntry.m_msg.sha256(), now);
+//                    for (auto const& n: nodes) {
+//                        if (n.second) {
+//                            m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer, msgEntry.m_msg.sha256(), now);
+//                            break;
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
-            auto salt = i.salt();
-            std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
-            common::protocol_entry protocolEntry(encode);
-            if (protocolEntry.m_pid == common::protocol_put) {
-                if (protocolEntry.m_data_type_id == common::message_entry::data_type_id) {
+        void communication::on_dht_relay_mutable_item(const entry &payload,
+                                                      const std::vector<std::pair<dht::node_entry, bool>> &nodes,
+                                                      const dht::public_key &peer) {
+            // data type id
+            if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type)))
+            {
+                auto data_type_id = i->integer();
+                if (data_type_id == common::message_entry::data_type_id) {
                     for (auto const& n: nodes) {
                         log(true, "====== nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
                     }
 
-                    common::message_entry msgEntry(i.value());
+                    common::message_entry msgEntry(payload);
                     auto now = get_current_time();
                     m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, msgEntry.m_msg.sha256(), now);
                     for (auto const& n: nodes) {
@@ -1588,50 +1597,50 @@ namespace libTAU {
             }
         }
 
-        namespace {
-
-            void on_dht_put_immutable_item(aux::alert_manager& alerts, sha256_hash target, int num)
-            {
-            }
-
-            void put_mutable_data(entry& e, std::array<char, 64>& sig
-                    , std::int64_t& ts
-                    , std::string const& salt
-                    , std::array<char, 32> const& pk
-                    , std::array<char, 64> const& sk
-                    , entry const& data)
-            {
-                using lt::dht::sign_mutable_item;
-
-                e = data;
-                std::vector<char> buf;
-                // bencode要发布的mutable data
-                bencode(std::back_inserter(buf), e);
-                dht::signature sign;
-                // get unix timestamp
-                ts = libTAU::aux::utcTime();
-                // 对编码完成之后的数据(data + salt + ts)进行签名
-                sign = sign_mutable_item(buf, salt, dht::timestamp(ts)
-                        , dht::public_key(pk.data())
-                        , dht::secret_key(sk.data()));
-                sig = sign.bytes;
-            }
-
-            void put_mutable_callback(dht::item& i
-                    , std::function<void(entry&, std::array<char, 64>&
-                    , std::int64_t&, std::string const&)> cb)
-            {
-                entry value = i.value();
-                dht::signature sig = i.sig();
-                dht::public_key pk = i.pk();
-                dht::timestamp ts = i.ts();
-                std::string salt = i.salt();
-                // 提取item信息，交给cb处理
-                cb(value, sig.bytes, ts.value, salt);
-                // 使用新生成的item信息替换旧的item
-                i.assign(std::move(value), salt, ts, pk, sig);
-            }
-        } // anonymous namespace
+//        namespace {
+//
+//            void on_dht_put_immutable_item(aux::alert_manager& alerts, sha256_hash target, int num)
+//            {
+//            }
+//
+//            void put_mutable_data(entry& e, std::array<char, 64>& sig
+//                    , std::int64_t& ts
+//                    , std::string const& salt
+//                    , std::array<char, 32> const& pk
+//                    , std::array<char, 64> const& sk
+//                    , entry const& data)
+//            {
+//                using lt::dht::sign_mutable_item;
+//
+//                e = data;
+//                std::vector<char> buf;
+//                // bencode要发布的mutable data
+//                bencode(std::back_inserter(buf), e);
+//                dht::signature sign;
+//                // get unix timestamp
+//                ts = libTAU::aux::utcTime();
+//                // 对编码完成之后的数据(data + salt + ts)进行签名
+//                sign = sign_mutable_item(buf, salt, dht::timestamp(ts)
+//                        , dht::public_key(pk.data())
+//                        , dht::secret_key(sk.data()));
+//                sig = sign.bytes;
+//            }
+//
+//            void put_mutable_callback(dht::item& i
+//                    , std::function<void(entry&, std::array<char, 64>&
+//                    , std::int64_t&, std::string const&)> cb)
+//            {
+//                entry value = i.value();
+//                dht::signature sig = i.sig();
+//                dht::public_key pk = i.pk();
+//                dht::timestamp ts = i.ts();
+//                std::string salt = i.salt();
+//                // 提取item信息，交给cb处理
+//                cb(value, sig.bytes, ts.value, salt);
+//                // 使用新生成的item信息替换旧的item
+//                i.assign(std::move(value), salt, ts, pk, sig);
+//            }
+//        } // anonymous namespace
 
 //        void communication::request_signal(const dht::public_key &peer) {
 //            dht::public_key pubkey = *m_ses.pubkey();
@@ -1673,19 +1682,10 @@ namespace libTAU {
 //                    , pk->bytes, sk->bytes, data), salt, peer);
 //        }
 
-        void communication::send_to(const dht::public_key &peer, std::int64_t data_type_id, const entry &data,
-                                    std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit, bool cache) {
-            dht::public_key * pk = m_ses.pubkey();
-            dht::secret_key * sk = m_ses.serkey();
-
-            // salt is y pubkey when publish signal
-            auto salt = make_salt(peer, data_type_id);
-
-            log(true, "INFO: Send to peer[%s], data type id[%ld], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
-                data_type_id, aux::toHex(salt).c_str(), data.to_string().c_str());
-
-            dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-                    , pk->bytes, sk->bytes, data), alpha, beta, invoke_limit, salt, peer, cache);
+        void communication::send_to(const dht::public_key &peer, const entry &data) {
+            if (!m_ses.dht()) return;
+            m_ses.dht()->send(peer, data, 1, 8, 100, 10,
+                              std::bind(&communication::on_dht_relay_mutable_item, self(), _1, _2, peer));
         }
 
 //        void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
@@ -1698,18 +1698,18 @@ namespace libTAU {
 //                    , target, _1));
 //        }
 
-        void communication::dht_put_mutable_item(std::array<char, 32> key
-                , std::function<void(entry&, std::array<char,64>&
-                , std::int64_t&, std::string const&)> cb
-                , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
-                , std::string salt, const dht::public_key &peer, bool cache)
-        {
-            if (!m_ses.dht()) return;
-            m_ses.dht()->put_item(dht::public_key(key.data())
-                    , std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2, peer)
-                    , std::bind(&put_mutable_callback, _1, std::move(cb))
-                    , alpha, beta, invoke_limit, salt, peer, cache);
-        }
+//        void communication::dht_put_mutable_item(std::array<char, 32> key
+//                , std::function<void(entry&, std::array<char,64>&
+//                , std::int64_t&, std::string const&)> cb
+//                , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
+//                , std::string salt, const dht::public_key &peer, bool cache)
+//        {
+//            if (!m_ses.dht()) return;
+//            m_ses.dht()->put_item(dht::public_key(key.data())
+//                    , std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2, peer)
+//                    , std::bind(&put_mutable_callback, _1, std::move(cb))
+//                    , alpha, beta, invoke_limit, salt, peer, cache);
+//        }
 
 //        void communication::send_one_unconfirmed_message_randomly(const dht::public_key &peer) {
 //            // find out missing messages and confirmation root
@@ -1765,7 +1765,7 @@ namespace libTAU {
             auto size = missing_messages.size();
             for(auto k = 0; k < size; k++) {
                 common::message_entry msg_entry(missing_messages[k], levenshtein_array, now);
-                send_to(peer, common::message_entry::data_type_id, msg_entry.get_entry(), 1, 8, 100, true);
+                send_to(peer, msg_entry.get_entry());
 //                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry());
 //                add_entry_task_to_queue(task);
             }

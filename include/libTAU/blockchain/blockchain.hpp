@@ -173,7 +173,7 @@ namespace blockchain {
 //        void unset_priority_chain();
 
         // mutable data is pushed here
-        void on_dht_item(dht::item const& i);
+        void on_dht_relay(dht::public_key const& peer, entry const& payload);
 
         void request_state(const aux::bytes &chain_id);
 
@@ -333,17 +333,17 @@ namespace blockchain {
         static std::string make_salt(dht::public_key peer, const aux::bytes &chain_id, std::int64_t data_type_id);
 
         // make a salt on mutable channel
-        static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
+//        static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
 
         // send data to peer
-        void send_to(const aux::bytes &chain_id, const dht::public_key &peer, std::int64_t data_type_id, entry const& data, bool cache);
+        void send_to(const dht::public_key &peer, entry const& data);
 
         void request_block(const aux::bytes &chain_id, const sha256_hash& hash);
 
         void request_block(const aux::bytes &chain_id, const dht::public_key &peer, const sha256_hash& hash);
 
-        void transfer_to_acl_peers(const aux::bytes &chain_id, std::int64_t data_type_id, entry const& data,
-                                   bool cache = true, const dht::public_key &incoming_peer = dht::public_key());
+        void transfer_to_acl_peers(const aux::bytes &chain_id, entry const& data,
+                                   const dht::public_key &incoming_peer = dht::public_key());
 
         void introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer);
 
@@ -387,6 +387,8 @@ namespace blockchain {
         void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
 
         void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
+
+        void on_dht_relay_mutable_item(entry const& payload, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
 
         // put immutable item to dht
 //        void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);

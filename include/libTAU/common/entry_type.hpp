@@ -34,10 +34,10 @@ namespace libTAU::common {
     const std::string entry_time = "m";
     const std::string entry_levenshtein_array = "l";
 
-    enum protocol_id {
-        protocol_put,
-        protocol_gossip,
-    };
+//    enum protocol_id {
+//        protocol_put,
+//        protocol_gossip,
+//    };
 
     struct TORRENT_EXPORT protocol_entry {
         // @param Construct with entry
@@ -46,19 +46,17 @@ namespace libTAU::common {
         // @param Construct with bencode
         explicit protocol_entry(std::string encode): protocol_entry(bdecode(encode)) {}
 
-        explicit protocol_entry(int64_t mDataTypeId) : m_data_type_id(mDataTypeId) { m_pid = protocol_put; }
+//        explicit protocol_entry(int64_t mDataTypeId) : m_data_type_id(mDataTypeId) { m_pid = protocol_put; }
 
         protocol_entry(aux::bytes mShortChainId, int64_t mDataTypeId) : m_short_chain_id(std::move(mShortChainId)),
-                                                                               m_data_type_id(mDataTypeId) {
-            m_pid = protocol_gossip;
-        }
+                                                                               m_data_type_id(mDataTypeId) {}
 
         entry get_entry();
 
         std::string get_encode();
 
         // protocol id
-        protocol_id m_pid;
+//        protocol_id m_pid;
 
         // data type id
         aux::bytes m_short_chain_id;
@@ -69,7 +67,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT gossip_cache_peers_entry {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 1;
+        static inline constexpr std::int64_t data_type_id = 8;
 
         // @param Construct with entry
         explicit gossip_cache_peers_entry(const entry& e);
@@ -87,7 +85,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT voting_block_cache_entry {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 2;
+        static inline constexpr std::int64_t data_type_id = 9;
 
         // @param Construct with entry
         explicit voting_block_cache_entry(const entry& e);
@@ -344,7 +342,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT message_entry final : communication_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 100;
+        static inline constexpr std::int64_t data_type_id = 50;
 
         // @param Construct with entry
         explicit message_entry(const entry& e);
@@ -400,7 +398,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT message_levenshtein_array_entry final : communication_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 101;
+        static inline constexpr std::int64_t data_type_id = 51;
 
         message_levenshtein_array_entry();
 
@@ -440,7 +438,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT message_levenshtein_array_entry2 final : communication_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 101;
+        static inline constexpr std::int64_t data_type_id = 51;
 
         // @param Construct with entry
         explicit message_levenshtein_array_entry2(const entry& e);
@@ -478,7 +476,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT friend_info_request_entry final : communication_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 102;
+        static inline constexpr std::int64_t data_type_id = 52;
 
         friend_info_request_entry();
 
@@ -513,7 +511,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT friend_info_entry final : communication_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 103;
+        static inline constexpr std::int64_t data_type_id = 53;
 
         // @param Construct with entry
         explicit friend_info_entry(const entry& e);
@@ -557,7 +555,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT block_request_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 301;
+        static inline constexpr std::int64_t data_type_id = 61;
 
         // @param Construct with entry
         explicit block_request_entry(const entry& e);
@@ -584,7 +582,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT block_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 302;
+        static inline constexpr std::int64_t data_type_id = 62;
 
         // @param Construct with entry
         explicit block_entry(const entry& e);
@@ -607,7 +605,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT transaction_request_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 303;
+        static inline constexpr std::int64_t data_type_id = 63;
 
         // @param Construct with entry
         explicit transaction_request_entry(const entry& e);
@@ -634,7 +632,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT transaction_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 304;
+        static inline constexpr std::int64_t data_type_id = 64;
 
         // @param Construct with entry
         explicit transaction_entry(const entry& e);
@@ -705,7 +703,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT head_block_request_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 307;
+        static inline constexpr std::int64_t data_type_id = 65;
 
         // @param Construct with entry
         explicit head_block_request_entry(const entry& e);
@@ -726,7 +724,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT head_block_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 308;
+        static inline constexpr std::int64_t data_type_id = 66;
 
         // @param Construct with entry
         explicit head_block_entry(const entry& e);
@@ -774,7 +772,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT state_request_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 309;
+        static inline constexpr std::int64_t data_type_id = 67;
 
         // @param Construct with entry
         explicit state_request_entry(const entry& e);
@@ -795,7 +793,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT state_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 310;
+        static inline constexpr std::int64_t data_type_id = 68;
 
         // @param Construct with entry
         explicit state_entry(const entry& e);
@@ -816,59 +814,59 @@ namespace libTAU::common {
         blockchain::account m_act;
     };
 
-    struct TORRENT_EXPORT transaction_reply_entry final : blockchain_entry_base {
-        // data type id
-        static inline constexpr std::int64_t data_type_id = 311;
+//    struct TORRENT_EXPORT transaction_reply_entry final : blockchain_entry_base {
+//        // data type id
+//        static inline constexpr std::int64_t data_type_id = 41;
+//
+//        // @param Construct with entry
+//        explicit transaction_reply_entry(const entry& e);
+//
+//        transaction_reply_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_hash(mHash) {
+//            m_chain_id = std::move(mChainId);
+//
+//            m_entry = get_entry();
+//        }
+//
+//        // @returns the corresponding entry
+//        entry get_entry() const override;
+//
+//        bool operator<(const transaction_reply_entry &rhs) const {
+//            if (m_chain_id < rhs.m_chain_id)
+//                return true;
+//            if (rhs.m_chain_id < m_chain_id)
+//                return false;
+//            return m_hash < rhs.m_hash;
+//        }
+//
+//        sha256_hash m_hash;
+//    };
 
-        // @param Construct with entry
-        explicit transaction_reply_entry(const entry& e);
-
-        transaction_reply_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_hash(mHash) {
-            m_chain_id = std::move(mChainId);
-
-            m_entry = get_entry();
-        }
-
-        // @returns the corresponding entry
-        entry get_entry() const override;
-
-        bool operator<(const transaction_reply_entry &rhs) const {
-            if (m_chain_id < rhs.m_chain_id)
-                return true;
-            if (rhs.m_chain_id < m_chain_id)
-                return false;
-            return m_hash < rhs.m_hash;
-        }
-
-        sha256_hash m_hash;
-    };
-
-    struct TORRENT_EXPORT block_reply_entry final : blockchain_entry_base {
-        // data type id
-        static inline constexpr std::int64_t data_type_id = 312;
-
-        // @param Construct with entry
-        explicit block_reply_entry(const entry& e);
-
-        block_reply_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_hash(mHash) {
-            m_chain_id = std::move(mChainId);
-
-            m_entry = get_entry();
-        }
-
-        // @returns the corresponding entry
-        entry get_entry() const override;
-
-        bool operator<(const block_reply_entry &rhs) const {
-            if (m_chain_id < rhs.m_chain_id)
-                return true;
-            if (rhs.m_chain_id < m_chain_id)
-                return false;
-            return m_hash < rhs.m_hash;
-        }
-
-        sha256_hash m_hash;
-    };
+//    struct TORRENT_EXPORT block_reply_entry final : blockchain_entry_base {
+//        // data type id
+//        static inline constexpr std::int64_t data_type_id = 42;
+//
+//        // @param Construct with entry
+//        explicit block_reply_entry(const entry& e);
+//
+//        block_reply_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_hash(mHash) {
+//            m_chain_id = std::move(mChainId);
+//
+//            m_entry = get_entry();
+//        }
+//
+//        // @returns the corresponding entry
+//        entry get_entry() const override;
+//
+//        bool operator<(const block_reply_entry &rhs) const {
+//            if (m_chain_id < rhs.m_chain_id)
+//                return true;
+//            if (rhs.m_chain_id < m_chain_id)
+//                return false;
+//            return m_hash < rhs.m_hash;
+//        }
+//
+//        sha256_hash m_hash;
+//    };
 
 //    struct TORRENT_EXPORT tx_pool_entry final : blockchain_entry_base {
 //        // data type id
@@ -903,7 +901,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT gossip_peers_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 314;
+        static inline constexpr std::int64_t data_type_id = 69;
 
         // @param Construct with entry
         explicit gossip_peers_entry(const entry& e);
@@ -931,7 +929,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT fee_tx_pool_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 315;
+        static inline constexpr std::int64_t data_type_id = 70;
 
         // @param Construct with entry
         explicit fee_tx_pool_entry(const entry& e);
@@ -958,7 +956,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT time_tx_pool_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 316;
+        static inline constexpr std::int64_t data_type_id = 71;
 
         // @param Construct with entry
         explicit time_tx_pool_entry(const entry& e);
@@ -985,7 +983,7 @@ namespace libTAU::common {
 
     struct TORRENT_EXPORT ping_entry final : blockchain_entry_base {
         // data type id
-        static inline constexpr std::int64_t data_type_id = 399;
+        static inline constexpr std::int64_t data_type_id = 77;
 
         // @param Construct with entry
         explicit ping_entry(const entry& e);

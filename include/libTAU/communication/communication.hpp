@@ -144,7 +144,7 @@ namespace libTAU {
             std::int64_t get_current_time();
 
             // mutable data is pushed here
-            void on_dht_item(dht::item const& i);
+            void on_dht_relay(dht::public_key const& peer, entry const& payload);
 
         private:
             // initialize member variables
@@ -168,8 +168,7 @@ namespace libTAU {
 //            void send_to(const dht::public_key &peer, entry const& data);
 
             // send data to peer
-            void send_to(const dht::public_key &peer, std::int64_t data_type_id, entry const& data,
-                    std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit, bool cache);
+            void send_to(const dht::public_key &peer, entry const& data);
 
             // select a friend randomly
 //            dht::public_key select_friend_randomly();
@@ -192,7 +191,7 @@ namespace libTAU {
                                     std::vector<message> &missing_messages, std::vector<message> &confirmed_messages);
 
             // make a salt on mutable channel
-            static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
+//            static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
 
             void process_payload(dht::public_key const& peer, std::int64_t data_type_id, entry const& payload, bool is_cache);
 
@@ -223,11 +222,11 @@ namespace libTAU {
 //            void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
 
             // put mutable item to dht
-            void dht_put_mutable_item(std::array<char, 32> key
-                    , std::function<void(entry&, std::array<char,64>&
-                    , std::int64_t&, std::string const&)> cb
-                    , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
-                    , std::string salt, const dht::public_key &peer, bool cache);
+//            void dht_put_mutable_item(std::array<char, 32> key
+//                    , std::function<void(entry&, std::array<char,64>&
+//                    , std::int64_t&, std::string const&)> cb
+//                    , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
+//                    , std::string salt, const dht::public_key &peer, bool cache);
 
             std::shared_ptr<communication> self()
             { return shared_from_this(); }
@@ -251,7 +250,9 @@ namespace libTAU {
 
             void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array, std::int64_t time);
 
-            void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
+//            void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
+
+            void on_dht_relay_mutable_item(entry const& payload, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
 
             // device id
             aux::bytes m_device_id;
