@@ -240,9 +240,9 @@ namespace libTAU {
 		sync_call(&session_impl::new_account_seed, account_seed);
 	}
 
-	void session_handle::enable_debug_log(bool logged)
+	void session_handle::set_log_level(int logged)
 	{
-		sync_call(&session_impl::enable_debug_log, logged);
+		sync_call(&session_impl::set_log_level, logged);
 	}
 
 	void session_handle::set_loop_time_interval(int milliseconds)

@@ -2484,14 +2484,14 @@ namespace {
 			stop_ip_notifier();
 	}
 
-	void session_impl::update_debug_log()
+	void session_impl::update_log_level()
 	{
-		m_logged = m_settings.get_bool(settings_pack::enable_debug_log);
+		m_logged = m_settings.get_bool(settings_pack::log_level);
 	}
 
-	void session_impl::enable_debug_log(bool logged)
+	void session_impl::set_log_level(int logged)
 	{
-		m_settings.set_bool(settings_pack::enable_debug_log, logged);
+		m_settings.set_bool(settings_pack::log_level, logged);
         m_logged = logged;
 	}
 
