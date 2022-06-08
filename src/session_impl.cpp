@@ -531,7 +531,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 			, std::max(5, (max_files - 20) * 8 / 10)));
 		// 20% goes towards regular files (see disk_io_thread)
 #ifndef TORRENT_DISABLE_LOGGING
-		if (should_log())
+		if (should_log(aux::LOG_LEVEL::LOG_INFO))
 		{
 			session_log("max-connections: %d max-files: %d"
 				, m_settings.get_int(settings_pack::connections_limit)
@@ -2307,6 +2307,11 @@ namespace {
         return m_alerts.should_post<log_alert>();
     }    
 
+    bool session_impl::should_log(aux::LOG_LEVEL log_level) const
+    {    
+        return (log_level <= m_logged) && m_alerts.should_post<log_alert>();
+    }    
+
     TORRENT_FORMAT(2,3)
     void session_impl::session_log(char const* fmt, ...) const noexcept try
     {    
@@ -2486,12 +2491,12 @@ namespace {
 
 	void session_impl::update_log_level()
 	{
-		m_logged = m_settings.get_bool(settings_pack::log_level);
+		m_logged = m_settings.get_int(settings_pack::log_level);
 	}
 
 	void session_impl::set_log_level(int logged)
 	{
-		m_settings.set_bool(settings_pack::log_level, logged);
+		m_settings.set_int(settings_pack::log_level, logged);
         m_logged = logged;
 	}
 
@@ -3754,6 +3759,11 @@ namespace {
 	bool session_impl::should_log(module_t) const
 	{
 		return m_alerts.should_post<dht_log_alert>();
+	}
+
+	bool session_impl::should_log(module_t m, aux::LOG_LEVEL log_level) const
+	{
+		return (log_level <= m_logged) && (m_alerts.should_post<dht_log_alert>());
 	}
 
 	TORRENT_FORMAT(3,4)

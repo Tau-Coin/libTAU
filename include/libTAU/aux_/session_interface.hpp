@@ -21,6 +21,7 @@ see LICENSE file.
 #include "libTAU/disk_buffer_holder.hpp"
 #include "libTAU/error_code.hpp"
 #include "libTAU/socket.hpp" // for tcp::endpoint
+#include "libTAU/aux_/common.h"
 #include "libTAU/aux_/vector.hpp"
 #include "libTAU/aux_/listen_socket_handle.hpp"
 #include "libTAU/aux_/session_udp_sockets.hpp" // for transport
@@ -83,6 +84,7 @@ namespace libTAU::aux {
 	{
 #ifndef TORRENT_DISABLE_LOGGING
 		virtual bool should_log() const = 0;
+		virtual bool should_log(aux::LOG_LEVEL log_level) const = 0;
 		virtual void session_log(char const* fmt, ...) const TORRENT_FORMAT(2,3) = 0;
 #endif
 
@@ -133,11 +135,12 @@ namespace libTAU::aux {
 		virtual time_point session_start_time() const = 0;
 
 		virtual bool is_aborted() const = 0;
-		virtual bool is_logged() const = 0;
 		virtual void trigger_optimistic_unchoke() noexcept = 0;
 		virtual void trigger_unchoke() noexcept = 0;
 
 		virtual int num_connections() const = 0;
+
+		virtual int get_log_level() const = 0;
 
 		virtual void for_each_listen_socket(std::function<void(aux::listen_socket_handle const&)> f) = 0;
 
