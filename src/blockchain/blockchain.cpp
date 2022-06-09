@@ -823,9 +823,6 @@ namespace libTAU::blockchain {
 
                                 process_block(chain_id, b);
 
-                                common::head_block_entry blockEntry(b);
-                                transfer_to_acl_peers(chain_id, blockEntry.get_entry());
-
                                 refresh_time = 100;
                             } else {
                                 log(LOG_INFO, "INFO: chain id[%s] left time[%" PRId64 "]s",
@@ -1519,6 +1516,9 @@ namespace libTAU::blockchain {
                 }
                 m_repository->flush(chain_id);
 
+                common::head_block_entry blockEntry(blk);
+                transfer_to_acl_peers(chain_id, blockEntry.get_entry());
+
                 // todo: test
 //                for (auto const& peer: peers) {
 //                    auto abp = m_repository->get_account_block_pointer(chain_id, peer);
@@ -2131,6 +2131,8 @@ namespace libTAU::blockchain {
                                     remove_all_same_chain_blocks_from_cache(best_voting_block);
                                 } else if (result == NO_FORK_POINT) {
                                     clear_chain_all_state_in_cache_and_db(chain_id);
+                                    m_repository->delete_peer_db(chain_id);
+                                    m_repository->create_peer_db(chain_id);
                                     block_reception_event(chain_id, best_voting_block);
                                     reset_chain_status(chain_id);
                                     // cancel
