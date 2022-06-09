@@ -94,8 +94,8 @@ namespace blockchain {
     // not have this class at all
     struct TORRENT_EXTRA_EXPORT blockchain_logger {
         //#ifndef TORRENT_DISABLE_LOGGING
-        virtual bool should_log() const = 0;
-        virtual void log(bool is_logged, char const* fmt, ...) const TORRENT_FORMAT(3,4) = 0;
+        virtual bool should_log(aux::LOG_LEVEL log_level) const = 0;
+        virtual void log(aux::LOG_LEVEL log_level, char const* fmt, ...) const TORRENT_FORMAT(3,4) = 0;
         //#endif
             protected:
                 ~blockchain_logger() {}
@@ -206,15 +206,15 @@ namespace blockchain {
         { return shared_from_this(); }
 
         //#ifndef TORRENT_DISABLE_LOGGING
-        bool should_log() const override;
-        void log(bool is_logged, char const* fmt, ...) const noexcept override TORRENT_FORMAT(3,4);
+        bool should_log(aux::LOG_LEVEL log_level) const override;
+        void log(aux::LOG_LEVEL log_level, char const* fmt, ...) const noexcept override TORRENT_FORMAT(3,4);
         //#endif
 
         void refresh_timeout(error_code const& e);
 
         void refresh_chain_status(error_code const &e, const aux::bytes &chain_id);
 
-        void refresh_votes(error_code const &e, const aux::bytes &chain_id);
+//        void refresh_votes(error_code const &e, const aux::bytes &chain_id);
 
         void refresh_mining_timeout(error_code const&, const aux::bytes &chain_id);
 

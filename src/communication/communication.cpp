@@ -7,6 +7,7 @@ see LICENSE file.
 */
 
 #include <cstdlib>
+#include <cinttypes> // for PRId64 et.al.
 #include <utility>
 #include <algorithm>
 
@@ -19,12 +20,13 @@ using namespace std::placeholders;
 
 namespace libTAU {
     namespace communication {
+        using namespace aux;
 
         bool communication::start()
         {
-            log(true, "INFO: Start Communication...");
+            log(LOG_INFO, "INFO: Start Communication...");
             if (!init()) {
-                log(true, "ERROR: Init fail.");
+                log(LOG_ERR, "ERROR: Init fail.");
                 return false;
             }
 
@@ -48,16 +50,16 @@ namespace libTAU {
 
             clear();
 
-            log(true, "INFO: Stop Communication...");
+            log(LOG_INFO, "INFO: Stop Communication...");
 
             return true;
         }
 
         bool communication::init() {
             try {
-                log(true, "INFO: Communication init...");
+                log(LOG_INFO, "INFO: Communication init...");
                 if (!m_message_db->init()) {
-                    log(true, "ERROR: DB init fail!");
+                    log(LOG_ERR, "ERROR: DB init fail!");
                     return false;
                 }
 
@@ -67,26 +69,25 @@ namespace libTAU {
                 dht::public_key *pk = m_ses.pubkey();
                 m_friends.push_back(*pk);
 
-                log(true, "INFO: friend size: %zu", m_friends.size());
                 for (auto const & peer: m_friends) {
-                    log(true, "INFO: friend: %s", aux::toHex(peer.bytes).c_str());
+                    log(LOG_INFO, "INFO: friend: %s", aux::toHex(peer.bytes).c_str());
                     std::string encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(*pk, peer));
 
                     if (!encode.empty()) {
                         message_hash_list hashList(encode);
-                        log(true, "INFO: %s from peer[%s]", hashList.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                        log(LOG_INFO, "INFO: %s from peer[%s]", hashList.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                         for (auto const &hash: hashList.hash_list()) {
-                            log(true, "INFO: Get message hash:%s", aux::toHex(hash).c_str());
+                            log(LOG_INFO, "INFO: Get message hash:%s", aux::toHex(hash).c_str());
                             message msg = m_message_db->get_message(hash);
                             if (!msg.empty()) {
-                                log(true, "INFO: Got message from db[%s]", msg.to_string().c_str());
+                                log(LOG_INFO, "INFO: Got message from db[%s]", msg.to_string().c_str());
                                 m_message_list_map[peer].push_back(msg);
                             } else {
-                                log(true, "INFO: Cannot find message[%s] in db.", aux::toHex(hash).c_str());
+                                log(LOG_INFO, "INFO: Cannot find message[%s] in db.", aux::toHex(hash).c_str());
                             }
                         }
                     } else {
-                        log(true, "INFO: Message hash list is empty.");
+                        log(LOG_INFO, "INFO: Message hash list is empty.");
                     }
 
 //                    m_last_detection_time[peer] = m_message_db->get_last_detection_time(std::make_pair(*pk, peer));
@@ -99,7 +100,7 @@ namespace libTAU {
 
                 }
             } catch (std::exception &e) {
-                log(true, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+                log(LOG_ERR, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
                 return false;
             }
 
@@ -125,7 +126,7 @@ namespace libTAU {
 
         void communication::account_changed() {
             try {
-                log(true, "INFO: Change account.");
+                log(LOG_INFO, "INFO: Change account.");
                 // 账户发生改变，模块重新启动
 //                stop();
 //                start();
@@ -133,7 +134,7 @@ namespace libTAU {
                 clear();
                 init();
             } catch (std::exception &e) {
-                log(true, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+                log(LOG_ERR, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             }
         }
 
@@ -146,7 +147,7 @@ namespace libTAU {
 
             std::int64_t timestamp = 0;
 
-            log(true, "---------------Got entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+            log(LOG_INFO, "---------------Got entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
             switch (data_type_id) {
                 case common::message_entry::data_type_id: {
                     // time
@@ -165,7 +166,7 @@ namespace libTAU {
                         auto& entry_cache = m_entry_cache[peer];
                         auto it = entry_cache.find(encode);
                         if (it != entry_cache.end()) {
-                            log(true, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                             return;
                         } else {
                             entry_cache[encode] = now;
@@ -175,7 +176,7 @@ namespace libTAU {
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
                     common::message_entry msg_entry(payload);
-                    log(true, "INFO: Got message, hash[%s].",
+                    log(LOG_INFO, "INFO: Got message, hash[%s].",
                         aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
 
                     {
@@ -185,7 +186,7 @@ namespace libTAU {
                             if (now > it->second + communication_same_response_interval) {
                                 m_last_same_entry_time[peer].erase(it);
                             } else {
-                                log(true, "INFO: The same request from the same peer in 4s.");
+                                log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
                                 break;
                             }
                         } else {
@@ -204,7 +205,6 @@ namespace libTAU {
 //                        std::vector<message> confirmed_messages;
 //                        auto &message_list = m_message_list_map[peer];
 //                        std::vector<message> messages(message_list.begin(), message_list.end());
-//                        log("INFO: Messages size:%zu", messages.size());
 //                        find_best_solution(messages, msg_entry.m_levenshtein_array,
 //                                           missing_messages, confirmed_messages);
 //
@@ -227,7 +227,7 @@ namespace libTAU {
                         std::vector<sha256_hash> confirmation_roots;
                         auto &message_list = m_message_list_map[peer];
                         std::vector<message> messages(message_list.begin(), message_list.end());
-                        log(true, "INFO: Messages size:%zu", messages.size());
+                        log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
                         find_best_solution(messages, msg_entry.m_levenshtein_array,
                                            missing_messages, confirmation_roots);
 
@@ -235,7 +235,7 @@ namespace libTAU {
                             m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
                                                                                                 confirmation_roots,
                                                                                                 now);
-                            log(true, "INFO: Confirmation roots:%zu", confirmation_roots.size());
+                            log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
                         }
 
                         aux::bytes levenshtein_array;
@@ -282,7 +282,7 @@ namespace libTAU {
                         auto& entry_cache = m_entry_cache[peer];
                         auto it = entry_cache.find(encode);
                         if (it != entry_cache.end()) {
-                            log(true, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                             return;
                         } else {
                             entry_cache[encode] = now;
@@ -292,7 +292,7 @@ namespace libTAU {
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
                     common::message_levenshtein_array_entry levenshtein_array_entry(payload);
-                    log(true, "INFO: Got message levenshtein array[%s].",
+                    log(LOG_INFO, "INFO: Got message levenshtein array[%s].",
                         aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
 
                     {
@@ -302,7 +302,7 @@ namespace libTAU {
                             if (now > it->second + communication_same_response_interval) {
                                 m_last_same_entry_time[peer].erase(it);
                             } else {
-                                log(true, "INFO: The same request from the same peer in 4s.");
+                                log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
                                 break;
                             }
                         } else {
@@ -319,7 +319,7 @@ namespace libTAU {
                         std::vector<sha256_hash> confirmation_roots;
                         auto &message_list = m_message_list_map[peer];
                         std::vector<message> messages(message_list.begin(), message_list.end());
-                        log(true, "INFO: Messages size:%zu", messages.size());
+                        log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
                         find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
                                            missing_messages, confirmation_roots);
 
@@ -327,10 +327,10 @@ namespace libTAU {
                             m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
                                                                                                 confirmation_roots,
                                                                                                 now);
-                            log(true, "INFO: Confirmation roots:%zu", confirmation_roots.size());
+                            log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
                         }
 
-                        log(true, "INFO: Found missing message size %zu", missing_messages.size());
+                        log(LOG_INFO, "INFO: Found missing message size %" PRIu64, missing_messages.size());
                         aux::bytes levenshtein_array;
                         auto &msg_list = m_message_list_map[peer];
                         for (auto const &msg: msg_list) {
@@ -363,7 +363,7 @@ namespace libTAU {
                         auto& entry_cache = m_entry_cache[peer];
                         auto it = entry_cache.find(encode);
                         if (it != entry_cache.end()) {
-                            log(true, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                             return;
                         } else {
                             entry_cache[encode] = now;
@@ -377,7 +377,7 @@ namespace libTAU {
                         if (now > it->second + communication_same_response_interval) {
                             m_last_same_entry_time[peer].erase(it);
                         } else {
-                            log(true, "INFO: The same request from the same peer in 4s.");
+                            log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
                             break;
                         }
                     } else {
@@ -419,7 +419,7 @@ namespace libTAU {
                         auto& entry_cache = m_entry_cache[peer];
                         auto it = entry_cache.find(encode);
                         if (it != entry_cache.end()) {
-                            log(true, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
                             return;
                         } else {
                             entry_cache[encode] = now;
@@ -453,7 +453,7 @@ namespace libTAU {
 
         void communication::on_dht_relay(dht::public_key const& peer, entry const& payload) {
             if(payload.type() != entry::dictionary_t){
-                log(true, "ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
+                log(LOG_ERR, "ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
                 return;
             }
 
@@ -465,7 +465,7 @@ namespace libTAU {
                     process_payload(peer, data_type_id, payload, false);
                 }
             } catch (std::exception &e) {
-                log(true, "ERROR: Receive exception data.");
+                log(LOG_ERR, "ERROR: Receive exception data.");
             }
         }
 
@@ -477,19 +477,19 @@ namespace libTAU {
 
         bool communication::add_new_friend(const dht::public_key &pubkey) {
             if (pubkey == dht::public_key()) {
-                log(true, "ERROR: Public key is empty.");
+                log(LOG_ERR, "ERROR: Public key is empty.");
                 return false;
             }
 
-            log(true, "INFO: Add new friend, public key %s.", aux::toHex(pubkey.bytes).c_str());
+            log(LOG_INFO, "INFO: Add new friend, public key %s.", aux::toHex(pubkey.bytes).c_str());
 
             auto it = find(m_friends.begin(), m_friends.end(), pubkey);
             if (it == m_friends.end()) {
-                log(true, "INFO: Friend is not existed.");
+                log(LOG_INFO, "INFO: Friend is not existed.");
 
                 m_friends.push_back(pubkey);
                 if (!m_message_db->save_friend(pubkey)) {
-                    log(true, "ERROR: Save friend failed!");
+                    log(LOG_ERR, "ERROR: Save friend failed!");
                     return false;
                 }
             }
@@ -498,7 +498,7 @@ namespace libTAU {
         }
 
         bool communication::delete_friend(const dht::public_key &pubkey) {
-            log(true, "INFO: Delete friend, public key %s.", aux::toHex(pubkey.bytes).c_str());
+            log(LOG_INFO, "INFO: Delete friend, public key %s.", aux::toHex(pubkey.bytes).c_str());
 
             for(auto it = m_friends.begin(); it != m_friends.end(); ++it) {
                 if (*it == pubkey) {
@@ -508,19 +508,19 @@ namespace libTAU {
             }
 
             if (!m_message_db->delete_friend(pubkey)) {
-                log(true, "ERROR: Delete friend failed!");
+                log(LOG_ERR, "ERROR: Delete friend failed!");
                 return false;
             }
 
             const auto &pk = m_ses.pubkey();
 
             if (!m_message_db->delete_friend_info(std::make_pair(*pk, pubkey))) {
-                log(true, "ERROR: Delete friend info failed!");
+                log(LOG_ERR, "ERROR: Delete friend info failed!");
                 return false;
             }
 
             if (!m_message_db->delete_latest_message_hash_list_encode(std::make_pair(*pk, pubkey))) {
-                log(true, "ERROR: Delete friend message hash list encode failed!");
+                log(LOG_ERR, "ERROR: Delete friend message hash list encode failed!");
                 return false;
             }
 
@@ -545,7 +545,7 @@ namespace libTAU {
         }
 
         bool communication::update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info) {
-            log(true, "INFO: Update peer[%s] friend info[%s]", aux::toHex(pubkey.bytes).c_str(), aux::toHex(friend_info).c_str());
+            log(LOG_INFO, "INFO: Update peer[%s] friend info[%s]", aux::toHex(pubkey.bytes).c_str(), aux::toHex(friend_info).c_str());
             const auto &pk = m_ses.pubkey();
             return m_message_db->save_friend_info(std::make_pair(*pk, pubkey), friend_info);
         }
@@ -563,7 +563,6 @@ namespace libTAU {
 //        }
 
 //        void communication::set_active_friends(std::vector<dht::public_key> active_friends) {
-////            log("INFO: Set active friends[%zu].", active_friends.size());
 //            m_active_friends = std::move(active_friends);
 //        }
 
@@ -624,11 +623,11 @@ namespace libTAU {
 
         bool communication::add_new_message(const dht::public_key &peer, const message& msg, bool post_alert) {
             if (msg.empty()) {
-                log(true, "ERROR: Message is empty.");
+                log(LOG_ERR, "ERROR: Message is empty.");
                 return false;
             }
 
-            log(true, "INFO: Add new msg[%s]", msg.to_string().c_str());
+            log(LOG_INFO, "INFO: Add new msg[%s]", msg.to_string().c_str());
 
 //            dht::public_key * pk = m_ses.pubkey();
 //            aux::bytes public_key;
@@ -669,7 +668,7 @@ namespace libTAU {
         bool communication::validate_message(const message& msg) {
             // TODO: size==1000?
             if (msg.encode().size() > 1000) {
-                log(true, "ERROR: Message is oversize!");
+                log(LOG_ERR, "ERROR: Message is oversize!");
                 return false;
             }
 
@@ -694,7 +693,6 @@ namespace libTAU {
 //                m_last_seen[peer] = signal.timestamp();
 //                // 通知用户新的last seen time
 //                m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signal.timestamp());
-//                log("INFO: Last seen peer[%s], time[%ld]", aux::toHex(peer.bytes).c_str(), signal.timestamp());
 //            }
 //
 //            auto &device_id = signal.device_id();
@@ -734,7 +732,6 @@ namespace libTAU {
 //                    std::vector<sha256_hash> confirmation_roots;
 //                    auto message_list = m_message_list_map[peer];
 //                    std::vector<message> messages(message_list.begin(), message_list.end());
-//                    log("INFO: Messages size:%zu", messages.size());
 //                    find_best_solution(messages, signal.hash_prefix_bytes(),
 //                                       missing_messages, confirmation_roots);
 //
@@ -748,11 +745,8 @@ namespace libTAU {
 //                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
 //                                                                                                confirmation_roots,
 //                                                                                                signal.timestamp());
-//                            log("INFO: Confirmation roots:%zu", confirmation_roots.size());
 //                        }
 //                    }
-//
-//                    log("INFO: Found missing message size %zu", missing_messages.size());
 //
 //                    for(auto const & msg: missing_messages) {
 //                        common::message_entry msg_entry(msg);
@@ -779,8 +773,6 @@ namespace libTAU {
 //
 //                // 检查chatting friend设置时间，如果超过30分钟，则重置
 //                std::int64_t current_time = total_seconds(system_clock::now().time_since_epoch());
-//                //log("INFO: Current time:%ld, chatting time:%ld, diff:%ld", current_time, m_chatting_friend.second,
-//                //    current_time - m_chatting_friend.second);
 //                if (current_time - m_chatting_friend.second > communication_max_chatting_time) {
 //                    unset_chatting_friend();
 //                }
@@ -834,38 +826,6 @@ namespace libTAU {
 
             try {
                 if (e.value() != boost::asio::error::operation_aborted) {
-                    /*
-                    {
-                        // log
-                        for(auto const& item: m_entry_putting_times) {
-                            auto const& peer = item.first;
-                            auto const& entry_putting_times = item.second;
-                            for (auto const& i: entry_putting_times) {
-                                log("------INFO: peer[%s] entry[%s] putting times:%d", aux::toHex(peer.bytes).c_str(),
-                                    i.first->get_entry().to_string(true).c_str(), i.second);
-                            }
-                        }
-
-                        for(auto const& item: m_entry_putting_nodes) {
-                            auto const& peer = item.first;
-                            auto const& entry_putting_times = item.second;
-                            for (auto const& i: entry_putting_times) {
-                                log("------INFO: peer[%s] entry[%s] putting nodes:%lu", aux::toHex(peer.bytes).c_str(),
-                                    i.first->get_entry().to_string(true).c_str(), i.second.size());
-                            }
-                        }
-
-                        for(auto const& item: m_entry_last_putting_time) {
-                            auto const& peer = item.first;
-                            auto const& entry_putting_times = item.second;
-                            for (auto const& i: entry_putting_times) {
-                                log("------INFO: peer[%s] entry[%s] last putting time:%ld", aux::toHex(peer.bytes).c_str(),
-                                    i.first->get_entry().to_string(true).c_str(), i.second);
-                            }
-                        }
-                    }
-                    */
-
                     auto now = get_current_time();
 
                     for (auto &entry_cache: m_entry_cache) {
@@ -889,139 +849,12 @@ namespace libTAU {
                             }
                         }
                     }
-
-//                // 随机挑选一个朋友put/get
-//                dht::public_key peer = select_friend_randomly();
-//                std::int64_t current_time = total_milliseconds(system_clock::now().time_since_epoch());
-//				int random_time_interval = rand()%400 + 800;
-//                if (peer != dht::public_key() && current_time > (m_peer_access_times[peer] + random_time_interval)) {
-//                    log("INFO: Select peer:%s", aux::toHex(peer.bytes).c_str());
-//                    m_peer_access_times[peer] = current_time;
-//
-////                    get_gossip_peers(peer);
-//                    publish_signal(peer);
-//                }
-
-                    /*
-                    for(auto const& item: m_last_same_entry_time) {
-                        auto const& peer = item.first;
-                        auto const& entry_putting_times = item.second;
-                        for (auto const& i: entry_putting_times) {
-                            log("------INFO: peer[%s] entry[%s] putting times:%d", aux::toHex(peer.bytes).c_str(),
-                                i.first->get_entry().to_string(true).c_str(), i.second);
-                        }
-                    }
-                    */
-
-//                auto size = m_friends.size();
-//                    for (auto const &peer : m_friends) {
-//                        auto &last_same_entry_time = m_last_same_entry_time[peer];
-//                        for (auto it = last_same_entry_time.begin(); it != last_same_entry_time.end();) {
-//                            if (now > it->second + communication_same_response_interval) {
-//                                last_same_entry_time.erase(it++);
-//                            } else {
-//                                ++it;
-//                            }
-//                        }
-
-//                        send_one_missing_entry_randomly(peer);
-//                    if (now > m_last_greeting[peer] + 60 * 60 * 1000) {
-//                        m_last_greeting[peer] = now;
-//
-////                        common::entry_task task(1, 10, 10, common::message_levenshtein_array_entry::data_type_id, peer, now);
-////                        add_entry_task_to_queue(task);
-//
-//                        request_signal(peer);
-//                    }
-
-//                    if (now < m_last_communication_time[peer] + 24 * 60 * 60 * 1000 && now > m_last_detection_time[peer] + 5 * 60 * 1000) {
-//                        send_one_unconfirmed_message_randomly(peer);
-//
-//                        update_detection_time(peer, now);
-//                    }
-//                    }
-
-//                    log("======communication tasks queue size:%lu", m_tasks.size());
-
-//                    if (!m_tasks.empty()) {
-//                        {
-//                            for (auto const &task: m_tasks_set) {
-//                                log("=======tasks set:peer[%s], entry:%s", aux::toHex(task.m_peer.bytes).c_str(),
-//                                    task.m_entry.to_string(true).c_str());
-//                            }
-//                        }
-//                        auto &task = m_tasks.front();
-//                        switch (task.m_data_type_id) {
-//                            case common::message_levenshtein_array_entry::data_type_id: {
-//                                // 本地消息数组为target
-//                                aux::bytes levenshtein_array;
-//                                auto &msg_list = m_message_list_map[task.m_peer];
-//                                for (auto const &msg: msg_list) {
-//                                    levenshtein_array.push_back(msg.sha256()[0]);
-//                                }
-//
-//                                common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
-//
-////                            auto ptr = std::make_shared<common::message_levenshtein_array_entry>(levenshtein_array, now);
-////                            auto it = m_entry_putting_times[task.m_peer].find(ptr);
-////                            if (it == m_entry_putting_times[task.m_peer].end()) {
-////                                m_entry_putting_times[task.m_peer][ptr] = 1;
-////                            }
-//
-//                                // 产生随机数
-//                                srand(total_microseconds(system_clock::now().time_since_epoch()));
-//                                auto index = rand() % 10;
-//                                send_to(task.m_peer, task.m_data_type_id, msg_levenshtein_array.get_entry(), 1, 3, 3, index < 1);
-//                                break;
-//                            }
-//                            case common::message_entry::data_type_id: {
-//                                // 本地消息数组为target
-//                                aux::bytes levenshtein_array;
-//                                auto &msg_list = m_message_list_map[task.m_peer];
-//                                for (auto const &msg: msg_list) {
-//                                    levenshtein_array.push_back(msg.sha256()[0]);
-//                                }
-//
-//                                common::message_entry msg_entry(task.m_entry);
-//                                msg_entry.set_levenshtein_array(levenshtein_array);
-//                                msg_entry.set_timestamp(now);
-//
-//                                send_to(task.m_peer, task.m_data_type_id, msg_entry.get_entry(), 1, 10, 7, true);
-//                                break;
-//                            }
-//                            case common::friend_info_entry::data_type_id: {
-//                                common::friend_info_entry friendInfoEntry(task.m_entry);
-//                                friendInfoEntry.set_timestamp(now);
-//                                send_to(task.m_peer, task.m_data_type_id, friendInfoEntry.get_entry(), 1, 10, 7, true);
-//                                break;
-//                            }
-//                            case common::friend_info_request_entry::data_type_id: {
-//                                common::friend_info_request_entry friendInfoRequestEntry(task.m_entry);
-//                                friendInfoRequestEntry.set_timestamp(now);
-//                                send_to(task.m_peer, task.m_data_type_id, friendInfoRequestEntry.get_entry(), 1, 10, 7, false);
-//                                break;
-//                            }
-//                            default: {
-//                                break;
-//                            }
-//                        }
-//
-//                        m_tasks_set.erase(task);
-//                        m_tasks.pop();
-//                    }
-//                }
-//
-//                if (!m_friends.empty()) {
-//                    int interval = 1000 / m_friends.size();
-//                    if (m_refresh_time < interval) {
-//                        m_refresh_time = interval;
-//                    }
                 }
 
                 m_refresh_timer.expires_after(seconds(communication_default_refresh_time));
                 m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
             } catch (std::exception &e) {
-                log(true, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+                log(LOG_ERR, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             }
         }
 
@@ -1036,7 +869,7 @@ namespace libTAU {
                 dht::public_key pubkey = *m_ses.pubkey();
 
                 message_hash_list messageHashList(hash_list);
-                log(true, "INFO: Save message hash list %s", messageHashList.to_string().c_str());
+                log(LOG_INFO, "INFO: Save message hash list %s", messageHashList.to_string().c_str());
                 m_message_db->save_latest_message_hash_list_encode(std::make_pair(pubkey, peer),messageHashList.encode());
             }
         }
@@ -1099,17 +932,17 @@ namespace libTAU {
 
             // 更新成功
             if (updated) {
-                log(true, "INFO: Add message[%s] into message list", msg.to_string().c_str());
+                log(LOG_INFO, "INFO: Add message[%s] into message list", msg.to_string().c_str());
 
                 // 通知用户新的message
                 if (post_alert) {
-                    log(true, "DEBUG: Post new message:%s", msg.to_string().c_str());
+                    log(LOG_INFO, "DEBUG: Post new message:%s", msg.to_string().c_str());
                     m_ses.alerts().emplace_alert<communication_new_message_alert>(msg);
                 }
 
                 // save message in db
                 if (!m_message_db->save_message(msg)) {
-                    log(true, "ERROR: Save message in db fail[%s]", msg.to_string().c_str());
+                    log(LOG_ERR, "ERROR: Save message in db fail[%s]", msg.to_string().c_str());
                     return false;
                 }
 
@@ -1156,7 +989,7 @@ namespace libTAU {
                                                std::vector<sha256_hash> &confirmation_roots) {
             // 如果对方没有信息，则本地消息全为缺失消息
             if (hash_prefix_array.empty()) {
-                log(true, "INFO: Hash prefix array is empty");
+                log(LOG_INFO, "INFO: Hash prefix array is empty");
                 missing_messages.insert(missing_messages.end(), messages.begin(), messages.end());
                 return;
             }
@@ -1174,7 +1007,7 @@ namespace libTAU {
                 const size_t sourceLength = source.size();
                 const size_t targetLength = size;
 
-                log(true, "INFO: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
+                log(LOG_INFO, "INFO: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
                 // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
                 if (source == target) {
                     for (auto const &msg: messages) {
@@ -1278,7 +1111,7 @@ namespace libTAU {
                                           std::vector<message> &confirmed_messages) {
             // 如果对方没有信息，则本地消息全为缺失消息
             if (hash_prefix_array.empty()) {
-                log(true, "INFO: Hash prefix array is empty");
+                log(LOG_INFO, "INFO: Hash prefix array is empty");
                 missing_messages.insert(missing_messages.end(), messages.begin(), messages.end());
                 return;
             }
@@ -1296,7 +1129,7 @@ namespace libTAU {
                 const size_t sourceLength = source.size();
                 const size_t targetLength = size;
 
-                log(true, "INFO: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
+                log(LOG_INFO, "INFO: source array[%s], target array[%s]", aux::toHex(source).c_str(), aux::toHex(target).c_str());
                 // 如果source和target一样，则直接跳过Levenshtein数组匹配计算
                 if (source == target) {
                     for (auto const &msg: messages) {
@@ -1444,8 +1277,6 @@ namespace libTAU {
 ////                        if (entries.size() > 2) {
 ////                            entries.resize(2);
 ////                        }
-////                        log("INFO: Put immutable message target[%s], entries[%zu]",
-////                            aux::toHex(missing_message.sha256().to_string()).c_str(), entries.size());
 ////                        dht_put_immutable_item(missing_message.get_entry(), entries, missing_message.sha256());
 ////
 ////                        payload = immutable_data_info(missing_message.sha256(), entries);
@@ -1507,7 +1338,6 @@ namespace libTAU {
 //        void communication::dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps)
 //        {
 //            if (!m_ses.dht()) return;
-//            log("INFO: Get immutable item, target[%s], entries size[%zu]", aux::toHex(target.to_string()).c_str(), eps.size());
 //            m_ses.dht()->get_item(target, eps, std::bind(&communication::get_immutable_callback
 //                    , this, peer, target, _1));
 //        }
@@ -1581,7 +1411,7 @@ namespace libTAU {
                 auto data_type_id = i->integer();
                 if (data_type_id == common::message_entry::data_type_id) {
                     for (auto const& n: nodes) {
-                        log(true, "====== nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
+                        log(LOG_DEBUG, "nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
                     }
 
                     common::message_entry msgEntry(payload);
@@ -1691,9 +1521,6 @@ namespace libTAU {
 //        void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
 //        {
 //            if (!m_ses.dht()) return;
-//            log("INFO: Put immutable item target[%s], entries[%zu], data[%s]",
-//                aux::toHex(target.to_string()).c_str(), eps.size(), data.to_string().c_str());
-//
 //            m_ses.dht()->put_item(data,  eps, std::bind(&on_dht_put_immutable_item, std::ref(m_ses.alerts())
 //                    , target, _1));
 //        }
@@ -1717,11 +1544,8 @@ namespace libTAU {
 //            std::vector<sha256_hash> confirmation_roots;
 //            auto &message_list = m_message_list_map[peer];
 //            std::vector<message> messages(message_list.begin(), message_list.end());
-//            log("INFO: Messages size:%zu", messages.size());
 //            find_best_solution(messages, m_levenshtein_array[peer],
 //                               missing_messages, confirmation_roots);
-//
-//            log("INFO: Found missing message size %zu", missing_messages.size());
 //
 //            auto now = get_current_time();
 //
@@ -1747,13 +1571,13 @@ namespace libTAU {
             std::vector<sha256_hash> confirmation_roots;
             auto &message_list = m_message_list_map[peer];
             std::vector<message> messages(message_list.begin(), message_list.end());
-            log(true, "INFO: Messages size:%zu", messages.size());
-            log(true, "INFO: Send all msgs peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(),
+            log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
+            log(LOG_INFO, "INFO: Send all msgs peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(),
                 aux::toHex(m_levenshtein_array[peer]).c_str());
             find_best_solution(messages, m_levenshtein_array[peer],
                                missing_messages, confirmation_roots);
 
-            log(true, "INFO: Found missing message size %zu", missing_messages.size());
+            log(LOG_INFO, "INFO: Found missing message size %" PRIu64, missing_messages.size());
 
             auto now = get_current_time();
 
@@ -1806,22 +1630,22 @@ namespace libTAU {
         void communication::update_levenshtein_array(const dht::public_key &peer, const aux::bytes& levenshtein_array, std::int64_t time) {
             m_levenshtein_array[peer] = levenshtein_array;
             m_levenshtein_array_time[peer] = time;
-            log(true, "save peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(levenshtein_array).c_str());
+            log(LOG_INFO, "save peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(levenshtein_array).c_str());
             m_message_db->save_levenshtein_array(std::make_pair(*m_ses.pubkey(), peer), levenshtein_array);
             m_message_db->save_levenshtein_array_time(std::make_pair(*m_ses.pubkey(), peer), time);
         }
 
 
-        bool communication::should_log() const
+        bool communication::should_log(aux::LOG_LEVEL log_level) const
         {
-            return m_ses.alerts().should_post<communication_log_alert>();
+            return log_level <= m_ses.get_log_level() && m_ses.alerts().should_post<communication_log_alert>();
         }
 
         TORRENT_FORMAT(3,4)
-        void communication::log(bool is_logged, char const* fmt, ...) const noexcept try
+        void communication::log(aux::LOG_LEVEL log_level, char const* fmt, ...) const noexcept try
         {
 #ifndef TORRENT_DISABLE_LOGGING
-            if (!should_log()) return;
+            if (!should_log(log_level)) return;
 
             va_list v;
             va_start(v, fmt);
