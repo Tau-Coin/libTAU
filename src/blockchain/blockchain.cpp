@@ -1694,8 +1694,12 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool blockchain::clear_chain_all_state(const aux::bytes &chain_id) {
-        return false;
+    bool blockchain::clear_chain_all_state_in_cache_and_db(const aux::bytes &chain_id) {
+        m_head_blocks.erase(chain_id);
+        m_tail_blocks.erase(chain_id);
+        m_consensus_point_blocks.erase(chain_id);
+        m_voting_point_blocks.erase(chain_id);
+        return m_repository->delete_all_chain_data(chain_id);
     }
 
     bool blockchain::is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
@@ -1861,6 +1865,10 @@ namespace libTAU::blockchain {
             auto previous_hash = main_chain_block.previous_block_hash();
             main_chain_block = m_repository->get_block_by_hash(previous_hash);
             if (main_chain_block.empty()) {
+                if(absolute) {
+                    log(LOG_INFO, "INFO chain[%s] has no fork point", aux::toHex(chain_id).c_str());
+                    return NO_FORK_POINT;
+                }
                 log(LOG_INFO, "INFO chain[%s] 3. Cannot find block[%s] in db",
                     aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
                 request_block(chain_id, previous_hash);
@@ -1870,6 +1878,10 @@ namespace libTAU::blockchain {
 
         block reference_block = target;
         while (head_block.block_number() < reference_block.block_number()) {
+            if (absolute && target.block_number() - reference_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE) {
+                log(LOG_INFO, "INFO chain[%s] has no fork point", aux::toHex(chain_id).c_str());
+                return NO_FORK_POINT;
+            }
             connect_blocks.push_back(reference_block);
 
             // find branch block from cache and db
@@ -1900,12 +1912,20 @@ namespace libTAU::blockchain {
             auto main_chain_previous_hash = main_chain_block.previous_block_hash();
             main_chain_block = m_repository->get_block_by_hash(main_chain_previous_hash);
             if (main_chain_block.empty()) {
+                if(absolute) {
+                    log(LOG_INFO, "INFO chain[%s] has no fork point", aux::toHex(chain_id).c_str());
+                    return NO_FORK_POINT;
+                }
                 log(LOG_INFO, "INFO chain[%s] 5.1 Cannot find main chain block[%s]",
                     aux::toHex(chain_id).c_str(), aux::toHex(main_chain_previous_hash.to_string()).c_str());
                 request_block(chain_id, main_chain_previous_hash);
                 return MISSING;
             }
 
+            if (absolute && target.block_number() - reference_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE) {
+                log(LOG_INFO, "INFO chain[%s] has no fork point", aux::toHex(chain_id).c_str());
+                return NO_FORK_POINT;
+            }
             connect_blocks.push_back(reference_block);
 
             // find branch block from cache and db
@@ -2109,6 +2129,15 @@ namespace libTAU::blockchain {
                                             best_voting_block);
                                 } else if (result == FAIL) {
                                     remove_all_same_chain_blocks_from_cache(best_voting_block);
+                                } else if (result == NO_FORK_POINT) {
+                                    clear_chain_all_state_in_cache_and_db(chain_id);
+                                    block_reception_event(chain_id, best_voting_block);
+                                    reset_chain_status(chain_id);
+                                    // cancel
+                                    auto it_chain_timer = m_chain_timers.find(chain_id);
+                                    if (it_chain_timer != m_chain_timers.end()) {
+                                        it_chain_timer->second.cancel();
+                                    }
                                 }
                             }
                         } else {

@@ -794,6 +794,10 @@ namespace libTAU::blockchain {
 //        return save_chains(chains);
 //    }
 
+    bool repository_track::delete_all_chain_data(const aux::bytes &chain_id) {
+        return false;
+    }
+
     std::string repository_track::get_all_cache() {
         std::string info = "DB:\n";
 

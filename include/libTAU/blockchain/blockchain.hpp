@@ -78,6 +78,7 @@ namespace blockchain {
         SUCCESS,
         FAIL,
         MISSING,
+        NO_FORK_POINT,
     };
 
     enum CHAIN_STATUS {
@@ -283,7 +284,7 @@ namespace blockchain {
         bool is_sync_completed(const aux::bytes &chain_id);
 
         // check if current chain sync completed
-        bool clear_chain_all_state(const aux::bytes &chain_id);
+        bool clear_chain_all_state_in_cache_and_db(const aux::bytes &chain_id);
 
         // check if a block in cache or db
         bool is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);

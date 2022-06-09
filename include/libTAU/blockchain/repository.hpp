@@ -190,6 +190,8 @@ namespace libTAU::blockchain {
 
         bool delete_chain(const aux::bytes &chain_id);
 
+        virtual bool delete_all_chain_data(const aux::bytes &chain_id) = 0;
+
         virtual std::string get_all_cache() = 0;
     };
 }

@@ -1119,6 +1119,78 @@ namespace libTAU::blockchain {
         return status.ok();
     }
 
+    bool repository_impl::delete_all_chain_data(const aux::bytes &chain_id) {
+        // leveldb write batch
+        leveldb::WriteBatch write_batch;
+
+        auto head_block_hash = get_head_block_hash(chain_id);
+        if (!head_block_hash.is_all_zeros()) {
+            auto head_block = get_block_by_hash(head_block_hash);
+            auto block_number = head_block.block_number();
+
+            for (std::int64_t i = block_number; i >= 0; i--) {
+                index_key_info indexKeyInfo = get_index_info(chain_id, i);
+                if (indexKeyInfo.empty()) {
+                    break;
+                }
+
+                // 1. remove account point
+                for (auto const &peer: indexKeyInfo.associated_peers()) {
+                    auto act = get_account(chain_id, peer);
+                    if (act.block_number() <= block_number) {
+                        std::string key;
+                        key.insert(key.end(), chain_id.begin(), chain_id.end());
+                        key.insert(key.end(), peer.bytes.begin(), peer.bytes.end());
+                        write_batch.Delete(key);
+                    }
+                }
+
+                // 2.1 remove main chain block and state linker
+                if (!indexKeyInfo.main_chain_block_hash().is_all_zeros()) {
+                    write_batch.Delete(indexKeyInfo.main_chain_block_hash().to_string());
+
+                    std::string key;
+                    key.insert(key.end(), indexKeyInfo.main_chain_block_hash().begin(),
+                               indexKeyInfo.main_chain_block_hash().end());
+                    key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
+                    write_batch.Delete(key);
+                }
+
+                // 2.2 remove non-main chain block and state linker
+                for (auto const &hash: indexKeyInfo.non_main_chain_block_hash_set()) {
+                    write_batch.Delete(hash.to_string());
+
+                    std::string key;
+                    key.insert(key.end(), hash.begin(), hash.end());
+                    key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
+                    write_batch.Delete(key);
+                }
+
+                // 3. remove index lastly
+                std::string key_index;
+                key_index.insert(key_index.end(), chain_id.begin(), chain_id.end());
+                key_index.insert(key_index.end(), key_separator.begin(), key_separator.end());
+                std::string str_num = std::to_string(i);
+                key_index.insert(key_index.end(), str_num.begin(), str_num.end());
+                write_batch.Delete(key_index);
+            }
+
+            auto tail_block_hash = get_tail_block_hash(chain_id);
+            auto consensus_point_block_hash = get_consensus_point_block_hash(chain_id);
+            write_batch.Delete(head_block_hash.to_string());
+            write_batch.Delete(tail_block_hash.to_string());
+            write_batch.Delete(consensus_point_block_hash.to_string());
+        }
+
+        // flush into leveldb
+        leveldb::Status status = m_leveldb->Write(leveldb::WriteOptions(), &write_batch);
+        if (!status.ok()) {
+            return false;
+        }
+
+        return true;
+    }
+
     std::string repository_impl::get_all_cache() {
         std::string info = "DB base:\n";
         for (auto const& blk: m_connected_blocks) {
