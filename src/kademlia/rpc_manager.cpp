@@ -200,7 +200,7 @@ void rpc_manager::check_invariant() const
 void rpc_manager::unreachable(udp::endpoint const& ep)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_log->should_log(dht_logger::rpc_manager))
+	if (m_log->should_log(dht_logger::rpc_manager, aux::LOG_WARNING))
 	{
 		m_log->log(dht_logger::rpc_manager, "PORT_UNREACHABLE [ ip: %s ]"
 			, aux::print_endpoint(ep).c_str());
@@ -213,8 +213,11 @@ void rpc_manager::unreachable(udp::endpoint const& ep)
 		if (i->second->target_ep() != ep) { ++i; continue; }
 		observer_ptr o = i->second;
 #ifndef TORRENT_DISABLE_LOGGING
-		m_log->log(dht_logger::rpc_manager, "[%u] found transaction [ tid: %d ]"
-			, o->algorithm()->id(), i->first);
+		if (m_log->should_log(dht_logger::rpc_manager, aux::LOG_WARNING))
+		{
+			m_log->log(dht_logger::rpc_manager, "[%u] found transaction [ tid: %d ]"
+				, o->algorithm()->id(), i->first);
+		}
 #endif
 		i = m_transactions.erase(i);
 		o->timeout();
@@ -254,7 +257,8 @@ bool rpc_manager::incoming(msg const& m, node_id const& nid)
 	if (!o)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_table.native_endpoint(m.addr) && m_log->should_log(dht_logger::rpc_manager))
+		if (m_table.native_endpoint(m.addr)
+			&& m_log->should_log(dht_logger::rpc_manager, aux::LOG_ERR))
 		{
 			m_log->log(dht_logger::rpc_manager, "reply with unknown transaction id size: %d from %s"
 				, int(transaction_id.size()), aux::print_endpoint(m.addr).c_str());
@@ -274,7 +278,7 @@ bool rpc_manager::incoming(msg const& m, node_id const& nid)
 	time_point const now = clock_type::now();
 
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_log->should_log(dht_logger::rpc_manager))
+	if (m_log->should_log(dht_logger::rpc_manager, aux::LOG_DEBUG))
 	{
 		m_log->log(dht_logger::rpc_manager, "[%u] round trip time(ms): %" PRId64 " from %s"
 			, o->algorithm()->id(), total_milliseconds(now - o->sent())
@@ -286,7 +290,7 @@ bool rpc_manager::incoming(msg const& m, node_id const& nid)
 	{
 		// It's an error.
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_log->should_log(dht_logger::rpc_manager))
+		if (m_log->should_log(dht_logger::rpc_manager, aux::LOG_ERR))
 		{
 			bdecode_node err = m.message.dict_find_list("e");
 			if (err && err.list_size() >= 2
@@ -327,7 +331,7 @@ bool rpc_manager::incoming(msg const& m, node_id const& nid)
 	}
 
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_log->should_log(dht_logger::rpc_manager))
+	if (m_log->should_log(dht_logger::rpc_manager, aux::LOG_DEBUG))
 	{
 		m_log->log(dht_logger::rpc_manager, "[%u] reply with transaction id: %d from %s"
 			, o->algorithm()->id(), int(transaction_id.size())
@@ -372,7 +376,7 @@ time_duration rpc_manager::tick()
 		if (diff >= timeout)
 		{
 #ifndef TORRENT_DISABLE_LOGGING
-			if (m_log->should_log(dht_logger::rpc_manager))
+			if (m_log->should_log(dht_logger::rpc_manager, aux::LOG_WARNING))
 			{
 				m_log->log(dht_logger::rpc_manager, "[%u] timing out transaction id: %d from: %s"
 					, o->algorithm()->id(), i->first
@@ -389,7 +393,7 @@ time_duration rpc_manager::tick()
 		if (diff >= short_timeout && !o->has_short_timeout())
 		{
 #ifndef TORRENT_DISABLE_LOGGING
-			if (m_log->should_log(dht_logger::rpc_manager))
+			if (m_log->should_log(dht_logger::rpc_manager, aux::LOG_WARNING))
 			{
 				m_log->log(dht_logger::rpc_manager, "[%u] short-timing out transaction id: %d from: %s"
 					, o->algorithm()->id(), i->first
@@ -447,7 +451,7 @@ bool rpc_manager::invoke(entry& e, udp::endpoint const& target_addr
 	o->set_target(target_addr);
 
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_log != nullptr && m_log->should_log(dht_logger::rpc_manager))
+	if (m_log != nullptr && m_log->should_log(dht_logger::rpc_manager, aux::LOG_INFO))
 	{
 		m_log->log(dht_logger::rpc_manager, "[%u] invoking %s -> %s"
 			, o->algorithm()->id(), e["q"].string().c_str()

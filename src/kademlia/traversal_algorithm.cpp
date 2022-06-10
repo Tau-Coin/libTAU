@@ -69,7 +69,7 @@ traversal_algorithm::traversal_algorithm(node& dht_node, node_id const& target)
 #ifndef TORRENT_DISABLE_LOGGING
 	m_id = m_node.search_id();
 	dht_observer* logger = get_node().observer();
-	if (logger != nullptr && logger->should_log(dht_logger::traversal))
+	if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 	{
 		logger->log(dht_logger::traversal, "[%u] NEW target: %s k: %d"
 			, m_id, aux::to_hex(target).c_str(), m_node.m_table.bucket_size());
@@ -137,7 +137,7 @@ void traversal_algorithm::add_entry(node_id const& id
 
 #ifndef TORRENT_DISABLE_LOGGING
 		dht_observer* logger = get_node().observer();
-		if (logger != nullptr && logger->should_log(dht_logger::traversal))
+		if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 		{
 			logger->log(dht_logger::traversal
 				, "[%u] ADD (no-id) id: %s addr: %s distance: %d invoke-count: %d type: %s"
@@ -190,7 +190,7 @@ void traversal_algorithm::add_entry(node_id const& id
 				// it claims a different node-ID. Ignore this to avoid attacks
 #ifndef TORRENT_DISABLE_LOGGING
 				dht_observer* logger = get_node().observer();
-				if (logger != nullptr && logger->should_log(dht_logger::traversal))
+				if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 				{
 					logger->log(dht_logger::traversal
 						, "[%u] traversal DUPLICATE node. id: %s addr: %s type: %s"
@@ -208,7 +208,7 @@ void traversal_algorithm::add_entry(node_id const& id
 
 #ifndef TORRENT_DISABLE_LOGGING
 			dht_observer* logger = get_node().observer();
-			if (logger != nullptr && logger->should_log(dht_logger::traversal))
+			if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 			{
 				logger->log(dht_logger::traversal
 					, "[%u] ADD id: %s addr: %s distance: %d invoke-count: %d type: %s"
@@ -296,7 +296,8 @@ void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 
 #ifndef TORRENT_DISABLE_LOGGING
 	dht_observer* logger = get_node().observer();
-	if (logger != nullptr && logger->should_log(dht_logger::traversal) && id.is_all_zeros())
+	if (logger != nullptr
+		&& logger->should_log(dht_logger::traversal, aux::LOG_WARNING) && id.is_all_zeros())
 	{
 		logger->log(dht_logger::traversal
 			, "[%u] WARNING node returned a list which included a node with id 0"
@@ -308,7 +309,7 @@ void traversal_algorithm::traverse(node_id const& id, udp::endpoint const& addr)
 	std::tie(existing, std::ignore, std::ignore) = m_node.m_table.find_node(addr);
 
 #ifndef TORRENT_DISABLE_LOGGING
-	if (logger != nullptr && logger->should_log(dht_logger::traversal))
+	if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 	{
 		if (existing != nullptr)
 		{
@@ -459,7 +460,7 @@ void traversal_algorithm::failed(observer_ptr o, traversal_flags_t const flags)
 void traversal_algorithm::log_timeout(observer_ptr const& o, char const* prefix) const
 {
 	dht_observer * logger = get_node().observer();
-	if (logger != nullptr && logger->should_log(dht_logger::traversal))
+	if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_WARNING))
 	{
 		logger->log(dht_logger::traversal
 			, "[%u] %sTIMEOUT id: %s distance: %d addr: %s branch-factor: %d "
@@ -494,7 +495,7 @@ void traversal_algorithm::done()
 #ifndef TORRENT_DISABLE_LOGGING
 		dht_observer* logger = get_node().observer();
 		if (results_target > 0 && (o->flags & observer::flag_alive)
-			&& logger != nullptr && logger->should_log(dht_logger::traversal))
+			&& logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 		{
 			TORRENT_ASSERT(o->flags & observer::flag_queried);
 			logger->log(dht_logger::traversal
@@ -655,7 +656,7 @@ bool traversal_algorithm::add_requests()
 
 #ifndef TORRENT_DISABLE_LOGGING
 		dht_observer* logger = get_node().observer();
-		if (logger != nullptr && logger->should_log(dht_logger::traversal))
+		if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 		{
 			logger->log(dht_logger::traversal
 				, "[%u] INVOKE node-index: %d top-invoke-count: %d "
@@ -810,7 +811,7 @@ bool traversal_algorithm::add_requests()
 
 #ifndef TORRENT_DISABLE_LOGGING
 		dht_observer* logger = get_node().observer();
-		if (logger != nullptr && logger->should_log(dht_logger::traversal))
+		if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 		{
 			logger->log(dht_logger::traversal
 				, "[%u] INVOKE node-index: %d outstanding: %d "
@@ -866,7 +867,7 @@ void traversal_algorithm::add_router_entries()
 {
 #ifndef TORRENT_DISABLE_LOGGING
 	dht_observer* logger = get_node().observer();
-	if (logger != nullptr && logger->should_log(dht_logger::traversal))
+	if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 	{
 		logger->log(dht_logger::traversal
 			, "[%u] using router nodes to initiate traversal algorithm %d routers"
@@ -949,7 +950,7 @@ void traversal_observer::reply(msg const& m, node_id const& from)
 
 #ifndef TORRENT_DISABLE_LOGGING
 	dht_observer* logger = get_observer();
-	if (logger != nullptr && logger->should_log(dht_logger::traversal))
+	if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 	{
         // Because node id has 32 bytes, and corresponding hex string
         // length is 64. So here allocate 64 + 1 bytes.

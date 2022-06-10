@@ -56,7 +56,8 @@ namespace libTAU::dht {
 					if (match->count == m_message_rate_limit * 10)
 					{
 #ifndef TORRENT_DISABLE_LOGGING
-						if (logger != nullptr && logger->should_log(dht_logger::tracker))
+						if (logger != nullptr
+							&& logger->should_log(dht_logger::tracker, aux::LOG_WARNING))
 						{
 							logger->log(dht_logger::tracker, "BANNING PEER [ ip: %s time: %d ms count: %d ]"
 								, aux::print_address(addr).c_str()

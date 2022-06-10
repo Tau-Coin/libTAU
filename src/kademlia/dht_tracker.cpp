@@ -132,7 +132,7 @@ namespace libTAU::dht {
 		update_storage_node_ids();
 
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_log->should_log(dht_logger::tracker))
+		if (m_log->should_log(dht_logger::tracker, aux::LOG_NOTICE))
 		{
 			m_log->log(dht_logger::tracker, "starting %s DHT tracker with node id: %s"
 				, local_address.is_v4() ? "IPv4" : "IPv6"
@@ -629,7 +629,7 @@ namespace libTAU::dht {
 		}
 
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_log->should_log(dht_logger::tracker))
+		if (m_log->should_log(dht_logger::tracker, aux::LOG_DEBUG))
 		{
 			m_log->log(dht_logger::tracker, "immutable item found locally for [ hash: %s, item: %s ]"
 				, aux::to_hex(target).c_str()
@@ -673,7 +673,7 @@ namespace libTAU::dht {
 		}
 
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_log->should_log(dht_logger::tracker))
+		if (m_log->should_log(dht_logger::tracker, aux::LOG_DEBUG))
 		{
 			char hex_key[65];
 			char hex_salt[129]; // 64*2 + 1
