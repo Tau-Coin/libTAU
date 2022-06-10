@@ -364,7 +364,8 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 					if (!item_exists)
 					{
 #ifndef TORRENT_DISABLE_LOGGING
-						if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+						if (m_observer != nullptr
+							&& m_observer->should_log(dht_logger::node, aux::LOG_NOTICE))
 						{
 							m_observer->log(dht_logger::node, "No relay entry pushed(%d):%s"
 								, i , aux::to_hex(from).c_str());
@@ -380,7 +381,8 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 						{
 							// push item
 #ifndef TORRENT_DISABLE_LOGGING
-							if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+							if (m_observer != nullptr
+								&& m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 							{
 								m_observer->log(dht_logger::node, "Push relay entry(%d) :%s to %s"
 									, i , aux::to_hex(key).c_str()
@@ -459,7 +461,8 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 		case 'e':
 		{
 #ifndef TORRENT_DISABLE_LOGGING
-			if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+			if (m_observer != nullptr
+				&& m_observer->should_log(dht_logger::node, aux::LOG_ERR))
 			{
 				bdecode_node const err = m.message.dict_find_list("e");
 				if (err && err.list_size() >= 2
@@ -491,7 +494,7 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 void node::add_router_node(node_entry const& router)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		m_observer->log(dht_logger::node, "adding router node: %s"
 			, aux::print_endpoint(router.ep()).c_str());
@@ -511,7 +514,7 @@ void node::add_node(node_entry const& node)
 void node::get_item(sha256_hash const& target, std::function<void(item const&)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		m_observer->log(dht_logger::node, "starting get for [ hash: %s ]"
 			, aux::to_hex(target).c_str());
@@ -528,7 +531,7 @@ void node::get_item(sha256_hash const& target
 	, std::function<void(item const&)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		m_observer->log(dht_logger::node, "starting get for [ hash: %s, target endpoints:%" PRId64 " ]"
 			, aux::to_hex(target).c_str(), eps.size());
@@ -549,7 +552,7 @@ void node::get_item(public_key const& pk, std::string const& salt
 	, std::int64_t timestamp, std::function<void(item const&, bool)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		char hex_key[65];
 		char hex_salt[129]; // 64*2 + 1
@@ -604,7 +607,7 @@ void node::put_item(sha256_hash const& target
 	, std::function<void(int)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		m_observer->log(dht_logger::node, "starting put for [ hash: %s ]"
 			, aux::to_hex(target).c_str());
@@ -628,7 +631,7 @@ void node::put_item(sha256_hash const& target
 	, std::function<void(int)> f)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		m_observer->log(dht_logger::node, "starting put for [ hash: %s, target endpoints:%" PRId64 " ]"
 			, aux::to_hex(target).c_str(), eps.size());
@@ -652,7 +655,7 @@ void node::put_item(public_key const& pk
 	, std::function<void(item&)> data_cb)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		char hex_key[65];
 		char hex_salt[129]; // 64*2 + 1
@@ -683,7 +686,7 @@ void node::put_item(public_key const& pk
 	, std::function<void(item&)> data_cb)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		char hex_key[65];
 		char hex_salt[129]; // 64*2 + 1
@@ -721,7 +724,7 @@ void node::put_item(public_key const& pk
 	, std::function<void(std::vector<std::pair<node_entry, bool>> const&)> ncb)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		char hex_key[65];
 		char hex_salt[129]; // 64*2 + 1
@@ -756,7 +759,7 @@ void node::send(public_key const& to
 	, std::function<void(entry const&, int)> cb)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		char hex_to[65];
 		aux::to_hex(to.bytes, hex_to);
@@ -804,7 +807,7 @@ void node::send(public_key const& to
 		, std::vector<std::pair<node_entry, bool>> const& nodes)> cb)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		char hex_to[65];
 		aux::to_hex(to.bytes, hex_to);
@@ -842,7 +845,7 @@ void node::send(public_key const& to
 	if (encoding_payload.size() > 1000)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+		if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_ERR))
 		{
 			m_observer->log(dht_logger::node, "payload is too large: %d", encoding_payload.size());
 		}
@@ -865,7 +868,7 @@ void node::send(public_key const& to
 	if (!result)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+		if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_ERR))
 		{
 			m_observer->log(dht_logger::node, "send encryption err: %s", encypt_err.c_str());
 		}
@@ -889,7 +892,7 @@ void node::send(public_key const& to
 void node::get_peers(public_key const& pk, std::string const& salt)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		char hex_key[65];
 		char hex_salt[129]; // 64*2 + 1
@@ -917,7 +920,7 @@ void node::find_live_nodes(node_id const& id
 	}
 
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		m_observer->log(dht_logger::node, "find node for [ hash: %s nodes:%d ]"
 			, aux::to_hex(id).c_str(), int(l.size()));
@@ -1055,7 +1058,7 @@ time_duration node::connection_timeout()
 	time_duration d = m_rpc.tick();
 /*
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_DEBUG))
 	{
 		auto x = std::chrono::duration_cast<std::chrono::milliseconds>(d);
 		m_observer->log(dht_logger::node, "connection_timeout called, duration:%" PRId64 " ms"
@@ -1743,7 +1746,7 @@ bool node::incoming_push(msg const& m, entry& e, node_id const& id, item& i)
 void node::incoming_push_error(const char *err_str)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_ERR))
 	{
 		m_observer->log(dht_logger::node, "INCOMING PUSH ERROR:%s", err_str);
 	}
@@ -1886,7 +1889,8 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 			{
 				incoming_relay_error(decrypt_err.c_str());
 #ifndef TORRENT_DISABLE_LOGGING
-				if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+				if (m_observer != nullptr
+					&& m_observer->should_log(dht_logger::node, aux::LOG_ERR))
 				{
 					m_observer->log(dht_logger::node, "payload size:%" PRId64, payload_buf.size());
 				}
@@ -1903,7 +1907,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 			span<char const> buf = decrypted_pl;
 			payload = bdecode(buf.first(buf.size()), errc);
 #ifndef TORRENT_DISABLE_LOGGING
-			if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+			if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_DEBUG))
 			{
 				m_observer->log(dht_logger::node, "relay payload: %s"
 					, payload.to_string(true).c_str());
@@ -1976,7 +1980,7 @@ void node::relay(node_id const& to, udp::endpoint const& to_ep
 void node::handle_referred_relays(node_id const& peer, node_entry const& ne)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
 	{
 		m_observer->log(dht_logger::node, "push relay from:%s, id: %s, ep:%s"
 			, aux::to_hex(peer).c_str()
@@ -1991,7 +1995,7 @@ void node::handle_referred_relays(node_id const& peer, node_entry const& ne)
 void node::incoming_relay_error(const char *err_str)
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_ERR))
 	{
 		m_observer->log(dht_logger::node, "INCOMING RELAY ERROR:%s", err_str);
 	}

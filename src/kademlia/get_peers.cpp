@@ -74,7 +74,7 @@ void get_peers_observer::log_peers(msg const& m, bdecode_node const& r
 	, int const size, node_id const& from) const
 {
 			auto* logger = get_observer();
-			if (logger != nullptr && logger->should_log(dht_logger::traversal))
+			if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 			{
 				logger->log(dht_logger::traversal, "[%u] PEERS "
 					"invoke-count: %d branch-factor: %d addr: %s id: %s distance: %d p: %d"

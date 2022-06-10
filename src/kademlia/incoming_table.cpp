@@ -80,7 +80,7 @@ incoming_table::incoming_table(node_id const& id, udp proto
 	, m_last_refresh(min_time())
 {
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
+		if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table, aux::LOG_NOTICE))
 		{
 			m_log->log(dht_logger::incoming_table
 				, "config: non-referrable: %s, cap: %d, refresh: %ds, expire: %ds"
@@ -167,7 +167,7 @@ void incoming_table::tick()
 		}
 
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
+		if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table, aux::LOG_WARNING))
 		{
 			m_log->log(dht_logger::incoming_table
 				, "expire endpoint id: %s, addr: %s:%d, size:%" PRId64
@@ -191,7 +191,7 @@ bool incoming_table::add_node(node_id const& id, udp::endpoint const& ep)
 		if (i->second.addr() != ep.address() || i->second.port() != ep.port())
 		{
 #ifndef TORRENT_DISABLE_LOGGING
-			if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
+			if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table, aux::LOG_NOTICE))
 			{
 				m_log->log(dht_logger::incoming_table
 					, "update endpoint id: %s, new: %s:%d, old: %s:%d, size:%" PRId64
@@ -217,7 +217,7 @@ bool incoming_table::add_node(node_id const& id, udp::endpoint const& ep)
 		auto const j = pick_least_important_endpoint(m_id, m_nr_table);
 
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
+		if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table, aux::LOG_NOTICE))
 		{
 			m_log->log(dht_logger::incoming_table
 				, "erase endpoint id: %s, addr: %s:%d, size: %" PRId64
@@ -237,7 +237,7 @@ bool incoming_table::add_node(node_id const& id, udp::endpoint const& ep)
 		std::make_pair(id, std::move(to_add)));
 
 #ifndef TORRENT_DISABLE_LOGGING
-	if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table))
+	if (m_log != nullptr && m_log->should_log(dht_logger::incoming_table, aux::LOG_NOTICE))
 	{
 		m_log->log(dht_logger::incoming_table, "new endpoint id: %s, addr: %s:%d, size: %" PRId64
 			, aux::to_hex(id).c_str()

@@ -235,7 +235,7 @@ routing_table::add_node_status_t replace_node_impl(node_entry const& e
 	if (j != b.end())
 	{
 #ifndef TORRENT_DISABLE_LOGGING
-		if (log != nullptr && log->should_log(dht_logger::routing_table))
+		if (log != nullptr && log->should_log(dht_logger::routing_table, aux::LOG_INFO))
 		{
 			log->log(dht_logger::routing_table, "replacing node with better one: %s %s [%s %dms %d] vs. [%s %dms %d]"
 				, aux::to_hex(e.id).c_str(), aux::print_address(e.addr()).c_str()
@@ -723,7 +723,8 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 			if (m_settings.get_bool(settings_pack::dht_restrict_routing_ips))
 			{
 #ifndef TORRENT_DISABLE_LOGGING
-				if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
+				if (m_log != nullptr
+					&& m_log->should_log(dht_logger::routing_table, aux::LOG_NOTICE))
 				{
 					m_log->log(dht_logger::routing_table, "ignoring node (duplicate IP): %s %s"
 						, aux::to_hex(e.id).c_str(), aux::print_address(e.addr()).c_str());
@@ -769,7 +770,7 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 			// This is the same IP and port, but with a new node ID.
 			// This may indicate a malicious node so remove the entry.
 #ifndef TORRENT_DISABLE_LOGGING
-			if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
+			if (m_log != nullptr && m_log->should_log(dht_logger::routing_table, aux::LOG_NOTICE))
 			{
 				m_log->log(dht_logger::routing_table, "evicting node (changed ID): old: %s new: %s %s"
 					, aux::to_hex(existing->id).c_str(), aux::to_hex(e.id).c_str(), aux::print_address(e.addr()).c_str());
@@ -929,7 +930,7 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 		// close to this one. We know that it's not the same, because
 		// it claims a different node-ID. Ignore this to avoid attacks
 #ifndef TORRENT_DISABLE_LOGGING
-		if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
+		if (m_log != nullptr && m_log->should_log(dht_logger::routing_table, aux::LOG_NOTICE))
 		{
 			m_log->log(dht_logger::routing_table, "ignoring node: %s %s existing node: %s %s"
 				, aux::to_hex(e.id).c_str(), aux::print_address(e.addr()).c_str()
@@ -1238,7 +1239,7 @@ void routing_table::node_failed(node_id const& nid, udp::endpoint const& ep)
 		if (j->fail_count() >= m_settings.get_int(settings_pack::dht_max_fail_count) || !j->pinged())
 		{
 #ifndef TORRENT_DISABLE_LOGGING
-			if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
+			if (m_log != nullptr && m_log->should_log(dht_logger::routing_table, aux::LOG_WARNING))
 			{
 				m_log->log(dht_logger::routing_table, "NODE DELETE IN ROUTING TABLE id: %s ip: %s fails: %d pinged: %d up-time: %d"
 				, aux::to_hex(nid).c_str(), aux::print_endpoint(j->ep()).c_str()
@@ -1438,7 +1439,7 @@ bool routing_table::is_full(int const bucket) const
 #ifndef TORRENT_DISABLE_LOGGING
 void routing_table::log_node_failed(node_id const& nid, node_entry const& ne) const
 {
-	if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
+	if (m_log != nullptr && m_log->should_log(dht_logger::routing_table, aux::LOG_INFO))
 	{
 		m_log->log(dht_logger::routing_table, "NODE FAILED id: %s ip: %s fails: %d pinged: %d up-time: %d"
 			, aux::to_hex(nid).c_str(), aux::print_endpoint(ne.ep()).c_str()
@@ -1456,7 +1457,7 @@ void print_ipset(const char* msg, address const& addr, ip_set& ips
 )
 {
 #ifndef TORRENT_DISABLE_LOGGING
-	if (logger != nullptr && logger->should_log(dht_logger::routing_table))
+	if (logger != nullptr && logger->should_log(dht_logger::routing_table, aux::LOG_DEBUG))
 	{
 		logger->log(dht_logger::routing_table, "ipset debug: %s, addr:%s, exists:%s, size:%" PRId64
 			, msg

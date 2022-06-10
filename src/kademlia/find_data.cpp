@@ -87,7 +87,7 @@ void find_data::got_write_token(node_id const& n, std::string write_token)
 {
 #ifndef TORRENT_DISABLE_LOGGING
 	auto* logger = get_node().observer();
-	if (logger != nullptr && logger->should_log(dht_logger::traversal))
+	if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 	{
 		logger->log(dht_logger::traversal
 			, "[%u] adding write token '%s' under id '%s'"
@@ -132,7 +132,7 @@ void find_data::done()
 		if (!(o->flags & observer::flag_alive))
 		{
 #ifndef TORRENT_DISABLE_LOGGING
-			if (logger != nullptr && logger->should_log(dht_logger::traversal))
+			if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_WARNING))
 			{
 				logger->log(dht_logger::traversal, "[%u] not alive: %s"
 					, id(), aux::print_endpoint(o->target_ep()).c_str());
@@ -144,7 +144,7 @@ void find_data::done()
 		if (j == m_write_tokens.end())
 		{
 #ifndef TORRENT_DISABLE_LOGGING
-			if (logger != nullptr && logger->should_log(dht_logger::traversal))
+			if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_ERR))
 			{
 				logger->log(dht_logger::traversal, "[%u] no write token: %s"
 					, id(), aux::print_endpoint(o->target_ep()).c_str());
@@ -154,7 +154,7 @@ void find_data::done()
 		}
 		results.emplace_back(node_entry(o->id(), o->target_ep()), j->second);
 #ifndef TORRENT_DISABLE_LOGGING
-		if (logger != nullptr && logger->should_log(dht_logger::traversal))
+		if (logger != nullptr && logger->should_log(dht_logger::traversal, aux::LOG_INFO))
 		{
 			logger->log(dht_logger::traversal, "[%u] %s"
 				, id(), aux::print_endpoint(o->target_ep()).c_str());
