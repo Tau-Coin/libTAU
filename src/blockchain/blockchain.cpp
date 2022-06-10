@@ -1516,8 +1516,7 @@ namespace libTAU::blockchain {
                 }
                 m_repository->flush(chain_id);
 
-                common::head_block_entry blockEntry(blk);
-                transfer_to_acl_peers(chain_id, blockEntry.get_entry());
+                transfer_head_block(chain_id, blk);
 
                 // todo: test
 //                for (auto const& peer: peers) {
@@ -2568,6 +2567,7 @@ namespace libTAU::blockchain {
 
     void blockchain::send_to(const dht::public_key &peer, const entry &data) {
         if (!m_ses.dht()) return;
+        log(LOG_INFO, "Send [%s] to peer[%s]", data.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
         m_ses.dht()->send(peer, data, 1, 8, 10, 1
                 , std::bind(&blockchain::on_dht_relay_mutable_item, self(), _1, _2, peer));
     }
@@ -2639,6 +2639,54 @@ namespace libTAU::blockchain {
 
         for (auto const& peer: peers) {
             send_to(peer, data);
+        }
+    }
+
+    void blockchain::transfer_head_block(const bytes &chain_id, const block &blk) {
+        std::set<dht::public_key> peers;
+        auto &acl = m_access_list[chain_id];
+        for (auto const &item: acl) {
+            if (item.second.m_head_block != blk) {
+                peers.insert(item.first);
+            }
+        }
+
+        auto size = acl.size();
+        if (size < blockchain_acl_max_peers) {
+            for (int i = 0; i < blockchain_acl_max_peers - size; i++) {
+                auto peer = m_repository->get_peer_randomly(chain_id);
+                peers.insert(peer);
+            }
+        }
+
+        common::head_block_entry blockEntry(blk);
+
+        for (auto const& peer: peers) {
+            send_to(peer, blockEntry.get_entry());
+        }
+    }
+
+    void blockchain::transfer_transaction(const bytes &chain_id, const transaction &tx) {
+        std::set<dht::public_key> peers;
+        auto &acl = m_access_list[chain_id];
+        for (auto const &item: acl) {
+            if (item.second.m_latest_tx != tx) {
+                peers.insert(item.first);
+            }
+        }
+
+        auto size = acl.size();
+        if (size < blockchain_acl_max_peers) {
+            for (int i = 0; i < blockchain_acl_max_peers - size; i++) {
+                auto peer = m_repository->get_peer_randomly(chain_id);
+                peers.insert(peer);
+            }
+        }
+
+        common::transaction_entry transactionEntry(tx);
+
+        for (auto const& peer: peers) {
+            send_to(peer, transactionEntry.get_entry());
         }
     }
 
@@ -3367,8 +3415,7 @@ namespace libTAU::blockchain {
                     return false;
                 }
 
-                common::transaction_entry txEntry(tx);
-                transfer_to_acl_peers(chain_id, txEntry.get_entry());
+                transfer_transaction(chain_id, tx);
 
                 m_tx_pools[chain_id].add_tx(tx);
                 return true;
@@ -3708,11 +3755,32 @@ namespace libTAU::blockchain {
             it->second.m_head_block = blk;
             it->second.m_requests_time.erase(std::make_unique<common::head_block_request_entry>(chain_id));
             it->second.m_last_seen = now;
-
-            introduce_gossip_peers(chain_id, peer);
         } else {
             if (acl.size() < blockchain_acl_max_peers) {
                 acl[peer] = peer_info(NORMAL, blk, now);
+
+                introduce_gossip_peers(chain_id, peer);
+            }
+        }
+    }
+
+    void blockchain::transaction_received_from_peer(const bytes &chain_id, const dht::public_key &peer,
+                                                    const transaction &tx) {
+        auto now = get_total_milliseconds();
+        auto &acl = m_access_list[chain_id];
+
+        auto it = acl.find(peer);
+        if (it != acl.end()) {
+            it->second.m_score += 3;
+            if (it->second.m_score > 100) {
+                it->second.m_score = 100;
+            }
+            it->second.m_latest_tx = tx;
+            it->second.m_requests_time.erase(std::make_unique<common::transaction_request_entry>(chain_id, tx.sha256()));
+            it->second.m_last_seen = now;
+        } else {
+            if (acl.size() < blockchain_acl_max_peers) {
+                acl[peer] = peer_info(tx, now);
 
                 introduce_gossip_peers(chain_id, peer);
             }
@@ -3949,7 +4017,7 @@ namespace libTAU::blockchain {
                             auto &tx = tx_entry.m_tx;
                             log(LOG_INFO, "INFO: Got transaction[%s].", tx.to_string().c_str());
 
-                            data_received_from_peer(chain_id, peer, 3, std::make_unique<common::transaction_request_entry>(chain_id, tx_entry.m_tx.sha256()));
+                            transaction_received_from_peer(chain_id, peer, tx_entry.m_tx);
 
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx_entry.m_tx);
 
@@ -3960,8 +4028,7 @@ namespace libTAU::blockchain {
 
                             auto &pool = m_tx_pools[chain_id];
                             if (pool.add_tx(tx)) {
-                                common::transaction_entry txEntry(tx);
-                                transfer_to_acl_peers(chain_id, txEntry.get_entry(), peer);
+                                transfer_transaction(chain_id, tx);
                             }
                         }
 

@@ -31,6 +31,8 @@ namespace libTAU::blockchain {
 
         explicit peer_info(int64_t mLastSeen) : m_last_seen(mLastSeen) {}
 
+        peer_info(transaction mLatestTx, int64_t mLastSeen) : m_latest_tx(std::move(mLatestTx)), m_last_seen(mLastSeen) {}
+
         peer_info(STAGE mStage, block mHeadBlock) : m_stage(mStage), m_head_block(std::move(mHeadBlock)) {}
 
         peer_info(STAGE mStage, block mHeadBlock, int64_t mLastSeen) : m_stage(mStage), m_head_block(std::move(mHeadBlock)),
@@ -55,6 +57,8 @@ namespace libTAU::blockchain {
         std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_peer_requests_time;
 
         block m_head_block;
+
+        transaction m_latest_tx;
 
         std::int64_t m_last_seen = 0;
 

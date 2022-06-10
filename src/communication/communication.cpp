@@ -1514,6 +1514,7 @@ namespace libTAU {
 
         void communication::send_to(const dht::public_key &peer, const entry &data) {
             if (!m_ses.dht()) return;
+            log(LOG_INFO, "Send [%s] to peer[%s]", data.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
             m_ses.dht()->send(peer, data, 1, 8, 100, 10,
                               std::bind(&communication::on_dht_relay_mutable_item, self(), _1, _2, peer));
         }

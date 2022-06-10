@@ -346,6 +346,10 @@ namespace blockchain {
         void transfer_to_acl_peers(const aux::bytes &chain_id, entry const& data,
                                    const dht::public_key &incoming_peer = dht::public_key());
 
+        void transfer_head_block(const aux::bytes &chain_id, const block& blk);
+
+        void transfer_transaction(const aux::bytes &chain_id, const transaction& tx);
+
         void introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer);
 
         void introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers);
@@ -409,6 +413,8 @@ namespace blockchain {
                                      const std::unique_ptr<common::blockchain_entry_base>& ptr);
 
         void head_block_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, const block &blk);
+
+        void transaction_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, const transaction &tx);
 
         // @return true: response, false: not response
         bool request_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer,
