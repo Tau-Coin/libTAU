@@ -3615,6 +3615,8 @@ namespace libTAU::blockchain {
             peers.insert(iter->first);
         }
 
+        peers.erase(peer);
+
         if (!peers.empty()) {
             introduce_peers(chain_id, peer, peers);
         }
