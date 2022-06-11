@@ -843,7 +843,7 @@ namespace libTAU::blockchain {
                 }
             }
 
-            log(LOG_INFO, "refresh time:%" PRId64, refresh_time);
+            log(LOG_INFO, "refresh time:%ld ", refresh_time);
             auto it = m_chain_timers.find(chain_id);
             if (it != m_chain_timers.end()) {
                 it->second.expires_after(milliseconds(refresh_time));
@@ -1303,11 +1303,11 @@ namespace libTAU::blockchain {
 
         auto necessary_interval = consensus::calculate_mining_time_interval(hit, base_target, power);
         if (b.timestamp() - previous_block.timestamp() < necessary_interval) {
-            log(LOG_ERR, "ERROR: Time is too short! hit:%" PRIu64 ", base target:%" PRIu64", power:%" PRId64 ", necessary interval:%" PRIu64", real interval:%" PRId64,
+            log(LOG_ERR, "ERROR: Time is too short! hit:%" PRIu64 ", base target:%" PRIu64 ", power:%" PRId64 ", necessary interval:%" PRIu64 ", real interval:%" PRId64 "",
                 hit, base_target, power, necessary_interval, b.timestamp() - previous_block.timestamp());
             return FAIL;
         }
-        log(LOG_INFO, "hit:%" PRIu64", base target:%" PRIu64", power:%" PRId64", interval:%" PRIu64", real interval:%" PRId64,
+        log(LOG_INFO, "hit:%" PRIu64 ", base target:%" PRIu64 ", power:%" PRId64 ", interval:%" PRIu64 ", real interval:%" PRId64 "",
             hit, base_target, power, necessary_interval, b.timestamp() - previous_block.timestamp());
         // notes: if use hit < base target * power * interval, data may be overflow
 //        if (!consensus::verify_hit(hit, base_target, power, interval)) {
@@ -3175,7 +3175,7 @@ namespace libTAU::blockchain {
                         }
                         case common::gossip_cache_peers_entry::data_type_id: {
                             common::gossip_cache_peers_entry gossipCachePeersEntry(i.value());
-                            log(LOG_INFO, "INFO: chain[%s] get %" PRIu64 " gossip peers from peer[%s]",
+                            log(LOG_INFO, "INFO: chain[%s] get %d gossip peers from peer[%s]",
                                 aux::toHex(chain_id).c_str(),
                                 gossipCachePeersEntry.m_peers.size(), aux::toHex(peer.bytes).c_str());
                             add_gossip_peers(chain_id, gossipCachePeersEntry.m_peers);
