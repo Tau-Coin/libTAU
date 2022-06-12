@@ -46,7 +46,7 @@ namespace libTAU::blockchain {
 
         friend std::ostream &operator<<(std::ostream &os, const peer_info &info);
 
-        int m_score = 30;
+        int m_score = 35;
 
         STAGE m_stage = HEAD_BLOCK;
 
