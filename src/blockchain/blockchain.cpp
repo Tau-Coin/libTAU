@@ -2582,13 +2582,13 @@ namespace libTAU::blockchain {
                 max_it = iter;
             }
         }
-        log(LOG_INFO, "INFO: chain[%s] request block hash[%s]", aux::toHex(chain_id).c_str(),
-            aux::toHex(hash.to_string()).c_str());
 
         if (max_it != acl.end()) {
             auto &peer = max_it->first;
             if (max_it->second.m_requests_time.find(std::make_unique<common::block_request_entry>(chain_id, hash)) ==
                 max_it->second.m_requests_time.end()) {
+                log(LOG_INFO, "=====INFO: chain[%s] request block hash[%s] time:%" PRId64, aux::toHex(chain_id).c_str(),
+                    aux::toHex(hash.to_string()).c_str(), now);
                 common::block_request_entry blockRequestEntry(chain_id, hash);
                 send_to(peer, blockRequestEntry.get_entry());
 
@@ -2608,6 +2608,8 @@ namespace libTAU::blockchain {
                     it->second.m_requests_time.end()) {
                     auto now = get_total_milliseconds();
 
+                    log(LOG_INFO, "=====INFO: chain[%s] request block hash[%s] time:%" PRId64, aux::toHex(chain_id).c_str(),
+                        aux::toHex(hash.to_string()).c_str(), now);
                     common::block_request_entry blockRequestEntry(chain_id, hash);
                     send_to(peer, blockRequestEntry.get_entry());
 
@@ -3863,9 +3865,14 @@ namespace libTAU::blockchain {
                             break;
                         }
 
+                        log(LOG_INFO, "=====INFO: Got block request[%s], time:%" PRId64,
+                            aux::toHex(blk_request_entry.m_hash.to_string()).c_str(), get_total_milliseconds());
+
                         auto blk = m_repository->get_block_by_hash(blk_request_entry.m_hash);
 
                         if (!blk.empty()) {
+                            log(LOG_INFO, "=====INFO: response block request[%s], time:%" PRId64,
+                                aux::toHex(blk_request_entry.m_hash.to_string()).c_str(), get_total_milliseconds());
                             common::block_entry blockEntry(blk);
                             send_to(peer, blockEntry.get_entry());
                         } else {
@@ -3902,7 +3909,8 @@ namespace libTAU::blockchain {
 
                             data_received_from_peer(chain_id, peer, 3, std::make_unique<common::block_request_entry>(chain_id, blk_entry.m_blk.sha256()));
 
-                            log(LOG_INFO, "INFO: Got block[%s].", blk_entry.m_blk.to_string().c_str());
+                            log(LOG_INFO, "=====INFO: Got block[%s], time:%" PRId64,
+                                blk_entry.m_blk.to_string().c_str(), get_total_milliseconds());
 
                             m_repository->save_block(blk_entry.m_blk);
 
