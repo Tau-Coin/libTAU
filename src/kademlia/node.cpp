@@ -821,6 +821,7 @@ void node::send(public_key const& to
 	std::vector<node_entry> l;
 	std::vector<node_entry> aux_nodes = m_table.find_node(
 		m_id, routing_table::include_pinged);
+	// remove the target endpoint from aux nodes
 	auto const new_end = std::remove_if(aux_nodes.begin(), aux_nodes.end()
 		, [&](node_entry const& ne) { return ne.id == dest; });
 	aux_nodes.erase(new_end, aux_nodes.end());
@@ -831,6 +832,7 @@ void node::send(public_key const& to
 		l.push_back(aux_nodes[r]);
 	}
 
+	// encode aux nodes
 	entry aux_nodes_entry;
 	std::string encoding_aux_nodes;
 	if (!l.empty())
@@ -1821,6 +1823,8 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 			return false;
 		}
 
+		// From relay node view, if 'from' field isn't specified,
+		// treat the public key parsed from udp packet header as sender public key.
 		char const* sender_pk = nullptr;
 		if (msg_keys[0])
 		{
@@ -1877,6 +1881,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 		// push to ourself
 		if (target_id == m_id)
 		{
+			// decoding 'payload' entry and get responding string.
 			error_code errc;
 			entry pl_entry = bdecode(buffer.first(buffer.size()), errc);
 			std::string payload_buf;
