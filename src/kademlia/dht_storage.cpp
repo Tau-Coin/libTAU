@@ -212,23 +212,30 @@ namespace {
 
 	struct relay_entry
 	{
-
+		// key = cat(<first 12 bytes of receiver><first 8 bytes of payload hash>
+		//     <first 12 bytes of sender>)
 		sha256_hash key;
 
+		// 'relay' protocol sender
 		sha256_hash sender;
 
+		// 'relay' protocol receiver
 		sha256_hash receiver;
 
+		// 'payload' is encrypted with ed25519.
+		// its storage is managed by unique_pointer.
 		std::unique_ptr<char[]> payload;
 
 		int payload_size = 0;
 
+		// aux includes capture swarm relay endpoints
 		std::unique_ptr<char[]> aux;
 
 		int aux_size = 0;
 
 		udp protocol = udp::v4();
 
+		// hmac contains first 4 bytes of the hash of payload and aux
 		relay_hmac hmac{};
 
 		time_point last_seen = aux::time_now();
@@ -273,6 +280,7 @@ namespace {
 		entry.protocol = pro;
 	}
 
+	// when the same 'relay_entry' is re-sent, just update "last_seen" timestamp.
 	struct touch_relay_entry
 	{
 		touch_relay_entry() {}
@@ -287,6 +295,11 @@ namespace {
 	struct time{};
 	struct receiver{};
 
+	// 'relay_table' can be treated as the relation table of 'relay entry'.
+	// This table has three index:
+	//   1. relay entry key as primary key.
+	//   2. time index: when this table is full, remove the oldest record.
+	//   3. receiver index: find relay entry by receiver for 'keep' protocol.
 	typedef multi_index_container<
 		relay_entry,
 

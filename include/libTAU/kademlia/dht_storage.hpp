@@ -142,6 +142,7 @@ namespace dht {
 			, std::vector<node_entry>& l
 			, int count, udp protocol) = 0;
 
+		// Store relay entry.
 		virtual void put_relay_entry(sha256_hash const& sender
 			, sha256_hash const& receiver
 			, span<char const> payload
@@ -149,6 +150,7 @@ namespace dht {
 			, udp protocol
 			, relay_hmac const& hmac) = 0;
 
+		// Get relay entry by key.
 		virtual bool get_relay_entry(sha256_hash const& key
 			, entry& re) const = 0;
 
@@ -156,6 +158,7 @@ namespace dht {
 		virtual bool get_random_relay_entry(sha256_hash const& receiver
 			, sha256_hash& key) const = 0;
 
+		// Remove relay entry by key.
 		virtual void remove_relay_entry(sha256_hash const& key) = 0;
 
 		// This function is called periodically (non-constant frequency).
