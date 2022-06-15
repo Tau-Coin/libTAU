@@ -68,8 +68,8 @@ namespace libTAU {
         // max entry cache time(ms)
         constexpr int communication_max_entry_cache_time = 2 * 60 * 60 * 1000;
 
-        // min response interval to the same request(ms)
-        constexpr int communication_same_response_interval = 4 * 1000;
+        // min response interval to the same request(2s)
+        constexpr int communication_same_response_interval = 2 * 1000;
 
         enum PEER_STATUS {
             DETECT,

@@ -39,28 +39,17 @@ namespace blockchain {
     // default refresh time of main task(2000)(ms)
     constexpr int blockchain_default_refresh_time = 2000;
 
-    // max task size
-    constexpr int blockchain_max_task_size = 10000;
-
-    // max access peer frequency(interval: 3000 ms)
-    constexpr int blockchain_max_access_peer_interval = 3000;
-
     // max tx list size
     constexpr int blockchain_max_tx_list_size = 10;
 
-    constexpr int blockchain_immutable_payload_put_node_size = 1;
+    // chain status reset interval(s)
+    constexpr int blockchain_status_reset_interval = 60 * 60;
 
-    // vote interval(s)
-    constexpr int blockchain_vote_interval = 60 * 60;
+    // min response interval to the same request(2s)
+    constexpr int blockchain_same_response_interval = 2 * 1000;
 
-    // min response interval to the same request(ms)
-    constexpr int blockchain_same_response_interval = 4 * 1000;
-
-    // blockchain max focus time(5ms)
-    constexpr std::int64_t blockchain_max_focus_time = 5 * 1000;
-
-    // blockchain request timeout(1s)
-    constexpr std::int64_t blockchain_request_timeout = 1000;
+    // blockchain request timeout(2500ms)
+    constexpr std::int64_t blockchain_request_timeout = 2 * 1000 + 500;
 
     // blockchain min peers in acl
     constexpr std::int64_t blockchain_acl_min_peers = 3;

@@ -323,7 +323,7 @@ namespace libTAU::blockchain {
         for (auto &item: acl) {
             auto &requests_time = item.second.m_requests_time;
             for (auto it = requests_time.begin(); it != requests_time.end();) {
-                if (now > it->second + 2 * blockchain_request_timeout + 500) {
+                if (now > it->second + blockchain_request_timeout) {
                     item.second.m_score = item.second.m_score - 5;
                     requests_time.erase(it++);
                 } else {
@@ -580,7 +580,7 @@ namespace libTAU::blockchain {
 
             auto i = m_chain_status_timers.find(chain_id);
             if (i != m_chain_status_timers.end()) {
-                i->second.expires_after(seconds(60 * 60));
+                i->second.expires_after(seconds(blockchain_status_reset_interval));
                 i->second.async_wait(std::bind(&blockchain::refresh_chain_status, self(), _1, chain_id));
             }
         } catch (std::exception &e) {
