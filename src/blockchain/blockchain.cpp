@@ -324,7 +324,7 @@ namespace libTAU::blockchain {
             auto &requests_time = item.second.m_requests_time;
             for (auto it = requests_time.begin(); it != requests_time.end();) {
                 if (now > it->second + blockchain_request_timeout) {
-                    item.second.m_score = item.second.m_score - 5;
+                    item.second.m_score = item.second.m_score - 8;
                     requests_time.erase(it++);
                 } else {
                     it++;
@@ -1846,7 +1846,6 @@ namespace libTAU::blockchain {
         std::vector<block> rollback_blocks;
         std::vector<block> connect_blocks;
 
-        // todo:: rollback until to tail?
         // align main chain and branch block number
         block main_chain_block = head_block;
         while (main_chain_block.block_number() > target.block_number()) {
@@ -4235,7 +4234,6 @@ namespace libTAU::blockchain {
                             }
 
                             if (blk_entry.m_blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
-                                // TODO:: transfer?
                                 m_ses.alerts().emplace_alert<blockchain_syncing_head_block_alert>(peer, blk_entry.m_blk);
                             }
 
