@@ -47,34 +47,14 @@ namespace libTAU {
         // default refresh time of main task(300)(s)
         constexpr int communication_default_refresh_time = 300;
 
-        // max task size
-        constexpr int communication_max_task_size = 10000;
-
         // max message list size(used in Levenshtein Distance)
         constexpr int communication_max_message_list_size = 10;
-
-        // short address(public key) length
-        constexpr int communication_short_address_length = 4;
-
-        // long time out(5s)
-        constexpr int communication_long_time_out = 5 * 1000;
-
-        // max chatting friend time(5s)
-        constexpr std::int64_t communication_max_chatting_time = 5;
-
-        // data accepted time(6h)(ms)
-        constexpr std::int64_t communication_data_accepted_time = 6 * 60 * 60 * 1000;
 
         // max entry cache time(ms)
         constexpr int communication_max_entry_cache_time = 2 * 60 * 60 * 1000;
 
         // min response interval to the same request(2s)
         constexpr int communication_same_response_interval = 2 * 1000;
-
-        enum PEER_STATUS {
-            DETECT,
-            SEND,
-        };
 
 //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
         // This is the basic logging and debug interface offered by the communication.
@@ -125,15 +105,6 @@ namespace libTAU {
             // save friend info
             bool update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info);
 
-//            // set chatting friends
-//            void set_chatting_friend(dht::public_key chatting_friend);
-//
-//            // unset chatting friends
-//            void unset_chatting_friend();
-
-            // set active friends
-//            void set_active_friends(std::vector<dht::public_key> active_friends);
-
             // add a new message
             bool add_new_message(const message& msg, bool post_alert = false);
 
@@ -157,15 +128,6 @@ namespace libTAU {
             bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
 
 //            void add_entry_task_to_queue(const common::entry_task &task);
-
-            // request online/new message signal from a given peer
-//            void request_signal(const dht::public_key &peer);
-
-            // publish online/new message signal to a given peer
-//            void publish_signal(const dht::public_key &peer);
-
-            // send data to peer
-//            void send_to(const dht::public_key &peer, entry const& data);
 
             // send data to peer
             void send_to(const dht::public_key &peer, entry const& data);
@@ -194,12 +156,6 @@ namespace libTAU {
 //            static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
 
             void process_payload(dht::public_key const& peer, std::int64_t data_type_id, entry const& payload, bool is_cache);
-
-            // make online signal
-//            online_signal make_signal(const dht::public_key &peer);
-
-            // process signal from dht
-//            void process_signal(const online_signal & signal, const dht::public_key &peer);
 
             // validate message, check if message is oversize( >1000 bytes)
             bool validate_message(const message& msg);
