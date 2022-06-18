@@ -158,10 +158,6 @@ namespace blockchain {
         // set blockchain main loop time interval (ms)
 //        void set_blockchain_loop_interval(int milliseconds);
 
-//        void set_priority_chain(const aux::bytes &chain_id);
-
-//        void unset_priority_chain();
-
         // mutable data is pushed here
         void on_dht_relay(dht::public_key const& peer, entry const& payload);
 
@@ -204,16 +200,7 @@ namespace blockchain {
 
         void refresh_chain_status(error_code const &e, const aux::bytes &chain_id);
 
-//        void refresh_votes(error_code const &e, const aux::bytes &chain_id);
-
         void refresh_mining_timeout(error_code const&, const aux::bytes &chain_id);
-
-//        void refresh_vote_timeout(error_code const& e);
-
-//        void refresh_tx_timeout(error_code const& e);
-
-//        void add_entry_task_to_queue(const aux::bytes &chain_id, const common::blockchain_entry_task &task);
-
 
         // load chain all info
         bool load_chain(const aux::bytes &chain_id);
@@ -228,20 +215,11 @@ namespace blockchain {
 
         void add_and_access_peers_in_acl(const aux::bytes &chain_id);
 
-        // refresh unchoked peers if timeout
-//        void try_to_refresh_unchoked_peers(const aux::bytes &chain_id);
-
         // select a chain randomly
         aux::bytes select_chain_randomly();
 
         // select a peer randomly
         dht::public_key select_peer_randomly(const aux::bytes &chain_id);
-
-        // select an un-choked peer randomly
-//        dht::public_key select_unchoked_peer_randomly(const aux::bytes &chain_id);
-
-        // select a peer randomly
-        std::set<dht::public_key> select_unchoked_peers(const aux::bytes &chain_id);
 
         // try to mine block
         block try_to_mine_block(const aux::bytes &chain_id);
@@ -355,13 +333,6 @@ namespace blockchain {
 
         void put_voting_block(const aux::bytes &chain_id, const block &blk);
 
-        // publish online/new message signal to a given peer
-//        void publish_signal(const aux::bytes &chain_id, const dht::public_key& peer,
-//                            const blockchain_signal &peer_signal = blockchain_signal());
-
-        // process signal from dht
-//        void process_signal(const blockchain_signal & signal, const aux::bytes &chain_id, const dht::public_key &peer);
-
         // immutable data callback
 //        void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);
 
@@ -426,14 +397,8 @@ namespace blockchain {
         // chain timers
         std::map<aux::bytes, aux::deadline_timer> m_chain_timers;
 
-        // vote timer
-//        aux::deadline_timer m_vote_timer;
-
         // chain status timers
         std::map<aux::bytes, aux::deadline_timer> m_chain_status_timers;
-
-        // tx timer
-//        aux::deadline_timer m_exchange_tx_timer;
 
         // blockchain db
         std::shared_ptr<repository> m_repository;
@@ -447,41 +412,16 @@ namespace blockchain {
         // all chains
         std::vector<aux::bytes> m_chains;
 
-//        // all chain peers
-//        std::map<aux::bytes, std::set<dht::public_key>> m_chain_peers;
-//
-//        // all chain gossip peers
-//        std::map<aux::bytes, std::set<dht::public_key>> m_chain_gossip_peers;
-
-//        // un-choked peers
-//        std::map<aux::bytes, std::set<dht::public_key>> m_unchoked_peers;
-//
-//        // un-choked peers signal
-//        std::map<aux::bytes, std::map<dht::public_key, blockchain_signal>> m_unchoked_peer_signal;
-//
-//        // update un-choked peers time(s)
-//        std::map<aux::bytes, std::int64_t> m_update_peer_time;
-
         // the time that last cache gossip peers(ms)
         std::map<aux::bytes, std::int64_t> m_last_cache_gossip_peers_time;
 
         std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
-//        std::map<aux::bytes, std::int64_t> m_last_voting_time;
-
         std::map<aux::bytes, std::int64_t> m_count_votes_time;
 
         std::map<aux::bytes, std::int64_t> m_collect_gossip_peers_time;
 
-//        std::map<aux::bytes, std::set<dht::public_key>> m_vote_request_peers;
-
-        // all tasks
-//        std::queue<common::blockchain_entry_task> m_tasks;
-//        std::set<common::blockchain_entry_task> m_tasks_set;
-
         std::map<aux::bytes, std::set<dht::public_key>> m_gossip_peers;
-
-//        std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_last_visiting_time;
 
         std::map<aux::bytes, std::int64_t> m_last_balance_alert_time;
 
@@ -509,16 +449,6 @@ namespace blockchain {
 
         // votes
         std::map<aux::bytes, std::map<dht::public_key, vote>> m_votes;
-
-        // priority chain(time:ms)
-//        std::pair<aux::bytes , std::int64_t> m_priority_chain = std::make_pair(aux::bytes(), 0);
-
-        // blockchain signal time(map:key1->chain id, key2->peer, value->signal time(ms))(1min)
-//        std::map<aux::bytes, std::map<dht::public_key, std::int64_t>> m_latest_signal_time;
-
-        // the latest item timestamp of peer
-//        std::map<aux::bytes, std::map<dht::public_key, dht::timestamp>> m_latest_item_timestamp;
-
     };
 }
 }
