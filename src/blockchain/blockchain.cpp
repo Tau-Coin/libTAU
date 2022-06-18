@@ -3260,7 +3260,7 @@ namespace libTAU::blockchain {
 
 //                            m_blocks[chain_id][blk_entry.m_blk.sha256()] = blk_entry.m_blk;
 
-                            m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(peer, blk_entry.m_blk);
+//                            m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(peer, blk_entry.m_blk);
 
                             // notify ui tx from block
                             if (!blk_entry.m_blk.tx().empty()) {
