@@ -491,7 +491,6 @@ namespace libTAU::blockchain {
             if (e.value() != boost::asio::error::operation_aborted) {
                 // 随机挑选一条
                 for (auto const& chain_id: m_chains) {
-//                    aux::bytes chain_id = select_chain_randomly();
                     if (!chain_id.empty()) {
 //                        log("INFO: Select chain:%s, status:%d", aux::toHex(chain_id).c_str(), m_chain_status[chain_id]);
 
@@ -799,29 +798,6 @@ namespace libTAU::blockchain {
         } catch (std::exception &e) {
             log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
-    }
-
-    aux::bytes blockchain::select_chain_randomly() {
-        aux::bytes chain_id;
-
-        if (!m_chains.empty())
-        {
-            // 产生随机数
-            auto now = get_total_milliseconds();
-//            if (now < m_priority_chain.second) {
-//                srand(now);
-//                auto i = rand() % 10;
-//                if (i < 3) {
-//                    return m_priority_chain.first;
-//                }
-//            }
-
-            srand(now);
-            auto index = rand() % m_chains.size();
-            chain_id = m_chains[index];
-        }
-
-        return chain_id;
     }
 
     dht::public_key blockchain::select_peer_randomly(const aux::bytes &chain_id) {

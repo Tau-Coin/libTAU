@@ -32,10 +32,6 @@ namespace libTAU {
 
             m_stop = false;
 
-//            for (auto const&peer: m_friends) {
-//                request_signal(peer);
-//            }
-
             m_refresh_timer.expires_after(milliseconds(100));
             m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
 
@@ -104,9 +100,7 @@ namespace libTAU {
 
         void communication::clear() {
             m_friends.clear();
-//            m_tasks.clear();
             m_message_list_map.clear();
-//            m_last_seen.clear();
         }
 
         void communication::account_changed() {
@@ -516,23 +510,6 @@ namespace libTAU {
             }
 
             log(LOG_INFO, "INFO: Add new msg[%s]", msg.to_string().c_str());
-
-//            dht::public_key * pk = m_ses.pubkey();
-//            aux::bytes public_key;
-//            public_key.insert(public_key.end(), pk->bytes.begin(), pk->bytes.end());
-//            if (msg.sender() != public_key && msg.receiver() != public_key) {
-//                log("ERROR: Unknown message, sender/receiver is not me.");
-//                return false;
-//            }
-
-//            aux::bytes key_y;
-//            if (msg.sender() == public_key) {
-//                // sender is me means message comes from me, y is receiver
-//                key_y = msg.receiver();
-//            } else {
-//                // receiver is me means message comes from others, y is sender
-//                key_y = msg.sender();
-//            }
 
             if (!validate_message(msg))
                 return false;
@@ -1161,33 +1138,6 @@ namespace libTAU {
 //                    , alpha, beta, invoke_limit, salt, peer, cache);
 //        }
 
-//        void communication::send_one_unconfirmed_message_randomly(const dht::public_key &peer) {
-//            // find out missing messages and confirmation root
-//            std::vector<message> missing_messages;
-//            std::vector<sha256_hash> confirmation_roots;
-//            auto &message_list = m_message_list_map[peer];
-//            std::vector<message> messages(message_list.begin(), message_list.end());
-//            find_best_solution(messages, m_levenshtein_array[peer],
-//                               missing_messages, confirmation_roots);
-//
-//            auto now = get_current_time();
-//
-//            aux::bytes levenshtein_array;
-//            for (auto const &message: messages) {
-//                levenshtein_array.push_back(message.sha256()[0]);
-//            }
-//
-//            auto size = missing_messages.size();
-//            // 产生随机数
-//            if (size > 0) {
-//                srand(now);
-//                auto index = rand() % missing_messages.size();
-//                common::message_entry msg_entry(missing_messages[index], levenshtein_array, now);
-//                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry());
-//                add_entry_task_to_queue(task);
-//            }
-//        }
-
         void communication::send_all_unconfirmed_messages(const dht::public_key &peer) {
             // find out missing messages and confirmation root
             std::vector<message> missing_messages;
@@ -1213,8 +1163,6 @@ namespace libTAU {
             for(auto k = 0; k < size; k++) {
                 common::message_entry msg_entry(missing_messages[k], levenshtein_array, now);
                 send_to(peer, msg_entry.get_entry());
-//                common::entry_task task(common::message_entry::data_type_id, peer, msg_entry.get_entry());
-//                add_entry_task_to_queue(task);
             }
         }
 

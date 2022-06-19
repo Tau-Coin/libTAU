@@ -22,7 +22,6 @@ see LICENSE file.
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
-#include "libTAU/blockchain/blockchain_signal.hpp"
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/peer_info.hpp"
 #include "libTAU/blockchain/repository.hpp"
@@ -214,9 +213,6 @@ namespace blockchain {
         void manage_peers_in_acl_ban_list(const aux::bytes &chain_id);
 
         void add_and_access_peers_in_acl(const aux::bytes &chain_id);
-
-        // select a chain randomly
-        aux::bytes select_chain_randomly();
 
         // select a peer randomly
         dht::public_key select_peer_randomly(const aux::bytes &chain_id);

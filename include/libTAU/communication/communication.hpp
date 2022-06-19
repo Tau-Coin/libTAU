@@ -31,7 +31,7 @@ see LICENSE file.
 #include "libTAU/common/entry_type.hpp"
 #include "libTAU/communication/message_db_impl.hpp"
 #include "libTAU/communication/message_db_interface.hpp"
-#include "libTAU/communication/online_signal.hpp"
+#include "libTAU/kademlia/node_entry.hpp"
 
 namespace libTAU {
 
@@ -130,9 +130,6 @@ namespace libTAU {
             // send data to peer
             void send_to(const dht::public_key &peer, entry const& data);
 
-            // select a friend randomly
-//            dht::public_key select_friend_randomly();
-
             // save the latest message hash list in database
             // @param peer is Y public key
             void save_friend_latest_message_hash_list(const dht::public_key &peer);
@@ -192,8 +189,6 @@ namespace libTAU {
 
             void refresh_timeout(error_code const& e);
 
-//            void send_one_unconfirmed_message_randomly(dht::public_key const& peer);
-
             void send_all_unconfirmed_messages(dht::public_key const& peer);
 
             void update_communication_time(dht::public_key const& peer, std::int64_t time);
@@ -234,23 +229,10 @@ namespace libTAU {
 
             std::map<dht::public_key, aux::bytes> m_levenshtein_array;
 
-            // friend last seen time(map:key->peer, value->last seen signal time(ms))
-//            std::map<dht::public_key, std::int64_t> m_last_seen;
-
             // message list(map:key->Y public key, value->message list)
             std::map<dht::public_key, std::list<message>> m_message_list_map;
 
             std::map<dht::public_key, std::map<std::string, std::int64_t>> m_entry_cache;
-
-            // missing messages (map:key->peer, value->missing message list)
-//            std::map<dht::public_key, std::set<message>> m_missing_messages;
-
-//            std::map<dht::public_key, std::int64_t> m_last_gasp_time;
-            // todo:: queue: task-timestamp
-            // todo:: (peer - request) - time
-
-            // the latest item timestamp of peer
-//            std::map<dht::public_key, dht::timestamp> m_latest_item_timestamp;
         };
     }
 }
