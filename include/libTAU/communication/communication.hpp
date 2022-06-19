@@ -127,8 +127,6 @@ namespace libTAU {
             // add a new message
             bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
 
-//            void add_entry_task_to_queue(const common::entry_task &task);
-
             // send data to peer
             void send_to(const dht::public_key &peer, entry const& data);
 
@@ -198,10 +196,6 @@ namespace libTAU {
 
             void send_all_unconfirmed_messages(dht::public_key const& peer);
 
-//            void send_one_missing_entry_randomly(dht::public_key const& peer);
-
-//            void update_detection_time(dht::public_key const& peer, std::int64_t time);
-
             void update_communication_time(dht::public_key const& peer, std::int64_t time);
 
             void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array, std::int64_t time);
@@ -224,9 +218,6 @@ namespace libTAU {
             // deadline timer
             aux::deadline_timer m_refresh_timer;
 
-            // refresh time interval
-//            int m_refresh_time = communication_default_refresh_time;
-
             // message db
             std::shared_ptr<message_db_interface> m_message_db;
 
@@ -234,27 +225,6 @@ namespace libTAU {
 
             // all friends
             std::vector<dht::public_key> m_friends;
-
-            // all tasks
-//            std::queue<common::entry_task> m_tasks;
-//            std::set<common::entry_task> m_tasks_set;
-
-//            std::map<dht::public_key, std::int64_t> m_last_greeting;
-
-//            std::map<dht::public_key, std::int64_t> m_array_align_time;
-
-            // peer access time
-//            std::map<dht::public_key, std::int64_t> m_peer_access_times;
-
-            // chatting friend(time:s)
-//            std::pair<dht::public_key, std::int64_t> m_chatting_friend = std::make_pair(dht::public_key(), 0);
-
-            // active friends
-//            std::vector<dht::public_key> m_active_friends;
-
-//            std::map<dht::public_key, std::int64_t> m_last_detection_time;
-
-//            std::map<dht::public_key, std::int64_t> m_last_request_friend_info_time;
 
             std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, int, common::less_communication_entry_base>> m_last_same_entry_time;
 
@@ -267,31 +237,13 @@ namespace libTAU {
             // friend last seen time(map:key->peer, value->last seen signal time(ms))
 //            std::map<dht::public_key, std::int64_t> m_last_seen;
 
-            // online/new message signal time(map:key1->peer, key2->device id, value->signal time(ms))
-//            std::map<dht::public_key, std::map<aux::bytes, std::int64_t>> m_latest_signal_time;
-
-            // online/new message signal time(map:key1->peer, key2->device id, value->hash prefix array)
-//            std::map<dht::public_key, std::map<aux::bytes, aux::bytes>> m_latest_hash_prefix_array;
-
             // message list(map:key->Y public key, value->message list)
             std::map<dht::public_key, std::list<message>> m_message_list_map;
 
             std::map<dht::public_key, std::map<std::string, std::int64_t>> m_entry_cache;
-//            std::int64_t m_last_check_time = 0;
-
-//            std::map<dht::public_key, std::set<message>> m_missing_messages;
-
-//            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, int, common::less_communication_entry_base>> m_entry_putting_times;
-//
-//            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, std::set<dht::node_entry>, common::less_communication_entry_base>> m_entry_putting_nodes;
-//
-//            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, std::int64_t, common::less_communication_entry_base>> m_entry_last_putting_time;
 
             // missing messages (map:key->peer, value->missing message list)
 //            std::map<dht::public_key, std::set<message>> m_missing_messages;
-
-            // put last missing message for 1min
-//            std::map<dht::public_key, immutable_data_info> m_last_gasp_payload;
 
 //            std::map<dht::public_key, std::int64_t> m_last_gasp_time;
             // todo:: queue: task-timestamp

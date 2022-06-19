@@ -90,14 +90,9 @@ namespace libTAU {
                         log(LOG_INFO, "INFO: Message hash list is empty.");
                     }
 
-//                    m_last_detection_time[peer] = m_message_db->get_last_detection_time(std::make_pair(*pk, peer));
                     m_last_communication_time[peer] = m_message_db->get_last_communication_time(std::make_pair(*pk, peer));
                     m_levenshtein_array_time[peer] = m_message_db->get_levenshtein_array_time(std::make_pair(*pk, peer));
                     m_levenshtein_array[peer] = m_message_db->get_levenshtein_array(std::make_pair(*pk, peer));
-
-                    // get array align time
-//                    m_array_align_time[peer] = m_message_db->get_array_align_time(std::make_pair(*pk, peer));
-
                 }
             } catch (std::exception &e) {
                 log(LOG_ERR, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
@@ -110,18 +105,8 @@ namespace libTAU {
         void communication::clear() {
             m_friends.clear();
 //            m_tasks.clear();
-//            m_last_greeting.clear();
-//            m_peer_access_times.clear();
             m_message_list_map.clear();
-//            m_chatting_friend = std::make_pair(dht::public_key(), 0);
-//            m_active_friends.clear();
 //            m_last_seen.clear();
-//            m_latest_signal_time.clear();
-//            m_latest_hash_prefix_array.clear();
-//            m_missing_messages.clear();
-//            m_entry_putting_times.clear();
-//            m_entry_putting_nodes.clear();
-//            m_entry_last_putting_time.clear();
         }
 
         void communication::account_changed() {
@@ -200,28 +185,6 @@ namespace libTAU {
                     if (timestamp > m_levenshtein_array_time[peer]) {
                         update_levenshtein_array(peer, msg_entry.m_levenshtein_array, timestamp);
 
-//                        // find out missing messages and confirmation root
-//                        std::vector<message> missing_messages;
-//                        std::vector<message> confirmed_messages;
-//                        auto &message_list = m_message_list_map[peer];
-//                        std::vector<message> messages(message_list.begin(), message_list.end());
-//                        find_best_solution(messages, msg_entry.m_levenshtein_array,
-//                                           missing_messages, confirmed_messages);
-//
-//                        for (auto const& msg: missing_messages) {
-//                            m_entry_putting_times[peer][std::make_shared<common::message_entry>(msg)] = 0;
-//                            m_entry_putting_nodes[peer].clear();
-//                            m_entry_last_putting_time[peer].clear();
-//                        }
-//
-//                        for (auto const& msg: confirmed_messages) {
-//                            // remove msg from set
-//                            auto ptr = std::make_shared<common::message_entry>(msg);
-//                            m_entry_putting_times[peer].erase(ptr);
-//                            m_entry_putting_nodes[peer].erase(ptr);
-//                            m_entry_last_putting_time[peer].erase(ptr);
-//                        }
-
                         // find out missing messages and confirmation root
                         std::vector<message> missing_messages;
                         std::vector<sha256_hash> confirmation_roots;
@@ -252,11 +215,6 @@ namespace libTAU {
 
                         common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
                         send_to(peer, msg_levenshtein_array.get_entry());
-
-//                    auto ptr = std::make_shared<common::message_levenshtein_array_entry>();
-//                    m_entry_putting_times[peer][ptr] = 1;
-//                    m_entry_putting_nodes[peer].clear();
-//                    m_entry_last_putting_time[peer][ptr] = now;
                     }
 
 //                    if (!is_cache) {
@@ -389,11 +347,6 @@ namespace libTAU {
                     if (!friend_info.empty()) {
                         common::friend_info_entry e(friend_info);
                         send_to(peer, e.get_entry());
-
-//                        auto ptr = std::make_shared<common::friend_info_entry>(friend_info);
-//                        m_entry_putting_times[peer][ptr] = 1;
-//                        m_entry_putting_nodes[peer].clear();
-//                        m_entry_last_putting_time[peer][ptr] = now;
                     }
 
                     if (!is_cache) {
@@ -433,11 +386,6 @@ namespace libTAU {
                         // 通知用户新的friend info
                         m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer, e.m_friend_info);
                     }
-
-//                    auto ptr = std::make_shared<common::friend_info_request_entry>();
-//                    m_entry_putting_times[peer].erase(ptr);
-//                    m_entry_putting_nodes[peer].erase(ptr);
-//                    m_entry_last_putting_time[peer].erase(ptr);
 
                     if (!is_cache) {
                         send_all_unconfirmed_messages(peer);
@@ -530,13 +478,6 @@ namespace libTAU {
         void communication::request_friend_info(const dht::public_key &peer) {
             common::friend_info_request_entry friendInfoRequestEntry(get_current_time());
             send_to(peer, friendInfoRequestEntry.get_entry());
-
-//            auto ptr = std::make_shared<common::friend_info_request_entry>();
-//            auto it = m_entry_putting_times[peer].find(ptr);
-//            if (it == m_entry_putting_times[peer].end()) {
-//                m_entry_putting_times[peer][ptr] = 1;
-//                m_entry_last_putting_time[peer][ptr] = get_current_time();
-//            }
         }
 
         aux::bytes communication::get_friend_info(const dht::public_key &pubkey) {
@@ -563,44 +504,7 @@ namespace libTAU {
             common::message_entry msg_entry(msg, levenshtein_array, now);
             send_to(msg.receiver(), msg_entry.get_entry());
 
-//            auto ptr = std::make_shared<common::message_entry>(msg);
-//            auto it = m_entry_putting_times[msg.receiver()].find(ptr);
-//            if (it == m_entry_putting_times[msg.receiver()].end()) {
-//                m_entry_putting_times[msg.receiver()][ptr] = 1;
-//                m_entry_last_putting_time[msg.receiver()][ptr] = now;
-//            }
-
-//            update_detection_time(msg.receiver(), now);
             update_communication_time(msg.receiver(), now);
-
-//            common::entry_task task1(common::message_entry::data_type_id, msg.receiver(), msg_entry.get_entry(), now);
-//            m_tasks.insert(task1);
-
-//            common::entry_task levenshtein_array_task1(common::message_levenshtein_array_entry::data_type_id, msg.receiver(), now + 1000);
-//            add_entry_task_to_queue(levenshtein_array_task1);
-
-//            {
-//                // 本地消息数组为target
-//                aux::bytes levenshtein_array;
-//                auto &msg_list = m_message_list_map[msg.receiver()];
-//                for (auto const &msg: msg_list) {
-//                    levenshtein_array.push_back(msg.sha256()[0]);
-//                }
-//
-//                common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array);
-//
-//                common::communication_entries communicationEntries;
-//                // big enough?
-//                communicationEntries.push_back(msg_entry.get_entry());
-//                communicationEntries.push_back(msg_levenshtein_array.get_entry());
-//
-//                common::entry_task task1(msg.receiver(), communicationEntries.get_entry(), now);
-//                m_tasks.insert(task1);
-//                common::entry_task task2(msg.receiver(), communicationEntries.get_entry(), now + 1000);
-//                m_tasks.insert(task2);
-//                common::entry_task task3(msg.receiver(), communicationEntries.get_entry(), now + 5000);
-//                m_tasks.insert(task3);
-//            }
 
             return true;
         }
@@ -636,19 +540,6 @@ namespace libTAU {
             return try_to_update_Latest_message_list(peer, msg, post_alert);
         }
 
-//        void communication::add_entry_task_to_queue(const common::entry_task &task) {
-//            if (m_tasks_set.find(task) != m_tasks_set.end())
-//                return;
-//
-//            if (m_tasks_set.size() > communication_max_task_size) {
-//                m_tasks_set.erase(m_tasks.front());
-//                m_tasks.pop();
-//            }
-//
-//            m_tasks.push(task);
-//            m_tasks_set.insert(task);
-//        }
-
         bool communication::validate_message(const message& msg) {
             // TODO: size==1000?
             if (msg.encode().size() > 1000) {
@@ -658,64 +549,6 @@ namespace libTAU {
 
             return true;
         }
-
-//        dht::public_key communication::select_friend_randomly() {
-//            dht::public_key peer{};
-//
-//            if (!m_friends.empty())
-//            {
-//                // 产生随机数
-//                srand(total_microseconds(system_clock::now().time_since_epoch()));
-//                auto index = rand() % 10;
-//
-//                // 检查chatting friend设置时间，如果超过30分钟，则重置
-//                std::int64_t current_time = total_seconds(system_clock::now().time_since_epoch());
-//                if (current_time - m_chatting_friend.second > communication_max_chatting_time) {
-//                    unset_chatting_friend();
-//                }
-//
-//                // chatting friend有80%的概率选中
-//                if (m_chatting_friend.first != dht::public_key() && index < 8) {
-//                    peer = m_chatting_friend.first;
-//                } else {
-//                    // 以上一次产生的随机数和时间的和作为种子，产生新的随机数，避免时钟太快，产生的随机数一样的情况
-//                    srand(total_microseconds(system_clock::now().time_since_epoch()));
-//                    index = rand() % 10;
-//
-//                    // active friends有70%的概率选中
-//                    if (!m_active_friends.empty() && index < 7) {
-//                        srand(total_microseconds(system_clock::now().time_since_epoch()));
-//                        index = rand() % m_active_friends.size();
-//                        peer = m_active_friends[index];
-//                    } else {
-//                        // 筛选剩余的朋友
-//                        std::vector<dht::public_key> other_friends = m_friends;
-//                        for (const auto& fri: m_friends) {
-//                            bool found = false;
-//                            for (const auto& active_fri: m_active_friends) {
-//                                if (active_fri == fri) {
-//                                    found = true;
-//                                    break;
-//                                }
-//                            }
-//
-//                            if (!found) {
-//                                other_friends.push_back(fri);
-//                            }
-//                        }
-//
-//                        // 在剩余的朋友中随机挑选一个
-//                        if (!other_friends.empty()) {
-//                            srand(total_microseconds(system_clock::now().time_since_epoch()));
-//                            index = rand() % other_friends.size();
-//                            peer = other_friends[index];
-//                        }
-//                    }
-//                }
-//            }
-//
-//            return peer;
-//        }
 
         void communication::refresh_timeout(error_code const& e)
         {
@@ -1384,33 +1217,6 @@ namespace libTAU {
 //                add_entry_task_to_queue(task);
             }
         }
-
-//        void communication::send_one_missing_entry_randomly(const dht::public_key &peer) {
-//            auto & entry_putting_times = m_entry_putting_times[peer];
-//            if (!entry_putting_times.empty()) {
-//                auto it = entry_putting_times.begin();
-//                if (it->second >= 7) {
-//                    m_entry_putting_times[peer].erase(it->first);
-//                    m_entry_putting_nodes[peer].erase(it->first);
-//                    m_entry_last_putting_time[peer].erase(it->first);
-//                } else {
-//                    auto now = get_current_time();
-//                    if (now > m_entry_last_putting_time[peer][it->first] + communication_long_time_out) {
-////                        common::message_entry msg_entry(it->first, levenshtein_array, now);
-//                        common::entry_task task(it->first->get_data_type_id(), peer, it->first->get_entry());
-//                        add_entry_task_to_queue(task);
-//
-//                        m_entry_putting_times[peer][it->first]++;
-//                        m_entry_last_putting_time[peer][it->first] = now;
-//                    }
-//                }
-//            }
-//        }
-
-//        void communication::update_detection_time(const dht::public_key &peer, std::int64_t time) {
-//            m_last_detection_time[peer] = time;
-//            m_message_db->save_last_detection_time(std::make_pair(*m_ses.pubkey(), peer), time);
-//        }
 
         void communication::update_communication_time(const dht::public_key &peer, std::int64_t time) {
             m_last_communication_time[peer] = time;
