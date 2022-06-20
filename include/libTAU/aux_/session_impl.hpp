@@ -315,8 +315,10 @@ namespace aux {
 		struct TORRENT_EXTRA_EXPORT refer_switch
 		{
 
-			refer_switch(bool non_referrable) { m_non_referrable = non_referrable; }
-			bool is_enabled() const { return m_non_referrable; }
+			refer_switch(bool enabled) { m_enabled = enabled; }
+
+			void set_enabled(bool enabled) { m_enabled = enabled; }
+			bool is_enabled() const { return m_enabled; }
 
 			bool is_done() const { return m_done; }
 			void set_done() { m_done = true; }
@@ -332,7 +334,7 @@ namespace aux {
 
 		private:
 
-			bool m_non_referrable;
+			bool m_enabled;
 
 			int m_ip_vote = 0;
 			bool m_done = false;
@@ -644,6 +646,7 @@ namespace aux {
 			void update_socket_buffer_size();
 			void update_connections_limit();
 			void update_alert_mask();
+			void update_auto_relay();
 
 			void set_loop_time_interval(int milliseconds);
 			bool add_new_friend(const dht::public_key& pubkey);
