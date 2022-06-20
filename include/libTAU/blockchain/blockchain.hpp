@@ -51,10 +51,10 @@ namespace blockchain {
     constexpr std::int64_t blockchain_request_timeout = 2 * 1000 + 500;
 
     // blockchain min peers in acl
-    constexpr std::int64_t blockchain_acl_min_peers = 3;
+    constexpr std::int64_t blockchain_acl_min_peers = 2;
 
     // blockchain max peers in acl
-    constexpr std::int64_t blockchain_acl_max_peers = 5;
+    constexpr std::int64_t blockchain_acl_max_peers = 3;
 
     // blockchain min ban time(5min)
     constexpr std::int64_t blockchain_min_ban_time = 5 * 60 * 1000;
