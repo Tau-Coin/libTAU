@@ -158,21 +158,21 @@ namespace libTAU {
                     log(LOG_INFO, "INFO: Got message, hash[%s].",
                         aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
 
-                    {
-                        auto it = m_last_same_entry_time[peer].find(
-                                std::make_shared<common::message_entry>(payload));
-                        if (it != m_last_same_entry_time[peer].end()) {
-                            if (now > it->second + communication_same_response_interval) {
-                                m_last_same_entry_time[peer].erase(it);
-                            } else {
-                                log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
-                                break;
-                            }
-                        } else {
-                            m_last_same_entry_time[peer].emplace(std::make_shared<common::message_entry>(payload),
-                                                                 now);
-                        }
-                    }
+//                    {
+//                        auto it = m_last_same_entry_time[peer].find(
+//                                std::make_shared<common::message_entry>(payload));
+//                        if (it != m_last_same_entry_time[peer].end()) {
+//                            if (now > it->second + communication_same_response_interval) {
+//                                m_last_same_entry_time[peer].erase(it);
+//                            } else {
+//                                log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
+//                                break;
+//                            }
+//                        } else {
+//                            m_last_same_entry_time[peer].emplace(std::make_shared<common::message_entry>(payload),
+//                                                                 now);
+//                        }
+//                    }
 
                     add_new_message(peer, msg_entry.m_msg, true);
 
@@ -247,21 +247,21 @@ namespace libTAU {
                     log(LOG_INFO, "INFO: Got message levenshtein array[%s].",
                         aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
 
-                    {
-                        auto it = m_last_same_entry_time[peer].find(
-                                std::make_shared<common::message_levenshtein_array_entry2>(payload));
-                        if (it != m_last_same_entry_time[peer].end()) {
-                            if (now > it->second + communication_same_response_interval) {
-                                m_last_same_entry_time[peer].erase(it);
-                            } else {
-                                log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
-                                break;
-                            }
-                        } else {
-                            m_last_same_entry_time[peer].emplace(
-                                    std::make_shared<common::message_levenshtein_array_entry2>(payload), now);
-                        }
-                    }
+//                    {
+//                        auto it = m_last_same_entry_time[peer].find(
+//                                std::make_shared<common::message_levenshtein_array_entry2>(payload));
+//                        if (it != m_last_same_entry_time[peer].end()) {
+//                            if (now > it->second + communication_same_response_interval) {
+//                                m_last_same_entry_time[peer].erase(it);
+//                            } else {
+//                                log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
+//                                break;
+//                            }
+//                        } else {
+//                            m_last_same_entry_time[peer].emplace(
+//                                    std::make_shared<common::message_levenshtein_array_entry2>(payload), now);
+//                        }
+//                    }
 
                     if (timestamp >= m_levenshtein_array_time[peer]) {
                         update_levenshtein_array(peer, levenshtein_array_entry.m_levenshtein_array, timestamp);
@@ -324,17 +324,17 @@ namespace libTAU {
 
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
-                    auto it = m_last_same_entry_time[peer].find(std::make_shared<common::friend_info_request_entry>(payload));
-                    if (it != m_last_same_entry_time[peer].end()) {
-                        if (now > it->second + communication_same_response_interval) {
-                            m_last_same_entry_time[peer].erase(it);
-                        } else {
-                            log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
-                            break;
-                        }
-                    } else {
-                        m_last_same_entry_time[peer].emplace(std::make_shared<common::friend_info_request_entry>(payload), now);
-                    }
+//                    auto it = m_last_same_entry_time[peer].find(std::make_shared<common::friend_info_request_entry>(payload));
+//                    if (it != m_last_same_entry_time[peer].end()) {
+//                        if (now > it->second + communication_same_response_interval) {
+//                            m_last_same_entry_time[peer].erase(it);
+//                        } else {
+//                            log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
+//                            break;
+//                        }
+//                    } else {
+//                        m_last_same_entry_time[peer].emplace(std::make_shared<common::friend_info_request_entry>(payload), now);
+//                    }
 
                     auto pubkey = *m_ses.pubkey();
                     auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
@@ -546,16 +546,16 @@ namespace libTAU {
                         }
                     }
 
-                    for (auto &last_same_entry_time: m_last_same_entry_time) {
-                        for (auto it = last_same_entry_time.second.begin(); it != last_same_entry_time.second.end();) {
-                            // remove outdated date
-                            if (now > it->second + communication_same_response_interval) {
-                                last_same_entry_time.second.erase(it++);
-                            } else {
-                                it++;
-                            }
-                        }
-                    }
+//                    for (auto &last_same_entry_time: m_last_same_entry_time) {
+//                        for (auto it = last_same_entry_time.second.begin(); it != last_same_entry_time.second.end();) {
+//                            // remove outdated date
+//                            if (now > it->second + communication_same_response_interval) {
+//                                last_same_entry_time.second.erase(it++);
+//                            } else {
+//                                it++;
+//                            }
+//                        }
+//                    }
                 }
 
                 m_refresh_timer.expires_after(seconds(communication_default_refresh_time));
