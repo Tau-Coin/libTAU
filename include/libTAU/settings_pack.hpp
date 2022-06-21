@@ -921,7 +921,7 @@ namespace aux {
 			// It means this node behind NAT.
 			dht_non_referrable,
 
-			auto_referred,
+			auto_relay,
 
             //start communication module
             enable_communication,

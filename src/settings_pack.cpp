@@ -195,7 +195,7 @@ namespace libTAU {
 		SET(dht_ignore_dark_internet, true, nullptr),
 		SET(dht_read_only, false, nullptr),
 		SET(dht_non_referrable, true, nullptr),
-		SET(auto_referred, false, nullptr),
+		SET(auto_relay, false, &session_impl::update_auto_relay),
 		SET(enable_communication, true, nullptr),
 		SET(enable_blockchain, true, nullptr),
 	}});

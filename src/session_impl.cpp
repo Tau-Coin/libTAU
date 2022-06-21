@@ -462,8 +462,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		, m_host_resolver(m_io_context)
 		, m_work(make_work_guard(m_io_context))
 		, m_timer(m_io_context)
-		, m_refer_switch(m_settings.get_bool(settings_pack::dht_non_referrable)
-				&& m_settings.get_bool(settings_pack::auto_referred))
+		, m_refer_switch(m_settings.get_bool(settings_pack::auto_relay))
 		, m_session_time(total_milliseconds(std::chrono::system_clock::now().time_since_epoch()))
 		, m_created(clock_type::now())
 		, m_last_tick(total_milliseconds(std::chrono::system_clock::now().time_since_epoch()))
@@ -3875,6 +3874,27 @@ namespace {
 
 		if (m_alerts.should_post<external_ip_alert>())
 			m_alerts.emplace_alert<external_ip_alert>(ip);
+	}
+
+	void session_impl::update_auto_relay()
+	{
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log())
+		{
+			session_log("update auto relay:%s"
+				, m_settings.get_bool(settings_pack::auto_relay) ? "enabled" : "disabled");
+		}
+#endif
+
+		if (m_settings.get_bool(settings_pack::auto_relay))
+		{
+			m_refer_switch.set_enabled(true);
+			reset_refer_switch();
+		}
+		else
+		{
+			m_refer_switch.set_enabled(false);
+		}
 	}
 
 	void session_impl::reset_refer_switch()
