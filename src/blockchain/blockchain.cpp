@@ -407,8 +407,6 @@ namespace libTAU::blockchain {
             // all peers those added into acl should request head block
             for (auto const &peer: peers) {
                 acl[peer] = peer_info();
-
-                introduce_gossip_peers(chain_id, peer);
             }
         }
 
@@ -424,6 +422,11 @@ namespace libTAU::blockchain {
                     item.second.m_requests_time[std::make_unique<common::head_block_request_entry>(chain_id)] = now;
                 }
             } else if (item.second.m_stage == NORMAL) {
+                if (!item.second.m_gossip_done) {
+                    introduce_gossip_peers(chain_id, item.first);
+
+                    item.second.m_gossip_done = true;
+                }
                 if (!item.second.m_fee_tx_pool_sync_done && is_sync_completed(chain_id)) {
                     common::fee_tx_pool_entry feeTxPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_fee());
                     send_to(item.first, feeTxPoolEntry.get_entry());
@@ -3064,8 +3067,6 @@ namespace libTAU::blockchain {
         } else {
             if (acl.size() < blockchain_acl_max_peers) {
                 acl[peer] = peer_info(now);
-
-                introduce_gossip_peers(chain_id, peer);
             }
         }
     }
@@ -3086,8 +3087,6 @@ namespace libTAU::blockchain {
         } else {
             if (acl.size() < blockchain_acl_max_peers) {
                 acl[peer] = peer_info(now);
-
-                introduce_gossip_peers(chain_id, peer);
             }
         }
     }
@@ -3109,8 +3108,6 @@ namespace libTAU::blockchain {
         } else {
             if (acl.size() < blockchain_acl_max_peers) {
                 acl[peer] = peer_info(NORMAL, blk, now);
-
-                introduce_gossip_peers(chain_id, peer);
             }
         }
     }
@@ -3132,8 +3129,6 @@ namespace libTAU::blockchain {
         } else {
             if (acl.size() < blockchain_acl_max_peers) {
                 acl[peer] = peer_info(tx, now);
-
-                introduce_gossip_peers(chain_id, peer);
             }
         }
     }
@@ -3168,8 +3163,6 @@ namespace libTAU::blockchain {
             } else {
                 acl[peer] = peer_info(now);
                 acl[peer].m_peer_requests_time.emplace(std::move(ptr), now);
-
-                introduce_gossip_peers(chain_id, peer);
             }
         }
 

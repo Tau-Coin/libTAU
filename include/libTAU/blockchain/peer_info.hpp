@@ -67,6 +67,8 @@ namespace libTAU::blockchain {
         bool m_fee_tx_pool_sync_done = false;
         bool m_time_tx_pool_sync_done = false;
 
+        bool m_gossip_done = false;
+
 //        vote m_vote;
 
 //        aux::bytes m_pool_levenshtein_array;
