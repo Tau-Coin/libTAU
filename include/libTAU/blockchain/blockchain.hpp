@@ -165,6 +165,10 @@ namespace blockchain {
         // reset when account changed
         void account_changed();
 
+        void on_pause();
+
+        void on_resume();
+
 
     private:
         // initialize member variables
@@ -389,6 +393,8 @@ namespace blockchain {
 
         // deadline timer
         aux::deadline_timer m_refresh_timer;
+
+        bool m_pause = false;
 
         // chain timers
         std::map<aux::bytes, aux::deadline_timer> m_chain_timers;

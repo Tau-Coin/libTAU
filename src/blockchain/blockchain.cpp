@@ -107,6 +107,14 @@ namespace libTAU::blockchain {
         m_ban_list.clear();
     }
 
+    void blockchain::on_pause() {
+        m_pause = true;
+    }
+
+    void blockchain::on_resume() {
+        m_pause = false;
+    }
+
     void blockchain::request_state(const aux::bytes &chain_id) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
@@ -2933,7 +2941,7 @@ namespace libTAU::blockchain {
         auto const& acl = m_access_list[chain_id];
         std::set<dht::public_key> peers;
         int i = 0;
-        for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
+        for (auto iter = acl.begin(); iter != acl.end() && i < blockchain_acl_max_peers; iter++, i++) {
             peers.insert(iter->first);
         }
 
@@ -2960,13 +2968,13 @@ namespace libTAU::blockchain {
         auto const& acl = m_access_list[chain_id];
         std::set<dht::public_key> peers;
         int i = 0;
-        for (auto iter = acl.begin(); iter != acl.end() && i < 5; iter++, i++) {
+        for (auto iter = acl.begin(); iter != acl.end() && i < blockchain_acl_max_peers; iter++, i++) {
             peers.insert(iter->first);
         }
 
-        if (peers.size() < 5) {
+        if (peers.size() < blockchain_acl_max_peers) {
             auto gossip_peers = m_repository->get_all_gossip_peers(chain_id);
-            int m = 5 - peers.size();
+            int m = blockchain_acl_max_peers - peers.size();
             int k = 0;
             for (const auto & gossip_peer : gossip_peers) {
                 if (k < m) {
@@ -2979,8 +2987,8 @@ namespace libTAU::blockchain {
             }
         }
 
-        if (peers.size() < 5) {
-            int m = 5 - peers.size();
+        if (peers.size() < blockchain_acl_max_peers) {
+            int m = blockchain_acl_max_peers - peers.size();
             for (int k = 0; k < m; k++) {
                 auto pubKey = m_repository->get_peer_randomly(chain_id);
                 if (!pubKey.is_all_zeros()) {
