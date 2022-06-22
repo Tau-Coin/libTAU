@@ -31,3 +31,11 @@
 ## 2022.03.11
 
 ### 1. new register protocol
+
+## 2022.06.22
+
+### 0. dht item target
+
+### 1. get item protocol: traffic control, invoke-window & invoke-limit
+
+### 2. put item protocol: just put item into ourself capture swarm and remove relay logic
