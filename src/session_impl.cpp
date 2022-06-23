@@ -685,6 +685,199 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 #endif
     }
 
+    void session_impl::sql_test()
+    {
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log(aux::LOG_LEVEL::LOG_INFO))
+		{
+			session_log("sql test start");
+		}
+#endif
+
+        //create test table; key, timestamp, value
+        std::string create_table_sql = "CREATE TABLE IF NOT EXISTS SQL_TEST (key char(33), time int, value text, PRIMARY KEY(key));";
+        char *errmsg = nullptr;
+        int ok = sqlite3_exec(m_sqldb, create_table_sql.c_str(), nullptr, nullptr, &errmsg);
+        if (ok != SQLITE_OK) {
+#ifndef TORRENT_DISABLE_LOGGING
+		    if (should_log(aux::LOG_LEVEL::LOG_INFO))
+		    {
+			    session_log("sql test create table error: %s", errmsg);
+		    }
+#endif
+            sqlite3_free(errmsg);
+            return;
+        }
+
+        //create index on time
+        std::string create_index_sql = "CREATE INDEX time_id ON SQL_TEST(time);";
+        errmsg = nullptr;
+        ok = sqlite3_exec(m_sqldb, create_index_sql.c_str(), nullptr, nullptr, &errmsg);
+        if (ok != SQLITE_OK) {
+#ifndef TORRENT_DISABLE_LOGGING
+		    if (should_log(aux::LOG_LEVEL::LOG_INFO))
+		    {
+			    session_log("sql test create index error: %s", errmsg);
+		    }
+#endif
+            sqlite3_free(errmsg);
+            return;
+        }
+
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log(aux::LOG_LEVEL::LOG_INFO))
+		{
+			session_log("sql test insert start");
+		}
+#endif
+        //value
+        int account_total = 30;
+        std::string account_temp = "9df518ee450ded0a659aeb4bc5bec636_1000000_1000_1231";
+        std::string account = "";
+        for(int i = 0; i < account_total; i++) {
+            account += (account_temp + "_");
+        }
+        account += account_temp;
+
+        //insert
+        int count = 10;
+        int seg = 5000;
+        int icount = 1;
+        std::string key_value[seg];
+        int time_value[seg];
+        while(icount <= count)
+        {
+            time_point const data_start = aux::time_now();
+            for(int i = 0; i < seg; i++) {
+
+                //key
+                std::vector<char> t_key = {'s','q','l','_', 't','e','s', 't'}; //len:13, + \0
+                char k_cc[8] = {'0','0','0','0','0','0','0'};
+                sprintf(k_cc, "%d", i+icount*seg);
+                for(int j = 0; j < 8; j++)
+                    t_key.push_back(k_cc[j]);
+                sha1_hash hash_temp = hasher(t_key).final();
+                key_value[i] = aux::toHex(hash_temp);
+
+                //time
+                time_value[i] = 1655769821 + i%90;
+            }
+            time_point const data_end = aux::time_now();
+            int const data_interval_ms = aux::numeric_cast<int>(total_milliseconds(data_end - data_start));
+#ifndef TORRENT_DISABLE_LOGGING
+		    if (should_log(aux::LOG_LEVEL::LOG_INFO))
+		    {
+			    session_log("%d round, data takes in: %d items, takes: %d ms" , icount, seg, data_interval_ms);
+		    }
+#endif
+            time_point const insert_start = aux::time_now();
+
+            sqlite3_exec(m_sqldb, "BEGIN TRANSACTION", NULL, NULL, &errmsg);
+
+            sqlite3_stmt * stmt;
+            std::string insert_sql_temp = "INSERT INTO SQL_TEST VALUES (?, ?, ?)";
+            ok = sqlite3_prepare_v2(m_sqldb, insert_sql_temp.c_str(), -1, &stmt, nullptr);
+            if (ok != SQLITE_OK) {
+                return;
+            }
+            for(int i = 0; i < seg; i++) {
+                sqlite3_bind_text(stmt, 1, key_value[i].c_str(), key_value[i].size(), nullptr);
+                sqlite3_bind_int(stmt, 2, time_value[i]);
+                sqlite3_bind_text(stmt, 3, account.c_str(), account.size(), nullptr);
+                ok = sqlite3_step(stmt);
+                if (ok != SQLITE_DONE) {
+                    return;
+                }
+                sqlite3_reset(stmt);
+            }
+
+            sqlite3_exec(m_sqldb, "COMMIT TRANSACTION", NULL, NULL, &errmsg);
+
+            sqlite3_finalize(stmt);
+
+            time_point const insert_end = aux::time_now();
+            int const insert_interval_ms = aux::numeric_cast<int>(total_milliseconds(insert_end - insert_start));
+#ifndef TORRENT_DISABLE_LOGGING
+		    if (should_log(aux::LOG_LEVEL::LOG_INFO))
+		    {
+			    session_log("%d round, data insert takes in: %d items, takes: %d ms" , icount, seg, insert_interval_ms);
+		    }
+#endif
+            icount++;
+        }
+
+        //select test
+        time_point const select_start = aux::time_now();
+        std::string select_sql = "SELECT * FROM SQL_TEST WHERE time= 1655769862;";
+        sqlite3_stmt * stmt_select;
+        ok = sqlite3_prepare_v2(m_sqldb, select_sql.c_str(), -1, &stmt_select, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt_select) == SQLITE_ROW;) {
+                const unsigned char *key_char = sqlite3_column_text(stmt_select, 0);
+                auto key_size = sqlite3_column_bytes(stmt_select, 0);
+                std::string key_str(key_char, key_char + key_size);
+            }
+        }
+        time_point const select_end = aux::time_now();
+        int const sql_interval_ms = aux::numeric_cast<int>(total_microseconds(select_end - select_start));
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log(aux::LOG_LEVEL::LOG_INFO))
+		{
+			session_log("sql select test takes: %d us" , sql_interval_ms);
+		}
+#endif
+
+        //insert test
+        int insert_test_number = 100;
+        for(int i = 0; i < insert_test_number; i++) {
+            //key
+            std::vector<char> t_key = {'s','q','l','_', 'i','n','s', 'e', 'r', 't'}; //len:13, + \0
+            char k_cc[8] = {'0','0','0','0','0','0','0'};
+            sprintf(k_cc, "%d", i);
+            for(int j = 0; j < 8; j++)
+                t_key.push_back(k_cc[j]);
+            sha1_hash hash_temp = hasher(t_key).final();
+            key_value[i] = aux::toHex(hash_temp);
+
+            //time
+            time_value[i] = 1655769821 + i%9000;
+        }
+
+        time_point const insert_start_test = aux::time_now();
+
+        sqlite3_exec(m_sqldb, "BEGIN TRANSACTION", NULL, NULL, &errmsg);
+
+        sqlite3_stmt * stmt_insert;
+        std::string insert_sql_temp = "INSERT INTO SQL_TEST VALUES (?, ?, ?)";
+        ok = sqlite3_prepare_v2(m_sqldb, insert_sql_temp.c_str(), -1, &stmt_insert, nullptr);
+        if (ok != SQLITE_OK) {
+            return;
+        }
+        for(int i = 0; i < insert_test_number; i++) {
+            sqlite3_bind_text(stmt_insert, 1, key_value[i].c_str(), key_value[i].size(), nullptr);
+            sqlite3_bind_int(stmt_insert, 2, time_value[i]);
+            sqlite3_bind_text(stmt_insert, 3, account.c_str(), account.size(), nullptr);
+            ok = sqlite3_step(stmt_insert);
+            if (ok != SQLITE_DONE) {
+                return;
+            }
+            sqlite3_reset(stmt_insert);
+        }
+
+        sqlite3_exec(m_sqldb, "COMMIT TRANSACTION", NULL, NULL, &errmsg);
+        sqlite3_finalize(stmt_insert);
+
+        time_point const insert_end_test = aux::time_now();
+        int const insert_interval_test = aux::numeric_cast<int>(total_milliseconds(insert_end_test - insert_start_test));
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log(aux::LOG_LEVEL::LOG_INFO))
+		{
+		    session_log(" data insert %d items, test takes into: %d items, takes: %d ms" , insert_test_number, seg*count, insert_interval_test);
+		}
+#endif
+
+    }
+
 	session_params session_impl::session_state(save_state_flags_t const flags) const
 	{
 		TORRENT_ASSERT(is_single_thread());
@@ -713,8 +906,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		TORRENT_ASSERT(is_single_thread());
 
 		if (m_abort) return;
-
-		std::cout << "ABORT CALLED Start" << std::endl;
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log(" *** ABORT CALLED ***");
@@ -783,8 +974,6 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 		}
 
 		m_alerts.emplace_alert<session_stop_over_alert>(true);
-
-		std::cout << "ABORT CALLED Over" << std::endl;
 	}
 
 	void session_impl::abort_stage2() noexcept

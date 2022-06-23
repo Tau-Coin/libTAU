@@ -405,6 +405,8 @@ namespace libTAU {
 
         void crash_test();
 
+        void sql_test();
+
 		// This call dereferences the reference count of the specified peer
 		// class. When creating a peer class it's automatically referenced by 1.
 		// If you want to recycle a peer class, you may call this function. You

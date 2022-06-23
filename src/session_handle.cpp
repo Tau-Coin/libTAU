@@ -448,6 +448,11 @@ namespace libTAU {
 		return sync_call(&session_impl::crash_test);
     }
 
+    void session_handle::sql_test()
+    {
+		return sync_call(&session_impl::sql_test);
+    }
+
 	void session_handle::set_ip_filter(ip_filter f)
 	{
 		std::shared_ptr<ip_filter> copy = std::make_shared<ip_filter>(std::move(f));

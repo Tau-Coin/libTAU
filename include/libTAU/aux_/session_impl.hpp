@@ -692,6 +692,8 @@ namespace aux {
 
             void crash_test();
 
+            void sql_test();
+
 		private:
 
 			// return the settings value for int setting "n", if the value is
