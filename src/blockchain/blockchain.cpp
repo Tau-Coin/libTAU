@@ -2458,7 +2458,7 @@ namespace libTAU::blockchain {
             log(LOG_INFO, "INFO: Chain id[%s] Cache voting block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-                    , pk->bytes, sk->bytes, votingBlockCacheEntry.get_entry()), 1, 8, 100, salt, *pk, true);
+                    , pk->bytes, sk->bytes, votingBlockCacheEntry.get_entry()), 1, 8, 24, salt, *pk, true);
         }
     }
 
@@ -3032,7 +3032,7 @@ namespace libTAU::blockchain {
             log(LOG_INFO, "INFO: Chain id[%s] Cache gossip peers salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
 
             dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-                    , pk->bytes, sk->bytes, gossipCachePeersEntry.get_entry()), 1, 8, 100, salt, *pk, true);
+                    , pk->bytes, sk->bytes, gossipCachePeersEntry.get_entry()), 1, 8, 24, salt, *pk, true);
         }
     }
 
