@@ -108,6 +108,16 @@ namespace libTAU::dht {
 			, std::string salt = std::string()
 			, std::int64_t timestamp = -1);
 
+		// key is a 32-byte binary string, the public key to look up.
+		// the salt is optional
+		void get_item(public_key const& key
+			, std::function<void(item const&, bool)> cb
+			, std::int8_t alpha
+			, std::int8_t invoke_window
+			, std::int8_t invoke_limit
+			, std::string salt = std::string()
+			, std::int64_t timestamp = -1);
+
 		// for immutable_item.
 		// the callback function will be called when put operation is done.
 		// the int parameter indicates the success numbers of put operation.
@@ -160,11 +170,22 @@ namespace libTAU::dht {
 			, public_key const& to = public_key()
 			, bool cache = true);
 
+		// for mutable_item.
+		// the data_cb will be called when we get authoritative mutable_item,
+		// the cb is same as put immutable_item.
+		void put_item(public_key const& key
+			, entry const& data
+			, std::function<void(item const&, int)> cb
+			, std::int8_t alpha
+			, std::int8_t beta
+			, std::int8_t invoke_limit
+			, std::string salt = std::string());
+
 		// relay protocol
 		void send(public_key const& to
 			, entry const& payload
 			, std::int8_t alpha
-			, std::int8_t beta
+			, std::int8_t invoke_window
 			, std::int8_t invoke_limit
 			, std::function<void(entry const&, int)> cb);
 

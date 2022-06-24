@@ -488,6 +488,30 @@ namespace libTAU::dht {
 				, timestamp, std::bind(&get_mutable_item_callback, _1, _2, ctx, cb));
 	}
 
+	void dht_tracker::get_item(public_key const& key
+		, std::function<void(item const&, bool)> cb
+		, std::int8_t alpha
+		, std::int8_t invoke_window
+		, std::int8_t invoke_limit
+		, std::string salt
+		, std::int64_t timestamp)
+	{
+		// firstly get mutable item from local dht storage.
+		bool const found = get_local_mutable_item(key, cb, salt);
+		if (found)
+		{
+			// ignore result
+		}
+
+		/*
+		auto ctx = std::make_shared<get_mutable_item_ctx>(int(m_nodes.size()));
+		for (auto& n : m_nodes)
+			n.second.dht.get_item(key, salt
+				, timestamp, alpha, invoke_window, invoke_limit
+				, std::bind(&get_mutable_item_callback, _1, _2, ctx, cb));
+		*/
+	}
+
 	void dht_tracker::put_item(entry const& data
 		, std::function<void(int)> cb
 		, public_key const& to)
@@ -568,6 +592,23 @@ namespace libTAU::dht {
 				, std::bind(&tau_put_mutable_item_callback, _1, _2, ctx, cb)
 				, data_cb
 				, std::bind(&tau_put_mutable_item_nodes_callback, _1, ctx));
+	}
+
+	void dht_tracker::put_item(public_key const& key
+		, entry const& data
+		, std::function<void(item const&, int)> cb
+		, std::int8_t alpha
+		, std::int8_t invoke_window
+		, std::int8_t invoke_limit
+		, std::string salt)
+	{
+		/*
+		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
+		for (auto& n : m_nodes)
+			n.second.dht.put_item(key, salt, data
+				, alpha, invoke_window, invoke_limit
+				, std::bind(&put_mutable_item_callback, _1, _2, ctx, cb));
+		*/
 	}
 
 	// relay protocol
