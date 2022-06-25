@@ -417,6 +417,18 @@ namespace libTAU {
 //            m_refresh_timer.cancel();
 //        }
 
+        void communication::publish(const std::string& key, const std::string& value) {
+
+        }
+
+        void communication::subscribe(const dht::public_key &peer, const std::string& key) {
+
+        }
+
+        void communication::send_to_peer(const dht::public_key &peer, const std::string& data) {
+
+        }
+
         bool communication::add_new_friend(const dht::public_key &pubkey) {
             if (pubkey == dht::public_key()) {
                 log(LOG_ERR, "ERROR: Public key is empty.");

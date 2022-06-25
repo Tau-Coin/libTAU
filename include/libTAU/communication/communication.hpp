@@ -90,6 +90,15 @@ namespace libTAU {
             // set main loop time interval (ms)
 //            void set_loop_time_interval(int milliseconds);
 
+            // key length < 20 bytes, value length < 1k
+            void publish(const std::string& key, const std::string& value);
+
+            // key length < 20 bytes
+            void subscribe(const dht::public_key &peer, const std::string& key);
+
+            // data length < 1k
+            void send_to_peer(const dht::public_key &peer, const std::string& data);
+
             // add new friend in memory & db
             bool add_new_friend(const dht::public_key &pubkey);
 
