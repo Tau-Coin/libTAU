@@ -417,16 +417,17 @@ namespace libTAU {
 //            m_refresh_timer.cancel();
 //        }
 
-        void communication::publish(const std::string& key, const std::string& value) {
-
+        void communication::publish_my_data(const std::string& key, const std::string& value) {
+            publish(key, value);
         }
 
-        void communication::subscribe(const dht::public_key &peer, const std::string& key) {
-
+        void communication::subscribe_from_peer(const dht::public_key &peer, const std::string& key) {
+            subscribe(peer, key);
         }
 
         void communication::send_to_peer(const dht::public_key &peer, const std::string& data) {
-
+            common::event_entry eventEntry(data, get_current_time());
+            send_to(peer, eventEntry.get_entry());
         }
 
         bool communication::add_new_friend(const dht::public_key &pubkey) {
@@ -980,9 +981,9 @@ namespace libTAU {
 //        }
 
         // callback for dht_mutable_get
-//        void communication::get_mutable_callback(dht::item const& i
-//                , bool const authoritative)
-//        {
+        void communication::get_mutable_callback(dht::item const& i
+                , bool const authoritative)
+        {
 //            TORRENT_ASSERT(i.is_mutable());
 //
 //            // construct mutable data wrapper from entry
@@ -1002,7 +1003,7 @@ namespace libTAU {
 ////
 ////                process_signal(onlineSignal, i.pk());
 //            }
-//        }
+        }
 
         // key is a 32-byte binary string, the public key to look up.
         // the salt is optional
@@ -1014,7 +1015,7 @@ namespace libTAU {
 //                    , this, _1, _2), std::move(salt), t.value);
 //        }
 
-//        void communication::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes, dht::public_key const& peer) {
+        void communication::on_dht_put_mutable_item(const dht::item &i, int n) {
 //            log(true, "INFO: peer[%s], value[%s]", aux::toHex(peer.bytes).c_str(), i.value().to_string().c_str());
 //
 //            auto salt = i.salt();
@@ -1037,7 +1038,7 @@ namespace libTAU {
 //                    }
 //                }
 //            }
-//        }
+        }
 
         void communication::on_dht_relay_mutable_item(const entry &payload,
                                                       const std::vector<std::pair<dht::node_entry, bool>> &nodes,
@@ -1109,19 +1110,23 @@ namespace libTAU {
 //            }
 //        } // anonymous namespace
 
-//        void communication::send_to(const dht::public_key &peer, const entry &data) {
-//            dht::public_key * pk = m_ses.pubkey();
-//            dht::secret_key * sk = m_ses.serkey();
-//
-//            // salt is y pubkey when publish signal
-//            auto salt = make_salt(peer);
-//
-//            log("INFO: Send to peer[%s], salt[%s], data[%s]", aux::toHex(peer.bytes).c_str(),
-//                aux::toHex(salt).c_str(), data.to_string().c_str());
-//
-//            dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-//                    , pk->bytes, sk->bytes, data), salt, peer);
-//        }
+        void communication::publish(const std::string& salt, const std::string& data) {
+            dht::public_key * pk = m_ses.pubkey();
+            dht::secret_key * sk = m_ses.serkey();
+
+            log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.c_str());
+
+            dht_put_mutable_item(pk->bytes, data, 1, 8, 24, salt);
+        }
+
+        void communication::subscribe(const dht::public_key &peer, const std::string &salt) {
+            dht::public_key * pk = m_ses.pubkey();
+            dht::secret_key * sk = m_ses.serkey();
+
+            if (!m_ses.dht()) return;
+            m_ses.dht()->get_item(*pk, std::bind(&communication::get_mutable_callback
+                    , this, _1, _2), std::move(salt));
+        }
 
         void communication::send_to(const dht::public_key &peer, const entry &data) {
             if (!m_ses.dht()) return;
@@ -1137,18 +1142,14 @@ namespace libTAU {
 //                    , target, _1));
 //        }
 
-//        void communication::dht_put_mutable_item(std::array<char, 32> key
-//                , std::function<void(entry&, std::array<char,64>&
-//                , std::int64_t&, std::string const&)> cb
-//                , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
-//                , std::string salt, const dht::public_key &peer, bool cache)
-//        {
-//            if (!m_ses.dht()) return;
-//            m_ses.dht()->put_item(dht::public_key(key.data())
-//                    , std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2, peer)
-//                    , std::bind(&put_mutable_callback, _1, std::move(cb))
-//                    , alpha, beta, invoke_limit, salt, peer, cache);
-//        }
+        void communication::dht_put_mutable_item(std::array<char, 32> key, entry const& data
+                , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit, std::string salt)
+        {
+            if (!m_ses.dht()) return;
+            m_ses.dht()->put_item(dht::public_key(key.data()), data
+                    , std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2)
+                    , alpha, beta, invoke_limit, std::move(salt));
+        }
 
         void communication::send_all_unconfirmed_messages(const dht::public_key &peer) {
             // find out missing messages and confirmation root
