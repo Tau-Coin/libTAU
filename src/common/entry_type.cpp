@@ -249,84 +249,84 @@ namespace libTAU::common {
         return e;
     }
 
-    friend_info_request_entry::friend_info_request_entry() {
-        auto et = get_real_payload_entry();
-        std::string encode;
-        bencode(std::back_inserter(encode), et);
-        m_real_payload_hash = dht::item_target_id(encode);
-    }
-
-    friend_info_request_entry::friend_info_request_entry(const entry &e) {
-        // time
-        if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
-        {
-            m_timestamp = i->integer();
-        }
-
-        auto et = get_real_payload_entry();
-        std::string encode;
-        bencode(std::back_inserter(encode), et);
-        m_real_payload_hash = dht::item_target_id(encode);
-    }
-
-    entry friend_info_request_entry::get_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-        e[entry_type] = entry(data_type_id);
-        // time
-        e[entry_time] = entry(m_timestamp);
-
-        return e;
-    }
-
-    entry friend_info_request_entry::get_real_payload_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-        e[entry_type] = entry(data_type_id);
-
-        return e;
-    }
-
-    friend_info_entry::friend_info_entry(const entry &e) {
-        // friend info
-        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
-        {
-            std::string friend_info = i->string();
-            m_friend_info = aux::bytes(friend_info.begin(), friend_info.end());
-        }
-        // time
-        if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
-        {
-            m_timestamp = i->integer();
-        }
-
-        auto et = get_real_payload_entry();
-        std::string encode;
-        bencode(std::back_inserter(encode), et);
-        m_real_payload_hash = dht::item_target_id(encode);
-    }
-
-    entry friend_info_entry::get_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-        e[entry_type] = entry(data_type_id);
-        // friend info
-        e[entry_value] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
-        // time
-        e[entry_time] = entry(m_timestamp);
-
-        return e;
-    }
-
-    entry friend_info_entry::get_real_payload_entry() const {
-        entry e(entry::dictionary_t);
-        // data type id
-        e[entry_type] = entry(data_type_id);
-        // friend info
-        e[entry_value] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
-
-        return e;
-    }
+//    friend_info_request_entry::friend_info_request_entry() {
+//        auto et = get_real_payload_entry();
+//        std::string encode;
+//        bencode(std::back_inserter(encode), et);
+//        m_real_payload_hash = dht::item_target_id(encode);
+//    }
+//
+//    friend_info_request_entry::friend_info_request_entry(const entry &e) {
+//        // time
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
+//        {
+//            m_timestamp = i->integer();
+//        }
+//
+//        auto et = get_real_payload_entry();
+//        std::string encode;
+//        bencode(std::back_inserter(encode), et);
+//        m_real_payload_hash = dht::item_target_id(encode);
+//    }
+//
+//    entry friend_info_request_entry::get_entry() const {
+//        entry e(entry::dictionary_t);
+//        // data type id
+//        e[entry_type] = entry(data_type_id);
+//        // time
+//        e[entry_time] = entry(m_timestamp);
+//
+//        return e;
+//    }
+//
+//    entry friend_info_request_entry::get_real_payload_entry() const {
+//        entry e(entry::dictionary_t);
+//        // data type id
+//        e[entry_type] = entry(data_type_id);
+//
+//        return e;
+//    }
+//
+//    friend_info_entry::friend_info_entry(const entry &e) {
+//        // friend info
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
+//        {
+//            std::string friend_info = i->string();
+//            m_friend_info = aux::bytes(friend_info.begin(), friend_info.end());
+//        }
+//        // time
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
+//        {
+//            m_timestamp = i->integer();
+//        }
+//
+//        auto et = get_real_payload_entry();
+//        std::string encode;
+//        bencode(std::back_inserter(encode), et);
+//        m_real_payload_hash = dht::item_target_id(encode);
+//    }
+//
+//    entry friend_info_entry::get_entry() const {
+//        entry e(entry::dictionary_t);
+//        // data type id
+//        e[entry_type] = entry(data_type_id);
+//        // friend info
+//        e[entry_value] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
+//        // time
+//        e[entry_time] = entry(m_timestamp);
+//
+//        return e;
+//    }
+//
+//    entry friend_info_entry::get_real_payload_entry() const {
+//        entry e(entry::dictionary_t);
+//        // data type id
+//        e[entry_type] = entry(data_type_id);
+//        // friend info
+//        e[entry_value] = entry(std::string(m_friend_info.begin(), m_friend_info.end()));
+//
+//        return e;
+//    }
 
     event_entry::event_entry(const entry &e) {
         // value

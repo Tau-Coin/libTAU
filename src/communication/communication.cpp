@@ -298,7 +298,7 @@ namespace libTAU {
 
                     break;
                 }
-                case common::friend_info_request_entry::data_type_id: {
+                case common::event_entry::data_type_id: {
                     // time
                     if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
                     {
@@ -324,69 +324,106 @@ namespace libTAU {
 
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
-//                    auto it = m_last_same_entry_time[peer].find(std::make_shared<common::friend_info_request_entry>(payload));
-//                    if (it != m_last_same_entry_time[peer].end()) {
-//                        if (now > it->second + communication_same_response_interval) {
-//                            m_last_same_entry_time[peer].erase(it);
-//                        } else {
-//                            log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
-//                            break;
+                    common::event_entry eventEntry(payload);
+
+                    // 通知用户新的user event
+                    m_ses.alerts().emplace_alert<communication_user_event_alert>(peer, eventEntry.m_value);
+
+                    if (!is_cache) {
+                        send_all_unconfirmed_messages(peer);
+                    }
+
+                    break;
+                }
+//                case common::friend_info_request_entry::data_type_id: {
+//                    // time
+//                    if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
+//                    {
+//                        timestamp = i->integer();
+//                        if (timestamp > m_last_communication_time[peer]) {
+//                            update_communication_time(peer, timestamp);
 //                        }
-//                    } else {
-//                        m_last_same_entry_time[peer].emplace(std::make_shared<common::friend_info_request_entry>(payload), now);
 //                    }
-
-                    auto pubkey = *m_ses.pubkey();
-                    auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
-                    if (!friend_info.empty()) {
-                        common::friend_info_entry e(friend_info);
-                        send_to(peer, e.get_entry());
-                    }
-
-                    if (!is_cache) {
-                        send_all_unconfirmed_messages(peer);
-                    }
-
-                    break;
-                }
-                case common::friend_info_entry::data_type_id: {
-                    // time
-                    if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
-                    {
-                        timestamp = i->integer();
-                        if (timestamp > m_last_communication_time[peer]) {
-                            update_communication_time(peer, timestamp);
-                        }
-                    }
-
-                    {
-                        std::string encode;
-                        bencode(std::back_inserter(encode), payload);
-
-                        auto& entry_cache = m_entry_cache[peer];
-                        auto it = entry_cache.find(encode);
-                        if (it != entry_cache.end()) {
-                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-                            return;
-                        } else {
-                            entry_cache[encode] = now;
-                        }
-                    }
-
-                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
-                    common::friend_info_entry e(payload);
-                    if (!e.m_friend_info.empty()) {
-                        // 通知用户新的friend info
-                        m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer, e.m_friend_info);
-                    }
-
-                    if (!is_cache) {
-                        send_all_unconfirmed_messages(peer);
-                    }
-
-                    break;
-                }
+//
+//                    {
+//                        std::string encode;
+//                        bencode(std::back_inserter(encode), payload);
+//
+//                        auto& entry_cache = m_entry_cache[peer];
+//                        auto it = entry_cache.find(encode);
+//                        if (it != entry_cache.end()) {
+//                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+//                            return;
+//                        } else {
+//                            entry_cache[encode] = now;
+//                        }
+//                    }
+//
+//                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+//
+////                    auto it = m_last_same_entry_time[peer].find(std::make_shared<common::friend_info_request_entry>(payload));
+////                    if (it != m_last_same_entry_time[peer].end()) {
+////                        if (now > it->second + communication_same_response_interval) {
+////                            m_last_same_entry_time[peer].erase(it);
+////                        } else {
+////                            log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
+////                            break;
+////                        }
+////                    } else {
+////                        m_last_same_entry_time[peer].emplace(std::make_shared<common::friend_info_request_entry>(payload), now);
+////                    }
+//
+//                    auto pubkey = *m_ses.pubkey();
+//                    auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
+//                    if (!friend_info.empty()) {
+//                        common::friend_info_entry e(friend_info);
+//                        send_to(peer, e.get_entry());
+//                    }
+//
+//                    if (!is_cache) {
+//                        send_all_unconfirmed_messages(peer);
+//                    }
+//
+//                    break;
+//                }
+//                case common::friend_info_entry::data_type_id: {
+//                    // time
+//                    if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
+//                    {
+//                        timestamp = i->integer();
+//                        if (timestamp > m_last_communication_time[peer]) {
+//                            update_communication_time(peer, timestamp);
+//                        }
+//                    }
+//
+//                    {
+//                        std::string encode;
+//                        bencode(std::back_inserter(encode), payload);
+//
+//                        auto& entry_cache = m_entry_cache[peer];
+//                        auto it = entry_cache.find(encode);
+//                        if (it != entry_cache.end()) {
+//                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+//                            return;
+//                        } else {
+//                            entry_cache[encode] = now;
+//                        }
+//                    }
+//
+//                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+//
+//                    common::friend_info_entry e(payload);
+//                    if (!e.m_friend_info.empty()) {
+//                        // 通知用户新的friend info
+//                        m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer, e.m_friend_info);
+//                    }
+//
+//                    if (!is_cache) {
+//                        send_all_unconfirmed_messages(peer);
+//                    }
+//
+//                    break;
+//                }
                 default: {
                 }
             }
@@ -417,7 +454,7 @@ namespace libTAU {
 //            m_refresh_timer.cancel();
 //        }
 
-        void communication::publish_my_data(const std::string& key, const std::string& value) {
+        void communication::publish_data(const std::string& key, const std::string& value) {
             publish(key, value);
         }
 
@@ -482,21 +519,21 @@ namespace libTAU {
             return true;
         }
 
-        void communication::request_friend_info(const dht::public_key &peer) {
-            common::friend_info_request_entry friendInfoRequestEntry(get_current_time());
-            send_to(peer, friendInfoRequestEntry.get_entry());
-        }
-
-        aux::bytes communication::get_friend_info(const dht::public_key &pubkey) {
-            const auto &pk = m_ses.pubkey();
-            return m_message_db->get_friend_info(std::make_pair(*pk, pubkey));
-        }
-
-        bool communication::update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info) {
-            log(LOG_INFO, "INFO: Update peer[%s] friend info[%s]", aux::toHex(pubkey.bytes).c_str(), aux::toHex(friend_info).c_str());
-            const auto &pk = m_ses.pubkey();
-            return m_message_db->save_friend_info(std::make_pair(*pk, pubkey), friend_info);
-        }
+//        void communication::request_friend_info(const dht::public_key &peer) {
+//            common::friend_info_request_entry friendInfoRequestEntry(get_current_time());
+//            send_to(peer, friendInfoRequestEntry.get_entry());
+//        }
+//
+//        aux::bytes communication::get_friend_info(const dht::public_key &pubkey) {
+//            const auto &pk = m_ses.pubkey();
+//            return m_message_db->get_friend_info(std::make_pair(*pk, pubkey));
+//        }
+//
+//        bool communication::update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info) {
+//            log(LOG_INFO, "INFO: Update peer[%s] friend info[%s]", aux::toHex(pubkey.bytes).c_str(), aux::toHex(friend_info).c_str());
+//            const auto &pk = m_ses.pubkey();
+//            return m_message_db->save_friend_info(std::make_pair(*pk, pubkey), friend_info);
+//        }
 
         bool communication::add_new_message(const message &msg, bool post_alert) {
             add_new_message(msg.receiver(), msg, post_alert);
@@ -984,6 +1021,10 @@ namespace libTAU {
         void communication::get_mutable_callback(dht::item const& i
                 , bool const authoritative)
         {
+            // 通知用户新的user event
+            if (!i.empty()) {
+                m_ses.alerts().emplace_alert<communication_user_event_alert>(i.pk(), i.value().string());
+            }
 //            TORRENT_ASSERT(i.is_mutable());
 //
 //            // construct mutable data wrapper from entry

@@ -436,82 +436,82 @@ namespace libTAU::common {
         aux::bytes m_levenshtein_array;
     };
 
-    struct TORRENT_EXPORT friend_info_request_entry final : communication_entry_base {
-        // data type id
-        static inline constexpr std::int64_t data_type_id = 52;
-
-        friend_info_request_entry();
-
-        // @param Construct with entry
-        explicit friend_info_request_entry(const entry& e);
-
-        explicit friend_info_request_entry(int64_t mTimestamp) {
-            m_timestamp = mTimestamp;
-
-            auto et = get_real_payload_entry();
-            std::string encode;
-            bencode(std::back_inserter(encode), et);
-            m_real_payload_hash = dht::item_target_id(encode);
-        }
-
-        std::int64_t get_data_type_id() const override { return data_type_id; }
-
-        // @returns the corresponding entry
-        entry get_entry() const override;
-
-        // @returns the corresponding entry
-        entry get_real_payload_entry() const override;
-
-        void set_timestamp(std::int64_t t) override {
-            m_timestamp = t;
-        }
-
-        bool operator<(const friend_info_request_entry &rhs) const {
-            return false;
-        }
-    };
-
-    struct TORRENT_EXPORT friend_info_entry final : communication_entry_base {
-        // data type id
-        static inline constexpr std::int64_t data_type_id = 53;
-
-        // @param Construct with entry
-        explicit friend_info_entry(const entry& e);
-
-        explicit friend_info_entry(aux::bytes mFriendInfo) : m_friend_info(std::move(mFriendInfo)) {
-            auto et = get_real_payload_entry();
-            std::string encode;
-            bencode(std::back_inserter(encode), et);
-            m_real_payload_hash = dht::item_target_id(encode);
-        }
-
-        friend_info_entry(aux::bytes mFriendInfo, int64_t mTimestamp) : m_friend_info(std::move(mFriendInfo)) {
-            m_timestamp = mTimestamp;
-
-            auto et = get_real_payload_entry();
-            std::string encode;
-            bencode(std::back_inserter(encode), et);
-            m_real_payload_hash = dht::item_target_id(encode);
-        }
-
-        std::int64_t get_data_type_id() const override { return data_type_id; }
-
-        // @returns the corresponding entry
-        entry get_entry() const override;
-
-        // @returns the corresponding entry
-        entry get_real_payload_entry() const override;
-
-        void set_timestamp(std::int64_t t) override {
-            m_timestamp = t;
-        }
-
-        bool operator<(const friend_info_entry &rhs) const {
-            return m_friend_info < rhs.m_friend_info;
-        }
-
-        aux::bytes m_friend_info;
-    };
+//    struct TORRENT_EXPORT friend_info_request_entry final : communication_entry_base {
+//        // data type id
+//        static inline constexpr std::int64_t data_type_id = 52;
+//
+//        friend_info_request_entry();
+//
+//        // @param Construct with entry
+//        explicit friend_info_request_entry(const entry& e);
+//
+//        explicit friend_info_request_entry(int64_t mTimestamp) {
+//            m_timestamp = mTimestamp;
+//
+//            auto et = get_real_payload_entry();
+//            std::string encode;
+//            bencode(std::back_inserter(encode), et);
+//            m_real_payload_hash = dht::item_target_id(encode);
+//        }
+//
+//        std::int64_t get_data_type_id() const override { return data_type_id; }
+//
+//        // @returns the corresponding entry
+//        entry get_entry() const override;
+//
+//        // @returns the corresponding entry
+//        entry get_real_payload_entry() const override;
+//
+//        void set_timestamp(std::int64_t t) override {
+//            m_timestamp = t;
+//        }
+//
+//        bool operator<(const friend_info_request_entry &rhs) const {
+//            return false;
+//        }
+//    };
+//
+//    struct TORRENT_EXPORT friend_info_entry final : communication_entry_base {
+//        // data type id
+//        static inline constexpr std::int64_t data_type_id = 53;
+//
+//        // @param Construct with entry
+//        explicit friend_info_entry(const entry& e);
+//
+//        explicit friend_info_entry(aux::bytes mFriendInfo) : m_friend_info(std::move(mFriendInfo)) {
+//            auto et = get_real_payload_entry();
+//            std::string encode;
+//            bencode(std::back_inserter(encode), et);
+//            m_real_payload_hash = dht::item_target_id(encode);
+//        }
+//
+//        friend_info_entry(aux::bytes mFriendInfo, int64_t mTimestamp) : m_friend_info(std::move(mFriendInfo)) {
+//            m_timestamp = mTimestamp;
+//
+//            auto et = get_real_payload_entry();
+//            std::string encode;
+//            bencode(std::back_inserter(encode), et);
+//            m_real_payload_hash = dht::item_target_id(encode);
+//        }
+//
+//        std::int64_t get_data_type_id() const override { return data_type_id; }
+//
+//        // @returns the corresponding entry
+//        entry get_entry() const override;
+//
+//        // @returns the corresponding entry
+//        entry get_real_payload_entry() const override;
+//
+//        void set_timestamp(std::int64_t t) override {
+//            m_timestamp = t;
+//        }
+//
+//        bool operator<(const friend_info_entry &rhs) const {
+//            return m_friend_info < rhs.m_friend_info;
+//        }
+//
+//        aux::bytes m_friend_info;
+//    };
 
     struct TORRENT_EXPORT event_entry final : communication_entry_base {
         // data type id

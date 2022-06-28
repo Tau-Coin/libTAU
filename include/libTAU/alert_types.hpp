@@ -66,7 +66,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 54;
+	constexpr int num_alert_types = 56;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1445,6 +1445,44 @@ namespace libTAU {
 
         // syncing msg time
         std::int64_t time;
+    };
+
+    // this alert is posted when user info found in new mutable data.
+    struct TORRENT_EXPORT communication_user_info_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_user_info_alert(aux::stack_allocator& alloc, dht::public_key p, std::string t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_user_info_alert, 54, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // public key
+        dht::public_key peer;
+
+        // user info
+        std::string user_info;
+    };
+
+    // this alert is posted when user event found in new mutable data.
+    struct TORRENT_EXPORT communication_user_event_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_user_event_alert(aux::stack_allocator& alloc, dht::public_key p, std::string t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_user_event_alert, 55, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // public key
+        dht::public_key peer;
+
+        // user event
+        std::string user_event;
     };
 
 #undef TORRENT_DEFINE_ALERT_IMPL

@@ -1754,4 +1754,32 @@ namespace {
 #endif
     }
 
+    communication_user_info_alert::communication_user_info_alert(aux::stack_allocator&
+            , dht::public_key p, std::string t)
+            : peer(p), user_info(std::move(t))
+    {}
+
+    std::string communication_user_info_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        return "Alert: peer:" + aux::toHex(peer.bytes) + " user info: " + user_info;
+#endif
+    }
+
+    communication_user_event_alert::communication_user_event_alert(aux::stack_allocator&
+            , dht::public_key p, std::string t)
+            : peer(p), user_event(std::move(t))
+    {}
+
+    std::string communication_user_event_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        return "Alert: peer:" + aux::toHex(peer.bytes) + " user event: " + user_event;
+#endif
+    }
+
 } // namespace libTAU

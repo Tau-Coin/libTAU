@@ -91,7 +91,7 @@ namespace libTAU {
 //            void set_loop_time_interval(int milliseconds);
 
             // key length < 20 bytes, value length < 1k
-            void publish_my_data(const std::string& key, const std::string& value);
+            void publish_data(const std::string& key, const std::string& value);
 
             // key length < 20 bytes
             void subscribe_from_peer(const dht::public_key &peer, const std::string& key);
@@ -105,14 +105,14 @@ namespace libTAU {
             // delete friend and all related data in memory & db
             bool delete_friend(const dht::public_key &pubkey);
 
-            // request friend info: device id/nickname/timestamp
-            void request_friend_info(const dht::public_key &peer);
-
-            // get friend info by public key
-            aux::bytes get_friend_info(const dht::public_key &pubkey);
-
-            // save friend info
-            bool update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info);
+//            // request friend info: device id/nickname/timestamp
+//            void request_friend_info(const dht::public_key &peer);
+//
+//            // get friend info by public key
+//            aux::bytes get_friend_info(const dht::public_key &pubkey);
+//
+//            // save friend info
+//            bool update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info);
 
             // add a new message
             bool add_new_message(const message& msg, bool post_alert = false);
