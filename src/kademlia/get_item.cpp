@@ -22,6 +22,15 @@ see LICENSE file.
 
 namespace libTAU { namespace dht {
 
+namespace {
+
+	std::string trim_tailing_zeros(std::string const& str)
+	{
+		return str.substr(0, str.find_last_not_of(char(0)) + 1);
+	}
+
+}
+
 void get_item::got_data(bdecode_node const& v,
 	public_key const& pk,
 	timestamp const ts,
@@ -80,6 +89,11 @@ void get_item::got_data(bdecode_node const& v,
 	item mutable_data(pk, salt_copy);
 	if (mutable_data.assign(v, salt_copy, ts, pk, sig))
 	{
+		if (m_timestamp != -1 && m_timestamp <= ts.value)
+		{
+			++m_got_items_count;
+		}
+
 		if (!mutable_data.empty())
 		{
 			m_data_callback(mutable_data, false);
@@ -157,7 +171,9 @@ bool get_item::invoke(observer_ptr o)
 	entry& a = e["a"];
 
 	e["q"] = "get";
-	a["target"] = target().to_string();
+	std::string raw = target().to_string();
+	std::string trim = trim_tailing_zeros(raw);
+	a["target"] = trim_tailing_zeros(target().to_string());
 	a["mutable"] = m_immutable ? 0 : 1;
 
 	if (!m_immutable)
@@ -195,6 +211,11 @@ void get_item::done()
 	}
 
 	find_data::done();
+}
+
+bool get_item::is_done() const
+{
+	return m_timestamp != -1 && m_got_items_count >= got_items_max_count;
 }
 
 void get_item_observer::reply(msg const& m, node_id const& from)

@@ -24,6 +24,11 @@ namespace dht {
 class get_item : public find_data
 {
 public:
+
+	// when getting enough items satisfied with the specified timestamp,
+	// done this traversal algorithm.
+	static constexpr int got_items_max_count = 1;
+
 	using data_callback = std::function<void(item const&, bool)>;
 
 	void got_data(bdecode_node const& v,
@@ -48,6 +53,8 @@ public:
 
 	virtual void start();
 
+	bool is_done() const override;
+
 	void set_timestamp(std::int64_t timestamp) { m_timestamp = timestamp; }
 
 protected:
@@ -61,6 +68,7 @@ protected:
 	bool m_immutable;
 
 	std::int64_t m_timestamp = -1;
+	int m_got_items_count = 0;
 };
 
 class get_item_observer : public find_data_observer

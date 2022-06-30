@@ -503,13 +503,11 @@ namespace libTAU::dht {
 			// ignore result
 		}
 
-		/*
 		auto ctx = std::make_shared<get_mutable_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
 			n.second.dht.get_item(key, salt
 				, timestamp, alpha, invoke_window, invoke_limit
 				, std::bind(&get_mutable_item_callback, _1, _2, ctx, cb));
-		*/
 	}
 
 	void dht_tracker::put_item(entry const& data
@@ -602,13 +600,22 @@ namespace libTAU::dht {
 		, std::int8_t invoke_limit
 		, std::string salt)
 	{
-		/*
 		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
 			n.second.dht.put_item(key, salt, data
 				, alpha, invoke_window, invoke_limit
 				, std::bind(&put_mutable_item_callback, _1, _2, ctx, cb));
-		*/
+	}
+
+	void dht_tracker::put_item(entry const& data
+		, std::function<void(item const&, int)> cb
+		, std::int8_t alpha
+		, std::int8_t invoke_window
+		, std::int8_t invoke_limit
+		, std::string salt)
+    {
+		public_key self(m_public_key.data());
+		put_item(self, data, cb, alpha, invoke_window, invoke_limit, salt);
 	}
 
 	// relay protocol

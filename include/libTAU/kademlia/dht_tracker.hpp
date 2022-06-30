@@ -181,6 +181,16 @@ namespace libTAU::dht {
 			, std::int8_t invoke_limit
 			, std::string salt = std::string());
 
+		// for mutable_item.
+		// the data_cb will be called when we get authoritative mutable_item,
+		// the cb is same as put immutable_item.
+		void put_item(entry const& data
+			, std::function<void(item const&, int)> cb
+			, std::int8_t alpha
+			, std::int8_t beta
+			, std::int8_t invoke_limit
+			, std::string salt = std::string());
+
 		// relay protocol
 		void send(public_key const& to
 			, entry const& payload

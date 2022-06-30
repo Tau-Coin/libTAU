@@ -145,6 +145,14 @@ public:
 		, std::int64_t timestamp
 		, std::function<void(item const&, bool)> f);
 
+	void get_item(public_key const& pk
+		, std::string const& salt
+		, std::int64_t timestamp
+		, std::int8_t alpha
+		, std::int8_t invoke_window
+		, std::int8_t invoke_limit
+		, std::function<void(item const&, bool)> f);
+
 	void put_item(sha256_hash const& target
 		, entry const& data
 		, public_key const& to
@@ -180,6 +188,14 @@ public:
 		, std::function<void(item const&, int)> f
 		, std::function<void(item&)> data_cb
 		, std::function<void(std::vector<std::pair<node_entry, bool>> const&)> ncb);
+
+	void put_item(public_key const& pk
+		, std::string const& salt
+		, entry const& data
+		, std::int8_t alpha
+		, std::int8_t invoke_window
+		, std::int8_t invoke_limit
+		, std::function<void(item const&, int)> f);
 
 	// relay protocol
 	void send(public_key const& to

@@ -55,6 +55,9 @@ namespace aux {
 		// get libTAU public key
 		dht::public_key pub_key() const { return m_pub_key; };
 
+		// get libTAU private key
+		dht::secret_key priv_key() const { return m_priv_key; };
+
 		// exchange key with libTAU private key.
 		std::array<char, 32> key_exchange(dht::public_key const& pk);
 

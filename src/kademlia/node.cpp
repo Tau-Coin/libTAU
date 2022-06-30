@@ -26,6 +26,7 @@ see LICENSE file.
 #include "libTAU/hex.hpp" // to_hex
 #endif
 
+#include <libTAU/aux_/common.h> // for utcTime()
 #include <libTAU/aux_/socket_io.hpp>
 #include <libTAU/session_status.hpp>
 #include "libTAU/bencode.hpp"
@@ -571,6 +572,32 @@ void node::get_item(public_key const& pk, std::string const& salt
 	ta->start();
 }
 
+void node::get_item(public_key const& pk, std::string const& salt
+	, std::int64_t timestamp, std::int8_t alpha, std::int8_t invoke_window
+	, std::int8_t invoke_limit, std::function<void(item const&, bool)> f)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
+	{
+		char hex_key[65];
+		char hex_salt[129]; // 64*2 + 1
+		aux::to_hex(pk.bytes, hex_key);
+		aux::to_hex(salt, hex_salt);
+		m_observer->log(dht_logger::node, "start getting for [k:%s, s:%s, beta:%d, limit:%d]"
+			, hex_key, hex_salt, invoke_window, invoke_limit);
+	}
+#endif
+
+	auto ta = std::make_shared<dht::get_item>(*this, pk, salt, std::move(f)
+		, find_data::nodes_callback());
+	ta->set_timestamp(timestamp);
+	ta->set_invoke_window(invoke_window);
+	ta->set_invoke_limit(invoke_limit);
+	// TODO: removed
+	ta->set_fixed_distance(256);
+	ta->start();
+}
+
 namespace {
 
 void put(std::vector<std::pair<node_entry, std::string>> const& nodes
@@ -599,6 +626,21 @@ void put_data_cb(item const& i, bool auth
 	}
 }
 
+void construct_mutable_item(item& i
+	, entry const& value
+	, span<char const> salt
+	, public_key const& pk
+	, secret_key const& sk)
+{
+	entry v = value;
+	std::vector<char> buf;
+	bencode(std::back_inserter(buf), v);
+	std::int64_t ts = libTAU::aux::utcTime();
+	dht::signature sign = sign_mutable_item(buf, salt
+		, dht::timestamp(ts), pk, sk);
+	i.assign(std::move(v), salt, dht::timestamp(ts), pk, sign);
+}
+
 } // namespace
 
 void node::put_item(sha256_hash const& target
@@ -614,6 +656,7 @@ void node::put_item(sha256_hash const& target
 	}
 #endif
 
+	/*
 	item i;
 	i.assign(data);
 	auto put_ta = std::make_shared<dht::put_data>(*this, target, to, std::bind(f, _2));
@@ -622,6 +665,7 @@ void node::put_item(sha256_hash const& target
 	auto ta = std::make_shared<dht::get_item>(*this, target
 		, get_item::data_callback(), std::bind(&put, _1, put_ta));
 	ta->start();
+	*/
 }
 
 void node::put_item(sha256_hash const& target
@@ -638,6 +682,7 @@ void node::put_item(sha256_hash const& target
 	}
 #endif
 
+	/*
 	item i;
 	i.assign(data);
 
@@ -646,6 +691,7 @@ void node::put_item(sha256_hash const& target
 	ta->set_direct_endpoints(eps);
 	ta->set_discard_response(true);
 	ta->start();
+	*/
 }
 
 void node::put_item(public_key const& pk
@@ -666,6 +712,7 @@ void node::put_item(public_key const& pk
 	}
 #endif
 
+	/*
 	item i(pk, salt);
 	data_cb(i);
 
@@ -673,6 +720,7 @@ void node::put_item(public_key const& pk
 	put_ta->set_data(std::move(i));
 
 	put_ta->start();
+	*/
 }
 
 void node::put_item(public_key const& pk
@@ -698,6 +746,7 @@ void node::put_item(public_key const& pk
 	}
 #endif
 
+	/*
 	item i(pk, salt);
 	data_cb(i);
 
@@ -710,6 +759,7 @@ void node::put_item(public_key const& pk
 	put_ta->set_fixed_distance(256);
 
 	put_ta->start();
+	*/
 }
 
 void node::put_item(public_key const& pk
@@ -736,6 +786,7 @@ void node::put_item(public_key const& pk
 	}
 #endif
 
+	/*
 	item i(pk, salt);
 	data_cb(i);
 
@@ -745,6 +796,42 @@ void node::put_item(public_key const& pk
 	put_ta->set_invoke_limit(invoke_limit);
 	put_ta->set_cache(cache);
 	put_ta->set_hit_limit(m_settings.get_int(settings_pack::dht_hit_limit));
+	// TODO: removed
+	put_ta->set_fixed_distance(256);
+
+	put_ta->start();
+	*/
+}
+
+void node::put_item(public_key const& pk
+	, std::string const& salt
+	, entry const& data
+	, std::int8_t alpha
+	, std::int8_t invoke_window
+	, std::int8_t invoke_limit
+	, std::function<void(item const&, int)> f)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_INFO))
+	{
+		char hex_key[65];
+		char hex_salt[129]; // 64*2 + 1
+		aux::to_hex(pk.bytes, hex_key);
+		aux::to_hex(salt, hex_salt);
+		m_observer->log(dht_logger::node
+			, "starting put for [ key: %s, salt:%s, invoke_window:%d, invoke-limit:%d]"
+			, hex_key, hex_salt, invoke_window, invoke_limit);
+	}
+#endif
+
+	item i(pk, salt);
+	construct_mutable_item(i, data, salt
+		, m_account_manager->pub_key(), m_account_manager->priv_key());
+
+	auto put_ta = std::make_shared<dht::put_data>(*this, item_target_id(salt, pk), f);
+	put_ta->set_data(std::move(i));
+	put_ta->set_invoke_window(invoke_window);
+	put_ta->set_invoke_limit(invoke_limit);
 	// TODO: removed
 	put_ta->set_fixed_distance(256);
 
@@ -1261,15 +1348,13 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 			{"salt", bdecode_node::string_t, 0, key_desc_t::optional},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
 			{"distance", bdecode_node::int_t, 0, key_desc_t::optional},
-			{"to", bdecode_node::string_t, public_key::len, key_desc_t::optional},
-			{"cache", bdecode_node::int_t, 0, key_desc_t::optional},
 		};
 
 		// attempt to parse the message
 		// also reject the message if it has any non-fatal encoding errors
 		// because put messages contain a signed value they must have correct bencoding
 		// otherwise the value will not round-trip without breaking the signature
-		bdecode_node msg_keys[11];
+		bdecode_node msg_keys[9];
 		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string)
 			|| arg_ent.has_soft_error(error_string))
 		{
@@ -1366,9 +1451,8 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 
 			TORRENT_ASSERT(signature::len == msg_keys[4].string_length());
 
-			bool const cache = msg_keys[10] && msg_keys[10].int_value() != 0;
 			timestamp item_ts;
-			if (!m_storage.get_mutable_item_timestamp(target, item_ts) && cache)
+			if (!m_storage.get_mutable_item_timestamp(target, item_ts))
 			{
 				m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
 					, m.addr.address());
@@ -1396,11 +1480,8 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 					return std::make_tuple(need_response, need_push);
 				}
 
-				if (cache)
-				{
-					m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
-						, m.addr.address());
-				}
+				m_storage.put_mutable_item(target, buf, sig, ts, pk, salt
+					, m.addr.address());
 			}
 
 			if (msg_keys[8])
@@ -1418,6 +1499,8 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		}
 		 */
 
+		// remove relay logic
+		/*
 		if (msg_keys[9])
 		{
 			node_id const receiver(msg_keys[9].string_ptr());
@@ -1435,7 +1518,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 				need_push = true;
 				reply["hit"] = 1;
 			}
-		}
+		}*/
 
 		// for multi online devices, another devices with the same node id
 		// may be in our routing table.
@@ -1448,7 +1531,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 	{
 		static key_desc_t const msg_desc[] = {
 			{"ts", bdecode_node::int_t, 0, key_desc_t::optional},
-			{"target", bdecode_node::string_t, 32, 0},
+			{"target", bdecode_node::string_t, 0, 0},
 			{"mutable", bdecode_node::int_t, 0, key_desc_t::optional},
 			{"want", bdecode_node::list_t, 0, key_desc_t::optional},
 			{"distance", bdecode_node::int_t, 0, key_desc_t::optional},
@@ -1466,7 +1549,19 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 		}
 
 		m_counters.inc_stats_counter(counters::dht_get_in);
-		sha256_hash const target(msg_keys[1].string_ptr());
+
+		span<char const> target_str;
+		if (msg_keys[1])
+			target_str = {msg_keys[1].string_ptr(), msg_keys[1].string_length()};
+		if (target_str.size() > 32)
+		{
+			m_counters.inc_stats_counter(counters::dht_invalid_put);
+			incoming_error(e, "target too big", 407);
+			return std::make_tuple(need_response, need_push);
+		}
+
+		sha256_hash target;
+		std::memcpy(&target[0], target_str.data(), target_str.size());
 
 //		std::fprintf(stderr, "%s GET target: %s\n"
 //			, msg_keys[1] ? "mutable":"immutable"
