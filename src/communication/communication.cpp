@@ -1152,21 +1152,14 @@ namespace libTAU {
 //        } // anonymous namespace
 
         void communication::publish(const std::string& salt, const std::string& data) {
-            dht::public_key * pk = m_ses.pubkey();
-            dht::secret_key * sk = m_ses.serkey();
-
             log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.c_str());
 
-            dht_put_mutable_item(pk->bytes, data, 1, 8, 24, salt);
+            dht_put_mutable_item(data, 1, 8, 24, salt);
         }
 
         void communication::subscribe(const dht::public_key &peer, const std::string &salt) {
-            dht::public_key * pk = m_ses.pubkey();
-            dht::secret_key * sk = m_ses.serkey();
-
             if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(*pk, std::bind(&communication::get_mutable_callback
-                    , this, _1, _2), std::move(salt));
+            m_ses.dht()->get_item(peer, std::bind(&communication::get_mutable_callback, self(), _1, _2), salt);
         }
 
         void communication::send_to(const dht::public_key &peer, const entry &data) {
@@ -1183,12 +1176,11 @@ namespace libTAU {
 //                    , target, _1));
 //        }
 
-        void communication::dht_put_mutable_item(std::array<char, 32> key, entry const& data
-                , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit, std::string salt)
+        void communication::dht_put_mutable_item(entry const& data, std::int8_t alpha, std::int8_t beta,
+                                                 std::int8_t invoke_limit, std::string salt)
         {
             if (!m_ses.dht()) return;
-            m_ses.dht()->put_item(dht::public_key(key.data()), data
-                    , std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2)
+            m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2)
                     , alpha, beta, invoke_limit, std::move(salt));
         }
 
