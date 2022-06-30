@@ -443,6 +443,18 @@ namespace libTAU {
 		return sync_call(&session_impl::restart_service);
 	}
 
+	// pause service
+	void session_handle::pause_service()
+	{
+		return sync_call(&session_impl::pause_service);
+	}
+
+	// resume service
+	void session_handle::resume_service()
+	{
+		return sync_call(&session_impl::resume_service);
+	}
+
     void session_handle::crash_test()
     {
 		return sync_call(&session_impl::crash_test);

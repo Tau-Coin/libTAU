@@ -426,6 +426,10 @@ namespace aux {
             //io_context
             void stop_service();
 
+            void pause_service();
+
+            void resume_service();
+
             void restart_service();
 
 			//communicaiton

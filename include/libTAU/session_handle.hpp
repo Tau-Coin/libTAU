@@ -403,6 +403,10 @@ namespace libTAU {
 
         void restart_service();
 
+        void pause_service();
+
+        void resume_service();
+
         void crash_test();
 
         void sql_test();

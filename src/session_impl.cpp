@@ -3010,17 +3010,30 @@ namespace {
 
     void session_impl::stop_service()
     {
-        //m_io_context.stop();
-        //std::this_thread::sleep_for(std::chrono::seconds(30));
         // TODO: coe to control timer interval when in 'doze' model
     }
 
     void session_impl::restart_service()
     {
-        //m_io_context.restart();
-        //m_io_context.run();
         // TODO: coe to control timer interval when in 'doze' model
-        // restart in dht, communication, blockchain, to timer cancel, make coe valid
+    }
+
+    void session_impl::pause_service()
+    {
+        // TODO: coe to control timer interval when in 'doze' model
+		if(m_blockchain)
+		{
+			m_blockchain->on_pause();
+		}
+    }
+
+    void session_impl::resume_service()
+    {
+        // TODO: coe to control timer interval when in 'doze' model
+		if(m_blockchain)
+		{
+			m_blockchain->on_resume();
+		}
     }
 
 	void session_impl::start_communication()
@@ -3221,22 +3234,28 @@ namespace {
 
 	void session_impl::get_friend_info(const dht::public_key& pubkey, std::vector<char>* info)
 	{
+        /*
 		if(m_communication)
 			*info = m_communication->get_friend_info(pubkey);
+        */
 	}
 
 	void session_impl::request_friend_info(const dht::public_key& pubkey)
 	{
+        /*
 		if(m_communication)
 			m_communication->request_friend_info(pubkey);
+        */
 	}
 
 	bool session_impl::update_friend_info(const dht::public_key& pubkey, aux::bytes friend_info)
 	{
+        /*
 		if(m_communication)
 			return m_communication->update_friend_info(pubkey, friend_info);
 		else
 			return false;
+        */
 	}
 
 	void session_impl::unset_chatting_friend()
