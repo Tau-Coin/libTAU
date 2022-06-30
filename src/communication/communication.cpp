@@ -1158,12 +1158,8 @@ namespace libTAU {
         }
 
         void communication::subscribe(const dht::public_key &peer, const std::string &salt) {
-            dht::public_key * pk = m_ses.pubkey();
-            dht::secret_key * sk = m_ses.serkey();
-
             if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(*pk, std::bind(&communication::get_mutable_callback
-                    , this, _1, _2), std::move(salt));
+            m_ses.dht()->get_item(peer, std::bind(&communication::get_mutable_callback, self(), _1, _2), salt);
         }
 
         void communication::send_to(const dht::public_key &peer, const entry &data) {
