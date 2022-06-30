@@ -187,8 +187,8 @@ namespace libTAU {
 //            void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
 
             // put mutable item to dht
-            void dht_put_mutable_item(std::array<char, 32> key, entry const& data
-                    , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit, std::string salt);
+            void dht_put_mutable_item(entry const& data, std::int8_t alpha, std::int8_t beta,
+                                      std::int8_t invoke_limit, std::string salt);
 
             std::shared_ptr<communication> self()
             { return shared_from_this(); }
