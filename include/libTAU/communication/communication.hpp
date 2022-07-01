@@ -136,7 +136,7 @@ namespace libTAU {
             // add a new message
             bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
 
-            void publish(const std::string& salt, const std::string& data);
+            void publish(const std::string& salt, const entry& data);
 
             // key length < 20 bytes
             void subscribe(const dht::public_key &peer, const std::string& salt);
@@ -187,8 +187,8 @@ namespace libTAU {
 //            void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
 
             // put mutable item to dht
-            void dht_put_mutable_item(entry const& data, std::int8_t alpha, std::int8_t beta,
-                                      std::int8_t invoke_limit, std::string salt);
+//            void dht_put_mutable_item(entry const& data, std::int8_t alpha, std::int8_t beta,
+//                                      std::int8_t invoke_limit, std::string salt);
 
             std::shared_ptr<communication> self()
             { return shared_from_this(); }

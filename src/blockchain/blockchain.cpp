@@ -2016,7 +2016,7 @@ namespace libTAU::blockchain {
         m_votes[chain_id].clear();
     }
 
-    void blockchain::on_dht_put_mutable_item(const dht::item &i, const std::vector<std::pair<dht::node_entry, bool>> &nodes, dht::public_key const& peer) {
+    void blockchain::on_dht_put_mutable_item(const dht::item &i, int n) {
 //        log(true, "INFO: peer[%s], value[%s]", aux::toHex(peer.bytes).c_str(), i.value().to_string().c_str());
 //
 //        auto salt = i.salt();
@@ -2282,13 +2282,21 @@ namespace libTAU::blockchain {
         }
     }
 
-    std::string blockchain::make_salt(dht::public_key peer, const aux::bytes &chain_id, std::int64_t data_type_id) {
-        std::string salt(peer.bytes.begin(), peer.bytes.begin() + common::salt_pubkey_length);
+    std::string blockchain::make_salt(const aux::bytes &chain_id, std::int64_t data_type_id) {
         common::protocol_entry protocolEntry(chain_id, data_type_id);
-        std::string encode = protocolEntry.get_encode();
-        salt.insert(salt.end(), encode.begin(), encode.end());
+        sha1_hash hash = hasher(protocolEntry.get_encode()).final();
+        return hash.to_string();
+    }
 
-        return salt;
+    void blockchain::publish(const std::string &salt, const entry& data) {
+        if (!m_ses.dht()) return;
+        log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
+        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2), 1, 8, 24, salt);
+    }
+
+    void blockchain::subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string &salt) {
+        if (!m_ses.dht()) return;
+        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2), salt);
     }
 
 //    std::string blockchain::make_salt(dht::public_key peer, std::int64_t data_type_id) {
@@ -2429,36 +2437,31 @@ namespace libTAU::blockchain {
 
     void blockchain::get_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer) {
         // salt is x pubkey when request signal
-        auto salt = make_salt(peer, chain_id, common::gossip_cache_peers_entry::data_type_id);
+        auto salt = make_salt(chain_id, common::gossip_cache_peers_entry::data_type_id);
 
         log(LOG_INFO, "INFO: Request gossip peers from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        dht_get_mutable_item(chain_id, peer.bytes, salt);
+        subscribe(chain_id, peer, salt);
     }
 
     void blockchain::get_voting_block(const aux::bytes &chain_id, const dht::public_key &peer) {
         // salt is x pubkey when request signal
-        auto salt = make_salt(peer, chain_id, common::voting_block_cache_entry::data_type_id);
+        auto salt = make_salt(chain_id, common::voting_block_cache_entry::data_type_id);
 
         log(LOG_INFO, "INFO: Request vote from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        dht_get_mutable_item(chain_id, peer.bytes, salt);
+        subscribe(chain_id, peer, salt);
     }
 
     void blockchain::put_voting_block(const aux::bytes &chain_id, const block &blk) {
         if (!blk.empty()) {
             common::voting_block_cache_entry votingBlockCacheEntry(blk);
 
-            dht::public_key * pk = m_ses.pubkey();
-            dht::secret_key * sk = m_ses.serkey();
-
             // salt is y pubkey when publish signal
-            auto salt = make_salt(*pk, chain_id, common::voting_block_cache_entry::data_type_id);
+            auto salt = make_salt(chain_id, common::voting_block_cache_entry::data_type_id);
 
             log(LOG_INFO, "INFO: Chain id[%s] Cache voting block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-
-            dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-                    , pk->bytes, sk->bytes, votingBlockCacheEntry.get_entry()), 1, 8, 24, salt, *pk, true);
+            publish(salt, votingBlockCacheEntry.get_entry());
         }
     }
 
@@ -2561,12 +2564,12 @@ namespace libTAU::blockchain {
 
     // key is a 32-byte binary string, the public key to look up.
     // the salt is optional
-    void blockchain::dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt)
-    {
-        if (!m_ses.dht()) return;
-        m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&blockchain::get_mutable_callback
-                , this, chain_id, _1, _2), std::move(salt));
-    }
+//    void blockchain::dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt)
+//    {
+//        if (!m_ses.dht()) return;
+//        m_ses.dht()->get_item(dht::public_key(key.data()), std::bind(&blockchain::get_mutable_callback
+//                , self(), chain_id, _1, _2), std::move(salt));
+//    }
 
 //    void blockchain::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
 //    {
@@ -2575,21 +2578,21 @@ namespace libTAU::blockchain {
 //                , target, _1));
 //    }
 
-    void blockchain::dht_put_mutable_item(std::array<char, 32> key
-            , std::function<void(entry&, std::array<char,64>&
-            , std::int64_t&, std::string const&)> cb
-            , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
-            , std::string salt, const dht::public_key &peer, bool cache)
-    {
-        if (!m_ses.dht()) return;
+//    void blockchain::dht_put_mutable_item(std::array<char, 32> key
+//            , std::function<void(entry&, std::array<char,64>&
+//            , std::int64_t&, std::string const&)> cb
+//            , std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
+//            , std::string salt, const dht::public_key &peer, bool cache)
+//    {
+//        if (!m_ses.dht()) return;
+////        m_ses.dht()->put_item(dht::public_key(key.data())
+////                , std::bind(&on_dht_put_mutable_item, std::ref(m_ses.alerts()), _1, _2)
+////                , std::bind(&put_mutable_callback, _1, std::move(cb)), std::move(salt), peer);
 //        m_ses.dht()->put_item(dht::public_key(key.data())
-//                , std::bind(&on_dht_put_mutable_item, std::ref(m_ses.alerts()), _1, _2)
-//                , std::bind(&put_mutable_callback, _1, std::move(cb)), std::move(salt), peer);
-        m_ses.dht()->put_item(dht::public_key(key.data())
-                , std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2, peer)
-                , std::bind(&put_mutable_callback, _1, std::move(cb))
-                , alpha, beta, invoke_limit, salt, peer, cache);
-    }
+//                , std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2, peer)
+//                , std::bind(&put_mutable_callback, _1, std::move(cb))
+//                , alpha, beta, invoke_limit, salt, peer, cache);
+//    }
 
     bool blockchain::should_log(aux::LOG_LEVEL log_level) const
     {
@@ -3027,12 +3030,10 @@ namespace libTAU::blockchain {
             dht::secret_key * sk = m_ses.serkey();
 
             // salt is y pubkey when publish signal
-            auto salt = make_salt(*pk, chain_id, common::gossip_cache_peers_entry::data_type_id);
+            auto salt = make_salt(chain_id, common::gossip_cache_peers_entry::data_type_id);
 
             log(LOG_INFO, "INFO: Chain id[%s] Cache gossip peers salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-
-            dht_put_mutable_item(pk->bytes, std::bind(&put_mutable_data, _1, _2, _3, _4
-                    , pk->bytes, sk->bytes, gossipCachePeersEntry.get_entry()), 1, 8, 24, salt, *pk, true);
+            publish(salt, gossipCachePeersEntry.get_entry());
         }
     }
 

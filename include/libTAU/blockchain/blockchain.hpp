@@ -298,7 +298,12 @@ namespace blockchain {
                                 std::set<transaction> &missing_txs);
 
         // make a salt on mutable channel
-        static std::string make_salt(dht::public_key peer, const aux::bytes &chain_id, std::int64_t data_type_id);
+        static std::string make_salt(const aux::bytes &chain_id, std::int64_t data_type_id);
+
+        void publish(const std::string& salt, const entry& data);
+
+        // key length < 20 bytes
+        void subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string& salt);
 
         // make a salt on mutable channel
 //        static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
@@ -349,9 +354,9 @@ namespace blockchain {
         void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool);
 
         // get mutable item from dht
-        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
+//        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
 
-        void on_dht_put_mutable_item(dht::item const& i, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
+        void on_dht_put_mutable_item(const dht::item &i, int n);
 
         void on_dht_relay_mutable_item(entry const& payload, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
 
@@ -359,11 +364,11 @@ namespace blockchain {
 //        void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
 
         // put mutable item to dht
-        void dht_put_mutable_item(std::array<char, 32> key
-                                  , std::function<void(entry&, std::array<char,64>&
-                                          , std::int64_t&, std::string const&)> cb,
-                                          std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
-                                          , std::string salt, const dht::public_key &peer, bool cache);
+//        void dht_put_mutable_item(std::array<char, 32> key
+//                                  , std::function<void(entry&, std::array<char,64>&
+//                                          , std::int64_t&, std::string const&)> cb,
+//                                          std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
+//                                          , std::string salt, const dht::public_key &peer, bool cache);
 
         void print_acl_ban_list_info(aux::bytes const& chain_id);
 

@@ -1151,10 +1151,11 @@ namespace libTAU {
 //            }
 //        } // anonymous namespace
 
-        void communication::publish(const std::string& salt, const std::string& data) {
-            log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.c_str());
-
-            dht_put_mutable_item(data, 1, 8, 24, salt);
+        void communication::publish(const std::string& salt, const entry& data) {
+            if (!m_ses.dht()) return;
+            log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
+            m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2)
+                    , 1, 8, 24, salt);
         }
 
         void communication::subscribe(const dht::public_key &peer, const std::string &salt) {
@@ -1176,13 +1177,13 @@ namespace libTAU {
 //                    , target, _1));
 //        }
 
-        void communication::dht_put_mutable_item(entry const& data, std::int8_t alpha, std::int8_t beta,
-                                                 std::int8_t invoke_limit, std::string salt)
-        {
-            if (!m_ses.dht()) return;
-            m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2)
-                    , alpha, beta, invoke_limit, std::move(salt));
-        }
+//        void communication::dht_put_mutable_item(entry const& data, std::int8_t alpha, std::int8_t beta,
+//                                                 std::int8_t invoke_limit, std::string salt)
+//        {
+//            if (!m_ses.dht()) return;
+//            m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2)
+//                    , alpha, beta, invoke_limit, std::move(salt));
+//        }
 
         void communication::send_all_unconfirmed_messages(const dht::public_key &peer) {
             // find out missing messages and confirmation root
