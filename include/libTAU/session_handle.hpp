@@ -314,6 +314,12 @@ namespace libTAU {
 		// set main loop time interval (ms)
 		void set_loop_time_interval(int milliseconds);
 
+		bool publish_data(const std::vector<char>& key, const std::vector<char>& value);
+
+		bool subscribe_from_peer(const dht::public_key& pubkey, const std::vector<char>& data);
+
+		bool send_to_peer(const dht::public_key& pubkey, const std::vector<char>& data);
+
 		// add new friend in memory & db
 		bool add_new_friend(const dht::public_key& pubkey);
 

@@ -250,6 +250,28 @@ namespace libTAU {
 		async_call(&session_impl::set_loop_time_interval, milliseconds);
 	}
 
+	bool session_handle::publish_data(const std::vector<char>& key, const std::vector<char>& value)
+	{
+		std::string skey, svalue;
+		skey.insert(skey.begin(), key.begin(), key.end());
+		svalue.insert(svalue.begin(), value.begin(), value.end());
+		return sync_call_ret<bool>(&session_impl::publish_data, skey, svalue);
+	}
+
+	bool session_handle::subscribe_from_peer(const dht::public_key& pubkey, const std::vector<char>& data)
+	{
+		std::string sdata;
+		sdata.insert(sdata.begin(), data.begin(), data.end());
+		return sync_call_ret<bool>(&session_impl::subscribe_from_peer, pubkey, sdata);
+	}
+
+	bool session_handle::send_to_peer(const dht::public_key& pubkey, const std::vector<char>& data)
+	{
+		std::string sdata;
+		sdata.insert(sdata.begin(), data.begin(), data.end());
+		return sync_call_ret<bool>(&session_impl::send_to_peer, pubkey, sdata);
+	}
+
 	bool session_handle::add_new_friend(const dht::public_key& pubkey)
 	{
 		return sync_call_ret<bool>(&session_impl::add_new_friend, pubkey);

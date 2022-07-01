@@ -653,6 +653,13 @@ namespace aux {
 			void update_auto_relay();
 
 			void set_loop_time_interval(int milliseconds);
+
+		    bool publish_data(const std::string& key, const std::string& value);
+
+		    bool subscribe_from_peer(const dht::public_key& pubkey, const std::string& data);
+
+		    bool send_to_peer(const dht::public_key& pubkey, const std::string& data);
+
 			bool add_new_friend(const dht::public_key& pubkey);
 			bool delete_friend(const dht::public_key& pubkey);
             void get_friend_info(const dht::public_key& pubkey, std::vector<char>* info);

@@ -3216,6 +3216,39 @@ namespace {
         */
 	}
 
+    bool session_impl::publish_data(const std::string& key, const std::string& value)
+    {
+		if(m_communication) {
+            m_communication->publish_data(key, value);
+            return true;
+        }
+		else
+			return false;
+
+    }
+
+    bool session_impl::subscribe_from_peer(const dht::public_key& pubkey, const std::string& data)
+    {
+		if(m_communication) {
+            m_communication->subscribe_from_peer(pubkey, data);
+            return true;
+        }
+		else
+			return false;
+
+    }
+
+    bool session_impl::send_to_peer(const dht::public_key& pubkey, const std::string& data)
+    {
+		if(m_communication) {
+            m_communication->subscribe_from_peer(pubkey, data);
+            return true;
+        }
+		else
+			return false;
+
+    }
+
 	bool session_impl::add_new_friend(const dht::public_key& pubkey)
 	{
 		if(m_communication)
