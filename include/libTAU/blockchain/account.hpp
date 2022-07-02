@@ -15,6 +15,7 @@ see LICENSE file.
 #include "libTAU/entry.hpp"
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
+#include "libTAU/kademlia/types.hpp"
 
 namespace libTAU {
     namespace blockchain {
@@ -29,13 +30,18 @@ namespace libTAU {
 
             explicit account(int64_t mBalance) : m_balance(mBalance) {}
 
-            account(int64_t mBalance, int64_t mNonce, int64_t mBlockNumber) :
-                m_balance(mBalance), m_nonce(mNonce), m_block_number(mBlockNumber) {}
+            account(int64_t mBalance, int64_t mNonce) : m_balance(mBalance), m_nonce(mNonce) {}
 
-            account(int64_t mBalance, int64_t mNonce, int64_t mEffectivePower, int64_t mBlockNumber) :
-                m_balance(mBalance), m_nonce(mNonce), m_effective_power(mEffectivePower), m_block_number(mBlockNumber) {}
+            account(const dht::public_key &mPeer, int64_t mBalance, int64_t mNonce) : m_peer(mPeer),
+                                                                                      m_balance(mBalance),
+                                                                                      m_nonce(mNonce) {}
 
-            bool empty() const { return m_balance == 0 && m_nonce == 0; }
+//            account(int64_t mBalance, int64_t mNonce, int64_t mEffectivePower, int64_t mBlockNumber) :
+//                m_balance(mBalance), m_nonce(mNonce), m_effective_power(mEffectivePower), m_block_number(mBlockNumber) {}
+
+//            bool empty() const { return m_balance == 0 && m_nonce == 0; }
+
+            const dht::public_key &peer() const { return m_peer; }
 
             int64_t balance() const { return m_balance; }
 
@@ -43,11 +49,11 @@ namespace libTAU {
 
             int64_t nonce() const { return m_nonce; }
 
-            void set_effective_power(int64_t mEffectivePower) { m_effective_power = mEffectivePower; }
-
-            int64_t effective_power() const { return m_effective_power; }
-
-            int64_t block_number() const { return m_block_number; }
+//            void set_effective_power(int64_t mEffectivePower) { m_effective_power = mEffectivePower; }
+//
+//            int64_t effective_power() const { return m_effective_power; }
+//
+//            int64_t block_number() const { return m_block_number; }
 
             // @returns the corresponding entry
             entry get_entry() const;
@@ -62,17 +68,19 @@ namespace libTAU {
             // populate message data from entry
             void populate(const entry& e);
 
+            dht::public_key m_peer;
+
             // balance
             std::int64_t m_balance{};
 
             // nonce
             std::int64_t m_nonce{};
 
-            // effective power
-            std::int64_t m_effective_power{};
-
-            // block number
-            std::int64_t m_block_number{};
+//            // effective power
+//            std::int64_t m_effective_power{};
+//
+//            // block number
+//            std::int64_t m_block_number{};
         };
     }
 }

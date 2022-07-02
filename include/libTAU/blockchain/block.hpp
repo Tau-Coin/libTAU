@@ -41,26 +41,21 @@ namespace blockchain {
 
         block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
               const sha256_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
-              const sha256_hash &mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
-              int64_t mMinerBalance, int64_t mMinerNonce, int64_t mSenderBalance, int64_t mSenderNonce,
-              int64_t mReceiverBalance, int64_t mReceiverNonce) : m_chain_id(std::move(mChainId)), m_version(mVersion), m_timestamp(mTimestamp),
-              m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
-              m_cumulative_difficulty(mCumulativeDifficulty), m_generation_signature(mGenerationSignature),
-              m_tx(std::move(mTx)), m_miner(mMiner), m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce),
-              m_sender_balance(mSenderBalance), m_sender_nonce(mSenderNonce), m_receiver_balance(mReceiverBalance),
-              m_receiver_nonce(mReceiverNonce) {}
+              const sha256_hash &mGenerationSignature, const sha256_hash &mStateRoot, transaction mTx,
+              const dht::public_key &mMiner) : m_chain_id(std::move(mChainId)), m_version(mVersion),
+              m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash),
+              m_base_target(mBaseTarget), m_cumulative_difficulty(mCumulativeDifficulty),
+              m_generation_signature(mGenerationSignature), m_state_root(mStateRoot),
+              m_tx(std::move(mTx)), m_miner(mMiner) {}
 
         block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
               const sha256_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
-              const sha256_hash &mGenerationSignature, transaction mTx, const dht::public_key &mMiner,
-              int64_t mMinerBalance, int64_t mMinerNonce, int64_t mSenderBalance,
-              int64_t mSenderNonce, int64_t mReceiverBalance, int64_t mReceiverNonce, udp::endpoint mEndpoint) :
-              m_chain_id(std::move(mChainId)), m_version(mVersion), m_timestamp(mTimestamp),
-              m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
+              const sha256_hash &mGenerationSignature, const sha256_hash &mStateRoot, transaction mTx,
+              const dht::public_key &mMiner, udp::endpoint mEndpoint) : m_chain_id(std::move(mChainId)),
+              m_version(mVersion), m_timestamp(mTimestamp), m_block_number(mBlockNumber),
+              m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
               m_cumulative_difficulty(mCumulativeDifficulty), m_generation_signature(mGenerationSignature),
-              m_tx(std::move(mTx)), m_miner(mMiner), m_miner_balance(mMinerBalance), m_miner_nonce(mMinerNonce),
-              m_sender_balance(mSenderBalance), m_sender_nonce(mSenderNonce), m_receiver_balance(mReceiverBalance),
-              m_receiver_nonce(mReceiverNonce), m_endpoint(std::move(mEndpoint)) {}
+              m_state_root(mStateRoot), m_tx(std::move(mTx)), m_miner(mMiner), m_endpoint(std::move(mEndpoint)) {}
 
         const aux::bytes &chain_id() const { return m_chain_id; }
 
@@ -78,21 +73,23 @@ namespace blockchain {
 
         const sha256_hash &generation_signature() const { return m_generation_signature; }
 
+        const sha256_hash &state_root() const { return m_state_root; }
+
         const transaction &tx() const { return m_tx; }
 
         const dht::public_key &miner() const { return m_miner; }
 
-        int64_t miner_balance() const { return m_miner_balance; }
-
-        int64_t miner_nonce() const { return m_miner_nonce; }
-
-        int64_t sender_balance() const { return m_sender_balance; }
-
-        int64_t sender_nonce() const { return m_sender_nonce; }
-
-        int64_t receiver_balance() const { return m_receiver_balance; }
-
-        int64_t receiver_nonce() const { return m_receiver_nonce; }
+//        int64_t miner_balance() const { return m_miner_balance; }
+//
+//        int64_t miner_nonce() const { return m_miner_nonce; }
+//
+//        int64_t sender_balance() const { return m_sender_balance; }
+//
+//        int64_t sender_nonce() const { return m_sender_nonce; }
+//
+//        int64_t receiver_balance() const { return m_receiver_balance; }
+//
+//        int64_t receiver_nonce() const { return m_receiver_nonce; }
 
         const udp::endpoint &end_point() const { return m_endpoint; }
 
@@ -163,29 +160,32 @@ namespace blockchain {
         // generation signature
         sha256_hash m_generation_signature;
 
+        // state root
+        sha256_hash m_state_root;
+
         // tx
         transaction m_tx;
 
         // miner
         dht::public_key m_miner{};
 
-        // miner balance
-        std::int64_t m_miner_balance{};
-
-        // miner nonce
-        std::int64_t m_miner_nonce{};
-
-        // sender balance
-        std::int64_t m_sender_balance{};
-
-        // sender nonce
-        std::int64_t m_sender_nonce{};
-
-        // receiver balance
-        std::int64_t m_receiver_balance{};
-
-        // receiver nonce
-        std::int64_t m_receiver_nonce{};
+//        // miner balance
+//        std::int64_t m_miner_balance{};
+//
+//        // miner nonce
+//        std::int64_t m_miner_nonce{};
+//
+//        // sender balance
+//        std::int64_t m_sender_balance{};
+//
+//        // sender nonce
+//        std::int64_t m_sender_nonce{};
+//
+//        // receiver balance
+//        std::int64_t m_receiver_balance{};
+//
+//        // receiver nonce
+//        std::int64_t m_receiver_nonce{};
 
         udp::endpoint m_endpoint;
 

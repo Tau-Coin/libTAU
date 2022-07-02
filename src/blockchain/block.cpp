@@ -82,24 +82,26 @@ namespace libTAU::blockchain {
         e["d"] = entry(static_cast<std::int64_t>(m_cumulative_difficulty));
         // generation signature
         e["g"] = entry(m_generation_signature.to_string());
+        // state root
+        e["s"] = entry(m_state_root.to_string());
         // miner
         e["m"] = entry(std::string(m_miner.bytes.begin(), m_miner.bytes.end()));
-        // miner balance
-        e["mb"] = entry(m_miner_balance);
-        // miner nonce
-        e["mn"] = entry(m_miner_nonce);
-        if (!m_tx.empty()) {
-            // tx
-            e["tx"] = m_tx.get_entry();
-            // sender balance
-            e["sb"] = entry(m_sender_balance);
-            // sender nonce
-            e["sn"] = entry(m_sender_nonce);
-            // receiver balance
-            e["rb"] = entry(m_receiver_balance);
-            // receiver nonce
-            e["rn"] = entry(m_receiver_nonce);
-        }
+//        // miner balance
+//        e["mb"] = entry(m_miner_balance);
+//        // miner nonce
+//        e["mn"] = entry(m_miner_nonce);
+//        if (!m_tx.empty()) {
+//            // tx
+//            e["tx"] = m_tx.get_entry();
+//            // sender balance
+//            e["sb"] = entry(m_sender_balance);
+//            // sender nonce
+//            e["sn"] = entry(m_sender_nonce);
+//            // receiver balance
+//            e["rb"] = entry(m_receiver_balance);
+//            // receiver nonce
+//            e["rn"] = entry(m_receiver_nonce);
+//        }
 
         if (m_endpoint.port() != 0) {
             entry ne(entry::dictionary_t);
@@ -169,6 +171,12 @@ namespace libTAU::blockchain {
             auto generation_signature = i->string();
             m_generation_signature = sha256_hash(generation_signature.data());
         }
+        // state root
+        if (auto* i = const_cast<entry *>(e.find_key("s")))
+        {
+            auto state_root = i->string();
+            m_state_root = sha256_hash(state_root.data());
+        }
         // transaction
         if (auto* i = const_cast<entry *>(e.find_key("tx")))
         {
@@ -180,36 +188,36 @@ namespace libTAU::blockchain {
             auto miner = i->string();
             m_miner = dht::public_key(miner.data());
         }
-        // miner balance
-        if (auto* i = const_cast<entry *>(e.find_key("mb")))
-        {
-            m_miner_balance = i->integer();
-        }
-        // miner nonce
-        if (auto* i = const_cast<entry *>(e.find_key("mn")))
-        {
-            m_miner_nonce = i->integer();
-        }
-        // sender balance
-        if (auto* i = const_cast<entry *>(e.find_key("sb")))
-        {
-            m_sender_balance = i->integer();
-        }
-        // sender nonce
-        if (auto* i = const_cast<entry *>(e.find_key("sn")))
-        {
-            m_sender_nonce = i->integer();
-        }
-        // receiver balance
-        if (auto* i = const_cast<entry *>(e.find_key("rb")))
-        {
-            m_receiver_balance = i->integer();
-        }
-        // receiver nonce
-        if (auto* i = const_cast<entry *>(e.find_key("rn")))
-        {
-            m_receiver_nonce = i->integer();
-        }
+//        // miner balance
+//        if (auto* i = const_cast<entry *>(e.find_key("mb")))
+//        {
+//            m_miner_balance = i->integer();
+//        }
+//        // miner nonce
+//        if (auto* i = const_cast<entry *>(e.find_key("mn")))
+//        {
+//            m_miner_nonce = i->integer();
+//        }
+//        // sender balance
+//        if (auto* i = const_cast<entry *>(e.find_key("sb")))
+//        {
+//            m_sender_balance = i->integer();
+//        }
+//        // sender nonce
+//        if (auto* i = const_cast<entry *>(e.find_key("sn")))
+//        {
+//            m_sender_nonce = i->integer();
+//        }
+//        // receiver balance
+//        if (auto* i = const_cast<entry *>(e.find_key("rb")))
+//        {
+//            m_receiver_balance = i->integer();
+//        }
+//        // receiver nonce
+//        if (auto* i = const_cast<entry *>(e.find_key("rn")))
+//        {
+//            m_receiver_nonce = i->integer();
+//        }
         // signature
         if (auto* i = const_cast<entry *>(e.find_key("sig")))
         {
@@ -281,11 +289,9 @@ namespace libTAU::blockchain {
         os << "m_chain_id: " << aux::toHex(block.m_chain_id) << " m_version: " << block.m_version << " m_timestamp: "
            << block.m_timestamp << " m_block_number: " << block.m_block_number << " m_previous_block_hash: "
            << aux::toHex(block.m_previous_block_hash.to_string()) << " m_base_target: " << block.m_base_target << " m_cumulative_difficulty: "
-           << block.m_cumulative_difficulty << " m_generation_signature: " << aux::toHex(block.m_generation_signature.to_string()) << " m_tx: "
-           << block.m_tx << " m_miner: " << aux::toHex(block.m_miner.bytes) << " m_miner_balance: " << block.m_miner_balance
-           << " m_miner_nonce: " << block.m_miner_nonce << " m_sender_balance: " << block.m_sender_balance
-           << " m_sender_nonce: " << block.m_sender_nonce << " m_receiver_balance: " << block.m_receiver_balance
-           << " m_receiver_nonce: " << block.m_receiver_nonce << " m_end_point ip: " << block.m_endpoint.address().to_string()
+           << block.m_cumulative_difficulty << " m_generation_signature: " << aux::toHex(block.m_generation_signature.to_string())
+           << " state root: " << aux::toHex(block.m_state_root.to_string()) << " m_tx: " << block.m_tx
+           << " m_miner: " << aux::toHex(block.m_miner.bytes) << " m_end_point ip: " << block.m_endpoint.address().to_string()
            << " port: " << block.m_endpoint.port() << " m_hash: " << aux::toHex(block.m_hash.to_string());
         return os;
     }
