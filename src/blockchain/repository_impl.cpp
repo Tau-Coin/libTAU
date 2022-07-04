@@ -25,34 +25,54 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::create_peer_db(const aux::bytes &chain_id) {
-        std::string sql = "CREATE TABLE IF NOT EXISTS ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
-        if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
-            return false;
-        }
-
-        return true;
+    bool repository_impl::create_state_db(const aux::bytes &chain_id) {
+        return false;
     }
 
-    bool repository_impl::delete_peer_db(const aux::bytes &chain_id) {
-        std::string sql = "DROP TABLE ";
-        sql.append(chain_id_to_short_hash(chain_id));
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
-        if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
-            return false;
-        }
-
-        return true;
+    bool repository_impl::delete_state_db(const aux::bytes &chain_id) {
+        return false;
     }
+
+    account repository_impl::get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        return account();
+    }
+
+    bool repository_impl::save_account(const aux::bytes &chain_id, const account &act) {
+        return false;
+    }
+
+    bool repository_impl::delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        return false;
+    }
+
+//    bool repository_impl::create_peer_db(const aux::bytes &chain_id) {
+//        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
+//
+//        char *zErrMsg = nullptr;
+//        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+//        if (ok != SQLITE_OK) {
+//            sqlite3_free(zErrMsg);
+//            return false;
+//        }
+//
+//        return true;
+//    }
+//
+//    bool repository_impl::delete_peer_db(const aux::bytes &chain_id) {
+//        std::string sql = "DROP TABLE ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//
+//        char *zErrMsg = nullptr;
+//        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+//        if (ok != SQLITE_OK) {
+//            sqlite3_free(zErrMsg);
+//            return false;
+//        }
+//
+//        return true;
+//    }
 
 //    account repository_impl::get_account_from_user_db(aux::bytes chain_id, dht::public_key pubKey) {
 //        std::int64_t balance;
@@ -79,68 +99,68 @@ namespace libTAU::blockchain {
 //        return account(balance, nonce, height);
 //    }
 
-    std::set<dht::public_key> repository_impl::get_all_peers(const aux::bytes &chain_id) {
-        std::set<dht::public_key> peers;
+//    std::set<dht::public_key> repository_impl::get_all_peers(const aux::bytes &chain_id) {
+//        std::set<dht::public_key> peers;
+//
+//        sqlite3_stmt * stmt;
+//        std::string sql = "SELECT PUBKEY FROM ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//
+//        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+//        if (ok == SQLITE_OK) {
+//            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+//                const unsigned char *pK = sqlite3_column_text(stmt,0);
+//                auto length = sqlite3_column_bytes(stmt, 0);
+//                std::string value(pK, pK + length);
+//                auto public_key = dht::public_key(value.data());
+//                peers.insert(public_key);
+//            }
+//        }
+//
+//        sqlite3_finalize(stmt);
+//
+//        return peers;
+//    }
+//
+//    dht::public_key repository_impl::get_peer_randomly(const aux::bytes &chain_id) {
+//        dht::public_key peer{};
+//
+//        sqlite3_stmt * stmt;
+//        std::string sql = "SELECT PUBKEY FROM ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append(" ORDER BY RANDOM() limit 1");
+//
+//        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+//        if (ok == SQLITE_OK) {
+//            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+//                const unsigned char *pK = sqlite3_column_text(stmt,0);
+//                auto length = sqlite3_column_bytes(stmt, 0);
+//                std::string value(pK, pK + length);
+//                peer = dht::public_key(value.data());
+//                break;
+//            }
+//        }
+//
+//        sqlite3_finalize(stmt);
+//
+//        return peer;
+//    }
 
-        sqlite3_stmt * stmt;
-        std::string sql = "SELECT PUBKEY FROM ";
-        sql.append(chain_id_to_short_hash(chain_id));
-
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok == SQLITE_OK) {
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *pK = sqlite3_column_text(stmt,0);
-                auto length = sqlite3_column_bytes(stmt, 0);
-                std::string value(pK, pK + length);
-                auto public_key = dht::public_key(value.data());
-                peers.insert(public_key);
-            }
-        }
-
-        sqlite3_finalize(stmt);
-
-        return peers;
-    }
-
-    dht::public_key repository_impl::get_peer_randomly(const aux::bytes &chain_id) {
-        dht::public_key peer{};
-
-        sqlite3_stmt * stmt;
-        std::string sql = "SELECT PUBKEY FROM ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append(" ORDER BY RANDOM() limit 1");
-
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok == SQLITE_OK) {
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *pK = sqlite3_column_text(stmt,0);
-                auto length = sqlite3_column_bytes(stmt, 0);
-                std::string value(pK, pK + length);
-                peer = dht::public_key(value.data());
-                break;
-            }
-        }
-
-        sqlite3_finalize(stmt);
-
-        return peer;
-    }
-
-    bool repository_impl::delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        std::string sql = "DELETE FROM ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append(" WHERE PUBKEY=");
-        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
-        if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
-            return false;
-        }
-
-        return true;
-    }
+//    bool repository_impl::delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        std::string sql = "DELETE FROM ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append(" WHERE PUBKEY=");
+//        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
+//
+//        char *zErrMsg = nullptr;
+//        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+//        if (ok != SQLITE_OK) {
+//            sqlite3_free(zErrMsg);
+//            return false;
+//        }
+//
+//        return true;
+//    }
 
 //    bool repository_impl::update_user_state_db(const block &b) {
 //        update_user_state_db(b.chain_id(), b.miner());
@@ -154,172 +174,172 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_impl::add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        sqlite3_stmt * stmt;
-        std::string sql = "INSERT INTO ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append(" VALUES(?)");
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok != SQLITE_OK) {
-            return false;
-        }
-        std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
-        sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
-//        sqlite3_bind_int64(stmt, 2, balance);
-//        sqlite3_bind_int64(stmt, 3, nonce);
-//        sqlite3_bind_int64(stmt, 4, height);
-        ok = sqlite3_step(stmt);
-        if (ok != SQLITE_DONE) {
-            return false;
-        }
-        sqlite3_finalize(stmt);
+//    bool repository_impl::add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        sqlite3_stmt * stmt;
+//        std::string sql = "INSERT INTO ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append(" VALUES(?)");
+//        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+//        if (ok != SQLITE_OK) {
+//            return false;
+//        }
+//        std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
+//        sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
+////        sqlite3_bind_int64(stmt, 2, balance);
+////        sqlite3_bind_int64(stmt, 3, nonce);
+////        sqlite3_bind_int64(stmt, 4, height);
+//        ok = sqlite3_step(stmt);
+//        if (ok != SQLITE_DONE) {
+//            return false;
+//        }
+//        sqlite3_finalize(stmt);
+//
+//        return true;
+//    }
 
-        return true;
-    }
+//    bool repository_impl::create_gossip_peer_db(const aux::bytes &chain_id) {
+//        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append("GOSSIP(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
+//
+//        char *zErrMsg = nullptr;
+//        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+//        if (ok != SQLITE_OK) {
+//            sqlite3_free(zErrMsg);
+//            return false;
+//        }
+//
+//        return true;
+//    }
+//
+//    bool repository_impl::delete_gossip_peer_db(const aux::bytes &chain_id) {
+//        std::string sql = "DROP TABLE ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append("GOSSIP");
+//
+//        char *zErrMsg = nullptr;
+//        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+//        if (ok != SQLITE_OK) {
+//            sqlite3_free(zErrMsg);
+//            return false;
+//        }
+//
+//        return true;
+//    }
 
-    bool repository_impl::create_gossip_peer_db(const aux::bytes &chain_id) {
-        std::string sql = "CREATE TABLE IF NOT EXISTS ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append("GOSSIP(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
+//    std::set<dht::public_key> repository_impl::get_all_gossip_peers(const aux::bytes &chain_id) {
+//        std::set<dht::public_key> peers;
+//
+//        sqlite3_stmt * stmt;
+//        std::string sql = "SELECT PUBKEY FROM ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append("GOSSIP");
+//
+//        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+//        if (ok == SQLITE_OK) {
+//            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+//                const unsigned char *pK = sqlite3_column_text(stmt,0);
+//                auto length = sqlite3_column_bytes(stmt, 0);
+//                std::string value(pK, pK + length);
+//                auto public_key = dht::public_key(value.data());
+//                peers.insert(public_key);
+//            }
+//        }
+//
+//        sqlite3_finalize(stmt);
+//
+//        return peers;
+//    }
 
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
-        if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
-            return false;
-        }
+//    dht::public_key repository_impl::get_gossip_peer_randomly(const aux::bytes &chain_id) {
+//        dht::public_key peer{};
+//
+//        sqlite3_stmt * stmt;
+//        std::string sql = "SELECT PUBKEY FROM ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append("GOSSIP ORDER BY RANDOM() limit 1");
+//
+//        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+//        if (ok == SQLITE_OK) {
+//            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+//                const unsigned char *pK = sqlite3_column_text(stmt,0);
+//                auto length = sqlite3_column_bytes(stmt, 0);
+//                std::string value(pK, pK + length);
+//                peer = dht::public_key(value.data());
+//                break;
+//            }
+//        }
+//
+//        sqlite3_finalize(stmt);
+//
+//        return peer;
+//    }
 
-        return true;
-    }
+//    bool repository_impl::delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        std::string sql = "DELETE FROM ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append("GOSSIP");
+//        sql.append(" WHERE PUBKEY=");
+//        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
+//
+//        char *zErrMsg = nullptr;
+//        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+//        if (ok != SQLITE_OK) {
+//            sqlite3_free(zErrMsg);
+//            return false;
+//        }
+//
+//        return true;
+//    }
 
-    bool repository_impl::delete_gossip_peer_db(const aux::bytes &chain_id) {
-        std::string sql = "DROP TABLE ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append("GOSSIP");
+//    bool repository_impl::delete_all_peers_in_gossip_peer_db(const aux::bytes &chain_id) {
+//        std::string sql = "DELETE FROM ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append("GOSSIP");
+//
+//        char *zErrMsg = nullptr;
+//        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+//        if (ok != SQLITE_OK) {
+//            sqlite3_free(zErrMsg);
+//            return false;
+//        }
+//
+//        return true;
+//    }
 
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
-        if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
-            return false;
-        }
+//    bool repository_impl::add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        sqlite3_stmt * stmt;
+//        std::string sql = "INSERT INTO ";
+//        sql.append(chain_id_to_short_hash(chain_id));
+//        sql.append("GOSSIP");
+//        sql.append(" VALUES(?)");
+//        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+//        if (ok != SQLITE_OK) {
+//            return false;
+//        }
+//        std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
+//        sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
+////        sqlite3_bind_int64(stmt, 2, balance);
+////        sqlite3_bind_int64(stmt, 3, nonce);
+////        sqlite3_bind_int64(stmt, 4, height);
+//        ok = sqlite3_step(stmt);
+//        if (ok != SQLITE_DONE) {
+//            return false;
+//        }
+//        sqlite3_finalize(stmt);
+//
+//        return true;
+//    }
 
-        return true;
-    }
-
-    std::set<dht::public_key> repository_impl::get_all_gossip_peers(const aux::bytes &chain_id) {
-        std::set<dht::public_key> peers;
-
-        sqlite3_stmt * stmt;
-        std::string sql = "SELECT PUBKEY FROM ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append("GOSSIP");
-
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok == SQLITE_OK) {
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *pK = sqlite3_column_text(stmt,0);
-                auto length = sqlite3_column_bytes(stmt, 0);
-                std::string value(pK, pK + length);
-                auto public_key = dht::public_key(value.data());
-                peers.insert(public_key);
-            }
-        }
-
-        sqlite3_finalize(stmt);
-
-        return peers;
-    }
-
-    dht::public_key repository_impl::get_gossip_peer_randomly(const aux::bytes &chain_id) {
-        dht::public_key peer{};
-
-        sqlite3_stmt * stmt;
-        std::string sql = "SELECT PUBKEY FROM ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append("GOSSIP ORDER BY RANDOM() limit 1");
-
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok == SQLITE_OK) {
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *pK = sqlite3_column_text(stmt,0);
-                auto length = sqlite3_column_bytes(stmt, 0);
-                std::string value(pK, pK + length);
-                peer = dht::public_key(value.data());
-                break;
-            }
-        }
-
-        sqlite3_finalize(stmt);
-
-        return peer;
-    }
-
-    bool repository_impl::delete_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        std::string sql = "DELETE FROM ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append("GOSSIP");
-        sql.append(" WHERE PUBKEY=");
-        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
-        if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
-            return false;
-        }
-
-        return true;
-    }
-
-    bool repository_impl::delete_all_peers_in_gossip_peer_db(const aux::bytes &chain_id) {
-        std::string sql = "DELETE FROM ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append("GOSSIP");
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
-        if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
-            return false;
-        }
-
-        return true;
-    }
-
-    bool repository_impl::add_peer_in_gossip_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        sqlite3_stmt * stmt;
-        std::string sql = "INSERT INTO ";
-        sql.append(chain_id_to_short_hash(chain_id));
-        sql.append("GOSSIP");
-        sql.append(" VALUES(?)");
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok != SQLITE_OK) {
-            return false;
-        }
-        std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
-        sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
-//        sqlite3_bind_int64(stmt, 2, balance);
-//        sqlite3_bind_int64(stmt, 3, nonce);
-//        sqlite3_bind_int64(stmt, 4, height);
-        ok = sqlite3_step(stmt);
-        if (ok != SQLITE_DONE) {
-            return false;
-        }
-        sqlite3_finalize(stmt);
-
-        return true;
-    }
-
-    bool repository_impl::is_account_exist(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
-        std::string value;
-        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
-
-        return status.ok();
-    }
+//    bool repository_impl::is_account_exist(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
+//        std::string value;
+//        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
+//
+//        return status.ok();
+//    }
 
 //    std::int64_t repository_impl::get_effective_power(const aux::bytes &chain_id, const dht::public_key &pubKey) {
 //        account_block_pointer accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
@@ -390,57 +410,57 @@ namespace libTAU::blockchain {
 //        return s;
 //    }
 
-    account_block_pointer repository_impl::get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
+//    account_block_pointer repository_impl::get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
+//
+//        std::string value;
+//        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
+//
+//        if (!value.empty()) {
+//            return account_block_pointer(value);
+//        }
+//
+//        return account_block_pointer();
+//    }
+//
+//    bool repository_impl::save_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const account_block_pointer &accountBlockPointer) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
+//
+//        leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, accountBlockPointer.get_encode());
+//
+//        return status.ok();
+//    }
+//
+//    bool repository_impl::delete_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
+//
+//        leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
+//        return status.ok();
+//    }
 
-        std::string value;
-        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), key, &value);
-
-        if (!value.empty()) {
-            return account_block_pointer(value);
-        }
-
-        return account_block_pointer();
-    }
-
-    bool repository_impl::save_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey, const account_block_pointer &accountBlockPointer) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
-
-        leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, accountBlockPointer.get_encode());
-
-        return status.ok();
-    }
-
-    bool repository_impl::delete_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), pubKey.bytes.begin(), pubKey.bytes.end());
-
-        leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
-        return status.ok();
-    }
-
-    bool repository_impl::is_block_exist(const sha256_hash &hash) {
-        std::string value;
-        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
-
-        return status.ok();
-    }
-
-    block repository_impl::get_block_by_hash(const sha256_hash &hash) {
-        std::string value;
-        m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
-
-        if (!value.empty()) {
-            return block(value);
-        }
-
-        return block();
-    }
+//    bool repository_impl::is_block_exist(const sha256_hash &hash) {
+//        std::string value;
+//        leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
+//
+//        return status.ok();
+//    }
+//
+//    block repository_impl::get_block_by_hash(const sha256_hash &hash) {
+//        std::string value;
+//        m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
+//
+//        if (!value.empty()) {
+//            return block(value);
+//        }
+//
+//        return block();
+//    }
 
 //    block repository_impl::get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
 //        auto index_info = get_index_info(chain_id, block_number);
@@ -473,39 +493,39 @@ namespace libTAU::blockchain {
 //        return account(0, 0, 0);
 //    }
 
-    state_linker repository_impl::get_state_linker(const sha256_hash &block_hash) {
-        std::string key;
-        key.insert(key.end(), block_hash.begin(), block_hash.end());
-        key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
-
-        std::string value;
-        m_leveldb->Get(leveldb::ReadOptions(), key, &value);
-
-        if (!value.empty()) {
-            return state_linker(value);
-        }
-
-        return state_linker();
-    }
-
-    bool repository_impl::save_state_linker(const state_linker &stateLinker) {
-        std::string key;
-        auto& block_hash = stateLinker.block_hash();
-        key.insert(key.end(), block_hash.begin(), block_hash.end());
-        key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
-
-        leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, stateLinker.get_encode());
-        return status.ok();
-    }
-
-    bool repository_impl::delete_state_linker(const sha256_hash &block_hash) {
-        std::string key;
-        key.insert(key.end(), block_hash.begin(), block_hash.end());
-        key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
-
-        leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
-        return status.ok();
-    }
+//    state_linker repository_impl::get_state_linker(const sha256_hash &block_hash) {
+//        std::string key;
+//        key.insert(key.end(), block_hash.begin(), block_hash.end());
+//        key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
+//
+//        std::string value;
+//        m_leveldb->Get(leveldb::ReadOptions(), key, &value);
+//
+//        if (!value.empty()) {
+//            return state_linker(value);
+//        }
+//
+//        return state_linker();
+//    }
+//
+//    bool repository_impl::save_state_linker(const state_linker &stateLinker) {
+//        std::string key;
+//        auto& block_hash = stateLinker.block_hash();
+//        key.insert(key.end(), block_hash.begin(), block_hash.end());
+//        key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
+//
+//        leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, stateLinker.get_encode());
+//        return status.ok();
+//    }
+//
+//    bool repository_impl::delete_state_linker(const sha256_hash &block_hash) {
+//        std::string key;
+//        key.insert(key.end(), block_hash.begin(), block_hash.end());
+//        key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
+//
+//        leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), key);
+//        return status.ok();
+//    }
 
     bool repository_impl::save_block(const block &b) {
         if (b.empty())
@@ -603,233 +623,233 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_impl::connect_head_block(const block &b) {
-        m_connected_blocks.push_back(b);
+//    bool repository_impl::connect_head_block(const block &b) {
+//        m_connected_blocks.push_back(b);
+//
+//        // save block
+//        if (!save_block(b))
+//            return false;
+//
+//        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+//        indexKeyInfo.set_main_chain_block_hash(b.sha256());
+//
+//        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
+//            state_linker stateLinker(b.sha256());
+//            auto &chain_id = b.chain_id();
+//
+//            std::set<dht::public_key> peers = b.get_block_peers();
+//            if (!peers.empty()) {
+//                indexKeyInfo.set_associated_peers(peers);
+//                for (auto const &peer: peers) {
+//                    // update state linker
+//                    if (!forward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
+//                        return false;
+//                    // update state pointer
+//                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+//                    if (accountBlockPointer.empty()) {
+//                        accountBlockPointer.set_initial_block_hash(b.sha256());
+//                    } else {
+//                        accountBlockPointer.set_latest_block_hash(b.sha256());
+//                    }
+//                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+//                        return false;
+//                }
+//            }
+//
+//            if (!save_state_linker(stateLinker))
+//                return false;
+//        }
+//
+//        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
+//    }
 
-        // save block
-        if (!save_block(b))
-            return false;
-
-        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
-        indexKeyInfo.set_main_chain_block_hash(b.sha256());
-
-        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
-            state_linker stateLinker(b.sha256());
-            auto &chain_id = b.chain_id();
-
-            std::set<dht::public_key> peers = b.get_block_peers();
-            if (!peers.empty()) {
-                indexKeyInfo.set_associated_peers(peers);
-                for (auto const &peer: peers) {
-                    // update state linker
-                    if (!forward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
-                        return false;
-                    // update state pointer
-                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-                    if (accountBlockPointer.empty()) {
-                        accountBlockPointer.set_initial_block_hash(b.sha256());
-                    } else {
-                        accountBlockPointer.set_latest_block_hash(b.sha256());
-                    }
-                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
-                        return false;
-                }
-            }
-
-            if (!save_state_linker(stateLinker))
-                return false;
-        }
-
-        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
-    }
-
-    bool repository_impl::connect_tail_block(const block &b) {
-        m_connected_blocks.push_back(b);
-
-        // save block
-        if (!save_block(b))
-            return false;
-
-        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
-        indexKeyInfo.set_main_chain_block_hash(b.sha256());
-
-        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
-            state_linker stateLinker(b.sha256());
-            auto &chain_id = b.chain_id();
-
-            std::set<dht::public_key> peers = b.get_block_peers();
-            if (!peers.empty()) {
-                indexKeyInfo.set_associated_peers(peers);
-
-                for (auto const &peer: peers) {
-                    // update state linker
-                    if (!backward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
-                        return false;
-                    // update state pointer
-                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-                    if (accountBlockPointer.empty()) {
-                        accountBlockPointer.set_initial_block_hash(b.sha256());
-                    } else {
-                        accountBlockPointer.set_oldest_block_hash(b.sha256());
-                    }
-                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
-                        return false;
-                }
-            }
-
-            if (!save_state_linker(stateLinker))
-                return false;
-        }
-
-        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
-    }
+//    bool repository_impl::connect_tail_block(const block &b) {
+//        m_connected_blocks.push_back(b);
+//
+//        // save block
+//        if (!save_block(b))
+//            return false;
+//
+//        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+//        indexKeyInfo.set_main_chain_block_hash(b.sha256());
+//
+//        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
+//            state_linker stateLinker(b.sha256());
+//            auto &chain_id = b.chain_id();
+//
+//            std::set<dht::public_key> peers = b.get_block_peers();
+//            if (!peers.empty()) {
+//                indexKeyInfo.set_associated_peers(peers);
+//
+//                for (auto const &peer: peers) {
+//                    // update state linker
+//                    if (!backward_update_state_linker(chain_id, peer, stateLinker, b.sha256()))
+//                        return false;
+//                    // update state pointer
+//                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+//                    if (accountBlockPointer.empty()) {
+//                        accountBlockPointer.set_initial_block_hash(b.sha256());
+//                    } else {
+//                        accountBlockPointer.set_oldest_block_hash(b.sha256());
+//                    }
+//                    if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+//                        return false;
+//                }
+//            }
+//
+//            if (!save_state_linker(stateLinker))
+//                return false;
+//        }
+//
+//        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
+//    }
 
     // validate peer
-    bool repository_impl::rollback_block(const block &b) {
-        if (b.empty())
-            return false;
-
-        m_discarded_blocks.push_back(b);
-
-        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
-            auto &chain_id = b.chain_id();
-            auto stateLinker = get_state_linker(b.sha256());
-            auto &block_hash_map = stateLinker.get_previous_change_block_hash_map();
-            auto peers = b.get_block_peers();
-
-            for (auto const &peer: peers) {
-                sha256_hash previous_change_block_hash;
-                auto it = block_hash_map.find(peer);
-                if (it != block_hash_map.end()) {
-                    previous_change_block_hash = it->second;
-                }
-
-                if (previous_change_block_hash.is_all_zeros()) {
-                    if (!delete_account_block_pointer(chain_id, peer))
-                        return false;
-                } else {
-                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-                    // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
-                    if (accountBlockPointer.oldest_block_hash() == b.sha256()) {
-                        if (!delete_account_block_pointer(chain_id, peer))
-                            return false;
-                    } else {
-                        accountBlockPointer.set_latest_block_hash(previous_change_block_hash);
-                        if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
-                            return false;
-                    }
-
-                    // no need to update state linker
-                }
-            }
-
-            if (!delete_state_linker(b.sha256()))
-                return false;
-//        for (auto const& item: stateLinker.get_previous_change_block_hash_map()) {
-//            auto& pubKey = item.first;
-//            auto& previous_change_block_hash = item.second;
-//            if (previous_change_block_hash.is_all_zeros()) {
-//                if (!delete_account_block_pointer(chain_id, pubKey))
-//                    return false;
-//            } else {
-//                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
-//                // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
-//                if (accountBlockPointer.oldest_block_hash() == b.sha256()) {
-//                    if (!delete_account_block_pointer(chain_id, pubKey))
-//                        return false;
-//                } else {
-//                    accountBlockPointer.set_latest_block_hash(previous_change_block_hash);
-//                    if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
-//                        return false;
+//    bool repository_impl::rollback_block(const block &b) {
+//        if (b.empty())
+//            return false;
+//
+//        m_discarded_blocks.push_back(b);
+//
+//        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
+//            auto &chain_id = b.chain_id();
+//            auto stateLinker = get_state_linker(b.sha256());
+//            auto &block_hash_map = stateLinker.get_previous_change_block_hash_map();
+//            auto peers = b.get_block_peers();
+//
+//            for (auto const &peer: peers) {
+//                sha256_hash previous_change_block_hash;
+//                auto it = block_hash_map.find(peer);
+//                if (it != block_hash_map.end()) {
+//                    previous_change_block_hash = it->second;
 //                }
 //
-//                // no need to update state linker
+//                if (previous_change_block_hash.is_all_zeros()) {
+//                    if (!delete_account_block_pointer(chain_id, peer))
+//                        return false;
+//                } else {
+//                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+//                    // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
+//                    if (accountBlockPointer.oldest_block_hash() == b.sha256()) {
+//                        if (!delete_account_block_pointer(chain_id, peer))
+//                            return false;
+//                    } else {
+//                        accountBlockPointer.set_latest_block_hash(previous_change_block_hash);
+//                        if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+//                            return false;
+//                    }
+//
+//                    // no need to update state linker
+//                }
 //            }
 //
 //            if (!delete_state_linker(b.sha256()))
 //                return false;
+////        for (auto const& item: stateLinker.get_previous_change_block_hash_map()) {
+////            auto& pubKey = item.first;
+////            auto& previous_change_block_hash = item.second;
+////            if (previous_change_block_hash.is_all_zeros()) {
+////                if (!delete_account_block_pointer(chain_id, pubKey))
+////                    return false;
+////            } else {
+////                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+////                // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
+////                if (accountBlockPointer.oldest_block_hash() == b.sha256()) {
+////                    if (!delete_account_block_pointer(chain_id, pubKey))
+////                        return false;
+////                } else {
+////                    accountBlockPointer.set_latest_block_hash(previous_change_block_hash);
+////                    if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
+////                        return false;
+////                }
+////
+////                // no need to update state linker
+////            }
+////
+////            if (!delete_state_linker(b.sha256()))
+////                return false;
+////        }
 //        }
-        }
+//
+//        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+//        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
+//        indexKeyInfo.clear_main_chain_block_hash();
+//        indexKeyInfo.clear_associated_peers();
+//        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
+//    }
 
-        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
-        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
-        indexKeyInfo.clear_main_chain_block_hash();
-        indexKeyInfo.clear_associated_peers();
-        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
-    }
-
-    bool repository_impl::expire_block(const block &b) {
-        if (b.empty())
-            return false;
-
-        m_discarded_blocks.push_back(b);
-
-        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
-            auto &chain_id = b.chain_id();
-            auto stateLinker = get_state_linker(b.sha256());
-            auto &block_hash_map = stateLinker.get_next_change_block_hash_map();
-            auto peers = b.get_block_peers();
-
-            for (auto const &peer: peers) {
-                sha256_hash next_change_block_hash;
-                auto it = block_hash_map.find(peer);
-                if (it != block_hash_map.end()) {
-                    next_change_block_hash = it->second;
-                }
-
-                if (next_change_block_hash.is_all_zeros()) {
-                    if (!delete_account_block_pointer(chain_id, peer))
-                        return false;
-                } else {
-                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
-                    // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
-                    if (accountBlockPointer.latest_block_hash() == b.sha256()) {
-                        if (!delete_account_block_pointer(chain_id, peer))
-                            return false;
-                    } else {
-                        accountBlockPointer.set_oldest_block_hash(next_change_block_hash);
-                        if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
-                            return false;
-                    }
-
-                    // no need to update state linker
-                }
-            }
-
-            if (!delete_state_linker(b.sha256()))
-                return false;
-//        for (auto const& item: stateLinker.get_next_change_block_hash_map()) {
-//            auto& pubKey = item.first;
-//            auto& next_change_block_hash = item.second;
-//            if (next_change_block_hash.is_all_zeros()) {
-//                if (!delete_account_block_pointer(chain_id, pubKey))
-//                    return false;
-//            } else {
-//                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
-//                // if latest block pointer point to current block, this account was on chain last once, delete it
-//                if (accountBlockPointer.latest_block_hash() == b.sha256()) {
-//                    if (!delete_account_block_pointer(chain_id, pubKey))
-//                        return false;
-//                } else {
-//                    accountBlockPointer.set_oldest_block_hash(next_change_block_hash);
-//                    if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
-//                        return false;
+//    bool repository_impl::expire_block(const block &b) {
+//        if (b.empty())
+//            return false;
+//
+//        m_discarded_blocks.push_back(b);
+//
+//        if (b.miner_balance() != 0 || b.miner_nonce() != 0 || b.sender_balance() != 0 || b.sender_nonce() != 0 || b.receiver_balance() != 0 || b.receiver_nonce() != 0) {
+//            auto &chain_id = b.chain_id();
+//            auto stateLinker = get_state_linker(b.sha256());
+//            auto &block_hash_map = stateLinker.get_next_change_block_hash_map();
+//            auto peers = b.get_block_peers();
+//
+//            for (auto const &peer: peers) {
+//                sha256_hash next_change_block_hash;
+//                auto it = block_hash_map.find(peer);
+//                if (it != block_hash_map.end()) {
+//                    next_change_block_hash = it->second;
 //                }
 //
-//                // no need to update state linker
+//                if (next_change_block_hash.is_all_zeros()) {
+//                    if (!delete_account_block_pointer(chain_id, peer))
+//                        return false;
+//                } else {
+//                    auto accountBlockPointer = get_account_block_pointer(chain_id, peer);
+//                    // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
+//                    if (accountBlockPointer.latest_block_hash() == b.sha256()) {
+//                        if (!delete_account_block_pointer(chain_id, peer))
+//                            return false;
+//                    } else {
+//                        accountBlockPointer.set_oldest_block_hash(next_change_block_hash);
+//                        if (!save_account_block_pointer(chain_id, peer, accountBlockPointer))
+//                            return false;
+//                    }
+//
+//                    // no need to update state linker
+//                }
 //            }
 //
 //            if (!delete_state_linker(b.sha256()))
 //                return false;
+////        for (auto const& item: stateLinker.get_next_change_block_hash_map()) {
+////            auto& pubKey = item.first;
+////            auto& next_change_block_hash = item.second;
+////            if (next_change_block_hash.is_all_zeros()) {
+////                if (!delete_account_block_pointer(chain_id, pubKey))
+////                    return false;
+////            } else {
+////                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
+////                // if latest block pointer point to current block, this account was on chain last once, delete it
+////                if (accountBlockPointer.latest_block_hash() == b.sha256()) {
+////                    if (!delete_account_block_pointer(chain_id, pubKey))
+////                        return false;
+////                } else {
+////                    accountBlockPointer.set_oldest_block_hash(next_change_block_hash);
+////                    if (!save_account_block_pointer(chain_id, pubKey, accountBlockPointer))
+////                        return false;
+////                }
+////
+////                // no need to update state linker
+////            }
+////
+////            if (!delete_state_linker(b.sha256()))
+////                return false;
+////        }
 //        }
-        }
-
-        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
-        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
-        indexKeyInfo.clear_main_chain_block_hash();
-        indexKeyInfo.clear_associated_peers();
-        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
-    }
+//
+//        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+//        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
+//        indexKeyInfo.clear_main_chain_block_hash();
+//        indexKeyInfo.clear_associated_peers();
+//        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
+//    }
 
     bool repository_impl::delete_block(const sha256_hash &hash) {
         leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), hash.to_string());
@@ -866,64 +886,64 @@ namespace libTAU::blockchain {
 //        return delete_index_info(chain_id, block_number);
 //    }
 
-    bool repository_impl::delete_all_outdated_data(const aux::bytes &chain_id, std::int64_t block_number) {
-        // leveldb write batch
-        leveldb::WriteBatch write_batch;
-
-        for (std::int64_t i = block_number; i >=0; i--) {
-            index_key_info indexKeyInfo = get_index_info(chain_id, i);
-            if (indexKeyInfo.empty()) {
-                break;
-            }
-
-            // 1. remove account point
-            for (auto const& peer: indexKeyInfo.associated_peers()) {
-                auto act = get_account(chain_id, peer);
-                if (act.block_number() <= block_number) {
-                    std::string key;
-                    key.insert(key.end(), chain_id.begin(), chain_id.end());
-                    key.insert(key.end(), peer.bytes.begin(), peer.bytes.end());
-                    write_batch.Delete(key);
-                }
-            }
-
-            // 2.1 remove main chain block and state linker
-            if (!indexKeyInfo.main_chain_block_hash().is_all_zeros()) {
-                write_batch.Delete(indexKeyInfo.main_chain_block_hash().to_string());
-
-                std::string key;
-                key.insert(key.end(), indexKeyInfo.main_chain_block_hash().begin(), indexKeyInfo.main_chain_block_hash().end());
-                key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
-                write_batch.Delete(key);
-            }
-
-            // 2.2 remove non-main chain block and state linker
-            for (auto const& hash: indexKeyInfo.non_main_chain_block_hash_set()) {
-                write_batch.Delete(hash.to_string());
-
-                std::string key;
-                key.insert(key.end(), hash.begin(), hash.end());
-                key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
-                write_batch.Delete(key);
-            }
-
-            // 3. remove index lastly
-            std::string key_index;
-            key_index.insert(key_index.end(), chain_id.begin(), chain_id.end());
-            key_index.insert(key_index.end(), key_separator.begin(), key_separator.end());
-            std::string str_num = std::to_string(i);
-            key_index.insert(key_index.end(), str_num.begin(), str_num.end());
-            write_batch.Delete(key_index);
-        }
-
-        // flush into leveldb
-        leveldb::Status status = m_leveldb->Write(leveldb::WriteOptions(), &write_batch);
-        if (!status.ok()) {
-            return false;
-        }
-
-        return true;
-    }
+//    bool repository_impl::delete_all_outdated_data(const aux::bytes &chain_id, std::int64_t block_number) {
+//        // leveldb write batch
+//        leveldb::WriteBatch write_batch;
+//
+//        for (std::int64_t i = block_number; i >=0; i--) {
+//            index_key_info indexKeyInfo = get_index_info(chain_id, i);
+//            if (indexKeyInfo.empty()) {
+//                break;
+//            }
+//
+//            // 1. remove account point
+//            for (auto const& peer: indexKeyInfo.associated_peers()) {
+//                auto act = get_account(chain_id, peer);
+//                if (act.block_number() <= block_number) {
+//                    std::string key;
+//                    key.insert(key.end(), chain_id.begin(), chain_id.end());
+//                    key.insert(key.end(), peer.bytes.begin(), peer.bytes.end());
+//                    write_batch.Delete(key);
+//                }
+//            }
+//
+//            // 2.1 remove main chain block and state linker
+//            if (!indexKeyInfo.main_chain_block_hash().is_all_zeros()) {
+//                write_batch.Delete(indexKeyInfo.main_chain_block_hash().to_string());
+//
+//                std::string key;
+//                key.insert(key.end(), indexKeyInfo.main_chain_block_hash().begin(), indexKeyInfo.main_chain_block_hash().end());
+//                key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
+//                write_batch.Delete(key);
+//            }
+//
+//            // 2.2 remove non-main chain block and state linker
+//            for (auto const& hash: indexKeyInfo.non_main_chain_block_hash_set()) {
+//                write_batch.Delete(hash.to_string());
+//
+//                std::string key;
+//                key.insert(key.end(), hash.begin(), hash.end());
+//                key.insert(key.end(), key_suffix_state_linker.begin(), key_suffix_state_linker.end());
+//                write_batch.Delete(key);
+//            }
+//
+//            // 3. remove index lastly
+//            std::string key_index;
+//            key_index.insert(key_index.end(), chain_id.begin(), chain_id.end());
+//            key_index.insert(key_index.end(), key_separator.begin(), key_separator.end());
+//            std::string str_num = std::to_string(i);
+//            key_index.insert(key_index.end(), str_num.begin(), str_num.end());
+//            write_batch.Delete(key_index);
+//        }
+//
+//        // flush into leveldb
+//        leveldb::Status status = m_leveldb->Write(leveldb::WriteOptions(), &write_batch);
+//        if (!status.ok()) {
+//            return false;
+//        }
+//
+//        return true;
+//    }
 
     sha256_hash repository_impl::get_head_block_hash(const aux::bytes &chain_id) {
         std::string key;
