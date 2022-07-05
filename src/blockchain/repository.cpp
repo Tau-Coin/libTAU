@@ -11,6 +11,14 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
+    bool repository::save_main_chain_block(const block &blk) {
+        return save_block(blk, true);
+    }
+
+    bool repository::save_non_main_chain_block(const block &blk) {
+        return save_block(blk, false);
+    }
+
 //    bool repository::add_block_peer_in_peer_db(const block &b) {
 //        auto peers = b.get_block_peers();
 //        for (auto const& peer: peers) {
@@ -108,18 +116,18 @@ namespace libTAU::blockchain {
 //        return account(0, 0, 0);
 //    }
 
-    bool repository::save_non_main_chain_block(const block &b) {
-        // save block
-        if (!save_block(b))
-            return false;
-
-        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
-        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
-        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
-            return false;
-
-        return true;
-    }
+//    bool repository::save_non_main_chain_block(const block &b) {
+//        // save block
+//        if (!save_block(b))
+//            return false;
+//
+//        index_key_info indexKeyInfo = get_index_info(b.chain_id(), b.block_number());
+//        indexKeyInfo.add_non_main_chain_block_hash(b.sha256());
+//        if (!save_index_info(b.chain_id(), b.block_number(), indexKeyInfo))
+//            return false;
+//
+//        return true;
+//    }
 
 //    bool repository::forward_update_state_linker(const aux::bytes &chain_id, const dht::public_key &pubKey,
 //                                                 state_linker &stateLinker, const sha256_hash &current_block_hash) {
@@ -179,18 +187,18 @@ namespace libTAU::blockchain {
 //        return delete_index_info(chain_id, block_number);
 //    }
 
-    bool repository::add_new_chain(const aux::bytes &chain_id) {
-        std::set<aux::bytes> chains = get_all_chains();
-        chains.insert(chain_id);
-
-        return save_chains(chains);
-    }
-
-    bool repository::delete_chain(const aux::bytes &chain_id) {
-        std::set<aux::bytes> chains = get_all_chains();
-        chains.erase(chain_id);
-
-        return save_chains(chains);
-    }
+//    bool repository::add_new_chain(const aux::bytes &chain_id) {
+//        std::set<aux::bytes> chains = get_all_chains();
+//        chains.insert(chain_id);
+//
+//        return save_chains(chains);
+//    }
+//
+//    bool repository::delete_chain(const aux::bytes &chain_id) {
+//        std::set<aux::bytes> chains = get_all_chains();
+//        chains.erase(chain_id);
+//
+//        return save_chains(chains);
+//    }
 
 }

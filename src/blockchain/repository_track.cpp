@@ -14,6 +14,42 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    std::shared_ptr<repository> repository_track::start_tracking() {
+        return std::shared_ptr<repository>();
+    }
+
+    bool repository_track::flush(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::commit(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    void repository_track::rollback(const aux::bytes &chain_id) {
+
+    }
+
+    bool repository_track::add_new_chain(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::delete_chain(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    sha256_hash repository_track::get_head_block_hash(const aux::bytes &chain_id) {
+        return libTAU::sha256_hash();
+    }
+
+    bool repository_track::set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+        return false;
+    }
+
+    bool repository_track::delete_head_block_hash(const aux::bytes &chain_id) {
+        return false;
+    }
+
     bool repository_track::create_state_db(const aux::bytes &chain_id) {
         return false;
     }
@@ -31,6 +67,30 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        return false;
+    }
+
+    bool repository_track::create_block_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::delete_block_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    block repository_track::get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+        return block();
+    }
+
+    block repository_track::get_block_by_number(const aux::bytes &chain_id, int64_t block_number) {
+        return block();
+    }
+
+    bool repository_track::save_block(const block &blk, bool is_main_chain) {
+        return false;
+    }
+
+    bool repository_track::delete_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
         return false;
     }
 
@@ -477,135 +537,135 @@ namespace libTAU::blockchain {
 //        return save_index_info(b.chain_id(), b.block_number(), indexKeyInfo);
 //    }
 
-    bool repository_track::delete_block(const sha256_hash &hash) {
-        m_cache[hash.to_string()] = std::string ();
-        return true;
-    }
+//    bool repository_track::delete_block(const sha256_hash &hash) {
+//        m_cache[hash.to_string()] = std::string ();
+//        return true;
+//    }
+//
+//    sha256_hash repository_track::get_head_block_hash(const aux::bytes &chain_id) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
+//
+//        auto it = m_cache.find(key);
+//        if (it != m_cache.end() && !it->second.empty()) {
+//            return sha256_hash (it->second.data());
+//        } else {
+//            return m_repository->get_head_block_hash(chain_id);
+//        }
+//    }
+//
+//    bool repository_track::set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
+//        m_cache[key] = hash.to_string();
+//
+//        return true;
+//    }
+//
+//    bool repository_track::delete_head_block_hash(const aux::bytes &chain_id) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
+//        m_cache[key] = std::string ();
+//
+//        return true;
+//    }
+//
+//    sha256_hash repository_track::get_tail_block_hash(const aux::bytes &chain_id) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
+//
+//        auto it = m_cache.find(key);
+//        if (it != m_cache.end() && !it->second.empty()) {
+//            return sha256_hash (it->second.data());
+//        } else {
+//            return m_repository->get_tail_block_hash(chain_id);
+//        }
+//    }
+//
+//    bool repository_track::set_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
+//        m_cache[key] = hash.to_string();
+//
+//        return true;
+//    }
+//
+//    bool repository_track::delete_tail_block_hash(const aux::bytes &chain_id) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
+//        m_cache[key] = std::string ();
+//
+//        return true;
+//    }
+//
+//    sha256_hash repository_track::get_consensus_point_block_hash(const aux::bytes &chain_id) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
+//
+//        auto it = m_cache.find(key);
+//        if (it != m_cache.end() && !it->second.empty()) {
+//            return sha256_hash (it->second.data());
+//        } else {
+//            return m_repository->get_tail_block_hash(chain_id);
+//        }
+//    }
+//
+//    bool repository_track::set_consensus_point_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
+//        m_cache[key] = hash.to_string();
+//
+//        return true;
+//    }
+//
+//    bool repository_track::delete_consensus_point_block_hash(const aux::bytes &chain_id) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
+//        m_cache[key] = std::string ();
+//
+//        return true;
+//    }
 
-    sha256_hash repository_track::get_head_block_hash(const aux::bytes &chain_id) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
-
-        auto it = m_cache.find(key);
-        if (it != m_cache.end() && !it->second.empty()) {
-            return sha256_hash (it->second.data());
-        } else {
-            return m_repository->get_head_block_hash(chain_id);
-        }
-    }
-
-    bool repository_track::set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
-        m_cache[key] = hash.to_string();
-
-        return true;
-    }
-
-    bool repository_track::delete_head_block_hash(const aux::bytes &chain_id) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
-        m_cache[key] = std::string ();
-
-        return true;
-    }
-
-    sha256_hash repository_track::get_tail_block_hash(const aux::bytes &chain_id) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
-
-        auto it = m_cache.find(key);
-        if (it != m_cache.end() && !it->second.empty()) {
-            return sha256_hash (it->second.data());
-        } else {
-            return m_repository->get_tail_block_hash(chain_id);
-        }
-    }
-
-    bool repository_track::set_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
-        m_cache[key] = hash.to_string();
-
-        return true;
-    }
-
-    bool repository_track::delete_tail_block_hash(const aux::bytes &chain_id) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_tail_block_hash.begin(), key_suffix_tail_block_hash.end());
-        m_cache[key] = std::string ();
-
-        return true;
-    }
-
-    sha256_hash repository_track::get_consensus_point_block_hash(const aux::bytes &chain_id) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
-
-        auto it = m_cache.find(key);
-        if (it != m_cache.end() && !it->second.empty()) {
-            return sha256_hash (it->second.data());
-        } else {
-            return m_repository->get_tail_block_hash(chain_id);
-        }
-    }
-
-    bool repository_track::set_consensus_point_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
-        m_cache[key] = hash.to_string();
-
-        return true;
-    }
-
-    bool repository_track::delete_consensus_point_block_hash(const aux::bytes &chain_id) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_suffix_consensus_point_block_hash.begin(), key_suffix_consensus_point_block_hash.end());
-        m_cache[key] = std::string ();
-
-        return true;
-    }
-
-    std::shared_ptr<repository> repository_track::start_tracking() {
-        return std::make_shared<repository_track>(this);
-    }
-
-    void repository_track::update_batch(const std::map<std::string, std::string> &cache,
-                                        const std::vector<block> &connected_blocks,
-                                        const std::vector<block> &discarded_blocks) {
-        m_cache.insert(cache.begin(), cache.end());
-        m_connected_blocks.insert(m_connected_blocks.end(), connected_blocks.begin(), connected_blocks.end());
-        m_discarded_blocks.insert(m_discarded_blocks.end(), discarded_blocks.begin(), discarded_blocks.end());
-    }
-
-    // unsupported
-    bool repository_track::flush(const aux::bytes &chain_id) {
-        return false;
-    }
-
-    bool repository_track::commit() {
-        m_repository->update_batch(m_cache, m_connected_blocks, m_discarded_blocks);
-        m_cache.clear();
-        m_connected_blocks.clear();
-        m_discarded_blocks.clear();
-
-        return true;
-    }
-
-    void repository_track::rollback() {
-        m_cache.clear();
-        m_connected_blocks.clear();
-        m_discarded_blocks.clear();
-    }
+//    std::shared_ptr<repository> repository_track::start_tracking() {
+//        return std::make_shared<repository_track>(this);
+//    }
+//
+//    void repository_track::update_batch(const std::map<std::string, std::string> &cache,
+//                                        const std::vector<block> &connected_blocks,
+//                                        const std::vector<block> &discarded_blocks) {
+//        m_cache.insert(cache.begin(), cache.end());
+//        m_connected_blocks.insert(m_connected_blocks.end(), connected_blocks.begin(), connected_blocks.end());
+//        m_discarded_blocks.insert(m_discarded_blocks.end(), discarded_blocks.begin(), discarded_blocks.end());
+//    }
+//
+//    // unsupported
+//    bool repository_track::flush(const aux::bytes &chain_id) {
+//        return false;
+//    }
+//
+//    bool repository_track::commit() {
+//        m_repository->update_batch(m_cache, m_connected_blocks, m_discarded_blocks);
+//        m_cache.clear();
+//        m_connected_blocks.clear();
+//        m_discarded_blocks.clear();
+//
+//        return true;
+//    }
+//
+//    void repository_track::rollback() {
+//        m_cache.clear();
+//        m_connected_blocks.clear();
+//        m_discarded_blocks.clear();
+//    }
 
 //    account_block_pointer repository_track::get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) {
 //        std::string key;
@@ -691,13 +751,13 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_track::save_block(const block &b) {
-        if (b.empty())
-            return false;
-
-        m_cache[b.sha256().to_string()] = b.get_encode();
-        return true;
-    }
+//    bool repository_track::save_block(const block &b) {
+//        if (b.empty())
+//            return false;
+//
+//        m_cache[b.sha256().to_string()] = b.get_encode();
+//        return true;
+//    }
 
 //    bool repository_track::save_non_main_chain_block(block &b) {
 //        // save block
@@ -712,51 +772,51 @@ namespace libTAU::blockchain {
 //        return true;
 //    }
 
-    bool repository_track::delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_separator.begin(), key_separator.end());
-        std::string str_num = std::to_string(block_number);
-        key.insert(key.end(), str_num.begin(), str_num.end());
-
-        m_cache[key] = std::string ();
-
-        return true;
-    }
-
-    index_key_info repository_track::get_index_info(const aux::bytes &chain_id, std::int64_t block_number) {
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_separator.begin(), key_separator.end());
-        std::string str_num = std::to_string(block_number);
-        key.insert(key.end(), str_num.begin(), str_num.end());
-
-        auto it = m_cache.find(key);
-        if (it != m_cache.end()) {
-            if (it->second.empty()) {
-                return index_key_info();
-            } else {
-                return index_key_info(it->second);
-            }
-        } else {
-            return m_repository->get_index_info(chain_id, block_number);
-        }
-    }
-
-    bool repository_track::save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) {
-        if (indexKeyInfo.empty())
-            return false;
-
-        std::string key;
-        key.insert(key.end(), chain_id.begin(), chain_id.end());
-        key.insert(key.end(), key_separator.begin(), key_separator.end());
-        std::string str_num = std::to_string(block_number);
-        key.insert(key.end(), str_num.begin(), str_num.end());
-
-        m_cache[key] = indexKeyInfo.get_encode();
-
-        return true;
-    }
+//    bool repository_track::delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_separator.begin(), key_separator.end());
+//        std::string str_num = std::to_string(block_number);
+//        key.insert(key.end(), str_num.begin(), str_num.end());
+//
+//        m_cache[key] = std::string ();
+//
+//        return true;
+//    }
+//
+//    index_key_info repository_track::get_index_info(const aux::bytes &chain_id, std::int64_t block_number) {
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_separator.begin(), key_separator.end());
+//        std::string str_num = std::to_string(block_number);
+//        key.insert(key.end(), str_num.begin(), str_num.end());
+//
+//        auto it = m_cache.find(key);
+//        if (it != m_cache.end()) {
+//            if (it->second.empty()) {
+//                return index_key_info();
+//            } else {
+//                return index_key_info(it->second);
+//            }
+//        } else {
+//            return m_repository->get_index_info(chain_id, block_number);
+//        }
+//    }
+//
+//    bool repository_track::save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) {
+//        if (indexKeyInfo.empty())
+//            return false;
+//
+//        std::string key;
+//        key.insert(key.end(), chain_id.begin(), chain_id.end());
+//        key.insert(key.end(), key_separator.begin(), key_separator.end());
+//        std::string str_num = std::to_string(block_number);
+//        key.insert(key.end(), str_num.begin(), str_num.end());
+//
+//        m_cache[key] = indexKeyInfo.get_encode();
+//
+//        return true;
+//    }
 
 //    bool repository_track::delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) {
 //        index_key_info indexKeyInfo = get_index_info(chain_id, block_number);
@@ -792,13 +852,13 @@ namespace libTAU::blockchain {
 //        return false;
 //    }
 
-    std::set<aux::bytes> repository_track::get_all_chains() {
-        return m_repository->get_all_chains();
-    }
-
-    bool repository_track::save_chains(const std::set<aux::bytes> &chains) {
-        return m_repository->save_chains(chains);
-    }
+//    std::set<aux::bytes> repository_track::get_all_chains() {
+//        return m_repository->get_all_chains();
+//    }
+//
+//    bool repository_track::save_chains(const std::set<aux::bytes> &chains) {
+//        return m_repository->save_chains(chains);
+//    }
 
 //    bool repository_track::add_new_chain(const aux::bytes &chain_id) {
 //        std::set<aux::bytes> chains = get_all_chains();
@@ -814,26 +874,26 @@ namespace libTAU::blockchain {
 //        return save_chains(chains);
 //    }
 
-    bool repository_track::delete_all_chain_data(const aux::bytes &chain_id) {
-        return false;
-    }
-
-    std::string repository_track::get_all_cache() {
-        std::string info = "DB:\n";
-
-        for (auto const& item: m_cache) {
-            info.append(" key:").append(aux::toHex(item.first)).append("\n");
-        }
-
-        for (auto const& blk: m_connected_blocks) {
-            info.append(" connect block:").append(blk.to_string()).append("\n");
-        }
-
-        for (auto const& blk: m_discarded_blocks) {
-            info.append(" discard block:").append(blk.to_string()).append("\n");
-        }
-
-        return info;
-    }
+//    bool repository_track::delete_all_chain_data(const aux::bytes &chain_id) {
+//        return false;
+//    }
+//
+//    std::string repository_track::get_all_cache() {
+//        std::string info = "DB:\n";
+//
+//        for (auto const& item: m_cache) {
+//            info.append(" key:").append(aux::toHex(item.first)).append("\n");
+//        }
+//
+//        for (auto const& blk: m_connected_blocks) {
+//            info.append(" connect block:").append(blk.to_string()).append("\n");
+//        }
+//
+//        for (auto const& blk: m_discarded_blocks) {
+//            info.append(" discard block:").append(blk.to_string()).append("\n");
+//        }
+//
+//        return info;
+//    }
 
 }

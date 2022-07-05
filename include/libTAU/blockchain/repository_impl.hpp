@@ -23,6 +23,24 @@ namespace libTAU::blockchain {
 
         bool init() override;
 
+        std::shared_ptr<repository> start_tracking() override;
+
+        bool flush(const aux::bytes &chain_id) override;
+
+        bool commit(const aux::bytes &chain_id) override;
+
+        void rollback(const aux::bytes &chain_id) override;
+
+        bool add_new_chain(const aux::bytes &chain_id) override;
+
+        bool delete_chain(const aux::bytes &chain_id) override;
+
+        sha256_hash get_head_block_hash(const aux::bytes &chain_id) override;
+
+        bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+
+        bool delete_head_block_hash(const aux::bytes &chain_id) override;
+
         bool create_state_db(const aux::bytes &chain_id) override;
 
         bool delete_state_db(const aux::bytes &chain_id) override;
@@ -32,6 +50,18 @@ namespace libTAU::blockchain {
         bool save_account(const aux::bytes &chain_id, const account &act) override;
 
         bool delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+
+        bool create_block_db(const aux::bytes &chain_id) override;
+
+        bool delete_block_db(const aux::bytes &chain_id) override;
+
+        block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+
+        block get_block_by_number(const aux::bytes &chain_id, int64_t block_number) override;
+
+        bool save_block(const block &blk, bool is_main_chain) override;
+
+        bool delete_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
 
 
 
@@ -100,36 +130,36 @@ namespace libTAU::blockchain {
 //
 //        bool expire_block(const block &b) override;
 
-        bool delete_block(const sha256_hash &hash) override;
+//        bool delete_block(const sha256_hash &hash) override;
+//
+//        sha256_hash get_head_block_hash(const aux::bytes &chain_id) override;
+//
+//        bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+//
+//        bool delete_head_block_hash(const aux::bytes &chain_id) override;
+//
+//        sha256_hash get_tail_block_hash(const aux::bytes &chain_id) override;
+//
+//        bool set_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+//
+//        bool delete_tail_block_hash(const aux::bytes &chain_id) override;
+//
+//        sha256_hash get_consensus_point_block_hash(const aux::bytes &chain_id) override;
+//
+//        bool set_consensus_point_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+//
+//        bool delete_consensus_point_block_hash(const aux::bytes &chain_id) override;
 
-        sha256_hash get_head_block_hash(const aux::bytes &chain_id) override;
-
-        bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
-
-        bool delete_head_block_hash(const aux::bytes &chain_id) override;
-
-        sha256_hash get_tail_block_hash(const aux::bytes &chain_id) override;
-
-        bool set_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
-
-        bool delete_tail_block_hash(const aux::bytes &chain_id) override;
-
-        sha256_hash get_consensus_point_block_hash(const aux::bytes &chain_id) override;
-
-        bool set_consensus_point_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
-
-        bool delete_consensus_point_block_hash(const aux::bytes &chain_id) override;
-
-        std::shared_ptr<repository> start_tracking() override;
-
-        void update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,
-                          const std::vector<block> &discarded_blocks) override;
-
-        bool flush(const aux::bytes &chain_id) override;
-
-        bool commit() override;
-
-        void rollback() override;
+//        std::shared_ptr<repository> start_tracking() override;
+//
+//        void update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,
+//                          const std::vector<block> &discarded_blocks) override;
+//
+//        bool flush(const aux::bytes &chain_id) override;
+//
+//        bool commit() override;
+//
+//        void rollback() override;
 
 //        account_block_pointer get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 //
@@ -145,31 +175,31 @@ namespace libTAU::blockchain {
 //
 //        bool delete_state_linker(const sha256_hash &block_hash) override;
 
-        bool save_block(const block &b) override;
+//        bool save_block(const block &b) override;
 
 //        bool save_non_main_chain_block(block &b) override;
 
-        bool delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) override;
-
-        index_key_info get_index_info(const aux::bytes &chain_id, std::int64_t block_number) override;
-
-        bool save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) override;
+//        bool delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) override;
+//
+//        index_key_info get_index_info(const aux::bytes &chain_id, std::int64_t block_number) override;
+//
+//        bool save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) override;
 
 //        bool delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number) override;
 
 //        bool delete_all_outdated_data(const aux::bytes &chain_id, std::int64_t block_number) override;
 
-        std::set<aux::bytes> get_all_chains() override;
-
-        bool save_chains(const std::set<aux::bytes> &chains) override;
+//        std::set<aux::bytes> get_all_chains() override;
+//
+//        bool save_chains(const std::set<aux::bytes> &chains) override;
 
 //        bool add_new_chain(const aux::bytes &chain_id) override;
 //
 //        bool delete_chain(const aux::bytes &chain_id) override;
 
-        bool delete_all_chain_data(const aux::bytes &chain_id) override;
-
-        std::string get_all_cache() override;
+//        bool delete_all_chain_data(const aux::bytes &chain_id) override;
+//
+//        std::string get_all_cache() override;
 
     private:
 

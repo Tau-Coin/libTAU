@@ -37,6 +37,44 @@ namespace libTAU::blockchain {
         // init db
         virtual bool init() = 0;
 
+        /**
+         * Save a snapshot and start tracking future changes
+         *
+         * @return the tracker repository
+         */
+        virtual std::shared_ptr<repository> start_tracking() = 0;
+
+//        virtual void
+//        update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,
+//                     const std::vector<block> &discarded_blocks) = 0;
+
+        virtual bool flush(const aux::bytes &chain_id) = 0;
+
+        /**
+         * Store all the temporary changes made
+         * to the repository in the actual database
+         */
+        virtual bool commit(const aux::bytes &chain_id) = 0;
+
+        /**
+         * Undo all the changes made so far
+         * to a snapshot of the repository
+         */
+        virtual void rollback(const aux::bytes &chain_id) = 0;
+
+        // chain set api
+        virtual bool add_new_chain(const aux::bytes &chain_id) = 0;
+
+        virtual bool delete_chain(const aux::bytes &chain_id) = 0;
+
+        // key point
+        virtual sha256_hash get_head_block_hash(const aux::bytes &chain_id) = 0;
+
+        virtual bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+
+        virtual bool delete_head_block_hash(const aux::bytes &chain_id) = 0;
+
+        // state db api
         virtual bool create_state_db(const aux::bytes &chain_id) = 0;
 
         virtual bool delete_state_db(const aux::bytes &chain_id) = 0;
@@ -47,6 +85,22 @@ namespace libTAU::blockchain {
 
         virtual bool delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
+        // block db api
+        virtual bool create_block_db(const aux::bytes &chain_id) = 0;
+
+        virtual bool delete_block_db(const aux::bytes &chain_id) = 0;
+
+        virtual block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+
+        virtual block get_block_by_number(const aux::bytes &chain_id, int64_t block_number) = 0;
+
+        virtual bool save_block(const block &blk, bool is_main_chain) = 0;
+
+        bool save_main_chain_block(const block &blk);
+
+        bool save_non_main_chain_block(const block &blk);
+
+        virtual bool delete_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
 
 
 
@@ -123,50 +177,50 @@ namespace libTAU::blockchain {
 //
 //        virtual bool expire_block(const block &b) = 0;
 
-        virtual bool delete_block(const sha256_hash &hash) = 0;
-
-        virtual sha256_hash get_head_block_hash(const aux::bytes &chain_id) = 0;
-
-        virtual bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
-
-        virtual bool delete_head_block_hash(const aux::bytes &chain_id) = 0;
-
-        virtual sha256_hash get_tail_block_hash(const aux::bytes &chain_id) = 0;
-
-        virtual bool set_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
-
-        virtual bool delete_tail_block_hash(const aux::bytes &chain_id) = 0;
-
-        virtual sha256_hash get_consensus_point_block_hash(const aux::bytes &chain_id) = 0;
-
-        virtual bool set_consensus_point_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
-
-        virtual bool delete_consensus_point_block_hash(const aux::bytes &chain_id) = 0;
+//        virtual bool delete_block(const sha256_hash &hash) = 0;
+//
+//        virtual sha256_hash get_head_block_hash(const aux::bytes &chain_id) = 0;
+//
+//        virtual bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+//
+//        virtual bool delete_head_block_hash(const aux::bytes &chain_id) = 0;
+//
+//        virtual sha256_hash get_tail_block_hash(const aux::bytes &chain_id) = 0;
+//
+//        virtual bool set_tail_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+//
+//        virtual bool delete_tail_block_hash(const aux::bytes &chain_id) = 0;
+//
+//        virtual sha256_hash get_consensus_point_block_hash(const aux::bytes &chain_id) = 0;
+//
+//        virtual bool set_consensus_point_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+//
+//        virtual bool delete_consensus_point_block_hash(const aux::bytes &chain_id) = 0;
 
         /**
          * Save a snapshot and start tracking future changes
          *
          * @return the tracker repository
          */
-        virtual std::shared_ptr<repository> start_tracking() = 0;
-
-        virtual void
-        update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,
-                     const std::vector<block> &discarded_blocks) = 0;
-
-        virtual bool flush(const aux::bytes &chain_id) = 0;
-
-        /**
-         * Store all the temporary changes made
-         * to the repository in the actual database
-         */
-        virtual bool commit() = 0;
-
-        /**
-         * Undo all the changes made so far
-         * to a snapshot of the repository
-         */
-        virtual void rollback() = 0;
+//        virtual std::shared_ptr<repository> start_tracking() = 0;
+//
+//        virtual void
+//        update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,
+//                     const std::vector<block> &discarded_blocks) = 0;
+//
+//        virtual bool flush(const aux::bytes &chain_id) = 0;
+//
+//        /**
+//         * Store all the temporary changes made
+//         * to the repository in the actual database
+//         */
+//        virtual bool commit() = 0;
+//
+//        /**
+//         * Undo all the changes made so far
+//         * to a snapshot of the repository
+//         */
+//        virtual void rollback() = 0;
 
 //        virtual account_block_pointer get_account_block_pointer(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 //
@@ -182,31 +236,31 @@ namespace libTAU::blockchain {
 //
 //        virtual bool delete_state_linker(const sha256_hash &block_hash) = 0;
 
-        virtual bool save_block(const block &b) = 0;
+//        virtual bool save_block(const block &b) = 0;
 
-        bool save_non_main_chain_block(const block &b);
+//        bool save_non_main_chain_block(const block &b);
 
-        virtual bool delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) = 0;
-
-        virtual index_key_info get_index_info(const aux::bytes &chain_id, std::int64_t block_number) = 0;
-
-        virtual bool save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) = 0;
+//        virtual bool delete_index_info(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+//
+//        virtual index_key_info get_index_info(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+//
+//        virtual bool save_index_info(const aux::bytes &chain_id, std::int64_t block_number, const index_key_info &indexKeyInfo) = 0;
 
 //        bool delete_expired_data_by_height(const aux::bytes &chain_id, std::int64_t block_number);
 
 //        virtual bool delete_all_outdated_data(const aux::bytes &chain_id, std::int64_t block_number) = 0;
 
-        virtual std::set<aux::bytes> get_all_chains() = 0;
-
-        virtual bool save_chains(const std::set<aux::bytes> &chains) = 0;
-
-        bool add_new_chain(const aux::bytes &chain_id);
-
-        bool delete_chain(const aux::bytes &chain_id);
-
-        virtual bool delete_all_chain_data(const aux::bytes &chain_id) = 0;
-
-        virtual std::string get_all_cache() = 0;
+//        virtual std::set<aux::bytes> get_all_chains() = 0;
+//
+//        virtual bool save_chains(const std::set<aux::bytes> &chains) = 0;
+//
+//        bool add_new_chain(const aux::bytes &chain_id);
+//
+//        bool delete_chain(const aux::bytes &chain_id);
+//
+//        virtual bool delete_all_chain_data(const aux::bytes &chain_id) = 0;
+//
+//        virtual std::string get_all_cache() = 0;
     };
 }
 #endif //LIBTAU_REPOSITORY_HPP
