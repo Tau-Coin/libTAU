@@ -39,6 +39,11 @@ see LICENSE file.
 // for dht_lookup and dht_routing_bucket
 #include <libTAU/alert_types.hpp>
 
+#include <boost/bimap/bimap.hpp>
+#include <boost/bimap/multiset_of.hpp>
+#include <boost/bimap/set_of.hpp>
+
+using namespace boost::bimaps;
 using libTAU::aux::account_manager;
 
 namespace libTAU {
@@ -82,6 +87,65 @@ struct dht_status
 	udp::endpoint local_endpoint;
 	std::vector<dht_routing_bucket> table;
 	std::vector<dht_lookup> requests;
+};
+
+static constexpr int relay_pkt_timeout = 3; // 3 seconds
+
+typedef bimap<
+
+	set_of<std::string>,
+
+	multiset_of<std::int64_t, std::less<std::int64_t> >
+
+> relay_pkt_deduplicater_type;
+
+typedef relay_pkt_deduplicater_type::value_type relay_pkt;
+
+struct relay_pkt_deduplicater
+{
+	relay_pkt_deduplicater_type m_deduplicater;
+
+	time_point m_last_tick = aux::time_now();
+
+	std::size_t size()
+	{
+		return m_deduplicater.left.size();
+	}
+
+	bool exist(std::string const& hmac)
+	{
+		return m_deduplicater.left.find(hmac) != m_deduplicater.left.end();
+	}
+
+	void add(std::string const& hmac)
+	{
+		std::int64_t ts = libTAU::aux::utcTime();
+		m_deduplicater.insert(relay_pkt(hmac, ts));
+	}
+
+	void tick(std::int64_t timeout)
+	{
+		if (m_deduplicater.left.size() == 0) return;
+
+		time_point now(aux::time_now());
+		if (now - seconds(1) < m_last_tick) return;
+
+		m_last_tick = now;
+
+		std::int64_t ts = libTAU::aux::utcTime() - timeout + 1;
+		relay_pkt_deduplicater_type::right_iterator it = m_deduplicater.right.lower_bound(ts);
+		m_deduplicater.right.erase(m_deduplicater.right.begin(), it);
+	}
+
+	void get_all_timestamps(std::vector<std::int64_t>& vec)
+	{
+		for (auto it = m_deduplicater.right.begin();
+			it != m_deduplicater.right.end();
+			it++)
+		{
+			vec.push_back(it->first);
+		}
+	}
 };
 
 class TORRENT_EXTRA_EXPORT node
@@ -378,6 +442,8 @@ private:
 	counters& m_counters;
 
 	std::shared_ptr<account_manager> m_account_manager;
+
+	relay_pkt_deduplicater m_relay_pkt_deduplicater;
 
 #ifndef TORRENT_DISABLE_LOGGING
 	std::uint32_t m_search_id = 0;

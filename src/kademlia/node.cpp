@@ -1156,6 +1156,39 @@ time_duration node::connection_timeout()
 #endif
 */
 
+	std::size_t orig_size = m_relay_pkt_deduplicater.size();
+	if (orig_size > 0)
+	{
+		// std::vector<std::int64_t> before;
+		// std::vector<std::int64_t> after;
+		// m_relay_pkt_deduplicater.get_all_timestamps(before);
+		m_relay_pkt_deduplicater.tick(relay_pkt_timeout);
+		// m_relay_pkt_deduplicater.get_all_timestamps(after);
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_DEBUG))
+		{
+			m_observer->log(dht_logger::node, "relay pkt deduplicater:%d,%d"
+				, int(orig_size), int(m_relay_pkt_deduplicater.size()));
+
+			/*
+			m_observer->log(dht_logger::node, "relay pkt deduplicater tick before:%d"
+				, before.size());
+			for (auto it = before.begin(); it != before.end(); it++)
+			{
+				m_observer->log(dht_logger::node, "relay pkt deduplicater:%d", *it);
+			}
+
+			m_observer->log(dht_logger::node, "relay pkt deduplicater tick after:%d"
+				, after.size());
+			for (auto it = after.begin(); it != after.end(); it++)
+			{
+				m_observer->log(dht_logger::node, "relay pkt deduplicater:%d", *it);
+			}
+			 */
+		}
+#endif
+	}
+
 	time_point now(aux::time_now());
 	if (now - minutes(1) < m_last_tracker_tick) return d;
 	m_last_tracker_tick = now;
@@ -2019,6 +2052,25 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 					{ handle_referred_relays(sender, {nep.id, nep.ep});});
 
 			reply["hit"] = 1;
+
+			// de-duplicate relay packet
+			std::string hmac_str(hmac.bytes.data(), 4);
+			hmac_str.append(sender.data(), 4);
+			if (m_relay_pkt_deduplicater.exist(hmac_str))
+			{
+#ifndef TORRENT_DISABLE_LOGGING
+				if (m_observer != nullptr
+					&& m_observer->should_log(dht_logger::node, aux::LOG_DEBUG))
+				{
+					m_observer->log(dht_logger::node, "drop duplicate relay packet");
+				}
+#endif
+				return false;
+			}
+			else
+			{
+				m_relay_pkt_deduplicater.add(hmac_str);
+			}
 		}
 		else
 		{
