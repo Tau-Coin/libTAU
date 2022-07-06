@@ -27,6 +27,11 @@ namespace libTAU::blockchain {
     // 的状态链接器，状态链接器通过previous change指针，可以完整回溯该账户的变化历史。
     struct TORRENT_EXPORT repository {
 
+        const std::string table_chains = "chains";
+        const std::string table_blocks = "blocks";
+        const std::string table_state = "state";
+        const std::string table_head_block = "head";
+
         const std::string key_chains = "chains";
         const std::string key_separator = "_";
         const std::string key_suffix_state_linker = "linker";
@@ -34,7 +39,7 @@ namespace libTAU::blockchain {
         const std::string key_suffix_tail_block_hash = "tail";
         const std::string key_suffix_consensus_point_block_hash = "consensus";
 
-        // init db
+        // init db, create chains table
         virtual bool init() = 0;
 
         /**
@@ -63,6 +68,8 @@ namespace libTAU::blockchain {
         virtual void rollback(const aux::bytes &chain_id) = 0;
 
         // chain set api
+        virtual std::set<aux::bytes> get_all_chains() = 0;
+
         virtual bool add_new_chain(const aux::bytes &chain_id) = 0;
 
         virtual bool delete_chain(const aux::bytes &chain_id) = 0;
@@ -84,6 +91,8 @@ namespace libTAU::blockchain {
         virtual bool save_account(const aux::bytes &chain_id, const account &act) = 0;
 
         virtual bool delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
+        virtual std::vector<account> get_all_effective_state(const aux::bytes &chain_id) = 0;
 
         // block db api
         virtual bool create_block_db(const aux::bytes &chain_id) = 0;

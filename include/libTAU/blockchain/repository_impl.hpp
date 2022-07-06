@@ -31,6 +31,8 @@ namespace libTAU::blockchain {
 
         void rollback(const aux::bytes &chain_id) override;
 
+        std::set<aux::bytes> get_all_chains() override;
+
         bool add_new_chain(const aux::bytes &chain_id) override;
 
         bool delete_chain(const aux::bytes &chain_id) override;
@@ -50,6 +52,8 @@ namespace libTAU::blockchain {
         bool save_account(const aux::bytes &chain_id, const account &act) override;
 
         bool delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+
+        std::vector<account> get_all_effective_state(const aux::bytes &chain_id) override;
 
         bool create_block_db(const aux::bytes &chain_id) override;
 

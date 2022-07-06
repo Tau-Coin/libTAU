@@ -206,7 +206,7 @@ namespace blockchain {
         void refresh_mining_timeout(error_code const&, const aux::bytes &chain_id);
 
         // load chain all info
-        bool load_chain(const aux::bytes &chain_id);
+//        bool load_chain(const aux::bytes &chain_id);
 
         // start chain
         bool start_chain(const aux::bytes &chain_id);

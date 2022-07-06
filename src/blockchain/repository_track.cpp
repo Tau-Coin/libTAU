@@ -30,6 +30,10 @@ namespace libTAU::blockchain {
 
     }
 
+    std::set<aux::bytes> repository_track::get_all_chains() {
+        return std::set<aux::bytes>();
+    }
+
     bool repository_track::add_new_chain(const aux::bytes &chain_id) {
         return false;
     }
@@ -68,6 +72,10 @@ namespace libTAU::blockchain {
 
     bool repository_track::delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         return false;
+    }
+
+    std::vector<account> repository_track::get_all_effective_state(const aux::bytes &chain_id) {
+        return std::vector<account>();
     }
 
     bool repository_track::create_block_db(const aux::bytes &chain_id) {

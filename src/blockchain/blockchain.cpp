@@ -23,23 +23,12 @@ namespace libTAU::blockchain {
 
     bool blockchain::init() {
         try {
+            // db init
+            m_repository->init();
+
             // get all chains
             auto chains = m_repository->get_all_chains();
             m_chains.insert(m_chains.end(), chains.begin(), chains.end());
-
-            // load all chains
-//            bool has_tau = false;
-//            for (auto const &chain_id: m_chains) {
-//                if (chain_id == TAU_CHAIN_ID) {
-//                    has_tau = true;
-//                }
-//                load_chain(chain_id);
-//            }
-
-            // create tau chain
-//            if (!has_tau) {
-//                create_TAU_chain();
-//            }
         } catch (std::exception &e) {
             log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             return false;
@@ -224,45 +213,45 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool blockchain::load_chain(const aux::bytes &chain_id) {
-        log(LOG_INFO, "INFO: load chain[%s]", aux::toHex(chain_id).c_str());
-
-        // create vote timer
-        m_chain_status_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
-
-        // create tx pool
-        m_tx_pools[chain_id] = tx_pool(m_repository.get());
-
-        // get gossip peers
-        m_gossip_peers[chain_id] = m_repository->get_all_gossip_peers(chain_id);
-
-        // load key point block in memory
-        // load head/tail/consensus block
-        auto head_block_hash = m_repository->get_head_block_hash(chain_id);
-        auto tail_block_hash = m_repository->get_tail_block_hash(chain_id);
-        auto consensus_point_block_hash = m_repository->get_consensus_point_block_hash(chain_id);
-        log(LOG_INFO, "INFO chain id[%s], head block hash[%s], tail block hash[%s], consensus point block hash[%s]",
-            aux::toHex(chain_id).c_str(), aux::toHex(head_block_hash.to_string()).c_str(),
-            aux::toHex(tail_block_hash.to_string()).c_str(), aux::toHex(consensus_point_block_hash.to_string()).c_str());
-        if (!head_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros() && !consensus_point_block_hash.is_all_zeros()) {
-            auto head_block = m_repository->get_block_by_hash(head_block_hash);
-            auto tail_block = m_repository->get_block_by_hash(tail_block_hash);
-            auto consensus_point_block = m_repository->get_block_by_hash(consensus_point_block_hash);
-            if (!head_block.empty() && !tail_block.empty() && !consensus_point_block.empty()) {
-                m_head_blocks[chain_id] = head_block;
-                m_tail_blocks[chain_id] = tail_block;
-                m_consensus_point_blocks[chain_id] = consensus_point_block;
-                log(LOG_INFO, "INFO: Head block: %s", head_block.to_string().c_str());
-                log(LOG_INFO, "INFO: Tail block: %s", tail_block.to_string().c_str());
-                log(LOG_INFO, "INFO: Consensus point block: %s", consensus_point_block.to_string().c_str());
-
-                // try to update voting point block
-                try_to_update_voting_point_block(chain_id);
-            }
-        }
-
-        return true;
-    }
+//    bool blockchain::load_chain(const aux::bytes &chain_id) {
+//        log(LOG_INFO, "INFO: load chain[%s]", aux::toHex(chain_id).c_str());
+//
+//        // create vote timer
+//        m_chain_status_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
+//
+//        // create tx pool
+//        m_tx_pools[chain_id] = tx_pool(m_repository.get());
+//
+//        // get gossip peers
+//        m_gossip_peers[chain_id] = m_repository->get_all_gossip_peers(chain_id);
+//
+//        // load key point block in memory
+//        // load head/tail/consensus block
+//        auto head_block_hash = m_repository->get_head_block_hash(chain_id);
+//        auto tail_block_hash = m_repository->get_tail_block_hash(chain_id);
+//        auto consensus_point_block_hash = m_repository->get_consensus_point_block_hash(chain_id);
+//        log(LOG_INFO, "INFO chain id[%s], head block hash[%s], tail block hash[%s], consensus point block hash[%s]",
+//            aux::toHex(chain_id).c_str(), aux::toHex(head_block_hash.to_string()).c_str(),
+//            aux::toHex(tail_block_hash.to_string()).c_str(), aux::toHex(consensus_point_block_hash.to_string()).c_str());
+//        if (!head_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros() && !consensus_point_block_hash.is_all_zeros()) {
+//            auto head_block = m_repository->get_block_by_hash(head_block_hash);
+//            auto tail_block = m_repository->get_block_by_hash(tail_block_hash);
+//            auto consensus_point_block = m_repository->get_block_by_hash(consensus_point_block_hash);
+//            if (!head_block.empty() && !tail_block.empty() && !consensus_point_block.empty()) {
+//                m_head_blocks[chain_id] = head_block;
+//                m_tail_blocks[chain_id] = tail_block;
+//                m_consensus_point_blocks[chain_id] = consensus_point_block;
+//                log(LOG_INFO, "INFO: Head block: %s", head_block.to_string().c_str());
+//                log(LOG_INFO, "INFO: Tail block: %s", tail_block.to_string().c_str());
+//                log(LOG_INFO, "INFO: Consensus point block: %s", consensus_point_block.to_string().c_str());
+//
+//                // try to update voting point block
+//                try_to_update_voting_point_block(chain_id);
+//            }
+//        }
+//
+//        return true;
+//    }
 
     bool blockchain::start_chain(const aux::bytes &chain_id) {
         log(LOG_INFO, "INFO: start chain[%s]", aux::toHex(chain_id).c_str());
