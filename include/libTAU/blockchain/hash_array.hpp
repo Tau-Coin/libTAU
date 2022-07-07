@@ -42,7 +42,7 @@ namespace libTAU {
             friend std::ostream &operator<<(std::ostream &os, const hash_array &hashArray);
 
         private:
-            // populate block data from entry
+            // populate hash array from entry
             void populate(const entry& e);
 
             // hash
