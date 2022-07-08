@@ -11,6 +11,10 @@ see LICENSE file.
 namespace libTAU::blockchain {
     state_array::state_array(const entry &e) {
         populate(e);
+
+        std::string encode;
+        bencode(std::back_inserter(encode), e);
+        m_hash = dht::item_target_id(encode);
     }
 
     entry state_array::get_entry() const {
@@ -49,6 +53,8 @@ namespace libTAU::blockchain {
         for (auto const& act: stateArray.m_state_array) {
             os << " account:" << act.to_string();
         }
+
+        os << " m_hash: " << aux::toHex(stateArray.m_hash.to_string());
 
         return os;
     }

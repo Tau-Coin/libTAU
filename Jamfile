@@ -958,6 +958,7 @@ BLOCKCHAIN_SOURCES =
     repository
     repository_impl
     repository_track
+    state_array
     state_linker
     transaction
     tx_pool

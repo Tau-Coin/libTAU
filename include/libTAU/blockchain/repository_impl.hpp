@@ -43,6 +43,12 @@ namespace libTAU::blockchain {
 
         bool delete_head_block_hash(const aux::bytes &chain_id) override;
 
+        state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+
+        bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) override;
+
+        bool delete_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+
         bool create_state_db(const aux::bytes &chain_id) override;
 
         bool delete_state_db(const aux::bytes &chain_id) override;

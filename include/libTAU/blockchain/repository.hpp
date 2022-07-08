@@ -16,6 +16,7 @@ see LICENSE file.
 #include "libTAU/blockchain/index_key_info.hpp"
 #include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/state_array.hpp"
 #include "libTAU/blockchain/state_linker.hpp"
 #include "libTAU/blockchain/account_block_pointer.hpp"
 
@@ -74,12 +75,19 @@ namespace libTAU::blockchain {
 
         virtual bool delete_chain(const aux::bytes &chain_id) = 0;
 
-        // key point
+        // head block
         virtual sha256_hash get_head_block_hash(const aux::bytes &chain_id) = 0;
 
         virtual bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
 
         virtual bool delete_head_block_hash(const aux::bytes &chain_id) = 0;
+
+        // state array
+        virtual state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+
+        virtual bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) = 0;
+
+        virtual bool delete_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
 
         // state db api
         virtual bool create_state_db(const aux::bytes &chain_id) = 0;
