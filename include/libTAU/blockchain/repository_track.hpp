@@ -35,11 +35,13 @@ namespace libTAU::blockchain {
 
         bool delete_chain(const aux::bytes &chain_id) override;
 
-        sha256_hash get_head_block_hash(const aux::bytes &chain_id) override;
+//        bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+//
+//        bool delete_head_block_hash(const aux::bytes &chain_id) override;
 
-        bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+        bool create_state_array_db(const aux::bytes &chain_id) override;
 
-        bool delete_head_block_hash(const aux::bytes &chain_id) override;
+        bool delete_state_array_db(const aux::bytes &chain_id) override;
 
         state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
 
@@ -59,9 +61,13 @@ namespace libTAU::blockchain {
 
         std::vector<account> get_all_effective_state(const aux::bytes &chain_id) override;
 
+        dht::public_key get_peer_randomly(const aux::bytes &chain_id) override;
+
         bool create_block_db(const aux::bytes &chain_id) override;
 
         bool delete_block_db(const aux::bytes &chain_id) override;
+
+        sha256_hash get_head_block_hash(const aux::bytes &chain_id) override;
 
         block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
 
@@ -70,6 +76,20 @@ namespace libTAU::blockchain {
         bool save_block(const block &blk, bool is_main_chain) override;
 
         bool delete_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+
+        block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) override;
+
+        bool delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) override;
+
+        bool create_bootstrap_db(const aux::bytes &chain_id) override;
+
+        bool delete_bootstrap_db(const aux::bytes &chain_id) override;
+
+        std::set<dht::public_key> get_all_bootstraps(const aux::bytes &chain_id) override;
+
+        bool delete_bootstrap_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+
+        bool add_bootstrap(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
 
 

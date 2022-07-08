@@ -42,15 +42,19 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    sha256_hash repository_track::get_head_block_hash(const aux::bytes &chain_id) {
-        return libTAU::sha256_hash();
-    }
+//    bool repository_track::set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+//        return false;
+//    }
+//
+//    bool repository_track::delete_head_block_hash(const aux::bytes &chain_id) {
+//        return false;
+//    }
 
-    bool repository_track::set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+    bool repository_track::create_state_array_db(const aux::bytes &chain_id) {
         return false;
     }
 
-    bool repository_track::delete_head_block_hash(const aux::bytes &chain_id) {
+    bool repository_track::delete_state_array_db(const aux::bytes &chain_id) {
         return false;
     }
 
@@ -90,12 +94,20 @@ namespace libTAU::blockchain {
         return std::vector<account>();
     }
 
+    dht::public_key repository_track::get_peer_randomly(const aux::bytes &chain_id) {
+        return dht::public_key();
+    }
+
     bool repository_track::create_block_db(const aux::bytes &chain_id) {
         return false;
     }
 
     bool repository_track::delete_block_db(const aux::bytes &chain_id) {
         return false;
+    }
+
+    sha256_hash repository_track::get_head_block_hash(const aux::bytes &chain_id) {
+        return libTAU::sha256_hash();
     }
 
     block repository_track::get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
@@ -111,6 +123,34 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::delete_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+        return false;
+    }
+
+    block repository_track::get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+        return block();
+    }
+
+    bool repository_track::delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+        return false;
+    }
+
+    bool repository_track::create_bootstrap_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::delete_bootstrap_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    std::set<dht::public_key> repository_track::get_all_bootstraps(const aux::bytes &chain_id) {
+        return std::set<dht::public_key>();
+    }
+
+    bool repository_track::delete_bootstrap_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        return false;
+    }
+
+    bool repository_track::add_bootstrap(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         return false;
     }
 

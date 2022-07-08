@@ -76,13 +76,16 @@ namespace libTAU::blockchain {
         virtual bool delete_chain(const aux::bytes &chain_id) = 0;
 
         // head block
-        virtual sha256_hash get_head_block_hash(const aux::bytes &chain_id) = 0;
 
-        virtual bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+//        virtual bool set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+//
+//        virtual bool delete_head_block_hash(const aux::bytes &chain_id) = 0;
 
-        virtual bool delete_head_block_hash(const aux::bytes &chain_id) = 0;
+        // state array db
+        virtual bool create_state_array_db(const aux::bytes &chain_id) = 0;
 
-        // state array
+        virtual bool delete_state_array_db(const aux::bytes &chain_id) = 0;
+
         virtual state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
 
         virtual bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) = 0;
@@ -102,10 +105,14 @@ namespace libTAU::blockchain {
 
         virtual std::vector<account> get_all_effective_state(const aux::bytes &chain_id) = 0;
 
+        virtual dht::public_key get_peer_randomly(const aux::bytes &chain_id) = 0;
+
         // block db api
         virtual bool create_block_db(const aux::bytes &chain_id) = 0;
 
         virtual bool delete_block_db(const aux::bytes &chain_id) = 0;
+
+        virtual sha256_hash get_head_block_hash(const aux::bytes &chain_id) = 0;
 
         virtual block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
 
@@ -118,6 +125,21 @@ namespace libTAU::blockchain {
         bool save_non_main_chain_block(const block &blk);
 
         virtual bool delete_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+
+        virtual block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+
+        virtual bool delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+
+        // bootstrap db
+        virtual bool create_bootstrap_db(const aux::bytes &chain_id) = 0;
+
+        virtual bool delete_bootstrap_db(const aux::bytes &chain_id) = 0;
+
+        virtual std::set<dht::public_key> get_all_bootstraps(const aux::bytes &chain_id) = 0;
+
+        virtual bool delete_bootstrap_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
+        virtual bool add_bootstrap(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
 
 

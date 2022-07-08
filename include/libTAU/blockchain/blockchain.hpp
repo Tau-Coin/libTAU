@@ -152,7 +152,7 @@ namespace blockchain {
         std::set<dht::public_key> get_ban_list(const aux::bytes &chain_id);
 
         // return access list
-        std::set<dht::public_key> get_gossip_peers(const aux::bytes &chain_id);
+//        std::set<dht::public_key> get_gossip_peers(const aux::bytes &chain_id);
 
         // set blockchain main loop time interval (ms)
 //        void set_blockchain_loop_interval(int milliseconds);
@@ -160,7 +160,7 @@ namespace blockchain {
         // mutable data is pushed here
         void on_dht_relay(dht::public_key const& peer, entry const& payload);
 
-        void request_state(const aux::bytes &chain_id);
+//        void request_state(const aux::bytes &chain_id);
 
         // reset when account changed
         void account_changed();
@@ -254,11 +254,7 @@ namespace blockchain {
         bool clear_chain_all_state_in_cache_and_db(const aux::bytes &chain_id);
 
         // check if a block in cache or db
-        bool is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);
-
-        bool is_peer_in_acl(const aux::bytes &chain_id, const dht::public_key& peer);
-
-        bool is_peer_banned(const aux::bytes &chain_id, const dht::public_key& peer);
+//        bool is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);
 
         void try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key& peer);
 
@@ -326,9 +322,9 @@ namespace blockchain {
 
         void introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers);
 
-        void put_gossip_peers_to_cache(const aux::bytes &chain_id);
+//        void put_gossip_peers_to_cache(const aux::bytes &chain_id);
 
-        void add_gossip_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
+//        void add_gossip_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
         // request signal from a given peer
         void get_gossip_peers(const aux::bytes &chain_id, const dht::public_key& peer);
@@ -420,7 +416,7 @@ namespace blockchain {
         std::vector<aux::bytes> m_chains;
 
         // the time that last cache gossip peers(ms)
-        std::map<aux::bytes, std::int64_t> m_last_cache_gossip_peers_time;
+//        std::map<aux::bytes, std::int64_t> m_last_cache_gossip_peers_time;
 
         std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
@@ -428,7 +424,7 @@ namespace blockchain {
 
         std::map<aux::bytes, std::int64_t> m_collect_gossip_peers_time;
 
-        std::map<aux::bytes, std::set<dht::public_key>> m_gossip_peers;
+//        std::map<aux::bytes, std::set<dht::public_key>> m_gossip_peers;
 
         std::map<aux::bytes, std::int64_t> m_last_balance_alert_time;
 
