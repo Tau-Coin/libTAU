@@ -201,9 +201,11 @@ namespace blockchain {
 
         void refresh_timeout(error_code const& e);
 
-        void refresh_chain_status(error_code const &e, const aux::bytes &chain_id);
+//        void refresh_chain_status(error_code const &e, const aux::bytes &chain_id);
 
         void refresh_mining_timeout(error_code const&, const aux::bytes &chain_id);
+
+        void peer_preparation(const aux::bytes &chain_id);
 
         // load chain all info
 //        bool load_chain(const aux::bytes &chain_id);
@@ -401,7 +403,7 @@ namespace blockchain {
         std::map<aux::bytes, aux::deadline_timer> m_chain_timers;
 
         // chain status timers
-        std::map<aux::bytes, aux::deadline_timer> m_chain_status_timers;
+//        std::map<aux::bytes, aux::deadline_timer> m_chain_status_timers;
 
         // blockchain db
         std::shared_ptr<repository> m_repository;
@@ -428,6 +430,7 @@ namespace blockchain {
 
         std::map<aux::bytes, std::int64_t> m_last_balance_alert_time;
 
+        // Forwarding list
         std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_access_list;
 
         std::map<aux::bytes, std::map<dht::public_key, ban_info>> m_ban_list;

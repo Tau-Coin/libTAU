@@ -117,8 +117,8 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    sha256_hash repository_impl::get_head_block_hash(const aux::bytes &chain_id) {
-        return libTAU::sha256_hash();
+    block repository_impl::get_head_block(const aux::bytes &chain_id) {
+        return block();
     }
 
     block repository_impl::get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) {

@@ -69,7 +69,7 @@ namespace libTAU::blockchain {
 
         bool delete_block_db(const aux::bytes &chain_id) override;
 
-        sha256_hash get_head_block_hash(const aux::bytes &chain_id) override;
+        block get_head_block(const aux::bytes &chain_id) override;
 
         block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
 

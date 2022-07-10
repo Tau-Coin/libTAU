@@ -112,7 +112,7 @@ namespace libTAU::blockchain {
 
         virtual bool delete_block_db(const aux::bytes &chain_id) = 0;
 
-        virtual sha256_hash get_head_block_hash(const aux::bytes &chain_id) = 0;
+        virtual block get_head_block(const aux::bytes &chain_id) = 0;
 
         virtual block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
 
