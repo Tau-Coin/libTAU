@@ -125,7 +125,7 @@ namespace blockchain {
         bool submitTransaction(const transaction& tx);
 
         // check if tx is in pool
-        bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha256_hash& txid);
+        bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid);
 
         // get account by public key
         account getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey);
@@ -134,7 +134,7 @@ namespace blockchain {
         block getBlock(const aux::bytes &chain_id, std::int64_t block_number);
 
         // get main chain block by hash
-        block getBlock(const aux::bytes &chain_id, sha256_hash block_hash);
+        block getBlock(const aux::bytes &chain_id, sha1_hash block_hash);
 
         // get top tip blocks
         std::vector<block> getTopTipBlocks(const aux::bytes &chain_id, int topNum);
@@ -189,7 +189,7 @@ namespace blockchain {
         // clear chain cache
         void clear_chain_cache(const aux::bytes &chain_id);
 
-        void try_to_clear_outdated_data_in_db(const aux::bytes &chain_id);
+//        void try_to_clear_outdated_data_in_db(const aux::bytes &chain_id);
 
         std::shared_ptr<blockchain> self()
         { return shared_from_this(); }
@@ -271,7 +271,7 @@ namespace blockchain {
 //        void decrease_peer_score(const aux::bytes &chain_id, const dht::public_key& peer, int score);
 
         // get block from block cache or db
-        block get_block_from_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);
+        block get_block_from_cache_or_db(const aux::bytes &chain_id, const sha1_hash &hash);
 
         // remove all relevant blocks those on the same chain from cache
         void remove_all_same_chain_blocks_from_cache(const block &blk);
@@ -298,6 +298,9 @@ namespace blockchain {
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id, std::int64_t data_type_id);
 
+        // make a salt on mutable channel
+        static std::string make_salt(const sha1_hash &block_hash);
+
         void publish(const std::string& salt, const entry& data);
 
         // key length < 20 bytes
@@ -309,9 +312,9 @@ namespace blockchain {
         // send data to peer
         void send_to(const dht::public_key &peer, entry const& data);
 
-        void request_block(const aux::bytes &chain_id, const sha256_hash& hash);
+        void request_block(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void request_block(const aux::bytes &chain_id, const dht::public_key &peer, const sha256_hash& hash);
+        void request_block(const aux::bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash);
 
         void transfer_to_acl_peers(const aux::bytes &chain_id, entry const& data,
                                    const dht::public_key &incoming_peer = dht::public_key());
@@ -335,6 +338,10 @@ namespace blockchain {
         void get_voting_block(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void put_voting_block(const aux::bytes &chain_id, const block &blk);
+
+        void get_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+
+        void put_block(const aux::bytes &chain_id, const block &blk);
 
         // immutable data callback
 //        void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);

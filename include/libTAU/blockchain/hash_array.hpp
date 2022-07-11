@@ -28,9 +28,9 @@ namespace libTAU {
             // @param Construct with bencode
             explicit hash_array(std::string encode): hash_array(bdecode(encode)) {}
 
-            explicit hash_array(std::vector<sha256_hash> mHashArray) : m_hash_array(std::move(mHashArray)) {}
+            explicit hash_array(std::vector<sha1_hash> mHashArray) : m_hash_array(std::move(mHashArray)) {}
 
-            const std::vector<sha256_hash> &HashArray() const { return m_hash_array; }
+            const std::vector<sha1_hash> &HashArray() const { return m_hash_array; }
 
             entry get_entry() const;
 
@@ -46,7 +46,7 @@ namespace libTAU {
             void populate(const entry& e);
 
             // hash
-            std::vector<sha256_hash> m_hash_array;
+            std::vector<sha1_hash> m_hash_array;
         };
     }
 }

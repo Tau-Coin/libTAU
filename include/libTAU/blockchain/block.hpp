@@ -19,6 +19,7 @@ see LICENSE file.
 #include "libTAU/entry.hpp"
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
+#include "libTAU/hasher.hpp"
 #include "libTAU/socket.hpp" // for tcp::endpoint
 
 namespace libTAU {
@@ -40,8 +41,8 @@ namespace blockchain {
         explicit block(std::string encode): block(bdecode(encode)) {}
 
         block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
-              const sha256_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
-              const sha256_hash &mGenerationSignature, const sha256_hash &mStateRoot, transaction mTx,
+              const sha1_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
+              const sha1_hash &mGenerationSignature, const sha1_hash &mStateRoot, transaction mTx,
               const dht::public_key &mMiner) : m_chain_id(std::move(mChainId)), m_version(mVersion),
               m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash),
               m_base_target(mBaseTarget), m_cumulative_difficulty(mCumulativeDifficulty),
@@ -49,8 +50,8 @@ namespace blockchain {
               m_tx(std::move(mTx)), m_miner(mMiner) {}
 
         block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
-              const sha256_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
-              const sha256_hash &mGenerationSignature, const sha256_hash &mStateRoot, transaction mTx,
+              const sha1_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
+              const sha1_hash &mGenerationSignature, const sha1_hash &mStateRoot, transaction mTx,
               const dht::public_key &mMiner, udp::endpoint mEndpoint) : m_chain_id(std::move(mChainId)),
               m_version(mVersion), m_timestamp(mTimestamp), m_block_number(mBlockNumber),
               m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
@@ -65,15 +66,15 @@ namespace blockchain {
 
         int64_t block_number() const { return m_block_number; }
 
-        const sha256_hash &previous_block_hash() const { return m_previous_block_hash; }
+        const sha1_hash &previous_block_hash() const { return m_previous_block_hash; }
 
         uint64_t base_target() const { return m_base_target; }
 
         uint64_t cumulative_difficulty() const { return m_cumulative_difficulty; }
 
-        const sha256_hash &generation_signature() const { return m_generation_signature; }
+        const sha1_hash &generation_signature() const { return m_generation_signature; }
 
-        const sha256_hash &state_root() const { return m_state_root; }
+        const sha1_hash &state_root() const { return m_state_root; }
 
         const transaction &tx() const { return m_tx; }
 
@@ -102,7 +103,7 @@ namespace blockchain {
         std::string get_encode() const;
 
         // @returns the SHA256 hash of this block
-        const sha256_hash &sha256() const { return m_hash; }
+        const sha1_hash &sha256() const { return m_hash; }
 
         void sign(dht::public_key const& pk, dht::secret_key const& sk);
 
@@ -149,7 +150,7 @@ namespace blockchain {
         std::int64_t m_block_number{};
 
         // previous block hash
-        sha256_hash m_previous_block_hash;
+        sha1_hash m_previous_block_hash;
 
         // base target
         std::uint64_t m_base_target{};
@@ -158,10 +159,10 @@ namespace blockchain {
         std::uint64_t m_cumulative_difficulty{};
 
         // generation signature
-        sha256_hash m_generation_signature;
+        sha1_hash m_generation_signature;
 
         // state root
-        sha256_hash m_state_root;
+        sha1_hash m_state_root;
 
         // tx
         transaction m_tx;
@@ -192,8 +193,8 @@ namespace blockchain {
         // signature
         dht::signature m_signature{};
 
-        // sha256 hash
-        sha256_hash m_hash;
+        // sha1 hash
+        sha1_hash m_hash;
     };
 }
 }

@@ -103,7 +103,7 @@ namespace blockchain {
         size_t get_encode_size() const;
 
         // @returns the SHA256 hash of this message
-        const sha256_hash &sha256() const { return m_hash; }
+        const sha1_hash &sha256() const { return m_hash; }
 
         void sign(dht::public_key const& pk, dht::secret_key const& sk);
 
@@ -169,7 +169,7 @@ namespace blockchain {
         dht::signature m_signature{};
 
         // sha256 hash
-        sha256_hash m_hash;
+        sha1_hash m_hash;
     };
 }
 }

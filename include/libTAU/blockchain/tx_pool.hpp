@@ -63,9 +63,9 @@ namespace libTAU::blockchain {
 
         bool recheck_account_txs(const std::set<dht::public_key> &peers);
 
-        bool is_transaction_in_fee_pool(const sha256_hash& txid) const;
+        bool is_transaction_in_fee_pool(const sha1_hash &txid) const;
 
-        bool is_transaction_in_pool(const sha256_hash& txid) const;
+        bool is_transaction_in_pool(const sha1_hash &txid) const;
 
         std::int64_t get_min_allowed_fee();
 
@@ -95,22 +95,22 @@ namespace libTAU::blockchain {
         repository* m_repository{};
 
         // tx set
-        std::map<sha256_hash, transaction> m_all_txs_by_fee;
+        std::map<sha1_hash, transaction> m_all_txs_by_fee;
 
         // ordered by fee
         std::set<tx_entry_with_fee> m_ordered_txs_by_fee;
 
         // one account one tx
-        std::map<dht::public_key, sha256_hash> m_account_tx_by_fee;
+        std::map<dht::public_key, sha1_hash> m_account_tx_by_fee;
 
         // tx set
-        std::map<sha256_hash, transaction> m_all_txs_by_timestamp;
+        std::map<sha1_hash, transaction> m_all_txs_by_timestamp;
 
         // ordered by timestamp
         std::set<tx_entry_with_timestamp> m_ordered_txs_by_timestamp;
 
         // one account one tx
-        std::map<dht::public_key, sha256_hash> m_account_tx_by_timestamp;
+        std::map<dht::public_key, sha1_hash> m_account_tx_by_timestamp;
 
         // active peers found from tx
         std::queue<dht::public_key> m_active_peers;

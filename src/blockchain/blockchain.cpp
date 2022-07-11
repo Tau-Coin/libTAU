@@ -510,13 +510,13 @@ namespace libTAU::blockchain {
 //        m_gossip_peers[chain_id].clear();
     }
 
-    void blockchain::try_to_clear_outdated_data_in_db(const aux::bytes &chain_id) {
-        auto const& head_block = m_head_blocks[chain_id];
-        if (!head_block.empty() && head_block.block_number() > OUTDATED_BLOCK_NUMBER) {
-            // remove outdated data from db
-            m_repository->delete_all_outdated_data(chain_id, head_block.block_number() - OUTDATED_BLOCK_NUMBER);
-        }
-    }
+//    void blockchain::try_to_clear_outdated_data_in_db(const aux::bytes &chain_id) {
+//        auto const& head_block = m_head_blocks[chain_id];
+//        if (!head_block.empty() && head_block.block_number() > OUTDATED_BLOCK_NUMBER) {
+//            // remove outdated data from db
+//            m_repository->delete_all_outdated_data(chain_id, head_block.block_number() - OUTDATED_BLOCK_NUMBER);
+//        }
+//    }
 
 
     void blockchain::refresh_timeout(const error_code &e) {
@@ -1522,7 +1522,7 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    block blockchain::get_block_from_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
+    block blockchain::get_block_from_cache_or_db(const aux::bytes &chain_id, const sha1_hash &hash) {
 //        auto &block_map = m_blocks[chain_id];
 //        auto it = block_map.find(hash);
 //        if (it != block_map.end()) {
@@ -2291,6 +2291,10 @@ namespace libTAU::blockchain {
         return hash.to_string();
     }
 
+    std::string blockchain::make_salt(const sha1_hash &block_hash) {
+        return block_hash.to_string();
+    }
+
     void blockchain::publish(const std::string &salt, const entry& data) {
         if (!m_ses.dht()) return;
         log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
@@ -2318,7 +2322,7 @@ namespace libTAU::blockchain {
                 , std::bind(&blockchain::on_dht_relay_mutable_item, self(), _1, _2, peer));
     }
 
-    void blockchain::request_block(const aux::bytes &chain_id, const sha256_hash &hash) {
+    void blockchain::request_block(const aux::bytes &chain_id, const sha1_hash &hash) {
         auto now = get_total_milliseconds();
 
         auto &acl = m_access_list[chain_id];
@@ -2345,7 +2349,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::request_block(const aux::bytes &chain_id, const dht::public_key &peer, const sha256_hash &hash) {
+    void blockchain::request_block(const aux::bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
         if (!peer.is_all_zeros()) {
             auto it = m_access_list[chain_id].find(peer);
 
@@ -2465,6 +2469,27 @@ namespace libTAU::blockchain {
 
             log(LOG_INFO, "INFO: Chain id[%s] Cache voting block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, votingBlockCacheEntry.get_entry());
+        }
+    }
+
+    void blockchain::get_block(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Request block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt);
+    }
+
+    void blockchain::put_block(const bytes &chain_id, const block &blk) {
+        if (!blk.empty()) {
+            common::block_entry blockEntry(blk);
+
+            // salt is y pubkey when publish signal
+            auto salt = make_salt(blk.sha256());
+
+            log(LOG_INFO, "INFO: Chain id[%s] Cache block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish(salt, blockEntry.get_entry());
         }
     }
 
@@ -2799,7 +2824,7 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha256_hash &txid) {
+    bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
@@ -2817,7 +2842,7 @@ namespace libTAU::blockchain {
         return m_repository->get_main_chain_block_by_number(chain_id, block_number);
     }
 
-    block blockchain::getBlock(const aux::bytes &chain_id, sha256_hash block_hash) {
+    block blockchain::getBlock(const aux::bytes &chain_id, sha1_hash block_hash) {
         return m_repository->get_block_by_hash(chain_id, block_hash);
     }
 

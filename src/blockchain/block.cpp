@@ -16,7 +16,7 @@ namespace libTAU::blockchain {
 
         std::string encode;
         bencode(std::back_inserter(encode), e);
-        m_hash = dht::item_target_id(encode);
+        m_hash = hasher(encode).final();
     }
 
     entry block::get_entry() const {
@@ -48,7 +48,7 @@ namespace libTAU::blockchain {
         m_signature = ed25519_sign(get_encode_without_signature(), pk, sk);
 
         auto encode = get_encode();
-        m_hash = dht::item_target_id(encode);
+        m_hash = hasher(encode).final();
     }
 
     bool block::verify_signature() const {
@@ -153,7 +153,7 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("h")))
         {
             auto previous_block_hash = i->string();
-            m_previous_block_hash = sha256_hash(previous_block_hash.data());
+            m_previous_block_hash = sha1_hash(previous_block_hash.data());
         }
         // base target
         if (auto* i = const_cast<entry *>(e.find_key("b")))
@@ -169,13 +169,13 @@ namespace libTAU::blockchain {
         if (auto* i = const_cast<entry *>(e.find_key("g")))
         {
             auto generation_signature = i->string();
-            m_generation_signature = sha256_hash(generation_signature.data());
+            m_generation_signature = sha1_hash(generation_signature.data());
         }
         // state root
         if (auto* i = const_cast<entry *>(e.find_key("s")))
         {
             auto state_root = i->string();
-            m_state_root = sha256_hash(state_root.data());
+            m_state_root = sha1_hash(state_root.data());
         }
         // transaction
         if (auto* i = const_cast<entry *>(e.find_key("tx")))

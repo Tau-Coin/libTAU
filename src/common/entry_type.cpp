@@ -382,7 +382,7 @@ namespace libTAU::common {
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
             auto hash = i->string();
-            m_hash = sha256_hash(hash.data());
+            m_hash = sha1_hash(hash.data());
         }
     }
 
@@ -433,7 +433,7 @@ namespace libTAU::common {
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
             auto hash = i->string();
-            m_hash = sha256_hash(hash.data());
+            m_hash = sha1_hash(hash.data());
         }
     }
 

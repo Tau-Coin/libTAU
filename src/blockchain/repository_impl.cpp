@@ -69,7 +69,7 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    state_array repository_impl::get_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+    state_array repository_impl::get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
         return state_array(libTAU::entry());
     }
 
@@ -77,7 +77,7 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool repository_impl::delete_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+    bool repository_impl::delete_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
         return false;
     }
 
@@ -121,7 +121,7 @@ namespace libTAU::blockchain {
         return block();
     }
 
-    block repository_impl::get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+    block repository_impl::get_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
         return block();
     }
 
@@ -133,7 +133,7 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool repository_impl::delete_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
+    bool repository_impl::delete_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
         return false;
     }
 

@@ -18,7 +18,7 @@ namespace libTAU::blockchain {
 
         static std::uint64_t calculate_required_base_target(const block &previousBlock, block &ancestor3);
 
-        static sha256_hash calculate_generation_signature(const sha256_hash &preGenerationSignature, const dht::public_key& pubkey);
+        static sha1_hash calculate_generation_signature(const sha1_hash &preGenerationSignature, const dht::public_key& pubkey);
 
         /**
          * get miner target value
@@ -26,7 +26,7 @@ namespace libTAU::blockchain {
          */
 //        static std::uint64_t calculate_miner_target_value(uint64_t baseTarget, uint64_t power, uint64_t time);
 
-        static std::uint64_t calculate_random_hit(const sha256_hash &generationSignature);
+        static std::uint64_t calculate_random_hit(const sha1_hash &generationSignature);
 
         /**
          * calculate cumulative difficulty: last cumulative difficulty + DiffAdjustNumerator / base target

@@ -43,11 +43,11 @@ namespace libTAU::blockchain {
 
         bool delete_state_array_db(const aux::bytes &chain_id) override;
 
-        state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+        state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
         bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) override;
 
-        bool delete_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+        bool delete_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
         bool create_state_db(const aux::bytes &chain_id) override;
 
@@ -69,13 +69,13 @@ namespace libTAU::blockchain {
 
         block get_head_block(const aux::bytes &chain_id) override;
 
-        block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+        block get_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
         block get_block_by_number(const aux::bytes &chain_id, int64_t block_number) override;
 
         bool save_block(const block &blk, bool is_main_chain) override;
 
-        bool delete_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) override;
+        bool delete_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
         block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) override;
 

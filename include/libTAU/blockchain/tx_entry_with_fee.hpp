@@ -15,11 +15,11 @@ see LICENSE file.
 namespace libTAU::blockchain {
     class tx_entry_with_fee {
     public:
-        tx_entry_with_fee(const sha256_hash &mTxid, int64_t mFee) : m_txid(mTxid), m_fee(mFee) {}
+        tx_entry_with_fee(const sha1_hash &mTxid, int64_t mFee) : m_txid(mTxid), m_fee(mFee) {}
 
-        const sha256_hash &txid() const { return m_txid; }
+        const sha1_hash &txid() const { return m_txid; }
 
-        void set_txid(const sha256_hash &mTxid) { m_txid = mTxid; }
+        void set_txid(const sha1_hash &mTxid) { m_txid = mTxid; }
 
         int64_t fee() const { return m_fee; }
 
@@ -55,7 +55,7 @@ namespace libTAU::blockchain {
         }
 
     private:
-        sha256_hash m_txid;
+        sha1_hash m_txid;
 
         std::int64_t m_fee;
     };

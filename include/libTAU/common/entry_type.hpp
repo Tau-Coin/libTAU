@@ -117,7 +117,7 @@ namespace libTAU::common {
         // timestamp
         std::int64_t m_timestamp{};
 
-        sha256_hash m_real_payload_hash;
+        sha1_hash m_real_payload_hash;
     };
 
     struct less_communication_entry_base: std::binary_function<const std::shared_ptr<communication_entry_base>&, const std::shared_ptr<communication_entry_base>&, bool>
@@ -351,7 +351,7 @@ namespace libTAU::common {
             auto et = get_real_payload_entry();
             std::string encode;
             bencode(std::back_inserter(encode), et);
-            m_real_payload_hash = dht::item_target_id(encode);
+            m_real_payload_hash = hasher(encode).final();
         }
 
 //        message_entry(communication::message mMsg, int64_t mTimestamp) : m_msg(std::move(mMsg)), m_timestamp(mTimestamp) {}
@@ -363,7 +363,7 @@ namespace libTAU::common {
             auto et = get_real_payload_entry();
             std::string encode;
             bencode(std::back_inserter(encode), et);
-            m_real_payload_hash = dht::item_target_id(encode);
+            m_real_payload_hash = hasher(encode).final();
         }
 
         std::int64_t get_data_type_id() const override { return data_type_id; }
@@ -413,7 +413,7 @@ namespace libTAU::common {
             auto et = get_real_payload_entry();
             std::string encode;
             bencode(std::back_inserter(encode), et);
-            m_real_payload_hash = dht::item_target_id(encode);
+            m_real_payload_hash = hasher(encode).final();
         }
 
         std::int64_t get_data_type_id() const override { return data_type_id; }
@@ -524,7 +524,7 @@ namespace libTAU::common {
             auto et = get_real_payload_entry();
             std::string encode;
             bencode(std::back_inserter(encode), et);
-            m_real_payload_hash = dht::item_target_id(encode);
+            m_real_payload_hash = hasher(encode).final();
         }
 
         event_entry(std::string mValue, int64_t mTimestamp) : m_value(std::move(mValue)) {
@@ -533,7 +533,7 @@ namespace libTAU::common {
             auto et = get_real_payload_entry();
             std::string encode;
             bencode(std::back_inserter(encode), et);
-            m_real_payload_hash = dht::item_target_id(encode);
+            m_real_payload_hash = hasher(encode).final();
         }
 
         std::int64_t get_data_type_id() const override { return data_type_id; }
@@ -560,7 +560,7 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit block_request_entry(const entry& e);
 
-        block_request_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_hash(mHash) {
+        block_request_entry(aux::bytes mChainId, const sha1_hash &mHash) : m_hash(mHash) {
             m_chain_id = std::move(mChainId);
 
             m_entry = get_entry();
@@ -577,7 +577,7 @@ namespace libTAU::common {
             return m_hash < rhs.m_hash;
         }
 
-        sha256_hash m_hash;
+        sha1_hash m_hash;
     };
 
     struct TORRENT_EXPORT block_entry final : blockchain_entry_base {
@@ -610,7 +610,7 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit transaction_request_entry(const entry& e);
 
-        transaction_request_entry(aux::bytes mChainId, const sha256_hash &mHash) : m_hash(mHash) {
+        transaction_request_entry(aux::bytes mChainId, const sha1_hash &mHash) : m_hash(mHash) {
             m_chain_id = std::move(mChainId);
 
             m_entry = get_entry();
@@ -627,7 +627,7 @@ namespace libTAU::common {
             return m_hash < rhs.m_hash;
         }
 
-        sha256_hash m_hash;
+        sha1_hash m_hash;
     };
 
     struct TORRENT_EXPORT transaction_entry final : blockchain_entry_base {

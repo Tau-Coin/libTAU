@@ -86,11 +86,11 @@ namespace libTAU::blockchain {
 
         virtual bool delete_state_array_db(const aux::bytes &chain_id) = 0;
 
-        virtual state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+        virtual state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         virtual bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) = 0;
 
-        virtual bool delete_state_array_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+        virtual bool delete_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         // state db api
         virtual bool create_state_db(const aux::bytes &chain_id) = 0;
@@ -114,7 +114,7 @@ namespace libTAU::blockchain {
 
         virtual block get_head_block(const aux::bytes &chain_id) = 0;
 
-        virtual block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+        virtual block get_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         virtual block get_block_by_number(const aux::bytes &chain_id, int64_t block_number) = 0;
 
@@ -124,7 +124,7 @@ namespace libTAU::blockchain {
 
         bool save_non_main_chain_block(const block &blk);
 
-        virtual bool delete_block_by_hash(const aux::bytes &chain_id, const sha256_hash &hash) = 0;
+        virtual bool delete_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         virtual block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
 

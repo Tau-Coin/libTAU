@@ -7,6 +7,7 @@ see LICENSE file.
 */
 
 #include "libTAU/blockchain/transaction.hpp"
+#include "libTAU/hasher.hpp"
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/kademlia/ed25519.hpp"
 #include <utility>
@@ -17,7 +18,7 @@ namespace libTAU::blockchain {
 
         std::string encode;
         bencode(std::back_inserter(encode), e);
-        m_hash = dht::item_target_id(encode);
+        m_hash = hasher(encode).final();
     }
 
     entry transaction::get_entry_without_signature() const {
@@ -94,7 +95,7 @@ namespace libTAU::blockchain {
         m_signature = ed25519_sign(get_encode_without_signature(), pk, sk);
 
         auto encode = get_encode();
-        m_hash = dht::item_target_id(encode);
+        m_hash = hasher(encode).final();
     }
 
     bool transaction::verify_signature() const {

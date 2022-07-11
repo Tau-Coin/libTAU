@@ -28,13 +28,13 @@ namespace libTAU {
 
             explicit state_array(std::vector<account> mStateArray) : m_state_array(std::move(mStateArray)) {
                 auto encode = get_encode();
-                m_hash = dht::item_target_id(encode);
+                m_hash = hasher(encode).final();
             }
 
             const std::vector<account> &StateArray() const { return m_state_array; }
 
             // @returns the SHA256 hash of this block
-            const sha256_hash &sha256() const { return m_hash; }
+            const sha1_hash &sha256() const { return m_hash; }
 
             entry get_entry() const;
 
@@ -52,7 +52,7 @@ namespace libTAU {
             std::vector<account> m_state_array;
 
             // sha256 hash
-            sha256_hash m_hash;
+            sha1_hash m_hash;
         };
     }
 }

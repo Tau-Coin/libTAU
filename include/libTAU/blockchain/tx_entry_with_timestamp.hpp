@@ -15,11 +15,11 @@ see LICENSE file.
 namespace libTAU::blockchain {
     class tx_entry_with_timestamp {
     public:
-        tx_entry_with_timestamp(const sha256_hash &mTxid, int64_t mTimestamp) : m_txid(mTxid), m_timestamp(mTimestamp) {}
+        tx_entry_with_timestamp(const sha1_hash &mTxid, int64_t mTimestamp) : m_txid(mTxid), m_timestamp(mTimestamp) {}
 
-        const sha256_hash &txid() const { return m_txid; }
+        const sha1_hash &txid() const { return m_txid; }
 
-        void set_txid(const sha256_hash &mTxid) { m_txid = mTxid; }
+        void set_txid(const sha1_hash &mTxid) { m_txid = mTxid; }
 
         int64_t timestamp() const { return m_timestamp; }
 
@@ -55,7 +55,7 @@ namespace libTAU::blockchain {
         }
 
     private:
-        sha256_hash m_txid;
+        sha1_hash m_txid;
 
         std::int64_t m_timestamp;
     };

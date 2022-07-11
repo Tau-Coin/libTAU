@@ -7,6 +7,7 @@ see LICENSE file.
 */
 
 #include "libTAU/blockchain/consensus.hpp"
+#include "libTAU/hasher.hpp"
 #include "libTAU/kademlia/item.hpp"
 
 namespace libTAU::blockchain {
@@ -64,12 +65,12 @@ namespace libTAU::blockchain {
         return requiredBaseTarget;
     }
 
-    sha256_hash consensus::calculate_generation_signature(const sha256_hash &preGenerationSignature, const dht::public_key& pubkey) {
+    sha1_hash consensus::calculate_generation_signature(const sha1_hash &preGenerationSignature, const dht::public_key& pubkey) {
         std::string data;
         data.insert(data.end(), preGenerationSignature.begin(), preGenerationSignature.end());
         data.insert(data.end(), pubkey.bytes.begin(), pubkey.bytes.end());
 
-        return dht::item_target_id(data);
+        return hasher(data).final();
     }
 
     // note: result --> data overflow
@@ -77,7 +78,7 @@ namespace libTAU::blockchain {
 //        return baseTarget * power * time;
 //    }
 
-    std::uint64_t consensus::calculate_random_hit(const sha256_hash &generationSignature) {
+    std::uint64_t consensus::calculate_random_hit(const sha1_hash &generationSignature) {
         std::uint64_t hit = 0;
         for (int i = 0; i < 8; i++) {
             std::uint8_t b = generationSignature[7 - i];
