@@ -930,6 +930,7 @@ KADEMLIA_SOURCES =
 	incoming_table
 	ed25519
 	dht_settings
+	items_db_sqlite
 	;
 
 COMMON_SOURCES =

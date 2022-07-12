@@ -598,6 +598,8 @@ namespace aux {
 
 			void on_dht_relay(dht::public_key const& from, entry const& payload) override;
 
+			sqlite3* get_items_database() override;
+
 			void set_external_address(tcp::endpoint const& local_endpoint
 				, address const& ip
 				, ip_source_t source_type, address const& source) override;

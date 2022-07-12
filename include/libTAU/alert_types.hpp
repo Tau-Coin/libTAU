@@ -724,7 +724,8 @@ namespace libTAU {
 			routing_table,
 			rpc_manager,
 			traversal,
-			incoming_table
+			incoming_table,
+			items_db
 		};
 
 		// internal

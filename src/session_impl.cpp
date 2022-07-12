@@ -4083,6 +4083,11 @@ namespace {
         }
 	}
 
+	sqlite3* session_impl::get_items_database()
+	{
+		return m_sqldb;
+	}
+
 	void session_impl::set_external_address(
 		tcp::endpoint const& local_endpoint, address const& ip
 		, ip_source_t const source_type, address const& source)
