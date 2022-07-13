@@ -1451,7 +1451,7 @@ namespace libTAU {
     struct TORRENT_EXPORT communication_user_info_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_user_info_alert(aux::stack_allocator& alloc, dht::public_key p, std::string t);
+        TORRENT_UNEXPORT communication_user_info_alert(aux::stack_allocator& alloc, dht::public_key p, aux::bytes k, aux::bytes v);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_user_info_alert, 54, alert_priority::critical)
 
@@ -1462,15 +1462,17 @@ namespace libTAU {
         // public key
         dht::public_key peer;
 
+        aux::bytes key;
+
         // user info
-        std::string user_info;
+        aux::bytes user_info;
     };
 
     // this alert is posted when user event found in new mutable data.
     struct TORRENT_EXPORT communication_user_event_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_user_event_alert(aux::stack_allocator& alloc, dht::public_key p, std::string t);
+        TORRENT_UNEXPORT communication_user_event_alert(aux::stack_allocator& alloc, dht::public_key p, aux::bytes t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_user_event_alert, 55, alert_priority::critical)
 
@@ -1482,7 +1484,7 @@ namespace libTAU {
         dht::public_key peer;
 
         // user event
-        std::string user_event;
+        aux::bytes user_event;
     };
 
 #undef TORRENT_DEFINE_ALERT_IMPL

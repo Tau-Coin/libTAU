@@ -91,13 +91,13 @@ namespace libTAU {
 //            void set_loop_time_interval(int milliseconds);
 
             // key length < 20 bytes, value length < 1k
-            void publish_data(const std::string& key, const std::string& value);
+            void publish_data(const aux::bytes& key, const aux::bytes& value);
 
             // key length < 20 bytes
-            void subscribe_from_peer(const dht::public_key &peer, const std::string& key);
+            void subscribe_from_peer(const dht::public_key &peer, const aux::bytes& key);
 
             // data length < 1k
-            void send_to_peer(const dht::public_key &peer, const std::string& data);
+            void send_to_peer(const dht::public_key &peer, const aux::bytes& data);
 
             // add new friend in memory & db
             bool add_new_friend(const dht::public_key &pubkey);

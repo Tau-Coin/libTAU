@@ -454,15 +454,15 @@ namespace libTAU {
 //            m_refresh_timer.cancel();
 //        }
 
-        void communication::publish_data(const std::string& key, const std::string& value) {
-            publish(key, value);
+        void communication::publish_data(const aux::bytes& key, const aux::bytes& value) {
+            publish(std::string(key.begin(), key.end()), std::string(value.begin(), value.end()));
         }
 
-        void communication::subscribe_from_peer(const dht::public_key &peer, const std::string& key) {
-            subscribe(peer, key);
+        void communication::subscribe_from_peer(const dht::public_key &peer, const aux::bytes& key) {
+            subscribe(peer, std::string(key.begin(), key.end()));
         }
 
-        void communication::send_to_peer(const dht::public_key &peer, const std::string& data) {
+        void communication::send_to_peer(const dht::public_key &peer, const aux::bytes& data) {
             common::event_entry eventEntry(data, get_current_time());
             send_to(peer, eventEntry.get_entry());
         }
@@ -1023,7 +1023,10 @@ namespace libTAU {
         {
             // 通知用户新的user event
             if (!i.empty()) {
-                m_ses.alerts().emplace_alert<communication_user_event_alert>(i.pk(), i.value().string());
+                m_ses.alerts().emplace_alert<communication_user_info_alert>(i.pk(),
+                                                                            aux::bytes(i.salt().begin(),i.salt().end()),
+                                                                            aux::bytes(i.value().string().begin(),
+                                                                                       i.value().string().end()));
             }
 //            TORRENT_ASSERT(i.is_mutable());
 //

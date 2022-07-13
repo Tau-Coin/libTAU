@@ -520,14 +520,14 @@ namespace libTAU::common {
         // @param Construct with entry
         explicit event_entry(const entry& e);
 
-        explicit event_entry(std::string mValue) : m_value(std::move(mValue)) {
+        explicit event_entry(aux::bytes mValue) : m_value(std::move(mValue)) {
             auto et = get_real_payload_entry();
             std::string encode;
             bencode(std::back_inserter(encode), et);
             m_real_payload_hash = hasher(encode).final();
         }
 
-        event_entry(std::string mValue, int64_t mTimestamp) : m_value(std::move(mValue)) {
+        event_entry(aux::bytes mValue, int64_t mTimestamp) : m_value(std::move(mValue)) {
             m_timestamp = mTimestamp;
 
             auto et = get_real_payload_entry();
@@ -548,7 +548,7 @@ namespace libTAU::common {
             m_timestamp = t;
         }
 
-        std::string m_value;
+        aux::bytes m_value;
     };
 
 

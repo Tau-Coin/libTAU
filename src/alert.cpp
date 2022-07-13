@@ -1755,8 +1755,8 @@ namespace {
     }
 
     communication_user_info_alert::communication_user_info_alert(aux::stack_allocator&
-            , dht::public_key p, std::string t)
-            : peer(p), user_info(std::move(t))
+            , dht::public_key p, aux::bytes k, aux::bytes v)
+            : peer(p), key(std::move(k)), user_info(std::move(v))
     {}
 
     std::string communication_user_info_alert::message() const
@@ -1764,12 +1764,12 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: peer:" + aux::toHex(peer.bytes) + " user info: " + user_info;
+        return "Alert: peer:" + aux::toHex(peer.bytes) + " key: " + aux::toHex(key) + " user info: " + aux::toHex(user_info);
 #endif
     }
 
     communication_user_event_alert::communication_user_event_alert(aux::stack_allocator&
-            , dht::public_key p, std::string t)
+            , dht::public_key p, aux::bytes t)
             : peer(p), user_event(std::move(t))
     {}
 
@@ -1778,7 +1778,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: peer:" + aux::toHex(peer.bytes) + " user event: " + user_event;
+        return "Alert: peer:" + aux::toHex(peer.bytes) + " user event: " + aux::toHex(user_event);
 #endif
     }
 

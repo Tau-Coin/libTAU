@@ -174,7 +174,7 @@ namespace libTAU::common {
         auto et = get_real_payload_entry();
         std::string encode;
         bencode(std::back_inserter(encode), et);
-        m_real_payload_hash = dht::item_target_id(encode);
+        m_real_payload_hash = hasher(encode).final();
     }
 
     entry message_entry::get_entry() const {
@@ -205,7 +205,7 @@ namespace libTAU::common {
         auto et = get_real_payload_entry();
         std::string encode;
         bencode(std::back_inserter(encode), et);
-        m_real_payload_hash = dht::item_target_id(encode);
+        m_real_payload_hash = hasher(encode).final();
     }
 
     message_levenshtein_array_entry::message_levenshtein_array_entry(const entry &e) {
@@ -224,7 +224,7 @@ namespace libTAU::common {
         auto et = get_real_payload_entry();
         std::string encode;
         bencode(std::back_inserter(encode), et);
-        m_real_payload_hash = dht::item_target_id(encode);
+        m_real_payload_hash = hasher(encode).final();
     }
 
     entry message_levenshtein_array_entry::get_entry() const {
@@ -332,7 +332,8 @@ namespace libTAU::common {
         // value
         if (auto* i = const_cast<entry *>(e.find_key(entry_value)))
         {
-            m_value = i->string();
+            auto value = i->string();
+            m_value = aux::bytes(value.begin(), value.end());
         }
         // time
         if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
@@ -343,7 +344,7 @@ namespace libTAU::common {
         auto et = get_real_payload_entry();
         std::string encode;
         bencode(std::back_inserter(encode), et);
-        m_real_payload_hash = dht::item_target_id(encode);
+        m_real_payload_hash = hasher(encode).final();
     }
 
     entry event_entry::get_entry() const {
@@ -351,7 +352,7 @@ namespace libTAU::common {
         // data type id
         e[entry_type] = entry(data_type_id);
         // friend info
-        e[entry_value] = entry(m_value);
+        e[entry_value] = entry(std::string(m_value.begin(), m_value.end()));
         // time
         e[entry_time] = entry(m_timestamp);
 
@@ -363,7 +364,7 @@ namespace libTAU::common {
         // data type id
         e[entry_type] = entry(data_type_id);
         // value
-        e[entry_value] = entry(m_value);
+        e[entry_value] = entry(std::string(m_value.begin(), m_value.end()));
 
         return e;
     }
