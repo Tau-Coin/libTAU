@@ -1719,7 +1719,7 @@ namespace {
     }
 
     blockchain_tx_sent_alert::blockchain_tx_sent_alert(aux::stack_allocator&
-            , dht::public_key p, sha256_hash s, std::int64_t t)
+            , dht::public_key p, sha1_hash s, std::int64_t t)
             : peer(p), tx_sent_hash(s), time(t)
     {}
 
@@ -1737,7 +1737,7 @@ namespace {
     }
 
     blockchain_tx_arrived_alert::blockchain_tx_arrived_alert(aux::stack_allocator&
-            , dht::public_key p, sha256_hash s, std::int64_t t)
+            , dht::public_key p, sha1_hash s, std::int64_t t)
             : peer(p), tx_arrived_hash(s), time(t)
     {}
 

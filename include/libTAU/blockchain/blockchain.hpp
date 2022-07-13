@@ -45,7 +45,7 @@ namespace blockchain {
     constexpr int blockchain_status_reset_interval = 60 * 60;
 
     // min response interval to the same request(2s)
-    constexpr int blockchain_same_response_interval = 2 * 1000;
+//    constexpr int blockchain_same_response_interval = 2 * 1000;
 
     // blockchain request timeout(2500ms)
     constexpr std::int64_t blockchain_request_timeout = 2 * 1000 + 500;
@@ -54,13 +54,29 @@ namespace blockchain {
     constexpr std::int64_t blockchain_acl_min_peers = 2;
 
     // blockchain max peers in acl
-    constexpr std::int64_t blockchain_acl_max_peers = 3;
+    constexpr std::int64_t blockchain_acl_max_peers = 16;
 
     // blockchain min ban time(5min)
     constexpr std::int64_t blockchain_min_ban_time = 5 * 60 * 1000;
 
     // blockchain max ban time(30min)
     constexpr std::int64_t blockchain_max_ban_time = 30 * 60 * 1000;
+
+    // tx pool key suffix
+    const std::string key_suffix_tx_pool = "tx_pool";
+    // head block key suffix
+    const std::string key_suffix_head_block_hash = "head_block_hash";
+    // state root key suffix
+    const std::string key_suffix_state_root = "state_root";
+
+    enum GET_ITEM {
+        HEAD_BLOCK_HASH,
+        BLOCK,
+        TX_HASH_ARRAY,
+        TX,
+        STATE_HASH_ARRAY,
+        STATE_ARRAY,
+    };
 
     enum RESULT {
         SUCCESS,
@@ -71,9 +87,6 @@ namespace blockchain {
 
     enum CHAIN_STATUS {
         GET_GOSSIP_PEERS,
-        COLLECT_GOSSIP_PEERS,
-        VOTE,
-        COUNT_VOTES,
         MINE,
     };
 
@@ -108,7 +121,7 @@ namespace blockchain {
         aux::bytes create_chain_id(std::string community_name);
 
         // create new community with tx
-        bool createNewCommunity(const aux::bytes &chain_id, const std::map<dht::public_key, account>& accounts);
+        bool createNewCommunity(const aux::bytes &chain_id, const std::set<account>& accounts);
 
         std::set<aux::bytes> get_all_chains();
 
@@ -181,7 +194,7 @@ namespace blockchain {
         static std::int64_t get_total_microseconds();
 
         // create and follow tau chain
-        bool create_TAU_chain();
+//        bool create_TAU_chain();
 
         // clear all cache
         void clear_all_cache();
@@ -224,16 +237,13 @@ namespace blockchain {
         dht::public_key select_peer_randomly(const aux::bytes &chain_id);
 
         // try to mine block
-        block try_to_mine_block(const aux::bytes &chain_id);
-
-        // try to update consensus point block if best voting block changed
-//        void try_to_update_consensus_point_block(const aux::bytes &chain_id);
-
-        // try to update voting point block if chain changed
-        void try_to_update_voting_point_block(const aux::bytes &chain_id);
+//        block try_to_mine_block(const aux::bytes &chain_id);
 
         // verify block
         RESULT verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block, repository *repo);
+
+        // process block
+        RESULT process_genesis_block(const aux::bytes &chain_id, const block &blk);
 
         // process block
         RESULT process_block(const aux::bytes &chain_id, const block &blk);
@@ -244,13 +254,9 @@ namespace blockchain {
         bool is_empty_chain(const aux::bytes &chain_id);
 
         // check if a block immutable certainly
-        bool is_block_immutable_certainly(const aux::bytes &chain_id, const block &blk);
+//        bool is_block_immutable_certainly(const aux::bytes &chain_id, const block &blk);
 
-        // check if consensus point block immutable, true if it is same to voting block, false otherwise
-//        bool is_voting_point_immutable(const aux::bytes &chain_id);
-
-        // check if current chain sync completed
-        bool is_sync_completed(const aux::bytes &chain_id);
+        bool clear_all_chain_data_in_db(const aux::bytes &chain_id);
 
         // check if current chain sync completed
         bool clear_chain_all_state_in_cache_and_db(const aux::bytes &chain_id);
@@ -279,21 +285,23 @@ namespace blockchain {
         // remove all relevant blocks those on the same chain from cache
         void remove_all_ancestor_blocks_from_cache(const block &blk);
 
-        void try_to_rebranch_to_best_vote(const aux::bytes &chain_id);
+//        void try_to_rebranch_to_best_vote(const aux::bytes &chain_id);
 
         void try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id);
 
         // try to rebranch the most difficult chain, or a voting chain
         RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute, dht::public_key peer = dht::public_key());
 
-        void try_to_sync_block(const aux::bytes &chain_id);
-
         // count votes
-        void count_votes(const aux::bytes &chain_id);
+//        void count_votes(const aux::bytes &chain_id);
 
         // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing tx)
         void find_best_solution(std::vector<transaction>& txs, const aux::bytes& hash_prefix_array,
                                 std::set<transaction> &missing_txs);
+
+        void trim_state(const aux::bytes &chain_id);
+
+        sha1_hash calculate_state_root(const aux::bytes &chain_id);
 
         // make a salt on mutable channel
         static std::string make_salt(const aux::bytes &chain_id, std::int64_t data_type_id);
@@ -323,9 +331,9 @@ namespace blockchain {
 
         void transfer_transaction(const aux::bytes &chain_id, const transaction& tx);
 
-        void introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer);
+//        void introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer);
 
-        void introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers);
+//        void introduce_peers(const aux::bytes &chain_id, const dht::public_key &peer, const std::set<dht::public_key>& peers);
 
 //        void put_gossip_peers_to_cache(const aux::bytes &chain_id);
 
@@ -424,16 +432,10 @@ namespace blockchain {
         // all chains
         std::vector<aux::bytes> m_chains;
 
-        // the time that last cache gossip peers(ms)
-//        std::map<aux::bytes, std::int64_t> m_last_cache_gossip_peers_time;
+        // short chain id table<short chain id, chain id>
+        std::map<aux::bytes, aux::bytes> m_short_chain_id_table;
 
         std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
-
-        std::map<aux::bytes, std::int64_t> m_count_votes_time;
-
-        std::map<aux::bytes, std::int64_t> m_collect_gossip_peers_time;
-
-//        std::map<aux::bytes, std::set<dht::public_key>> m_gossip_peers;
 
         std::map<aux::bytes, std::int64_t> m_last_balance_alert_time;
 
@@ -447,21 +449,6 @@ namespace blockchain {
 
         // head blocks
         std::map<aux::bytes, block> m_head_blocks;
-
-        // tail blocks
-        std::map<aux::bytes, block> m_tail_blocks;
-
-        // consensus point blocks
-        std::map<aux::bytes, block> m_consensus_point_blocks;
-
-        // voting point blocks
-        std::map<aux::bytes, block> m_voting_point_blocks;
-
-        // current best votes
-        std::map<aux::bytes, vote> m_best_votes;
-
-        // votes
-        std::map<aux::bytes, std::map<dht::public_key, vote>> m_votes;
     };
 }
 }

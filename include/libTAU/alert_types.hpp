@@ -1407,7 +1407,7 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_tx_sent_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_tx_sent_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
+        TORRENT_UNEXPORT blockchain_tx_sent_alert(aux::stack_allocator& alloc, dht::public_key p, sha1_hash s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_tx_sent_alert, 52, alert_priority::critical)
 
@@ -1419,7 +1419,7 @@ namespace libTAU {
         dht::public_key peer;
 
         // message sent hash
-        sha256_hash tx_sent_hash;
+        sha1_hash tx_sent_hash;
 
         // syncing msg time
         std::int64_t time;
@@ -1429,7 +1429,7 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_tx_arrived_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_tx_arrived_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
+        TORRENT_UNEXPORT blockchain_tx_arrived_alert(aux::stack_allocator& alloc, dht::public_key p, sha1_hash s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_tx_arrived_alert, 53, alert_priority::critical)
 
@@ -1441,7 +1441,7 @@ namespace libTAU {
         dht::public_key peer;
 
         // message sent hash
-        sha256_hash tx_arrived_hash;
+        sha1_hash tx_arrived_hash;
 
         // syncing msg time
         std::int64_t time;

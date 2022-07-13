@@ -28,13 +28,11 @@ namespace libTAU {
             // @param Construct with bencode
             explicit account(std::string encode): account(bdecode(encode)) {}
 
-            explicit account(int64_t mBalance) : m_balance(mBalance) {}
+//            explicit account(int64_t mBalance) : m_balance(mBalance) {}
 
-            account(int64_t mBalance, int64_t mNonce) : m_balance(mBalance), m_nonce(mNonce) {}
+//            account(int64_t mBalance, int64_t mNonce) : m_balance(mBalance), m_nonce(mNonce) {}
 
-            account(const dht::public_key &mPeer, int64_t mBalance, int64_t mNonce) : m_peer(mPeer),
-                                                                                      m_balance(mBalance),
-                                                                                      m_nonce(mNonce) {}
+            account(const dht::public_key &mPeer, int64_t mBalance, int64_t mNonce) : m_peer(mPeer), m_balance(mBalance), m_nonce(mNonce) {}
 
 //            account(int64_t mBalance, int64_t mNonce, int64_t mEffectivePower, int64_t mBlockNumber) :
 //                m_balance(mBalance), m_nonce(mNonce), m_effective_power(mEffectivePower), m_block_number(mBlockNumber) {}
@@ -45,9 +43,35 @@ namespace libTAU {
 
             int64_t balance() const { return m_balance; }
 
-//            void set_balance(int64_t mBalance) { m_balance = mBalance; }
+            // add
+            void add_balance(int64_t mBalance) { m_balance += mBalance; }
+
+            // subtract
+            void subtract_balance(int64_t mBalance) { m_balance -= mBalance; }
 
             int64_t nonce() const { return m_nonce; }
+
+            void increase_nonce() { m_nonce++; }
+
+            void decrease_nonce() { m_nonce--; }
+
+            void set_nonce(int64_t mNonce) { m_nonce = mNonce; }
+
+            bool operator<(const account &rhs) const {
+                return m_peer < rhs.m_peer;
+            }
+
+            bool operator>(const account &rhs) const {
+                return rhs < *this;
+            }
+
+            bool operator<=(const account &rhs) const {
+                return !(rhs < *this);
+            }
+
+            bool operator>=(const account &rhs) const {
+                return !(*this < rhs);
+            }
 
 //            void set_effective_power(int64_t mEffectivePower) { m_effective_power = mEffectivePower; }
 //

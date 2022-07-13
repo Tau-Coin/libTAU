@@ -13,8 +13,8 @@ see LICENSE file.
 namespace libTAU::blockchain {
 
     std::uint64_t consensus::calculate_required_base_target(const block &previousBlock, block &ancestor3) {
-        if (previousBlock.block_number() <= 3) {
-            return GENESIS_BASE_TARGET;
+        if (previousBlock.block_number() % CHAIN_EPOCH_BLOCK_SIZE <= 3) {
+            return previousBlock.base_target();
         }
 
         long totalTimeInterval = 0;

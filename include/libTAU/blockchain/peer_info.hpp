@@ -54,7 +54,7 @@ namespace libTAU::blockchain {
 
         std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_requests_time;
 
-        std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_peer_requests_time;
+//        std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_peer_requests_time;
 
         block m_head_block;
 
@@ -67,7 +67,9 @@ namespace libTAU::blockchain {
         bool m_fee_tx_pool_sync_done = false;
         bool m_time_tx_pool_sync_done = false;
 
-        bool m_gossip_done = false;
+//        bool m_sync_done = false;
+
+//        bool m_gossip_done = false;
 
 //        vote m_vote;
 
