@@ -6,7 +6,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#include <common_data.h>
+#include "libTAU/aux_/common_data.h"
 #include "libTAU/blockchain/hash_array.hpp"
 
 namespace libTAU::blockchain {

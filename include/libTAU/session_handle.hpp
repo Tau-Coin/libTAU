@@ -354,7 +354,7 @@ namespace libTAU {
 		std::set<std::vector<char>> get_all_chains();
 
 		// create new community
-        bool create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
+        bool create_new_community(std::vector<char> chain_id, const std::set<blockchain::account>& accounts);
 		// follow chain
         bool follow_chain(std::vector<char> chain_id, const std::set<dht::public_key>& peers);
         //add new bs peers
@@ -393,10 +393,10 @@ namespace libTAU {
         blockchain::block get_block_by_number(std::vector<char> chain_id, std::int64_t block_number);
 
 		// get block by hash
-        blockchain::block get_block_by_hash(std::vector<char> chain_id, const sha256_hash& block_hash);
+        blockchain::block get_block_by_hash(std::vector<char> chain_id, const sha1_hash& block_hash);
 
 		// whether txid in pool or not
-        bool is_transaction_in_fee_pool(std::vector<char> chain_id, const sha256_hash& txid);
+        bool is_transaction_in_fee_pool(std::vector<char> chain_id, const sha1_hash& txid);
 
 
 		// get chain state 

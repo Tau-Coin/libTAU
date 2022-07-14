@@ -3216,7 +3216,7 @@ namespace {
         */
 	}
 
-    bool session_impl::publish_data(const std::string& key, const std::string& value)
+    bool session_impl::publish_data(const aux::bytes& key, const aux::bytes& value)
     {
 		if(m_communication) {
             m_communication->publish_data(key, value);
@@ -3227,7 +3227,7 @@ namespace {
 
     }
 
-    bool session_impl::subscribe_from_peer(const dht::public_key& pubkey, const std::string& data)
+    bool session_impl::subscribe_from_peer(const dht::public_key& pubkey, const aux::bytes& data)
     {
 		if(m_communication) {
             m_communication->subscribe_from_peer(pubkey, data);
@@ -3238,7 +3238,7 @@ namespace {
 
     }
 
-    bool session_impl::send_to_peer(const dht::public_key& pubkey, const std::string& data)
+    bool session_impl::send_to_peer(const dht::public_key& pubkey, const aux::bytes& data)
     {
 		if(m_communication) {
             m_communication->subscribe_from_peer(pubkey, data);
@@ -3335,7 +3335,7 @@ namespace {
 			*cids = m_blockchain->get_all_chains();
 	}
 
-	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts) {
+	bool session_impl::create_new_community(const aux::bytes &chain_id, const std::set<blockchain::account>& accounts) {
 		if(m_blockchain) {
 			return m_blockchain->createNewCommunity(chain_id, accounts);
 		}
@@ -3399,10 +3399,12 @@ namespace {
 	}
 
 	bool session_impl::get_gossip_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys) {
+        /*
 		if(m_blockchain) {
 			*keys = m_blockchain->get_gossip_peers(chain_id);
 			return true;
 		}
+        */
 		return false;
 	}
 
@@ -3442,22 +3444,24 @@ namespace {
 		}
 	}
 
-	blockchain::block session_impl::get_block_by_hash(const aux::bytes &chain_id, const sha256_hash& block_hash) {
+	blockchain::block session_impl::get_block_by_hash(const aux::bytes &chain_id, const sha1_hash& block_hash) {
 		if(m_blockchain) {
 			return m_blockchain->getBlock(chain_id, block_hash);
 		}
 	}
 
-	bool session_impl::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha256_hash& txid) {
+	bool session_impl::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash& txid) {
 		if(m_blockchain) {
 			return m_blockchain->is_transaction_in_fee_pool(chain_id, txid);
 		}
 	}
 
 	void session_impl::request_chain_state(const aux::bytes &chain_id) {
+    /*
 		if(m_blockchain) {
 			return m_blockchain->request_state(chain_id);
 		}
+    */
 	}
 
 	void session_impl::set_dht_state(dht::dht_state&& state)
