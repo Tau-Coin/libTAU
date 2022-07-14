@@ -20,6 +20,8 @@ see LICENSE file.
 #include "libTAU/aux_/common.h" // for transport
 #include "libTAU/aux_/session_udp_sockets.hpp" // for transport
 
+#include <sqlite3.h>
+
 namespace libTAU {
 
 struct entry;
@@ -40,7 +42,8 @@ namespace dht {
 			routing_table,
 			rpc_manager,
 			traversal,
-			incoming_table
+			incoming_table,
+			items_db
 		};
 
 		enum message_direction_t
@@ -74,6 +77,7 @@ namespace dht {
 		virtual void on_dht_item(dht::item& i) = 0;
 		virtual std::int64_t get_time() = 0;
 		virtual void on_dht_relay(public_key const& from, entry const& payload) = 0;
+		virtual sqlite3* get_items_database() = 0;
 
 	protected:
 		~dht_observer() = default;

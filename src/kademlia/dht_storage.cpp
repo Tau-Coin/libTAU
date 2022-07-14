@@ -347,6 +347,11 @@ namespace {
 			m_node_ids = ids;
 		}
 
+		void set_backend(std::shared_ptr<dht_storage_interface> backend) override
+		{
+			m_backend = std::move(backend);
+		}
+
 		bool get_immutable_item(sha256_hash const& target
 			, entry& item) const override
 		{
@@ -709,6 +714,7 @@ namespace {
 
 	private:
 		settings_interface const& m_settings;
+		std::shared_ptr<dht_storage_interface> m_backend;
 		dht_storage_counters m_counters;
 
 		std::vector<node_id> m_node_ids;

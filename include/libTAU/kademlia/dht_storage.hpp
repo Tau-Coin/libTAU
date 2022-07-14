@@ -66,6 +66,11 @@ namespace dht {
 		// to make room for a new one.
 		virtual void update_node_ids(std::vector<node_id> const& ids) = 0;
 
+		// This member function sets backend database for dht storage.
+		//
+		// Persistence of immutable or mutable items.
+		virtual void set_backend(std::shared_ptr<dht_storage_interface> backend) = 0;
+
 		// This function retrieves the immutable item given its target hash.
 		//
 		// For future implementers:
