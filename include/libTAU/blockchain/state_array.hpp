@@ -13,6 +13,7 @@ see LICENSE file.
 
 #include "libTAU/aux_/common_data.h"
 #include "libTAU/blockchain/account.hpp"
+#include "libTAU/hasher.hpp"
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/sha1_hash.hpp"
 
@@ -34,7 +35,7 @@ namespace libTAU {
             const std::vector<account> &StateArray() const { return m_state_array; }
 
             // @returns the SHA256 hash of this block
-            const sha1_hash &sha256() const { return m_hash; }
+            const sha1_hash &sha1() const { return m_hash; }
 
             entry get_entry() const;
 

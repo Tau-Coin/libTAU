@@ -874,7 +874,7 @@ namespace libTAU::blockchain {
 ////            } else {
 ////                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
 ////                // if oldest block pointer point to current block, this account was taken on chain on this block, delete it
-////                if (accountBlockPointer.oldest_block_hash() == b.sha256()) {
+////                if (accountBlockPointer.oldest_block_hash() == b.sha1()) {
 ////                    if (!delete_account_block_pointer(chain_id, pubKey))
 ////                        return false;
 ////                } else {
@@ -886,7 +886,7 @@ namespace libTAU::blockchain {
 ////                // no need to update state linker
 ////            }
 ////
-////            if (!delete_state_linker(b.sha256()))
+////            if (!delete_state_linker(b.sha1()))
 ////                return false;
 ////        }
 //        }
@@ -947,7 +947,7 @@ namespace libTAU::blockchain {
 ////            } else {
 ////                auto accountBlockPointer = get_account_block_pointer(chain_id, pubKey);
 ////                // if latest block pointer point to current block, this account was on chain last once, delete it
-////                if (accountBlockPointer.latest_block_hash() == b.sha256()) {
+////                if (accountBlockPointer.latest_block_hash() == b.sha1()) {
 ////                    if (!delete_account_block_pointer(chain_id, pubKey))
 ////                        return false;
 ////                } else {
@@ -959,7 +959,7 @@ namespace libTAU::blockchain {
 ////                // no need to update state linker
 ////            }
 ////
-////            if (!delete_state_linker(b.sha256()))
+////            if (!delete_state_linker(b.sha1()))
 ////                return false;
 ////        }
 //        }

@@ -14,7 +14,7 @@ namespace libTAU::blockchain {
 
         std::string encode;
         bencode(std::back_inserter(encode), e);
-        m_hash = dht::item_target_id(encode);
+        m_hash = hasher(encode).final();
     }
 
     entry state_array::get_entry() const {

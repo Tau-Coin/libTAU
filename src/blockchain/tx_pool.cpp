@@ -124,10 +124,10 @@ namespace libTAU::blockchain {
                 auto old_tx = it_tx->second;
                 if (tx.fee() > old_tx.fee()) {
                     // replace old tx with new one
-                    m_all_txs_by_fee[tx.sha256()] = tx;
-                    m_account_tx_by_fee[tx.sender()] = tx.sha256();
-                    m_ordered_txs_by_fee.erase(tx_entry_with_fee(old_tx.sha256(), old_tx.fee()));
-                    m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
+                    m_all_txs_by_fee[tx.sha1()] = tx;
+                    m_account_tx_by_fee[tx.sender()] = tx.sha1();
+                    m_ordered_txs_by_fee.erase(tx_entry_with_fee(old_tx.sha1(), old_tx.fee()));
+                    m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha1(), tx.fee()));
                 } else {
                     return false;
                 }
@@ -135,9 +135,9 @@ namespace libTAU::blockchain {
         }
 
         // insert if cannot find in local
-        m_all_txs_by_fee[tx.sha256()] = tx;
-        m_account_tx_by_fee[tx.sender()] = tx.sha256();
-        m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha256(), tx.fee()));
+        m_all_txs_by_fee[tx.sha1()] = tx;
+        m_account_tx_by_fee[tx.sender()] = tx.sha1();
+        m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha1(), tx.fee()));
 
         if (m_all_txs_by_fee.size() > tx_pool_max_size_by_fee) {
             remove_min_fee_tx();
@@ -158,10 +158,10 @@ namespace libTAU::blockchain {
                 auto old_tx = it_tx->second;
                 if (tx.timestamp() > old_tx.timestamp()) {
                     // replace old tx with new one
-                    m_all_txs_by_timestamp[tx.sha256()] = tx;
-                    m_account_tx_by_timestamp[tx.sender()] = tx.sha256();
-                    m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(old_tx.sha256(), old_tx.timestamp()));
-                    m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
+                    m_all_txs_by_timestamp[tx.sha1()] = tx;
+                    m_account_tx_by_timestamp[tx.sender()] = tx.sha1();
+                    m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(old_tx.sha1(), old_tx.timestamp()));
+                    m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha1(), tx.timestamp()));
                 } else {
                     return false;
                 }
@@ -169,9 +169,9 @@ namespace libTAU::blockchain {
         }
 
         // insert if cannot find in local
-        m_all_txs_by_timestamp[tx.sha256()] = tx;
-        m_account_tx_by_timestamp[tx.sender()] = tx.sha256();
-        m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
+        m_all_txs_by_timestamp[tx.sha1()] = tx;
+        m_account_tx_by_timestamp[tx.sender()] = tx.sha1();
+        m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha1(), tx.timestamp()));
 
         if (m_all_txs_by_timestamp.size() > tx_pool_max_size_by_timestamp) {
             remove_oldest_tx();
@@ -268,10 +268,10 @@ namespace libTAU::blockchain {
         if (tx.empty())
             return;
 
-        m_all_txs_by_timestamp.erase(tx.sha256());
-        m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(tx.sha256(), tx.timestamp()));
+        m_all_txs_by_timestamp.erase(tx.sha1());
+        m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(tx.sha1(), tx.timestamp()));
         auto it = m_account_tx_by_timestamp.find(tx.sender());
-        if (it != m_account_tx_by_timestamp.end() && it->second == tx.sha256()) {
+        if (it != m_account_tx_by_timestamp.end() && it->second == tx.sha1()) {
             m_account_tx_by_timestamp.erase(it);
         }
     }
@@ -313,7 +313,7 @@ namespace libTAU::blockchain {
         if (it_txid != m_account_tx_by_fee.end()) {
             auto it = m_all_txs_by_fee.find(it_txid->second);
             if (it != m_all_txs_by_fee.end()) {
-                m_ordered_txs_by_fee.erase(tx_entry_with_fee(it->second.sha256(), it->second.fee()));
+                m_ordered_txs_by_fee.erase(tx_entry_with_fee(it->second.sha1(), it->second.fee()));
                 m_all_txs_by_fee.erase(it);
             }
 
@@ -405,7 +405,7 @@ namespace libTAU::blockchain {
                 // validate tx state
                 auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
                 if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost()) {
-                    m_ordered_txs_by_fee.erase(tx_entry_with_fee(tx.sha256(), tx.fee()));
+                    m_ordered_txs_by_fee.erase(tx_entry_with_fee(tx.sha1(), tx.fee()));
                     m_all_txs_by_fee.erase(it);
                     m_account_tx_by_fee.erase(it_txid);
                 }

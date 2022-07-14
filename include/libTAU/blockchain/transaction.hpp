@@ -102,8 +102,8 @@ namespace blockchain {
 
         size_t get_encode_size() const;
 
-        // @returns the SHA256 hash of this message
-        const sha1_hash &sha256() const { return m_hash; }
+        // @returns the SHA1 hash of this message
+        const sha1_hash &sha1() const { return m_hash; }
 
         void sign(dht::public_key const& pk, dht::secret_key const& sk);
 

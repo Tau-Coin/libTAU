@@ -1621,7 +1621,7 @@ namespace {
 #else
 		char buffer[256];
 		std::snprintf(buffer, sizeof(buffer), "new tx hash: %s"
-				, aux::toHex(tx.sha256().to_string()).c_str());
+				, aux::toHex(tx.sha1().to_string()).c_str());
 		return buffer;
 #endif
 	}

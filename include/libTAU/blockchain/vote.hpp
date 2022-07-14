@@ -58,7 +58,7 @@ namespace libTAU {
 
             void vote_up() { m_count++; }
 
-            bool empty() { return m_voting_block.sha256().is_all_zeros(); }
+            bool empty() { return m_voting_block.sha1().is_all_zeros(); }
 
 //            entry get_entry() const;
 //
