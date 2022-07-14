@@ -252,24 +252,17 @@ namespace libTAU {
 
 	bool session_handle::publish_data(const std::vector<char>& key, const std::vector<char>& value)
 	{
-		std::string skey, svalue;
-		skey.insert(skey.begin(), key.begin(), key.end());
-		svalue.insert(svalue.begin(), value.begin(), value.end());
-		return sync_call_ret<bool>(&session_impl::publish_data, skey, svalue);
+		return sync_call_ret<bool>(&session_impl::publish_data, key, value);
 	}
 
 	bool session_handle::subscribe_from_peer(const dht::public_key& pubkey, const std::vector<char>& data)
 	{
-		std::string sdata;
-		sdata.insert(sdata.begin(), data.begin(), data.end());
-		return sync_call_ret<bool>(&session_impl::subscribe_from_peer, pubkey, sdata);
+		return sync_call_ret<bool>(&session_impl::subscribe_from_peer, pubkey, data);
 	}
 
 	bool session_handle::send_to_peer(const dht::public_key& pubkey, const std::vector<char>& data)
 	{
-		std::string sdata;
-		sdata.insert(sdata.begin(), data.begin(), data.end());
-		return sync_call_ret<bool>(&session_impl::send_to_peer, pubkey, sdata);
+		return sync_call_ret<bool>(&session_impl::send_to_peer, pubkey, data);
 	}
 
 	bool session_handle::add_new_friend(const dht::public_key& pubkey)
@@ -336,7 +329,7 @@ namespace libTAU {
 	}
 
 	// create new community
-    bool session_handle::create_new_community(std::vector<char> chain_id, const std::map<dht::public_key, blockchain::account>& accounts)
+    bool session_handle::create_new_community(std::vector<char> chain_id, const std::set<blockchain::account>& accounts)
 	{
 		return sync_call_ret<bool>(&session_impl::create_new_community, chain_id, accounts);
 	}
@@ -430,13 +423,13 @@ namespace libTAU {
 	}
 
 	// get block by hash
-    blockchain::block session_handle::get_block_by_hash(std::vector<char> chain_id, const sha256_hash& block_hash)
+    blockchain::block session_handle::get_block_by_hash(std::vector<char> chain_id, const sha1_hash& block_hash)
 	{
 		return sync_call_ret<blockchain::block>(&session_impl::get_block_by_hash, chain_id, block_hash);
 	}
 
 	// txid in pool or not
-    bool session_handle::is_transaction_in_fee_pool(std::vector<char> chain_id, const sha256_hash& txid)
+    bool session_handle::is_transaction_in_fee_pool(std::vector<char> chain_id, const sha1_hash& txid)
 	{
 		return sync_call_ret<bool>(&session_impl::is_transaction_in_fee_pool, chain_id, txid);
 	}

@@ -656,11 +656,11 @@ namespace aux {
 
 			void set_loop_time_interval(int milliseconds);
 
-		    bool publish_data(const std::string& key, const std::string& value);
+		    bool publish_data(const aux::bytes& key, const aux::bytes& value);
 
-		    bool subscribe_from_peer(const dht::public_key& pubkey, const std::string& data);
+		    bool subscribe_from_peer(const dht::public_key& pubkey, const aux::bytes& data);
 
-		    bool send_to_peer(const dht::public_key& pubkey, const std::string& data);
+		    bool send_to_peer(const dht::public_key& pubkey, const aux::bytes& data);
 
 			bool add_new_friend(const dht::public_key& pubkey);
 			bool delete_friend(const dht::public_key& pubkey);
@@ -677,7 +677,7 @@ namespace aux {
 			
         	void create_chain_id(std::string community_name, std::vector<char>* id);
             void get_all_chains(std::set<std::vector<char>>* cids);
-            bool create_new_community(const aux::bytes &chain_id, const std::map<dht::public_key, blockchain::account>& accounts);
+            bool create_new_community(const aux::bytes &chain_id, const std::set<blockchain::account>& accounts);
         	bool follow_chain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
         	bool add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
         	bool unfollow_chain(const aux::bytes &chain_id);
@@ -692,9 +692,9 @@ namespace aux {
         	void set_priority_chain(const aux::bytes &chain_id);
         	void unset_priority_chain();
         	blockchain::block get_block_by_number(const aux::bytes &chain_id, std::int64_t block_number);
-        	blockchain::block get_block_by_hash(const aux::bytes &chain_id, const sha256_hash& block_hash);
+        	blockchain::block get_block_by_hash(const aux::bytes &chain_id, const sha1_hash& block_hash);
 
-        	bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha256_hash& txid);
+        	bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash& txid);
 
         	void request_chain_state(const aux::bytes &chain_id);
 
