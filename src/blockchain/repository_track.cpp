@@ -62,6 +62,10 @@ namespace libTAU::blockchain {
         return state_array(libTAU::entry());
     }
 
+    bool repository_track::is_state_array_in_db(const aux::bytes &chain_id, const sha1_hash &hash) {
+        return false;
+    }
+
     bool repository_track::save_state_array(const aux::bytes &chain_id, const state_array &stateArray) {
         return false;
     }

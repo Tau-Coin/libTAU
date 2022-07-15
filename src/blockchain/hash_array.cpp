@@ -12,6 +12,10 @@ namespace libTAU::blockchain {
 
     hash_array::hash_array(const entry& e) {
         populate(e);
+
+        std::string encode;
+        bencode(std::back_inserter(encode), e);
+        m_hash = hasher(encode).final();
     }
 
     entry hash_array::get_entry() const {
@@ -50,6 +54,8 @@ namespace libTAU::blockchain {
         for (auto const& hash: hashArray.m_hash_array) {
             os << " hash:" << aux::toHex(hash.to_string());
         }
+
+        os << " m_hash: " << aux::toHex(hashArray.m_hash.to_string());
 
         return os;
     }

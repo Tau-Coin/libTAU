@@ -597,7 +597,7 @@ namespace libTAU::blockchain {
 
                     for (auto const &peer: peers) {
                         // get gossip peers
-                        get_gossip_peers(chain_id, peer);
+//                        get_gossip_peers(chain_id, peer);
                     }
 
                     m_chain_status[chain_id] = MINE;
@@ -1150,6 +1150,10 @@ namespace libTAU::blockchain {
         auto &head_block = m_head_blocks[chain_id];
 
         return head_block.empty();
+    }
+
+    bool blockchain::is_transaction_in_pool(const bytes &chain_id, const sha1_hash &txid) {
+        return m_tx_pools[chain_id].is_transaction_in_pool(txid);
     }
 
 //    bool blockchain::is_block_immutable_certainly(const aux::bytes &chain_id, const block &blk) {
@@ -1981,9 +1985,9 @@ namespace libTAU::blockchain {
         m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2), 1, 8, 24, salt);
     }
 
-    void blockchain::subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string &salt) {
+    void blockchain::subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string &salt, GET_ITEM_TYPE type) {
         if (!m_ses.dht()) return;
-        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2), salt);
+        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type), salt);
     }
 
 //    std::string blockchain::make_salt(dht::public_key peer, std::int64_t data_type_id) {
@@ -2122,33 +2126,108 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::get_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer) {
-        // salt is x pubkey when request signal
-        auto salt = make_salt(chain_id, common::gossip_cache_peers_entry::data_type_id);
+//    void blockchain::get_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer) {
+//        // salt is x pubkey when request signal
+//        auto salt = make_salt(chain_id, common::gossip_cache_peers_entry::data_type_id);
+//
+//        log(LOG_INFO, "INFO: Request gossip peers from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+//            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+//        subscribe(chain_id, peer, salt);
+//    }
 
-        log(LOG_INFO, "INFO: Request gossip peers from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+//    void blockchain::get_voting_block(const aux::bytes &chain_id, const dht::public_key &peer) {
+//        // salt is x pubkey when request signal
+//        auto salt = make_salt(chain_id, common::voting_block_cache_entry::data_type_id);
+//
+//        log(LOG_INFO, "INFO: Request vote from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+//            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+//        subscribe(chain_id, peer, salt);
+//    }
+
+//    void blockchain::put_voting_block(const aux::bytes &chain_id, const block &blk) {
+//        if (!blk.empty()) {
+//            common::voting_block_cache_entry votingBlockCacheEntry(blk);
+//
+//            // salt is y pubkey when publish signal
+//            auto salt = make_salt(chain_id, common::voting_block_cache_entry::data_type_id);
+//
+//            log(LOG_INFO, "INFO: Chain id[%s] Cache voting block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+//            publish(salt, votingBlockCacheEntry.get_entry());
+//        }
+//    }
+
+    void blockchain::get_head_block_hash(const bytes &chain_id, const dht::public_key &peer) {
+        // salt is x pubkey when request signal
+        std::string data(chain_id.begin(), chain_id.end());
+        data.insert(data.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
+        auto key = hasher(data).final();
+        auto salt = make_salt(key);
+
+        log(LOG_INFO, "INFO: Request head block hash from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        subscribe(chain_id, peer, salt);
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::HEAD_BLOCK_HASH);
     }
 
-    void blockchain::get_voting_block(const aux::bytes &chain_id, const dht::public_key &peer) {
-        // salt is x pubkey when request signal
-        auto salt = make_salt(chain_id, common::voting_block_cache_entry::data_type_id);
-
-        log(LOG_INFO, "INFO: Request vote from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
-            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        subscribe(chain_id, peer, salt);
-    }
-
-    void blockchain::put_voting_block(const aux::bytes &chain_id, const block &blk) {
-        if (!blk.empty()) {
-            common::voting_block_cache_entry votingBlockCacheEntry(blk);
-
+    void blockchain::put_head_block_hash(const bytes &chain_id, const sha1_hash &hash) {
+        if (!hash.is_all_zeros()) {
             // salt is y pubkey when publish signal
-            auto salt = make_salt(chain_id, common::voting_block_cache_entry::data_type_id);
+            std::string data(chain_id.begin(), chain_id.end());
+            data.insert(data.end(), key_suffix_head_block_hash.begin(), key_suffix_head_block_hash.end());
+            auto key = hasher(data).final();
+            auto salt = make_salt(key);
 
-            log(LOG_INFO, "INFO: Chain id[%s] Cache voting block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-            publish(salt, votingBlockCacheEntry.get_entry());
+            log(LOG_INFO, "INFO: Chain id[%s] Cache head block hash salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish(salt, hash.to_string());
+        }
+    }
+
+    void blockchain::get_fee_pool_root(const bytes &chain_id, const dht::public_key &peer) {
+        // salt is x pubkey when request signal
+        std::string data(chain_id.begin(), chain_id.end());
+        data.insert(data.end(), key_suffix_fee_pool_root.begin(), key_suffix_fee_pool_root.end());
+        auto key = hasher(data).final();
+        auto salt = make_salt(key);
+
+        log(LOG_INFO, "INFO: Request fee pool root from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::FEE_POOL_ROOT);
+    }
+
+    void blockchain::put_fee_pool_root(const bytes &chain_id, const sha1_hash &hash) {
+        if (!hash.is_all_zeros()) {
+            // salt is y pubkey when publish signal
+            std::string data(chain_id.begin(), chain_id.end());
+            data.insert(data.end(), key_suffix_fee_pool_root.begin(), key_suffix_fee_pool_root.end());
+            auto key = hasher(data).final();
+            auto salt = make_salt(key);
+
+            log(LOG_INFO, "INFO: Chain id[%s] Cache fee pool root salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish(salt, hash.to_string());
+        }
+    }
+
+    void blockchain::get_time_pool_root(const bytes &chain_id, const dht::public_key &peer) {
+        // salt is x pubkey when request signal
+        std::string data(chain_id.begin(), chain_id.end());
+        data.insert(data.end(), key_suffix_time_pool_root.begin(), key_suffix_time_pool_root.end());
+        auto key = hasher(data).final();
+        auto salt = make_salt(key);
+
+        log(LOG_INFO, "INFO: Request time pool root from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TIME_POOL_ROOT);
+    }
+
+    void blockchain::put_time_pool_root(const bytes &chain_id, const sha1_hash &hash) {
+        if (!hash.is_all_zeros()) {
+            // salt is y pubkey when publish signal
+            std::string data(chain_id.begin(), chain_id.end());
+            data.insert(data.end(), key_suffix_time_pool_root.begin(), key_suffix_time_pool_root.end());
+            auto key = hasher(data).final();
+            auto salt = make_salt(key);
+
+            log(LOG_INFO, "INFO: Chain id[%s] Cache time pool root salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish(salt, hash.to_string());
         }
     }
 
@@ -2158,18 +2237,82 @@ namespace libTAU::blockchain {
 
         log(LOG_INFO, "INFO: Request block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        subscribe(chain_id, peer, salt);
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::BLOCK);
     }
 
     void blockchain::put_block(const bytes &chain_id, const block &blk) {
         if (!blk.empty()) {
-            common::block_entry blockEntry(blk);
-
             // salt is y pubkey when publish signal
             auto salt = make_salt(blk.sha1());
 
             log(LOG_INFO, "INFO: Chain id[%s] Cache block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-            publish(salt, blockEntry.get_entry());
+            publish(salt, blk.get_entry());
+        }
+    }
+
+    void blockchain::get_transaction(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Request tx from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TX);
+    }
+
+    void blockchain::put_transaction(const bytes &chain_id, const transaction &tx) {
+        if (!tx.empty()) {
+            // salt is y pubkey when publish signal
+            auto salt = make_salt(tx.sha1());
+
+            log(LOG_INFO, "INFO: Chain id[%s] Cache tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish(salt, tx.get_entry());
+        }
+    }
+
+    void blockchain::get_state_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Request state array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::STATE_ARRAY);
+    }
+
+    void blockchain::put_state_array(const bytes &chain_id, const state_array &stateArray) {
+        if (!stateArray.empty()) {
+            // salt is y pubkey when publish signal
+            auto salt = make_salt(stateArray.sha1());
+
+            log(LOG_INFO, "INFO: Chain id[%s] Cache state array salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish(salt, stateArray.get_entry());
+        }
+    }
+
+    void blockchain::get_pool_hash_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Request pool hash array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::POOL_HASH_ARRAY);
+    }
+
+    void blockchain::get_state_hash_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Request state hash array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::STATE_HASH_ARRAY);
+    }
+
+    void blockchain::put_hash_array(const bytes &chain_id, const hash_array &hashArray) {
+        if (!hashArray.empty()) {
+            // salt is y pubkey when publish signal
+            auto salt = make_salt(hashArray.sha1());
+
+            log(LOG_INFO, "INFO: Chain id[%s] Cache hash array salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish(salt, hashArray.get_entry());
         }
     }
 
@@ -2225,7 +2368,7 @@ namespace libTAU::blockchain {
 
     // callback for dht_mutable_get
     void blockchain::get_mutable_callback(aux::bytes const& chain_id, dht::item const& i
-            , bool const authoritative)
+            , bool const authoritative, GET_ITEM_TYPE type)
     {
         TORRENT_ASSERT(i.is_mutable());
 
@@ -2233,36 +2376,97 @@ namespace libTAU::blockchain {
         try {
             if (!i.empty()) {
                 auto peer = i.pk();
-                auto salt = i.salt();
-                if (salt.length() > common::salt_pubkey_length) {
-                    std::string encode(salt.begin() + common::salt_pubkey_length, salt.end());
-                    common::protocol_entry protocolEntry(encode);
-                    switch (protocolEntry.m_data_type_id) {
-//                        case common::voting_block_cache_entry::data_type_id: {
-//                            common::voting_block_cache_entry votingBlockCacheEntry(i.value());
-//                            if (!votingBlockCacheEntry.m_blk.empty()) {
-//                                log(LOG_INFO, "INFO: chain[%s] get vote[%s] from peer[%s]",
-//                                    aux::toHex(chain_id).c_str(),
-//                                    votingBlockCacheEntry.m_blk.to_string().c_str(),
-//                                    aux::toHex(peer.bytes).c_str());
-//                                m_votes[chain_id][peer] = vote(votingBlockCacheEntry.m_blk);
-//                            }
-//                            break;
-//                        }
-//                        case common::gossip_cache_peers_entry::data_type_id: {
-//                            common::gossip_cache_peers_entry gossipCachePeersEntry(i.value());
-//                            log(LOG_INFO, "INFO: chain[%s] get %d gossip peers from peer[%s]",
-//                                aux::toHex(chain_id).c_str(),
-//                                gossipCachePeersEntry.m_peers.size(), aux::toHex(peer.bytes).c_str());
-//                            add_gossip_peers(chain_id, gossipCachePeersEntry.m_peers);
-//                            break;
-//                        }
-                        default: {
-
+                switch (type) {
+                    case GET_ITEM_TYPE::HEAD_BLOCK_HASH: {
+                        sha1_hash head_block_hash(i.value().string().c_str());
+                        if (!head_block_hash.is_all_zeros()) {
+                            get_block(chain_id, peer, head_block_hash);
                         }
+
+                        break;
                     }
-                } else {
-                    log(LOG_ERR, "ERROR: Invalid salt in getting callback!");
+                    case GET_ITEM_TYPE::BLOCK: {
+                        block blk(i.value());
+
+                        // TODO: mark as head if more difficult
+
+                        data_received_from_peer(chain_id, peer, 3, std::make_unique<common::block_request_entry>(chain_id,
+                                                                                                                 blk.sha1()));
+
+                        log(LOG_INFO, "=====INFO: Got block[%s], time:%" PRId64,
+                            blk.to_string().c_str(), get_total_milliseconds());
+
+                        m_repository->save_non_main_chain_block(blk);
+
+                        // notify ui tx from block
+                        if (!blk.tx().empty()) {
+                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
+                        }
+
+                        block_reception_event(chain_id, blk);
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::TX: {
+                        transaction tx(i.value());
+
+                        log(LOG_INFO, "INFO: Got transaction[%s].", tx.to_string().c_str());
+
+                        transaction_received_from_peer(chain_id, peer, tx);
+
+                        m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
+
+                        auto &pool = m_tx_pools[chain_id];
+                        if (pool.add_tx(tx)) {
+                            transfer_transaction(chain_id, tx);
+                        }
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::FEE_POOL_ROOT:
+                    case GET_ITEM_TYPE::TIME_POOL_ROOT: {
+                        sha1_hash pool_root(i.value().string().c_str());
+                        if (!pool_root.is_all_zeros()) {
+                            get_pool_hash_array(chain_id, peer, pool_root);
+                        }
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::POOL_HASH_ARRAY: {
+                        hash_array hashArray(i.value());
+                        log(LOG_INFO, "INFO: Got tx hash array[%s].", hashArray.to_string().c_str());
+                        for (auto const& hash: hashArray.HashArray()) {
+                            if (!is_transaction_in_pool(chain_id, hash)) {
+                                get_transaction(chain_id, peer, hash);
+                            }
+                        }
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::STATE_HASH_ARRAY: {
+                        hash_array hashArray(i.value());
+                        log(LOG_INFO, "INFO: Got state hash array[%s].", hashArray.to_string().c_str());
+                        for (auto const& hash: hashArray.HashArray()) {
+                            if (!m_repository->is_state_array_in_db(chain_id, hash)) {
+                                get_state_array(chain_id, peer, hash);
+                            }
+                        }
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::STATE_ARRAY: {
+                        state_array stateArray(i.value());
+                        log(LOG_INFO, "INFO: Got state array[%s].", stateArray.to_string().c_str());
+
+                        m_repository->save_state_array(chain_id, stateArray);
+
+                        // TODO: state array event
+
+                        break;
+                    }
+                    default: {
+                        log(LOG_ERR, "INFO: Unknown type.");
+                    }
                 }
             }
         } catch (std::exception &e) {
@@ -3058,126 +3262,6 @@ namespace libTAU::blockchain {
 
                         break;
                     }
-//                    case common::vote_request_entry::data_type_id: {
-//                        common::vote_request_entry voteRequestEntry(payload);
-//                        auto &chain_id = voteRequestEntry.m_chain_id;
-//
-//                        {
-//                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-//                            if (it == m_chains.end()) {
-//                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-//                                return;
-//                            }
-//                        }
-//
-//                        try_to_kick_out_of_ban_list(chain_id, peer);
-//
-//                        auto &acl = m_access_list[chain_id];
-//                        auto it = acl.find(peer);
-//                        if (it != acl.end()) {
-//                            auto itor = it->second.m_peer_requests_time.find(std::make_unique<common::vote_request_entry>(payload));
-//                            if (itor != it->second.m_peer_requests_time.end()) {
-//                                if (now > itor->second + blockchain_same_response_interval) {
-//                                    it->second.m_peer_requests_time.erase(itor);
-//                                } else {
-//                                    log("INFO: The same request from the same peer in 3s.");
-//                                    break;
-//                                }
-//                            } else {
-//                                it->second.m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
-//                            }
-//                            it->second.m_score -= 3;
-//                            it->second.m_last_seen = now;
-//                        } else {
-//                            if (acl.size() >= blockchain_acl_max_peers) {
-//                                // find out min score peer
-//                                auto min_it = acl.begin();
-//                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-//                                    if (iter->second.m_score  < min_it->second.m_score) {
-//                                        min_it = iter;
-//                                    }
-//                                }
-//
-//                                if (min_it->second.m_score < peer_info().m_score) {
-//                                    // replace min score peer with new one
-//                                    acl.erase(min_it);
-//                                    acl[peer] = peer_info(now);
-//                                    acl[peer].m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
-//
-//                                    introduce_gossip_peers(chain_id, peer);
-//                                }
-//                            } else {
-//                                acl[peer] = peer_info(now);
-//                                acl[peer].m_peer_requests_time.emplace(std::make_unique<common::vote_request_entry>(payload), now);
-//
-//                                introduce_gossip_peers(chain_id, peer);
-//                            }
-//                        }
-//
-//                        // vote for voting point
-//                        auto &voting_point_block = m_voting_point_blocks[chain_id];
-//                        if (is_sync_completed(chain_id) && !voting_point_block.empty()) {
-//                            common::vote_entry voteEntry(chain_id,vote(voting_point_block.sha256(),
-//                                                                       voting_point_block.cumulative_difficulty(),
-//                                                                       voting_point_block.block_number()));
-//                            send_to(chain_id, peer, common::vote_entry::data_type_id, voteEntry.get_entry(), true);
-//                        }
-//
-//                        break;
-//                    }
-//                    case common::vote_entry::data_type_id: {
-//                        common::vote_entry voteEntry(payload);
-//                        auto &chain_id = voteEntry.m_chain_id;
-//
-//                        {
-//                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-//                            if (it == m_chains.end()) {
-//                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-//                                return;
-//                            }
-//                        }
-//
-//                        try_to_kick_out_of_ban_list(chain_id, peer);
-//
-//                        auto &acl = m_access_list[chain_id];
-//                        auto it = acl.find(peer);
-//                        if (it != acl.end()) {
-//                            it->second.m_score += 3;
-//                            if (it->second.m_score > 100) {
-//                                it->second.m_score = 100;
-//                            }
-//                            it->second.m_requests_time.erase(std::make_unique<common::vote_request_entry>(chain_id));
-//                            it->second.m_last_seen = now;
-//                        } else {
-//                            if (acl.size() >= blockchain_acl_max_peers) {
-//                                // find out min score peer
-//                                auto min_it = acl.begin();
-//                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-//                                    if (iter->second.m_score  < min_it->second.m_score) {
-//                                        min_it = iter;
-//                                    }
-//                                }
-//
-//                                if (min_it->second.m_score < peer_info().m_score) {
-//                                    // replace min score peer with new one
-//                                    acl.erase(min_it);
-//                                    acl[peer] = peer_info(now);
-//
-//                                    introduce_gossip_peers(chain_id, peer);
-//                                }
-//                            } else {
-//                                acl[peer] = peer_info(now);
-//
-//                                introduce_gossip_peers(chain_id, peer);
-//                            }
-//                        }
-//
-//                        log("INFO: chain[%s] valid vote[%s]",
-//                            aux::toHex(chain_id).c_str(), voteEntry.m_vote.to_string().c_str());
-//                        m_votes[chain_id][peer] = voteEntry.m_vote;
-//
-//                        break;
-//                    }
                     case common::head_block_request_entry::data_type_id: {
                         common::head_block_request_entry headBlockRequestEntry(payload);
                         auto &chain_id = headBlockRequestEntry.m_chain_id;
@@ -3387,60 +3471,6 @@ namespace libTAU::blockchain {
 //
 //                        if (!act.empty()) {
 //                            m_ses.alerts().emplace_alert<blockchain_state_alert>(chain_id, act);
-//                        }
-//
-//                        break;
-//                    }
-//                    case common::transaction_reply_entry::data_type_id: {
-//                        common::transaction_reply_entry txReplyEntry(payload);
-//                        auto &chain_id = txReplyEntry.m_chain_id;
-//
-//                        {
-//                            auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-//                            if (it == m_chains.end()) {
-//                                log("INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-//                                return;
-//                            }
-//                        }
-//
-//                        try_to_kick_out_of_ban_list(chain_id, peer);
-//
-//                        auto &acl = m_access_list[chain_id];
-//                        auto it = acl.find(peer);
-//                        if (it != acl.end()) {
-//                            it->second.m_score += 3;
-//                            if (it->second.m_score > 100) {
-//                                it->second.m_score = 100;
-//                            }
-//                            it->second.m_last_seen = now;
-//                        } else {
-//                            if (acl.size() >= blockchain_acl_max_peers) {
-//                                // find out min score peer
-//                                auto min_it = acl.begin();
-//                                for (auto iter = acl.begin(); iter != acl.end(); iter++) {
-//                                    if (iter->second.m_score  < min_it->second.m_score) {
-//                                        min_it = iter;
-//                                    }
-//                                }
-//
-//                                if (min_it->second.m_score < peer_info().m_score) {
-//                                    // replace min score peer with new one
-//                                    acl.erase(min_it);
-//                                    acl[peer] = peer_info(now);
-//
-//                                    introduce_gossip_peers(chain_id, peer);
-//                                }
-//                            } else {
-//                                acl[peer] = peer_info(now);
-//
-//                                introduce_gossip_peers(chain_id, peer);
-//                            }
-//                        }
-//
-//                        log("INFO: chain[%s] Got tx reply", aux::toHex(txReplyEntry.m_hash).c_str());
-//
-//                        if (!txReplyEntry.m_hash.is_all_zeros()) {
-//                            m_ses.alerts().emplace_alert<blockchain_tx_confirmation_alert>(chain_id, peer, txReplyEntry.m_hash);
 //                        }
 //
 //                        break;

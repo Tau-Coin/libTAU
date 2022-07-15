@@ -13,6 +13,7 @@ see LICENSE file.
 
 #include "libTAU/aux_/common.h"
 #include "libTAU/aux_/common_data.h"
+#include "libTAU/hasher.hpp"
 #include "libTAU/entry.hpp"
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
@@ -28,9 +29,17 @@ namespace libTAU {
             // @param Construct with bencode
             explicit hash_array(std::string encode): hash_array(bdecode(encode)) {}
 
-            explicit hash_array(std::vector<sha1_hash> mHashArray) : m_hash_array(std::move(mHashArray)) {}
+            explicit hash_array(std::vector<sha1_hash> mHashArray) : m_hash_array(std::move(mHashArray)) {
+                auto encode = get_encode();
+                m_hash = hasher(encode).final();
+            }
 
             const std::vector<sha1_hash> &HashArray() const { return m_hash_array; }
+
+            // @returns the SHA1 hash of this block
+            const sha1_hash &sha1() const { return m_hash; }
+
+            bool empty() const { return m_hash_array.empty(); }
 
             entry get_entry() const;
 
@@ -47,6 +56,9 @@ namespace libTAU {
 
             // hash
             std::vector<sha1_hash> m_hash_array;
+
+            // sha1 hash
+            sha1_hash m_hash;
         };
     }
 }

@@ -34,8 +34,10 @@ namespace libTAU {
 
             const std::vector<account> &StateArray() const { return m_state_array; }
 
-            // @returns the SHA256 hash of this block
+            // @returns the SHA1 hash of this block
             const sha1_hash &sha1() const { return m_hash; }
+
+            bool empty() const { return m_state_array.empty(); }
 
             entry get_entry() const;
 
@@ -52,7 +54,7 @@ namespace libTAU {
 
             std::vector<account> m_state_array;
 
-            // sha256 hash
+            // sha1 hash
             sha1_hash m_hash;
         };
     }

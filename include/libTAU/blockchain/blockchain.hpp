@@ -23,10 +23,12 @@ see LICENSE file.
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
 #include "libTAU/blockchain/constants.hpp"
+#include "libTAU/blockchain/hash_array.hpp"
 #include "libTAU/blockchain/peer_info.hpp"
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/repository_impl.hpp"
 #include "libTAU/blockchain/repository_track.hpp"
+#include "libTAU/blockchain/state_array.hpp"
 #include "libTAU/blockchain/tx_pool.hpp"
 #include "libTAU/common/entry_type.hpp"
 
@@ -62,18 +64,22 @@ namespace blockchain {
     // blockchain max ban time(30min)
     constexpr std::int64_t blockchain_max_ban_time = 30 * 60 * 1000;
 
-    // tx pool key suffix
-    const std::string key_suffix_tx_pool = "tx_pool";
+    // fee pool key suffix
+    const std::string key_suffix_fee_pool_root = "fee_pool_root";
+    // time pool key suffix
+    const std::string key_suffix_time_pool_root = "time_pool_root";
     // head block key suffix
     const std::string key_suffix_head_block_hash = "head_block_hash";
     // state root key suffix
     const std::string key_suffix_state_root = "state_root";
 
-    enum GET_ITEM {
+    enum GET_ITEM_TYPE {
         HEAD_BLOCK_HASH,
         BLOCK,
-        TX_HASH_ARRAY,
         TX,
+        FEE_POOL_ROOT,
+        TIME_POOL_ROOT,
+        POOL_HASH_ARRAY,
         STATE_HASH_ARRAY,
         STATE_ARRAY,
     };
@@ -253,6 +259,9 @@ namespace blockchain {
         // check if a chain is empty, true if has no info, false otherwise
         bool is_empty_chain(const aux::bytes &chain_id);
 
+        // check if tx is in pool
+        bool is_transaction_in_pool(const aux::bytes &chain_id, const sha1_hash &txid);
+
         // check if a block immutable certainly
 //        bool is_block_immutable_certainly(const aux::bytes &chain_id, const block &blk);
 
@@ -312,7 +321,7 @@ namespace blockchain {
         void publish(const std::string& salt, const entry& data);
 
         // key length < 20 bytes
-        void subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string& salt);
+        void subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string& salt, GET_ITEM_TYPE type);
 
         // make a salt on mutable channel
 //        static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
@@ -340,16 +349,42 @@ namespace blockchain {
 //        void add_gossip_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
         // request signal from a given peer
-        void get_gossip_peers(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void get_gossip_peers(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // request signal from a given peer
-        void get_voting_block(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void get_voting_block(const aux::bytes &chain_id, const dht::public_key& peer);
 
-        void put_voting_block(const aux::bytes &chain_id, const block &blk);
+//        void put_voting_block(const aux::bytes &chain_id, const block &blk);
+
+        void get_head_block_hash(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
+
+        void get_fee_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void put_fee_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
+
+        void get_time_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void put_time_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
 
         void get_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
         void put_block(const aux::bytes &chain_id, const block &blk);
+
+        void get_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+
+        void put_transaction(const aux::bytes &chain_id, const transaction &tx);
+
+        void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+
+        void put_state_array(const aux::bytes &chain_id, const state_array &stateArray);
+
+        void get_pool_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+
+        void get_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+
+        void put_hash_array(const aux::bytes &chain_id, const hash_array &hashArray);
 
         // immutable data callback
 //        void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);
@@ -364,7 +399,7 @@ namespace blockchain {
 //        void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
         // mutable data callback
-        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool);
+        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool, GET_ITEM_TYPE type);
 
         // get mutable item from dht
 //        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);

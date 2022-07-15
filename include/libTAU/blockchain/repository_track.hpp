@@ -45,6 +45,8 @@ namespace libTAU::blockchain {
 
         state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
+        bool is_state_array_in_db(const aux::bytes &chain_id, const sha1_hash &hash) override;
+
         bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) override;
 
         bool delete_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
