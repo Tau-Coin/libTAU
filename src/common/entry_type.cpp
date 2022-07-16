@@ -10,18 +10,18 @@ see LICENSE file.
 
 namespace libTAU::common {
 
-    protocol_entry::protocol_entry(const entry &e) {
+    signal_entry::signal_entry(const entry &e) {
         // protocol id
-//        if (auto* i = const_cast<entry *>(e.find_key(protocol_type)))
-//        {
-//            m_pid = static_cast<protocol_id>(i->integer());
-//        }
+        if (auto* i = const_cast<entry *>(e.find_key(protocol_type)))
+        {
+            m_pid = static_cast<signal_id>(i->integer());
+        }
 
         // data type id
-        if (auto* i = const_cast<entry *>(e.find_key(entry_type)))
-        {
-            m_data_type_id = i->integer();
-        }
+//        if (auto* i = const_cast<entry *>(e.find_key(entry_type)))
+//        {
+//            m_data_type_id = i->integer();
+//        }
 
         // short chain id
         if (auto* i = const_cast<entry *>(e.find_key(entry_short_chain_id)))
@@ -31,30 +31,30 @@ namespace libTAU::common {
         }
     }
 
-    entry protocol_entry::get_entry() {
+    entry signal_entry::get_entry() {
         entry e(entry::dictionary_t);
 
         // protocol id
-//        e[protocol_type] = entry(m_pid);
+        e[protocol_type] = entry(m_pid);
 
         // data type id
-        e[entry_type] = entry(m_data_type_id);
+//        e[entry_type] = entry(m_data_type_id);
 
-//        if (m_pid == protocol_gossip) {
-            // short chain id
-            if (m_short_chain_id.size() > salt_short_chain_id_length) {
+        // short chain id
+        if (!m_short_chain_id.empty()) {
+            if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
                 e[entry_short_chain_id] = entry(
-                        std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + salt_short_chain_id_length));
+                        std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
             } else {
                 e[entry_short_chain_id] = entry(
                         std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
             }
-//        }
+        }
 
         return e;
     }
 
-    std::string protocol_entry::get_encode() {
+    std::string signal_entry::get_encode() {
         std::string encode;
         auto e = get_entry();
         bencode(std::back_inserter(encode), e);

@@ -301,6 +301,14 @@ namespace libTAU::blockchain {
     bool blockchain::start_chain(const aux::bytes &chain_id) {
         log(LOG_INFO, "INFO: start chain[%s]", aux::toHex(chain_id).c_str());
 
+        aux::bytes short_chain_id;
+        if (chain_id.size() > short_chain_id_length) {
+            short_chain_id.insert(short_chain_id.end(), chain_id.begin(), chain_id.begin() + short_chain_id_length);
+        } else {
+            short_chain_id = chain_id;
+        }
+        m_short_chain_id_table[short_chain_id] = chain_id;
+
         peer_preparation(chain_id);
 
         // create tx pool
@@ -1969,11 +1977,11 @@ namespace libTAU::blockchain {
         return libTAU::sha1_hash();
     }
 
-    std::string blockchain::make_salt(const aux::bytes &chain_id, std::int64_t data_type_id) {
-        common::protocol_entry protocolEntry(chain_id, data_type_id);
-        sha1_hash hash = hasher(protocolEntry.get_encode()).final();
-        return hash.to_string();
-    }
+//    std::string blockchain::make_salt(const aux::bytes &chain_id, std::int64_t data_type_id) {
+//        common::protocol_entry protocolEntry(chain_id, data_type_id);
+//        sha1_hash hash = hasher(protocolEntry.get_encode()).final();
+//        return hash.to_string();
+//    }
 
     std::string blockchain::make_salt(const sha1_hash &block_hash) {
         return block_hash.to_string();
@@ -2155,6 +2163,44 @@ namespace libTAU::blockchain {
 //            publish(salt, votingBlockCacheEntry.get_entry());
 //        }
 //    }
+
+    void blockchain::send_online_signal(const aux::bytes &chain_id) {
+        common::signal_entry signalEntry(common::ONLINE, chain_id);
+        auto const& acl = m_access_list[chain_id];
+        for (auto const& item: acl) {
+            send_to(item.first, signalEntry.get_entry());
+        }
+    }
+
+    void blockchain::send_new_head_block_signal(const bytes &chain_id) {
+        common::signal_entry signalEntry(common::NEW_HEAD_BLOCK, chain_id);
+        auto const& acl = m_access_list[chain_id];
+        for (auto const& item: acl) {
+            send_to(item.first, signalEntry.get_entry());
+        }
+    }
+
+    void blockchain::send_new_tx_signal(const bytes &chain_id) {
+        common::signal_entry signalEntry(common::NEW_TX, chain_id);
+        auto const& acl = m_access_list[chain_id];
+        for (auto const& item: acl) {
+            send_to(item.first, signalEntry.get_entry());
+        }
+    }
+
+    void blockchain::put_head_block(const bytes &chain_id, const block &blk) {
+        if (!blk.empty()) {
+            if (blk.block_number() + 1 % CHAIN_EPOCH_BLOCK_SIZE ==0) {
+                put_block(chain_id, blk);
+                put_head_block_hash(chain_id, blk.sha1());
+                // TODO:signal
+            } else {
+                put_block(chain_id, blk);
+                // TODO:put all state
+                put_head_block_hash(chain_id, blk.sha1());
+            }
+        }
+    }
 
     void blockchain::get_head_block_hash(const bytes &chain_id, const dht::public_key &peer) {
         // salt is x pubkey when request signal
@@ -3055,6 +3101,37 @@ namespace libTAU::blockchain {
         auto now = get_total_milliseconds();
 
         try {
+            common::signal_entry signalEntry(payload);
+
+            auto &chain_id = m_short_chain_id_table[signalEntry.m_short_chain_id];
+
+            {
+                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
+                if (it == m_chains.end()) {
+                    log(LOG_INFO, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                    return;
+                }
+            }
+
+            switch (signalEntry.m_pid) {
+                case common::ONLINE: {
+                    //update time
+                    break;
+                }
+                case common::NEW_HEAD_BLOCK: {
+                    get_head_block_hash(chain_id, peer);
+                    break;
+                }
+                case common::NEW_TX: {
+                    get_fee_pool_root(chain_id, peer);
+                    break;
+                }
+                default: {
+                }
+            }
+
+
+
             // data type id
             if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type)))
             {

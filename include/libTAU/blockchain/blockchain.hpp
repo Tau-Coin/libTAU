@@ -313,7 +313,7 @@ namespace blockchain {
         sha1_hash calculate_state_root(const aux::bytes &chain_id);
 
         // make a salt on mutable channel
-        static std::string make_salt(const aux::bytes &chain_id, std::int64_t data_type_id);
+//        static std::string make_salt(const aux::bytes &chain_id, std::int64_t data_type_id);
 
         // make a salt on mutable channel
         static std::string make_salt(const sha1_hash &block_hash);
@@ -355,6 +355,14 @@ namespace blockchain {
 //        void get_voting_block(const aux::bytes &chain_id, const dht::public_key& peer);
 
 //        void put_voting_block(const aux::bytes &chain_id, const block &blk);
+
+        void send_online_signal(const aux::bytes &chain_id);
+
+        void send_new_head_block_signal(const aux::bytes &chain_id);
+
+        void send_new_tx_signal(const aux::bytes &chain_id);
+
+        void put_head_block(const aux::bytes &chain_id, const block &blk);
 
         void get_head_block_hash(const aux::bytes &chain_id, const dht::public_key& peer);
 

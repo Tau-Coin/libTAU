@@ -15,6 +15,7 @@ see LICENSE file.
 #include "libTAU/aux_/export.hpp"
 #include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/vote.hpp"
 #include "libTAU/communication/message.hpp"
 #include "libTAU/entry.hpp"
@@ -23,7 +24,6 @@ namespace libTAU::common {
 
     // salt length (first 12 bytes of public key)
     constexpr int salt_pubkey_length = 12;
-    constexpr int salt_short_chain_id_length = 8;
 
     // TODO:: tlv
     const std::string protocol_type = "p";
@@ -34,35 +34,36 @@ namespace libTAU::common {
     const std::string entry_time = "m";
     const std::string entry_levenshtein_array = "l";
 
-//    enum protocol_id {
-//        protocol_put,
-//        protocol_gossip,
-//    };
+    enum signal_id {
+        ONLINE,
+        NEW_HEAD_BLOCK,
+        NEW_TX,
+    };
 
-    struct TORRENT_EXPORT protocol_entry {
+    struct TORRENT_EXPORT signal_entry {
         // @param Construct with entry
-        explicit protocol_entry(const entry& e);
+        explicit signal_entry(const entry& e);
 
         // @param Construct with bencode
-        explicit protocol_entry(std::string encode): protocol_entry(bdecode(encode)) {}
+        explicit signal_entry(std::string encode): signal_entry(bdecode(encode)) {}
 
-//        explicit protocol_entry(int64_t mDataTypeId) : m_data_type_id(mDataTypeId) { m_pid = protocol_put; }
+        explicit signal_entry(signal_id mPid) : m_pid(mPid) {}
 
-        protocol_entry(aux::bytes mShortChainId, int64_t mDataTypeId) : m_short_chain_id(std::move(mShortChainId)),
-                                                                               m_data_type_id(mDataTypeId) {}
+        signal_entry(signal_id mPid, aux::bytes mShortChainId) : m_pid(mPid),
+                                                                 m_short_chain_id(std::move(mShortChainId)) {}
 
         entry get_entry();
 
         std::string get_encode();
 
         // protocol id
-//        protocol_id m_pid;
+        signal_id m_pid;
 
         // data type id
         aux::bytes m_short_chain_id;
 
-        // data type id
-        std::int64_t m_data_type_id{};
+//        // data type id
+//        std::int64_t m_data_type_id{};
     };
 
     struct TORRENT_EXPORT gossip_cache_peers_entry {

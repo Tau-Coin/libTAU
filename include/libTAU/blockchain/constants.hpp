@@ -44,6 +44,8 @@ namespace libTAU::blockchain {
 
     constexpr int MAX_ACCOUNT_SIZE = 1000;
 
+    constexpr int short_chain_id_length = 4;
+
     // block time
     constexpr int DEFAULT_BLOCK_TIME = 300;
     constexpr int DEFAULT_MIN_BLOCK_TIME = 60;
