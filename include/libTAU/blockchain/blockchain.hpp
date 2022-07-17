@@ -316,7 +316,7 @@ namespace blockchain {
 //        static std::string make_salt(const aux::bytes &chain_id, std::int64_t data_type_id);
 
         // make a salt on mutable channel
-        static std::string make_salt(const sha1_hash &block_hash);
+        static std::string make_salt(const sha1_hash &hash);
 
         void publish(const std::string& salt, const entry& data);
 
@@ -361,6 +361,8 @@ namespace blockchain {
         void send_new_head_block_signal(const aux::bytes &chain_id);
 
         void send_new_tx_signal(const aux::bytes &chain_id);
+
+        void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void put_head_block(const aux::bytes &chain_id, const block &blk);
 
@@ -480,15 +482,10 @@ namespace blockchain {
 
         std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
-        std::map<aux::bytes, std::int64_t> m_last_balance_alert_time;
-
         // Forwarding list
         std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_access_list;
 
         std::map<aux::bytes, std::map<dht::public_key, ban_info>> m_ban_list;
-
-        // block cache todo:100000?
-//        std::map<aux::bytes, std::map<sha256_hash, block>> m_blocks;
 
         // head blocks
         std::map<aux::bytes, block> m_head_blocks;

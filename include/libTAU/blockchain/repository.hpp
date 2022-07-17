@@ -107,7 +107,7 @@ namespace libTAU::blockchain {
 
         virtual std::vector<account> get_all_effective_state(const aux::bytes &chain_id) = 0;
 
-        virtual dht::public_key get_peer_randomly(const aux::bytes &chain_id) = 0;
+        virtual dht::public_key get_peer_from_state_db_randomly(const aux::bytes &chain_id) = 0;
 
         // block db api
         virtual bool create_block_db(const aux::bytes &chain_id) = 0;
@@ -132,16 +132,16 @@ namespace libTAU::blockchain {
 
         virtual bool delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
 
-        // bootstrap db
-        virtual bool create_bootstrap_db(const aux::bytes &chain_id) = 0;
+        // peer db
+        virtual bool create_peer_db(const aux::bytes &chain_id) = 0;
 
-        virtual bool delete_bootstrap_db(const aux::bytes &chain_id) = 0;
+        virtual bool delete_peer_db(const aux::bytes &chain_id) = 0;
 
-        virtual std::set<dht::public_key> get_all_bootstraps(const aux::bytes &chain_id) = 0;
+        virtual dht::public_key get_peer_from_peer_db_randomly(const aux::bytes &chain_id) = 0;
 
-        virtual bool delete_bootstrap_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        virtual bool delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
-        virtual bool add_bootstrap(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+        virtual bool add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
 
 

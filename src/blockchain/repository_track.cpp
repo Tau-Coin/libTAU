@@ -98,7 +98,7 @@ namespace libTAU::blockchain {
         return std::vector<account>();
     }
 
-    dht::public_key repository_track::get_peer_randomly(const aux::bytes &chain_id) {
+    dht::public_key repository_track::get_peer_from_state_db_randomly(const aux::bytes &chain_id) {
         return dht::public_key();
     }
 
@@ -138,23 +138,23 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool repository_track::create_bootstrap_db(const aux::bytes &chain_id) {
+    bool repository_track::create_peer_db(const aux::bytes &chain_id) {
         return false;
     }
 
-    bool repository_track::delete_bootstrap_db(const aux::bytes &chain_id) {
+    bool repository_track::delete_peer_db(const aux::bytes &chain_id) {
         return false;
     }
 
-    std::set<dht::public_key> repository_track::get_all_bootstraps(const aux::bytes &chain_id) {
-        return std::set<dht::public_key>();
+    dht::public_key repository_track::get_peer_from_peer_db_randomly(const aux::bytes &chain_id) {
+        return dht::public_key();
     }
 
-    bool repository_track::delete_bootstrap_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+    bool repository_track::delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         return false;
     }
 
-    bool repository_track::add_bootstrap(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+    bool repository_track::add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         return false;
     }
 
