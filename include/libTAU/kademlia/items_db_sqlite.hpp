@@ -13,8 +13,37 @@ see LICENSE file.
 #include <libTAU/kademlia/dht_observer.hpp>
 #include <libTAU/kademlia/dht_storage.hpp>
 
+#include "libTAU/time.hpp"
+#include "libTAU/aux_/time.hpp" // for time_now
+
 namespace libTAU {
 namespace dht {
+
+	static const std::string create_items_table =
+		"CREATE TABLE IF NOT EXISTS mutable_items ("
+			 "target VARCHAR(32) NOT NULL PRIMARY KEY,"
+			 "ts INT,"
+			 "item VARCHAR(1000) NOT NULL);";
+
+	static const std::string create_ts_index =
+		"CREATE INDEX IF NOT EXISTS index_ts ON mutable_items (ts);";
+
+	static const std::string select_ts_by_target =
+		"SELECT ts FROM mutable_items WHERE target=?";
+
+	static const std::string select_item_by_target =
+		"SELECT * FROM mutable_items WHERE target=?";
+
+	static const std::string insert_or_replace_items =
+		"INSERT OR REPLACE INTO mutable_items (target, ts, item) VALUES (?, ?, ?);";
+
+	static const std::string items_count =
+		"SELECT COUNT(target) FROM mutable_items;";
+
+	static const std::string delete_items =
+		"DELETE FROM mutable_items "
+			 "WHERE target IN "
+			 "(SELECT target FROM mutable_items ORDER BY ts ASC LIMIT 0, ?);";
 
 	struct TORRENT_EXPORT items_db_sqlite : public dht_storage_interface
 	{
@@ -84,13 +113,31 @@ namespace dht {
 
 		dht_storage_counters counters() const override { return dht_storage_counters{}; };
 
+		virtual void close() override;
+
 	private:
 
 		void init();
+		void prepare_statements();
+
+		void sql_error(int err_code, const char* err_str) const;
+		void sql_log(int code, const char* msg) const;
+		void sql_time_cost(int const milliseconds, const char* msg) const;
 
 		settings_interface const& m_settings;
 		dht_observer* m_observer;
 
+		// sql statements
+		sqlite3_stmt* m_select_ts_by_target_stmt = NULL;
+		sqlite3_stmt* m_select_item_by_target_stmt = NULL;
+		sqlite3_stmt* m_insert_or_replace_items_stmt = NULL;
+		sqlite3_stmt* m_items_count_stmt = NULL;
+		sqlite3_stmt* m_delete_items_stmt = NULL;
+
+		// put item cache
+		std::string m_mutable_item;
+
+		time_point m_last_refresh;
 	};
 } // namespace dht
 } // namespace libTAU

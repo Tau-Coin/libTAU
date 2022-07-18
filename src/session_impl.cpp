@@ -3113,6 +3113,9 @@ namespace {
 
 		// TODO: refactor, move the storage to dht_tracker
 		m_dht_storage = m_dht_storage_constructor(m_settings);
+		m_items_db = std::make_shared<dht::items_db_sqlite>(
+			m_settings, static_cast<dht::dht_observer*>(this));
+		m_dht_storage->set_backend(m_items_db);
 		m_dht = std::make_shared<dht::dht_tracker>(
 			static_cast<dht::dht_observer*>(this)
 			, m_io_context
@@ -3200,7 +3203,9 @@ namespace {
 			m_dht.reset();
 		}
 
+		if (m_dht_storage != nullptr) m_dht_storage->close();
 		m_dht_storage.reset();
+		m_items_db.reset();
 	}
 
 	void session_impl::set_loop_time_interval(int milliseconds)
@@ -3656,6 +3661,35 @@ namespace {
 			, std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
 	}
 
+	void session_impl::tau_get_mutable_callback(dht::item const& i, bool auth)
+	{
+#ifndef TORRENT_DISABLE_LOGGING
+		if (auth && should_log())
+		{
+			session_log("get done, data:%s", i.value().to_string(true).c_str());
+		}
+#endif
+	}
+
+	void session_impl::tau_put_mutable_callback(dht::item const& i
+		, int num, std::int8_t alpha, std::int8_t invoke_window
+		, std::int8_t invoke_limit, std::string salt)
+	{
+#ifndef TORRENT_DISABLE_LOGGING
+		if (should_log())
+		{
+			session_log("put done, number:%d, data:%s"
+				, num, i.value().to_string(true).c_str());
+		}
+#endif
+
+		if (!m_dht) return;
+
+		m_dht->get_item(m_account_manager->pub_key()
+			, std::bind(&session_impl::tau_get_mutable_callback
+			, this, _1, _2)
+			, alpha, invoke_window, invoke_limit, salt);
+	}
 
 	void session_impl::send(dht::public_key const& to
 		, entry const& payload
@@ -3665,8 +3699,20 @@ namespace {
 		, std::int8_t hit_limit)
 	{
 		if (!m_dht) return;
-		m_dht->send(to, payload, alpha, beta, invoke_limit
-			, hit_limit, std::bind(&send_callback, _1, _2));
+
+		std::string mutable_item;
+		bencode(std::back_inserter(mutable_item), payload);
+		hasher h(mutable_item);
+		sha1_hash const hash = h.final();
+		std::string salt = std::string(hash.data(), 20);
+
+		//m_dht->send(to, payload, alpha, beta, invoke_limit
+		//	, hit_limit, std::bind(&send_callback, _1, _2));
+		m_dht->put_item(m_account_manager->pub_key()
+			, payload
+			, std::bind(&session_impl::tau_put_mutable_callback
+				, this, _1, _2, alpha, beta, invoke_limit, salt)
+			, alpha, beta, invoke_limit, salt);
 	}
 
 	void session_impl::dht_live_nodes(sha256_hash const& nid)

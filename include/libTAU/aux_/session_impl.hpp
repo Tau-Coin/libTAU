@@ -61,6 +61,7 @@ see LICENSE file.
 #include "libTAU/kademlia/dht_observer.hpp"
 #include "libTAU/kademlia/dht_state.hpp"
 #include "libTAU/kademlia/announce_flags.hpp"
+#include "libTAU/kademlia/items_db_sqlite.hpp"
 #include "libTAU/kademlia/types.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
 
@@ -462,7 +463,13 @@ namespace aux {
 				, std::function<void(entry&, std::array<char,64>&
 					, std::int64_t&, std::string const&)> cb
 				, std::string salt = std::string());
-            
+
+			void tau_get_mutable_callback(dht::item const& i, bool);
+
+			void tau_put_mutable_callback(dht::item const& i
+				, int num, std::int8_t alpha, std::int8_t invoke_window
+				, std::int8_t invoke_limit, std::string salt);
+
             void send(dht::public_key const& to , entry const& payload
                 , std::int8_t alpha , std::int8_t beta
                 , std::int8_t invoke_limit, std::int8_t hit_limit);
@@ -889,6 +896,7 @@ namespace aux {
 			std::string m_decrypted_ucd_udp_packet;
 
 			std::unique_ptr<dht::dht_storage_interface> m_dht_storage;
+			std::shared_ptr<dht::items_db_sqlite> m_items_db;
 			std::shared_ptr<dht::dht_tracker> m_dht;
 			dht::dht_storage_constructor_type m_dht_storage_constructor
 				= dht::dht_default_storage_constructor;

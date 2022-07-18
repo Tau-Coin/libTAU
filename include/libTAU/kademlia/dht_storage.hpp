@@ -173,6 +173,9 @@ namespace dht {
 		// storage cleanup.
 		virtual void tick() = 0;
 
+		// close storage
+		virtual void close() = 0;
+
 		// return stats counters for the store
 		virtual dht_storage_counters counters() const = 0;
 
