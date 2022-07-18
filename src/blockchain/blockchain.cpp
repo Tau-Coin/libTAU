@@ -443,25 +443,25 @@ namespace libTAU::blockchain {
 //
 //                    item.second.m_gossip_done = true;
 //                }
-                if (!item.second.m_fee_tx_pool_sync_done) {
-                    common::fee_tx_pool_entry feeTxPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_fee());
-                    send_to(item.first, feeTxPoolEntry.get_entry());
-
-                    item.second.m_fee_tx_pool_sync_done = true;
-                }
-                if (!item.second.m_time_tx_pool_sync_done) {
-                    common::time_tx_pool_entry txPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp());
-                    send_to(item.first, txPoolEntry.get_entry());
-
-                    item.second.m_time_tx_pool_sync_done = true;
-                }
+//                if (!item.second.m_fee_tx_pool_sync_done) {
+//                    common::fee_tx_pool_entry feeTxPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_fee());
+//                    send_to(item.first, feeTxPoolEntry.get_entry());
+//
+//                    item.second.m_fee_tx_pool_sync_done = true;
+//                }
+//                if (!item.second.m_time_tx_pool_sync_done) {
+//                    common::time_tx_pool_entry txPoolEntry(chain_id, m_tx_pools[chain_id].get_hash_prefix_array_by_timestamp());
+//                    send_to(item.first, txPoolEntry.get_entry());
+//
+//                    item.second.m_time_tx_pool_sync_done = true;
+//                }
                 // ping every minute
-                if (now > item.second.m_last_ping_time + 60 * 1000) {
-                    common::ping_entry pingEntry(chain_id);
-                    send_to(item.first, pingEntry.get_entry());
-
-                    item.second.m_last_ping_time = now;
-                }
+//                if (now > item.second.m_last_ping_time + 60 * 1000) {
+//                    common::ping_entry pingEntry(chain_id);
+//                    send_to(item.first, pingEntry.get_entry());
+//
+//                    item.second.m_last_ping_time = now;
+//                }
             }
         }
     }
@@ -596,175 +596,158 @@ namespace libTAU::blockchain {
                 // current time
                 auto now = get_total_milliseconds();
 
-                if (m_chain_status[chain_id] == GET_GOSSIP_PEERS) {
-                    std::set<dht::public_key> peers;
-                    for (int i = 0; i < 30; i++) {
-                        auto peer = m_repository->get_peer_from_state_db_randomly(chain_id);
-                        peers.insert(peer);
-                    }
+                // try to mine on the best chain
+                if (m_counters[counters::dht_nodes] > 0) {
+                    if (!is_empty_chain(chain_id)) {
+                        dht::secret_key *sk = m_ses.serkey();
+                        dht::public_key *pk = m_ses.pubkey();
 
-                    peers.erase(*m_ses.pubkey());
+                        const auto &head_block = m_head_blocks[chain_id];
 
-                    for (auto const &peer: peers) {
-                        // get gossip peers
-//                        get_gossip_peers(chain_id, peer);
-                    }
-
-                    m_chain_status[chain_id] = MINE;
-
-                    refresh_time = 3000;
-                }
-
-                if (m_chain_status[chain_id] == MINE) {
-                    // try to mine on the best chain
-                    if (m_counters[counters::dht_nodes] > 0) {
-                        if (!is_empty_chain(chain_id)) {
-                            dht::secret_key *sk = m_ses.serkey();
-                            dht::public_key *pk = m_ses.pubkey();
-
-                            const auto &head_block = m_head_blocks[chain_id];
-
-                            if (head_block.block_number() + 1 % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                                // mine genesis block
-                                block ancestor;
-                                auto previous_hash = head_block.previous_block_hash();
-                                if (head_block.block_number() % CHAIN_EPOCH_BLOCK_SIZE > 3) {
-                                    int i = 3;
-                                    while (i > 0) {
-                                        ancestor = m_repository->get_block_by_hash(chain_id, previous_hash);
-                                        previous_hash = ancestor.previous_block_hash();
-                                        i--;
-                                    }
-                                }
-
-                                auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
-                                auto act = m_repository->get_account(chain_id, *pk);
-                                log(LOG_INFO, "INFO: chain id[%s] account[%s]",
-                                    aux::toHex(chain_id).c_str(), act.to_string().c_str());
-                                auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
-                                auto hit = consensus::calculate_random_hit(genSig);
-                                auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit,
-                                                                                                                    base_target,
-                                                                                                                    act.nonce()));
-                                log(LOG_INFO,
-                                    "INFO: chain id[%s] generation signature[%s], base target[%" PRIu64 "], hit[%" PRIu64 "]",
-                                    aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target,
-                                    hit);
-
-                                auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(
-                                        head_block.cumulative_difficulty(), base_target);
-
-                                std::int64_t current_time = get_total_milliseconds() / 1000; // second
-                                if (current_time >= head_block.timestamp() + interval) {
-                                    transaction tx = m_tx_pools[chain_id].get_best_fee_transaction();
-
-                                    if (tx.empty()) {
-                                        tx = m_tx_pools[chain_id].get_latest_note_transaction();
-                                    }
-
-                                    auto ep = m_ses.external_udp_endpoint();
-                                    // mine block with current time instead of (head_block.timestamp() + interval)
-                                    block b;
-                                    if (ep.port() != 0) {
-                                        b = block(chain_id, block_version::block_version1, current_time,
-                                                  head_block.block_number() + 1, head_block.sha1(), base_target,
-                                                  cumulative_difficulty, genSig, calculate_state_root(chain_id), tx, *pk, ep);
-                                    } else {
-                                        b = block(chain_id, block_version::block_version1, current_time,
-                                                  head_block.block_number() + 1, head_block.sha1(), base_target,
-                                                  cumulative_difficulty, genSig, calculate_state_root(chain_id), tx, *pk);
-                                    }
-
-                                    b.sign(*pk, *sk);
-
-                                    // process mined block
-                                    log(LOG_INFO, "INFO chain[%s] process mined block[%s]",
-                                        aux::toHex(chain_id).c_str(), b.to_string().c_str());
-
-                                    process_block(chain_id, b);
-
-                                    refresh_time = 100;
-                                } else {
-                                    log(LOG_INFO, "INFO: chain id[%s] left time[%" PRId64 "]s",
-                                        aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - current_time);
-                                    refresh_time = (head_block.timestamp() + interval - current_time) * 1000;
-                                }
-                            } else {
-                                block ancestor;
-                                auto previous_hash = head_block.previous_block_hash();
-                                if (head_block.block_number() % CHAIN_EPOCH_BLOCK_SIZE > 3) {
-                                    int i = 3;
-                                    while (i > 0) {
-                                        ancestor = m_repository->get_block_by_hash(chain_id, previous_hash);
-                                        previous_hash = ancestor.previous_block_hash();
-                                        i--;
-                                    }
-                                }
-
-                                auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
-                                auto act = m_repository->get_account(chain_id, *pk);
-                                log(LOG_INFO, "INFO: chain id[%s] account[%s]",
-                                    aux::toHex(chain_id).c_str(), act.to_string().c_str());
-                                auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
-                                auto hit = consensus::calculate_random_hit(genSig);
-                                auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit,
-                                                                                                                    base_target,
-                                                                                                                    act.nonce()));
-                                log(LOG_INFO,
-                                    "INFO: chain id[%s] generation signature[%s], base target[%" PRIu64 "], hit[%" PRIu64 "]",
-                                    aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target,
-                                    hit);
-
-                                auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(
-                                        head_block.cumulative_difficulty(), base_target);
-
-                                std::int64_t current_time = get_total_milliseconds() / 1000; // second
-                                if (current_time >= head_block.timestamp() + interval) {
-                                    transaction tx = m_tx_pools[chain_id].get_best_fee_transaction();
-
-                                    if (tx.empty()) {
-                                        tx = m_tx_pools[chain_id].get_latest_note_transaction();
-                                    }
-
-                                    auto ep = m_ses.external_udp_endpoint();
-                                    // mine block with current time instead of (head_block.timestamp() + interval)
-                                    block b;
-                                    if (ep.port() != 0) {
-                                        b = block(chain_id, block_version::block_version1, current_time,
-                                                  head_block.block_number() + 1, head_block.sha1(), base_target,
-                                                  cumulative_difficulty, genSig, head_block.state_root(), tx, *pk, ep);
-                                    } else {
-                                        b = block(chain_id, block_version::block_version1, current_time,
-                                                  head_block.block_number() + 1, head_block.sha1(), base_target,
-                                                  cumulative_difficulty, genSig, head_block.state_root(), tx, *pk);
-                                    }
-
-                                    b.sign(*pk, *sk);
-
-                                    // process mined block
-                                    log(LOG_INFO, "INFO chain[%s] process mined block[%s]",
-                                        aux::toHex(chain_id).c_str(), b.to_string().c_str());
-
-                                    process_block(chain_id, b);
-
-                                    refresh_time = 100;
-                                } else {
-                                    log(LOG_INFO, "INFO: chain id[%s] left time[%" PRId64 "]s",
-                                        aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - current_time);
-                                    refresh_time = (head_block.timestamp() + interval - current_time) * 1000;
+                        if (head_block.block_number() + 1 % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                            // mine genesis block
+                            block ancestor;
+                            auto previous_hash = head_block.previous_block_hash();
+                            if (head_block.block_number() % CHAIN_EPOCH_BLOCK_SIZE > 3) {
+                                int i = 3;
+                                while (i > 0) {
+                                    ancestor = m_repository->get_block_by_hash(chain_id, previous_hash);
+                                    previous_hash = ancestor.previous_block_hash();
+                                    i--;
                                 }
                             }
-                        } else {
-                            // continue to vote if chain is empty
-                            reset_chain_status(chain_id);
 
-                            log(LOG_INFO, "Chain[%s] re-vote after 15s", aux::toHex(chain_id).c_str());
-                            refresh_time = 15000;
+                            auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
+                            auto act = m_repository->get_account(chain_id, *pk);
+                            log(LOG_INFO, "INFO: chain id[%s] account[%s]",
+                                aux::toHex(chain_id).c_str(), act.to_string().c_str());
+                            auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
+                            auto hit = consensus::calculate_random_hit(genSig);
+                            auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit,
+                                                                                                                base_target,
+                                                                                                                act.nonce()));
+                            log(LOG_INFO,
+                                "INFO: chain id[%s] generation signature[%s], base target[%" PRIu64 "], hit[%" PRIu64 "]",
+                                aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target,
+                                hit);
+
+                            auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(
+                                    head_block.cumulative_difficulty(), base_target);
+
+                            std::int64_t current_time = get_total_milliseconds() / 1000; // second
+                            if (current_time >= head_block.timestamp() + interval) {
+                                transaction tx = m_tx_pools[chain_id].get_best_fee_transaction();
+
+                                if (tx.empty()) {
+                                    tx = m_tx_pools[chain_id].get_latest_note_transaction();
+                                }
+
+                                auto ep = m_ses.external_udp_endpoint();
+                                // mine block with current time instead of (head_block.timestamp() + interval)
+                                block b;
+                                if (ep.port() != 0) {
+                                    b = block(chain_id, block_version::block_version1, current_time,
+                                              head_block.block_number() + 1, head_block.sha1(), base_target,
+                                              cumulative_difficulty, genSig, calculate_state_root(chain_id), tx, *pk, ep);
+                                } else {
+                                    b = block(chain_id, block_version::block_version1, current_time,
+                                              head_block.block_number() + 1, head_block.sha1(), base_target,
+                                              cumulative_difficulty, genSig, calculate_state_root(chain_id), tx, *pk);
+                                }
+
+                                b.sign(*pk, *sk);
+
+                                // process mined block
+                                log(LOG_INFO, "INFO chain[%s] process mined block[%s]",
+                                    aux::toHex(chain_id).c_str(), b.to_string().c_str());
+
+                                process_block(chain_id, b);
+
+                                refresh_time = 100;
+                            } else {
+                                log(LOG_INFO, "INFO: chain id[%s] left time[%" PRId64 "]s",
+                                    aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - current_time);
+                                refresh_time = (head_block.timestamp() + interval - current_time) * 1000;
+                            }
+                        } else {
+                            block ancestor;
+                            auto previous_hash = head_block.previous_block_hash();
+                            if (head_block.block_number() % CHAIN_EPOCH_BLOCK_SIZE > 3) {
+                                int i = 3;
+                                while (i > 0) {
+                                    ancestor = m_repository->get_block_by_hash(chain_id, previous_hash);
+                                    previous_hash = ancestor.previous_block_hash();
+                                    i--;
+                                }
+                            }
+
+                            auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
+                            auto act = m_repository->get_account(chain_id, *pk);
+                            log(LOG_INFO, "INFO: chain id[%s] account[%s]",
+                                aux::toHex(chain_id).c_str(), act.to_string().c_str());
+                            auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
+                            auto hit = consensus::calculate_random_hit(genSig);
+                            auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit,
+                                                                                                                base_target,
+                                                                                                                act.nonce()));
+                            log(LOG_INFO,
+                                "INFO: chain id[%s] generation signature[%s], base target[%" PRIu64 "], hit[%" PRIu64 "]",
+                                aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target,
+                                hit);
+
+                            auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(
+                                    head_block.cumulative_difficulty(), base_target);
+
+                            std::int64_t current_time = get_total_milliseconds() / 1000; // second
+                            if (current_time >= head_block.timestamp() + interval) {
+                                transaction tx = m_tx_pools[chain_id].get_best_fee_transaction();
+
+                                if (tx.empty()) {
+                                    tx = m_tx_pools[chain_id].get_latest_note_transaction();
+                                }
+
+                                auto ep = m_ses.external_udp_endpoint();
+                                // mine block with current time instead of (head_block.timestamp() + interval)
+                                block b;
+                                if (ep.port() != 0) {
+                                    b = block(chain_id, block_version::block_version1, current_time,
+                                              head_block.block_number() + 1, head_block.sha1(), base_target,
+                                              cumulative_difficulty, genSig, head_block.state_root(), tx, *pk, ep);
+                                } else {
+                                    b = block(chain_id, block_version::block_version1, current_time,
+                                              head_block.block_number() + 1, head_block.sha1(), base_target,
+                                              cumulative_difficulty, genSig, head_block.state_root(), tx, *pk);
+                                }
+
+                                b.sign(*pk, *sk);
+
+                                // process mined block
+                                log(LOG_INFO, "INFO chain[%s] process mined block[%s]",
+                                    aux::toHex(chain_id).c_str(), b.to_string().c_str());
+
+                                process_block(chain_id, b);
+
+                                refresh_time = 100;
+                            } else {
+                                log(LOG_INFO, "INFO: chain id[%s] left time[%" PRId64 "]s",
+                                    aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - current_time);
+                                refresh_time = (head_block.timestamp() + interval - current_time) * 1000;
+                            }
                         }
                     } else {
-                        log(LOG_INFO, "Chain[%s] stop mining", aux::toHex(chain_id).c_str());
-                        refresh_time = 5000;
+                        // select peer randomly to get chain data
+                        auto peer = m_repository->get_peer_from_peer_db_randomly(chain_id);
+
+                        if (!peer.is_all_zeros()) {
+                            get_head_block_from_peer(chain_id, peer);
+                        }
+
+                        log(LOG_INFO, "Chain[%s] get head block for 15s", aux::toHex(chain_id).c_str());
+                        refresh_time = 15000;
                     }
+                } else {
+                    log(LOG_INFO, "Chain[%s] stop mining", aux::toHex(chain_id).c_str());
+                    refresh_time = 5000;
                 }
             } else {
                 log(LOG_INFO, "Block chain is paused.");
@@ -2191,6 +2174,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::get_head_block_from_peer(const bytes &chain_id, const dht::public_key &peer) {
+        log(LOG_INFO, "Chain[%s] get head block from peer[%s]", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
         get_head_block_hash(chain_id, peer);
     }
 
@@ -2199,12 +2183,32 @@ namespace libTAU::blockchain {
             if (blk.block_number() + 1 % CHAIN_EPOCH_BLOCK_SIZE ==0) {
                 put_block(chain_id, blk);
                 put_head_block_hash(chain_id, blk.sha1());
-                // TODO:signal
             } else {
                 put_block(chain_id, blk);
                 // TODO:put all state
                 put_head_block_hash(chain_id, blk.sha1());
             }
+
+            send_new_head_block_signal(chain_id);
+        }
+    }
+
+    void blockchain::get_all_state_from_peer(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+        get_state_hash_array(chain_id, peer, hash);
+    }
+
+    void blockchain::put_all_state(const bytes &chain_id) {
+        auto all_state_arrays = m_repository->get_all_state_arrays(chain_id);
+        std::vector<sha1_hash> all_hash;
+        for (auto const& states: all_state_arrays) {
+            put_state_array(chain_id, states);
+
+            all_hash.push_back(states.sha1());
+        }
+
+        if (!all_hash.empty()) {
+            state_hash_array hashArray(all_hash);
+            put_state_hash_array(chain_id, hashArray);
         }
     }
 
@@ -2358,7 +2362,7 @@ namespace libTAU::blockchain {
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::STATE_HASH_ARRAY);
     }
 
-    void blockchain::put_hash_array(const bytes &chain_id, const hash_array &hashArray) {
+    void blockchain::put_state_hash_array(const bytes &chain_id, const state_hash_array &hashArray) {
         if (!hashArray.empty()) {
             // salt is y pubkey when publish signal
             auto salt = make_salt(hashArray.sha1());
@@ -2485,7 +2489,7 @@ namespace libTAU::blockchain {
                         break;
                     }
                     case GET_ITEM_TYPE::POOL_HASH_ARRAY: {
-                        hash_array hashArray(i.value());
+                        state_hash_array hashArray(i.value());
                         log(LOG_INFO, "INFO: Got tx hash array[%s].", hashArray.to_string().c_str());
                         for (auto const& hash: hashArray.HashArray()) {
                             if (!is_transaction_in_pool(chain_id, hash)) {
@@ -2496,7 +2500,7 @@ namespace libTAU::blockchain {
                         break;
                     }
                     case GET_ITEM_TYPE::STATE_HASH_ARRAY: {
-                        hash_array hashArray(i.value());
+                        state_hash_array hashArray(i.value());
                         log(LOG_INFO, "INFO: Got state hash array[%s].", hashArray.to_string().c_str());
                         for (auto const& hash: hashArray.HashArray()) {
                             if (!m_repository->is_state_array_in_db(chain_id, hash)) {

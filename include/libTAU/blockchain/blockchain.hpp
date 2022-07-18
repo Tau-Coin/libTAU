@@ -23,7 +23,7 @@ see LICENSE file.
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
 #include "libTAU/blockchain/constants.hpp"
-#include "libTAU/blockchain/hash_array.hpp"
+#include "libTAU/blockchain/state_hash_array.hpp"
 #include "libTAU/blockchain/peer_info.hpp"
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/repository_impl.hpp"
@@ -366,6 +366,10 @@ namespace blockchain {
 
         void put_head_block(const aux::bytes &chain_id, const block &blk);
 
+        void get_all_state_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+
+        void put_all_state(const aux::bytes &chain_id);
+
         void get_head_block_hash(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
@@ -394,7 +398,7 @@ namespace blockchain {
 
         void get_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
-        void put_hash_array(const aux::bytes &chain_id, const hash_array &hashArray);
+        void put_state_hash_array(const aux::bytes &chain_id, const state_hash_array &hashArray);
 
         // immutable data callback
 //        void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);
@@ -486,6 +490,9 @@ namespace blockchain {
         std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_access_list;
 
         std::map<aux::bytes, std::map<dht::public_key, ban_info>> m_ban_list;
+
+        // last get time(chain id <--> (peer <--> (salt <-->last get time)))
+        std::map<aux::bytes, std::map<dht::public_key, std::map<std::string, std::int64_t>>> m_last_get_time;
 
         // head blocks
         std::map<aux::bytes, block> m_head_blocks;

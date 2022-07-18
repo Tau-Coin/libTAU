@@ -6,8 +6,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#ifndef LIBTAU_HASH_ARRAY_HPP
-#define LIBTAU_HASH_ARRAY_HPP
+#ifndef LIBTAU_STATE_HASH_ARRAY_HPP
+#define LIBTAU_STATE_HASH_ARRAY_HPP
 
 #include <utility>
 
@@ -21,15 +21,15 @@ see LICENSE file.
 
 namespace libTAU {
     namespace blockchain {
-        class hash_array {
+        class state_hash_array {
         public:
             // @param Construct with entry
-            explicit hash_array(const entry& e);
+            explicit state_hash_array(const entry& e);
 
             // @param Construct with bencode
-            explicit hash_array(std::string encode): hash_array(bdecode(encode)) {}
+            explicit state_hash_array(std::string encode): state_hash_array(bdecode(encode)) {}
 
-            explicit hash_array(std::vector<sha1_hash> mHashArray) : m_hash_array(std::move(mHashArray)) {
+            explicit state_hash_array(std::vector<sha1_hash> mHashArray) : m_hash_array(std::move(mHashArray)) {
                 auto encode = get_encode();
                 m_hash = hasher(encode).final();
             }
@@ -48,7 +48,7 @@ namespace libTAU {
             // @returns a pretty-printed string representation of block structure
             std::string to_string() const;
 
-            friend std::ostream &operator<<(std::ostream &os, const hash_array &hashArray);
+            friend std::ostream &operator<<(std::ostream &os, const state_hash_array &hashArray);
 
         private:
             // populate hash array from entry
@@ -64,4 +64,4 @@ namespace libTAU {
 }
 
 
-#endif //LIBTAU_HASH_ARRAY_HPP
+#endif //LIBTAU_STATE_HASH_ARRAY_HPP

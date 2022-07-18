@@ -62,10 +62,10 @@ namespace libTAU::blockchain {
 
         std::int64_t m_last_seen = 0;
 
-        std::int64_t m_last_ping_time = 0;
+//        std::int64_t m_last_ping_time = 0;
 
-        bool m_fee_tx_pool_sync_done = false;
-        bool m_time_tx_pool_sync_done = false;
+//        bool m_fee_tx_pool_sync_done = false;
+//        bool m_time_tx_pool_sync_done = false;
 
 //        bool m_sync_done = false;
 
