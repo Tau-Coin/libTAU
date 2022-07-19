@@ -13,6 +13,7 @@ see LICENSE file.
 #include <cstdint>
 
 #include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/state_hash_array.hpp"
 #include "libTAU/blockchain/vote.hpp"
 #include "libTAU/common/entry_type.hpp"
 #include <libTAU/sha1_hash.hpp>
@@ -21,10 +22,10 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    enum STAGE {
-        HEAD_BLOCK,
-        NORMAL,
-    };
+//    enum STAGE {
+//        HEAD_BLOCK,
+//        NORMAL,
+//    };
 
     struct peer_info {
         peer_info() = default;
@@ -33,22 +34,22 @@ namespace libTAU::blockchain {
 
         peer_info(transaction mLatestTx, int64_t mLastSeen) : m_latest_tx(std::move(mLatestTx)), m_last_seen(mLastSeen) {}
 
-        peer_info(STAGE mStage, block mHeadBlock) : m_stage(mStage), m_head_block(std::move(mHeadBlock)) {}
+//        peer_info(STAGE mStage, block mHeadBlock) : m_stage(mStage), m_head_block(std::move(mHeadBlock)) {}
+//
+//        peer_info(STAGE mStage, block mHeadBlock, int64_t mLastSeen) : m_stage(mStage), m_head_block(std::move(mHeadBlock)),
+//                                                                              m_last_seen(mLastSeen) {}
 
-        peer_info(STAGE mStage, block mHeadBlock, int64_t mLastSeen) : m_stage(mStage), m_head_block(std::move(mHeadBlock)),
-                                                                              m_last_seen(mLastSeen) {}
-
-        void setStage(STAGE mStage) {
-            m_stage = mStage;
-        }
+//        void setStage(STAGE mStage) {
+//            m_stage = mStage;
+//        }
 
         std::string to_string() const;
 
         friend std::ostream &operator<<(std::ostream &os, const peer_info &info);
 
-        int m_score = 40;
+//        int m_score = 40;
 
-        STAGE m_stage = HEAD_BLOCK;
+//        STAGE m_stage = HEAD_BLOCK;
 
 //        int m_last_request_time = 0;
 
@@ -57,6 +58,10 @@ namespace libTAU::blockchain {
 //        std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_peer_requests_time;
 
         block m_head_block;
+
+        block m_genesis_block;
+
+        state_hash_array m_state_hash_array;
 
         transaction m_latest_tx;
 

@@ -76,6 +76,7 @@ namespace blockchain {
 
     enum GET_ITEM_TYPE {
         HEAD_BLOCK_HASH,
+        HEAD_BLOCK,
         BLOCK,
         TX,
         POOL_HASH_SET,
@@ -328,10 +329,6 @@ namespace blockchain {
         // send data to peer
         void send_to(const dht::public_key &peer, entry const& data);
 
-        void request_block(const aux::bytes &chain_id, const sha1_hash &hash);
-
-        void request_block(const aux::bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash);
-
         void transfer_to_acl_peers(const aux::bytes &chain_id, entry const& data,
                                    const dht::public_key &incoming_peer = dht::public_key());
 
@@ -439,7 +436,7 @@ namespace blockchain {
 
         void print_acl_ban_list_info(aux::bytes const& chain_id);
 
-        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score);
+        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
         void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score,
                                      const std::unique_ptr<common::blockchain_entry_base>& ptr);

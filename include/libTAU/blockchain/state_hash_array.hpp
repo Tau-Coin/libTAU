@@ -23,6 +23,8 @@ namespace libTAU {
     namespace blockchain {
         class state_hash_array {
         public:
+            state_hash_array() = default;
+
             // @param Construct with entry
             explicit state_hash_array(const entry& e);
 
