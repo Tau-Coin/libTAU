@@ -1783,4 +1783,19 @@ namespace {
 #endif
     }
 
+    blockchain_state_array_alert::blockchain_state_array_alert(aux::stack_allocator&
+            , aux::bytes id, std::vector<libTAU::blockchain::account> acts)
+            : chain_id(std::move(id)), accounts(std::move(acts))
+    {}
+
+    std::string blockchain_state_array_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        return "Alert: chain:" + aux::toHex(chain_id) + " post state array";
+#endif
+    }
+
+
 } // namespace libTAU

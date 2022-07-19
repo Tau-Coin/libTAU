@@ -2487,6 +2487,10 @@ namespace libTAU::blockchain {
                         state_array stateArray(i.value());
                         log(LOG_INFO, "INFO: Got state array[%s].", stateArray.to_string().c_str());
 
+                        if (!stateArray.empty()) {
+                            m_ses.alerts().emplace_alert<blockchain_state_array_alert>(chain_id, stateArray.StateArray());
+                        }
+
                         m_repository->save_state_array(chain_id, stateArray);
 
                         // TODO: state array event
@@ -2555,7 +2559,7 @@ namespace libTAU::blockchain {
     catch (std::exception const&) {}
 
 
-    aux::bytes blockchain::create_chain_id(std::string community_name) {
+    aux::bytes blockchain::create_chain_id(aux::bytes type, std::string community_name) {
         libTAU::aux::bytes chain_id;
         dht::public_key * pk = m_ses.pubkey();
         std::int64_t now = get_total_milliseconds();
@@ -2565,6 +2569,8 @@ namespace libTAU::blockchain {
         data << spk << now;
         sha1_hash hash = hasher(data.str()).final();
         chain_id.insert(chain_id.end(), hash.begin(), hash.begin() + CHAIN_ID_HASH_MAX_LENGTH);
+
+        chain_id.insert(chain_id.end(), type.begin(), type.end());
 
         if (community_name.length() > CHAIN_ID_COMMUNITY_NAME_MAX_LENGTH) {
             chain_id.insert(chain_id.end(), community_name.begin(), community_name.begin() + CHAIN_ID_COMMUNITY_NAME_MAX_LENGTH);

@@ -33,7 +33,8 @@ namespace libTAU::blockchain {
     // chain id
     // todo:validate
     constexpr int CHAIN_ID_MAX_LENGTH = 32;
-    constexpr int CHAIN_ID_HASH_MAX_LENGTH = 8;
+    constexpr int CHAIN_ID_HASH_MAX_LENGTH = 4;
+    constexpr int CHAIN_ID_TYPE_MAX_LENGTH = 4;
     constexpr int CHAIN_ID_COMMUNITY_NAME_MAX_LENGTH = 24;
 
 //    constexpr int EFFECTIVE_BLOCK_NUMBER = 288 * 180;
