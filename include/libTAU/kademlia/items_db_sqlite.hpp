@@ -23,7 +23,7 @@ namespace dht {
 		"CREATE TABLE IF NOT EXISTS mutable_items ("
 			 "target VARCHAR(32) NOT NULL PRIMARY KEY,"
 			 "ts INT,"
-			 "item VARCHAR(1000) NOT NULL);";
+			 "item VARCHAR(2000) NOT NULL);";
 
 	static const std::string create_ts_index =
 		"CREATE INDEX IF NOT EXISTS index_ts ON mutable_items (ts);";
