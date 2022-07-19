@@ -397,6 +397,11 @@ namespace {
 		bool get_mutable_item_timestamp(sha256_hash const& target
 			, timestamp& ts) const override
 		{
+			if (m_backend != nullptr)
+			{
+				return m_backend->get_mutable_item_timestamp(target, ts);
+			}
+
 			auto const i = m_mutable_table.find(target);
 			if (i == m_mutable_table.end()) return false;
 
@@ -408,6 +413,11 @@ namespace {
 			, timestamp const ts, bool const force_fill
 			, entry& item) const override
 		{
+			if (m_backend != nullptr)
+			{
+				return m_backend->get_mutable_item(target, ts, force_fill, item);
+			}
+
 			auto const i = m_mutable_table.find(target);
 			if (i == m_mutable_table.end()) return false;
 
@@ -427,6 +437,11 @@ namespace {
 		bool get_mutable_item_target(sha256_hash const& prefix
 			, sha256_hash& target) const override
 		{
+			if (m_backend != nullptr)
+			{
+				return m_backend->get_mutable_item_target(prefix, target);
+			}
+
 			if (m_mutable_table.empty()) return false;
 
 			std::vector<sha256_hash> candidates;
@@ -457,6 +472,12 @@ namespace {
 			, span<char const> salt
 			, address const& addr) override
 		{
+			if (m_backend != nullptr)
+			{
+				m_backend->put_mutable_item(target, buf, sig, ts, pk, salt, addr);
+				return;
+			}
+
 			TORRENT_ASSERT(!m_node_ids.empty());
 			auto i = m_mutable_table.find(target);
 			if (i == m_mutable_table.end())
@@ -501,6 +522,12 @@ namespace {
 
 		void remove_mutable_item(sha256_hash const& target) override
 		{
+			if (m_backend != nullptr)
+			{
+				m_backend->remove_mutable_item(target);
+				return;
+			}
+
 			auto i = m_mutable_table.find(target);
 			if (i == m_mutable_table.end()) return;
 			m_mutable_table.erase(i);
@@ -647,6 +674,8 @@ namespace {
 
 		void tick() override
 		{
+			if (m_backend != nullptr) m_backend->tick();
+
 			if (m_settings.get_int(settings_pack::dht_item_lifetime) > 0)
 			{
 				time_point const now = aux::time_now();
@@ -710,6 +739,11 @@ namespace {
 		dht_storage_counters counters() const override
 		{
 			return m_counters;
+		}
+
+		void close() override
+		{
+			if (m_backend != nullptr) m_backend->close();
 		}
 
 	private:

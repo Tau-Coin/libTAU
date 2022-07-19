@@ -1887,6 +1887,13 @@ namespace aux {
 			// the life time (seconds) of relay cache entry
 			dht_relay_entry_lifetime,
 
+			// the maximum number of mutable item sqlite records
+			dht_items_db_max_count,
+
+			// the time interval(seconds) of refreshing items db
+			dht_items_db_refresh_time,
+
+
 			// the time interval(seconds) of accepting mutable item
 			dht_time_offset,
 
