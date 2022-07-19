@@ -31,7 +31,7 @@ items_db_sqlite::items_db_sqlite(settings_interface const& settings
 void items_db_sqlite::init()
 {
 	// init data members
-	m_mutable_item.reserve(1500);
+	m_mutable_item.reserve(2000);
 	m_last_refresh = min_time();
 
 	sqlite3* db = m_observer->get_items_database();
@@ -164,7 +164,9 @@ bool items_db_sqlite::get_mutable_item_timestamp(sha256_hash const& target
 
 	if (db != NULL && m_select_ts_by_target_stmt != NULL)
 	{
-		sqlite3_bind_blob(m_select_ts_by_target_stmt, 1
+		sqlite3_reset(m_select_ts_by_target_stmt);
+
+		sqlite3_bind_text(m_select_ts_by_target_stmt, 1
 			, target.data(), 32, nullptr);
 
 		time_point const start = aux::time_now();
@@ -212,7 +214,9 @@ bool items_db_sqlite::get_mutable_item(sha256_hash const& target
 
 	if (db != NULL && m_select_item_by_target_stmt != NULL)
 	{
-		sqlite3_bind_blob(m_select_item_by_target_stmt, 1
+		sqlite3_reset(m_select_item_by_target_stmt);
+
+		sqlite3_bind_text(m_select_item_by_target_stmt, 1
 			, target.data(), 32, nullptr);
 
 		time_point const start = aux::time_now();
@@ -227,17 +231,26 @@ bool items_db_sqlite::get_mutable_item(sha256_hash const& target
             item["ts"] = ts_value;
 
 			const unsigned char* item_ptr = static_cast<const unsigned char*>(
-				sqlite3_column_blob(m_select_item_by_target_stmt, 2));
+				sqlite3_column_text(m_select_item_by_target_stmt, 2));
 			auto length = static_cast<std::size_t>(
 				sqlite3_column_bytes(m_select_item_by_target_stmt, 2));
 			std::string item_str(item_ptr, item_ptr + length);
+
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_observer->should_log(dht_logger::items_db, aux::LOG_DEBUG))
+			{
+				m_observer->log(dht_logger::items_db, "debug put size:%d, get size:%d, put==get? %s"
+					, m_mutable_item.size(), length
+					, item_str == m_mutable_item ? "true" : "false");
+
+			}
+#endif
 
 			if (force_fill || (timestamp(0) <= ts && ts < timestamp(ts_value)))
 			{
 				error_code ec;
 				item = bdecode(item_str, ec);
 				// TODO: how to handle decoding error
-				/*
 				if (ec.value() != 0)
 				{
 					std::string err_msg("get bdecoding error:");
@@ -250,7 +263,6 @@ bool items_db_sqlite::get_mutable_item(sha256_hash const& target
 					sqlite3_step(m_select_item_by_target_stmt);
 					return false;
 				}
-				*/
 
 				std::string get_log_msg("get item:");
 				get_log_msg.append(item.to_string(true));
@@ -297,54 +309,65 @@ void items_db_sqlite::put_mutable_item(sha256_hash const& target
 	, span<char const> salt
 	, address const& addr)
 {
-	entry e;
-	error_code ec;
-	entry value = bdecode(buf.first(buf.size()), ec);
-	// TODO: how to handle decoding error
-	/*
-	if (ec.value() != 0)
+	sqlite3* db = m_observer->get_items_database();
+
+	if (db != NULL && m_insert_or_replace_items_stmt != NULL)
 	{
-		std::string err_msg("put item bdecoding error:");
-		err_msg.append(buf.data(), buf.size());
-		sql_error(ec.value(), err_msg.c_str());
+		entry e;
+		error_code ec;
+		entry value = bdecode(buf.first(buf.size()), ec);
+		// TODO: how to handle decoding error
+		if (ec.value() != 0)
+		{
+			std::string err_msg("put item bdecoding error:");
+			err_msg.append(buf.data(), buf.size());
+			sql_error(ec.value(), err_msg.c_str());
 
-		return;
-	}
-	*/
+			return;
+		}
 
-	e["k"] = pk.bytes;
-	e["salt"] = salt;
-	e["ts"] = ts.value;
-	e["v"] = value;
-	e["sig"] = sig.bytes;
+		e["k"] = pk.bytes;
+		e["salt"] = salt;
+		e["ts"] = ts.value;
+		e["v"] = value;
+		e["sig"] = sig.bytes;
 
-	m_mutable_item.clear();
-	bencode(std::back_inserter(m_mutable_item), e);
+		m_mutable_item.clear();
+		bencode(std::back_inserter(m_mutable_item), e);
 
-	entry test_entry = bdecode(m_mutable_item, ec);
+		sqlite3_reset(m_insert_or_replace_items_stmt);
 
-	std::string put_log_msg("put bdecode test:");
-	put_log_msg.append(test_entry.to_string(true));
-	sql_log(0, put_log_msg.c_str());
+		sqlite3_bind_text(m_insert_or_replace_items_stmt, 1
+			, target.data(), 32, nullptr);
+		sqlite3_bind_int(m_insert_or_replace_items_stmt, 2, aux::numeric_cast<int>(ts.value));
+		sqlite3_bind_text(m_insert_or_replace_items_stmt, 3
+			, m_mutable_item.data(), m_mutable_item.size(), SQLITE_STATIC);
 
-	sqlite3_bind_blob(m_insert_or_replace_items_stmt, 1
-		, target.data(), 32, nullptr);
-	sqlite3_bind_int(m_insert_or_replace_items_stmt, 2, aux::numeric_cast<int>(ts.value));
-	sqlite3_bind_blob(m_insert_or_replace_items_stmt, 3
-		, m_mutable_item.data(), m_mutable_item.size(), nullptr);
-
-	int ok = sqlite3_step(m_insert_or_replace_items_stmt);
-	if (ok == SQLITE_DONE)
-	{
-		std::string log_msg("insert or update successfully:");
-		log_msg.append(e.to_string(true));
-		sql_log(ok, log_msg.c_str());
+		time_point const start = aux::time_now();
+		int ok = sqlite3_step(m_insert_or_replace_items_stmt);
+		int const cost = aux::numeric_cast<int>(total_microseconds(aux::time_now() - start));
+		if (ok == SQLITE_DONE)
+		{
+			sql_time_cost(cost, "put item");
+			std::string log_msg("insert or update successfully:");
+			log_msg.append(e.to_string(true));
+			sql_log(ok, log_msg.c_str());
+		}
+		else
+		{
+			std::string err_msg("insert or update error:");
+			err_msg.append(e.to_string(true));
+			sql_error(ok, err_msg.c_str());
+		}
 	}
 	else
 	{
-		std::string err_msg("insert or update error:");
-		err_msg.append(e.to_string(true));
-		sql_error(ok, err_msg.c_str());
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_observer->should_log(dht_logger::items_db, aux::LOG_ERR))
+		{
+			m_observer->log(dht_logger::items_db, "put mutable item: sqlite databse is invalid");
+		}
+#endif
 	}
 }
 
@@ -367,6 +390,8 @@ void items_db_sqlite::tick()
 	if (db != NULL && m_items_count_stmt != NULL
 		&& m_delete_items_stmt != NULL)
 	{
+		sqlite3_reset(m_items_count_stmt);
+
 		time_point const start = aux::time_now();
 		int ok = sqlite3_step(m_items_count_stmt);
 		int const cost = aux::numeric_cast<int>(total_microseconds(aux::time_now() - start));
@@ -394,6 +419,8 @@ void items_db_sqlite::tick()
 
 		if (count > max)
 		{
+			sqlite3_reset(m_delete_items_stmt);
+
 			sqlite3_bind_int(m_delete_items_stmt, 1, max - count);
 
 			time_point const start1 = aux::time_now();
