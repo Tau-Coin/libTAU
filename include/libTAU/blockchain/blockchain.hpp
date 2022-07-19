@@ -23,6 +23,7 @@ see LICENSE file.
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
 #include "libTAU/blockchain/constants.hpp"
+#include "libTAU/blockchain/pool_hash_set.hpp"
 #include "libTAU/blockchain/state_hash_array.hpp"
 #include "libTAU/blockchain/peer_info.hpp"
 #include "libTAU/blockchain/repository.hpp"
@@ -64,10 +65,10 @@ namespace blockchain {
     // blockchain max ban time(30min)
     constexpr std::int64_t blockchain_max_ban_time = 30 * 60 * 1000;
 
-    // fee pool key suffix
-    const std::string key_suffix_fee_pool_root = "fee_pool_root";
+    // pool key suffix
+    const std::string key_suffix_pool_root = "pool_root";
     // time pool key suffix
-    const std::string key_suffix_time_pool_root = "time_pool_root";
+//    const std::string key_suffix_time_pool_root = "time_pool_root";
     // head block key suffix
     const std::string key_suffix_head_block_hash = "head_block_hash";
     // state root key suffix
@@ -77,9 +78,7 @@ namespace blockchain {
         HEAD_BLOCK_HASH,
         BLOCK,
         TX,
-        FEE_POOL_ROOT,
-        TIME_POOL_ROOT,
-        POOL_HASH_ARRAY,
+        POOL_HASH_SET,
         STATE_HASH_ARRAY,
         STATE_ARRAY,
     };
@@ -366,6 +365,10 @@ namespace blockchain {
 
         void put_head_block(const aux::bytes &chain_id, const block &blk);
 
+        void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void put_new_transaction(const aux::bytes &chain_id, const transaction &tx);
+
         void get_all_state_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
         void put_all_state(const aux::bytes &chain_id);
@@ -374,13 +377,13 @@ namespace blockchain {
 
         void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void get_fee_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void get_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
 
-        void put_fee_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
+//        void put_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void get_time_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
-
-        void put_time_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
+//        void get_time_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
+//
+//        void put_time_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
 
         void get_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
@@ -394,7 +397,9 @@ namespace blockchain {
 
         void put_state_array(const aux::bytes &chain_id, const state_array &stateArray);
 
-        void get_pool_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+        void get_pool_hash_set(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void put_pool_hash_set(const aux::bytes &chain_id);
 
         void get_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 

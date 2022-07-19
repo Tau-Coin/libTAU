@@ -6,8 +6,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#ifndef LIBTAU_POOL_HASH_ARRAY_HPP
-#define LIBTAU_POOL_HASH_ARRAY_HPP
+#ifndef LIBTAU_POOL_HASH_SET_HPP
+#define LIBTAU_POOL_HASH_SET_HPP
 
 
 #include <utility>
@@ -23,25 +23,22 @@ see LICENSE file.
 
 namespace libTAU {
     namespace blockchain {
-        class pool_hash_array {
+        class pool_hash_set {
         public:
             // @param Construct with entry
-            explicit pool_hash_array(const entry &e);
+            explicit pool_hash_set(const entry &e);
 
             // @param Construct with bencode
-            explicit pool_hash_array(std::string encode) : pool_hash_array(bdecode(encode)) {}
+            explicit pool_hash_set(std::string encode) : pool_hash_set(bdecode(encode)) {}
 
-            explicit pool_hash_array(std::vector<sha1_hash> mHashArray) : m_hash_array(std::move(mHashArray)) {
-                auto encode = get_encode();
-                m_hash = hasher(encode).final();
-            }
+            explicit pool_hash_set(std::set<sha1_hash> mPoolHashSet) : m_pool_hash_set(std::move(mPoolHashSet)) {}
 
-            const std::vector<sha1_hash> &HashArray() const { return m_hash_array; }
+            const std::set<sha1_hash> &PoolHashSet() const { return m_pool_hash_set; }
 
             // @returns the SHA1 hash of this block
             const sha1_hash &sha1() const { return m_hash; }
 
-            bool empty() const { return m_hash_array.empty(); }
+            bool empty() const { return m_pool_hash_set.empty(); }
 
             entry get_entry() const;
 
@@ -50,14 +47,14 @@ namespace libTAU {
             // @returns a pretty-printed string representation of block structure
             std::string to_string() const;
 
-            friend std::ostream &operator<<(std::ostream &os, const pool_hash_array &hashArray);
+            friend std::ostream &operator<<(std::ostream &os, const pool_hash_set &hashArray);
 
         private:
             // populate hash array from entry
             void populate(const entry &e);
 
-            // hash
-            std::vector<sha1_hash> m_hash_array;
+            // pool hash set
+            std::set<sha1_hash> m_pool_hash_set;
 
             // sha1 hash
             sha1_hash m_hash;
@@ -66,4 +63,4 @@ namespace libTAU {
 }
 
 
-#endif //LIBTAU_POOL_HASH_ARRAY_HPP
+#endif //LIBTAU_POOL_HASH_SET_HPP

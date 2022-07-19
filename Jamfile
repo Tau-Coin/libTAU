@@ -953,7 +953,7 @@ BLOCKCHAIN_SOURCES =
 	blockchain
 	blockchain_signal
 	consensus
-	pool_hash_array
+	pool_hash_set
 	state_hash_array
     index_key_info
     peer_info
