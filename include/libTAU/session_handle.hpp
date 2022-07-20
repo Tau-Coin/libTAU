@@ -348,7 +348,7 @@ namespace libTAU {
 		bool add_new_message(communication::message msg);
 
 		// create chain id
-		std::vector<char> create_chain_id(std::vector<char> community_name);
+		std::vector<char> create_chain_id(std::vector<char> type, std::vector<char> community_name);
 
         // get all followd chains
 		std::set<std::vector<char>> get_all_chains();

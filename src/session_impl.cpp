@@ -3328,10 +3328,10 @@ namespace {
 			return false;
 	}	
 
-	void session_impl::create_chain_id(std::string community_name, std::vector<char>* id)
+	void session_impl::create_chain_id(const aux::bytes &type, std::string community_name, std::vector<char>* id)
 	{
 		if(m_blockchain)
-			*id = m_blockchain->create_chain_id(community_name);
+			*id = m_blockchain->create_chain_id(type, community_name);
 	}
 
 	void session_impl::get_all_chains(std::set<std::vector<char>>* cids)
