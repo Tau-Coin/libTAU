@@ -31,6 +31,8 @@ namespace libTAU::blockchain {
         const std::string table_chains = "chains";
         const std::string table_blocks = "blocks";
         const std::string table_state = "state";
+        const std::string table_peer = "peer";
+        const std::string table_state_array = "state_array";
         const std::string table_head_block = "head";
 
         const std::string key_chains = "chains";
@@ -100,6 +102,8 @@ namespace libTAU::blockchain {
         virtual bool create_state_db(const aux::bytes &chain_id) = 0;
 
         virtual bool delete_state_db(const aux::bytes &chain_id) = 0;
+
+        virtual bool clear_state_db(const aux::bytes &chain_id) = 0;
 
         virtual account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 

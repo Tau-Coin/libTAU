@@ -13,6 +13,7 @@ see LICENSE file.
 #include <cstdint>
 
 #include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/state_array.hpp"
 #include "libTAU/blockchain/state_hash_array.hpp"
 #include "libTAU/blockchain/vote.hpp"
 #include "libTAU/common/entry_type.hpp"
@@ -32,7 +33,7 @@ namespace libTAU::blockchain {
 
         explicit peer_info(int64_t mLastSeen) : m_last_seen(mLastSeen) {}
 
-        peer_info(transaction mLatestTx, int64_t mLastSeen) : m_latest_tx(std::move(mLatestTx)), m_last_seen(mLastSeen) {}
+//        peer_info(transaction mLatestTx, int64_t mLastSeen) : m_latest_tx(std::move(mLatestTx)), m_last_seen(mLastSeen) {}
 
 //        peer_info(STAGE mStage, block mHeadBlock) : m_stage(mStage), m_head_block(std::move(mHeadBlock)) {}
 //
@@ -53,7 +54,7 @@ namespace libTAU::blockchain {
 
 //        int m_last_request_time = 0;
 
-        std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_requests_time;
+//        std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_requests_time;
 
 //        std::map<std::unique_ptr<common::blockchain_entry_base>, std::int64_t, common::less_blockchain_entry_base> m_peer_requests_time;
 
@@ -63,7 +64,9 @@ namespace libTAU::blockchain {
 
         state_hash_array m_state_hash_array;
 
-        transaction m_latest_tx;
+        std::map<sha1_hash, state_array> m_state_arrays;
+
+//        transaction m_latest_tx;
 
         std::int64_t m_last_seen = 0;
 

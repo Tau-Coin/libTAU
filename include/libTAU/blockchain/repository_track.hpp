@@ -57,6 +57,8 @@ namespace libTAU::blockchain {
 
         bool delete_state_db(const aux::bytes &chain_id) override;
 
+        bool clear_state_db(const aux::bytes &chain_id) override;
+
         account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
         bool save_account(const aux::bytes &chain_id, const account &act) override;

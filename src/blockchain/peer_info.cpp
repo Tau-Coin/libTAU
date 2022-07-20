@@ -19,10 +19,10 @@ namespace libTAU::blockchain {
 
     std::ostream &operator<<(std::ostream &os, const peer_info &info) {
         os << info.m_head_block.block_number();
-        os << " m_requests_time: ";
-        for (auto const &item: info.m_requests_time) {
-            os << "key: " << *item.first << " value: " << item.second;
-        }
+//        os << " m_requests_time: ";
+//        for (auto const &item: info.m_requests_time) {
+//            os << "key: " << *item.first << " value: " << item.second;
+//        }
         return os;
     }
 

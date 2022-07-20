@@ -12,6 +12,7 @@ see LICENSE file.
 
 #include <map>
 #include <set>
+#include <utility>
 #include <vector>
 #include <queue>
 
@@ -50,8 +51,8 @@ namespace blockchain {
     // min response interval to the same request(2s)
 //    constexpr int blockchain_same_response_interval = 2 * 1000;
 
-    // blockchain request timeout(2500ms)
-    constexpr std::int64_t blockchain_request_timeout = 2 * 1000 + 500;
+    // blockchain get timeout(2500ms)
+    constexpr std::int64_t blockchain_get_timeout = 2 * 1000 + 500;
 
     // blockchain min peers in acl
     constexpr std::int64_t blockchain_acl_min_peers = 2;
@@ -94,6 +95,57 @@ namespace blockchain {
     enum CHAIN_STATUS {
         GET_GOSSIP_PEERS,
         MINE,
+    };
+
+    struct GET_ITEM {
+        GET_ITEM(aux::bytes mChainId, const dht::public_key &mPeer, std::string mSalt, GET_ITEM_TYPE mType) :
+                m_chain_id(std::move(mChainId)), m_peer(mPeer), m_salt(std::move(mSalt)), m_type(mType) {}
+
+        bool operator<(const GET_ITEM &rhs) const {
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (rhs.m_chain_id < m_chain_id)
+                return false;
+            if (m_peer < rhs.m_peer)
+                return true;
+            if (rhs.m_peer < m_peer)
+                return false;
+            if (m_salt < rhs.m_salt)
+                return true;
+            if (rhs.m_salt < m_salt)
+                return false;
+            return m_type < rhs.m_type;
+        }
+
+        bool operator>(const GET_ITEM &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const GET_ITEM &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const GET_ITEM &rhs) const {
+            return !(*this < rhs);
+        }
+
+        aux::bytes m_chain_id;
+        dht::public_key m_peer;
+        std::string m_salt;
+        GET_ITEM_TYPE m_type;
+    };
+
+    struct GET_INFO {
+        GET_INFO() = default;
+
+        explicit GET_INFO(int64_t mTimestamp) : m_timestamp(mTimestamp) {}
+
+        GET_INFO(int64_t mTimestamp, int mTimes) : m_timestamp(mTimestamp), m_times(mTimes) {}
+
+        void increase_get_times() { m_times++; }
+
+        std::int64_t m_timestamp;
+        int m_times = 1;
     };
 
     //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
@@ -235,6 +287,8 @@ namespace blockchain {
         // reset chain status
         void reset_chain_status(const aux::bytes &chain_id);
 
+        void try_to_get_again();
+
         void manage_peers_in_acl_ban_list(const aux::bytes &chain_id);
 
         void add_and_access_peers_in_acl(const aux::bytes &chain_id);
@@ -249,12 +303,14 @@ namespace blockchain {
         RESULT verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block, repository *repo);
 
         // process block
-        RESULT process_genesis_block(const aux::bytes &chain_id, const block &blk);
+        RESULT process_genesis_block(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
         // process block
         RESULT process_block(const aux::bytes &chain_id, const block &blk);
 
-        void block_reception_event(const aux::bytes &chain_id, const block &blk);
+        void block_reception_event(const aux::bytes &chain_id, const dht::public_key& peer, const block &blk);
+
+        void state_reception_event(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // check if a chain is empty, true if has no info, false otherwise
         bool is_empty_chain(const aux::bytes &chain_id);
@@ -329,12 +385,12 @@ namespace blockchain {
         // send data to peer
         void send_to(const dht::public_key &peer, entry const& data);
 
-        void transfer_to_acl_peers(const aux::bytes &chain_id, entry const& data,
-                                   const dht::public_key &incoming_peer = dht::public_key());
+//        void transfer_to_acl_peers(const aux::bytes &chain_id, entry const& data,
+//                                   const dht::public_key &incoming_peer = dht::public_key());
 
-        void transfer_head_block(const aux::bytes &chain_id, const block& blk);
+//        void transfer_head_block(const aux::bytes &chain_id, const block& blk);
 
-        void transfer_transaction(const aux::bytes &chain_id, const transaction& tx);
+//        void transfer_transaction(const aux::bytes &chain_id, const transaction& tx);
 
 //        void introduce_gossip_peers(const aux::bytes &chain_id, const dht::public_key &peer);
 
@@ -361,6 +417,8 @@ namespace blockchain {
         void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void put_head_block(const aux::bytes &chain_id, const block &blk);
+
+        void put_genesis_block(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
         void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer);
 
@@ -438,16 +496,16 @@ namespace blockchain {
 
         void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
-        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score,
-                                     const std::unique_ptr<common::blockchain_entry_base>& ptr);
+//        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score,
+//                                     const std::unique_ptr<common::blockchain_entry_base>& ptr);
 
-        void head_block_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, const block &blk);
-
-        void transaction_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, const transaction &tx);
+//        void head_block_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, const block &blk);
+//
+//        void transaction_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, const transaction &tx);
 
         // @return true: response, false: not response
-        bool request_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer,
-                                        std::unique_ptr<common::blockchain_entry_base>& ptr);
+//        bool request_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer,
+//                                        std::unique_ptr<common::blockchain_entry_base>& ptr);
 
         // io context
         io_context& m_ioc;
@@ -467,6 +525,8 @@ namespace blockchain {
 
         // chain timers
         std::map<aux::bytes, aux::deadline_timer> m_chain_timers;
+
+        std::map<GET_ITEM, GET_INFO> m_get_item_info;
 
         // chain status timers
 //        std::map<aux::bytes, aux::deadline_timer> m_chain_status_timers;
