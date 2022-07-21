@@ -138,13 +138,8 @@ namespace blockchain {
     struct GET_INFO {
         GET_INFO() = default;
 
-        explicit GET_INFO(int64_t mTimestamp) : m_timestamp(mTimestamp) {}
-
-        GET_INFO(int64_t mTimestamp, int mTimes) : m_timestamp(mTimestamp), m_times(mTimes) {}
-
         void increase_get_times() { m_times++; }
 
-        std::int64_t m_timestamp;
         int m_times = 1;
     };
 
@@ -270,7 +265,7 @@ namespace blockchain {
         void log(aux::LOG_LEVEL log_level, char const* fmt, ...) const noexcept override TORRENT_FORMAT(3,4);
         //#endif
 
-        void refresh_timeout(error_code const& e);
+//        void refresh_timeout(error_code const& e);
 
 //        void refresh_chain_status(error_code const &e, const aux::bytes &chain_id);
 
@@ -287,7 +282,7 @@ namespace blockchain {
         // reset chain status
         void reset_chain_status(const aux::bytes &chain_id);
 
-        void try_to_get_again();
+//        void try_to_get_again();
 
         void manage_peers_in_acl_ban_list(const aux::bytes &chain_id);
 
@@ -476,7 +471,7 @@ namespace blockchain {
 //        void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
         // mutable data callback
-        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool, GET_ITEM_TYPE type);
+        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool, GET_ITEM_TYPE type, std::int64_t timestamp);
 
         // get mutable item from dht
 //        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
