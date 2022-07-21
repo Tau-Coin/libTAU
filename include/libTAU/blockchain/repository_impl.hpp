@@ -59,7 +59,7 @@ namespace libTAU::blockchain {
 
         bool delete_state_db(const aux::bytes &chain_id) override;
 
-        bool clear_state_db(const aux::bytes &chain_id) override;
+        bool clear_all_state(const aux::bytes &chain_id) override;
 
         account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
@@ -88,6 +88,12 @@ namespace libTAU::blockchain {
         block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) override;
 
         bool delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) override;
+
+        bool set_block_non_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) override;
+
+        bool set_block_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) override;
+
+        bool set_all_block_non_main_chain(const aux::bytes &chain_id) override;
 
         bool create_peer_db(const aux::bytes &chain_id) override;
 

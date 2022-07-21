@@ -103,7 +103,7 @@ namespace libTAU::blockchain {
 
         virtual bool delete_state_db(const aux::bytes &chain_id) = 0;
 
-        virtual bool clear_state_db(const aux::bytes &chain_id) = 0;
+        virtual bool clear_all_state(const aux::bytes &chain_id) = 0;
 
         virtual account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
@@ -137,6 +137,12 @@ namespace libTAU::blockchain {
         virtual block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
 
         virtual bool delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+
+        virtual bool set_block_non_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+
+        virtual bool set_block_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+
+        virtual bool set_all_block_non_main_chain(const aux::bytes &chain_id) = 0;
 
         // peer db
         virtual bool create_peer_db(const aux::bytes &chain_id) = 0;

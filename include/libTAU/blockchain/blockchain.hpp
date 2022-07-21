@@ -352,7 +352,7 @@ namespace blockchain {
 
 //        void try_to_rebranch_to_best_vote(const aux::bytes &chain_id);
 
-        void try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id);
+        void try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // try to rebranch the most difficult chain, or a voting chain
         RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute, dht::public_key peer = dht::public_key());
@@ -364,9 +364,7 @@ namespace blockchain {
         void find_best_solution(std::vector<transaction>& txs, const aux::bytes& hash_prefix_array,
                                 std::set<transaction> &missing_txs);
 
-        void trim_state(const aux::bytes &chain_id);
-
-        sha1_hash calculate_state_root(const aux::bytes &chain_id);
+        void get_genesis_state(const aux::bytes &chain_id, sha1_hash &stateRoot, std::vector<state_array> &arrays);
 
         // make a salt on mutable channel
 //        static std::string make_salt(const aux::bytes &chain_id, std::int64_t data_type_id);

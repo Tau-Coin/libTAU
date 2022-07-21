@@ -86,7 +86,7 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool repository_track::clear_state_db(const aux::bytes &chain_id) {
+    bool repository_track::clear_all_state(const aux::bytes &chain_id) {
         return false;
     }
 
@@ -143,6 +143,18 @@ namespace libTAU::blockchain {
     }
 
     bool repository_track::delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+        return false;
+    }
+
+    bool repository_track::set_block_non_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) {
+        return false;
+    }
+
+    bool repository_track::set_block_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) {
+        return false;
+    }
+
+    bool repository_track::set_all_block_non_main_chain(const aux::bytes &chain_id) {
         return false;
     }
 
