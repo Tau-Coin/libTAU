@@ -406,6 +406,8 @@ namespace blockchain {
 
 //        void put_voting_block(const aux::bytes &chain_id, const block &blk);
 
+        void request_chain_data(const aux::bytes &chain_id, const dht::public_key& peer);
+
         void send_online_signal(const aux::bytes &chain_id);
 
         void send_new_head_block_signal(const aux::bytes &chain_id);

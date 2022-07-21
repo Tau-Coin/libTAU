@@ -2221,6 +2221,12 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
+    void blockchain::request_chain_data(const bytes &chain_id, const dht::public_key &peer) {
+        common::signal_entry signalEntry(common::CHAIN_DATA, chain_id);
+
+        send_to(peer, signalEntry.get_entry());
+    }
+
     void blockchain::send_online_signal(const aux::bytes &chain_id) {
         common::signal_entry signalEntry(common::ONLINE, chain_id);
         auto const& acl = m_access_list[chain_id];

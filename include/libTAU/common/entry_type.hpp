@@ -35,6 +35,7 @@ namespace libTAU::common {
     const std::string entry_levenshtein_array = "l";
 
     enum signal_id {
+        CHAIN_DATA,
         ONLINE,
         NEW_HEAD_BLOCK,
         NEW_TX,
