@@ -375,7 +375,8 @@ namespace blockchain {
         void publish(const std::string& salt, const entry& data);
 
         // key length < 20 bytes
-        void subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string& salt, GET_ITEM_TYPE type);
+        void subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string& salt,
+                       GET_ITEM_TYPE type, std::int64_t timestamp = 0);
 
         // make a salt on mutable channel
 //        static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
@@ -408,19 +409,21 @@ namespace blockchain {
 
         void request_chain_data(const aux::bytes &chain_id, const dht::public_key& peer);
 
+        void put_all_chain_data(const aux::bytes &chain_id);
+
         void send_online_signal(const aux::bytes &chain_id);
 
         void send_new_head_block_signal(const aux::bytes &chain_id);
 
         void send_new_tx_signal(const aux::bytes &chain_id);
 
-        void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer);
+        void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
         void put_head_block(const aux::bytes &chain_id, const block &blk);
 
         void put_genesis_block(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
-        void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer);
+        void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
         void put_new_transaction(const aux::bytes &chain_id, const transaction &tx);
 
@@ -428,7 +431,7 @@ namespace blockchain {
 
         void put_all_state(const aux::bytes &chain_id);
 
-        void get_head_block_hash(const aux::bytes &chain_id, const dht::public_key& peer);
+        void get_head_block_hash(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
         void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
 
@@ -452,7 +455,7 @@ namespace blockchain {
 
         void put_state_array(const aux::bytes &chain_id, const state_array &stateArray);
 
-        void get_pool_hash_set(const aux::bytes &chain_id, const dht::public_key& peer);
+        void get_pool_hash_set(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
         void put_pool_hash_set(const aux::bytes &chain_id);
 

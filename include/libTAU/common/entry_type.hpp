@@ -48,10 +48,8 @@ namespace libTAU::common {
         // @param Construct with bencode
         explicit signal_entry(std::string encode): signal_entry(bdecode(encode)) {}
 
-        explicit signal_entry(signal_id mPid) : m_pid(mPid) {}
-
-        signal_entry(signal_id mPid, aux::bytes mShortChainId) : m_pid(mPid),
-                                                                 m_short_chain_id(std::move(mShortChainId)) {}
+        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp) : m_pid(mPid),
+            m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp) {}
 
         entry get_entry();
 
@@ -63,8 +61,8 @@ namespace libTAU::common {
         // data type id
         aux::bytes m_short_chain_id;
 
-//        // data type id
-//        std::int64_t m_data_type_id{};
+        // timestamp
+        std::int64_t m_timestamp{};
     };
 
     struct TORRENT_EXPORT gossip_cache_peers_entry {

@@ -17,11 +17,11 @@ namespace libTAU::common {
             m_pid = static_cast<signal_id>(i->integer());
         }
 
-        // data type id
-//        if (auto* i = const_cast<entry *>(e.find_key(entry_type)))
-//        {
-//            m_data_type_id = i->integer();
-//        }
+        // timestamp
+        if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
+        {
+            m_timestamp = i->integer();
+        }
 
         // short chain id
         if (auto* i = const_cast<entry *>(e.find_key(entry_short_chain_id)))
@@ -37,8 +37,8 @@ namespace libTAU::common {
         // protocol id
         e[protocol_type] = entry(m_pid);
 
-        // data type id
-//        e[entry_type] = entry(m_data_type_id);
+        // timestamp
+        e[entry_time] = entry(m_timestamp);
 
         // short chain id
         if (!m_short_chain_id.empty()) {
