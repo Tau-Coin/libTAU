@@ -421,7 +421,7 @@ void items_db_sqlite::tick()
 		{
 			sqlite3_reset(m_delete_items_stmt);
 
-			sqlite3_bind_int(m_delete_items_stmt, 1, max - count);
+			sqlite3_bind_int(m_delete_items_stmt, 1, count - max);
 
 			time_point const start1 = aux::time_now();
 			ok = sqlite3_step(m_delete_items_stmt);

@@ -312,12 +312,12 @@ namespace libTAU {
 		return sync_call_ret<bool>(&session_impl::add_new_message, msg);
 	}
 
-	std::vector<char> session_handle::create_chain_id(std::vector<char> community_name)
+	std::vector<char> session_handle::create_chain_id(std::vector<char> type, std::vector<char> community_name)
 	{
 		std::string name;
 		name.insert(name.begin(), community_name.begin(), community_name.end());
 		std::vector<char> id;
-		sync_call(&session_impl::create_chain_id, name, &id); 
+		sync_call(&session_impl::create_chain_id, type, name, &id); 
 		return id;
 	}
 
