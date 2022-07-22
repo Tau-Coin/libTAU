@@ -22,18 +22,16 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
+    const std::string table_chains = "chains";
+    const std::string table_blocks = "blocks";
+    const std::string table_state = "state";
+    const std::string table_peer = "peer";
+    const std::string table_state_array = "state_array";
 
     // repository: 存储账户、区块、状态链接器以及相应高度的索引数据，每个账户的状态是一个通过状态链接器链接起来的一个链式结构。
     // 每个账户会指向一个block hash，通过block hash可以到区块里面查找到对应该账户的状态，同时，通过block hash也能获得对应
     // 的状态链接器，状态链接器通过previous change指针，可以完整回溯该账户的变化历史。
     struct TORRENT_EXPORT repository {
-
-        const std::string table_chains = "chains";
-        const std::string table_blocks = "blocks";
-        const std::string table_state = "state";
-        const std::string table_peer = "peer";
-        const std::string table_state_array = "state_array";
-        const std::string table_head_block = "head";
 
         const std::string key_chains = "chains";
         const std::string key_separator = "_";
@@ -41,6 +39,16 @@ namespace libTAU::blockchain {
         const std::string key_suffix_head_block_hash = "head";
         const std::string key_suffix_tail_block_hash = "tail";
         const std::string key_suffix_consensus_point_block_hash = "consensus";
+
+        static std::string chains_db_name();
+
+        static std::string blocks_db_name(const aux::bytes &chain_id);
+
+        static std::string state_db_name(const aux::bytes &chain_id);
+
+        static std::string state_array_db_name(const aux::bytes &chain_id);
+
+        static std::string peer_db_name(const aux::bytes &chain_id);
 
         // init db, create chains table
         virtual bool init() = 0;

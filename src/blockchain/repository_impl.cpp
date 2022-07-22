@@ -12,16 +12,27 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    namespace {
-        std::string chain_id_to_short_hash(const aux::bytes &chain_id) {
-            // prevent SQL injection
-            sha1_hash hash = hasher(chain_id).final();
-            // 't' + hex(sha1(chain id))
-            return "t" + aux::toHex(hash);
-        }
-    }
+//    namespace {
+//        std::string chain_id_to_short_hash(const aux::bytes &chain_id) {
+//            // prevent SQL injection
+//            sha1_hash hash = hasher(chain_id).final();
+//            // 't' + hex(sha1(chain id))
+//            return "t" + aux::toHex(hash);
+//        }
+//    }
 
     bool repository_impl::init() {
+        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+        sql.append(chains_db_name());
+        sql.append("(CHAIN_ID VARCHAR(32) PRIMARY KEY NOT NULL);");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
         return true;
     }
 
@@ -62,11 +73,32 @@ namespace libTAU::blockchain {
 //    }
 
     bool repository_impl::create_state_array_db(const aux::bytes &chain_id) {
-        return false;
+        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+        sql.append(state_array_db_name(chain_id));
+        sql.append("(HASH CHAR(20) PRIMARY KEY NOT NULL, DATA TEXT);");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     bool repository_impl::delete_state_array_db(const aux::bytes &chain_id) {
-        return false;
+        std::string sql = "DROP TABLE ";
+        sql.append(state_array_db_name(chain_id));
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     state_array repository_impl::get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
@@ -90,11 +122,32 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::create_state_db(const aux::bytes &chain_id) {
-        return false;
+        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+        sql.append(state_db_name(chain_id));
+        sql.append("(PUBKEY CHAR(32) PRIMARY KEY NOT NULL,BALANCE BIGINT,NONCE INT);");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     bool repository_impl::delete_state_db(const aux::bytes &chain_id) {
-        return false;
+        std::string sql = "DROP TABLE ";
+        sql.append(state_db_name(chain_id));
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     bool repository_impl::clear_all_state(const aux::bytes &chain_id) {
@@ -122,11 +175,34 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::create_block_db(const aux::bytes &chain_id) {
-        return false;
+        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+        sql.append(blocks_db_name(chain_id));
+        sql.append("(HASH CHAR(20) PRIMARY KEY NOT NULL,CHAIN_ID VARCHAR(32),VERSION TINYINT,"
+                   "TIMESTAMP BIGINT,NUMBER INT,PREVIOUS_HASH CHAR(20),BASE_TARGET BIGINT,DIFFICULTY BIGINT,"
+                   "GENERATION_SIGNATURE CHAR(20),STATE_ROOT CHAR(20),TX TEXT,MINER CHAR(32),SIGNATURE TEXT);");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     bool repository_impl::delete_block_db(const aux::bytes &chain_id) {
-        return false;
+        std::string sql = "DROP TABLE ";
+        sql.append(blocks_db_name(chain_id));
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     block repository_impl::get_head_block(const aux::bytes &chain_id) {
@@ -170,23 +246,93 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::create_peer_db(const aux::bytes &chain_id) {
-        return false;
+        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+        sql.append(peer_db_name(chain_id));
+        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     bool repository_impl::delete_peer_db(const aux::bytes &chain_id) {
-        return false;
+        std::string sql = "DROP TABLE ";
+        sql.append(peer_db_name(chain_id));
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     dht::public_key repository_impl::get_peer_from_peer_db_randomly(const aux::bytes &chain_id) {
-        return dht::public_key();
+        dht::public_key peer{};
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT PUBKEY FROM ";
+        sql.append(peer_db_name(chain_id));
+        sql.append(" ORDER BY RANDOM() limit 1");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                const unsigned char *pK = sqlite3_column_text(stmt,0);
+                auto length = sqlite3_column_bytes(stmt, 0);
+                std::string value(pK, pK + length);
+                peer = dht::public_key(value.data());
+                break;
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return peer;
     }
 
     bool repository_impl::delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        return false;
+        std::string sql = "DELETE FROM ";
+        sql.append(peer_db_name(chain_id));
+        sql.append(" WHERE PUBKEY=");
+        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
     bool repository_impl::add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        return false;
+        sqlite3_stmt * stmt;
+        std::string sql = "INSERT INTO ";
+        sql.append(peer_db_name(chain_id));
+        sql.append(" VALUES(?)");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+        std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
+        sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
     }
 
 //    bool repository_impl::create_peer_db(const aux::bytes &chain_id) {

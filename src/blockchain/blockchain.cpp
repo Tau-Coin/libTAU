@@ -1039,7 +1039,7 @@ namespace libTAU::blockchain {
                 }
                 m_repository->flush(chain_id);
 
-                put_genesis_block(chain_id, blk, arrays);
+                put_genesis_head_block(chain_id, blk, arrays);
 
                 m_head_blocks[chain_id] = blk;
 
@@ -1069,7 +1069,7 @@ namespace libTAU::blockchain {
             }
             m_repository->flush(chain_id);
 
-            put_genesis_block(chain_id, blk, arrays);
+            put_genesis_head_block(chain_id, blk, arrays);
 
             m_head_blocks[chain_id] = blk;
 
@@ -1523,7 +1523,7 @@ namespace libTAU::blockchain {
                 }
             }
 
-            track->save_non_main_chain_block(blk);
+            track->set_block_non_main_chain(chain_id, blk.sha1());
         }
 
         // connect new branch blocks
@@ -1556,7 +1556,7 @@ namespace libTAU::blockchain {
                 }
             }
 
-            track->save_main_chain_block(blk);
+            track->set_block_main_chain(chain_id, blk.sha1());
         }
 
         if (!track->commit(chain_id)) {
@@ -2227,8 +2227,11 @@ namespace libTAU::blockchain {
                 put_block(chain_id, blk);
                 blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
             }
-            put_block(chain_id, blk);
-            put_all_state(chain_id);
+            sha1_hash stateRoot;
+            std::vector<state_array> stateArrays;
+            get_genesis_state(chain_id, stateRoot, stateArrays);
+            put_block_with_all_state(chain_id, blk, stateArrays);
+            put_head_block_hash(chain_id, blk.sha1());
         }
     }
 
@@ -2270,17 +2273,10 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::put_genesis_block(const bytes &chain_id, const block &blk, const std::vector<state_array> &arrays) {
+    void blockchain::put_genesis_head_block(const bytes &chain_id, const block &blk, const std::vector<state_array> &arrays) {
         if (!blk.empty() && !arrays.empty()) {
+            put_block_with_all_state(chain_id, blk, arrays);
 
-            put_block(chain_id, blk);
-            state_hash_array stateHashArray;
-            std::vector<sha1_hash> hashArray;
-            for (auto const& stateArray: arrays) {
-                hashArray.push_back(stateArray.sha1());
-                put_state_array(chain_id, stateArray);
-            }
-            put_state_hash_array(chain_id, stateHashArray);
             put_head_block_hash(chain_id, blk.sha1());
 
             send_new_head_block_signal(chain_id);
@@ -2303,20 +2299,20 @@ namespace libTAU::blockchain {
         get_state_hash_array(chain_id, peer, hash);
     }
 
-    void blockchain::put_all_state(const bytes &chain_id) {
-        auto all_state_arrays = m_repository->get_all_state_arrays(chain_id);
-        std::vector<sha1_hash> all_hash;
-        for (auto const& states: all_state_arrays) {
-            put_state_array(chain_id, states);
-
-            all_hash.push_back(states.sha1());
-        }
-
-        if (!all_hash.empty()) {
-            state_hash_array hashArray(all_hash);
-            put_state_hash_array(chain_id, hashArray);
-        }
-    }
+//    void blockchain::put_all_state(const bytes &chain_id) {
+//        auto all_state_arrays = m_repository->get_all_state_arrays(chain_id);
+//        std::vector<sha1_hash> all_hash;
+//        for (auto const& states: all_state_arrays) {
+//            put_state_array(chain_id, states);
+//
+//            all_hash.push_back(states.sha1());
+//        }
+//
+//        if (!all_hash.empty()) {
+//            state_hash_array hashArray(all_hash);
+//            put_state_hash_array(chain_id, hashArray);
+//        }
+//    }
 
     void blockchain::get_head_block_hash(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
         // salt is x pubkey when request signal
@@ -2384,6 +2380,20 @@ namespace libTAU::blockchain {
 
             log(LOG_INFO, "INFO: Chain id[%s] Cache block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, blk.get_entry());
+        }
+    }
+
+    void blockchain::put_block_with_all_state(const bytes &chain_id, const block &blk, const std::vector<state_array> &arrays) {
+        if (!blk.empty() && !arrays.empty()) {
+
+            put_block(chain_id, blk);
+            state_hash_array stateHashArray;
+            std::vector<sha1_hash> hashArray;
+            for (auto const& stateArray: arrays) {
+                hashArray.push_back(stateArray.sha1());
+                put_state_array(chain_id, stateArray);
+            }
+            put_state_hash_array(chain_id, stateHashArray);
         }
     }
 

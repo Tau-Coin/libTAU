@@ -217,6 +217,10 @@ namespace blockchain {
         // return ban list
         std::set<dht::public_key> get_ban_list(const aux::bytes &chain_id);
 
+        void request_chain_data(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void put_all_chain_data(const aux::bytes &chain_id);
+
         // return access list
 //        std::set<dht::public_key> get_gossip_peers(const aux::bytes &chain_id);
 
@@ -402,10 +406,6 @@ namespace blockchain {
 
 //        void put_voting_block(const aux::bytes &chain_id, const block &blk);
 
-        void request_chain_data(const aux::bytes &chain_id, const dht::public_key& peer);
-
-        void put_all_chain_data(const aux::bytes &chain_id);
-
         void send_online_signal(const aux::bytes &chain_id);
 
         void send_new_head_block_signal(const aux::bytes &chain_id);
@@ -416,7 +416,7 @@ namespace blockchain {
 
         void put_head_block(const aux::bytes &chain_id, const block &blk);
 
-        void put_genesis_block(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
+        void put_genesis_head_block(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
         void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
@@ -424,7 +424,7 @@ namespace blockchain {
 
         void get_all_state_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
-        void put_all_state(const aux::bytes &chain_id);
+//        void put_all_state(const aux::bytes &chain_id);
 
         void get_head_block_hash(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
@@ -441,6 +441,8 @@ namespace blockchain {
         void get_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
         void put_block(const aux::bytes &chain_id, const block &blk);
+
+        void put_block_with_all_state(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
         void get_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 

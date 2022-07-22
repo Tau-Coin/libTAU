@@ -11,6 +11,38 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
+    std::string repository::chains_db_name() {
+        return "t" + table_chains;
+    }
+
+    std::string repository::blocks_db_name(const aux::bytes &chain_id) {
+        // prevent SQL injection
+        sha1_hash hash = hasher(chain_id).final();
+        // 't' + hex(sha1(chain id))
+        return "t" + aux::toHex(hash) + table_blocks;
+    }
+
+    std::string repository::state_db_name(const aux::bytes &chain_id) {
+        // prevent SQL injection
+        sha1_hash hash = hasher(chain_id).final();
+        // 't' + hex(sha1(chain id))
+        return "t" + aux::toHex(hash) + table_state;
+    }
+
+    std::string repository::state_array_db_name(const aux::bytes &chain_id) {
+        // prevent SQL injection
+        sha1_hash hash = hasher(chain_id).final();
+        // 't' + hex(sha1(chain id))
+        return "t" + aux::toHex(hash) + table_state_array;
+    }
+
+    std::string repository::peer_db_name(const aux::bytes &chain_id) {
+        // prevent SQL injection
+        sha1_hash hash = hasher(chain_id).final();
+        // 't' + hex(sha1(chain id))
+        return "t" + aux::toHex(hash) + table_peer;
+    }
+
     bool repository::save_main_chain_block(const block &blk) {
         return save_block(blk, true);
     }
