@@ -49,14 +49,14 @@ namespace blockchain {
               m_generation_signature(mGenerationSignature), m_state_root(mStateRoot),
               m_tx(std::move(mTx)), m_miner(mMiner) {}
 
-        block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
-              const sha1_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
-              const sha1_hash &mGenerationSignature, const sha1_hash &mStateRoot, transaction mTx,
-              const dht::public_key &mMiner, udp::endpoint mEndpoint) : m_chain_id(std::move(mChainId)),
-              m_version(mVersion), m_timestamp(mTimestamp), m_block_number(mBlockNumber),
-              m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
-              m_cumulative_difficulty(mCumulativeDifficulty), m_generation_signature(mGenerationSignature),
-              m_state_root(mStateRoot), m_tx(std::move(mTx)), m_miner(mMiner), m_endpoint(std::move(mEndpoint)) {}
+//        block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
+//              const sha1_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
+//              const sha1_hash &mGenerationSignature, const sha1_hash &mStateRoot, transaction mTx,
+//              const dht::public_key &mMiner, udp::endpoint mEndpoint) : m_chain_id(std::move(mChainId)),
+//              m_version(mVersion), m_timestamp(mTimestamp), m_block_number(mBlockNumber),
+//              m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
+//              m_cumulative_difficulty(mCumulativeDifficulty), m_generation_signature(mGenerationSignature),
+//              m_state_root(mStateRoot), m_tx(std::move(mTx)), m_miner(mMiner), m_endpoint(std::move(mEndpoint)) {}
 
         const aux::bytes &chain_id() const { return m_chain_id; }
 
@@ -92,7 +92,7 @@ namespace blockchain {
 //
 //        int64_t receiver_nonce() const { return m_receiver_nonce; }
 
-        const udp::endpoint &end_point() const { return m_endpoint; }
+//        const udp::endpoint &end_point() const { return m_endpoint; }
 
         const dht::signature &signature() const { return m_signature; }
 
@@ -188,7 +188,7 @@ namespace blockchain {
 //        // receiver nonce
 //        std::int64_t m_receiver_nonce{};
 
-        udp::endpoint m_endpoint;
+//        udp::endpoint m_endpoint;
 
         // signature
         dht::signature m_signature{};

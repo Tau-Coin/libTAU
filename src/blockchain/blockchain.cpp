@@ -661,22 +661,15 @@ namespace libTAU::blockchain {
                                 tx = m_tx_pools[chain_id].get_latest_note_transaction();
                             }
 
-                            auto ep = m_ses.external_udp_endpoint();
+//                            auto ep = m_ses.external_udp_endpoint();
                             // mine block with current time instead of (head_block.timestamp() + interval)
                             if (head_block.block_number() + 1 % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                                block b;
                                 sha1_hash stateRoot;
                                 std::vector<state_array> stateArrays;
                                 get_genesis_state(chain_id, stateRoot, stateArrays);
-                                if (ep.port() != 0) {
-                                    b = block(chain_id, block_version::block_version1, current_time,
-                                              head_block.block_number() + 1, head_block.sha1(), base_target,
-                                              cumulative_difficulty, genSig, stateRoot, tx, *pk, ep);
-                                } else {
-                                    b = block(chain_id, block_version::block_version1, current_time,
-                                              head_block.block_number() + 1, head_block.sha1(), base_target,
-                                              cumulative_difficulty, genSig, stateRoot, tx, *pk);
-                                }
+                                block b = block(chain_id, block_version::block_version1, current_time,
+                                          head_block.block_number() + 1, head_block.sha1(), base_target,
+                                          cumulative_difficulty, genSig, stateRoot, tx, *pk);
 
                                 b.sign(*pk, *sk);
 
@@ -686,16 +679,9 @@ namespace libTAU::blockchain {
 
                                 process_genesis_block(chain_id, b, stateArrays);
                             } else {
-                                block b;
-                                if (ep.port() != 0) {
-                                    b = block(chain_id, block_version::block_version1, current_time,
-                                              head_block.block_number() + 1, head_block.sha1(), base_target,
-                                              cumulative_difficulty, genSig, head_block.state_root(), tx, *pk, ep);
-                                } else {
-                                    b = block(chain_id, block_version::block_version1, current_time,
-                                              head_block.block_number() + 1, head_block.sha1(), base_target,
-                                              cumulative_difficulty, genSig, head_block.state_root(), tx, *pk);
-                                }
+                                block b = block(chain_id, block_version::block_version1, current_time,
+                                          head_block.block_number() + 1, head_block.sha1(), base_target,
+                                          cumulative_difficulty, genSig, head_block.state_root(), tx, *pk);
 
                                 b.sign(*pk, *sk);
 
@@ -2840,7 +2826,7 @@ namespace libTAU::blockchain {
 
         std::int64_t total_balance = 0;
 
-        auto ep = m_ses.external_udp_endpoint();
+//        auto ep = m_ses.external_udp_endpoint();
 
         // TODO:: shiwu
         for (auto const &act: accounts) {
@@ -2857,14 +2843,8 @@ namespace libTAU::blockchain {
 
         std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
 
-        block b;
-        if (ep.port() != 0) {
-            b = block(chain_id, block_version::block_version1, now, 0, sha1_hash(),
-                      GENESIS_BASE_TARGET, 0, genSig, stateRoot, transaction(), *pk, ep);
-        } else {
-            b = block(chain_id, block_version::block_version1, now, 0, sha1_hash(),
-                      GENESIS_BASE_TARGET, 0, genSig, stateRoot, transaction(), *pk);
-        }
+        block b = block(chain_id, block_version::block_version1, now, 0, sha1_hash(),
+                  GENESIS_BASE_TARGET, 0, genSig, stateRoot, transaction(), *pk);
 
         b.sign(*pk, *sk);
 
