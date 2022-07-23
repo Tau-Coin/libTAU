@@ -16,6 +16,7 @@ see LICENSE file.
 #include "libTAU/blockchain/index_key_info.hpp"
 #include "libTAU/blockchain/account.hpp"
 #include "libTAU/blockchain/block.hpp"
+#include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/state_array.hpp"
 #include "libTAU/blockchain/state_linker.hpp"
 #include "libTAU/blockchain/account_block_pointer.hpp"
@@ -140,7 +141,7 @@ namespace libTAU::blockchain {
 
         virtual block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
 
-        virtual bool delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
+        virtual bool delete_all_blocks_less_than_number(const aux::bytes &chain_id, std::int64_t block_number) = 0;
 
         virtual bool set_block_non_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 

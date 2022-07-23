@@ -96,7 +96,24 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::delete_chain(const aux::bytes &chain_id) {
-        return false;
+        sqlite3_stmt * stmt;
+        std::string sql = "DELETE FROM ";
+        sql.append(chains_db_name());
+        sql.append(" WHERE CHAIN_ID=?");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+        std::string id(chain_id.begin(), chain_id.end());
+        sqlite3_bind_text(stmt, 1, id.c_str(), id.size(), nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
     }
 
 //    bool repository_impl::set_head_block_hash(const aux::bytes &chain_id, const sha256_hash &hash) {
@@ -211,17 +228,21 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::delete_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+        sqlite3_stmt * stmt;
         std::string sql = "DELETE FROM ";
         sql.append(state_array_db_name(chain_id));
-        sql.append(" WHERE HASH=");
-        sql.append(hash.to_string());
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        sql.append(" WHERE HASH=?");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
             return false;
         }
+        sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
 
         return true;
     }
@@ -256,15 +277,19 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::clear_all_state(const aux::bytes &chain_id) {
+        sqlite3_stmt * stmt;
         std::string sql = "DELETE * FROM ";
-        sql.append(state_db_name(chain_id));
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        sql.append(state_array_db_name(chain_id));
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
             return false;
         }
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
 
         return true;
     }
@@ -318,27 +343,77 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        sqlite3_stmt * stmt;
         std::string sql = "DELETE FROM ";
         sql.append(state_db_name(chain_id));
-        sql.append(" WHERE PUBKEY=");
-        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        sql.append(" WHERE PUBKEY=?");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
             return false;
         }
+        sqlite3_bind_text(stmt, 1, std::string(pubKey.bytes.begin(), pubKey.bytes.end()).c_str(), dht::public_key::len, nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
 
         return true;
     }
 
     std::vector<account> repository_impl::get_all_effective_state(const aux::bytes &chain_id) {
-        return std::vector<account>();
+        std::vector<account> accounts;
+        account act;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT * FROM ";
+        sql.append(state_db_name(chain_id));
+        sql.append(" ORDER BY BALANCE DESC LIMIT ?");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            sqlite3_bind_int(stmt, 1, MAX_ACCOUNT_SIZE);
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                const unsigned char *pK = sqlite3_column_text(stmt,0);
+                auto length = sqlite3_column_bytes(stmt, 0);
+                std::string value(pK, pK + length);
+                dht::public_key peer(value.data());
+
+                std::int64_t balance = sqlite3_column_int64(stmt, 1);
+                std::int64_t nonce = sqlite3_column_int64(stmt, 2);
+
+                accounts.emplace_back(peer, balance, nonce);
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return accounts;
     }
 
     dht::public_key repository_impl::get_peer_from_state_db_randomly(const aux::bytes &chain_id) {
-        return dht::public_key();
+        dht::public_key peer{};
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT PUBKEY FROM ";
+        sql.append(peer_db_name(chain_id));
+        sql.append(" ORDER BY RANDOM() limit 1");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                const unsigned char *pK = sqlite3_column_text(stmt,0);
+                auto length = sqlite3_column_bytes(stmt, 0);
+                std::string value(pK, pK + length);
+                peer = dht::public_key(value.data());
+                break;
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return peer;
     }
 
     bool repository_impl::create_block_db(const aux::bytes &chain_id) {
@@ -373,7 +448,62 @@ namespace libTAU::blockchain {
     }
 
     block repository_impl::get_head_block(const aux::bytes &chain_id) {
-        return block();
+        block blk;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT CHAIN_ID,VERSION,TIMESTAMP,NUMBER,PREVIOUS_HASH,BASE_TARGET,DIFFICULTY,GENERATION_SIGNATURE,STATE_ROOT,TX,MINER,SIGNATURE,HASH FROM ";
+        sql.append(blocks_db_name(chain_id));
+        sql.append(" WHERE MAIN_CHAIN=1 ORDER BY NUMBER DESC");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                const unsigned char *p = sqlite3_column_text(stmt,0);
+                auto length = sqlite3_column_bytes(stmt, 0);
+                aux::bytes chainID(p, p + length);
+
+                auto version = static_cast<block_version>(sqlite3_column_int(stmt, 1));
+
+                std::int64_t timestamp = sqlite3_column_int64(stmt, 2);
+                std::int64_t number = sqlite3_column_int64(stmt, 3);
+
+                p = sqlite3_column_text(stmt,4);
+                std::string preHash(p, p + libTAU::sha1_hash::size());
+                sha1_hash previous_hash(preHash.c_str());
+
+                auto base_target = static_cast<std::uint64_t>(sqlite3_column_int64(stmt, 5));
+                auto difficulty = static_cast<std::uint64_t>(sqlite3_column_int64(stmt, 6));
+
+                p = sqlite3_column_text(stmt,7);
+                std::string gen_sig(p, p + libTAU::sha1_hash::size());
+                sha1_hash generation_signature(gen_sig.c_str());
+
+                p = sqlite3_column_text(stmt,8);
+                std::string root(p, p + libTAU::sha1_hash::size());
+                sha1_hash state_root(root.c_str());
+
+                p = sqlite3_column_text(stmt,9);
+                length = sqlite3_column_bytes(stmt, 9);
+                std::string tx_encode(p, p + length);
+                transaction tx(tx_encode);
+
+                p = sqlite3_column_text(stmt,10);
+                dht::public_key miner(std::string(p, p + dht::public_key::len).c_str());
+
+                p = sqlite3_column_text(stmt,11);
+                dht::signature sig(std::string(p, p + dht::signature::len).c_str());
+
+                p = sqlite3_column_text(stmt,12);
+                sha1_hash hash(std::string(p, p + libTAU::sha1_hash::size()).c_str());
+
+                blk = block(chainID, version, timestamp, number, previous_hash, base_target, difficulty, generation_signature, state_root, tx, miner, sig, hash);
+                break;
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return blk;
     }
 
     block repository_impl::get_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
@@ -474,17 +604,21 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::delete_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+        sqlite3_stmt * stmt;
         std::string sql = "DELETE FROM ";
         sql.append(blocks_db_name(chain_id));
-        sql.append(" WHERE HASH=");
-        sql.append(hash.to_string());
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        sql.append(" WHERE HASH=?");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
             return false;
         }
+        sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
 
         return true;
     }
@@ -495,12 +629,11 @@ namespace libTAU::blockchain {
         sqlite3_stmt * stmt;
         std::string sql = "SELECT CHAIN_ID,VERSION,TIMESTAMP,NUMBER,PREVIOUS_HASH,BASE_TARGET,DIFFICULTY,GENERATION_SIGNATURE,STATE_ROOT,TX,MINER,SIGNATURE,HASH FROM ";
         sql.append(blocks_db_name(chain_id));
-        sql.append(" WHERE NUMBER=? AND MAIN_CHAIN=?");
+        sql.append(" WHERE NUMBER=? AND MAIN_CHAIN=1");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
             sqlite3_bind_int64(stmt, 1, block_number);
-            sqlite3_bind_int(stmt, 2, 1);
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
                 const unsigned char *p = sqlite3_column_text(stmt,0);
                 auto length = sqlite3_column_bytes(stmt, 0);
@@ -550,20 +683,83 @@ namespace libTAU::blockchain {
         return blk;
     }
 
-    bool repository_impl::delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
-        return false;
+    bool repository_impl::delete_all_blocks_less_than_number(const aux::bytes &chain_id, std::int64_t block_number) {
+        sqlite3_stmt * stmt;
+        std::string sql = "DELETE FROM ";
+        sql.append(blocks_db_name(chain_id));
+        sql.append(" WHERE NUMBER<=?");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+        sqlite3_bind_int64(stmt, 1, block_number);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
     }
 
     bool repository_impl::set_block_non_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) {
-        return false;
+        sqlite3_stmt * stmt;
+        std::string sql = "UPDATE ";
+        sql.append(blocks_db_name(chain_id));
+        sql.append(" SET MAIN_CHAIN=1 WHERE HASH=?");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+        sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
     }
 
     bool repository_impl::set_block_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) {
-        return false;
+        sqlite3_stmt * stmt;
+        std::string sql = "UPDATE ";
+        sql.append(blocks_db_name(chain_id));
+        sql.append(" SET MAIN_CHAIN=0 WHERE HASH=?");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+        sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
     }
 
     bool repository_impl::set_all_block_non_main_chain(const aux::bytes &chain_id) {
-        return false;
+        sqlite3_stmt * stmt;
+        std::string sql = "UPDATE ";
+        sql.append(blocks_db_name(chain_id));
+        sql.append(" SET MAIN_CHAIN=0");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
     }
 
     bool repository_impl::create_peer_db(const aux::bytes &chain_id) {
@@ -620,17 +816,21 @@ namespace libTAU::blockchain {
     }
 
     bool repository_impl::delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        sqlite3_stmt * stmt;
         std::string sql = "DELETE FROM ";
         sql.append(peer_db_name(chain_id));
-        sql.append(" WHERE PUBKEY=");
-        sql.append(std::string(pubKey.bytes.begin(), pubKey.bytes.end()));
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        sql.append(" WHERE PUBKEY=?");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
             return false;
         }
+        sqlite3_bind_text(stmt, 1, std::string(pubKey.bytes.begin(), pubKey.bytes.end()).c_str(), dht::public_key::len, nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
 
         return true;
     }

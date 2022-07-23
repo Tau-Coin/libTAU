@@ -134,7 +134,7 @@ namespace libTAU::blockchain {
         return block();
     }
 
-    bool repository_track::delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) {
+    bool repository_track::delete_all_blocks_less_than_number(const aux::bytes &chain_id, std::int64_t block_number) {
         return false;
     }
 

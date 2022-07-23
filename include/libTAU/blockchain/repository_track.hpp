@@ -81,7 +81,7 @@ namespace libTAU::blockchain {
 
         block get_main_chain_block_by_number(const aux::bytes &chain_id, std::int64_t block_number) override;
 
-        bool delete_blocks_by_number(const aux::bytes &chain_id, std::int64_t block_number) override;
+        bool delete_all_blocks_less_than_number(const aux::bytes &chain_id, std::int64_t block_number) override;
 
         bool set_block_non_main_chain(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
