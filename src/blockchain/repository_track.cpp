@@ -62,10 +62,6 @@ namespace libTAU::blockchain {
         return state_array(libTAU::entry());
     }
 
-    std::vector<state_array> repository_track::get_all_state_arrays(const aux::bytes &chain_id) {
-        return std::vector<state_array>();
-    }
-
     bool repository_track::is_state_array_in_db(const aux::bytes &chain_id, const sha1_hash &hash) {
         return false;
     }
@@ -123,10 +119,6 @@ namespace libTAU::blockchain {
     }
 
     block repository_track::get_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
-        return block();
-    }
-
-    block repository_track::get_block_by_number(const aux::bytes &chain_id, int64_t block_number) {
         return block();
     }
 

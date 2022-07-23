@@ -49,6 +49,16 @@ namespace blockchain {
               m_generation_signature(mGenerationSignature), m_state_root(mStateRoot),
               m_tx(std::move(mTx)), m_miner(mMiner) {}
 
+        block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
+              const sha1_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
+              const sha1_hash &mGenerationSignature, const sha1_hash &mStateRoot, transaction mTx,
+              const dht::public_key &mMiner, const dht::signature &mSignature, const sha1_hash &mHash) :
+                m_chain_id(std::move(mChainId)), m_version(mVersion), m_timestamp(mTimestamp),
+                m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
+                m_cumulative_difficulty(mCumulativeDifficulty), m_generation_signature(mGenerationSignature),
+                m_state_root(mStateRoot), m_tx(std::move(mTx)), m_miner(mMiner), m_signature(mSignature),
+                m_hash(mHash) {}
+
 //        block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
 //              const sha1_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
 //              const sha1_hash &mGenerationSignature, const sha1_hash &mStateRoot, transaction mTx,

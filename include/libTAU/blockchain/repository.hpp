@@ -98,8 +98,6 @@ namespace libTAU::blockchain {
 
         virtual state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
-        virtual std::vector<state_array> get_all_state_arrays(const aux::bytes &chain_id) = 0;
-
         virtual bool is_state_array_in_db(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         virtual bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) = 0;
@@ -131,8 +129,6 @@ namespace libTAU::blockchain {
         virtual block get_head_block(const aux::bytes &chain_id) = 0;
 
         virtual block get_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
-
-        virtual block get_block_by_number(const aux::bytes &chain_id, int64_t block_number) = 0;
 
         virtual bool save_block(const block &blk, bool is_main_chain) = 0;
 

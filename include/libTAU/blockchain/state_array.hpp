@@ -21,6 +21,8 @@ namespace libTAU {
     namespace blockchain {
         class state_array {
         public:
+            state_array() = default;
+
             // @param Construct with entry
             explicit state_array(const entry& e);
 
@@ -31,6 +33,8 @@ namespace libTAU {
                 auto encode = get_encode();
                 m_hash = hasher(encode).final();
             }
+
+            void setStateArray(const std::vector<account> &mStateArray) { m_state_array = mStateArray; }
 
             const std::vector<account> &StateArray() const { return m_state_array; }
 
