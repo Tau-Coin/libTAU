@@ -1797,5 +1797,19 @@ namespace {
 #endif
     }
 
+    blockchain_fail_to_get_chain_data_alert::blockchain_fail_to_get_chain_data_alert(aux::stack_allocator&
+            , aux::bytes id)
+            : chain_id(std::move(id))
+    {}
+
+    std::string blockchain_fail_to_get_chain_data_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        return "Alert: chain:" + aux::toHex(chain_id) + " fail to get chain data";
+#endif
+    }
+
 
 } // namespace libTAU

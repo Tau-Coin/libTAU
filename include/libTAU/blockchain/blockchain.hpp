@@ -181,6 +181,9 @@ namespace blockchain {
         // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
+        // start chain
+        bool start_chain(const aux::bytes &chain_id);
+
         // add new bootstrap peers
         bool add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
@@ -279,9 +282,6 @@ namespace blockchain {
 
         // load chain all info
 //        bool load_chain(const aux::bytes &chain_id);
-
-        // start chain
-        bool start_chain(const aux::bytes &chain_id);
 
         // reset chain status
         void reset_chain_status(const aux::bytes &chain_id);

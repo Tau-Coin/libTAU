@@ -66,7 +66,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 57;
+	constexpr int num_alert_types = 58;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1504,6 +1504,21 @@ namespace libTAU {
 
         // state from peers.
         std::vector<libTAU::blockchain::account> accounts;
+    };
+
+    // this alert is posted when fail to get chain data from peers.
+    struct TORRENT_EXPORT blockchain_fail_to_get_chain_data_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_fail_to_get_chain_data_alert(aux::stack_allocator& alloc, aux::bytes id);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_fail_to_get_chain_data_alert, 57, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        aux::bytes chain_id;
     };
 
 #undef TORRENT_DEFINE_ALERT_IMPL
