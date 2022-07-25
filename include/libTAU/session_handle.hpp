@@ -402,6 +402,12 @@ namespace libTAU {
 		// get chain state 
         void request_chain_state(std::vector<char> chain_id);
 
+		// get chain data 
+        void request_chain_data(std::vector<char> chain_id, dht::public_key publicKey);
+
+		// put chain data 
+        void put_all_chain_data(std::vector<char> chain_id);
+
 		// get current session system time
         std::int64_t get_session_time();
 

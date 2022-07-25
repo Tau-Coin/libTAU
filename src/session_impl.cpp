@@ -3469,6 +3469,18 @@ namespace {
     */
 	}
 
+	void session_impl::request_chain_data(const aux::bytes &chain_id, const dht::public_key &peer) {
+		if(m_blockchain) {
+			return m_blockchain->request_chain_data(chain_id, peer);
+		}
+	}
+
+	void session_impl::put_all_chain_data(const aux::bytes &chain_id) {
+		if(m_blockchain) {
+			return m_blockchain->put_all_chain_data(chain_id);
+		}
+	}
+
 	void session_impl::set_dht_state(dht::dht_state&& state)
 	{
 		m_dht_state = std::move(state);
@@ -4132,6 +4144,8 @@ namespace {
             m_blockchain->on_dht_relay(from, payload);
         }
 	}
+
+
 
 	sqlite3* session_impl::get_items_database()
 	{

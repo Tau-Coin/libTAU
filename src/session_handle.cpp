@@ -440,6 +440,18 @@ namespace libTAU {
 		return sync_call(&session_impl::request_chain_state, chain_id);
 	}
 
+	// get chain data
+    void session_handle::request_chain_data(std::vector<char> chain_id, dht::public_key pub_key)
+	{
+		return sync_call(&session_impl::request_chain_data, chain_id, pub_key);
+	}
+
+	// put chain data
+    void session_handle::put_all_chain_data(std::vector<char> chain_id)
+	{
+		return sync_call(&session_impl::put_all_chain_data, chain_id);
+	}
+
 	// get current time
 	std::int64_t session_handle::get_session_time()
 	{

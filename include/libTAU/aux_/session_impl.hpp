@@ -705,6 +705,10 @@ namespace aux {
 
         	void request_chain_state(const aux::bytes &chain_id);
 
+        	void request_chain_data(const aux::bytes &chain_id, const dht::public_key &peer);
+
+        	void put_all_chain_data(const aux::bytes &chain_id);
+
 			std::int64_t session_current_time_ms() const
 			{
 				return m_session_time;
