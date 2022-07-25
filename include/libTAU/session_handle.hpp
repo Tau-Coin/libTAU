@@ -361,6 +361,10 @@ namespace libTAU {
         bool add_new_bootstrap_peers(std::vector<char> chain_id, const std::set<dht::public_key>& peers);
 		// unfollow chain
         bool unfollow_chain(std::vector<char> chain_id);
+
+		// start chain
+        bool start_chain(std::vector<char> chain_id);
+
 		// submit transaction
         bool submit_transaction(const blockchain::transaction & tx);
 		// get account info

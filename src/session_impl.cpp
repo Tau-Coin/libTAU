@@ -3365,6 +3365,12 @@ namespace {
 		return false;
 	}
 
+	bool session_impl::start_chain(const aux::bytes &chain_id) {
+		if(m_blockchain)
+			return m_blockchain->start_chain(chain_id);
+		return false;
+	}
+
 	bool session_impl::submit_transaction(const blockchain::transaction & tx) {
 		if(m_blockchain)
 			return m_blockchain->submitTransaction(tx);

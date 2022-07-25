@@ -352,6 +352,12 @@ namespace libTAU {
 		return sync_call_ret<bool>(&session_impl::unfollow_chain, chain_id);
 	}
 
+	// start chain
+    bool session_handle::start_chain(std::vector<char> chain_id)
+	{
+		return sync_call_ret<bool>(&session_impl::start_chain, chain_id);
+	}
+
 	// submit transaction
     bool session_handle::submit_transaction(const blockchain::transaction & tx)
 	{
