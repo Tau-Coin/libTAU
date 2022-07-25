@@ -39,36 +39,34 @@ namespace blockchain {
     using system_clock = std::chrono::system_clock;
 
     // default refresh time of main task(2000)(ms)
-    constexpr int blockchain_default_refresh_time = 2000;
+//    constexpr int blockchain_default_refresh_time = 2000;
 
     // max tx list size
     constexpr int blockchain_max_tx_list_size = 10;
 
     // chain status reset interval(s)
-    constexpr int blockchain_status_reset_interval = 60 * 60;
+//    constexpr int blockchain_status_reset_interval = 60 * 60;
 
     // min response interval to the same request(2s)
 //    constexpr int blockchain_same_response_interval = 2 * 1000;
 
-    // blockchain get timeout(2500ms)
-    constexpr std::int64_t blockchain_get_timeout = 2 * 1000 + 500;
-
     // blockchain min peers in acl
-    constexpr std::int64_t blockchain_acl_min_peers = 2;
+//    constexpr std::int64_t blockchain_acl_min_peers = 2;
 
     // blockchain max peers in acl
     constexpr std::int64_t blockchain_acl_max_peers = 16;
 
+    // blockchain max getting times
+    constexpr std::int64_t blockchain_max_getting_times = 10;
+
     // blockchain min ban time(5min)
-    constexpr std::int64_t blockchain_min_ban_time = 5 * 60 * 1000;
+//    constexpr std::int64_t blockchain_min_ban_time = 5 * 60 * 1000;
 
     // blockchain max ban time(30min)
-    constexpr std::int64_t blockchain_max_ban_time = 30 * 60 * 1000;
+//    constexpr std::int64_t blockchain_max_ban_time = 30 * 60 * 1000;
 
     // pool key suffix
     const std::string key_suffix_pool_root = "pool_root";
-    // time pool key suffix
-//    const std::string key_suffix_time_pool_root = "time_pool_root";
     // head block key suffix
     const std::string key_suffix_head_block_hash = "head_block_hash";
     // state root key suffix
@@ -283,13 +281,13 @@ namespace blockchain {
 //        bool load_chain(const aux::bytes &chain_id);
 
         // reset chain status
-        void reset_chain_status(const aux::bytes &chain_id);
+//        void reset_chain_status(const aux::bytes &chain_id);
 
 //        void try_to_get_again();
 
-        void manage_peers_in_acl_ban_list(const aux::bytes &chain_id);
+//        void manage_peers_in_acl_ban_list(const aux::bytes &chain_id);
 
-        void add_and_access_peers_in_acl(const aux::bytes &chain_id);
+//        void add_and_access_peers_in_acl(const aux::bytes &chain_id);
 
         // select a peer randomly
         dht::public_key select_peer_randomly(const aux::bytes &chain_id);
@@ -327,7 +325,7 @@ namespace blockchain {
         // check if a block in cache or db
 //        bool is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash);
 
-        void try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key& peer);
 
 //        void ban_peer(const aux::bytes &chain_id, const dht::public_key& peer);
 
@@ -491,7 +489,7 @@ namespace blockchain {
 //                                          std::int8_t alpha, std::int8_t beta, std::int8_t invoke_limit
 //                                          , std::string salt, const dht::public_key &peer, bool cache);
 
-        void print_acl_ban_list_info(aux::bytes const& chain_id);
+        void print_acl_info(aux::bytes const& chain_id);
 
         void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
@@ -515,7 +513,7 @@ namespace blockchain {
         counters& m_counters;
 
         // refresh time interval
-        int m_refresh_time = blockchain_default_refresh_time;
+//        int m_refresh_time = blockchain_default_refresh_time;
 
         // deadline timer
         aux::deadline_timer m_refresh_timer;
@@ -545,12 +543,12 @@ namespace blockchain {
         // short chain id table<short chain id, chain id>
         std::map<aux::bytes, aux::bytes> m_short_chain_id_table;
 
-        std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
+        std::map<aux::bytes, int> m_chain_getting_times;
+
+//        std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
         // Forwarding list
         std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_access_list;
-
-        std::map<aux::bytes, std::map<dht::public_key, ban_info>> m_ban_list;
 
         // last get time(chain id <--> (peer <--> (salt <-->last get time)))
         std::map<aux::bytes, std::map<dht::public_key, std::map<std::string, std::int64_t>>> m_last_get_time;

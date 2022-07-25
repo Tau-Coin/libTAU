@@ -93,7 +93,6 @@ namespace libTAU::blockchain {
         log(LOG_INFO, "INFO: Change account..");
 
         m_access_list.clear();
-        m_ban_list.clear();
     }
 
     void blockchain::on_pause() {
@@ -308,6 +307,8 @@ namespace libTAU::blockchain {
         }
         m_short_chain_id_table[short_chain_id] = chain_id;
 
+        m_chain_getting_times[chain_id] = 0;
+
         peer_preparation(chain_id);
 
         // create tx pool
@@ -365,8 +366,8 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::manage_peers_in_acl_ban_list(const aux::bytes &chain_id) {
-        auto now = get_total_milliseconds();
+//    void blockchain::manage_peers_in_acl_ban_list(const aux::bytes &chain_id) {
+//        auto now = get_total_milliseconds();
 
         // calc score
 //        auto &acl = m_access_list[chain_id];
@@ -407,41 +408,30 @@ namespace libTAU::blockchain {
 //
 //            acl.erase(min_it);
 //        }
-    }
+//    }
 
-    void blockchain::add_and_access_peers_in_acl(const aux::bytes &chain_id) {
-        auto now = get_total_milliseconds();
-
-        auto &acl = m_access_list[chain_id];
-        auto size = acl.size();
-        if (size < blockchain_acl_min_peers) {
-            std::set<dht::public_key> peers;
-            for (auto i = blockchain_acl_min_peers - size; i > 0; i--) {
-                auto peer = select_peer_randomly(chain_id);
-//              log("INFO: Chain[%s] select peer[%s]", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
-                // if peer is not in acl, not been banned
-                if (!peer.is_all_zeros() &&
-                    acl.find(peer) == acl.end() & peer != *m_ses.pubkey()) {
-                    auto &ban_list = m_ban_list[chain_id];
-                    auto it = ban_list.find(peer);
-                    if (it != ban_list.end()) {
-                        if (it->second.m_free_time > now) {
-                            // peer is still banned
-//                          log("INFO: Chain[%s] peer[%s] is in ban list", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
-                            continue;
-                        } else {
-                            ban_list.erase(it);
-                        }
-                    }
-                    peers.insert(peer);
-                }
-            }
-
-            // all peers those added into acl should request head block
-            for (auto const &peer: peers) {
-                acl[peer] = peer_info();
-            }
-        }
+//    void blockchain::add_and_access_peers_in_acl(const aux::bytes &chain_id) {
+//        auto now = get_total_milliseconds();
+//
+//        auto &acl = m_access_list[chain_id];
+//        auto size = acl.size();
+//        if (size < blockchain_acl_min_peers) {
+//            std::set<dht::public_key> peers;
+//            for (auto i = blockchain_acl_min_peers - size; i > 0; i--) {
+//                auto peer = select_peer_randomly(chain_id);
+////              log("INFO: Chain[%s] select peer[%s]", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+//                // if peer is not in acl, not been banned
+//                if (!peer.is_all_zeros() &&
+//                    acl.find(peer) == acl.end() & peer != *m_ses.pubkey()) {
+//                    peers.insert(peer);
+//                }
+//            }
+//
+//            // all peers those added into acl should request head block
+//            for (auto const &peer: peers) {
+//                acl[peer] = peer_info();
+//            }
+//        }
 
         // check if need to request on current stage
 //        for (auto &item: acl) {
@@ -481,7 +471,7 @@ namespace libTAU::blockchain {
 //                }
 //            }
 //        }
-    }
+//    }
 
     std::int64_t blockchain::get_total_milliseconds() {
         return total_milliseconds(system_clock::now().time_since_epoch());
@@ -494,11 +484,10 @@ namespace libTAU::blockchain {
     void blockchain::clear_all_cache() {
         m_chains.clear();
         m_tx_pools.clear();
-        m_chain_status.clear();
+//        m_chain_status.clear();
         m_chain_timers.clear();
 //        m_chain_status_timers.clear();
         m_access_list.clear();
-        m_ban_list.clear();
 //        m_blocks.clear();
         m_head_blocks.clear();
 //        m_gossip_peers.clear();
@@ -507,11 +496,10 @@ namespace libTAU::blockchain {
     void blockchain::clear_chain_cache(const aux::bytes &chain_id) {
 //        m_chains.erase(chain_id);
         m_tx_pools[chain_id].clear();
-        m_chain_status.erase(chain_id);
+//        m_chain_status.erase(chain_id);
         m_chain_timers.erase(chain_id);
 //        m_chain_status_timers.erase(chain_id);
         m_access_list.erase(chain_id);
-        m_ban_list.erase(chain_id);
 //        m_blocks[chain_id].clear();
         m_head_blocks.erase(chain_id);
 //        m_gossip_peers[chain_id].clear();
@@ -580,9 +568,9 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::reset_chain_status(const aux::bytes &chain_id) {
-        m_chain_status[chain_id] = GET_GOSSIP_PEERS;
-    }
+//    void blockchain::reset_chain_status(const aux::bytes &chain_id) {
+//        m_chain_status[chain_id] = GET_GOSSIP_PEERS;
+//    }
 
 //    void blockchain::refresh_chain_status(const error_code &e, const aux::bytes &chain_id) {
 //        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
@@ -609,7 +597,7 @@ namespace libTAU::blockchain {
         }
 
         try {
-            log(LOG_INFO, "INFO: 1. Chain[%s] status[%d]", aux::toHex(chain_id).c_str(), m_chain_status[chain_id]);
+//            log(LOG_INFO, "INFO: 1. Chain[%s] status[%d]", aux::toHex(chain_id).c_str(), m_chain_status[chain_id]);
 
             long refresh_time = DEFAULT_BLOCK_TIME * 1000;
 
@@ -699,8 +687,15 @@ namespace libTAU::blockchain {
                             refresh_time = (head_block.timestamp() + interval - current_time) * 1000;
                         }
                     } else {
+                        if (m_chain_getting_times[chain_id] >= blockchain_max_getting_times) {
+                            m_ses.alerts().emplace_alert<blockchain_fail_to_get_chain_data_alert>(chain_id);
+                            return;
+                        }
+
                         // select peer randomly to get chain data
                         auto peer = m_repository->get_peer_from_peer_db_randomly(chain_id);
+
+                        m_chain_getting_times[chain_id]++;
 
                         if (!peer.is_all_zeros()) {
                             get_head_block_from_peer(chain_id, peer);
@@ -1229,9 +1224,9 @@ namespace libTAU::blockchain {
 //        return m_repository->is_block_exist(hash);
 //    }
 
-    void blockchain::try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key &peer) {
-        m_ban_list[chain_id].erase(peer);
-    }
+//    void blockchain::try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key &peer) {
+//        m_ban_list[chain_id].erase(peer);
+//    }
 
 //    void blockchain::add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key &peer) {
 //        auto &acl = m_access_list[chain_id];
@@ -1629,8 +1624,6 @@ namespace libTAU::blockchain {
                     remove_all_same_chain_blocks_from_cache(peer_head_block);
 
                     acl.erase(it);
-                    auto &ban_list = m_ban_list[chain_id];
-                    ban_list[it->first] = ban_info(now + blockchain_max_ban_time);
                 } else if (result == SUCCESS) {
                     // clear all ancestor blocks
                     remove_all_ancestor_blocks_from_cache(peer_head_block);
@@ -2997,10 +2990,10 @@ namespace libTAU::blockchain {
         }
 
         std::set<dht::public_key> peers;
-        auto& ban_list = m_ban_list[chain_id];
-        for (auto const& item: ban_list) {
-            peers.insert(item.first);
-        }
+//        auto& ban_list = m_ban_list[chain_id];
+//        for (auto const& item: ban_list) {
+//            peers.insert(item.first);
+//        }
 
         return peers;
     }
@@ -3288,18 +3281,12 @@ namespace libTAU::blockchain {
 
     }
 
-    void blockchain::print_acl_ban_list_info(const aux::bytes &chain_id) {
+    void blockchain::print_acl_info(const aux::bytes &chain_id) {
         // peer list log
         // acl
         auto &acl = m_access_list[chain_id];
         for (auto const &item: acl) {
             log(LOG_INFO, "-----ACL: peer[%s], info[%s]", aux::toHex(item.first.bytes).c_str(),
-                item.second.to_string().c_str());
-        }
-        // ban list
-        auto &ban_list = m_ban_list[chain_id];
-        for (auto const &item: ban_list) {
-            log(LOG_INFO, "-----Ban List: peer[%s], info[%s]", aux::toHex(item.first.bytes).c_str(),
                 item.second.to_string().c_str());
         }
     }
