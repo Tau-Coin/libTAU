@@ -29,7 +29,6 @@ see LICENSE file.
 #include "libTAU/blockchain/peer_info.hpp"
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/repository_impl.hpp"
-#include "libTAU/blockchain/repository_track.hpp"
 #include "libTAU/blockchain/state_array.hpp"
 #include "libTAU/blockchain/tx_pool.hpp"
 #include "libTAU/common/entry_type.hpp"
@@ -162,7 +161,7 @@ namespace blockchain {
     public:
         blockchain(io_context& mIoc, aux::session_interface &mSes, counters &mCounters) :
         m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc) {
-            m_repository = std::make_shared<repository_impl>(m_ses.sqldb(), m_ses.kvdb());
+            m_repository = std::make_shared<repository_impl>(m_ses.sqldb());
         }
         // start blockchain
         bool start();
@@ -299,7 +298,7 @@ namespace blockchain {
 //        block try_to_mine_block(const aux::bytes &chain_id);
 
         // verify block
-        RESULT verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block, repository *repo);
+        RESULT verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block);
 
         // process block
         RESULT process_genesis_block(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);

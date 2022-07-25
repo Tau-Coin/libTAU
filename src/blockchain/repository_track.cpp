@@ -14,20 +14,16 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    std::shared_ptr<repository> repository_track::start_tracking() {
-        return std::shared_ptr<repository>();
-    }
-
-    bool repository_track::flush(const aux::bytes &chain_id) {
+    bool repository_track::begin_transaction() {
         return false;
     }
 
-    bool repository_track::commit(const aux::bytes &chain_id) {
+    bool repository_track::commit() {
         return false;
     }
 
-    void repository_track::rollback(const aux::bytes &chain_id) {
-
+    bool repository_track::rollback() {
+        return false;
     }
 
     std::set<aux::bytes> repository_track::get_all_chains() {

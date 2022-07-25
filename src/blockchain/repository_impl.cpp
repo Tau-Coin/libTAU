@@ -36,20 +36,43 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    std::shared_ptr<repository> repository_impl::start_tracking() {
-        return std::shared_ptr<repository>();
+    bool repository_impl::begin_transaction() {
+        std::string sql = "BEGIN TRANSACTION;";
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
-    bool repository_impl::flush(const aux::bytes &chain_id) {
-        return false;
+    bool repository_impl::commit() {
+        std::string sql = "COMMIT;";
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
     }
 
-    bool repository_impl::commit(const aux::bytes &chain_id) {
-        return false;
-    }
+    bool repository_impl::rollback() {
+        std::string sql = "ROLLBACK;";
 
-    void repository_impl::rollback(const aux::bytes &chain_id) {
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
 
+        return true;
     }
 
     std::set<aux::bytes> repository_impl::get_all_chains() {
@@ -76,7 +99,7 @@ namespace libTAU::blockchain {
 
     bool repository_impl::add_new_chain(const aux::bytes &chain_id) {
         sqlite3_stmt * stmt;
-        std::string sql = "INSERT INTO ";
+        std::string sql = "REPLACE INTO ";
         sql.append(chains_db_name());
         sql.append(" VALUES(?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -206,7 +229,7 @@ namespace libTAU::blockchain {
 
     bool repository_impl::save_state_array(const aux::bytes &chain_id, const state_array &stateArray) {
         sqlite3_stmt * stmt;
-        std::string sql = "INSERT INTO ";
+        std::string sql = "REPLACE INTO ";
         sql.append(state_array_db_name(chain_id));
         sql.append(" VALUES(?,?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -321,7 +344,7 @@ namespace libTAU::blockchain {
 
     bool repository_impl::save_account(const aux::bytes &chain_id, const account &act) {
         sqlite3_stmt * stmt;
-        std::string sql = "INSERT INTO ";
+        std::string sql = "REPLACE INTO ";
         sql.append(state_db_name(chain_id));
         sql.append(" VALUES(?,?,?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -566,7 +589,7 @@ namespace libTAU::blockchain {
     bool repository_impl::save_block(const block &blk, bool is_main_chain) {
         const auto& chain_id = blk.chain_id();
         sqlite3_stmt * stmt;
-        std::string sql = "INSERT INTO ";
+        std::string sql = "REPLACE INTO ";
         sql.append(blocks_db_name(chain_id));
         sql.append(" VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -837,7 +860,7 @@ namespace libTAU::blockchain {
 
     bool repository_impl::add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         sqlite3_stmt * stmt;
-        std::string sql = "INSERT INTO ";
+        std::string sql = "REPLACE INTO ";
         sql.append(peer_db_name(chain_id));
         sql.append(" VALUES(?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);

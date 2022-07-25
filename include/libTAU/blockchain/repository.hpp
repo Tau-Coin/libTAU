@@ -34,12 +34,12 @@ namespace libTAU::blockchain {
     // 的状态链接器，状态链接器通过previous change指针，可以完整回溯该账户的变化历史。
     struct TORRENT_EXPORT repository {
 
-        const std::string key_chains = "chains";
-        const std::string key_separator = "_";
-        const std::string key_suffix_state_linker = "linker";
-        const std::string key_suffix_head_block_hash = "head";
-        const std::string key_suffix_tail_block_hash = "tail";
-        const std::string key_suffix_consensus_point_block_hash = "consensus";
+//        const std::string key_chains = "chains";
+//        const std::string key_separator = "_";
+//        const std::string key_suffix_state_linker = "linker";
+//        const std::string key_suffix_head_block_hash = "head";
+//        const std::string key_suffix_tail_block_hash = "tail";
+//        const std::string key_suffix_consensus_point_block_hash = "consensus";
 
         static std::string chains_db_name();
 
@@ -54,30 +54,19 @@ namespace libTAU::blockchain {
         // init db, create chains table
         virtual bool init() = 0;
 
-        /**
-         * Save a snapshot and start tracking future changes
-         *
-         * @return the tracker repository
-         */
-        virtual std::shared_ptr<repository> start_tracking() = 0;
-
-//        virtual void
-//        update_batch(const std::map<std::string, std::string> &cache, const std::vector<block> &connected_blocks,
-//                     const std::vector<block> &discarded_blocks) = 0;
-
-        virtual bool flush(const aux::bytes &chain_id) = 0;
+        virtual bool begin_transaction() = 0;
 
         /**
          * Store all the temporary changes made
          * to the repository in the actual database
          */
-        virtual bool commit(const aux::bytes &chain_id) = 0;
+        virtual bool commit() = 0;
 
         /**
          * Undo all the changes made so far
          * to a snapshot of the repository
          */
-        virtual void rollback(const aux::bytes &chain_id) = 0;
+        virtual bool rollback() = 0;
 
         // chain set api
         virtual std::set<aux::bytes> get_all_chains() = 0;

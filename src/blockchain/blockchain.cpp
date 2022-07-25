@@ -861,8 +861,7 @@ namespace libTAU::blockchain {
 //        return b;
 //    }
 
-    RESULT blockchain::verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block, repository *repo) {
-        return SUCCESS;
+    RESULT blockchain::verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block) {
 
         if (b.empty()) {
             log(LOG_ERR, "INFO chain[%s] block is empty", aux::toHex(chain_id).c_str());
@@ -895,7 +894,7 @@ namespace libTAU::blockchain {
         if (previous_block.block_number() > 3) {
             int i = 3;
             while (i > 0) {
-                ancestor = repo->get_block_by_hash(chain_id, previous_hash);
+                ancestor = m_repository->get_block_by_hash(chain_id, previous_hash);
                 if (ancestor.empty()) {
                     log(LOG_INFO, "INFO chain[%s] 2. Cannot find block[%s] in db, previous_block[%s]",
                         aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str(), previous_block.to_string().c_str());
@@ -908,7 +907,7 @@ namespace libTAU::blockchain {
         }
 
         auto base_target = consensus::calculate_required_base_target(previous_block, ancestor);
-        auto act = repo->get_account(chain_id, b.miner());
+        auto act = m_repository->get_account(chain_id, b.miner());
 
         log(LOG_INFO, "INFO chain[%s] Account[%s] in db",aux::toHex(chain_id).c_str(), act.to_string().c_str());
 
@@ -969,7 +968,7 @@ namespace libTAU::blockchain {
         }
 
         if (!tx.empty() && tx.type() == tx_type::type_transfer) {
-            auto miner_act = repo->get_account(chain_id, b.miner());
+            auto miner_act = m_repository->get_account(chain_id, b.miner());
             if (miner_act.balance() < tx.cost()) {
                 return FAIL;
             }
@@ -987,28 +986,11 @@ namespace libTAU::blockchain {
             if (blk.previous_block_hash() == head_block.sha1()) {
                 std::set<dht::public_key> peers = blk.get_block_peers();
 
-                auto track = m_repository->start_tracking();
-
-                auto result = verify_block(chain_id, blk, head_block, track.get());
+                auto result = verify_block(chain_id, blk, head_block);
                 if (result != SUCCESS)
                     return result;
 
-//                auto const& tx = blk.tx();
-//                if (!tx.empty() && tx.type() == type_transfer) {
-//                    std::map<dht::public_key, account> accounts;
-//                    for (auto const& peer: peers) {
-//                        accounts[peer] = track->get_account(chain_id, peer);
-//                    }
-//
-//                    accounts[blk.miner()].add_balance(tx.fee());
-//                    accounts[tx.receiver()].add_balance(tx.amount());
-//                    accounts[tx.sender()].subtract_balance(tx.cost());
-//                    accounts[tx.sender()].increase_nonce();
-//
-//                    for (auto const& item: accounts) {
-//                        track->save_account(chain_id, item.second);
-//                    }
-//                }
+                m_repository->begin_transaction();
 
                 m_repository->clear_all_state(chain_id);
                 for (auto const& stateArray: arrays) {
@@ -1017,13 +999,9 @@ namespace libTAU::blockchain {
                     }
                 }
 
-                track->save_main_chain_block(blk);
+                m_repository->save_main_chain_block(blk);
 
-                if (!track->commit(chain_id)) {
-                    log(LOG_ERR, "INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
-                    return FAIL;
-                }
-                m_repository->flush(chain_id);
+                m_repository->commit();
 
                 put_genesis_head_block(chain_id, blk, arrays);
 
@@ -1038,7 +1016,7 @@ namespace libTAU::blockchain {
         } else {
             std::set<dht::public_key> peers = blk.get_block_peers();
 
-            auto track = m_repository->start_tracking();
+            m_repository->begin_transaction();
 
             m_repository->clear_all_state(chain_id);
             for (auto const& stateArray: arrays) {
@@ -1047,13 +1025,9 @@ namespace libTAU::blockchain {
                 }
             }
 
-            track->save_main_chain_block(blk);
+            m_repository->save_main_chain_block(blk);
 
-            if (!track->commit(chain_id)) {
-                log(LOG_ERR, "INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
-                return FAIL;
-            }
-            m_repository->flush(chain_id);
+            m_repository->commit();
 
             put_genesis_head_block(chain_id, blk, arrays);
 
@@ -1078,17 +1052,17 @@ namespace libTAU::blockchain {
             if (blk.previous_block_hash() == head_block.sha1()) {
                 std::set<dht::public_key> peers = blk.get_block_peers();
 
-                auto track = m_repository->start_tracking();
-
-                auto result = verify_block(chain_id, blk, head_block, track.get());
+                auto result = verify_block(chain_id, blk, head_block);
                 if (result != SUCCESS)
                     return result;
+
+                m_repository->begin_transaction();
 
                 auto const& tx = blk.tx();
                 if (!tx.empty() && tx.type() == type_transfer) {
                     std::map<dht::public_key, account> accounts;
                     for (auto const& peer: peers) {
-                        accounts[peer] = track->get_account(chain_id, peer);
+                        accounts[peer] = m_repository->get_account(chain_id, peer);
                     }
 
                     accounts[blk.miner()].add_balance(tx.fee());
@@ -1097,17 +1071,13 @@ namespace libTAU::blockchain {
                     accounts[tx.sender()].increase_nonce();
 
                     for (auto const& item: accounts) {
-                        track->save_account(chain_id, item.second);
+                        m_repository->save_account(chain_id, item.second);
                     }
                 }
 
-                track->save_main_chain_block(blk);
+                m_repository->save_main_chain_block(blk);
 
-                if (!track->commit(chain_id)) {
-                    log(LOG_ERR, "INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
-                    return FAIL;
-                }
-                m_repository->flush(chain_id);
+                m_repository->commit();
 
                 put_head_block(chain_id, blk);
 
@@ -1483,7 +1453,7 @@ namespace libTAU::blockchain {
 
         std::set<dht::public_key> peers;
 
-        auto track = m_repository->start_tracking();
+        m_repository->begin_transaction();
 
         // Rollback blocks
         for (auto &blk: rollback_blocks) {
@@ -1496,7 +1466,7 @@ namespace libTAU::blockchain {
             if (!tx.empty() && tx.type() == type_transfer) {
                 std::map<dht::public_key, account> accounts;
                 for (auto const& block_peer: block_peers) {
-                    accounts[block_peer] = track->get_account(chain_id, block_peer);
+                    accounts[block_peer] = m_repository->get_account(chain_id, block_peer);
                 }
 
                 accounts[blk.miner()].subtract_balance(tx.fee());
@@ -1505,11 +1475,11 @@ namespace libTAU::blockchain {
                 accounts[tx.sender()].decrease_nonce();
 
                 for (auto const& item: accounts) {
-                    track->save_account(chain_id, item.second);
+                    m_repository->save_account(chain_id, item.second);
                 }
             }
 
-            track->set_block_non_main_chain(chain_id, blk.sha1());
+            m_repository->set_block_non_main_chain(chain_id, blk.sha1());
         }
 
         // connect new branch blocks
@@ -1518,9 +1488,11 @@ namespace libTAU::blockchain {
             auto &previous_block = connect_blocks[i - 1];
 
 //            log("INFO: try to connect block:%s", blk.to_string().c_str());
-            auto result = verify_block(chain_id, blk, previous_block, track.get());
-            if (result != SUCCESS)
+            auto result = verify_block(chain_id, blk, previous_block);
+            if (result != SUCCESS) {
+                m_repository->rollback();
                 return result;
+            }
 
             auto block_peers = blk.get_block_peers();
             peers.insert(block_peers.begin(), block_peers.end());
@@ -1529,7 +1501,7 @@ namespace libTAU::blockchain {
             if (!tx.empty() && tx.type() == type_transfer) {
                 std::map<dht::public_key, account> accounts;
                 for (auto const& block_peer: block_peers) {
-                    accounts[block_peer] = track->get_account(chain_id, block_peer);
+                    accounts[block_peer] = m_repository->get_account(chain_id, block_peer);
                 }
 
                 accounts[blk.miner()].add_balance(tx.fee());
@@ -1538,18 +1510,14 @@ namespace libTAU::blockchain {
                 accounts[tx.sender()].increase_nonce();
 
                 for (auto const& item: accounts) {
-                    track->save_account(chain_id, item.second);
+                    m_repository->save_account(chain_id, item.second);
                 }
             }
 
-            track->set_block_main_chain(chain_id, blk.sha1());
+            m_repository->set_block_main_chain(chain_id, blk.sha1());
         }
 
-        if (!track->commit(chain_id)) {
-            log(LOG_ERR, "INFO chain[%s] commit fail", aux::toHex(chain_id).c_str());
-            return FAIL;
-        }
-        m_repository->flush(chain_id);
+        m_repository->commit();
 
         // after all above is success
         m_head_blocks[chain_id] = target;

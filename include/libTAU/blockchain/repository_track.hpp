@@ -21,13 +21,11 @@ namespace libTAU::blockchain {
 
         bool init() override;
 
-        std::shared_ptr<repository> start_tracking() override;
+        bool begin_transaction() override;
 
-        bool flush(const aux::bytes &chain_id) override;
+        bool commit() override;
 
-        bool commit(const aux::bytes &chain_id) override;
-
-        void rollback(const aux::bytes &chain_id) override;
+        bool rollback() override;
 
         std::set<aux::bytes> get_all_chains() override;
 

@@ -19,17 +19,15 @@ see LICENSE file.
 namespace libTAU::blockchain {
     struct repository_impl final : repository {
 
-        repository_impl(sqlite3 *mSqlite, leveldb::DB *mLeveldb) : m_sqlite(mSqlite), m_leveldb(mLeveldb) {}
+        explicit repository_impl(sqlite3 *mSqlite) : m_sqlite(mSqlite) {}
 
         bool init() override;
 
-        std::shared_ptr<repository> start_tracking() override;
+        bool begin_transaction() override;
 
-        bool flush(const aux::bytes &chain_id) override;
+        bool commit() override;
 
-        bool commit(const aux::bytes &chain_id) override;
-
-        void rollback(const aux::bytes &chain_id) override;
+        bool rollback() override;
 
         std::set<aux::bytes> get_all_chains() override;
 
@@ -245,17 +243,17 @@ namespace libTAU::blockchain {
         sqlite3 *m_sqlite;
 
         // leveldb instance
-        leveldb::DB* m_leveldb;
-
-        // leveldb write batch
-        leveldb::WriteBatch m_write_batch;
-
-        // todo:merge by order
-        // main chain connected blocks
-        std::vector<block> m_connected_blocks;
-
-        // main chain discarded blocks
-        std::vector<block> m_discarded_blocks;
+//        leveldb::DB* m_leveldb;
+//
+//        // leveldb write batch
+//        leveldb::WriteBatch m_write_batch;
+//
+//        // todo:merge by order
+//        // main chain connected blocks
+//        std::vector<block> m_connected_blocks;
+//
+//        // main chain discarded blocks
+//        std::vector<block> m_discarded_blocks;
     };
 }
 
