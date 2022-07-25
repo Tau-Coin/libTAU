@@ -688,6 +688,7 @@ namespace aux {
         	bool follow_chain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
         	bool add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
         	bool unfollow_chain(const aux::bytes &chain_id);
+        	bool start_chain(const aux::bytes &chain_id);
         	bool submit_transaction(const blockchain::transaction & tx);
         	bool get_account_info(const aux::bytes &chain_id, dht::public_key publicKey, blockchain::account* act);
         	bool get_top_tip_block(const aux::bytes &chain_id, int topNum, std::vector<blockchain::block>* blks);
