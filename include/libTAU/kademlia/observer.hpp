@@ -30,7 +30,7 @@ struct observer;
 struct msg;
 struct traversal_algorithm;
 
-using observer_flags_t = libTAU::flags::bitfield_flag<std::uint8_t, struct observer_flags_tag>;
+using observer_flags_t = libTAU::flags::bitfield_flag<std::uint16_t, struct observer_flags_tag>;
 
 struct TORRENT_EXTRA_EXPORT observer
 	: std::enable_shared_from_this<observer>
@@ -90,6 +90,7 @@ struct TORRENT_EXTRA_EXPORT observer
 	static inline constexpr observer_flags_t flag_ipv6_address = 5_bit;
 	static inline constexpr observer_flags_t flag_alive = 6_bit;
 	static inline constexpr observer_flags_t flag_done = 7_bit;
+	static inline constexpr observer_flags_t flag_high_priority = 8_bit;
 
 protected:
 

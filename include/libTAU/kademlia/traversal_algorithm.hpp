@@ -90,6 +90,8 @@ protected:
 	std::shared_ptr<traversal_algorithm> self()
 	{ return shared_from_this(); }
 
+	std::uint32_t get_high_priority_node(std::uint32_t max);
+
 	// returns true if we're done
 	bool add_requests();
 

@@ -1902,7 +1902,8 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 		{"ro", bdecode_node::int_t, 0, key_desc_t::optional},
 		{"nr", bdecode_node::int_t, 0, key_desc_t::optional},
 		{"a", bdecode_node::dict_t, 0, key_desc_t::parse_children},
-			{"t", bdecode_node::string_t, 32, key_desc_t::last_child}, // receiver: 'to'
+			{"hmac", bdecode_node::string_t
+				, relay_hmac::len, key_desc_t::last_child},
 	};
 
 	bdecode_node top_level[5];
@@ -1913,7 +1914,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 		return false;
 	}
 
-	node_id const target_id(top_level[4].string_ptr());
+	node_id target_id = m_id;
 	*to = target_id;
 
 	bool const read_only = top_level[1] && top_level[1].int_value() != 0;
@@ -1939,11 +1940,12 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 			// ipv6 aux nodes
 			{"rn6", bdecode_node::none_t, 0, key_desc_t::optional},
 			{"hmac", bdecode_node::string_t, relay_hmac::len, 0},
+			{"t", bdecode_node::string_t, public_key::len, key_desc_t::optional},
 		};
 
 		// attempt to parse the message
 		// also reject the message if it has any non-fatal encoding errors
-		bdecode_node msg_keys[7];
+		bdecode_node msg_keys[8];
 		if (!verify_message(arg_ent, msg_desc, msg_keys, error_string)
 			|| arg_ent.has_soft_error(error_string))
 		{
@@ -1962,6 +1964,12 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 		else
 		{
 			sender = from;
+		}
+
+		if (msg_keys[7])
+		{
+			target_id.assign(msg_keys[7].string_ptr());
+			*to = target_id;
 		}
 
 		// parse payload
@@ -2110,12 +2118,29 @@ void node::relay(node_id const& to, udp::endpoint const& to_ep
 	if (to_ep == m.addr) return;
 
 	// construct push protocol
-	entry e(m.message);
+	entry orig(m.message);
+	entry& orig_a = orig["a"];
+
+	entry e(entry::dictionary_t);
 	entry& a = e["a"];
+	e["y"] = "h"; // hop"
+	e["q"] = "relay";
 	e["ro"] = m_settings.get_bool(settings_pack::dht_read_only) ? 1 : 0;
 	e["nr"] = m_settings.get_bool(settings_pack::dht_non_referrable) ? 1 : 0;
+
 	public_key pk(from.data());
 	a["f"] = pk.bytes;
+	a["pl"] = orig_a["pl"];
+	a["hmac"] = orig_a["hmac"];
+
+	if (orig_a.find_key("rn"))
+	{
+		a["rn"] = *orig_a.find_key("rn");
+	}
+	if (orig_a.find_key("rn6"))
+	{
+		a["rn6"] = *orig_a.find_key("rn6");
+	}
 
 	// create a dummy traversal_algorithm
 	auto algo = std::make_shared<traversal_algorithm>(*this, to);

@@ -90,6 +90,21 @@ void relay::start()
 	// nodes from routing table.
 	if (m_results.empty() && !m_direct_invoking)
 	{
+		// fill aux endpoints
+		std::vector<node_entry> aux_nodes;
+		m_node.m_storage.find_relays(target(), aux_nodes
+			, invoke_window(), m_node.protocol());
+		for (auto& an : aux_nodes)
+		{
+#ifndef TORRENT_DISABLE_LOGGING
+			get_node().observer()->log(dht_logger::traversal, "add relay, id: %s, ep:%s"
+				, aux::to_hex(an.id).c_str()
+				, aux::print_endpoint(an.ep()).c_str());
+#endif
+			add_entry(an.id, an.ep()
+				, observer::flag_initial | observer::flag_high_priority);
+		}
+
 		std::vector<node_entry> nodes = m_node.m_table.find_node(
 			target(), routing_table::include_pinged, invoke_window());
 
@@ -103,19 +118,6 @@ void relay::start()
 		for (auto& n : nodes)
 		{
 			add_entry(n.id, n.ep(), observer::flag_initial);
-		}
-
-		// fill aux endpoints
-		std::vector<node_entry> aux_nodes;
-		m_node.m_storage.find_relays(target(), aux_nodes, 1, m_node.protocol());
-		for (auto& an : aux_nodes)
-		{
-#ifndef TORRENT_DISABLE_LOGGING
-			get_node().observer()->log(dht_logger::traversal, "add relay, id: %s, ep:%s"
-				, aux::to_hex(an.id).c_str()
-				, aux::print_endpoint(an.ep()).c_str());
-#endif
-			add_entry(an.id, an.ep(), observer::flag_initial);
 		}
 	}
 
