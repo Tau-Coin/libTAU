@@ -19,6 +19,14 @@ namespace libTAU::blockchain {
         m_hash = hasher(encode).final();
     }
 
+    const sha1_hash &block::genesis_block_hash() const {
+        if (m_block_number % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+            return m_hash;
+        } else {
+            return m_multiplex_hash;
+        }
+    }
+
     entry block::get_entry() const {
         auto e = get_entry_without_signature();
         // signature
@@ -82,8 +90,8 @@ namespace libTAU::blockchain {
         e["d"] = entry(static_cast<std::int64_t>(m_cumulative_difficulty));
         // generation signature
         e["g"] = entry(m_generation_signature.to_string());
-        // state root
-        e["s"] = entry(m_state_root.to_string());
+        // multiplex hash
+        e["x"] = entry(m_multiplex_hash.to_string());
         // miner
         e["m"] = entry(std::string(m_miner.bytes.begin(), m_miner.bytes.end()));
         if (!m_tx.empty()) {
@@ -139,11 +147,11 @@ namespace libTAU::blockchain {
             auto generation_signature = i->string();
             m_generation_signature = sha1_hash(generation_signature.data());
         }
-        // state root
-        if (auto* i = const_cast<entry *>(e.find_key("s")))
+        // multiplex hash
+        if (auto* i = const_cast<entry *>(e.find_key("x")))
         {
-            auto state_root = i->string();
-            m_state_root = sha1_hash(state_root.data());
+            auto multiplex_hash = i->string();
+            m_multiplex_hash = sha1_hash(multiplex_hash.data());
         }
         // transaction
         if (auto* i = const_cast<entry *>(e.find_key("tx")))
@@ -258,7 +266,7 @@ namespace libTAU::blockchain {
            << block.m_timestamp << " m_block_number: " << block.m_block_number << " m_previous_block_hash: "
            << aux::toHex(block.m_previous_block_hash.to_string()) << " m_base_target: " << block.m_base_target << " m_cumulative_difficulty: "
            << block.m_cumulative_difficulty << " m_generation_signature: " << aux::toHex(block.m_generation_signature.to_string())
-           << " state root: " << aux::toHex(block.m_state_root.to_string()) << " m_tx: " << block.m_tx
+           << " state root: " << aux::toHex(block.m_multiplex_hash.to_string()) << " m_tx: " << block.m_tx
            << " m_miner: " << aux::toHex(block.m_miner.bytes);
         return os;
     }

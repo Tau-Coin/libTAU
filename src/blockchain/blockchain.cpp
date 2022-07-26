@@ -669,7 +669,7 @@ namespace libTAU::blockchain {
                             } else {
                                 block b = block(chain_id, block_version::block_version1, current_time,
                                           head_block.block_number() + 1, head_block.sha1(), base_target,
-                                          cumulative_difficulty, genSig, head_block.state_root(), tx, *pk);
+                                          cumulative_difficulty, genSig, head_block.multiplex_hash(), tx, *pk);
 
                                 b.sign(*pk, *sk);
 
@@ -1149,6 +1149,12 @@ namespace libTAU::blockchain {
                 if (it_timer != m_chain_timers.end()) {
                     it_timer->second.cancel();
                 }
+            } else {
+                if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                    get_all_state_from_peer(chain_id, peer, blk.state_root());
+                } else {
+                    get_block(chain_id, peer, blk.genesis_block_hash());
+                }
             }
 //        }
     }
@@ -1170,11 +1176,15 @@ namespace libTAU::blockchain {
                 }
 
                 if (it->second.m_head_block.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty() &&
-                it->second.m_head_block.state_root() != m_head_blocks[chain_id].state_root()) {
+                    it->second.m_head_block.genesis_block_hash() != m_head_blocks[chain_id].genesis_block_hash()) {
                     clear_chain_all_state_in_cache_and_db(chain_id);
                 }
 
                 process_genesis_block(chain_id, it->second.m_genesis_block, arrays);
+
+                if (it->second.m_head_block.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
+                    try_to_rebranch(chain_id, it->second.m_head_block, false, peer);
+                }
             }
         }
     }
@@ -1605,8 +1615,6 @@ namespace libTAU::blockchain {
 //    }
 
     void blockchain::try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id, const dht::public_key& peer) {
-        auto now = get_total_milliseconds();
-
         auto &head_block = m_head_blocks[chain_id];
         auto &acl = m_access_list[chain_id];
 
@@ -1615,7 +1623,7 @@ namespace libTAU::blockchain {
             return;
 
         if (it->second.m_head_block.cumulative_difficulty() > head_block.cumulative_difficulty()) {
-            if (it->second.m_head_block.state_root() == head_block.state_root()) {
+            if (it->second.m_head_block.genesis_block_hash() == head_block.genesis_block_hash()) {
                 auto peer_head_block = it->second.m_head_block;
                 auto result = try_to_rebranch(chain_id, peer_head_block, false, it->first);
                 // clear block cache if re-branch success/fail
@@ -2349,6 +2357,15 @@ namespace libTAU::blockchain {
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::BLOCK);
     }
 
+    void blockchain::get_head_block(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Request head block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::HEAD_BLOCK);
+    }
+
     void blockchain::put_block(const bytes &chain_id, const block &blk) {
         if (!blk.empty()) {
             // salt is y pubkey when publish signal
@@ -2530,7 +2547,7 @@ namespace libTAU::blockchain {
                         if (!head_block_hash.is_all_zeros()) {
                             auto blk = m_repository->get_block_by_hash(chain_id, head_block_hash);
                             if (blk.empty()) {
-                                get_block(chain_id, peer, head_block_hash);
+                                get_head_block(chain_id, peer, head_block_hash);
                             } else {
                                 block_reception_event(chain_id, peer, blk);
                             }

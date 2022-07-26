@@ -15,6 +15,7 @@ see LICENSE file.
 #include "libTAU/address.hpp"
 #include "libTAU/aux_/common.h"
 #include "libTAU/aux_/common_data.h"
+#include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/transaction.hpp"
 #include "libTAU/entry.hpp"
 #include "libTAU/bencode.hpp"
@@ -42,21 +43,22 @@ namespace blockchain {
 
         block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
               const sha1_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
-              const sha1_hash &mGenerationSignature, const sha1_hash &mStateRoot, transaction mTx,
+              const sha1_hash &mGenerationSignature, const sha1_hash &mMultiplexHash, transaction mTx,
               const dht::public_key &mMiner) : m_chain_id(std::move(mChainId)), m_version(mVersion),
-              m_timestamp(mTimestamp), m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash),
-              m_base_target(mBaseTarget), m_cumulative_difficulty(mCumulativeDifficulty),
-              m_generation_signature(mGenerationSignature), m_state_root(mStateRoot),
-              m_tx(std::move(mTx)), m_miner(mMiner) {}
+                                               m_timestamp(mTimestamp), m_block_number(mBlockNumber),
+                                               m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
+                                               m_cumulative_difficulty(mCumulativeDifficulty),
+                                               m_generation_signature(mGenerationSignature), m_multiplex_hash(mMultiplexHash),
+                                               m_tx(std::move(mTx)), m_miner(mMiner) {}
 
         block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
               const sha1_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
-              const sha1_hash &mGenerationSignature, const sha1_hash &mStateRoot, transaction mTx,
+              const sha1_hash &mGenerationSignature, const sha1_hash &mMultiplexHash, transaction mTx,
               const dht::public_key &mMiner, const dht::signature &mSignature, const sha1_hash &mHash) :
                 m_chain_id(std::move(mChainId)), m_version(mVersion), m_timestamp(mTimestamp),
                 m_block_number(mBlockNumber), m_previous_block_hash(mPreviousBlockHash), m_base_target(mBaseTarget),
                 m_cumulative_difficulty(mCumulativeDifficulty), m_generation_signature(mGenerationSignature),
-                m_state_root(mStateRoot), m_tx(std::move(mTx)), m_miner(mMiner), m_signature(mSignature),
+                m_multiplex_hash(mMultiplexHash), m_tx(std::move(mTx)), m_miner(mMiner), m_signature(mSignature),
                 m_hash(mHash) {}
 
 //        block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
@@ -84,7 +86,11 @@ namespace blockchain {
 
         const sha1_hash &generation_signature() const { return m_generation_signature; }
 
-        const sha1_hash &state_root() const { return m_state_root; }
+        const sha1_hash &state_root() const { return m_multiplex_hash; }
+
+        const sha1_hash &multiplex_hash() const { return m_multiplex_hash; }
+
+        const sha1_hash &genesis_block_hash() const;
 
         const transaction &tx() const { return m_tx; }
 
@@ -171,8 +177,8 @@ namespace blockchain {
         // generation signature
         sha1_hash m_generation_signature;
 
-        // state root
-        sha1_hash m_state_root;
+        // state root/genesis block hash
+        sha1_hash m_multiplex_hash;
 
         // tx
         transaction m_tx;

@@ -606,7 +606,7 @@ namespace libTAU::blockchain {
         sqlite3_bind_int64(stmt, 7, static_cast<std::int64_t>(blk.base_target()));
         sqlite3_bind_int64(stmt, 8, static_cast<std::int64_t>(blk.cumulative_difficulty()));
         sqlite3_bind_text(stmt, 9, blk.generation_signature().to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
-        sqlite3_bind_text(stmt, 10, blk.state_root().to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_text(stmt, 10, blk.multiplex_hash().to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
         auto tx_encode = blk.tx().get_encode();
         sqlite3_bind_text(stmt, 11, tx_encode.c_str(), tx_encode.size(), nullptr);
         sqlite3_bind_text(stmt, 12, std::string(blk.miner().bytes.begin(), blk.miner().bytes.end()).c_str(), dht::public_key::len, nullptr);

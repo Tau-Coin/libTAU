@@ -442,6 +442,8 @@ namespace blockchain {
 
         void get_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
+        void get_head_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+
         void put_block(const aux::bytes &chain_id, const block &blk);
 
         void put_block_with_all_state(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
