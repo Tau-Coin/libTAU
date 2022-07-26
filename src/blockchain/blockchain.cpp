@@ -2232,14 +2232,18 @@ namespace libTAU::blockchain {
 
     void blockchain::get_pool_from_peer(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
         log(LOG_INFO, "Chain[%s] get pool from peer[%s]", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
-        get_pool_hash_set(chain_id, peer, timestamp);
+        get_new_tx_hash(chain_id, peer, timestamp);
     }
 
     void blockchain::put_new_transaction(const bytes &chain_id, const transaction &tx) {
-        put_transaction(chain_id, tx);
-        put_pool_hash_set(chain_id);
+        if (!tx.empty()) {
+            transaction_wrapper txWrapper(m_current_tx_wrapper[chain_id].sha1(), tx);
+            m_current_tx_wrapper[chain_id] = txWrapper;
+            put_transaction_wrapper(chain_id, txWrapper);
+            put_new_tx_hash(chain_id, tx.sha1());
 
-        send_new_tx_signal(chain_id);
+            send_new_tx_signal(chain_id);
+        }
     }
 
     void blockchain::get_all_state_from_peer(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
@@ -2282,6 +2286,31 @@ namespace libTAU::blockchain {
             auto salt = make_salt(key);
 
             log(LOG_INFO, "INFO: Chain id[%s] Cache head block hash salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish(salt, hash.to_string());
+        }
+    }
+
+    void blockchain::get_new_tx_hash(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
+        // salt is x pubkey when request signal
+        std::string data(chain_id.begin(), chain_id.end());
+        data.insert(data.end(), key_suffix_new_tx_hash.begin(), key_suffix_new_tx_hash.end());
+        auto key = hasher(data).final();
+        auto salt = make_salt(key);
+
+        log(LOG_INFO, "INFO: Request new tx hash from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::NEW_TX_HASH, timestamp);
+    }
+
+    void blockchain::put_new_tx_hash(const bytes &chain_id, const sha1_hash &hash) {
+        if (!hash.is_all_zeros()) {
+            // salt is y pubkey when publish signal
+            std::string data(chain_id.begin(), chain_id.end());
+            data.insert(data.end(), key_suffix_new_tx_hash.begin(), key_suffix_new_tx_hash.end());
+            auto key = hasher(data).final();
+            auto salt = make_salt(key);
+
+            log(LOG_INFO, "INFO: Chain id[%s] Cache new tx hash salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, hash.to_string());
         }
     }
@@ -2344,22 +2373,22 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::get_transaction(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+    void blockchain::get_transaction_wrapper(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
         log(LOG_INFO, "INFO: Request tx from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TX);
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TX_WRAPPER);
     }
 
-    void blockchain::put_transaction(const bytes &chain_id, const transaction &tx) {
-        if (!tx.empty()) {
+    void blockchain::put_transaction_wrapper(const bytes &chain_id, const transaction_wrapper &txWrapper) {
+        if (!txWrapper.empty()) {
             // salt is y pubkey when publish signal
-            auto salt = make_salt(tx.sha1());
+            auto salt = make_salt(txWrapper.sha1());
 
             log(LOG_INFO, "INFO: Chain id[%s] Cache tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-            publish(salt, tx.get_entry());
+            publish(salt, txWrapper.get_entry());
         }
     }
 
@@ -2382,33 +2411,33 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::get_pool_hash_set(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
-        // salt is x pubkey when request signal
-        std::string data(chain_id.begin(), chain_id.end());
-        data.insert(data.end(), key_suffix_pool_root.begin(), key_suffix_pool_root.end());
-        auto key = hasher(data).final();
-        auto salt = make_salt(key);
-
-        log(LOG_INFO, "INFO: Request pool hash set from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
-            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::POOL_HASH_SET, timestamp);
-    }
-
-    void blockchain::put_pool_hash_set(const bytes &chain_id) {
-        auto hash_set = m_tx_pools[chain_id].get_history_txid();
-        pool_hash_set poolHashSet(hash_set);
-
-        if (!poolHashSet.empty()) {
-            // salt is y pubkey when publish signal
-            std::string data(chain_id.begin(), chain_id.end());
-            data.insert(data.end(), key_suffix_pool_root.begin(), key_suffix_pool_root.end());
-            auto key = hasher(data).final();
-            auto salt = make_salt(key);
-
-            log(LOG_INFO, "INFO: Chain id[%s] Cache pool hash set salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-            publish(salt, poolHashSet.get_entry());
-        }
-    }
+//    void blockchain::get_pool_hash_set(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
+//        // salt is x pubkey when request signal
+//        std::string data(chain_id.begin(), chain_id.end());
+//        data.insert(data.end(), key_suffix_pool_root.begin(), key_suffix_pool_root.end());
+//        auto key = hasher(data).final();
+//        auto salt = make_salt(key);
+//
+//        log(LOG_INFO, "INFO: Request pool hash set from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+//            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+//        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::LATEST_TX_HASH, timestamp);
+//    }
+//
+//    void blockchain::put_pool_hash_set(const bytes &chain_id) {
+//        auto hash_set = m_tx_pools[chain_id].get_history_txid();
+//        pool_hash_set poolHashSet(hash_set);
+//
+//        if (!poolHashSet.empty()) {
+//            // salt is y pubkey when publish signal
+//            std::string data(chain_id.begin(), chain_id.end());
+//            data.insert(data.end(), key_suffix_pool_root.begin(), key_suffix_pool_root.end());
+//            auto key = hasher(data).final();
+//            auto salt = make_salt(key);
+//
+//            log(LOG_INFO, "INFO: Chain id[%s] Cache pool hash set salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+//            publish(salt, poolHashSet.get_entry());
+//        }
+//    }
 
     void blockchain::get_state_hash_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
         // salt is x pubkey when request signal
@@ -2570,26 +2599,37 @@ namespace libTAU::blockchain {
 
                         break;
                     }
-                    case GET_ITEM_TYPE::TX: {
-                        transaction tx(i.value());
+                    case GET_ITEM_TYPE::TX_WRAPPER: {
+                        transaction_wrapper txWrapper(i.value());
 
-                        log(LOG_INFO, "INFO: Got transaction[%s].", tx.to_string().c_str());
+                        log(LOG_INFO, "INFO: Got transaction wrapper[%s].", txWrapper.to_string().c_str());
 
-                        m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
+                        m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(txWrapper.tx());
 
                         auto &pool = m_tx_pools[chain_id];
-                        if (pool.add_tx(tx)) {
-                            put_new_transaction(chain_id, tx);
+                        if (pool.add_tx(txWrapper.tx())) {
+                            if (peer != *m_ses.pubkey()) {
+                                put_new_transaction(chain_id, txWrapper.tx());
+                            } else {
+                                // update last tx wrapper
+                                if (m_current_tx_wrapper[chain_id].empty()) {
+                                    m_current_tx_wrapper[chain_id] = txWrapper;
+                                }
+
+                                // get history tx
+                                if (!is_transaction_in_pool(chain_id, txWrapper.previousHash())) {
+                                    get_transaction_wrapper(chain_id, peer, txWrapper.previousHash());
+                                }
+                            }
                         }
 
                         break;
                     }
-                    case GET_ITEM_TYPE::POOL_HASH_SET: {
-                        pool_hash_set poolHashSet(i.value());
-                        log(LOG_INFO, "INFO: Got pool hash set[%s].", poolHashSet.to_string().c_str());
-                        for (auto const& hash: poolHashSet.PoolHashSet()) {
-                            if (!is_transaction_in_pool(chain_id, hash)) {
-                                get_transaction(chain_id, peer, hash);
+                    case GET_ITEM_TYPE::NEW_TX_HASH: {
+                        sha1_hash latest_tx_hash(i.value().string().c_str());
+                        if (!latest_tx_hash.is_all_zeros()) {
+                            if (!is_transaction_in_pool(chain_id, latest_tx_hash)) {
+                                get_transaction_wrapper(chain_id, peer, latest_tx_hash);
                             }
                         }
 

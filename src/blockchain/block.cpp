@@ -86,42 +86,10 @@ namespace libTAU::blockchain {
         e["s"] = entry(m_state_root.to_string());
         // miner
         e["m"] = entry(std::string(m_miner.bytes.begin(), m_miner.bytes.end()));
-//        // miner balance
-//        e["mb"] = entry(m_miner_balance);
-//        // miner nonce
-//        e["mn"] = entry(m_miner_nonce);
-//        if (!m_tx.empty()) {
-//            // tx
-//            e["tx"] = m_tx.get_entry();
-//            // sender balance
-//            e["sb"] = entry(m_sender_balance);
-//            // sender nonce
-//            e["sn"] = entry(m_sender_nonce);
-//            // receiver balance
-//            e["rb"] = entry(m_receiver_balance);
-//            // receiver nonce
-//            e["rn"] = entry(m_receiver_nonce);
-//        }
-
-//        if (m_endpoint.port() != 0) {
-//            entry ne(entry::dictionary_t);
-//
-//            // address
-//            if (m_endpoint.address().is_v4()) {
-//                // ipv4
-//                address_v4::bytes_type b = m_endpoint.address().to_v4().to_bytes();
-//                ne["4"] = entry(std::string(b.begin(), b.end()));
-//            } else {
-//                // ipv6
-//                address_v6::bytes_type b = m_endpoint.address().to_v6().to_bytes();
-//                ne["6"] = entry(std::string(b.begin(), b.end()));
-//            }
-//
-//            // port
-//            ne["p"] = entry(m_endpoint.port());
-//
-//            e["ep"] = ne;
-//        }
+        if (!m_tx.empty()) {
+            // tx
+            e["tx"] = m_tx.get_entry();
+        }
 
         return e;
     }

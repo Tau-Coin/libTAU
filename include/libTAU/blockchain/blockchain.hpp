@@ -31,6 +31,7 @@ see LICENSE file.
 #include "libTAU/blockchain/repository_impl.hpp"
 #include "libTAU/blockchain/state_array.hpp"
 #include "libTAU/blockchain/tx_pool.hpp"
+#include "libTAU/blockchain/transaction_wrapper.hpp"
 #include "libTAU/common/entry_type.hpp"
 
 namespace libTAU {
@@ -65,8 +66,8 @@ namespace blockchain {
     // blockchain max ban time(30min)
 //    constexpr std::int64_t blockchain_max_ban_time = 30 * 60 * 1000;
 
-    // pool key suffix
-    const std::string key_suffix_pool_root = "pool_root";
+    // new tx key suffix
+    const std::string key_suffix_new_tx_hash = "new_tx_hash";
     // head block key suffix
     const std::string key_suffix_head_block_hash = "head_block_hash";
     // state root key suffix
@@ -76,8 +77,8 @@ namespace blockchain {
         HEAD_BLOCK_HASH,
         HEAD_BLOCK,
         BLOCK,
-        TX,
-        POOL_HASH_SET,
+        TX_WRAPPER,
+        NEW_TX_HASH,
         STATE_HASH_ARRAY,
         STATE_ARRAY,
     };
@@ -427,6 +428,10 @@ namespace blockchain {
 
         void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
 
+        void get_new_tx_hash(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
+
+        void put_new_tx_hash(const aux::bytes &chain_id, const sha1_hash &hash);
+
 //        void get_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
 
 //        void put_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
@@ -441,17 +446,17 @@ namespace blockchain {
 
         void put_block_with_all_state(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
-        void get_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+        void get_transaction_wrapper(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
-        void put_transaction(const aux::bytes &chain_id, const transaction &tx);
+        void put_transaction_wrapper(const aux::bytes &chain_id, const transaction_wrapper &txWrapper);
 
         void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
         void put_state_array(const aux::bytes &chain_id, const state_array &stateArray);
 
-        void get_pool_hash_set(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
-
-        void put_pool_hash_set(const aux::bytes &chain_id);
+//        void get_pool_hash_set(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
+//
+//        void put_pool_hash_set(const aux::bytes &chain_id);
 
         void get_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
@@ -533,6 +538,9 @@ namespace blockchain {
 
         // tx pool
         std::map<aux::bytes, tx_pool> m_tx_pools;
+
+        // tx wrapper
+        std::map<aux::bytes, transaction_wrapper> m_current_tx_wrapper;
 
         // chain status
         bool m_stop = false;

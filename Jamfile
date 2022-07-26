@@ -963,6 +963,7 @@ BLOCKCHAIN_SOURCES =
     state_array
     state_linker
     transaction
+    transaction_wrapper
     tx_pool
     vote
 	;
