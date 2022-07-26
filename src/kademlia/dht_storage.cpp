@@ -201,10 +201,18 @@ namespace {
 			l.clear();
 			if (relays.empty()) return;
 
+			/*
 			auto it = std::max_element(relays.begin(), relays.end(),
 				[](node_entry const& lhs, node_entry const& rhs)
 				{ return lhs.last_queried < rhs.last_queried; });
 			l.push_back({it->id, it->ep()});
+			*/
+
+			for (auto it = relays.rbegin(), end = relays.rend()
+				; it != end && count > 0; it++, count--)
+			{
+				l.push_back({it->id, it->ep()});
+			}
 		}
 	};
 

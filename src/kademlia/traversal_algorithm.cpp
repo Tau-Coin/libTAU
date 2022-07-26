@@ -794,8 +794,15 @@ bool traversal_algorithm::add_requests()
 		&& invoke_count_in_window < aux::numeric_cast<std::int16_t>(m_results.size())
 	)
 	{
-		// generate random
-		std::uint32_t const r = aux::random(random_max);
+		// try to get invoking node with high priority
+		std::uint32_t r = get_high_priority_node(random_max);
+
+		if (r > random_max)
+		{
+			// generate random
+			r = aux::random(random_max);
+		}
+
 		observer* o = (m_results.begin() + r)->get();
 
 		if (o->flags & observer::flag_alive)
@@ -861,6 +868,35 @@ bool traversal_algorithm::add_requests()
 	}
 
 	return false;
+}
+
+std::uint32_t traversal_algorithm::get_high_priority_node(std::uint32_t max)
+{
+	std::uint32_t ret = max + 1;
+	std::uint32_t j = 0;
+
+	// traverse the invoke window and get the node with high priority.
+	for (auto i = m_results.begin(), end(m_results.end());
+		i != end && j <= max;
+		++i, ++j)
+	{
+		observer* o = i->get();
+		if (o->flags & observer::flag_alive
+			|| o->flags & observer::flag_queried
+			|| o->flags & observer::flag_failed
+			|| o->flags & observer::flag_done)
+		{
+			continue;
+		}
+
+		if (o->flags & observer::flag_high_priority)
+		{
+			ret = j;
+			break;
+		}
+	}
+
+	return ret;
 }
 
 void traversal_algorithm::add_router_entries()
