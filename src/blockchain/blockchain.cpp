@@ -122,6 +122,28 @@ namespace libTAU::blockchain {
 //        transfer_to_acl_peers(chain_id, stateRequestEntry.get_entry());
 //    }
 
+    bool blockchain::create_chain_db(const bytes &chain_id) {
+        // create sqlite peer db
+        if (!m_repository->create_block_db(chain_id)) {
+            log(LOG_ERR, "INFO: chain:%s, create block db fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
+        if (!m_repository->create_state_db(chain_id)) {
+            log(LOG_ERR, "INFO: chain:%s, create state db fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
+        if (!m_repository->create_state_array_db(chain_id)) {
+            log(LOG_ERR, "INFO: chain:%s, create state array db fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
+        if (!m_repository->create_peer_db(chain_id)) {
+            log(LOG_ERR, "INFO: chain:%s, create bootstrap db fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
+
+        return true;
+    }
+
     bool blockchain::followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
         auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
         if (it != m_chains.end()) {
@@ -132,19 +154,9 @@ namespace libTAU::blockchain {
         if (!chain_id.empty()) {
             log(LOG_INFO, "INFO: Follow chain:%s", aux::toHex(chain_id).c_str());
 
-            // create sqlite peer db
-            if (!m_repository->create_block_db(chain_id)) {
-                log(LOG_ERR, "INFO: chain:%s, create block db fail.", aux::toHex(chain_id).c_str());
-            }
-            if (!m_repository->create_state_db(chain_id)) {
-                log(LOG_ERR, "INFO: chain:%s, create state db fail.", aux::toHex(chain_id).c_str());
-            }
-            if (!m_repository->create_state_array_db(chain_id)) {
-                log(LOG_ERR, "INFO: chain:%s, create state array db fail.", aux::toHex(chain_id).c_str());
-            }
-            if (!m_repository->create_peer_db(chain_id)) {
-                log(LOG_ERR, "INFO: chain:%s, create bootstrap db fail.", aux::toHex(chain_id).c_str());
-            }
+            // create db
+            if (!create_chain_db(chain_id))
+                return false;
 
             // add bootstrap into db
             for (auto const &peer: peers) {
@@ -2833,6 +2845,9 @@ namespace libTAU::blockchain {
 //    }
 
     bool blockchain::createNewCommunity(const aux::bytes &chain_id, const std::set<account>& accounts) {
+        if (!create_chain_db(chain_id))
+            return false;
+
         std::int64_t now = get_total_milliseconds() / 1000; // second
 
         dht::secret_key *sk = m_ses.serkey();
@@ -2846,20 +2861,25 @@ namespace libTAU::blockchain {
 
 //        auto ep = m_ses.external_udp_endpoint();
 
-        // TODO:: shiwu
+        int i = 0;
         for (auto const &act: accounts) {
-            m_repository->save_account(chain_id, act);
-            total_balance += act.balance();
+            if (i < MAX_ACCOUNT_SIZE) {
+                m_repository->save_account(chain_id, act);
+                total_balance += act.balance();
+
+                i++;
+            } else {
+                break;
+            }
         }
-        // TODO:genesis > 1000 peers
-        account genesis_account(*pk, GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0, 1);
+
+        std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
+        account genesis_account(*pk, genesis_balance, 1);
         m_repository->save_account(chain_id, genesis_account);
 
         sha1_hash stateRoot;
         std::vector<state_array> stateArrays;
         get_genesis_state(chain_id, stateRoot, stateArrays);
-
-        std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
 
         block b = block(chain_id, block_version::block_version1, now, 0, sha1_hash(),
                   GENESIS_BASE_TARGET, 0, genSig, stateRoot, transaction(), *pk);

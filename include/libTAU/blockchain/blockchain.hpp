@@ -245,6 +245,8 @@ namespace blockchain {
         // initialize member variables
         bool init();
 
+        bool create_chain_db(const aux::bytes &chain_id);
+
         // get current time(ms)
         static std::int64_t get_total_milliseconds();
 
