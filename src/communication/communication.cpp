@@ -30,19 +30,19 @@ namespace libTAU {
                 return false;
             }
 
-            m_stop = false;
+//            m_stop = false;
 
-            m_refresh_timer.expires_after(milliseconds(100));
-            m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
+//            m_refresh_timer.expires_after(milliseconds(100));
+//            m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
 
             return true;
         }
 
         bool communication::stop()
         {
-            m_stop = true;
-
-            m_refresh_timer.cancel();
+//            m_stop = true;
+//
+//            m_refresh_timer.cancel();
 
             clear();
 
@@ -85,10 +85,6 @@ namespace libTAU {
                     } else {
                         log(LOG_INFO, "INFO: Message hash list is empty.");
                     }
-
-                    m_last_communication_time[peer] = m_message_db->get_last_communication_time(std::make_pair(*pk, peer));
-                    m_levenshtein_array_time[peer] = m_message_db->get_levenshtein_array_time(std::make_pair(*pk, peer));
-                    m_levenshtein_array[peer] = m_message_db->get_levenshtein_array(std::make_pair(*pk, peer));
                 }
             } catch (std::exception &e) {
                 log(LOG_ERR, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
@@ -124,33 +120,9 @@ namespace libTAU {
         void communication::process_payload(const dht::public_key &peer, std::int64_t data_type_id, const entry &payload, bool is_cache) {
             auto now = get_current_time();
 
-            std::int64_t timestamp = 0;
-
             log(LOG_INFO, "---------------Got entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
             switch (data_type_id) {
                 case common::message_entry::data_type_id: {
-                    // time
-                    if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
-                    {
-                        timestamp = i->integer();
-                        if (timestamp > m_last_communication_time[peer]) {
-                            update_communication_time(peer, timestamp);
-                        }
-                    }
-
-                    {
-                        std::string encode;
-                        bencode(std::back_inserter(encode), payload);
-
-                        auto& entry_cache = m_entry_cache[peer];
-                        auto it = entry_cache.find(encode);
-                        if (it != entry_cache.end()) {
-                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-                            return;
-                        } else {
-                            entry_cache[encode] = now;
-                        }
-                    }
 
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
@@ -158,88 +130,43 @@ namespace libTAU {
                     log(LOG_INFO, "INFO: Got message, hash[%s].",
                         aux::toHex(msg_entry.m_msg.sha256().to_string()).c_str());
 
-//                    {
-//                        auto it = m_last_same_entry_time[peer].find(
-//                                std::make_shared<common::message_entry>(payload));
-//                        if (it != m_last_same_entry_time[peer].end()) {
-//                            if (now > it->second + communication_same_response_interval) {
-//                                m_last_same_entry_time[peer].erase(it);
-//                            } else {
-//                                log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
-//                                break;
-//                            }
-//                        } else {
-//                            m_last_same_entry_time[peer].emplace(std::make_shared<common::message_entry>(payload),
-//                                                                 now);
-//                        }
-//                    }
-
                     add_new_message(peer, msg_entry.m_msg, true);
 
-                    if (timestamp > m_levenshtein_array_time[peer]) {
-                        update_levenshtein_array(peer, msg_entry.m_levenshtein_array, timestamp);
+                    // find out missing messages and confirmation root
+                    std::vector<message> missing_messages;
+                    std::vector<sha256_hash> confirmation_roots;
+                    auto &message_list = m_message_list_map[peer];
+                    std::vector<message> messages(message_list.begin(), message_list.end());
+                    log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
+                    find_best_solution(messages, msg_entry.m_levenshtein_array,
+                                       missing_messages, confirmation_roots);
 
-                        // find out missing messages and confirmation root
-                        std::vector<message> missing_messages;
-                        std::vector<sha256_hash> confirmation_roots;
-                        auto &message_list = m_message_list_map[peer];
-                        std::vector<message> messages(message_list.begin(), message_list.end());
-                        log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
-                        find_best_solution(messages, msg_entry.m_levenshtein_array,
-                                           missing_messages, confirmation_roots);
-
-                        if (!confirmation_roots.empty()) {
-                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
-                                                                                                confirmation_roots,
-                                                                                                now);
-                            log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
-                        }
-
-                        aux::bytes levenshtein_array;
-                        auto &msg_list = m_message_list_map[peer];
-                        for (auto const &msg: msg_list) {
-                            levenshtein_array.push_back(msg.sha256()[0]);
-                        }
-
-                        auto size = missing_messages.size();
-                        for(auto k = 0; k < size; k++) {
-                            common::message_entry messageEntry(missing_messages[k], levenshtein_array, get_current_time());
-                            send_to(peer, messageEntry.get_entry());
-                        }
-
-                        common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
-                        send_to(peer, msg_levenshtein_array.get_entry());
+                    if (!confirmation_roots.empty()) {
+                        m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+                                                                                            confirmation_roots,
+                                                                                            now);
+                        log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
                     }
 
-//                    if (!is_cache) {
-//                        send_all_unconfirmed_messages(peer);
-//                    }
+                    aux::bytes levenshtein_array;
+                    auto &msg_list = m_message_list_map[peer];
+                    for (auto const &msg: msg_list) {
+                        levenshtein_array.push_back(msg.sha256()[0]);
+                    }
+
+                    auto size = missing_messages.size();
+                    for(auto k = 0; k < size; k++) {
+                        common::message_entry messageEntry(missing_messages[k], levenshtein_array, get_current_time());
+                        send_to(peer, messageEntry.get_entry());
+                    }
+
+                    common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
+                    send_to(peer, msg_levenshtein_array.get_entry());
+
 
                     break;
                 }
                 case common::message_levenshtein_array_entry::data_type_id: {
-                    // time
-                    if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
-                    {
-                        timestamp = i->integer();
-                        if (timestamp > m_last_communication_time[peer]) {
-                            update_communication_time(peer, timestamp);
-                        }
-                    }
-
-                    {
-                        std::string encode;
-                        bencode(std::back_inserter(encode), payload);
-
-                        auto& entry_cache = m_entry_cache[peer];
-                        auto it = entry_cache.find(encode);
-                        if (it != entry_cache.end()) {
-                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-                            return;
-                        } else {
-                            entry_cache[encode] = now;
-                        }
-                    }
 
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
@@ -247,80 +174,38 @@ namespace libTAU {
                     log(LOG_INFO, "INFO: Got message levenshtein array[%s].",
                         aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
 
-//                    {
-//                        auto it = m_last_same_entry_time[peer].find(
-//                                std::make_shared<common::message_levenshtein_array_entry2>(payload));
-//                        if (it != m_last_same_entry_time[peer].end()) {
-//                            if (now > it->second + communication_same_response_interval) {
-//                                m_last_same_entry_time[peer].erase(it);
-//                            } else {
-//                                log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
-//                                break;
-//                            }
-//                        } else {
-//                            m_last_same_entry_time[peer].emplace(
-//                                    std::make_shared<common::message_levenshtein_array_entry2>(payload), now);
-//                        }
-//                    }
+                    // find out missing messages and confirmation root
+                    std::vector<message> missing_messages;
+                    std::vector<sha256_hash> confirmation_roots;
+                    auto &message_list = m_message_list_map[peer];
+                    std::vector<message> messages(message_list.begin(), message_list.end());
+                    log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
+                    find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
+                                       missing_messages, confirmation_roots);
 
-                    if (timestamp >= m_levenshtein_array_time[peer]) {
-                        update_levenshtein_array(peer, levenshtein_array_entry.m_levenshtein_array, timestamp);
+                    if (!confirmation_roots.empty()) {
+                        m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+                                                                                            confirmation_roots,
+                                                                                            now);
+                        log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
+                    }
 
-                        // find out missing messages and confirmation root
-                        std::vector<message> missing_messages;
-                        std::vector<sha256_hash> confirmation_roots;
-                        auto &message_list = m_message_list_map[peer];
-                        std::vector<message> messages(message_list.begin(), message_list.end());
-                        log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
-                        find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
-                                           missing_messages, confirmation_roots);
+                    log(LOG_INFO, "INFO: Found missing message size %" PRIu64, missing_messages.size());
+                    aux::bytes levenshtein_array;
+                    auto &msg_list = m_message_list_map[peer];
+                    for (auto const &msg: msg_list) {
+                        levenshtein_array.push_back(msg.sha256()[0]);
+                    }
 
-                        if (!confirmation_roots.empty()) {
-                            m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
-                                                                                                confirmation_roots,
-                                                                                                now);
-                            log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
-                        }
-
-                        log(LOG_INFO, "INFO: Found missing message size %" PRIu64, missing_messages.size());
-                        aux::bytes levenshtein_array;
-                        auto &msg_list = m_message_list_map[peer];
-                        for (auto const &msg: msg_list) {
-                            levenshtein_array.push_back(msg.sha256()[0]);
-                        }
-
-                        auto size = missing_messages.size();
-                        for(auto k = 0; k < size; k++) {
-                            common::message_entry msg_entry(missing_messages[k], levenshtein_array, get_current_time());
-                            send_to(peer, msg_entry.get_entry());
-                        }
+                    auto size = missing_messages.size();
+                    for(auto k = 0; k < size; k++) {
+                        common::message_entry msg_entry(missing_messages[k], levenshtein_array, get_current_time());
+                        send_to(peer, msg_entry.get_entry());
                     }
 
                     break;
                 }
                 case common::event_entry::data_type_id: {
-                    // time
-                    if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
-                    {
-                        timestamp = i->integer();
-                        if (timestamp > m_last_communication_time[peer]) {
-                            update_communication_time(peer, timestamp);
-                        }
-                    }
-
-                    {
-                        std::string encode;
-                        bencode(std::back_inserter(encode), payload);
-
-                        auto& entry_cache = m_entry_cache[peer];
-                        auto it = entry_cache.find(encode);
-                        if (it != entry_cache.end()) {
-                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-                            return;
-                        } else {
-                            entry_cache[encode] = now;
-                        }
-                    }
 
                     m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
 
@@ -329,101 +214,8 @@ namespace libTAU {
                     // 通知用户新的user event
                     m_ses.alerts().emplace_alert<communication_user_event_alert>(peer, eventEntry.m_value);
 
-                    if (!is_cache) {
-                        send_all_unconfirmed_messages(peer);
-                    }
-
                     break;
                 }
-//                case common::friend_info_request_entry::data_type_id: {
-//                    // time
-//                    if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
-//                    {
-//                        timestamp = i->integer();
-//                        if (timestamp > m_last_communication_time[peer]) {
-//                            update_communication_time(peer, timestamp);
-//                        }
-//                    }
-//
-//                    {
-//                        std::string encode;
-//                        bencode(std::back_inserter(encode), payload);
-//
-//                        auto& entry_cache = m_entry_cache[peer];
-//                        auto it = entry_cache.find(encode);
-//                        if (it != entry_cache.end()) {
-//                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-//                            return;
-//                        } else {
-//                            entry_cache[encode] = now;
-//                        }
-//                    }
-//
-//                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-//
-////                    auto it = m_last_same_entry_time[peer].find(std::make_shared<common::friend_info_request_entry>(payload));
-////                    if (it != m_last_same_entry_time[peer].end()) {
-////                        if (now > it->second + communication_same_response_interval) {
-////                            m_last_same_entry_time[peer].erase(it);
-////                        } else {
-////                            log(LOG_INFO, "INFO: The same request from the same peer in 4s.");
-////                            break;
-////                        }
-////                    } else {
-////                        m_last_same_entry_time[peer].emplace(std::make_shared<common::friend_info_request_entry>(payload), now);
-////                    }
-//
-//                    auto pubkey = *m_ses.pubkey();
-//                    auto friend_info = m_message_db->get_friend_info(std::make_pair(pubkey, pubkey));
-//                    if (!friend_info.empty()) {
-//                        common::friend_info_entry e(friend_info);
-//                        send_to(peer, e.get_entry());
-//                    }
-//
-//                    if (!is_cache) {
-//                        send_all_unconfirmed_messages(peer);
-//                    }
-//
-//                    break;
-//                }
-//                case common::friend_info_entry::data_type_id: {
-//                    // time
-//                    if (auto* i = const_cast<entry *>(payload.find_key(common::entry_time)))
-//                    {
-//                        timestamp = i->integer();
-//                        if (timestamp > m_last_communication_time[peer]) {
-//                            update_communication_time(peer, timestamp);
-//                        }
-//                    }
-//
-//                    {
-//                        std::string encode;
-//                        bencode(std::back_inserter(encode), payload);
-//
-//                        auto& entry_cache = m_entry_cache[peer];
-//                        auto it = entry_cache.find(encode);
-//                        if (it != entry_cache.end()) {
-//                            log(LOG_INFO, "INFO: Duplicate entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-//                            return;
-//                        } else {
-//                            entry_cache[encode] = now;
-//                        }
-//                    }
-//
-//                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-//
-//                    common::friend_info_entry e(payload);
-//                    if (!e.m_friend_info.empty()) {
-//                        // 通知用户新的friend info
-//                        m_ses.alerts().emplace_alert<communication_friend_info_alert>(peer, e.m_friend_info);
-//                    }
-//
-//                    if (!is_cache) {
-//                        send_all_unconfirmed_messages(peer);
-//                    }
-//
-//                    break;
-//                }
                 default: {
                 }
             }
@@ -548,7 +340,7 @@ namespace libTAU {
             common::message_entry msg_entry(msg, levenshtein_array, now);
             send_to(msg.receiver(), msg_entry.get_entry());
 
-            update_communication_time(msg.receiver(), now);
+//            update_communication_time(msg.receiver(), now);
 
             return true;
         }
@@ -577,43 +369,20 @@ namespace libTAU {
             return true;
         }
 
-        void communication::refresh_timeout(error_code const& e)
-        {
-            if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
-
-            try {
-                if (e.value() != boost::asio::error::operation_aborted) {
-                    auto now = get_current_time();
-
-                    for (auto &entry_cache: m_entry_cache) {
-                        for (auto it = entry_cache.second.begin(); it != entry_cache.second.end();) {
-                            // remove outdated date
-                            if (now > it->second + communication_max_entry_cache_time) {
-                                entry_cache.second.erase(it++);
-                            } else {
-                                it++;
-                            }
-                        }
-                    }
-
-//                    for (auto &last_same_entry_time: m_last_same_entry_time) {
-//                        for (auto it = last_same_entry_time.second.begin(); it != last_same_entry_time.second.end();) {
-//                            // remove outdated date
-//                            if (now > it->second + communication_same_response_interval) {
-//                                last_same_entry_time.second.erase(it++);
-//                            } else {
-//                                it++;
-//                            }
-//                        }
-//                    }
-                }
-
-                m_refresh_timer.expires_after(seconds(communication_default_refresh_time));
-                m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
-            } catch (std::exception &e) {
-                log(LOG_ERR, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
-            }
-        }
+//        void communication::refresh_timeout(error_code const& e)
+//        {
+//            if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
+//
+//            try {
+//                if (e.value() != boost::asio::error::operation_aborted) {
+//                }
+//
+//                m_refresh_timer.expires_after(seconds(communication_default_refresh_time));
+//                m_refresh_timer.async_wait(std::bind(&communication::refresh_timeout, self(), _1));
+//            } catch (std::exception &e) {
+//                log(LOG_ERR, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+//            }
+//        }
 
         void communication::save_friend_latest_message_hash_list(const dht::public_key &peer) {
             auto message_list = m_message_list_map.at(peer);
@@ -1188,46 +957,44 @@ namespace libTAU {
 //                    , alpha, beta, invoke_limit, std::move(salt));
 //        }
 
-        void communication::send_all_unconfirmed_messages(const dht::public_key &peer) {
-            // find out missing messages and confirmation root
-            std::vector<message> missing_messages;
-            std::vector<sha256_hash> confirmation_roots;
-            auto &message_list = m_message_list_map[peer];
-            std::vector<message> messages(message_list.begin(), message_list.end());
-            log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
-            log(LOG_INFO, "INFO: Send all msgs peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(),
-                aux::toHex(m_levenshtein_array[peer]).c_str());
-            find_best_solution(messages, m_levenshtein_array[peer],
-                               missing_messages, confirmation_roots);
+//        void communication::send_all_unconfirmed_messages(const dht::public_key &peer) {
+//            // find out missing messages and confirmation root
+//            std::vector<message> missing_messages;
+//            std::vector<sha256_hash> confirmation_roots;
+//            auto &message_list = m_message_list_map[peer];
+//            std::vector<message> messages(message_list.begin(), message_list.end());
+//            log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
+//            log(LOG_INFO, "INFO: Send all msgs peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(),
+//                aux::toHex(m_levenshtein_array[peer]).c_str());
+//            find_best_solution(messages, m_levenshtein_array[peer],
+//                               missing_messages, confirmation_roots);
+//
+//            log(LOG_INFO, "INFO: Found missing message size %" PRIu64, missing_messages.size());
+//
+//            auto now = get_current_time();
+//
+//            aux::bytes levenshtein_array;
+//            for (auto const &message: messages) {
+//                levenshtein_array.push_back(message.sha256()[0]);
+//            }
+//
+//            auto size = missing_messages.size();
+//            for(auto k = 0; k < size; k++) {
+//                common::message_entry msg_entry(missing_messages[k], levenshtein_array, now);
+//                send_to(peer, msg_entry.get_entry());
+//            }
+//        }
 
-            log(LOG_INFO, "INFO: Found missing message size %" PRIu64, missing_messages.size());
+//        void communication::update_communication_time(const dht::public_key &peer, std::int64_t time) {
+//            m_last_communication_time[peer] = time;
+//            m_message_db->save_last_communication_time(std::make_pair(*m_ses.pubkey(), peer), time);
+//        }
 
-            auto now = get_current_time();
-
-            aux::bytes levenshtein_array;
-            for (auto const &message: messages) {
-                levenshtein_array.push_back(message.sha256()[0]);
-            }
-
-            auto size = missing_messages.size();
-            for(auto k = 0; k < size; k++) {
-                common::message_entry msg_entry(missing_messages[k], levenshtein_array, now);
-                send_to(peer, msg_entry.get_entry());
-            }
-        }
-
-        void communication::update_communication_time(const dht::public_key &peer, std::int64_t time) {
-            m_last_communication_time[peer] = time;
-            m_message_db->save_last_communication_time(std::make_pair(*m_ses.pubkey(), peer), time);
-        }
-
-        void communication::update_levenshtein_array(const dht::public_key &peer, const aux::bytes& levenshtein_array, std::int64_t time) {
-            m_levenshtein_array[peer] = levenshtein_array;
-            m_levenshtein_array_time[peer] = time;
-            log(LOG_INFO, "save peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(levenshtein_array).c_str());
-            m_message_db->save_levenshtein_array(std::make_pair(*m_ses.pubkey(), peer), levenshtein_array);
-            m_message_db->save_levenshtein_array_time(std::make_pair(*m_ses.pubkey(), peer), time);
-        }
+//        void communication::update_levenshtein_array(const dht::public_key &peer, const aux::bytes& levenshtein_array) {
+//            m_levenshtein_array[peer] = levenshtein_array;
+//            log(LOG_INFO, "save peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(levenshtein_array).c_str());
+//            m_message_db->save_levenshtein_array(std::make_pair(*m_ses.pubkey(), peer), levenshtein_array);
+//        }
 
 
         bool communication::should_log(aux::LOG_LEVEL log_level) const

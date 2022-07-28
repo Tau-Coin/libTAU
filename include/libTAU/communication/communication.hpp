@@ -51,10 +51,10 @@ namespace libTAU {
         constexpr int communication_max_message_list_size = 10;
 
         // max entry cache time(ms)
-        constexpr int communication_max_entry_cache_time = 2 * 60 * 60 * 1000;
+//        constexpr int communication_max_entry_cache_time = 2 * 60 * 60 * 1000;
 
         // min response interval to the same request(2s)
-        constexpr int communication_same_response_interval = 2 * 1000;
+//        constexpr int communication_same_response_interval = 2 * 1000;
 
 //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
         // This is the basic logging and debug interface offered by the communication.
@@ -77,7 +77,7 @@ namespace libTAU {
         public:
 
             communication(aux::bytes device_id, aux::session_interface &mSes, io_context &mIoc, counters &mCounters) :
-                    m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc) {
+                    m_device_id(std::move(device_id)), m_ioc(mIoc), m_ses(mSes), m_counters(mCounters)/*, m_refresh_timer(mIoc)*/ {
                 m_message_db = std::make_shared<message_db_impl>(m_ses.sqldb(), m_ses.kvdb());
             }
 
@@ -198,13 +198,13 @@ namespace libTAU {
             void log(aux::LOG_LEVEL log_level, char const* fmt, ...) const noexcept override TORRENT_FORMAT(3,4);
 //#endif
 
-            void refresh_timeout(error_code const& e);
+//            void refresh_timeout(error_code const& e);
 
-            void send_all_unconfirmed_messages(dht::public_key const& peer);
+//            void send_all_unconfirmed_messages(dht::public_key const& peer);
 
-            void update_communication_time(dht::public_key const& peer, std::int64_t time);
+//            void update_communication_time(dht::public_key const& peer, std::int64_t time);
 
-            void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array, std::int64_t time);
+//            void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array);
 
             void on_dht_put_mutable_item(dht::item const& i, int n);
 
@@ -222,28 +222,18 @@ namespace libTAU {
             counters& m_counters;
 
             // deadline timer
-            aux::deadline_timer m_refresh_timer;
+//            aux::deadline_timer m_refresh_timer;
 
             // message db
             std::shared_ptr<message_db_interface> m_message_db;
 
-            bool m_stop = false;
+//            bool m_stop = false;
 
             // all friends
             std::vector<dht::public_key> m_friends;
 
-//            std::map<dht::public_key, std::map<std::shared_ptr<common::communication_entry_base>, std::int64_t, common::less_communication_entry_base>> m_last_same_entry_time;
-
-            std::map<dht::public_key, std::int64_t> m_last_communication_time;
-
-            std::map<dht::public_key, std::int64_t> m_levenshtein_array_time;
-
-            std::map<dht::public_key, aux::bytes> m_levenshtein_array;
-
             // message list(map:key->Y public key, value->message list)
             std::map<dht::public_key, std::list<message>> m_message_list_map;
-
-            std::map<dht::public_key, std::map<std::string, std::int64_t>> m_entry_cache;
         };
     }
 }
