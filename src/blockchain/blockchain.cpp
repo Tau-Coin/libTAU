@@ -24,7 +24,10 @@ namespace libTAU::blockchain {
     bool blockchain::init() {
         try {
             // db init
-            m_repository->init();
+            if (!m_repository->init()) {
+                log(LOG_INFO, "INFO: Blockchain init fail!");
+                return false;
+            }
 
             // get all chains
             auto chains = m_repository->get_all_chains();
@@ -167,7 +170,10 @@ namespace libTAU::blockchain {
             }
 
             // follow chain id in memory and db
-            m_repository->add_new_chain(chain_id);
+            if (!m_repository->add_new_chain(chain_id)) {
+                log(LOG_ERR, "INFO: Add new chain[%s] fail", aux::toHex(chain_id).c_str());
+                return false;
+            }
             m_chains.push_back(chain_id);
 
             // start chain
@@ -638,8 +644,8 @@ namespace libTAU::blockchain {
 
                         auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
                         auto act = m_repository->get_account(chain_id, *pk);
-                        log(LOG_INFO, "INFO: chain id[%s] account[%s]",
-                            aux::toHex(chain_id).c_str(), act.to_string().c_str());
+                        log(LOG_INFO, "INFO: chain id[%s] pk[%s] account[%s]",
+                            aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), act.to_string().c_str());
                         auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
                         auto hit = consensus::calculate_random_hit(genSig);
                         auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit,
@@ -2030,6 +2036,14 @@ namespace libTAU::blockchain {
                 }
             }
 
+            // the last one
+            if (!states.empty()) {
+                state_array stateArray(states);
+                arrays.push_back(stateArray);
+
+                states.clear();
+            }
+
             if (!arrays.empty()) {
                 std::vector<sha1_hash> hashArray;
                 for (auto const &array: arrays) {
@@ -2864,6 +2878,7 @@ namespace libTAU::blockchain {
         int i = 0;
         for (auto const &act: accounts) {
             if (i < MAX_ACCOUNT_SIZE) {
+                log(LOG_INFO, "INFO: chain[%s] save account:%s", aux::toHex(chain_id).c_str(), act.to_string().c_str());
                 m_repository->save_account(chain_id, act);
                 total_balance += act.balance();
 
@@ -2875,6 +2890,7 @@ namespace libTAU::blockchain {
 
         std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
         account genesis_account(*pk, genesis_balance, 1);
+        log(LOG_INFO, "INFO: chain[%s] save account:%s", aux::toHex(chain_id).c_str(), genesis_account.to_string().c_str());
         m_repository->save_account(chain_id, genesis_account);
 
         sha1_hash stateRoot;
