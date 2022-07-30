@@ -24,7 +24,7 @@ namespace libTAU::blockchain {
     bool repository_impl::init() {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(chains_db_name());
-        sql.append("(CHAIN_ID VARCHAR(32) PRIMARY KEY NOT NULL);");
+        sql.append("(CHAIN_ID BLOB PRIMARY KEY NOT NULL);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -85,7 +85,7 @@ namespace libTAU::blockchain {
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *p = sqlite3_column_text(stmt,0);
+                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 auto length = sqlite3_column_bytes(stmt, 0);
                 aux::bytes chain_id(p, p + length);
                 chains.insert(chain_id);
@@ -106,8 +106,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        std::string value(chain_id.begin(), chain_id.end());
-        sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
+        sqlite3_bind_blob(stmt, 1, chain_id.data(), chain_id.size(), nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -127,8 +126,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        std::string id(chain_id.begin(), chain_id.end());
-        sqlite3_bind_text(stmt, 1, id.c_str(), id.size(), nullptr);
+        sqlite3_bind_blob(stmt, 1, chain_id.data(), chain_id.size(), nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -150,7 +148,7 @@ namespace libTAU::blockchain {
     bool repository_impl::create_state_array_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(state_array_db_name(chain_id));
-        sql.append("(HASH CHAR(20) PRIMARY KEY NOT NULL, DATA TEXT);");
+        sql.append("(HASH BLOB PRIMARY KEY NOT NULL, DATA BLOB);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -186,10 +184,11 @@ namespace libTAU::blockchain {
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
-            sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+            sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *p = sqlite3_column_text(stmt,0);
+                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 auto length = sqlite3_column_bytes(stmt, 0);
+
                 std::string encode(p, p + length);
                 stateArray = state_array(encode);
                 break;
@@ -211,7 +210,7 @@ namespace libTAU::blockchain {
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
-            sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+            sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
                 int num = sqlite3_column_int(stmt, 0);
                 if (num > 0) {
@@ -238,8 +237,8 @@ namespace libTAU::blockchain {
         }
         sha1_hash hash = stateArray.sha1();
         std::string e = stateArray.get_encode();
-        sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
-        sqlite3_bind_text(stmt, 2, e.c_str(), e.size(), nullptr);
+        sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 2, e.data(), e.size(), nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -259,7 +258,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -273,7 +272,7 @@ namespace libTAU::blockchain {
     bool repository_impl::create_state_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(state_db_name(chain_id));
-        sql.append("(PUBKEY CHAR(32) PRIMARY KEY NOT NULL,BALANCE INTEGER,NONCE INTEGER);");
+        sql.append("(PUBKEY BLOB PRIMARY KEY NOT NULL,BALANCE INTEGER,NONCE INTEGER);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -321,16 +320,16 @@ namespace libTAU::blockchain {
         account act;
 
         sqlite3_stmt * stmt;
-        std::string sql = "SELECT * FROM ";
+        std::string sql = "SELECT BALANCE,NONCE FROM ";
         sql.append(state_db_name(chain_id));
         sql.append(" WHERE PUBKEY=?");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
-            sqlite3_bind_text(stmt, 1, std::string(pubKey.bytes.begin(), pubKey.bytes.end()).c_str(), dht::public_key::len, nullptr);
+            sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                std::int64_t balance = sqlite3_column_int64(stmt, 1);
-                std::int64_t nonce = sqlite3_column_int64(stmt, 2);
+                std::int64_t balance = sqlite3_column_int64(stmt, 0);
+                std::int64_t nonce = sqlite3_column_int64(stmt, 1);
 
                 act = account(pubKey, balance, nonce);
                 break;
@@ -351,8 +350,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        std::string pubkey(act.peer().bytes.begin(), act.peer().bytes.end());
-        sqlite3_bind_text(stmt, 1, pubkey.c_str(), dht::public_key::len, nullptr);
+        sqlite3_bind_blob(stmt, 1, act.peer().bytes.data(), dht::public_key::len, nullptr);
         sqlite3_bind_int64(stmt, 2, act.balance());
         sqlite3_bind_int64(stmt, 3, act.nonce());
 
@@ -374,7 +372,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        sqlite3_bind_text(stmt, 1, std::string(pubKey.bytes.begin(), pubKey.bytes.end()).c_str(), dht::public_key::len, nullptr);
+        sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -398,10 +396,8 @@ namespace libTAU::blockchain {
         if (ok == SQLITE_OK) {
             sqlite3_bind_int(stmt, 1, MAX_ACCOUNT_SIZE);
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *pK = sqlite3_column_text(stmt,0);
-                auto length = sqlite3_column_bytes(stmt, 0);
-                std::string value(pK, pK + length);
-                dht::public_key peer(value.data());
+                const char *pK = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                dht::public_key peer(pK);
 
                 std::int64_t balance = sqlite3_column_int64(stmt, 1);
                 std::int64_t nonce = sqlite3_column_int64(stmt, 2);
@@ -426,10 +422,8 @@ namespace libTAU::blockchain {
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *pK = sqlite3_column_text(stmt,0);
-                auto length = sqlite3_column_bytes(stmt, 0);
-                std::string value(pK, pK + length);
-                peer = dht::public_key(value.data());
+                const char *pK = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                peer = dht::public_key(pK);
                 break;
             }
         }
@@ -442,9 +436,9 @@ namespace libTAU::blockchain {
     bool repository_impl::create_block_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(blocks_db_name(chain_id));
-        sql.append("(HASH CHAR(20) PRIMARY KEY NOT NULL,CHAIN_ID VARCHAR(32),VERSION INT,TIMESTAMP INTEGER,"
-                   "NUMBER INTEGER,PREVIOUS_HASH CHAR(20),BASE_TARGET INTEGER,DIFFICULTY INTEGER,"
-                   "GENERATION_SIGNATURE CHAR(20),STATE_ROOT CHAR(20),TX TEXT,MINER CHAR(32),SIGNATURE TEXT,MAIN_CHAIN INT);");
+        sql.append("(HASH BLOB PRIMARY KEY NOT NULL,CHAIN_ID BLOB,VERSION INT,TIMESTAMP INTEGER,NUMBER INTEGER,"
+                   "PREVIOUS_HASH BLOB,BASE_TARGET INTEGER,DIFFICULTY INTEGER,GENERATION_SIGNATURE BLOB,"
+                   "STATE_ROOT BLOB,TX BLOB,MINER BLOB,SIGNATURE BLOB,MAIN_CHAIN INT);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -481,7 +475,7 @@ namespace libTAU::blockchain {
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *p = sqlite3_column_text(stmt,0);
+                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 auto length = sqlite3_column_bytes(stmt, 0);
                 aux::bytes chainID(p, p + length);
 
@@ -490,34 +484,31 @@ namespace libTAU::blockchain {
                 std::int64_t timestamp = sqlite3_column_int64(stmt, 2);
                 std::int64_t number = sqlite3_column_int64(stmt, 3);
 
-                p = sqlite3_column_text(stmt,4);
-                std::string preHash(p, p + libTAU::sha1_hash::size());
-                sha1_hash previous_hash(preHash.c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 4));
+                sha1_hash previous_hash(p);
 
                 auto base_target = static_cast<std::uint64_t>(sqlite3_column_int64(stmt, 5));
                 auto difficulty = static_cast<std::uint64_t>(sqlite3_column_int64(stmt, 6));
 
-                p = sqlite3_column_text(stmt,7);
-                std::string gen_sig(p, p + libTAU::sha1_hash::size());
-                sha1_hash generation_signature(gen_sig.c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 7));
+                sha1_hash generation_signature(p);
 
-                p = sqlite3_column_text(stmt,8);
-                std::string root(p, p + libTAU::sha1_hash::size());
-                sha1_hash state_root(root.c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 8));
+                sha1_hash state_root(p);
 
-                p = sqlite3_column_text(stmt,9);
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 9));
                 length = sqlite3_column_bytes(stmt, 9);
                 std::string tx_encode(p, p + length);
                 transaction tx(tx_encode);
 
-                p = sqlite3_column_text(stmt,10);
-                dht::public_key miner(std::string(p, p + dht::public_key::len).c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 10));
+                dht::public_key miner(p);
 
-                p = sqlite3_column_text(stmt,11);
-                dht::signature sig(std::string(p, p + dht::signature::len).c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 11));
+                dht::signature sig(p);
 
-                p = sqlite3_column_text(stmt,12);
-                sha1_hash hash(std::string(p, p + libTAU::sha1_hash::size()).c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 12));
+                sha1_hash hash(p);
 
                 blk = block(chainID, version, timestamp, number, previous_hash, base_target, difficulty, generation_signature, state_root, tx, miner, sig, hash);
                 break;
@@ -539,9 +530,9 @@ namespace libTAU::blockchain {
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
-            sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+            sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *p = sqlite3_column_text(stmt,0);
+                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 auto length = sqlite3_column_bytes(stmt, 0);
                 aux::bytes chainID(p, p + length);
 
@@ -550,31 +541,28 @@ namespace libTAU::blockchain {
                 std::int64_t timestamp = sqlite3_column_int64(stmt, 2);
                 std::int64_t number = sqlite3_column_int64(stmt, 3);
 
-                p = sqlite3_column_text(stmt,4);
-                std::string preHash(p, p + libTAU::sha1_hash::size());
-                sha1_hash previous_hash(preHash.c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 4));
+                sha1_hash previous_hash(p);
 
                 auto base_target = static_cast<std::uint64_t>(sqlite3_column_int64(stmt, 5));
                 auto difficulty = static_cast<std::uint64_t>(sqlite3_column_int64(stmt, 6));
 
-                p = sqlite3_column_text(stmt,7);
-                std::string gen_sig(p, p + libTAU::sha1_hash::size());
-                sha1_hash generation_signature(gen_sig.c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 7));
+                sha1_hash generation_signature(p);
 
-                p = sqlite3_column_text(stmt,8);
-                std::string root(p, p + libTAU::sha1_hash::size());
-                sha1_hash state_root(root.c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 8));
+                sha1_hash state_root(p);
 
-                p = sqlite3_column_text(stmt,9);
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 9));
                 length = sqlite3_column_bytes(stmt, 9);
                 std::string tx_encode(p, p + length);
                 transaction tx(tx_encode);
 
-                p = sqlite3_column_text(stmt,10);
-                dht::public_key miner(std::string(p, p + dht::public_key::len).c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 10));
+                dht::public_key miner(p);
 
-                p = sqlite3_column_text(stmt,11);
-                dht::signature sig(std::string(p, p + dht::signature::len).c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 11));
+                dht::signature sig(p);
 
                 blk = block(chainID, version, timestamp, number, previous_hash, base_target, difficulty, generation_signature, state_root, tx, miner, sig, hash);
                 break;
@@ -597,20 +585,20 @@ namespace libTAU::blockchain {
             return false;
         }
 
-        sqlite3_bind_text(stmt, 1, blk.sha1().to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
-        sqlite3_bind_text(stmt, 2, std::string(chain_id.begin(), chain_id.end()).c_str(), chain_id.size(), nullptr);
+        sqlite3_bind_blob(stmt, 1, blk.sha1().data(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 2, chain_id.data(), chain_id.size(), nullptr);
         sqlite3_bind_int(stmt, 3, blk.version());
         sqlite3_bind_int64(stmt, 4, blk.timestamp());
         sqlite3_bind_int64(stmt, 5, blk.block_number());
-        sqlite3_bind_text(stmt, 6, blk.previous_block_hash().to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 6, blk.previous_block_hash().data(), libTAU::sha1_hash::size(), nullptr);
         sqlite3_bind_int64(stmt, 7, static_cast<std::int64_t>(blk.base_target()));
         sqlite3_bind_int64(stmt, 8, static_cast<std::int64_t>(blk.cumulative_difficulty()));
-        sqlite3_bind_text(stmt, 9, blk.generation_signature().to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
-        sqlite3_bind_text(stmt, 10, blk.multiplex_hash().to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 9, blk.generation_signature().data(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 10, blk.multiplex_hash().data(), libTAU::sha1_hash::size(), nullptr);
         auto tx_encode = blk.tx().get_encode();
-        sqlite3_bind_text(stmt, 11, tx_encode.c_str(), tx_encode.size(), nullptr);
-        sqlite3_bind_text(stmt, 12, std::string(blk.miner().bytes.begin(), blk.miner().bytes.end()).c_str(), dht::public_key::len, nullptr);
-        sqlite3_bind_text(stmt, 13, std::string(blk.signature().bytes.begin(), blk.signature().bytes.end()).c_str(), dht::signature::len, nullptr);
+        sqlite3_bind_blob(stmt, 11, tx_encode.data(), tx_encode.size(), nullptr);
+        sqlite3_bind_blob(stmt, 12, blk.miner().bytes.data(), dht::public_key::len, nullptr);
+        sqlite3_bind_blob(stmt, 13, blk.signature().bytes.data(), dht::signature::len, nullptr);
         if (is_main_chain) {
             sqlite3_bind_int(stmt, 14, 1);
         } else {
@@ -635,7 +623,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -658,7 +646,7 @@ namespace libTAU::blockchain {
         if (ok == SQLITE_OK) {
             sqlite3_bind_int64(stmt, 1, block_number);
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *p = sqlite3_column_text(stmt,0);
+                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 auto length = sqlite3_column_bytes(stmt, 0);
                 aux::bytes chainID(p, p + length);
 
@@ -667,34 +655,31 @@ namespace libTAU::blockchain {
                 std::int64_t timestamp = sqlite3_column_int64(stmt, 2);
                 std::int64_t number = sqlite3_column_int64(stmt, 3);
 
-                p = sqlite3_column_text(stmt,4);
-                std::string preHash(p, p + libTAU::sha1_hash::size());
-                sha1_hash previous_hash(preHash.c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 4));
+                sha1_hash previous_hash(p);
 
                 auto base_target = static_cast<std::uint64_t>(sqlite3_column_int64(stmt, 5));
                 auto difficulty = static_cast<std::uint64_t>(sqlite3_column_int64(stmt, 6));
 
-                p = sqlite3_column_text(stmt,7);
-                std::string gen_sig(p, p + libTAU::sha1_hash::size());
-                sha1_hash generation_signature(gen_sig.c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 7));
+                sha1_hash generation_signature(p);
 
-                p = sqlite3_column_text(stmt,8);
-                std::string root(p, p + libTAU::sha1_hash::size());
-                sha1_hash state_root(root.c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 8));
+                sha1_hash state_root(p);
 
-                p = sqlite3_column_text(stmt,9);
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 9));
                 length = sqlite3_column_bytes(stmt, 9);
                 std::string tx_encode(p, p + length);
                 transaction tx(tx_encode);
 
-                p = sqlite3_column_text(stmt,10);
-                dht::public_key miner(std::string(p, p + dht::public_key::len).c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 10));
+                dht::public_key miner(p);
 
-                p = sqlite3_column_text(stmt,11);
-                dht::signature sig(std::string(p, p + dht::signature::len).c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 11));
+                dht::signature sig(p);
 
-                p = sqlite3_column_text(stmt,12);
-                sha1_hash hash(std::string(p, p + libTAU::sha1_hash::size()).c_str());
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 12));
+                sha1_hash hash(p);
 
                 blk = block(chainID, version, timestamp, number, previous_hash, base_target, difficulty, generation_signature, state_root, tx, miner, sig, hash);
                 break;
@@ -735,7 +720,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -755,7 +740,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        sqlite3_bind_text(stmt, 1, hash.to_string().c_str(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -788,7 +773,7 @@ namespace libTAU::blockchain {
     bool repository_impl::create_peer_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(peer_db_name(chain_id));
-        sql.append("(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);");
+        sql.append("(PUBKEY BLOB PRIMARY KEY NOT NULL);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -825,10 +810,8 @@ namespace libTAU::blockchain {
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                const unsigned char *pK = sqlite3_column_text(stmt,0);
-                auto length = sqlite3_column_bytes(stmt, 0);
-                std::string value(pK, pK + length);
-                peer = dht::public_key(value.data());
+                const char *pK = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                peer = dht::public_key(pK);
                 break;
             }
         }
@@ -847,7 +830,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        sqlite3_bind_text(stmt, 1, std::string(pubKey.bytes.begin(), pubKey.bytes.end()).c_str(), dht::public_key::len, nullptr);
+        sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -867,8 +850,7 @@ namespace libTAU::blockchain {
         if (ok != SQLITE_OK) {
             return false;
         }
-        std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
-        sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
+        sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
