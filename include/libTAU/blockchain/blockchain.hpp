@@ -550,7 +550,7 @@ namespace blockchain {
         bool m_stop = false;
 
         // all chains
-        std::vector<aux::bytes> m_chains;
+        std::set<aux::bytes> m_chains;
 
         // short chain id table<short chain id, chain id>
         std::map<aux::bytes, aux::bytes> m_short_chain_id_table;

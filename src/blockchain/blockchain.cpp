@@ -30,8 +30,7 @@ namespace libTAU::blockchain {
             }
 
             // get all chains
-            auto chains = m_repository->get_all_chains();
-            m_chains.insert(m_chains.end(), chains.begin(), chains.end());
+            m_chains = m_repository->get_all_chains();
         } catch (std::exception &e) {
             log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             return false;
@@ -114,17 +113,6 @@ namespace libTAU::blockchain {
         }
     }
 
-//    void blockchain::request_state(const aux::bytes &chain_id) {
-//        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-//        if (it == m_chains.end()) {
-//            log(LOG_ERR, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-//            return;
-//        }
-//
-//        common::state_request_entry stateRequestEntry(chain_id);
-//        transfer_to_acl_peers(chain_id, stateRequestEntry.get_entry());
-//    }
-
     bool blockchain::create_chain_db(const bytes &chain_id) {
         // create sqlite peer db
         if (!m_repository->create_block_db(chain_id)) {
@@ -148,8 +136,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers) {
-        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-        if (it != m_chains.end()) {
+        if (m_chains.find(chain_id) != m_chains.end()) {
             log(LOG_INFO, "INFO: Already followed chain[%s]", aux::toHex(chain_id).c_str());
             return true;
         }
@@ -174,7 +161,7 @@ namespace libTAU::blockchain {
                 log(LOG_ERR, "INFO: Add new chain[%s] fail", aux::toHex(chain_id).c_str());
                 return false;
             }
-            m_chains.push_back(chain_id);
+            m_chains.insert(chain_id);
 
             // start chain
             start_chain(chain_id);
@@ -186,8 +173,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key> &peers) {
-        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-        if (it == m_chains.end()) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return false;
         }
@@ -206,9 +192,8 @@ namespace libTAU::blockchain {
     bool blockchain::unfollowChain(const aux::bytes &chain_id) {
         log(LOG_INFO, "INFO: Unfollow chain:%s", aux::toHex(chain_id).c_str());
 
-        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-        if (it != m_chains.end()) {
-            m_chains.erase(it);
+        if (m_chains.find(chain_id) != m_chains.end()) {
+            m_chains.erase(chain_id);
 
             // remove chain id from db
             m_repository->delete_chain(chain_id);
@@ -2927,8 +2912,7 @@ namespace libTAU::blockchain {
 
                 auto &chain_id = tx.chain_id();
 
-                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                if (it == m_chains.end()) {
+                if (m_chains.find(chain_id) == m_chains.end()) {
                     log(LOG_INFO, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
                     return false;
                 }
@@ -2947,8 +2931,7 @@ namespace libTAU::blockchain {
     }
 
     bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid) {
-        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-        if (it == m_chains.end()) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return false;
         }
@@ -2969,8 +2952,7 @@ namespace libTAU::blockchain {
     }
 
     std::vector<block> blockchain::getTopTipBlocks(const aux::bytes &chain_id, int topNum) {
-        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-        if (it == m_chains.end()) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return std::vector<block>();
         }
@@ -2996,8 +2978,7 @@ namespace libTAU::blockchain {
     }
 
     std::int64_t blockchain::getMedianTxFee(const aux::bytes &chain_id) {
-        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-        if (it == m_chains.end()) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return 0;
         }
@@ -3012,8 +2993,7 @@ namespace libTAU::blockchain {
     }
 
     std::int64_t blockchain::getMiningTime(const aux::bytes &chain_id) {
-        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-        if (it == m_chains.end()) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return -1;
         }
@@ -3060,8 +3040,7 @@ namespace libTAU::blockchain {
     }
 
     std::set<dht::public_key> blockchain::get_access_list(const aux::bytes &chain_id) {
-        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-        if (it == m_chains.end()) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return std::set<dht::public_key>();
         }
@@ -3076,8 +3055,7 @@ namespace libTAU::blockchain {
     }
 
     std::set<dht::public_key> blockchain::get_ban_list(const aux::bytes &chain_id) {
-        auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-        if (it == m_chains.end()) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
             return std::set<dht::public_key>();
         }
@@ -3333,12 +3311,9 @@ namespace libTAU::blockchain {
 
             auto &chain_id = m_short_chain_id_table[signalEntry.m_short_chain_id];
 
-            {
-                auto it = std::find(m_chains.begin(), m_chains.end(), chain_id);
-                if (it == m_chains.end()) {
-                    log(LOG_INFO, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
-                    return;
-                }
+            if (m_chains.find(chain_id) == m_chains.end()) {
+                log(LOG_INFO, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                return;
             }
 
             switch (signalEntry.m_pid) {
