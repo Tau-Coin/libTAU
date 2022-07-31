@@ -292,12 +292,6 @@ namespace blockchain {
 
 //        void add_and_access_peers_in_acl(const aux::bytes &chain_id);
 
-        // select a peer randomly
-        dht::public_key select_peer_randomly(const aux::bytes &chain_id);
-
-        // try to mine block
-//        block try_to_mine_block(const aux::bytes &chain_id);
-
         // verify block
         RESULT verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block);
 

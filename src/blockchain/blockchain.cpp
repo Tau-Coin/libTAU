@@ -61,17 +61,6 @@ namespace libTAU::blockchain {
 
     bool blockchain::stop()
     {
-//        for (auto& item: m_gossip_peers) {
-//            auto const& chain_id = item.first;
-//            auto const& gossip_peers = item.second;
-//            if (!gossip_peers.empty()) {
-//                m_repository->delete_all_peers_in_gossip_peer_db(chain_id);
-//                for (auto const&peer: gossip_peers) {
-//                    m_repository->add_peer_in_gossip_peer_db(chain_id, peer);
-//                }
-//            }
-//        }
-
         m_stop = true;
 
 //        m_refresh_timer.cancel();
@@ -196,15 +185,30 @@ namespace libTAU::blockchain {
             m_chains.erase(chain_id);
 
             // remove chain id from db
-            m_repository->delete_chain(chain_id);
+            if (!m_repository->delete_chain(chain_id)) {
+                log(LOG_ERR, "INFO: chain:%s, delete chain fail.", aux::toHex(chain_id).c_str());
+                return false;
+            }
 
-            m_repository->delete_block_db(chain_id);
+            if (!m_repository->delete_block_db(chain_id)) {
+                log(LOG_ERR, "INFO: chain:%s, delete block db fail.", aux::toHex(chain_id).c_str());
+                return false;
+            }
 
-            m_repository->delete_state_db(chain_id);
+            if (!m_repository->delete_state_db(chain_id)) {
+                log(LOG_ERR, "INFO: chain:%s, delete state db fail.", aux::toHex(chain_id).c_str());
+                return false;
+            }
 
-            m_repository->delete_state_array_db(chain_id);
+            if (!m_repository->delete_state_array_db(chain_id)) {
+                log(LOG_ERR, "INFO: chain:%s, delete state array db fail.", aux::toHex(chain_id).c_str());
+                return false;
+            }
 
-            m_repository->delete_peer_db(chain_id);
+            if (!m_repository->delete_peer_db(chain_id)) {
+                log(LOG_ERR, "INFO: chain:%s, delete peer db fail.", aux::toHex(chain_id).c_str());
+                return false;
+            }
 
             // cancel
             auto it_chain_timer = m_chain_timers.find(chain_id);
@@ -222,46 +226,6 @@ namespace libTAU::blockchain {
 
         return true;
     }
-
-//    bool blockchain::load_chain(const aux::bytes &chain_id) {
-//        log(LOG_INFO, "INFO: load chain[%s]", aux::toHex(chain_id).c_str());
-//
-//        // create vote timer
-//        m_chain_status_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
-//
-//        // create tx pool
-//        m_tx_pools[chain_id] = tx_pool(m_repository.get());
-//
-//        // get gossip peers
-//        m_gossip_peers[chain_id] = m_repository->get_all_gossip_peers(chain_id);
-//
-//        // load key point block in memory
-//        // load head/tail/consensus block
-//        auto head_block_hash = m_repository->get_head_block_hash(chain_id);
-//        auto tail_block_hash = m_repository->get_tail_block_hash(chain_id);
-//        auto consensus_point_block_hash = m_repository->get_consensus_point_block_hash(chain_id);
-//        log(LOG_INFO, "INFO chain id[%s], head block hash[%s], tail block hash[%s], consensus point block hash[%s]",
-//            aux::toHex(chain_id).c_str(), aux::toHex(head_block_hash.to_string()).c_str(),
-//            aux::toHex(tail_block_hash.to_string()).c_str(), aux::toHex(consensus_point_block_hash.to_string()).c_str());
-//        if (!head_block_hash.is_all_zeros() && !tail_block_hash.is_all_zeros() && !consensus_point_block_hash.is_all_zeros()) {
-//            auto head_block = m_repository->get_block_by_hash(head_block_hash);
-//            auto tail_block = m_repository->get_block_by_hash(tail_block_hash);
-//            auto consensus_point_block = m_repository->get_block_by_hash(consensus_point_block_hash);
-//            if (!head_block.empty() && !tail_block.empty() && !consensus_point_block.empty()) {
-//                m_head_blocks[chain_id] = head_block;
-//                m_tail_blocks[chain_id] = tail_block;
-//                m_consensus_point_blocks[chain_id] = consensus_point_block;
-//                log(LOG_INFO, "INFO: Head block: %s", head_block.to_string().c_str());
-//                log(LOG_INFO, "INFO: Tail block: %s", tail_block.to_string().c_str());
-//                log(LOG_INFO, "INFO: Consensus point block: %s", consensus_point_block.to_string().c_str());
-//
-//                // try to update voting point block
-//                try_to_update_voting_point_block(chain_id);
-//            }
-//        }
-//
-//        return true;
-//    }
 
     void blockchain::peer_preparation(const bytes &chain_id) {
         // add bootstrap
@@ -316,9 +280,6 @@ namespace libTAU::blockchain {
 
         // create tx pool
         m_tx_pools[chain_id] = tx_pool(m_repository.get());
-
-        // get gossip peers
-//        m_gossip_peers[chain_id] = m_repository->get_all_gossip_peers(chain_id);
 
         // load key point block in memory
         // load head/tail/consensus block
@@ -638,8 +599,7 @@ namespace libTAU::blockchain {
                                                                                                             act.nonce()));
                         log(LOG_INFO,
                             "INFO: chain id[%s] generation signature[%s], base target[%" PRIu64 "], hit[%" PRIu64 "]",
-                            aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target,
-                            hit);
+                            aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
 
                         auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(
                                 head_block.cumulative_difficulty(), base_target);
@@ -725,139 +685,6 @@ namespace libTAU::blockchain {
             log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
     }
-
-    dht::public_key blockchain::select_peer_randomly(const aux::bytes &chain_id) {
-//        srand(get_total_microseconds());
-//        auto n = rand() % 10;
-//        auto& gossip_peers = m_gossip_peers[chain_id];
-//        if (gossip_peers.empty() || n < 9) {
-            return m_repository->get_peer_from_state_db_randomly(chain_id);
-//        } else {
-//            srand(get_total_microseconds());
-//            auto index = rand() % gossip_peers.size();
-//
-//            int i = 0;
-//            for (const auto & gossip_peer : gossip_peers) {
-//                if (i == index) {
-//                    return gossip_peer;
-//                }
-//                i++;
-//            }
-//        }
-//
-//        return dht::public_key();
-    }
-
-//    block blockchain::try_to_mine_block(const aux::bytes &chain_id) {
-//        dht::secret_key *sk = m_ses.serkey();
-//        dht::public_key *pk = m_ses.pubkey();
-//
-//        block b;
-//        auto &head_block = m_head_blocks[chain_id];
-//        if (!head_block.empty()) {
-//            if (head_block.block_number() < 0) {
-//                log(LOG_INFO, "INFO chain[%s] Negative and genesis block cannot be mined", aux::toHex(chain_id).c_str());
-//                return b;
-//            }
-//
-//            block ancestor;
-//            auto previous_hash = head_block.previous_block_hash();
-//            if (head_block.block_number() > 3) {
-//                int i = 3;
-//                while (i > 0) {
-//                    ancestor = m_repository->get_block_by_hash(chain_id, previous_hash);
-//                    if (ancestor.empty()) {
-//                        log(LOG_INFO, "INFO chain[%s] 1. Cannot find block[%s] in db",
-//                            aux::toHex(chain_id).c_str(), aux::toHex(previous_hash.to_string()).c_str());
-//                        return b;
-//                    }
-//                    previous_hash = ancestor.previous_block_hash();
-//
-//                    i--;
-//                }
-//            }
-//
-//            auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
-//            std::int64_t power = m_repository->get_effective_power(chain_id, *pk);
-//            auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
-//            auto hit = consensus::calculate_random_hit(genSig);
-//            auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, power));
-//            log(LOG_INFO, "INFO: chain id[%s] generation signature[%s], base target[%" PRIu64 "], hit[%" PRIu64 "]",
-//                aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
-//
-//            auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(head_block.cumulative_difficulty(), base_target);
-//
-//            std::int64_t now = get_total_milliseconds() / 1000; // second
-//            if (now >= head_block.timestamp() + interval) {
-//                transaction tx;
-//                if (is_sync_completed(chain_id)) {
-//                    tx = m_tx_pools[chain_id].get_best_fee_transaction();
-//
-//                    if (tx.empty()) {
-//                        tx = m_tx_pools[chain_id].get_latest_note_transaction();
-//                    }
-//                } else {
-//                    tx = m_tx_pools[chain_id].get_latest_note_transaction();
-//                }
-//
-//                std::set<dht::public_key> peers;
-//                peers.insert(*pk);
-//                if (!tx.empty()) {
-//                    if (tx.type() == tx_type::type_transfer) {
-//                        peers.insert(tx.sender());
-//                        peers.insert(tx.receiver());
-//                    } else if (tx.type() == tx_type::type_note) {
-//                        peers.insert(tx.sender());
-//                    }
-//                }
-//
-//                std::map<dht::public_key, std::int64_t> peers_balance;
-//                std::map<dht::public_key, std::int64_t> peers_nonce;
-//
-//                if (is_sync_completed(chain_id)) {
-//                    for (auto const &peer: peers) {
-//                        auto peer_account = m_repository->get_account(chain_id, peer);
-//                        peers_balance[peer] = peer_account.balance();
-//                        peers_nonce[peer] = peer_account.nonce();
-//                    }
-//
-//                    if (!tx.empty()) {
-//                        // adjust state
-//                        if (tx.type() == tx_type::type_transfer) {
-//                            // miner earns fee
-//                            peers_balance[*pk] += tx.fee();
-//                            // receiver balance + amount
-//                            peers_balance[tx.receiver()] += tx.amount();
-//                            // sender balance - cost(fee + amount)
-//                            peers_balance[tx.sender()] -= tx.cost();
-//                            // sender nonce+1
-//                            peers_nonce[tx.sender()] += 1;
-//                        }
-//                    }
-//                }
-//
-//                auto ep = m_ses.external_udp_endpoint();
-//                // mine block with current time instead of (head_block.timestamp() + interval)
-//                if (ep.port() != 0) {
-//                    b = block(chain_id, block_version::block_version1, now,
-//                              head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
-//                              genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk],
-//                              peers_balance[tx.sender()], peers_nonce[tx.sender()],
-//                              peers_balance[tx.receiver()], peers_nonce[tx.receiver()], ep);
-//                } else {
-//                    b = block(chain_id, block_version::block_version1, now,
-//                              head_block.block_number() + 1, head_block.sha256(), base_target, cumulative_difficulty,
-//                              genSig, tx, *pk, peers_balance[*pk], peers_nonce[*pk],
-//                              peers_balance[tx.sender()], peers_nonce[tx.sender()],
-//                              peers_balance[tx.receiver()], peers_nonce[tx.receiver()]);
-//                }
-//
-//                b.sign(*pk, *sk);
-//            }
-//        }
-//
-//        return b;
-//    }
 
     RESULT blockchain::verify_block(const aux::bytes &chain_id, const block &b, const block &previous_block) {
 
@@ -990,14 +817,28 @@ namespace libTAU::blockchain {
 
                 m_repository->begin_transaction();
 
-                m_repository->clear_all_state(chain_id);
+                if (!m_repository->clear_all_state(chain_id)) {
+                    log(LOG_ERR, "INFO: chain:%s, clear all state fail.", aux::toHex(chain_id).c_str());
+                    m_repository->rollback();
+                    return FAIL;
+                }
                 for (auto const& stateArray: arrays) {
                     for (auto const& act: stateArray.StateArray()) {
-                        m_repository->save_account(chain_id, act);
+                        if (!m_repository->save_account(chain_id, act)) {
+                            log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                                aux::toHex(chain_id).c_str(), act.to_string().c_str());
+                            m_repository->rollback();
+                            return FAIL;
+                        }
                     }
                 }
 
-                m_repository->save_main_chain_block(blk);
+                if (!m_repository->save_main_chain_block(blk)) {
+                    log(LOG_ERR, "INFO: chain:%s, save main chain block[%s] fail.",
+                        aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                    m_repository->rollback();
+                    return FAIL;
+                }
 
                 m_repository->commit();
 
@@ -1016,14 +857,28 @@ namespace libTAU::blockchain {
 
             m_repository->begin_transaction();
 
-            m_repository->clear_all_state(chain_id);
+            if (!m_repository->clear_all_state(chain_id)) {
+                log(LOG_ERR, "INFO: chain:%s, clear all state fail.", aux::toHex(chain_id).c_str());
+                m_repository->rollback();
+                return FAIL;
+            }
             for (auto const& stateArray: arrays) {
                 for (auto const& act: stateArray.StateArray()) {
-                    m_repository->save_account(chain_id, act);
+                    if (!m_repository->save_account(chain_id, act)) {
+                        log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                            aux::toHex(chain_id).c_str(), act.to_string().c_str());
+                        m_repository->rollback();
+                        return FAIL;
+                    }
                 }
             }
 
-            m_repository->save_main_chain_block(blk);
+            if (!m_repository->save_main_chain_block(blk)) {
+                log(LOG_ERR, "INFO: chain:%s, save main chain block[%s] fail.",
+                    aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                m_repository->rollback();
+                return FAIL;
+            }
 
             m_repository->commit();
 
@@ -1069,11 +924,21 @@ namespace libTAU::blockchain {
                     accounts[tx.sender()].increase_nonce();
 
                     for (auto const& item: accounts) {
-                        m_repository->save_account(chain_id, item.second);
+                        if (!m_repository->save_account(chain_id, item.second)) {
+                            log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                                aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
+                            m_repository->rollback();
+                            return FAIL;
+                        }
                     }
                 }
 
-                m_repository->save_main_chain_block(blk);
+                if (!m_repository->save_main_chain_block(blk)) {
+                    log(LOG_ERR, "INFO: chain:%s, save main chain block[%s] fail.",
+                        aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                    m_repository->rollback();
+                    return FAIL;
+                }
 
                 m_repository->commit();
 
@@ -1217,8 +1082,16 @@ namespace libTAU::blockchain {
 
     bool blockchain::clear_all_chain_data_in_db(const bytes &chain_id) {
         // TODO:commit
-        m_repository->clear_all_state(chain_id);
-        m_repository->set_all_block_non_main_chain(chain_id);
+        m_repository->begin_transaction();
+        if (!m_repository->clear_all_state(chain_id)) {
+            log(LOG_ERR, "INFO: chain:%s, clear all state fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
+        if (!m_repository->set_all_block_non_main_chain(chain_id)) {
+            log(LOG_ERR, "INFO: chain:%s, set all block non main chain fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
+        m_repository->commit();
         return true;
     }
 
@@ -1226,20 +1099,6 @@ namespace libTAU::blockchain {
         m_head_blocks.erase(chain_id);
         return clear_all_chain_data_in_db(chain_id);
     }
-
-//    bool blockchain::is_block_in_cache_or_db(const aux::bytes &chain_id, const sha256_hash &hash) {
-////        auto &block_map = m_blocks[chain_id];
-////        auto it = block_map.find(hash);
-////        if (it != block_map.end() && !it->second.empty()) {
-////            return true;
-////        }
-//
-//        return m_repository->is_block_exist(hash);
-//    }
-
-//    void blockchain::try_to_kick_out_of_ban_list(const aux::bytes &chain_id, const dht::public_key &peer) {
-//        m_ban_list[chain_id].erase(peer);
-//    }
 
 //    void blockchain::add_if_peer_not_in_acl(const aux::bytes &chain_id, const dht::public_key &peer) {
 //        auto &acl = m_access_list[chain_id];
@@ -1483,11 +1342,21 @@ namespace libTAU::blockchain {
                 accounts[tx.sender()].decrease_nonce();
 
                 for (auto const& item: accounts) {
-                    m_repository->save_account(chain_id, item.second);
+                    if (!m_repository->save_account(chain_id, item.second)) {
+                        log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                            aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
+                        m_repository->rollback();
+                        return FAIL;
+                    }
                 }
             }
 
-            m_repository->set_block_non_main_chain(chain_id, blk.sha1());
+            if (!m_repository->set_block_non_main_chain(chain_id, blk.sha1())) {
+                log(LOG_ERR, "INFO: chain:%s, set block non main chain[%s] fail.",
+                    aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                m_repository->rollback();
+                return FAIL;
+            }
         }
 
         // connect new branch blocks
@@ -1518,11 +1387,21 @@ namespace libTAU::blockchain {
                 accounts[tx.sender()].increase_nonce();
 
                 for (auto const& item: accounts) {
-                    m_repository->save_account(chain_id, item.second);
+                    if (!m_repository->save_account(chain_id, item.second)) {
+                        log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                            aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
+                        m_repository->rollback();
+                        return FAIL;
+                    }
                 }
             }
 
-            m_repository->set_block_main_chain(chain_id, blk.sha1());
+            if (!m_repository->set_block_main_chain(chain_id, blk.sha1())) {
+                log(LOG_ERR, "INFO: chain:%s, set block main chain[%s] fail.",
+                    aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                m_repository->rollback();
+                return FAIL;
+            }
         }
 
         m_repository->commit();
@@ -2586,7 +2465,10 @@ namespace libTAU::blockchain {
                             get_all_state_from_peer(chain_id, peer, blk.state_root());
                         }
 
-                        m_repository->save_non_main_chain_block(blk);
+                        if (!m_repository->save_non_main_chain_block(blk)) {
+                            log(LOG_ERR, "INFO: chain:%s, save non main chain block[%s] fail.",
+                                aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                        }
 
                         // notify ui tx from block
                         if (!blk.tx().empty()) {
@@ -2616,7 +2498,10 @@ namespace libTAU::blockchain {
                             get_all_state_from_peer(chain_id, peer, blk.state_root());
                         }
 
-                        m_repository->save_non_main_chain_block(blk);
+                        if (!m_repository->save_non_main_chain_block(blk)) {
+                            log(LOG_ERR, "INFO: chain:%s, save non main chain block[%s] fail.",
+                                aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                        }
 
                         // notify ui tx from block
                         if (!blk.tx().empty()) {
@@ -2692,7 +2577,10 @@ namespace libTAU::blockchain {
                             m_ses.alerts().emplace_alert<blockchain_state_array_alert>(chain_id, stateArray.StateArray());
                         }
 
-                        m_repository->save_state_array(chain_id, stateArray);
+                        if (!m_repository->save_state_array(chain_id, stateArray)) {
+                            log(LOG_ERR, "INFO: chain:%s, save state array[%s] fail.",
+                                aux::toHex(chain_id).c_str(), stateArray.to_string().c_str());
+                        }
 
                         state_reception_event(chain_id, peer);
 
@@ -2864,7 +2752,10 @@ namespace libTAU::blockchain {
         for (auto const &act: accounts) {
             if (i < MAX_ACCOUNT_SIZE) {
                 log(LOG_INFO, "INFO: chain[%s] save account:%s", aux::toHex(chain_id).c_str(), act.to_string().c_str());
-                m_repository->save_account(chain_id, act);
+                if (!m_repository->save_account(chain_id, act)) {
+                    log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                        aux::toHex(chain_id).c_str(), act.to_string().c_str());
+                }
                 total_balance += act.balance();
 
                 i++;
@@ -2876,7 +2767,10 @@ namespace libTAU::blockchain {
         std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
         account genesis_account(*pk, genesis_balance, 1);
         log(LOG_INFO, "INFO: chain[%s] save account:%s", aux::toHex(chain_id).c_str(), genesis_account.to_string().c_str());
-        m_repository->save_account(chain_id, genesis_account);
+        if (!m_repository->save_account(chain_id, genesis_account)) {
+            log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                aux::toHex(chain_id).c_str(), genesis_account.to_string().c_str());
+        }
 
         sha1_hash stateRoot;
         std::vector<state_array> stateArrays;
