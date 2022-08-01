@@ -629,6 +629,18 @@ namespace libTAU::blockchain {
                                     aux::toHex(chain_id).c_str(), b.to_string().c_str());
 
                                 process_genesis_block(chain_id, b, stateArrays);
+                            } else if (head_block.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                                block b = block(chain_id, block_version::block_version1, current_time,
+                                                head_block.block_number() + 1, head_block.sha1(), base_target,
+                                                cumulative_difficulty, genSig, head_block.sha1(), tx, *pk);
+
+                                b.sign(*pk, *sk);
+
+                                // process mined block
+                                log(LOG_INFO, "INFO chain[%s] process mined block[%s]",
+                                    aux::toHex(chain_id).c_str(), b.to_string().c_str());
+
+                                process_block(chain_id, b);
                             } else {
                                 block b = block(chain_id, block_version::block_version1, current_time,
                                           head_block.block_number() + 1, head_block.sha1(), base_target,
