@@ -300,8 +300,8 @@ namespace libTAU::blockchain {
 
     bool repository_impl::clear_all_state(const aux::bytes &chain_id) {
         sqlite3_stmt * stmt;
-        std::string sql = "DELETE * FROM ";
-        sql.append(state_array_db_name(chain_id));
+        std::string sql = "DELETE FROM ";
+        sql.append(state_db_name(chain_id));
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
             return false;
