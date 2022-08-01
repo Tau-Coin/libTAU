@@ -416,7 +416,7 @@ namespace libTAU::blockchain {
 
         sqlite3_stmt * stmt;
         std::string sql = "SELECT PUBKEY FROM ";
-        sql.append(peer_db_name(chain_id));
+        sql.append(state_db_name(chain_id));
         sql.append(" ORDER BY RANDOM() limit 1");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
