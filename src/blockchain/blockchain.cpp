@@ -625,7 +625,7 @@ namespace libTAU::blockchain {
                                 b.sign(*pk, *sk);
 
                                 // process mined block
-                                log(LOG_INFO, "INFO chain[%s] process mined block[%s]",
+                                log(LOG_INFO, "INFO chain[%s] mined block[%s]",
                                     aux::toHex(chain_id).c_str(), b.to_string().c_str());
 
                                 process_genesis_block(chain_id, b, stateArrays);
@@ -637,7 +637,7 @@ namespace libTAU::blockchain {
                                 b.sign(*pk, *sk);
 
                                 // process mined block
-                                log(LOG_INFO, "INFO chain[%s] process mined block[%s]",
+                                log(LOG_INFO, "INFO chain[%s] mined block[%s]",
                                     aux::toHex(chain_id).c_str(), b.to_string().c_str());
 
                                 process_block(chain_id, b);
@@ -649,7 +649,7 @@ namespace libTAU::blockchain {
                                 b.sign(*pk, *sk);
 
                                 // process mined block
-                                log(LOG_INFO, "INFO chain[%s] process mined block[%s]",
+                                log(LOG_INFO, "INFO chain[%s] mined block[%s]",
                                     aux::toHex(chain_id).c_str(), b.to_string().c_str());
 
                                 process_block(chain_id, b);
@@ -815,6 +815,8 @@ namespace libTAU::blockchain {
     }
 
     RESULT blockchain::process_genesis_block(const bytes &chain_id, const block &blk, const std::vector<state_array> &arrays) {
+        log(LOG_ERR, "INFO: chain:%s process block[%s].",
+            aux::toHex(chain_id).c_str(), blk.to_string().c_str());
         if (blk.empty())
             return FAIL;
 
@@ -835,6 +837,8 @@ namespace libTAU::blockchain {
                     return FAIL;
                 }
                 for (auto const& stateArray: arrays) {
+                    log(LOG_ERR, "INFO: chain:%s process state array[%s].",
+                        aux::toHex(chain_id).c_str(), stateArray.to_string().c_str());
                     for (auto const& act: stateArray.StateArray()) {
                         if (!m_repository->save_account(chain_id, act)) {
                             log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
@@ -909,6 +913,8 @@ namespace libTAU::blockchain {
     }
 
     RESULT blockchain::process_block(const aux::bytes &chain_id, const block &blk) {
+        log(LOG_ERR, "INFO: chain:%s process block[%s].",
+            aux::toHex(chain_id).c_str(), blk.to_string().c_str());
         if (blk.empty())
             return FAIL;
 
@@ -1951,7 +1957,7 @@ namespace libTAU::blockchain {
                                GET_ITEM_TYPE type, std::int64_t timestamp) {
         if (!m_ses.dht()) return;
 
-        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type, timestamp), salt, timestamp);
+        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type, timestamp), 1, 8, 16, salt, timestamp);
     }
 
 //    std::string blockchain::make_salt(dht::public_key peer, std::int64_t data_type_id) {
@@ -2182,7 +2188,7 @@ namespace libTAU::blockchain {
         auto key = hasher(data).final();
         auto salt = make_salt(key);
 
-        log(LOG_INFO, "INFO: Request head block hash from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(LOG_INFO, "INFO: Get head block hash from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::HEAD_BLOCK_HASH, timestamp);
     }
@@ -2195,7 +2201,7 @@ namespace libTAU::blockchain {
             auto key = hasher(data).final();
             auto salt = make_salt(key);
 
-            log(LOG_INFO, "INFO: Chain id[%s] Cache head block hash salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(LOG_INFO, "INFO: Chain id[%s] Put head block hash salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, hash.to_string());
         }
     }
@@ -2207,7 +2213,7 @@ namespace libTAU::blockchain {
         auto key = hasher(data).final();
         auto salt = make_salt(key);
 
-        log(LOG_INFO, "INFO: Request new tx hash from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(LOG_INFO, "INFO: Get new tx hash from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::NEW_TX_HASH, timestamp);
     }
@@ -2220,7 +2226,7 @@ namespace libTAU::blockchain {
             auto key = hasher(data).final();
             auto salt = make_salt(key);
 
-            log(LOG_INFO, "INFO: Chain id[%s] Cache new tx hash salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(LOG_INFO, "INFO: Chain id[%s] Put new tx hash salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, hash.to_string());
         }
     }
@@ -2254,7 +2260,7 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
-        log(LOG_INFO, "INFO: Request block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(LOG_INFO, "INFO: Get block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::BLOCK);
     }
@@ -2263,7 +2269,7 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
-        log(LOG_INFO, "INFO: Request head block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(LOG_INFO, "INFO: Get head block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::HEAD_BLOCK);
     }
@@ -2273,7 +2279,7 @@ namespace libTAU::blockchain {
             // salt is y pubkey when publish signal
             auto salt = make_salt(blk.sha1());
 
-            log(LOG_INFO, "INFO: Chain id[%s] Cache block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(LOG_INFO, "INFO: Chain id[%s] Put block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, blk.get_entry());
         }
     }
@@ -2282,12 +2288,13 @@ namespace libTAU::blockchain {
         if (!blk.empty() && !arrays.empty()) {
 
             put_block(chain_id, blk);
-            state_hash_array stateHashArray;
+
             std::vector<sha1_hash> hashArray;
             for (auto const& stateArray: arrays) {
                 hashArray.push_back(stateArray.sha1());
                 put_state_array(chain_id, stateArray);
             }
+            state_hash_array stateHashArray(hashArray);
             put_state_hash_array(chain_id, stateHashArray);
         }
     }
@@ -2296,7 +2303,7 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
-        log(LOG_INFO, "INFO: Request tx from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(LOG_INFO, "INFO: Get tx from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TX_WRAPPER);
     }
@@ -2315,7 +2322,7 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
-        log(LOG_INFO, "INFO: Request state array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(LOG_INFO, "INFO: Get state array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::STATE_ARRAY);
     }
@@ -2325,7 +2332,7 @@ namespace libTAU::blockchain {
             // salt is y pubkey when publish signal
             auto salt = make_salt(stateArray.sha1());
 
-            log(LOG_INFO, "INFO: Chain id[%s] Cache state array salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(LOG_INFO, "INFO: Chain id[%s] Put state array salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, stateArray.get_entry());
         }
     }
@@ -2362,7 +2369,7 @@ namespace libTAU::blockchain {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
-        log(LOG_INFO, "INFO: Request state hash array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(LOG_INFO, "INFO: Get state hash array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::STATE_HASH_ARRAY);
     }
@@ -2372,7 +2379,7 @@ namespace libTAU::blockchain {
             // salt is y pubkey when publish signal
             auto salt = make_salt(hashArray.sha1());
 
-            log(LOG_INFO, "INFO: Chain id[%s] Cache state hash array salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(LOG_INFO, "INFO: Chain id[%s] Put state hash array salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, hashArray.get_entry());
         }
     }
@@ -2439,6 +2446,9 @@ namespace libTAU::blockchain {
             const auto& salt = i.salt();
             GET_ITEM getItem(chain_id, peer, salt, type);
 
+            log(LOG_INFO, "=====INFO: Got callback[%s], time:%" PRId64,
+                i.value().to_string(true).c_str(), get_total_milliseconds());
+
             if (!i.empty()) {
                 data_received_from_peer(chain_id, peer, i.ts().value);
                 m_get_item_info.erase(getItem);
@@ -2446,6 +2456,7 @@ namespace libTAU::blockchain {
                 switch (type) {
                     case GET_ITEM_TYPE::HEAD_BLOCK_HASH: {
                         sha1_hash head_block_hash(i.value().string().c_str());
+                        log(LOG_INFO, "INFO: Got head block hash[%s]", aux::toHex(head_block_hash).c_str());
                         if (!head_block_hash.is_all_zeros()) {
                             auto blk = m_repository->get_block_by_hash(chain_id, head_block_hash);
                             if (blk.empty()) {
@@ -2460,67 +2471,71 @@ namespace libTAU::blockchain {
                     case GET_ITEM_TYPE::HEAD_BLOCK: {
                         block blk(i.value());
 
-                        auto& acl = m_access_list[chain_id];
-                        auto it = acl.find(peer);
-                        if (it != acl.end()) {
-                            // only peer in acl is allowed
-                            it->second.m_head_block = blk;
-                            if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                                it->second.m_genesis_block = blk;
+                        if (!blk.empty()) {
+                            log(LOG_INFO, "INFO: Got head block[%s], time:%" PRId64,
+                                blk.to_string().c_str(), get_total_milliseconds());
+
+                            auto &acl = m_access_list[chain_id];
+                            auto it = acl.find(peer);
+                            if (it != acl.end()) {
+                                // only peer in acl is allowed
+                                it->second.m_head_block = blk;
+                                if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                                    it->second.m_genesis_block = blk;
+                                }
                             }
+
+                            if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                                get_all_state_from_peer(chain_id, peer, blk.state_root());
+                            }
+
+                            if (!m_repository->save_non_main_chain_block(blk)) {
+                                log(LOG_ERR, "INFO: chain:%s, save non main chain block[%s] fail.",
+                                    aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                            }
+
+                            // notify ui tx from block
+                            if (!blk.tx().empty()) {
+                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
+                            }
+
+                            block_reception_event(chain_id, peer, blk);
                         }
-
-                        log(LOG_INFO, "=====INFO: Got block[%s], time:%" PRId64,
-                            blk.to_string().c_str(), get_total_milliseconds());
-
-                        if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                            get_all_state_from_peer(chain_id, peer, blk.state_root());
-                        }
-
-                        if (!m_repository->save_non_main_chain_block(blk)) {
-                            log(LOG_ERR, "INFO: chain:%s, save non main chain block[%s] fail.",
-                                aux::toHex(chain_id).c_str(), blk.to_string().c_str());
-                        }
-
-                        // notify ui tx from block
-                        if (!blk.tx().empty()) {
-                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
-                        }
-
-                        block_reception_event(chain_id, peer, blk);
 
                         break;
                     }
                     case GET_ITEM_TYPE::BLOCK: {
                         block blk(i.value());
 
-                        auto& acl = m_access_list[chain_id];
-                        auto it = acl.find(peer);
-                        if (it != acl.end()) {
-                            // only peer in acl is allowed
-                            if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                                it->second.m_genesis_block = blk;
+                        if (!blk.empty()) {
+                            log(LOG_INFO, "INFO: Got block[%s], time:%" PRId64,
+                                blk.to_string().c_str(), get_total_milliseconds());
+
+                            auto &acl = m_access_list[chain_id];
+                            auto it = acl.find(peer);
+                            if (it != acl.end()) {
+                                // only peer in acl is allowed
+                                if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                                    it->second.m_genesis_block = blk;
+                                }
                             }
+
+                            if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                                get_all_state_from_peer(chain_id, peer, blk.state_root());
+                            }
+
+                            if (!m_repository->save_non_main_chain_block(blk)) {
+                                log(LOG_ERR, "INFO: chain:%s, save non main chain block[%s] fail.",
+                                    aux::toHex(chain_id).c_str(), blk.to_string().c_str());
+                            }
+
+                            // notify ui tx from block
+                            if (!blk.tx().empty()) {
+                                m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
+                            }
+
+                            block_reception_event(chain_id, peer, blk);
                         }
-
-                        log(LOG_INFO, "=====INFO: Got block[%s], time:%" PRId64,
-                            blk.to_string().c_str(), get_total_milliseconds());
-
-                        if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                            get_all_state_from_peer(chain_id, peer, blk.state_root());
-                        }
-
-                        if (!m_repository->save_non_main_chain_block(blk)) {
-                            log(LOG_ERR, "INFO: chain:%s, save non main chain block[%s] fail.",
-                                aux::toHex(chain_id).c_str(), blk.to_string().c_str());
-                        }
-
-                        // notify ui tx from block
-                        if (!blk.tx().empty()) {
-                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
-                        }
-
-                        block_reception_event(chain_id, peer, blk);
 
                         break;
                     }
@@ -2551,10 +2566,12 @@ namespace libTAU::blockchain {
                         break;
                     }
                     case GET_ITEM_TYPE::NEW_TX_HASH: {
-                        sha1_hash latest_tx_hash(i.value().string().c_str());
-                        if (!latest_tx_hash.is_all_zeros()) {
-                            if (!is_transaction_in_pool(chain_id, latest_tx_hash)) {
-                                get_transaction_wrapper(chain_id, peer, latest_tx_hash);
+                        sha1_hash new_tx_hash(i.value().string().c_str());
+                        log(LOG_INFO, "INFO: Got new tx hash[%s]", aux::toHex(new_tx_hash).c_str());
+
+                        if (!new_tx_hash.is_all_zeros()) {
+                            if (!is_transaction_in_pool(chain_id, new_tx_hash)) {
+                                get_transaction_wrapper(chain_id, peer, new_tx_hash);
                             }
                         }
 
@@ -2562,6 +2579,7 @@ namespace libTAU::blockchain {
                     }
                     case GET_ITEM_TYPE::STATE_HASH_ARRAY: {
                         state_hash_array hashArray(i.value());
+                        log(LOG_INFO, "INFO: Got state hash array[%s].", hashArray.to_string().c_str());
 
                         auto& acl = m_access_list[chain_id];
                         auto it = acl.find(peer);
@@ -2570,7 +2588,6 @@ namespace libTAU::blockchain {
                             it->second.m_state_hash_array = hashArray;
                         }
 
-                        log(LOG_INFO, "INFO: Got state hash array[%s].", hashArray.to_string().c_str());
                         for (auto const& hash: hashArray.HashArray()) {
                             if (!m_repository->is_state_array_in_db(chain_id, hash)) {
                                 get_state_array(chain_id, peer, hash);
