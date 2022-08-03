@@ -89,7 +89,7 @@ struct dht_status
 	std::vector<dht_lookup> requests;
 };
 
-static constexpr int relay_pkt_timeout = 3; // 3 seconds
+static constexpr int relay_pkt_timeout = 10; // keep_interval / 2 seconds
 
 typedef bimap<
 

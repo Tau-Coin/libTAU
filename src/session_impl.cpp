@@ -2796,8 +2796,12 @@ namespace {
 			TORRENT_ASSERT(sqlrc != SQLITE_OK);
 			alerts().emplace_alert<session_error_alert>(error_code(),
 					 "libTAU ERROR: open sqldb failed");
-			m_abort = true;	
+			m_abort = true;
+			return;
 		}
+
+		sqlite3_exec(m_sqldb, "pragma journal_mode = WAL;", NULL, NULL, NULL);
+		sqlite3_exec(m_sqldb, "pragma synchronous = normal;", NULL, NULL, NULL);
     }
 
 	void session_impl::update_dht_bootstrap_nodes()

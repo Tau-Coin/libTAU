@@ -38,12 +38,23 @@ namespace dht {
 		"INSERT OR REPLACE INTO mutable_items (target, ts, item) VALUES (?, ?, ?);";
 
 	static const std::string items_count =
-		"SELECT COUNT(target) FROM mutable_items;";
+		"SELECT COUNT(*) FROM mutable_items;";
 
 	static const std::string delete_items =
+		/*
 		"DELETE FROM mutable_items "
 			 "WHERE target IN "
 			 "(SELECT target FROM mutable_items ORDER BY ts ASC LIMIT 0, ?);";
+		 */
+		/*
+		"DELETE FROM mutable_items "
+			 "WHERE ts <= (SELECT ts FROM mutable_items LIMIT ?, 1);";
+		 */
+
+		"DELETE FROM mutable_items WHERE ts <= ?;";
+
+	static const std::string select_ts_threshold =
+		"SELECT ts FROM mutable_items LIMIT ?, 1;";
 
 	struct TORRENT_EXPORT items_db_sqlite : public dht_storage_interface
 	{
@@ -133,6 +144,7 @@ namespace dht {
 		sqlite3_stmt* m_insert_or_replace_items_stmt = NULL;
 		sqlite3_stmt* m_items_count_stmt = NULL;
 		sqlite3_stmt* m_delete_items_stmt = NULL;
+		sqlite3_stmt* m_select_ts_threshold_stmt = NULL;
 
 		// put item cache
 		std::string m_mutable_item;
