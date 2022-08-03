@@ -2084,6 +2084,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::put_all_chain_data(const bytes &chain_id) {
+        log(LOG_INFO, "Chain[%s] Put all chain data", aux::toHex(chain_id).c_str());
         if (!is_empty_chain(chain_id)) {
             auto blk = m_head_blocks[chain_id];
             while (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE != 0) {
@@ -2094,31 +2095,40 @@ namespace libTAU::blockchain {
             std::vector<state_array> stateArrays;
             get_genesis_state(chain_id, stateRoot, stateArrays);
             put_block_with_all_state(chain_id, blk, stateArrays);
-            put_head_block_hash(chain_id, blk.sha1());
+            put_head_block_hash(chain_id, m_head_blocks[chain_id].sha1());
         }
     }
 
     void blockchain::send_online_signal(const aux::bytes &chain_id) {
         common::signal_entry signalEntry(common::ONLINE, chain_id, get_total_milliseconds());
+        auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
-            send_to(item.first, signalEntry.get_entry());
+            log(LOG_INFO, "Chain[%s] Send peer[%s] online signal[%s]", aux::toHex(chain_id).c_str(),
+                aux::toHex(item.first.bytes).c_str(), e.to_string(true).c_str());
+            send_to(item.first, e);
         }
     }
 
     void blockchain::send_new_head_block_signal(const bytes &chain_id) {
         common::signal_entry signalEntry(common::NEW_HEAD_BLOCK, chain_id, get_total_milliseconds());
+        auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
-            send_to(item.first, signalEntry.get_entry());
+            log(LOG_INFO, "Chain[%s] Send peer[%s] new head block signal[%s]", aux::toHex(chain_id).c_str(),
+                aux::toHex(item.first.bytes).c_str(), e.to_string(true).c_str());
+            send_to(item.first, e);
         }
     }
 
     void blockchain::send_new_tx_signal(const bytes &chain_id) {
         common::signal_entry signalEntry(common::NEW_TX, chain_id, get_total_milliseconds());
+        auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
-            send_to(item.first, signalEntry.get_entry());
+            log(LOG_INFO, "Chain[%s] Send peer[%s] new tx signal[%s]", aux::toHex(chain_id).c_str(),
+                aux::toHex(item.first.bytes).c_str(), e.to_string(true).c_str());
+            send_to(item.first, e);
         }
     }
 
@@ -2201,7 +2211,8 @@ namespace libTAU::blockchain {
             auto key = hasher(data).final();
             auto salt = make_salt(key);
 
-            log(LOG_INFO, "INFO: Chain id[%s] Put head block hash salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(LOG_INFO, "INFO: Chain id[%s] Put head block hash salt[%s], hash[%s]",
+                aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str(), aux::toHex(hash.to_string()).c_str());
             publish(salt, hash.to_string());
         }
     }
@@ -2446,8 +2457,7 @@ namespace libTAU::blockchain {
             const auto& salt = i.salt();
             GET_ITEM getItem(chain_id, peer, salt, type);
 
-            log(LOG_INFO, "=====INFO: Got callback[%s], time:%" PRId64,
-                i.value().to_string(true).c_str(), get_total_milliseconds());
+            log(LOG_INFO, "=====INFO: Got callback[%s]", i.value().to_string(true).c_str());
 
             if (!i.empty()) {
                 data_received_from_peer(chain_id, peer, i.ts().value);
@@ -2620,6 +2630,9 @@ namespace libTAU::blockchain {
                     }
                 }
             } else {
+                log(LOG_INFO, "INFO: Chain[%s] Fail to get item: type[%d],salt[%s], timestamp:%" PRId64,
+                    aux::toHex(chain_id).c_str(), type, aux::toHex(i.salt()).c_str(), timestamp);
+
                 auto it = m_get_item_info.find(getItem);
                 if (it != m_get_item_info.end()) {
                     it->second.increase_get_times();
@@ -3108,15 +3121,15 @@ namespace libTAU::blockchain {
     void blockchain::data_received_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp) {
         auto &acl = m_access_list[chain_id];
 
+        log(LOG_INFO, "INFO: chain[%s] data from peer[%s]",
+            aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
         auto it = acl.find(peer);
         if (it != acl.end()) {
             if (timestamp > it->second.m_last_seen) {
                 it->second.m_last_seen = timestamp;
             }
         } else {
-            if (acl.size() < blockchain_acl_max_peers) {
-                acl[peer] = peer_info(timestamp);
-            }
+            acl[peer] = peer_info(timestamp);
         }
 
         if (acl.size() > blockchain_acl_max_peers) {
@@ -3238,6 +3251,9 @@ namespace libTAU::blockchain {
                 log(LOG_INFO, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
                 return;
             }
+
+            log(LOG_INFO, "INFO: chain[%s] Got signal[%s] from peer[%s]",
+                aux::toHex(chain_id).c_str(), payload.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
 
             switch (signalEntry.m_pid) {
                 case common::CHAIN_DATA: {
