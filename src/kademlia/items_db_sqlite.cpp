@@ -145,6 +145,16 @@ void items_db_sqlite::prepare_statements()
 
 			return;
 		}
+
+		ok = sqlite3_prepare_v2(db, select_ts_threshold.c_str(), -1
+			, &m_select_ts_threshold_stmt, nullptr);
+		if (ok != SQLITE_OK)
+		{
+			error.append(select_ts_threshold);
+			sql_error(ok, error.c_str());
+
+			return;
+		}
 	}
 	else
 	{
@@ -419,16 +429,45 @@ void items_db_sqlite::tick()
 
 		if (count > max)
 		{
-			sqlite3_reset(m_delete_items_stmt);
+			int timestamp = 0;
 
-			sqlite3_bind_int(m_delete_items_stmt, 1, count - max);
+			sqlite3_reset(m_select_ts_threshold_stmt);
+			sqlite3_bind_int(m_select_ts_threshold_stmt, 1, count - max - 1);
 
 			time_point const start1 = aux::time_now();
-			ok = sqlite3_step(m_delete_items_stmt);
+			ok = sqlite3_step(m_select_ts_threshold_stmt);
 			int const cost1 = aux::numeric_cast<int>(total_microseconds(aux::time_now() - start1));
+			if (ok == SQLITE_ROW)
+			{
+				sql_time_cost(cost1, "timestamp threshold:");
+				timestamp = sqlite3_column_int(m_select_ts_threshold_stmt, 0);
+
+#ifndef TORRENT_DISABLE_LOGGING
+				if (m_observer->should_log(dht_logger::items_db, aux::LOG_DEBUG))
+				{
+					m_observer->log(dht_logger::items_db, "timestamp threshold:%d"
+						, timestamp);
+				}
+#endif
+
+				// move to the end
+				sqlite3_step(m_select_ts_threshold_stmt);
+			}
+			else
+			{
+				sql_error(ok, select_ts_threshold.c_str());
+				return;
+			}
+
+			sqlite3_reset(m_delete_items_stmt);
+			sqlite3_bind_int(m_delete_items_stmt, 1, timestamp);
+
+			time_point const start2 = aux::time_now();
+			ok = sqlite3_step(m_delete_items_stmt);
+			int const cost2 = aux::numeric_cast<int>(total_microseconds(aux::time_now() - start2));
 			if (ok == SQLITE_DONE)
 			{
-				this->sql_time_cost(cost1, "delete:");
+				this->sql_time_cost(cost2, "delete:");
 
 #ifndef TORRENT_DISABLE_LOGGING
 				if (m_observer->should_log(dht_logger::items_db, aux::LOG_INFO))
@@ -463,6 +502,7 @@ void items_db_sqlite::close()
 	if (m_insert_or_replace_items_stmt != NULL) sqlite3_finalize(m_insert_or_replace_items_stmt);
 	if (m_items_count_stmt != NULL) sqlite3_finalize(m_items_count_stmt);
 	if (m_delete_items_stmt != NULL) sqlite3_finalize(m_delete_items_stmt);
+	if (m_select_ts_threshold_stmt != NULL) sqlite3_finalize(m_select_ts_threshold_stmt);
 }
 
 void items_db_sqlite::sql_error(int err_code, const char* err_str) const
