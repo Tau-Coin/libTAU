@@ -1515,14 +1515,30 @@ namespace libTAU::blockchain {
 //    }
 
     void blockchain::try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id, const dht::public_key& peer) {
+
+        log(LOG_ERR, "INFO: chain:%s, try to rebranch to peer[%s] chain.",
+            aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+
         auto &head_block = m_head_blocks[chain_id];
         auto &acl = m_access_list[chain_id];
 
         auto it = acl.find(peer);
-        if (it == acl.end())
+        if (it == acl.end()) {
+            log(LOG_ERR, "INFO: chain:%s, Cannot find peer[%s] in acl.",
+                aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
             return;
+        }
+
+        log(LOG_ERR, "INFO: chain:%s, remote head block[%s] local head block[%s].",
+            aux::toHex(chain_id).c_str(), it->second.m_head_block.to_string().c_str(), head_block.to_string().c_str());
 
         if (it->second.m_head_block.cumulative_difficulty() > head_block.cumulative_difficulty()) {
+            log(LOG_ERR, "INFO: chain:%s, remote head block genesis block hash[%s] local head block genesis block hash[%s].",
+                aux::toHex(chain_id).c_str(), aux::toHex(it->second.m_head_block.genesis_block_hash()).c_str(),
+                aux::toHex(head_block.genesis_block_hash()).c_str());
+            log(LOG_ERR, "INFO: chain:%s, remote head block hash[%s] local head block hash[%s].",
+                aux::toHex(chain_id).c_str(), aux::toHex(it->second.m_head_block.sha1()).c_str(),
+                aux::toHex(head_block.sha1()).c_str());
             if (it->second.m_head_block.genesis_block_hash() == head_block.genesis_block_hash()) {
                 auto peer_head_block = it->second.m_head_block;
                 auto result = try_to_rebranch(chain_id, peer_head_block, false, it->first);
@@ -1950,7 +1966,7 @@ namespace libTAU::blockchain {
     void blockchain::publish(const std::string &salt, const entry& data) {
         if (!m_ses.dht()) return;
         log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
-        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2), 1, 8, 24, salt);
+        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2), 1, 8, 16, salt);
     }
 
     void blockchain::subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string &salt,
@@ -1972,7 +1988,7 @@ namespace libTAU::blockchain {
     void blockchain::send_to(const dht::public_key &peer, const entry &data) {
         if (!m_ses.dht()) return;
         log(LOG_INFO, "Send [%s] to peer[%s]", data.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
-        m_ses.dht()->send(peer, data, 1, 8, 10, 1
+        m_ses.dht()->send(peer, data, 1, 8, 16, 1
                 , std::bind(&blockchain::on_dht_relay_mutable_item, self(), _1, _2, peer));
     }
 

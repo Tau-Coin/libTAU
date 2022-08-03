@@ -927,18 +927,18 @@ namespace libTAU {
             if (!m_ses.dht()) return;
             log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
             m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2)
-                    , 1, 8, 24, salt);
+                    , 1, 8, 16, salt);
         }
 
         void communication::subscribe(const dht::public_key &peer, const std::string &salt) {
             if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(peer, std::bind(&communication::get_mutable_callback, self(), _1, _2), salt);
+            m_ses.dht()->get_item(peer, std::bind(&communication::get_mutable_callback, self(), _1, _2), 1, 8, 16, salt);
         }
 
         void communication::send_to(const dht::public_key &peer, const entry &data) {
             if (!m_ses.dht()) return;
             log(LOG_INFO, "Send [%s] to peer[%s]", data.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
-            m_ses.dht()->send(peer, data, 1, 8, 100, 10,
+            m_ses.dht()->send(peer, data, 1, 8, 16, 1,
                               std::bind(&communication::on_dht_relay_mutable_item, self(), _1, _2, peer));
         }
 
