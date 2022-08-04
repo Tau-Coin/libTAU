@@ -1811,5 +1811,23 @@ namespace {
 #endif
     }
 
+    blockchain_online_peer_alert::blockchain_online_peer_alert(aux::stack_allocator&
+            , aux::bytes id, dht::public_key p, std::int64_t t)
+            : chain_id(std::move(id)), peer(p), time(t)
+    {}
+
+    std::string blockchain_online_peer_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char msg[256];
+        std::snprintf(msg, sizeof(msg), "chain[%s] online peer[%s] time:%" PRId64 "",
+                      aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), time);
+
+        return msg;
+#endif
+    }
+
 
 } // namespace libTAU

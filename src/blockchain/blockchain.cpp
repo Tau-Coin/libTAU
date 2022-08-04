@@ -3276,6 +3276,8 @@ namespace libTAU::blockchain {
                 return;
             }
 
+            m_ses.alerts().emplace_alert<blockchain_online_peer_alert>(chain_id, peer, signalEntry.m_timestamp);
+
             log(LOG_INFO, "INFO: chain[%s] Got signal[%s] from peer[%s]",
                 aux::toHex(chain_id).c_str(), payload.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
 
