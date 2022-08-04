@@ -28,6 +28,8 @@ namespace libTAU {
             // @param Construct with bencode
             explicit account(std::string encode): account(bdecode(encode)) {}
 
+            explicit account(const dht::public_key &mPeer) : m_peer(mPeer) {}
+
 //            explicit account(int64_t mBalance) : m_balance(mBalance) {}
 
 //            account(int64_t mBalance, int64_t mNonce) : m_balance(mBalance), m_nonce(mNonce) {}
@@ -40,6 +42,8 @@ namespace libTAU {
 //            bool empty() const { return m_balance == 0 && m_nonce == 0; }
 
             const dht::public_key &peer() const { return m_peer; }
+
+            void set_balance(int64_t mBalance) { m_balance = mBalance; }
 
             int64_t balance() const { return m_balance; }
 

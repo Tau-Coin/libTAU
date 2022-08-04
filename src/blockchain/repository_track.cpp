@@ -83,7 +83,7 @@ namespace libTAU::blockchain {
     }
 
     account repository_track::get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        return account();
+        return account(pubKey);
     }
 
     bool repository_track::save_account(const aux::bytes &chain_id, const account &act) {

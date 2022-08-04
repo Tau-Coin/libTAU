@@ -317,7 +317,7 @@ namespace libTAU::blockchain {
     }
 
     account repository_impl::get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) {
-        account act;
+        account act(pubKey);
 
         sqlite3_stmt * stmt;
         std::string sql = "SELECT BALANCE,NONCE FROM ";
@@ -331,7 +331,8 @@ namespace libTAU::blockchain {
                 std::int64_t balance = sqlite3_column_int64(stmt, 0);
                 std::int64_t nonce = sqlite3_column_int64(stmt, 1);
 
-                act = account(pubKey, balance, nonce);
+                act.set_balance(balance);
+                act.set_nonce(nonce);
                 break;
             }
         }
@@ -385,7 +386,6 @@ namespace libTAU::blockchain {
 
     std::vector<account> repository_impl::get_all_effective_state(const aux::bytes &chain_id) {
         std::vector<account> accounts;
-        account act;
 
         sqlite3_stmt * stmt;
         std::string sql = "SELECT * FROM ";
