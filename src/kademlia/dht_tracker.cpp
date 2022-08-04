@@ -398,6 +398,23 @@ namespace libTAU::dht {
 			cb(it, ctx->response_count);
 	}
 
+    void put_mutable_item_callback_with_storage(item const& it, int responses
+		, std::shared_ptr<put_item_ctx> ctx
+		, std::function<void(item const&, int)> cb
+		, bool referrable
+		, std::shared_ptr<dht_tracker> tracker_ptr)
+	{
+		ctx->response_count += responses;
+		if (--ctx->active_traversals == 0)
+		{
+			cb(it, ctx->response_count);
+			if (referrable)
+			{
+				tracker_ptr->store_mutable_item(it);
+			}
+		}
+    }
+
 	void tau_put_mutable_item_callback(item const& it, int responses
 		, std::shared_ptr<put_item_ctx> ctx
 		, std::function<void(item const&, std::vector<std::pair<node_entry, bool>> const&)> cb)
@@ -604,7 +621,10 @@ namespace libTAU::dht {
 		for (auto& n : m_nodes)
 			n.second.dht.put_item(key, salt, data
 				, alpha, invoke_window, invoke_limit
-				, std::bind(&put_mutable_item_callback, _1, _2, ctx, cb));
+				, std::bind(&put_mutable_item_callback_with_storage, _1, _2
+					, ctx, cb
+					, !m_settings.get_bool(settings_pack::dht_non_referrable)
+					, self()));
 	}
 
 	void dht_tracker::put_item(entry const& data
@@ -616,6 +636,17 @@ namespace libTAU::dht {
     {
 		public_key self(m_public_key.data());
 		put_item(self, data, cb, alpha, invoke_window, invoke_limit, salt);
+	}
+
+	void dht_tracker::store_mutable_item(item const& it)
+	{
+		if (!it.is_mutable()) return;
+
+		std::string flat_data;
+		bencode(std::back_inserter(flat_data), it.value());
+		sha256_hash target = item_target_id(it.salt(), it.pk());
+		m_storage.put_mutable_item(target, flat_data, it.sig()
+			, it.ts(), it.pk(), it.salt(), address());
 	}
 
 	// relay protocol

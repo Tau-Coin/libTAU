@@ -218,6 +218,9 @@ namespace libTAU::dht {
 			, std::vector<node_entry>& l
 			, int count = 0);
 
+		// store mutable item into local storage
+		void store_mutable_item(item const& it);
+
 		// get immutable item from local dht storage.
 		// returns true if the item is found.
 		bool get_local_immutable_item(sha256_hash const& target
