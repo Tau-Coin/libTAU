@@ -222,6 +222,8 @@ namespace blockchain {
 
         void put_all_chain_data(const aux::bytes &chain_id);
 
+        void send_online_signal(const aux::bytes &chain_id);
+
         // return access list
 //        std::set<dht::public_key> get_gossip_peers(const aux::bytes &chain_id);
 
@@ -399,8 +401,6 @@ namespace blockchain {
 //        void get_voting_block(const aux::bytes &chain_id, const dht::public_key& peer);
 
 //        void put_voting_block(const aux::bytes &chain_id, const block &blk);
-
-        void send_online_signal(const aux::bytes &chain_id);
 
         void send_new_head_block_signal(const aux::bytes &chain_id);
 
