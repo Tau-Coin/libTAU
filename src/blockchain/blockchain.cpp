@@ -258,7 +258,11 @@ namespace libTAU::blockchain {
             }
         }
 
+        // remove myself from acl
+        peers.erase(*m_ses.pubkey());
+
         for (auto const& peer: peers) {
+            log(LOG_INFO, "INFO: chain[%s] add peer[%s] into acl", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
             m_access_list[chain_id][peer] = peer_info();
         }
     }
@@ -290,6 +294,8 @@ namespace libTAU::blockchain {
         }
 
         get_pool_from_peer(chain_id, *m_ses.pubkey());
+
+        send_online_signal(chain_id);
 
         // create chain status timer
 //        m_chain_status_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
@@ -618,6 +624,8 @@ namespace libTAU::blockchain {
                                 sha1_hash stateRoot;
                                 std::vector<state_array> stateArrays;
                                 get_genesis_state(chain_id, stateRoot, stateArrays);
+                                log(LOG_INFO, "INFO chain[%s] genesis block state root[%s]",
+                                    aux::toHex(chain_id).c_str(), aux::toHex(stateRoot).c_str());
                                 block b = block(chain_id, block_version::block_version1, current_time,
                                           head_block.block_number() + 1, head_block.sha1(), base_target,
                                           cumulative_difficulty, genSig, stateRoot, tx, *pk);
@@ -625,7 +633,7 @@ namespace libTAU::blockchain {
                                 b.sign(*pk, *sk);
 
                                 // process mined block
-                                log(LOG_INFO, "INFO chain[%s] mined block[%s]",
+                                log(LOG_INFO, "INFO chain[%s] mined genesis block[%s]",
                                     aux::toHex(chain_id).c_str(), b.to_string().c_str());
 
                                 process_genesis_block(chain_id, b, stateArrays);
@@ -637,7 +645,7 @@ namespace libTAU::blockchain {
                                 b.sign(*pk, *sk);
 
                                 // process mined block
-                                log(LOG_INFO, "INFO chain[%s] mined block[%s]",
+                                log(LOG_INFO, "INFO Chain[%s] mined block[%s]",
                                     aux::toHex(chain_id).c_str(), b.to_string().c_str());
 
                                 process_block(chain_id, b);
