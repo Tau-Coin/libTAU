@@ -232,16 +232,25 @@ namespace libTAU::blockchain {
         std::set<dht::public_key> peers;
         if (!is_empty_chain(chain_id)) {
             auto blk = m_head_blocks[chain_id];
-            do {
+            for (int i = 0; i < CHAIN_EPOCH_BLOCK_SIZE; i++) {
+                log(LOG_INFO, "INFO: chain[%s] acl block[%s]",
+                    aux::toHex(chain_id).c_str(), blk.to_string().c_str());
                 peers.insert(blk.miner());
                 blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
-            } while (peers.size() < blockchain_acl_max_peers && !blk.empty());
+
+                if (peers.size() >= blockchain_acl_max_peers || blk.empty()) {
+                    break;
+                }
+            }
         }
 
         if (peers.size() < blockchain_acl_max_peers) {
-            int size = blockchain_acl_max_peers - peers.size();
+            std::size_t size = blockchain_acl_max_peers - peers.size();
+
             for (int i = 0; i < size; i++) {
                 auto peer = m_repository->get_peer_from_state_db_randomly(chain_id);
+                log(LOG_INFO, "INFO: chain[%s] add peer[%s] from state db into acl",
+                    aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 if (!peer.is_all_zeros()) {
                     peers.insert(peer);
                 }
@@ -249,9 +258,11 @@ namespace libTAU::blockchain {
         }
 
         if (peers.size() < blockchain_acl_max_peers) {
-            int size = blockchain_acl_max_peers - peers.size();
+            std::size_t size = blockchain_acl_max_peers - peers.size();
             for (int i = 0; i < size; i++) {
                 auto peer = m_repository->get_peer_from_peer_db_randomly(chain_id);
+                log(LOG_INFO, "INFO: chain[%s] add peer[%s] from peer db into acl",
+                    aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
                 if (!peer.is_all_zeros()) {
                     peers.insert(peer);
                 }
@@ -262,7 +273,8 @@ namespace libTAU::blockchain {
         peers.erase(*m_ses.pubkey());
 
         for (auto const& peer: peers) {
-            log(LOG_INFO, "INFO: chain[%s] add peer[%s] into acl", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+            log(LOG_INFO, "INFO: chain[%s] add peer[%s] into acl",
+                aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
             m_access_list[chain_id][peer] = peer_info();
         }
     }
@@ -280,8 +292,6 @@ namespace libTAU::blockchain {
 
         m_chain_getting_times[chain_id] = 0;
 
-        peer_preparation(chain_id);
-
         // create tx pool
         m_tx_pools[chain_id] = tx_pool(m_repository.get());
 
@@ -292,6 +302,8 @@ namespace libTAU::blockchain {
             m_head_blocks[chain_id] = head_block;
             log(LOG_INFO, "INFO: Head block: %s", head_block.to_string().c_str());
         }
+
+        peer_preparation(chain_id);
 
         get_pool_from_peer(chain_id, *m_ses.pubkey());
 
