@@ -120,11 +120,13 @@ namespace libTAU::blockchain {
 
         virtual block get_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
-        virtual bool save_block(const block &blk, bool is_main_chain) = 0;
+        virtual bool save_block_if_not_exist(const block &blk) = 0;
 
-        bool save_main_chain_block(const block &blk);
+//        virtual bool save_block(const block &blk, bool is_main_chain) = 0;
 
-        bool save_non_main_chain_block(const block &blk);
+        virtual bool save_main_chain_block(const block &blk) = 0;
+
+//        bool save_non_main_chain_block(const block &blk);
 
         virtual bool delete_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 

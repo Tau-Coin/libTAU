@@ -580,7 +580,52 @@ namespace libTAU::blockchain {
         return blk;
     }
 
-    bool repository_impl::save_block(const block &blk, bool is_main_chain) {
+    bool repository_impl::save_block_if_not_exist(const block &blk) {
+        const auto& chain_id = blk.chain_id();
+        sqlite3_stmt * stmt;
+        std::string sql = "INSERT INTO ";
+        sql.append(blocks_db_name(chain_id));
+        sql.append(" (HASH,CHAIN_ID,VERSION,TIMESTAMP,NUMBER,PREVIOUS_HASH,BASE_TARGET,DIFFICULTY,GENERATION_SIGNATURE,"
+                   "STATE_ROOT,TX,MINER,SIGNATURE,MAIN_CHAIN) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE NOT EXIST(SELECT * FROM ");
+        sql.append(blocks_db_name(chain_id));
+        sql.append(" WHERE HASH=?)");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+
+        sqlite3_bind_blob(stmt, 1, blk.sha1().data(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 2, chain_id.data(), chain_id.size(), nullptr);
+        sqlite3_bind_int(stmt, 3, blk.version());
+        sqlite3_bind_int64(stmt, 4, blk.timestamp());
+        sqlite3_bind_int64(stmt, 5, blk.block_number());
+        sqlite3_bind_blob(stmt, 6, blk.previous_block_hash().data(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_int64(stmt, 7, static_cast<std::int64_t>(blk.base_target()));
+        sqlite3_bind_int64(stmt, 8, static_cast<std::int64_t>(blk.cumulative_difficulty()));
+        sqlite3_bind_blob(stmt, 9, blk.generation_signature().data(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 10, blk.multiplex_hash().data(), libTAU::sha1_hash::size(), nullptr);
+        if (blk.tx().empty()) {
+            sqlite3_bind_null(stmt, 11);
+        } else {
+            auto tx_encode = blk.tx().get_encode();
+            sqlite3_bind_blob(stmt, 11, tx_encode.data(), tx_encode.size(), nullptr);
+        }
+        sqlite3_bind_blob(stmt, 12, blk.miner().bytes.data(), dht::public_key::len, nullptr);
+        sqlite3_bind_blob(stmt, 13, blk.signature().bytes.data(), dht::signature::len, nullptr);
+        sqlite3_bind_int(stmt, 14, 0);
+
+        sqlite3_bind_blob(stmt, 15, blk.sha1().data(), libTAU::sha1_hash::size(), nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
+    }
+
+    bool repository_impl::save_main_chain_block(const block &blk) {
         const auto& chain_id = blk.chain_id();
         sqlite3_stmt * stmt;
         std::string sql = "REPLACE INTO ";
@@ -609,11 +654,7 @@ namespace libTAU::blockchain {
         }
         sqlite3_bind_blob(stmt, 12, blk.miner().bytes.data(), dht::public_key::len, nullptr);
         sqlite3_bind_blob(stmt, 13, blk.signature().bytes.data(), dht::signature::len, nullptr);
-        if (is_main_chain) {
-            sqlite3_bind_int(stmt, 14, 1);
-        } else {
-            sqlite3_bind_int(stmt, 14, 0);
-        }
+        sqlite3_bind_int(stmt, 14, 1);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {

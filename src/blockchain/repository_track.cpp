@@ -118,7 +118,11 @@ namespace libTAU::blockchain {
         return block();
     }
 
-    bool repository_track::save_block(const block &blk, bool is_main_chain) {
+    bool repository_track::save_block_if_not_exist(const block &blk) {
+        return false;
+    }
+
+    bool repository_track::save_main_chain_block(const block &blk) {
         return false;
     }
 

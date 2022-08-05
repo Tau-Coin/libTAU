@@ -75,7 +75,9 @@ namespace libTAU::blockchain {
 
         block get_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
-        bool save_block(const block &blk, bool is_main_chain) override;
+        bool save_block_if_not_exist(const block &blk) override;
+
+        bool save_main_chain_block(const block &blk) override;
 
         bool delete_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 

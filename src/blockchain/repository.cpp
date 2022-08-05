@@ -43,13 +43,13 @@ namespace libTAU::blockchain {
         return "t" + aux::toHex(hash) + table_peer;
     }
 
-    bool repository::save_main_chain_block(const block &blk) {
-        return save_block(blk, true);
-    }
+//    bool repository::save_main_chain_block(const block &blk) {
+//        return save_block(blk, true);
+//    }
 
-    bool repository::save_non_main_chain_block(const block &blk) {
-        return save_block(blk, false);
-    }
+//    bool repository::save_non_main_chain_block(const block &blk) {
+//        return save_block(blk, false);
+//    }
 
 //    bool repository::add_block_peer_in_peer_db(const block &b) {
 //        auto peers = b.get_block_peers();

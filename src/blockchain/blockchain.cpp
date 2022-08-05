@@ -2506,6 +2506,7 @@ namespace libTAU::blockchain {
                         if (!head_block_hash.is_all_zeros()) {
                             auto blk = m_repository->get_block_by_hash(chain_id, head_block_hash);
                             if (blk.empty()) {
+                                log(LOG_INFO, "INFO: Cannot get block hash[%s] in local", aux::toHex(head_block_hash).c_str());
                                 get_head_block(chain_id, peer, head_block_hash);
                             } else {
                                 block_reception_event(chain_id, peer, blk);
@@ -2535,8 +2536,8 @@ namespace libTAU::blockchain {
                                 get_all_state_from_peer(chain_id, peer, blk.state_root());
                             }
 
-                            if (!m_repository->save_non_main_chain_block(blk)) {
-                                log(LOG_ERR, "INFO: chain:%s, save non main chain block[%s] fail.",
+                            if (!m_repository->save_block_if_not_exist(blk)) {
+                                log(LOG_ERR, "INFO: chain:%s, save remote head block[%s] fail.",
                                     aux::toHex(chain_id).c_str(), blk.to_string().c_str());
                             }
 
@@ -2570,8 +2571,8 @@ namespace libTAU::blockchain {
                                 get_all_state_from_peer(chain_id, peer, blk.state_root());
                             }
 
-                            if (!m_repository->save_non_main_chain_block(blk)) {
-                                log(LOG_ERR, "INFO: chain:%s, save non main chain block[%s] fail.",
+                            if (!m_repository->save_block_if_not_exist(blk)) {
+                                log(LOG_ERR, "INFO: chain:%s, save block[%s] fail.",
                                     aux::toHex(chain_id).c_str(), blk.to_string().c_str());
                             }
 
