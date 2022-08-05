@@ -632,7 +632,7 @@ namespace libTAU::blockchain {
 
 //                            auto ep = m_ses.external_udp_endpoint();
                             // mine block with current time instead of (head_block.timestamp() + interval)
-                            if (head_block.block_number() + 1 % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                            if ((head_block.block_number() + 1) % CHAIN_EPOCH_BLOCK_SIZE == 0) {
                                 sha1_hash stateRoot;
                                 std::vector<state_array> stateArrays;
                                 get_genesis_state(chain_id, stateRoot, stateArrays);
@@ -1286,7 +1286,7 @@ namespace libTAU::blockchain {
 
         block reference_block = target;
         while (head_block.block_number() < reference_block.block_number()) {
-            if (absolute && target.block_number() - reference_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE) {
+            if (absolute && (target.block_number() - reference_block.block_number()) >= CHAIN_EPOCH_BLOCK_SIZE) {
                 log(LOG_INFO, "INFO chain[%s] has no fork point", aux::toHex(chain_id).c_str());
                 return NO_FORK_POINT;
             }
@@ -1330,7 +1330,7 @@ namespace libTAU::blockchain {
                 return MISSING;
             }
 
-            if (absolute && target.block_number() - reference_block.block_number() >= CHAIN_EPOCH_BLOCK_SIZE) {
+            if (absolute && (target.block_number() - reference_block.block_number()) >= CHAIN_EPOCH_BLOCK_SIZE) {
                 log(LOG_INFO, "INFO chain[%s] has no fork point", aux::toHex(chain_id).c_str());
                 return NO_FORK_POINT;
             }
