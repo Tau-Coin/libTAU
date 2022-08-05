@@ -390,6 +390,9 @@ namespace libTAU {
 		// focus on chain
         void set_priority_chain(std::vector<char> chain_id);
 
+		// send online signal
+        void send_online_signal(std::vector<char> chain_id);
+
 		// un-focus on chain
         void unset_priority_chain();
 
@@ -401,7 +404,6 @@ namespace libTAU {
 
 		// whether txid in pool or not
         bool is_transaction_in_fee_pool(std::vector<char> chain_id, const sha1_hash& txid);
-
 
 		// get chain state 
         void request_chain_state(std::vector<char> chain_id);

@@ -458,6 +458,12 @@ namespace libTAU {
 		return sync_call(&session_impl::put_all_chain_data, chain_id);
 	}
 
+	// send online signal
+    void session_handle::send_online_signal(std::vector<char> chain_id)
+	{
+		return sync_call(&session_impl::send_online_signal, chain_id);
+	}
+
 	// get current time
 	std::int64_t session_handle::get_session_time()
 	{

@@ -661,29 +661,31 @@ namespace aux {
 			void update_alert_mask();
 			void update_auto_relay();
 
+            //DEPRECATED
+            //1. communication
 			void set_loop_time_interval(int milliseconds);
+            void get_friend_info(const dht::public_key& pubkey, std::vector<char>* info);
+            void request_friend_info(const dht::public_key& pubkey);
+            bool update_friend_info(const dht::public_key& pubkey, aux::bytes friend_info);
+            void unset_chatting_friend();
+			void set_chatting_friend(const dht::public_key& chatting_friend);
+            void set_active_friends(std::vector<dht::public_key> active_friends);
+            //2. blockchain
+        	bool get_gossip_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys);
+        	void set_priority_chain(const aux::bytes &chain_id);
+        	void unset_priority_chain();
+        	void request_chain_state(const aux::bytes &chain_id);
 
-		    bool publish_data(const aux::bytes& key, const aux::bytes& value);
-
-		    bool subscribe_from_peer(const dht::public_key& pubkey, const aux::bytes& data);
-
-		    bool send_to_peer(const dht::public_key& pubkey, const aux::bytes& data);
-
+            //Valid
+            //1. communication
 			bool add_new_friend(const dht::public_key& pubkey);
 			bool delete_friend(const dht::public_key& pubkey);
-            void get_friend_info(const dht::public_key& pubkey, std::vector<char>* info);
-            // request friend info: device id/nickname/timestamp
-            void request_friend_info(const dht::public_key& pubkey);
-
-            bool update_friend_info(const dht::public_key& pubkey, aux::bytes friend_info);
-			void set_chatting_friend(const dht::public_key& chatting_friend);
-            void unset_chatting_friend();
-            void set_active_friends(std::vector<dht::public_key> active_friends);
             bool add_new_message(const communication::message& msg);
-
-			
+		    bool publish_data(const aux::bytes& key, const aux::bytes& value);
+		    bool subscribe_from_peer(const dht::public_key& pubkey, const aux::bytes& data);
+		    bool send_to_peer(const dht::public_key& pubkey, const aux::bytes& data);
+            //2. blockchain
         	void create_chain_id(const aux::bytes& type, std::string community_name, std::vector<char>* id);
-            void get_all_chains(std::set<std::vector<char>>* cids);
             bool create_new_community(const aux::bytes &chain_id, const std::set<blockchain::account>& accounts);
         	bool follow_chain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
         	bool add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
@@ -694,21 +696,15 @@ namespace aux {
         	bool get_top_tip_block(const aux::bytes &chain_id, int topNum, std::vector<blockchain::block>* blks);
         	bool get_access_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys);
         	bool get_ban_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys);
-        	bool get_gossip_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys);
         	std::int64_t get_median_tx_free(const aux::bytes &chain_id);
         	std::int64_t get_mining_time(const aux::bytes &chain_id);
-        	void set_priority_chain(const aux::bytes &chain_id);
-        	void unset_priority_chain();
         	blockchain::block get_block_by_number(const aux::bytes &chain_id, std::int64_t block_number);
         	blockchain::block get_block_by_hash(const aux::bytes &chain_id, const sha1_hash& block_hash);
-
         	bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash& txid);
-
-        	void request_chain_state(const aux::bytes &chain_id);
-
         	void request_chain_data(const aux::bytes &chain_id, const dht::public_key &peer);
-
         	void put_all_chain_data(const aux::bytes &chain_id);
+        	void send_online_signal(const aux::bytes &chain_id);
+            void get_all_chains(std::set<std::vector<char>>* cids);
 
 			std::int64_t session_current_time_ms() const
 			{
