@@ -586,7 +586,7 @@ namespace libTAU::blockchain {
         std::string sql = "INSERT INTO ";
         sql.append(blocks_db_name(chain_id));
         sql.append(" (HASH,CHAIN_ID,VERSION,TIMESTAMP,NUMBER,PREVIOUS_HASH,BASE_TARGET,DIFFICULTY,GENERATION_SIGNATURE,"
-                   "STATE_ROOT,TX,MINER,SIGNATURE,MAIN_CHAIN) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE NOT EXIST(SELECT * FROM ");
+                   "STATE_ROOT,TX,MINER,SIGNATURE,MAIN_CHAIN) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE NOT EXISTS(SELECT * FROM ");
         sql.append(blocks_db_name(chain_id));
         sql.append(" WHERE HASH=?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
