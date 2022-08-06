@@ -1703,6 +1703,13 @@ namespace libTAU::blockchain {
 //        }
     }
 
+
+    void blockchain::on_dht_put_transaction(const bytes &chain_id, dht::public_key const& peer, const sha1_hash &hash, const dht::item &i, int n) {
+        if (n > 0) {
+            m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(peer, hash, get_total_milliseconds());
+        }
+    }
+
     void blockchain::on_dht_relay_mutable_item(const entry &payload,
                                                const std::vector<std::pair<dht::node_entry, bool>> &nodes,
                                                const dht::public_key &peer) {
@@ -1989,6 +1996,12 @@ namespace libTAU::blockchain {
         if (!m_ses.dht()) return;
         log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
         m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2), 1, 8, 16, salt);
+    }
+
+    void blockchain::publish_transaction(const bytes &chain_id, dht::public_key const& peer, const sha1_hash &hash, const std::string &salt, const entry &data) {
+        if (!m_ses.dht()) return;
+        log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
+        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_transaction, self(), chain_id, peer, hash, _1, _2), 1, 8, 16, salt);
     }
 
     void blockchain::subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string &salt,

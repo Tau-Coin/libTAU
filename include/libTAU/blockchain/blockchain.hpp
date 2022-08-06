@@ -369,6 +369,8 @@ namespace blockchain {
 
         void publish(const std::string& salt, const entry& data);
 
+        void publish_transaction(const aux::bytes &chain_id, dht::public_key const& peer, const sha1_hash &hash, const std::string& salt, const entry& data);
+
         // key length < 20 bytes
         void subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string& salt,
                        GET_ITEM_TYPE type, std::int64_t timestamp = 0);
@@ -479,6 +481,8 @@ namespace blockchain {
 //        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
 
         void on_dht_put_mutable_item(const dht::item &i, int n);
+
+        void on_dht_put_transaction(aux::bytes const& chain_id, dht::public_key const& peer, const sha1_hash &hash, const dht::item &i, int n);
 
         void on_dht_relay_mutable_item(entry const& payload, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
 
