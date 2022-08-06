@@ -929,6 +929,8 @@ namespace libTAU::blockchain {
             m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
         }
 
+        update_peer_time(chain_id, blk.miner(), blk.timestamp() * 1000);
+
         return SUCCESS;
     }
 
@@ -989,6 +991,8 @@ namespace libTAU::blockchain {
                 m_tx_pools[chain_id].delete_tx_from_time_pool(blk.tx());
 
                 m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
+
+                update_peer_time(chain_id, blk.miner(), blk.timestamp() * 1000);
             }
         } else {
             return FAIL;
@@ -1460,6 +1464,7 @@ namespace libTAU::blockchain {
             m_tx_pools[chain_id].delete_tx_from_time_pool(connect_blocks[i - 2].tx());
             m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(connect_blocks[i - 2]);
         }
+        update_peer_time(chain_id, target.miner(), target.timestamp() * 1000);
 //        m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(target);
 //        m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(tail_block);
         m_ses.alerts().emplace_alert<blockchain_fork_point_block_alert>(reference_block);
@@ -2493,7 +2498,7 @@ namespace libTAU::blockchain {
             log(LOG_INFO, "=====INFO: Got callback[%s]", i.value().to_string(true).c_str());
 
             if (!i.empty()) {
-                data_received_from_peer(chain_id, peer, i.ts().value);
+                update_peer_time(chain_id, peer, i.ts().value);
                 m_get_item_info.erase(getItem);
 
                 switch (type) {
@@ -3152,11 +3157,15 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::data_received_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp) {
+    void blockchain::update_peer_time(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp) {
+        if (peer == *m_ses.pubkey()) {
+            return;
+        }
+        
         auto &acl = m_access_list[chain_id];
 
-        log(LOG_INFO, "INFO: chain[%s] data from peer[%s]",
-            aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+        log(LOG_INFO, "INFO: chain[%s] update peer[%s] time:%" PRId64,
+            aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), timestamp);
         auto it = acl.find(peer);
         if (it != acl.end()) {
             if (timestamp > it->second.m_last_seen) {
@@ -3294,23 +3303,23 @@ namespace libTAU::blockchain {
             switch (signalEntry.m_pid) {
                 case common::CHAIN_DATA: {
                     //update time
-                    data_received_from_peer(chain_id, peer, signalEntry.m_timestamp);
+                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
                     put_all_chain_data(chain_id);
                     break;
                 }
                 case common::ONLINE: {
                     //update time
-                    data_received_from_peer(chain_id, peer, signalEntry.m_timestamp);
+                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
                     break;
                 }
                 case common::NEW_HEAD_BLOCK: {
-                    data_received_from_peer(chain_id, peer, signalEntry.m_timestamp);
+                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
 
                     get_head_block_from_peer(chain_id, peer, (signalEntry.m_timestamp - 3000) / 1000);
                     break;
                 }
                 case common::NEW_TX: {
-                    data_received_from_peer(chain_id, peer, signalEntry.m_timestamp);
+                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
 
                     get_pool_from_peer(chain_id, peer, (signalEntry.m_timestamp - 3000) / 1000);
                     break;

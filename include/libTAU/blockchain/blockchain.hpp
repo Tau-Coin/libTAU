@@ -494,7 +494,7 @@ namespace blockchain {
 
         void print_acl_info(aux::bytes const& chain_id);
 
-        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
+        void update_peer_time(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
 //        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score,
 //                                     const std::unique_ptr<common::blockchain_entry_base>& ptr);
