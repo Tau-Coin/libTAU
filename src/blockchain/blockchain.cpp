@@ -1556,9 +1556,6 @@ namespace libTAU::blockchain {
             log(LOG_ERR, "INFO: chain:%s, remote head block genesis block hash[%s] local head block genesis block hash[%s].",
                 aux::toHex(chain_id).c_str(), aux::toHex(it->second.m_head_block.genesis_block_hash()).c_str(),
                 aux::toHex(head_block.genesis_block_hash()).c_str());
-            log(LOG_ERR, "INFO: chain:%s, remote head block hash[%s] local head block hash[%s].",
-                aux::toHex(chain_id).c_str(), aux::toHex(it->second.m_head_block.sha1()).c_str(),
-                aux::toHex(head_block.sha1()).c_str());
             if (it->second.m_head_block.genesis_block_hash() == head_block.genesis_block_hash()) {
                 auto peer_head_block = it->second.m_head_block;
                 auto result = try_to_rebranch(chain_id, peer_head_block, false, it->first);
@@ -3309,13 +3306,13 @@ namespace libTAU::blockchain {
                 case common::NEW_HEAD_BLOCK: {
                     data_received_from_peer(chain_id, peer, signalEntry.m_timestamp);
 
-                    get_head_block_from_peer(chain_id, peer, signalEntry.m_timestamp - 3000);
+                    get_head_block_from_peer(chain_id, peer, (signalEntry.m_timestamp - 3000) / 1000);
                     break;
                 }
                 case common::NEW_TX: {
                     data_received_from_peer(chain_id, peer, signalEntry.m_timestamp);
 
-                    get_pool_from_peer(chain_id, peer, signalEntry.m_timestamp - 3000);
+                    get_pool_from_peer(chain_id, peer, (signalEntry.m_timestamp - 3000) / 1000);
                     break;
                 }
                 default: {
