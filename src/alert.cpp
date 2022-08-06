@@ -1738,8 +1738,8 @@ namespace {
     }
 
     blockchain_tx_arrived_alert::blockchain_tx_arrived_alert(aux::stack_allocator&
-            , dht::public_key p, sha1_hash s, std::int64_t t)
-            : peer(p), tx_arrived_hash(s), time(t)
+            , aux::bytes id, sha1_hash s, std::int64_t t)
+            : chain_id(std::move(id)), tx_arrived_hash(s), time(t)
     {}
 
     std::string blockchain_tx_arrived_alert::message() const
@@ -1748,8 +1748,8 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] arrived tx hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
-                , aux::toHex(tx_arrived_hash.to_string()).c_str(), time);
+        std::snprintf(msg, sizeof(msg), "ALERT: chain[%s] arrived tx hash %s, time:%" PRId64 "",
+                      aux::toHex(chain_id).c_str(), aux::toHex(tx_arrived_hash.to_string()).c_str(), time);
 
         return msg;
 #endif

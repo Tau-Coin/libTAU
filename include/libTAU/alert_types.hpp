@@ -1430,7 +1430,7 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_tx_arrived_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_tx_arrived_alert(aux::stack_allocator& alloc, dht::public_key p, sha1_hash s, std::int64_t t);
+        TORRENT_UNEXPORT blockchain_tx_arrived_alert(aux::stack_allocator& alloc, aux::bytes id, sha1_hash s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_tx_arrived_alert, 53, alert_priority::critical)
 
@@ -1438,8 +1438,8 @@ namespace libTAU {
 
         std::string message() const override;
 
-        // public key
-        dht::public_key peer;
+        // chain id
+        aux::bytes chain_id;
 
         // message sent hash
         sha1_hash tx_arrived_hash;

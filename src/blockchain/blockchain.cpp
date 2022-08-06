@@ -1704,9 +1704,9 @@ namespace libTAU::blockchain {
     }
 
 
-    void blockchain::on_dht_put_transaction(const bytes &chain_id, dht::public_key const& peer, const sha1_hash &hash, const dht::item &i, int n) {
+    void blockchain::on_dht_put_transaction(const bytes &chain_id, const sha1_hash &hash, const dht::item &i, int n) {
         if (n > 0) {
-            m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(peer, hash, get_total_milliseconds());
+            m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(chain_id, hash, get_total_milliseconds());
         }
     }
 
@@ -1714,25 +1714,25 @@ namespace libTAU::blockchain {
                                                const std::vector<std::pair<dht::node_entry, bool>> &nodes,
                                                const dht::public_key &peer) {
         // data type id
-        if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type)))
-        {
-            auto data_type_id = i->integer();
-            if (data_type_id == common::transaction_entry::data_type_id) {
-                for (auto const &n: nodes) {
-                    log(LOG_DEBUG, "INFO: nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
-                }
-
-                common::transaction_entry txEntry(payload);
-                auto now = get_total_milliseconds();
-                m_ses.alerts().emplace_alert<blockchain_tx_sent_alert>(peer, txEntry.m_tx.sha1(), now);
-                for (auto const &n: nodes) {
-                    if (n.second) {
-                        m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(peer, txEntry.m_tx.sha1(), now);
-                        break;
-                    }
-                }
-            }
-        }
+//        if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type)))
+//        {
+//            auto data_type_id = i->integer();
+//            if (data_type_id == common::transaction_entry::data_type_id) {
+//                for (auto const &n: nodes) {
+//                    log(LOG_DEBUG, "INFO: nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
+//                }
+//
+//                common::transaction_entry txEntry(payload);
+//                auto now = get_total_milliseconds();
+//                m_ses.alerts().emplace_alert<blockchain_tx_sent_alert>(peer, txEntry.m_tx.sha1(), now);
+//                for (auto const &n: nodes) {
+//                    if (n.second) {
+//                        m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(peer, txEntry.m_tx.sha1(), now);
+//                        break;
+//                    }
+//                }
+//            }
+//        }
     }
 
     namespace {
@@ -1998,10 +1998,10 @@ namespace libTAU::blockchain {
         m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2), 1, 8, 16, salt);
     }
 
-    void blockchain::publish_transaction(const bytes &chain_id, dht::public_key const& peer, const sha1_hash &hash, const std::string &salt, const entry &data) {
+    void blockchain::publish_transaction(const bytes &chain_id, const sha1_hash &hash, const std::string &salt, const entry &data) {
         if (!m_ses.dht()) return;
         log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
-        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_transaction, self(), chain_id, peer, hash, _1, _2), 1, 8, 16, salt);
+        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_transaction, self(), chain_id, hash, _1, _2), 1, 8, 16, salt);
     }
 
     void blockchain::subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string &salt,
@@ -2375,8 +2375,8 @@ namespace libTAU::blockchain {
             // salt is y pubkey when publish signal
             auto salt = make_salt(txWrapper.sha1());
 
-            log(LOG_INFO, "INFO: Chain id[%s] Cache tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-            publish(salt, txWrapper.get_entry());
+            log(LOG_INFO, "INFO: Chain id[%s] Put tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish_transaction(chain_id, txWrapper.sha1(), salt, txWrapper.get_entry());
         }
     }
 
