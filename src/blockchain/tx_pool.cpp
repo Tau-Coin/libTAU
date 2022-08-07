@@ -211,9 +211,8 @@ namespace libTAU::blockchain {
         if (tx.empty())
             return false;
 
-        // TODO: remove for test
-//        if (!tx.verify_signature())
-//            return false;
+        if (!tx.verify_signature())
+            return false;
 
         m_active_peers.push(tx.sender());
         if (m_active_peers.size() > tx_pool_max_active_friends_size) {
