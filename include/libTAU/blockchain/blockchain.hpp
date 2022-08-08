@@ -93,11 +93,6 @@ namespace blockchain {
         NO_FORK_POINT,
     };
 
-    enum CHAIN_STATUS {
-        GET_GOSSIP_PEERS,
-        MINE,
-    };
-
     struct GET_ITEM {
         GET_ITEM(aux::bytes mChainId, const dht::public_key &mPeer, std::string mSalt, GET_ITEM_TYPE mType) :
                 m_chain_id(std::move(mChainId)), m_peer(mPeer), m_salt(std::move(mSalt)), m_type(mType) {}

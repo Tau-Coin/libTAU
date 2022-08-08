@@ -584,9 +584,6 @@ namespace libTAU::blockchain {
             long refresh_time = DEFAULT_BLOCK_TIME * 1000;
 
             if (!m_pause) {
-                // current time
-                auto now = get_total_milliseconds();
-
                 // try to mine on the best chain
                 if (m_counters[counters::dht_nodes] > 0) {
                     if (!is_empty_chain(chain_id)) {
@@ -929,7 +926,7 @@ namespace libTAU::blockchain {
             m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
         }
 
-        update_peer_time(chain_id, blk.miner(), blk.timestamp() * 1000);
+        update_peer_time(chain_id, blk.miner(), blk.timestamp());
 
         return SUCCESS;
     }
@@ -992,7 +989,7 @@ namespace libTAU::blockchain {
 
                 m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
 
-                update_peer_time(chain_id, blk.miner(), blk.timestamp() * 1000);
+                update_peer_time(chain_id, blk.miner(), blk.timestamp());
             }
         } else {
             return FAIL;
@@ -1003,7 +1000,7 @@ namespace libTAU::blockchain {
 
     void blockchain::block_reception_event(const aux::bytes &chain_id, const dht::public_key& peer, const block &blk) {
 //        if (m_chain_status[chain_id] == MINING) {
-            auto now = get_total_milliseconds();
+//            auto now = get_total_milliseconds();
 
 //            auto &block_map = m_blocks[chain_id];
 
@@ -1464,7 +1461,7 @@ namespace libTAU::blockchain {
             m_tx_pools[chain_id].delete_tx_from_time_pool(connect_blocks[i - 2].tx());
             m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(connect_blocks[i - 2]);
         }
-        update_peer_time(chain_id, target.miner(), target.timestamp() * 1000);
+        update_peer_time(chain_id, target.miner(), target.timestamp());
 //        m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(target);
 //        m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(tail_block);
         m_ses.alerts().emplace_alert<blockchain_fork_point_block_alert>(reference_block);
@@ -1706,7 +1703,7 @@ namespace libTAU::blockchain {
 
     void blockchain::on_dht_put_transaction(const bytes &chain_id, const sha1_hash &hash, const dht::item &i, int n) {
         if (n > 0) {
-            m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(chain_id, hash, get_total_milliseconds());
+            m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(chain_id, hash, get_total_milliseconds() / 1000);
         }
     }
 
@@ -2129,7 +2126,7 @@ namespace libTAU::blockchain {
 //    }
 
     void blockchain::request_chain_data(const bytes &chain_id, const dht::public_key &peer) {
-        common::signal_entry signalEntry(common::CHAIN_DATA, chain_id, get_total_milliseconds());
+        common::signal_entry signalEntry(common::CHAIN_DATA, chain_id, get_total_milliseconds() / 1000);
 
         send_to(peer, signalEntry.get_entry());
     }
@@ -2151,7 +2148,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_online_signal(const aux::bytes &chain_id) {
-        common::signal_entry signalEntry(common::ONLINE, chain_id, get_total_milliseconds());
+        common::signal_entry signalEntry(common::ONLINE, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -2162,7 +2159,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_new_head_block_signal(const bytes &chain_id) {
-        common::signal_entry signalEntry(common::NEW_HEAD_BLOCK, chain_id, get_total_milliseconds());
+        common::signal_entry signalEntry(common::NEW_HEAD_BLOCK, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -2173,7 +2170,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_new_transfer_tx_signal(const bytes &chain_id) {
-        common::signal_entry signalEntry(common::NEW_TRANSFER_TX, chain_id, get_total_milliseconds());
+        common::signal_entry signalEntry(common::NEW_TRANSFER_TX, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -2184,7 +2181,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_new_note_tx_signal(const bytes &chain_id) {
-        common::signal_entry signalEntry(common::NEW_NOTE_TX, chain_id, get_total_milliseconds());
+        common::signal_entry signalEntry(common::NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -3406,19 +3403,19 @@ namespace libTAU::blockchain {
                 case common::NEW_HEAD_BLOCK: {
                     update_peer_time(chain_id, peer, signalEntry.m_timestamp);
 
-                    get_head_block_from_peer(chain_id, peer, (signalEntry.m_timestamp - 3000) / 1000);
+                    get_head_block_from_peer(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
                 case common::NEW_TRANSFER_TX: {
                     update_peer_time(chain_id, peer, signalEntry.m_timestamp);
 
-                    get_transfer_transaction(chain_id, peer, (signalEntry.m_timestamp - 3000) / 1000);
+                    get_transfer_transaction(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
                 case common::NEW_NOTE_TX: {
                     update_peer_time(chain_id, peer, signalEntry.m_timestamp);
 
-                    get_new_note_tx_hash(chain_id, peer, (signalEntry.m_timestamp - 3000) / 1000);
+                    get_new_note_tx_hash(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
                 default: {
