@@ -214,24 +214,13 @@ namespace libTAU::blockchain {
         if (!tx.verify_signature())
             return false;
 
-        m_active_peers.push(tx.sender());
-        if (m_active_peers.size() > tx_pool_max_active_friends_size) {
-            m_active_peers.pop();
-        }
-
-        auto ret1 = false;
         if (tx.type() == tx_type::type_transfer) {
-            ret1 = add_tx_to_fee_pool(tx);
-        }
-        auto ret2 = add_tx_to_time_pool(tx);
-
-//        auto ret1 = add_tx_to_time_pool(tx);
-//        auto ret2 = add_tx_to_fee_pool(tx);
-
-        if (!ret1 && !ret2)
+            return add_tx_to_fee_pool(tx);
+        } else if (tx.type() == tx_type::type_note) {
+            return add_tx_to_time_pool(tx);
+        } else {
             return false;
-
-        return true;
+        }
     }
 
 //    bool tx_pool::rollback_block(const block &blk) {
@@ -369,6 +358,15 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    bool tx_pool::is_transaction_in_time_pool(const sha1_hash &txid) const {
+        auto it = m_all_txs_by_timestamp.find(txid);
+        if (it != m_all_txs_by_timestamp.end()) {
+            return true;
+        }
+
+        return false;
+    }
+
     bool tx_pool::is_transaction_in_pool(const sha1_hash &txid) const {
         auto it = m_all_txs_by_fee.find(txid);
         if (it != m_all_txs_by_fee.end()) {
@@ -399,18 +397,6 @@ namespace libTAU::blockchain {
         }
 
         return 0;
-    }
-
-    std::set<dht::public_key> tx_pool::get_active_peers() {
-        std::set<dht::public_key> peers;
-        auto size = m_active_peers.size();
-        for (auto i = 0; i < size; i++) {
-            peers.insert(m_active_peers.front());
-            m_active_peers.push(m_active_peers.front());
-            m_active_peers.pop();
-        }
-
-        return peers;
     }
 
     void tx_pool::clear() {

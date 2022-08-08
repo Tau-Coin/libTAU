@@ -67,13 +67,13 @@ namespace libTAU::blockchain {
 
         bool is_transaction_in_fee_pool(const sha1_hash &txid) const;
 
+        bool is_transaction_in_time_pool(const sha1_hash &txid) const;
+
         bool is_transaction_in_pool(const sha1_hash &txid) const;
 
         std::int64_t get_min_allowed_fee();
 
         std::int64_t get_oldest_allowed_timestamp();
-
-        std::set<dht::public_key> get_active_peers();
 
         void clear();
 
@@ -83,11 +83,11 @@ namespace libTAU::blockchain {
 
         std::set<transaction> get_all_transactions();
 
-    private:
-
         bool add_tx_to_fee_pool(const transaction& tx);
 
         bool add_tx_to_time_pool(const transaction& tx);
+
+    private:
 
         void remove_min_fee_tx();
 
@@ -113,9 +113,6 @@ namespace libTAU::blockchain {
 
         // one account one tx
         std::map<dht::public_key, sha1_hash> m_account_tx_by_timestamp;
-
-        // active peers found from tx
-        std::queue<dht::public_key> m_active_peers;
     };
 }
 

@@ -38,7 +38,8 @@ namespace libTAU::common {
         CHAIN_DATA,
         ONLINE,
         NEW_HEAD_BLOCK,
-        NEW_TX,
+        NEW_TRANSFER_TX,
+        NEW_NOTE_TX,
     };
 
     struct TORRENT_EXPORT signal_entry {

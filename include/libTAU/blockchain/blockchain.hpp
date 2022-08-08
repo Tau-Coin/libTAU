@@ -66,8 +66,10 @@ namespace blockchain {
     // blockchain max ban time(30min)
 //    constexpr std::int64_t blockchain_max_ban_time = 30 * 60 * 1000;
 
-    // new tx key suffix
-    const std::string key_suffix_new_tx_hash = "new_tx_hash";
+    // new note tx key suffix
+    const std::string key_suffix_new_note_tx_hash = "new_note_tx_hash";
+    // transfer tx key suffix
+    const std::string key_suffix_transfer_tx = "transfer_tx";
     // head block key suffix
     const std::string key_suffix_head_block_hash = "head_block_hash";
     // state root key suffix
@@ -78,7 +80,8 @@ namespace blockchain {
         HEAD_BLOCK,
         BLOCK,
         TX_WRAPPER,
-        NEW_TX_HASH,
+        NEW_NOTE_TX_HASH,
+        NEW_TRANSFER_TX,
         STATE_HASH_ARRAY,
         STATE_ARRAY,
     };
@@ -406,7 +409,9 @@ namespace blockchain {
 
         void send_new_head_block_signal(const aux::bytes &chain_id);
 
-        void send_new_tx_signal(const aux::bytes &chain_id);
+        void send_new_transfer_tx_signal(const aux::bytes &chain_id);
+
+        void send_new_note_tx_signal(const aux::bytes &chain_id);
 
         void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
@@ -416,7 +421,11 @@ namespace blockchain {
 
         void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
-        void put_new_transaction(const aux::bytes &chain_id, const transaction &tx);
+        void get_transfer_transaction(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
+
+        void put_transfer_transaction(const aux::bytes &chain_id, const transaction &tx);
+
+        void put_note_transaction(const aux::bytes &chain_id, const transaction &tx);
 
         void get_all_state_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
@@ -426,9 +435,9 @@ namespace blockchain {
 
         void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void get_new_tx_hash(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
+        void get_new_note_tx_hash(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
-        void put_new_tx_hash(const aux::bytes &chain_id, const sha1_hash &hash);
+        void put_new_note_tx_hash(const aux::bytes &chain_id, const sha1_hash &hash);
 
 //        void get_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
 
