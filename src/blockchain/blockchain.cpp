@@ -2601,6 +2601,10 @@ namespace libTAU::blockchain {
                                 m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
                             }
 
+                            if (blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
+                                m_ses.alerts().emplace_alert<blockchain_syncing_head_block_alert>(peer, blk);
+                            }
+
                             block_reception_event(chain_id, peer, blk);
                         }
 
@@ -2635,6 +2639,8 @@ namespace libTAU::blockchain {
                             if (!blk.tx().empty()) {
                                 m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
                             }
+
+                            m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(peer, blk);
 
                             block_reception_event(chain_id, peer, blk);
                         }
