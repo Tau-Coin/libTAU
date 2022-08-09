@@ -931,6 +931,7 @@ KADEMLIA_SOURCES =
 	ed25519
 	dht_settings
 	items_db_sqlite
+	bs_nodes_db_sqlite
 	;
 
 COMMON_SOURCES =
