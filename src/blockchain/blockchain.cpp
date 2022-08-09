@@ -2126,13 +2126,21 @@ namespace libTAU::blockchain {
 //    }
 
     void blockchain::request_chain_all_data(const bytes &chain_id, const dht::public_key &peer) {
-        common::signal_entry signalEntry(common::ALL_CHAIN_DATA, chain_id, get_total_milliseconds() / 1000);
+        common::signal_entry signalEntry(common::ALL_DATA, chain_id, get_total_milliseconds() / 1000);
 
         send_to(peer, signalEntry.get_entry());
     }
 
-    void blockchain::put_all_chain_data(const bytes &chain_id) {
+    void blockchain::put_chain_all_data(const bytes &chain_id) {
         log(LOG_INFO, "Chain[%s] Put all chain data", aux::toHex(chain_id).c_str());
+
+        auto now = get_total_milliseconds();
+        if (now < m_all_data_last_put_time[chain_id] + blockchain_min_put_interval) {
+            log(LOG_INFO, "Chain[%s] Already put it", aux::toHex(chain_id).c_str());
+            return;
+        }
+        m_all_data_last_put_time[chain_id] = now;
+
         if (!is_empty_chain(chain_id)) {
             auto blk = m_head_blocks[chain_id];
             while (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE != 0) {
@@ -2147,8 +2155,16 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::put_all_chain_state(const bytes &chain_id) {
+    void blockchain::put_chain_all_state(const bytes &chain_id) {
         log(LOG_INFO, "Chain[%s] Put all chain state", aux::toHex(chain_id).c_str());
+
+        auto now = get_total_milliseconds();
+        if (now < m_all_state_last_put_time[chain_id] + blockchain_min_put_interval) {
+            log(LOG_INFO, "Chain[%s] Already put it", aux::toHex(chain_id).c_str());
+            return;
+        }
+        m_all_state_last_put_time[chain_id] = now;
+
         if (!is_empty_chain(chain_id)) {
             auto blk = m_repository->get_block_by_hash(chain_id, m_head_blocks[chain_id].genesis_block_hash());
             sha1_hash stateRoot;
@@ -2158,20 +2174,34 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::put_chain_blocks(const bytes &chain_id, const sha1_hash &hash) {
-//        log(LOG_INFO, "Chain[%s] Put chain blocks", aux::toHex(chain_id).c_str());
-//        if (!is_empty_chain(chain_id)) {
-//            auto blk = m_head_blocks[chain_id];
-//            while (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE != 0) {
-//                put_block(chain_id, blk);
-//                blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
-//            }
-//            sha1_hash stateRoot;
-//            std::vector<state_array> stateArrays;
-//            get_genesis_state(chain_id, stateRoot, stateArrays);
-//            put_block_with_all_state(chain_id, blk, stateArrays);
-//            put_head_block_hash(chain_id, m_head_blocks[chain_id].sha1());
-//        }
+    void blockchain::put_chain_all_blocks(const bytes &chain_id) {
+        log(LOG_INFO, "Chain[%s] Put chain blocks", aux::toHex(chain_id).c_str());
+
+        auto now = get_total_milliseconds();
+        if (now < m_all_blocks_last_put_time[chain_id] + blockchain_min_put_interval) {
+            log(LOG_INFO, "Chain[%s] Already put it", aux::toHex(chain_id).c_str());
+            return;
+        }
+        m_all_blocks_last_put_time[chain_id] = now;
+
+        if (!is_empty_chain(chain_id)) {
+            auto blk = m_head_blocks[chain_id];
+            while (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE != 0) {
+                put_block(chain_id, blk);
+                blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
+            }
+            put_block(chain_id, blk);
+
+            put_head_block_hash(chain_id, m_head_blocks[chain_id].sha1());
+        }
+    }
+
+    void blockchain::request_all_blocks(const bytes &chain_id, const dht::public_key &peer) {
+        common::signal_entry signalEntry(common::ALL_BLOCKS, chain_id, get_total_milliseconds() / 1000);
+        auto e = signalEntry.get_entry();
+        log(LOG_INFO, "Chain[%s] Send peer[%s] all blocks request signal[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+        send_to(peer, e);
     }
 
     void blockchain::request_all_state(const bytes &chain_id, const dht::public_key &peer) {
@@ -2794,7 +2824,7 @@ namespace libTAU::blockchain {
                     case GET_ITEM_TYPE::HEAD_BLOCK_HASH:
                     case GET_ITEM_TYPE::HEAD_BLOCK:
                     case GET_ITEM_TYPE::BLOCK: {
-                        request_chain_all_data(chain_id, peer);
+                        request_all_blocks(chain_id, peer);
                         break;
                     }
                     case GET_ITEM_TYPE::STATE_HASH_ARRAY:
@@ -3441,16 +3471,22 @@ namespace libTAU::blockchain {
                 aux::toHex(chain_id).c_str(), payload.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
 
             switch (signalEntry.m_pid) {
-                case common::ALL_CHAIN_DATA: {
+                case common::ALL_DATA: {
                     //update time
                     update_peer_time(chain_id, peer, signalEntry.m_timestamp);
-                    put_all_chain_data(chain_id);
+                    put_chain_all_data(chain_id);
+                    break;
+                }
+                case common::ALL_BLOCKS: {
+                    //update time
+                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
+                    put_chain_all_blocks(chain_id);
                     break;
                 }
                 case common::ALL_STATE: {
                     //update time
                     update_peer_time(chain_id, peer, signalEntry.m_timestamp);
-                    put_all_chain_state(chain_id);
+                    put_chain_all_state(chain_id);
                     break;
                 }
                 case common::ONLINE: {

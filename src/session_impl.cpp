@@ -3499,7 +3499,7 @@ namespace {
 
 	void session_impl::put_all_chain_data(const aux::bytes &chain_id) {
 		if(m_blockchain) {
-			return m_blockchain->put_all_chain_data(chain_id);
+			return m_blockchain->put_chain_all_data(chain_id);
 		}
 	}
 

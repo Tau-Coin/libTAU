@@ -60,6 +60,9 @@ namespace blockchain {
     // blockchain max getting times
     constexpr std::int64_t blockchain_max_getting_times = 10;
 
+    // blockchain last put time(5min)
+    constexpr std::int64_t blockchain_min_put_interval = 5 * 60 * 1000;
+
     // blockchain min ban time(5min)
 //    constexpr std::int64_t blockchain_min_ban_time = 5 * 60 * 1000;
 
@@ -218,13 +221,15 @@ namespace blockchain {
 
         void request_chain_all_data(const aux::bytes &chain_id, const dht::public_key& peer);
 
-        void put_all_chain_data(const aux::bytes &chain_id);
+        void put_chain_all_data(const aux::bytes &chain_id);
 
-        void put_all_chain_state(const aux::bytes &chain_id);
+        void put_chain_all_state(const aux::bytes &chain_id);
 
-        void put_chain_blocks(const aux::bytes &chain_id, const sha1_hash &hash);
+        void put_chain_all_blocks(const aux::bytes &chain_id);
 
         void request_all_state(const aux::bytes &chain_id, const dht::public_key& peer);
+
+        void request_all_blocks(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void send_online_signal(const aux::bytes &chain_id);
 
@@ -575,6 +580,12 @@ namespace blockchain {
 
         // head blocks
         std::map<aux::bytes, block> m_head_blocks;
+
+        std::map<aux::bytes, std::int64_t> m_all_data_last_put_time;
+
+        std::map<aux::bytes, std::int64_t> m_all_blocks_last_put_time;
+
+        std::map<aux::bytes, std::int64_t> m_all_state_last_put_time;
     };
 }
 }
