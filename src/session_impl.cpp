@@ -3487,7 +3487,7 @@ namespace {
 
 	void session_impl::request_chain_data(const aux::bytes &chain_id, const dht::public_key &peer) {
 		if(m_blockchain) {
-			return m_blockchain->request_chain_data(chain_id, peer);
+			return m_blockchain->request_chain_all_data(chain_id, peer);
 		}
 	}
 

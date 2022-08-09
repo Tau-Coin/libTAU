@@ -216,9 +216,15 @@ namespace blockchain {
         // return ban list
         std::set<dht::public_key> get_ban_list(const aux::bytes &chain_id);
 
-        void request_chain_data(const aux::bytes &chain_id, const dht::public_key& peer);
+        void request_chain_all_data(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void put_all_chain_data(const aux::bytes &chain_id);
+
+        void put_all_chain_state(const aux::bytes &chain_id);
+
+        void put_chain_blocks(const aux::bytes &chain_id, const sha1_hash &hash);
+
+        void request_all_state(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void send_online_signal(const aux::bytes &chain_id);
 
@@ -534,7 +540,7 @@ namespace blockchain {
         // chain timers
         std::map<aux::bytes, aux::deadline_timer> m_chain_timers;
 
-        std::map<GET_ITEM, GET_INFO> m_get_item_info;
+//        std::map<GET_ITEM, GET_INFO> m_get_item_info;
 
         // chain status timers
 //        std::map<aux::bytes, aux::deadline_timer> m_chain_status_timers;
@@ -545,7 +551,7 @@ namespace blockchain {
         // tx pool
         std::map<aux::bytes, tx_pool> m_tx_pools;
 
-        // tx wrapper
+        // note tx wrapper
         std::map<aux::bytes, transaction_wrapper> m_current_tx_wrapper;
 
         // chain status
