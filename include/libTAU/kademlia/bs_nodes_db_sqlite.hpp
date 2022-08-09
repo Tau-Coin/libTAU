@@ -26,7 +26,7 @@ namespace dht {
 			 "endpoint VARCHAR(18) NOT NULL,"
 			 "v4 INT);";
 
-	static const std::string create_ts_index =
+	static const std::string create_bs_nodes_ts_index =
 		"CREATE INDEX IF NOT EXISTS index_ts ON bs_nodes (ts);";
 
 	static const std::string insert_or_replace_nodes =
@@ -48,7 +48,7 @@ namespace dht {
 	static const std::string delete_nodes =
 		"DELETE FROM bs_nodes WHERE ts <= ?;";
 
-	static const std::string select_ts_threshold =
+	static const std::string select_bs_nodes_ts_threshold =
 		"SELECT ts FROM bs_nodes ORDER BY ts ASC LIMIT ?, 1;";
 
 	struct TORRENT_EXPORT bs_nodes_db_sqlite : public bs_nodes_storage_interface

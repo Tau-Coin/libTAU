@@ -20,6 +20,7 @@ see LICENSE file.
 #include <libTAU/kademlia/node_entry.hpp>
 #include <libTAU/kademlia/dos_blocker.hpp>
 #include <libTAU/kademlia/dht_state.hpp>
+#include <libTAU/kademlia/bs_nodes_storage.hpp>
 
 #include <libTAU/aux_/listen_socket_handle.hpp>
 #include "libTAU/account_manager.hpp"
@@ -62,7 +63,8 @@ namespace libTAU::dht {
 			, counters& cnt
 			, dht_storage_interface& storage
 			, dht_state&& state
-			, std::shared_ptr<account_manager> account_manager);
+			, std::shared_ptr<account_manager> account_manager
+			, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage);
 
 		// the dht_state must be moved in!
 		dht_tracker(dht_observer* observer
@@ -253,7 +255,8 @@ namespace libTAU::dht {
 				, dht_observer* observer, counters& cnt
 				, get_foreign_node_t get_foreign_node
 				, dht_storage_interface& storage
-				, std::shared_ptr<account_manager> account_manager);
+				, std::shared_ptr<account_manager> account_manager
+				, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage);
 			tracker_node(tracker_node const&) = delete;
 			tracker_node(tracker_node&&) = delete;
 
@@ -310,6 +313,8 @@ namespace libTAU::dht {
 		libTAU::sha256_hash m_public_key;
 
 		std::shared_ptr<account_manager> m_account_manager;
+
+		std::shared_ptr<bs_nodes_storage_interface> m_bs_nodes_storage;
 	};
 } // namespace libTAU::dht
 

@@ -64,6 +64,7 @@ see LICENSE file.
 #include "libTAU/kademlia/types.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
 #include "libTAU/kademlia/node_id.hpp"
+#include "libTAU/kademlia/bs_nodes_db_sqlite.hpp"
 
 #include "libTAU/communication/message.hpp"
 #include "libTAU/communication/communication.hpp"
@@ -3119,6 +3120,8 @@ namespace {
 		m_dht_storage = m_dht_storage_constructor(m_settings);
 		m_items_db = std::make_shared<dht::items_db_sqlite>(
 			m_settings, static_cast<dht::dht_observer*>(this));
+		m_bs_nodes_storage = std::make_shared<dht::bs_nodes_db_sqlite>(
+			m_settings, static_cast<dht::dht_observer*>(this));
 		m_dht_storage->set_backend(m_items_db);
 		m_dht = std::make_shared<dht::dht_tracker>(
 			static_cast<dht::dht_observer*>(this)
@@ -3134,7 +3137,8 @@ namespace {
 			, m_stats_counters
 			, *m_dht_storage
 			, std::move(m_dht_state)
-			, m_account_manager);
+			, m_account_manager
+			, m_bs_nodes_storage);
 
 		for (auto& s : m_listening_sockets)
 		{
@@ -3208,8 +3212,10 @@ namespace {
 		}
 
 		if (m_dht_storage != nullptr) m_dht_storage->close();
+		if (m_bs_nodes_storage != nullptr) m_bs_nodes_storage->close();
 		m_dht_storage.reset();
 		m_items_db.reset();
+		m_bs_nodes_storage.reset();
 	}
 
 	void session_impl::set_loop_time_interval(int milliseconds)

@@ -54,7 +54,7 @@ void bs_nodes_db_sqlite::init()
 		}
 
 		// create index
-		ok = sqlite3_exec(db, create_ts_index.c_str(), nullptr, nullptr, &zErrMsg);
+		ok = sqlite3_exec(db, create_bs_nodes_ts_index.c_str(), nullptr, nullptr, &zErrMsg);
 		if (ok != SQLITE_OK)
 		{
 			sqlite3_free(zErrMsg);
@@ -62,7 +62,7 @@ void bs_nodes_db_sqlite::init()
 			if (m_observer->should_log(dht_logger::bs_nodes_db, aux::LOG_ERR))
 			{
 				m_observer->log(dht_logger::bs_nodes_db, "create index error: %d, %s"
-					, ok, create_ts_index.c_str());
+					, ok, create_bs_nodes_ts_index.c_str());
 			}
 #endif
 
@@ -135,11 +135,11 @@ void bs_nodes_db_sqlite::prepare_statements()
 			return;
 		}
 
-		ok = sqlite3_prepare_v2(db, select_ts_threshold.c_str(), -1
+		ok = sqlite3_prepare_v2(db, select_bs_nodes_ts_threshold.c_str(), -1
 			, &m_select_ts_threshold_stmt, nullptr);
 		if (ok != SQLITE_OK)
 		{
-			error.append(select_ts_threshold);
+			error.append(select_bs_nodes_ts_threshold);
 			sql_error(ok, error.c_str());
 
 			return;
@@ -370,7 +370,7 @@ std::size_t bs_nodes_db_sqlite::tick()
 			}
 			else
 			{
-				sql_error(ok, select_ts_threshold.c_str());
+				sql_error(ok, select_bs_nodes_ts_threshold.c_str());
 				return m_size;
 			}
 
