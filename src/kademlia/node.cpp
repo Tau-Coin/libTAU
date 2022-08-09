@@ -84,7 +84,8 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	, counters& cnt
 	, get_foreign_node_t get_foreign_node
 	, dht_storage_interface& storage
-	, std::shared_ptr<account_manager> account_manager)
+	, std::shared_ptr<account_manager> account_manager
+	, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage)
 	: m_settings(settings)
 	, m_id(nid)
 	, m_table(m_id, aux::is_v4(sock.get_local_endpoint()) ? udp::v4() : udp::v6(), 8, settings, observer)
@@ -102,6 +103,7 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	, m_counters(cnt)
 	, m_storage(storage)
 	, m_account_manager(std::move(account_manager))
+	, m_bs_nodes_storage(std::move(bs_nodes_storage))
 {
 	aux::crypto_random_bytes(m_secret[0]);
 	aux::crypto_random_bytes(m_secret[1]);

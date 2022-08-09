@@ -1893,6 +1893,11 @@ namespace aux {
 			// the time interval(seconds) of refreshing items db
 			dht_items_db_refresh_time,
 
+			// the maximum number of bootstrap nodes sqlite records
+			dht_bs_nodes_db_max_count,
+
+			// the time interval(seconds) of refreshing bootstrap nodes db
+			dht_bs_nodes_db_refresh_time,
 
 			// the time interval(seconds) of accepting mutable item
 			dht_time_offset,

@@ -398,7 +398,7 @@ void items_db_sqlite::tick()
 	sqlite3* db = m_observer->get_items_database();
 
 	if (db != NULL && m_items_count_stmt != NULL
-		&& m_delete_items_stmt != NULL)
+		&& m_delete_items_stmt != NULL && m_select_ts_threshold_stmt != NULL)
 	{
 		sqlite3_reset(m_items_count_stmt);
 

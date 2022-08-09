@@ -29,6 +29,7 @@ see LICENSE file.
 #include <libTAU/kademlia/find_data.hpp>
 #include <libTAU/kademlia/item.hpp>
 #include <libTAU/kademlia/announce_flags.hpp>
+#include <libTAU/kademlia/bs_nodes_storage.hpp>
 
 #include <libTAU/account_manager.hpp>
 #include <libTAU/fwd.hpp>
@@ -157,7 +158,8 @@ public:
 		, dht_observer* observer, counters& cnt
 		, get_foreign_node_t get_foreign_node
 		, dht_storage_interface& storage
-		, std::shared_ptr<account_manager> account_manager);
+		, std::shared_ptr<account_manager> account_manager
+		, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage);
 
 	~node();
 
@@ -444,6 +446,8 @@ private:
 	std::shared_ptr<account_manager> m_account_manager;
 
 	relay_pkt_deduplicater m_relay_pkt_deduplicater;
+
+	std::shared_ptr<bs_nodes_storage_interface> m_bs_nodes_storage;
 
 #ifndef TORRENT_DISABLE_LOGGING
 	std::uint32_t m_search_id = 0;

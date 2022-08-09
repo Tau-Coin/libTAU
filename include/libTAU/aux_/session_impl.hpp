@@ -62,6 +62,7 @@ see LICENSE file.
 #include "libTAU/kademlia/dht_state.hpp"
 #include "libTAU/kademlia/announce_flags.hpp"
 #include "libTAU/kademlia/items_db_sqlite.hpp"
+#include "libTAU/kademlia/bs_nodes_storage.hpp"
 #include "libTAU/kademlia/types.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
 
@@ -898,6 +899,7 @@ namespace aux {
 
 			std::unique_ptr<dht::dht_storage_interface> m_dht_storage;
 			std::shared_ptr<dht::items_db_sqlite> m_items_db;
+			std::shared_ptr<dht::bs_nodes_storage_interface> m_bs_nodes_storage;
 			std::shared_ptr<dht::dht_tracker> m_dht;
 			dht::dht_storage_constructor_type m_dht_storage_constructor
 				= dht::dht_default_storage_constructor;

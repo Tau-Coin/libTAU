@@ -897,7 +897,8 @@ namespace {
 			"rpc_manager",
 			"traversal",
 			"incoming_table",
-			"items_db"
+			"items_db",
+			"bs_nodes_db"
 		};
 
 		char ret[900];
