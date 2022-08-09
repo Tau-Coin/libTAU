@@ -769,7 +769,7 @@ namespace libTAU::blockchain {
         sqlite3_stmt * stmt;
         std::string sql = "UPDATE ";
         sql.append(blocks_db_name(chain_id));
-        sql.append(" SET MAIN_CHAIN=1 WHERE HASH=?");
+        sql.append(" SET MAIN_CHAIN=0 WHERE HASH=?");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
             return false;
@@ -789,7 +789,7 @@ namespace libTAU::blockchain {
         sqlite3_stmt * stmt;
         std::string sql = "UPDATE ";
         sql.append(blocks_db_name(chain_id));
-        sql.append(" SET MAIN_CHAIN=0 WHERE HASH=?");
+        sql.append(" SET MAIN_CHAIN=1 WHERE HASH=?");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
             return false;
