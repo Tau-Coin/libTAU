@@ -54,7 +54,7 @@ namespace dht {
 		"DELETE FROM mutable_items WHERE ts <= ?;";
 
 	static const std::string select_ts_threshold =
-		"SELECT ts FROM mutable_items LIMIT ?, 1;";
+		"SELECT ts FROM mutable_items ORDER BY ts ASC LIMIT ?, 1;";
 
 	struct TORRENT_EXPORT items_db_sqlite : public dht_storage_interface
 	{
