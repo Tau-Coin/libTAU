@@ -3145,7 +3145,8 @@ namespace libTAU::blockchain {
 
         dht::public_key *pk = m_ses.pubkey();
 
-        auto &head_block = m_head_blocks[chain_id];
+        const auto &head_block = m_head_blocks[chain_id];
+
         if (!head_block.empty()) {
             if (head_block.block_number() < 0) {
                 return -1;
@@ -3153,15 +3154,11 @@ namespace libTAU::blockchain {
 
             block ancestor;
             auto previous_hash = head_block.previous_block_hash();
-            if (head_block.block_number() > 3) {
+            if (head_block.block_number() % CHAIN_EPOCH_BLOCK_SIZE > 3) {
                 int i = 3;
                 while (i > 0) {
                     ancestor = m_repository->get_block_by_hash(chain_id, previous_hash);
-                    if (ancestor.empty()) {
-                        return -1;
-                    }
                     previous_hash = ancestor.previous_block_hash();
-
                     i--;
                 }
             }
