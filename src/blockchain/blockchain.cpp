@@ -745,7 +745,7 @@ namespace libTAU::blockchain {
 
         block ancestor;
         auto previous_hash = previous_block.previous_block_hash();
-        if (previous_block.block_number() > 3) {
+        if (previous_block.block_number() % CHAIN_EPOCH_BLOCK_SIZE > 3) {
             int i = 3;
             while (i > 0) {
                 ancestor = m_repository->get_block_by_hash(chain_id, previous_hash);
@@ -1293,9 +1293,19 @@ namespace libTAU::blockchain {
             }
             connect_blocks.push_back(reference_block);
 
-            // find branch block from cache and db
-            auto previous_hash = reference_block.previous_block_hash();
-            reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
+                // find branch block from cache and db
+                auto previous_hash = reference_block.previous_block_hash();
+                try {
+                    reference_block = m_repository->get_block_by_hash(chain_id, previous_hash);
+//                reference_block = get_block_from_cache_or_db(chain_id, previous_hash);
+
+                    log(LOG_INFO, "INFO chain[%s] ++++++++reference block:%s, previous hash:%s",
+                        aux::toHex(chain_id).c_str(), reference_block.to_string().c_str(),
+                        aux::toHex(previous_hash.to_string()).c_str());
+                } catch (std::exception& e) {
+                    log(LOG_ERR, "ERROR: 66666 Exception in get mutable callback [CHAIN] %s in file[%s], func[%s], line[%d]",
+                        e.what(), __FILE__, __FUNCTION__ , __LINE__);
+                }
 
             if (reference_block.empty()) {
                 log(LOG_INFO, "INFO chain[%s] 4. Cannot find block[%s]",
