@@ -1573,11 +1573,15 @@ namespace libTAU::blockchain {
                 }
             } else {
                 block blk = it->second.m_head_block;
-                while (!blk.empty() && blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE != 0) {
-                    blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
-                }
-
-                if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE != 0) {
+                    auto genesis_block_hash = blk.genesis_block_hash();
+                    blk = m_repository->get_block_by_hash(chain_id, genesis_block_hash);
+                    if (blk.empty()) {
+                        get_block(chain_id, peer, genesis_block_hash);
+                    } else {
+                        get_all_state_from_peer(chain_id, peer, blk.state_root());
+                    }
+                } else {
                     get_all_state_from_peer(chain_id, peer, blk.state_root());
                 }
             }
@@ -2608,9 +2612,10 @@ namespace libTAU::blockchain {
         try {
             const auto& peer = i.pk();
             const auto& salt = i.salt();
-            GET_ITEM getItem(chain_id, peer, salt, type);
+//            GET_ITEM getItem(chain_id, peer, salt, type);
 
-            log(LOG_INFO, "=====INFO: Got callback[%s]", i.value().to_string(true).c_str());
+            log(LOG_INFO, "=====INFO: Got callback[%s], type[%d],salt[%s], timestamp:%" PRId64,
+                i.value().to_string(true).c_str(), type, aux::toHex(i.salt()).c_str(), timestamp);
 
             if (!i.empty()) {
                 update_peer_time(chain_id, peer, i.ts().value);
@@ -2833,7 +2838,7 @@ namespace libTAU::blockchain {
                         break;
                     }
                     default: {
-                        log(LOG_ERR, "INFO: Unknown type.");
+                        log(LOG_DEBUG, "INFO: ignored type.");
                     }
                 }
 
@@ -2850,7 +2855,8 @@ namespace libTAU::blockchain {
 //                }
             }
         } catch (std::exception &e) {
-            log(LOG_ERR, "ERROR: Exception in get mutable callback.");
+            log(LOG_ERR, "ERROR: Exception in get mutable callback [CHAIN] %s in file[%s], func[%s], line[%d]",
+                e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
     }
 
@@ -3513,7 +3519,8 @@ namespace libTAU::blockchain {
                 }
             }
         } catch (std::exception &e) {
-            log(LOG_ERR, "ERROR: Receive exception data.");
+            log(LOG_ERR, "ERROR: Exception on_dht_relay [CHAIN] %s in file[%s], func[%s], line[%d]",
+                e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
 
     }
