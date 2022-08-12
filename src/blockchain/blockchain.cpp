@@ -305,7 +305,8 @@ namespace libTAU::blockchain {
 
         peer_preparation(chain_id);
 
-        get_pool_from_peer(chain_id, *m_ses.pubkey());
+//        get_pool_from_peer(chain_id, *m_ses.pubkey());
+        get_transfer_transaction(chain_id, *m_ses.pubkey());
 
         send_online_signal(chain_id);
 
