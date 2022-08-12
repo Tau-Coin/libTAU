@@ -118,6 +118,10 @@ namespace libTAU::blockchain {
 
         virtual block get_head_block(const aux::bytes &chain_id) = 0;
 
+        virtual std::string get_test_tx_string(const aux::bytes &chain_id) = 0;
+
+        virtual int get_test_tx_size(const aux::bytes &chain_id) = 0;
+
         virtual block get_block_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         virtual bool save_block_if_not_exist(const block &blk) = 0;

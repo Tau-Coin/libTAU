@@ -170,6 +170,14 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    std::string repository_track::get_test_tx_string(const aux::bytes &chain_id) {
+        return std::string();
+    }
+
+    int repository_track::get_test_tx_size(const aux::bytes &chain_id) {
+        return 0;
+    }
+
 //    bool repository_track::create_peer_db(const aux::bytes &chain_id) {
 //        return false;
 //    }

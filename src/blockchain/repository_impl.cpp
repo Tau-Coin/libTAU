@@ -464,6 +464,64 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    std::string repository_impl::get_test_tx_string(const aux::bytes &chain_id) {
+        std::string ret;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT TX FROM ";
+        sql.append(blocks_db_name(chain_id));
+        sql.append(" WHERE MAIN_CHAIN=1 ORDER BY NUMBER DESC");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                auto tp = sqlite3_column_blob(stmt, 0);
+                auto length = sqlite3_column_bytes(stmt, 0);
+                if (length > 0) {
+                    const char * p= static_cast<const char *>(tp);
+//                    aux::bytes temp(p, p + length);
+//                    std::string tx_encode(temp.begin(), temp.end());
+//                    ret = tx_encode;
+//                    char buf[1024] = {0};
+//                    memcpy(buf, tp, length);
+                    ret.append(p, length);
+//                    ret = buf;
+                }
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return ret;
+    }
+
+    int repository_impl::get_test_tx_size(const aux::bytes &chain_id) {
+        int ret = 111;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT TX FROM ";
+        sql.append(blocks_db_name(chain_id));
+        sql.append(" WHERE MAIN_CHAIN=1 ORDER BY NUMBER DESC");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                auto tp = sqlite3_column_blob(stmt, 0);
+                auto length = sqlite3_column_bytes(stmt, 0);
+                if (length > 0) {
+                    const char * p= static_cast<const char *>(tp);
+                    ret = strlen(p);
+                }
+
+                break;
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return ret;
+    }
+
     block repository_impl::get_head_block(const aux::bytes &chain_id) {
         block blk;
 
@@ -496,11 +554,11 @@ namespace libTAU::blockchain {
                 p = static_cast<const char *>(sqlite3_column_blob(stmt, 8));
                 sha1_hash state_root(p);
 
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 9));
                 length = sqlite3_column_bytes(stmt, 9);
                 transaction tx;
                 if (length > 0) {
-                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 9));
-                    std::string tx_encode(p, p + length);
+                    std::string tx_encode(p, length);
                     tx = transaction(tx_encode);
                 }
 
@@ -556,11 +614,11 @@ namespace libTAU::blockchain {
                 p = static_cast<const char *>(sqlite3_column_blob(stmt, 8));
                 sha1_hash state_root(p);
 
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 9));
                 length = sqlite3_column_bytes(stmt, 9);
                 transaction tx;
                 if (length > 0) {
-                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 9));
-                    std::string tx_encode(p, p + length);
+                    std::string tx_encode(p, length);
                     tx = transaction(tx_encode);
                 }
 
@@ -607,8 +665,8 @@ namespace libTAU::blockchain {
         if (blk.tx().empty()) {
             sqlite3_bind_null(stmt, 11);
         } else {
-            auto tx_encode = blk.tx().get_encode();
-            sqlite3_bind_blob(stmt, 11, tx_encode.data(), tx_encode.size(), nullptr);
+            std::string tx_encode = blk.tx().get_encode();
+            sqlite3_bind_blob(stmt, 11, tx_encode.data(), tx_encode.size(), SQLITE_TRANSIENT);
         }
         sqlite3_bind_blob(stmt, 12, blk.miner().bytes.data(), dht::public_key::len, nullptr);
         sqlite3_bind_blob(stmt, 13, blk.signature().bytes.data(), dht::signature::len, nullptr);
@@ -718,11 +776,11 @@ namespace libTAU::blockchain {
                 p = static_cast<const char *>(sqlite3_column_blob(stmt, 8));
                 sha1_hash state_root(p);
 
+                p = static_cast<const char *>(sqlite3_column_blob(stmt, 9));
                 length = sqlite3_column_bytes(stmt, 9);
                 transaction tx;
                 if (length > 0) {
-                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 9));
-                    std::string tx_encode(p, p + length);
+                    std::string tx_encode(p, length);
                     tx = transaction(tx_encode);
                 }
 
