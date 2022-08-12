@@ -34,22 +34,6 @@ namespace libTAU {
             // delete a friend
             bool delete_friend(const dht::public_key &pubKey) override;
 
-            // get friend info by key pair<my public key, peer public key>
-            aux::bytes get_friend_info(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            // save friend info
-            bool save_friend_info(const std::pair<dht::public_key, dht::public_key> &key, const aux::bytes& friend_info) override;
-
-            // delete friend info by key pair<my public key, peer public key>
-            bool delete_friend_info(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            int64_t get_array_align_time(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            bool save_array_align_time(const std::pair<dht::public_key, dht::public_key> &key,
-                                       std::int64_t timestamp) override;
-
-            bool delete_array_align_time(const std::pair<dht::public_key, dht::public_key> &key) override;
-
             // get message by hash
             communication::message get_message(const sha256_hash &hash) override;
 
@@ -67,34 +51,6 @@ namespace libTAU {
 
             // delete encode of the latest message hash list by key pair<my public key, peer public key>
             bool delete_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            int64_t get_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            bool save_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key,
-                                          std::int64_t timestamp) override;
-
-            bool delete_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            int64_t get_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            bool save_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key,
-                                              std::int64_t timestamp) override;
-
-            bool delete_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            int64_t get_levenshtein_array_time(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            bool save_levenshtein_array_time(const std::pair<dht::public_key, dht::public_key> &key,
-                                             std::int64_t timestamp) override;
-
-            bool delete_levenshtein_array_time(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            aux::bytes get_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            bool save_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key,
-                                        aux::bytes levenshtein_array) override;
-
-            bool delete_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key) override;
 
         private:
 

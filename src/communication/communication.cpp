@@ -298,11 +298,6 @@ namespace libTAU {
 
             const auto &pk = m_ses.pubkey();
 
-            if (!m_message_db->delete_friend_info(std::make_pair(*pk, pubkey))) {
-                log(LOG_ERR, "ERROR: Delete friend info failed!");
-                return false;
-            }
-
             if (!m_message_db->delete_latest_message_hash_list_encode(std::make_pair(*pk, pubkey))) {
                 log(LOG_ERR, "ERROR: Delete friend message hash list encode failed!");
                 return false;
@@ -310,22 +305,6 @@ namespace libTAU {
 
             return true;
         }
-
-//        void communication::request_friend_info(const dht::public_key &peer) {
-//            common::friend_info_request_entry friendInfoRequestEntry(get_current_time());
-//            send_to(peer, friendInfoRequestEntry.get_entry());
-//        }
-//
-//        aux::bytes communication::get_friend_info(const dht::public_key &pubkey) {
-//            const auto &pk = m_ses.pubkey();
-//            return m_message_db->get_friend_info(std::make_pair(*pk, pubkey));
-//        }
-//
-//        bool communication::update_friend_info(const dht::public_key &pubkey, const aux::bytes& friend_info) {
-//            log(LOG_INFO, "INFO: Update peer[%s] friend info[%s]", aux::toHex(pubkey.bytes).c_str(), aux::toHex(friend_info).c_str());
-//            const auto &pk = m_ses.pubkey();
-//            return m_message_db->save_friend_info(std::make_pair(*pk, pubkey), friend_info);
-//        }
 
         bool communication::add_new_message(const message &msg, bool post_alert) {
             add_new_message(msg.receiver(), msg, post_alert);
@@ -984,18 +963,6 @@ namespace libTAU {
 //                send_to(peer, msg_entry.get_entry());
 //            }
 //        }
-
-//        void communication::update_communication_time(const dht::public_key &peer, std::int64_t time) {
-//            m_last_communication_time[peer] = time;
-//            m_message_db->save_last_communication_time(std::make_pair(*m_ses.pubkey(), peer), time);
-//        }
-
-//        void communication::update_levenshtein_array(const dht::public_key &peer, const aux::bytes& levenshtein_array) {
-//            m_levenshtein_array[peer] = levenshtein_array;
-//            log(LOG_INFO, "save peer[%s] levenshtein array:%s", aux::toHex(peer.bytes).c_str(), aux::toHex(levenshtein_array).c_str());
-//            m_message_db->save_levenshtein_array(std::make_pair(*m_ses.pubkey(), peer), levenshtein_array);
-//        }
-
 
         bool communication::should_log(aux::LOG_LEVEL log_level) const
         {

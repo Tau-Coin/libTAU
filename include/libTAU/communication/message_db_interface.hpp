@@ -38,60 +38,6 @@ namespace libTAU {
             // delete a friend
             virtual bool delete_friend(const dht::public_key &pubKey) = 0;
 
-            // get friend info by key pair<my public key, peer public key>
-            virtual aux::bytes get_friend_info(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // save friend info
-            virtual bool save_friend_info(const std::pair<dht::public_key, dht::public_key> &key, const aux::bytes& friend_info) = 0;
-
-            // delete friend info by key pair<my public key, peer public key>
-            virtual bool delete_friend_info(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // get array align time by key pair<my public key, peer public key>
-            virtual std::int64_t get_array_align_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // save array align time
-            virtual bool save_array_align_time(const std::pair<dht::public_key, dht::public_key> &key, std::int64_t timestamp) = 0;
-
-            // delete array align time by key pair<my public key, peer public key>
-            virtual bool delete_array_align_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // get last detection by key pair<my public key, peer public key>
-            virtual std::int64_t get_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // save last detection time
-            virtual bool save_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key, std::int64_t timestamp) = 0;
-
-            // delete last detection time by key pair<my public key, peer public key>
-            virtual bool delete_last_detection_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // get last communication time by key pair<my public key, peer public key>
-            virtual std::int64_t get_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // save last communication time
-            virtual bool save_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key, std::int64_t timestamp) = 0;
-
-            // delete last communication time by key pair<my public key, peer public key>
-            virtual bool delete_last_communication_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // get levenshtein array time by key pair<my public key, peer public key>
-            virtual std::int64_t get_levenshtein_array_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // save levenshtein array time
-            virtual bool save_levenshtein_array_time(const std::pair<dht::public_key, dht::public_key> &key, std::int64_t timestamp) = 0;
-
-            // delete levenshtein array time by key pair<my public key, peer public key>
-            virtual bool delete_levenshtein_array_time(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // get levenshtein array by key pair<my public key, peer public key>
-            virtual aux::bytes get_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // save levenshtein array
-            virtual bool save_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key, aux::bytes levenshtein_array) = 0;
-
-            // delete levenshtein array by key pair<my public key, peer public key>
-            virtual bool delete_levenshtein_array(const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
             // get message by hash
             virtual communication::message get_message(const sha256_hash &hash) = 0;
 

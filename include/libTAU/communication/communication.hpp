@@ -202,10 +202,6 @@ namespace libTAU {
 
 //            void send_all_unconfirmed_messages(dht::public_key const& peer);
 
-//            void update_communication_time(dht::public_key const& peer, std::int64_t time);
-
-//            void update_levenshtein_array(dht::public_key const& peer, const aux::bytes& levenshtein_array);
-
             void on_dht_put_mutable_item(dht::item const& i, int n);
 
             void on_dht_relay_mutable_item(entry const& payload, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
