@@ -2280,6 +2280,12 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::put_genesis_head_block(const bytes &chain_id, const block &blk, const std::vector<state_array> &arrays) {
+        for (auto const& stateArray: arrays) {
+            if (!stateArray.empty()) {
+                m_ses.alerts().emplace_alert<blockchain_state_array_alert>(chain_id, stateArray.StateArray());
+            }
+        }
+
         if (!blk.empty() && !arrays.empty()) {
             put_block_with_all_state(chain_id, blk, arrays);
 
