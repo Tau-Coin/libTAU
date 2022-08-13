@@ -382,7 +382,7 @@ namespace blockchain {
 
         // key length < 20 bytes
         void subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string& salt,
-                       GET_ITEM_TYPE type, std::int64_t timestamp = 0);
+                       GET_ITEM_TYPE type, std::int64_t timestamp = 0, int times = 1);
 
         // make a salt on mutable channel
 //        static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
@@ -461,7 +461,7 @@ namespace blockchain {
 
         void put_block_with_all_state(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
-        void get_transaction_wrapper(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+        void get_transaction_wrapper(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 
         void put_transaction_wrapper(const aux::bytes &chain_id, const transaction_wrapper &txWrapper);
 
@@ -490,7 +490,7 @@ namespace blockchain {
 //        void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
         // mutable data callback
-        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool, GET_ITEM_TYPE type, std::int64_t timestamp);
+        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool, GET_ITEM_TYPE type, std::int64_t timestamp, int times = 1);
 
         // get mutable item from dht
 //        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
@@ -513,7 +513,7 @@ namespace blockchain {
 
         void print_acl_info(aux::bytes const& chain_id);
 
-        void update_peer_time(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
+        void add_peer_into_acl(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
 //        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score,
 //                                     const std::unique_ptr<common::blockchain_entry_base>& ptr);

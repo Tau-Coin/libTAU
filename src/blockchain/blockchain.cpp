@@ -235,7 +235,9 @@ namespace libTAU::blockchain {
             for (int i = 0; i < CHAIN_EPOCH_BLOCK_SIZE; i++) {
                 log(LOG_INFO, "INFO: chain[%s] acl block[%s]",
                     aux::toHex(chain_id).c_str(), blk.to_string().c_str());
-                peers.insert(blk.miner());
+                if (blk.miner() != *m_ses.pubkey()) {
+                    peers.insert(blk.miner());
+                }
                 blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
 
                 if (peers.size() >= blockchain_acl_max_peers || blk.empty()) {
@@ -251,7 +253,7 @@ namespace libTAU::blockchain {
                 auto peer = m_repository->get_peer_from_state_db_randomly(chain_id);
                 log(LOG_INFO, "INFO: chain[%s] add peer[%s] from state db into acl",
                     aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
-                if (!peer.is_all_zeros()) {
+                if (!peer.is_all_zeros() && peer != *m_ses.pubkey()) {
                     peers.insert(peer);
                 }
             }
@@ -263,19 +265,16 @@ namespace libTAU::blockchain {
                 auto peer = m_repository->get_peer_from_peer_db_randomly(chain_id);
                 log(LOG_INFO, "INFO: chain[%s] add peer[%s] from peer db into acl",
                     aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
-                if (!peer.is_all_zeros()) {
+                if (!peer.is_all_zeros() && peer != *m_ses.pubkey()) {
                     peers.insert(peer);
                 }
             }
         }
 
-        // remove myself from acl
-        peers.erase(*m_ses.pubkey());
-
         for (auto const& peer: peers) {
             log(LOG_INFO, "INFO: chain[%s] add peer[%s] into acl",
                 aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
-            m_access_list[chain_id][peer] = peer_info();
+            add_peer_into_acl(chain_id, peer, 0);
         }
     }
 
@@ -927,7 +926,7 @@ namespace libTAU::blockchain {
             m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
         }
 
-        update_peer_time(chain_id, blk.miner(), blk.timestamp());
+        add_peer_into_acl(chain_id, blk.miner(), blk.timestamp());
 
         return SUCCESS;
     }
@@ -990,7 +989,7 @@ namespace libTAU::blockchain {
 
                 m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
 
-                update_peer_time(chain_id, blk.miner(), blk.timestamp());
+                add_peer_into_acl(chain_id, blk.miner(), blk.timestamp());
             }
         } else {
             return FAIL;
@@ -1467,7 +1466,7 @@ namespace libTAU::blockchain {
             m_tx_pools[chain_id].delete_tx_from_time_pool(connect_blocks[i - 2].tx());
             m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(connect_blocks[i - 2]);
         }
-        update_peer_time(chain_id, target.miner(), target.timestamp());
+        add_peer_into_acl(chain_id, target.miner(), target.timestamp());
 //        m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(target);
 //        m_ses.alerts().emplace_alert<blockchain_new_tail_block_alert>(tail_block);
         m_ses.alerts().emplace_alert<blockchain_fork_point_block_alert>(reference_block);
@@ -2012,10 +2011,10 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string &salt,
-                               GET_ITEM_TYPE type, std::int64_t timestamp) {
+                               GET_ITEM_TYPE type, std::int64_t timestamp, int times) {
         if (!m_ses.dht()) return;
 
-        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type, timestamp), 1, 8, 16, salt, timestamp);
+        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type, timestamp, times), 1, 8, 16, salt, timestamp);
     }
 
 //    std::string blockchain::make_salt(dht::public_key peer, std::int64_t data_type_id) {
@@ -2479,13 +2478,13 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::get_transaction_wrapper(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+    void blockchain::get_transaction_wrapper(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, int times) {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
-        log(LOG_INFO, "INFO: Get tx from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
-            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TX_WRAPPER);
+        log(LOG_INFO, "INFO: Get tx from chain[%s] peer[%s], salt:[%s], times[%d]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TX_WRAPPER, times);
     }
 
     void blockchain::put_transaction_wrapper(const bytes &chain_id, const transaction_wrapper &txWrapper) {
@@ -2616,7 +2615,7 @@ namespace libTAU::blockchain {
 
     // callback for dht_mutable_get
     void blockchain::get_mutable_callback(aux::bytes const& chain_id, dht::item const& i
-            , bool const authoritative, GET_ITEM_TYPE type, std::int64_t timestamp)
+            , bool const authoritative, GET_ITEM_TYPE type, std::int64_t timestamp, int times)
     {
         TORRENT_ASSERT(i.is_mutable());
 
@@ -2630,7 +2629,7 @@ namespace libTAU::blockchain {
                 i.value().to_string(true).c_str(), type, aux::toHex(i.salt()).c_str(), timestamp);
 
             if (!i.empty()) {
-                update_peer_time(chain_id, peer, i.ts().value);
+                add_peer_into_acl(chain_id, peer, i.ts().value);
 //                m_get_item_info.erase(getItem);
 
                 switch (type) {
@@ -2749,8 +2748,8 @@ namespace libTAU::blockchain {
                                     }
 
                                     // get history tx
-                                    if (!pool.is_transaction_in_time_pool(txWrapper.previousHash())) {
-                                        get_transaction_wrapper(chain_id, peer, txWrapper.previousHash());
+                                    if (times < 10 && !pool.is_transaction_in_time_pool(txWrapper.previousHash())) {
+                                        get_transaction_wrapper(chain_id, peer, txWrapper.previousHash(), times + 1);
                                     }
                                 }
                             }
@@ -3342,7 +3341,7 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::update_peer_time(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp) {
+    void blockchain::add_peer_into_acl(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp) {
         if (peer == *m_ses.pubkey()) {
             return;
         }
@@ -3358,6 +3357,9 @@ namespace libTAU::blockchain {
             }
         } else {
             acl[peer] = peer_info(timestamp);
+
+            // get note tx
+            get_new_note_tx_hash(chain_id, peer, 0);
         }
 
         if (acl.size() > blockchain_acl_max_peers) {
@@ -3372,92 +3374,6 @@ namespace libTAU::blockchain {
             acl.erase(min_it);
         }
     }
-
-//    void blockchain::data_received_from_peer(const aux::bytes &chain_id, const dht::public_key &peer, int score,
-//                                             const std::unique_ptr<common::blockchain_entry_base> &ptr) {
-//        auto now = get_total_milliseconds();
-//        auto &acl = m_access_list[chain_id];
-//
-//        auto it = acl.find(peer);
-//        if (it != acl.end()) {
-////            it->second.m_score += score;
-////            if (it->second.m_score > 100) {
-////                it->second.m_score = 100;
-////            }
-//            it->second.m_requests_time.erase(ptr);
-//            it->second.m_last_seen = now;
-//        } else {
-//            if (acl.size() < blockchain_acl_max_peers) {
-//                acl[peer] = peer_info(now);
-//            }
-//        }
-//    }
-
-//    void blockchain::head_block_received_from_peer(const aux::bytes &chain_id, const dht::public_key &peer, const block &blk) {
-//        auto now = get_total_milliseconds();
-//        auto &acl = m_access_list[chain_id];
-//
-//        auto it = acl.find(peer);
-//        if (it != acl.end()) {
-////            it->second.m_stage = NORMAL;
-////            it->second.m_score += 3;
-////            if (it->second.m_score > 100) {
-////                it->second.m_score = 100;
-////            }
-//            it->second.m_head_block = blk;
-//            it->second.m_requests_time.erase(std::make_unique<common::head_block_request_entry>(chain_id));
-//            it->second.m_last_seen = now;
-//        } else {
-//            if (acl.size() < blockchain_acl_max_peers) {
-////                acl[peer] = peer_info(NORMAL, blk, now);
-//            }
-//        }
-//    }
-//
-//    void blockchain::transaction_received_from_peer(const bytes &chain_id, const dht::public_key &peer,
-//                                                    const transaction &tx) {
-//        auto now = get_total_milliseconds();
-//        auto &acl = m_access_list[chain_id];
-//
-//        auto it = acl.find(peer);
-//        if (it != acl.end()) {
-////            it->second.m_score += 3;
-////            if (it->second.m_score > 100) {
-////                it->second.m_score = 100;
-////            }
-//            it->second.m_latest_tx = tx;
-//            it->second.m_requests_time.erase(std::make_unique<common::transaction_request_entry>(chain_id, tx.sha1()));
-//            it->second.m_last_seen = now;
-//        } else {
-//            if (acl.size() < blockchain_acl_max_peers) {
-//                acl[peer] = peer_info(tx, now);
-//            }
-//        }
-//    }
-
-//    bool blockchain::request_received_from_peer(const aux::bytes &chain_id, const dht::public_key& peer,
-//                                                std::unique_ptr<common::blockchain_entry_base>& ptr) {
-//        auto now = get_total_milliseconds();
-//        auto &acl = m_access_list[chain_id];
-//        auto it = acl.find(peer);
-//        if (it != acl.end()) {
-//            it->second.m_last_seen = now;
-////            it->second.m_score -= 1;
-////            if (it->second.m_score <= 0) {
-////                acl.erase(it);
-////            }
-//        } else {
-//            if (acl.size() >= blockchain_acl_max_peers) {
-//                log(LOG_INFO, "INFO: Too many peers in acl to response.");
-////                introduce_gossip_peers(chain_id, peer);
-//                return false;
-//            } else {
-//                acl[peer] = peer_info(now);
-//            }
-//        }
-//
-//        return true;
-//    }
 
     void blockchain::on_dht_relay(dht::public_key const& peer, entry const& payload) {
         if (m_pause) {
@@ -3488,41 +3404,41 @@ namespace libTAU::blockchain {
             switch (signalEntry.m_pid) {
                 case common::ALL_DATA: {
                     //update time
-                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
+                    add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
                     put_chain_all_data(chain_id);
                     break;
                 }
                 case common::ALL_BLOCKS: {
                     //update time
-                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
+                    add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
                     put_chain_all_blocks(chain_id);
                     break;
                 }
                 case common::ALL_STATE: {
                     //update time
-                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
+                    add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
                     put_chain_all_state(chain_id);
                     break;
                 }
                 case common::ONLINE: {
                     //update time
-                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
+                    add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
                     break;
                 }
                 case common::NEW_HEAD_BLOCK: {
-                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
+                    add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
 
                     get_head_block_from_peer(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
                 case common::NEW_TRANSFER_TX: {
-                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
+                    add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
 
                     get_transfer_transaction(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
                 case common::NEW_NOTE_TX: {
-                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
+                    add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
 
                     get_new_note_tx_hash(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
