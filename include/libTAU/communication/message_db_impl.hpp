@@ -38,6 +38,12 @@ namespace libTAU {
 
             bool create_table_messages() override;
 
+            bool save_message_if_not_exist(const message &msg) override;
+
+            message get_message_by_hash(const sha1_hash &hash) override;
+
+            bool delete_message_by_hash(const sha1_hash &hash) override;
+
             // get message by hash
             communication::message get_message(const sha1_hash &hash) override;
 

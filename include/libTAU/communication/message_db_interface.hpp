@@ -44,6 +44,15 @@ namespace libTAU {
             // create table friends
             virtual bool create_table_messages() = 0;
 
+            // save message
+            virtual bool save_message_if_not_exist(const communication::message& msg) = 0;
+
+            // get message by hash
+            virtual communication::message get_message_by_hash(const sha1_hash &hash) = 0;
+
+            // delete message
+            virtual bool delete_message_by_hash(const sha1_hash &hash) = 0;
+
             // get message by hash
             virtual communication::message get_message(const sha1_hash &hash) = 0;
 

@@ -20,8 +20,10 @@ namespace libTAU {
             m_entry = std::move(e);
 
             populate(m_entry);
-            bencode(std::back_inserter(m_encode), m_entry);
-            m_hash = hasher(m_encode).final();
+
+            std::string encode;
+            bencode(std::back_inserter(encode), m_entry);
+            m_hash = hasher(encode).final();
         }
 
         message::message(std::int64_t mTimestamp, dht::public_key mSender, dht::public_key mReceiver, aux::bytes mPayload) :
@@ -36,8 +38,9 @@ namespace libTAU {
             // payload
             m_entry["p"] = entry(std::string(m_payload.begin(), m_payload.end()));
 
-            bencode(std::back_inserter(m_encode), m_entry);
-            m_hash = hasher(m_encode).final();
+            std::string encode;
+            bencode(std::back_inserter(encode), m_entry);
+            m_hash = hasher(encode).final();
         }
 
         void message::populate(const entry &e) {
@@ -64,6 +67,14 @@ namespace libTAU {
                 auto payload = i->string();
                 m_payload = aux::bytes(payload.begin(), payload.end());
             }
+        }
+
+        std::string message::encode() const {
+            std::string encode;
+            auto e = get_entry();
+            bencode(std::back_inserter(encode), e);
+
+            return encode;
         }
 
         std::string message::to_string() const {

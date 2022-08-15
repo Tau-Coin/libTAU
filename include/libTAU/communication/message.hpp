@@ -36,8 +36,11 @@ namespace libTAU {
             // @param Construct with bencode
             explicit message(std::string encode): message(bdecode(encode)) {}
 
-            message(std::int64_t mTimestamp, dht::public_key mSender, dht::public_key mReceiver,
-                    aux::bytes mPayload);
+            message(std::int64_t mTimestamp, dht::public_key mSender, dht::public_key mReceiver, aux::bytes mPayload);
+
+            message(int64_t mTimestamp, const dht::public_key &mSender, const dht::public_key &mReceiver,
+                    aux::bytes mPayload, const sha1_hash &mHash) : m_timestamp(mTimestamp), m_sender(mSender),
+                    m_receiver(mReceiver), m_payload(std::move(mPayload)), m_hash(mHash) {}
 
             // @returns message timestamp
             std::int64_t timestamp() const { return m_timestamp; }
@@ -55,7 +58,7 @@ namespace libTAU {
             const entry &get_entry() const { return m_entry; }
 
             // @returns the message bencode
-            const std::string &encode() const { return m_encode; }
+            std::string encode() const;
 
             // @returns the SHA1 hash of this message
             const sha1_hash &sha1() const { return m_hash; }
@@ -112,7 +115,7 @@ namespace libTAU {
             entry m_entry;
 
             // encode
-            std::string m_encode;
+//            std::string m_encode;
 
             // sha1 hash
             sha1_hash m_hash;
