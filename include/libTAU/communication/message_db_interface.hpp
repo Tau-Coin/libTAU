@@ -29,6 +29,9 @@ namespace libTAU {
             // init db
             virtual bool init() = 0;
 
+            // create table friends
+            virtual bool create_table_friends() = 0;
+
             // get all friends
             virtual std::vector<dht::public_key> get_all_friends() = 0;
 
@@ -37,6 +40,9 @@ namespace libTAU {
 
             // delete a friend
             virtual bool delete_friend(const dht::public_key &pubKey) = 0;
+
+            // create table friends
+            virtual bool create_table_messages() = 0;
 
             // get message by hash
             virtual communication::message get_message(const sha256_hash &hash) = 0;

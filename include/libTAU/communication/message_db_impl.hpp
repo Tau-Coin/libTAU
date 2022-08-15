@@ -25,6 +25,8 @@ namespace libTAU {
             // init db
             bool init() override;
 
+            bool create_table_friends() override;
+
             // get all friends
             std::vector<dht::public_key> get_all_friends() override;
 
@@ -33,6 +35,8 @@ namespace libTAU {
 
             // delete a friend
             bool delete_friend(const dht::public_key &pubKey) override;
+
+            bool create_table_messages() override;
 
             // get message by hash
             communication::message get_message(const sha256_hash &hash) override;

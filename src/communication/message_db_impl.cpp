@@ -23,7 +23,15 @@ namespace libTAU {
 
         // table friends: public key
         bool message_db_impl::init() {
-            std::string sql = "CREATE TABLE IF NOT EXISTS FRIENDS(PUBKEY VARCHAR(32) PRIMARY KEY NOT NULL);";
+            if (!create_table_friends()) {
+                return false;
+            }
+
+            return true;
+        }
+
+        bool message_db_impl::create_table_friends() {
+            std::string sql = "CREATE TABLE IF NOT EXISTS FRIENDS(PUBKEY BLOB PRIMARY KEY NOT NULL);";
             char *zErrMsg = nullptr;
             int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
             if (ok != SQLITE_OK) {
@@ -42,10 +50,8 @@ namespace libTAU {
             int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
             if (ok == SQLITE_OK) {
                 for (;sqlite3_step(stmt) == SQLITE_ROW;) {
-                    const unsigned char *pK = sqlite3_column_text(stmt,0);
-                    auto length = sqlite3_column_bytes(stmt, 0);
-                    std::string value(pK, pK + length);
-                    dht::public_key pubKey(value.data());
+                    const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                    dht::public_key pubKey(p);
                     friends.push_back(pubKey);
                 }
             }
@@ -62,8 +68,7 @@ namespace libTAU {
             if (ok != SQLITE_OK) {
                 return false;
             }
-            std::string value(pubKey.bytes.begin(), pubKey.bytes.end());
-            sqlite3_bind_text(stmt, 1, value.c_str(), value.size(), nullptr);
+            sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
             ok = sqlite3_step(stmt);
             if (ok != SQLITE_DONE) {
                 return false;
@@ -80,12 +85,24 @@ namespace libTAU {
             if (ok != SQLITE_OK) {
                 return false;
             }
-            sqlite3_bind_text(stmt, 1, std::string(pubKey.bytes.begin(), pubKey.bytes.end()).c_str(), pubKey.len, nullptr);
+            sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
             ok = sqlite3_step(stmt);
             if (ok != SQLITE_DONE) {
                 return false;
             }
             sqlite3_finalize(stmt);
+
+            return true;
+        }
+
+        bool message_db_impl::create_table_messages() {
+            std::string sql = "CREATE TABLE IF NOT EXISTS MESSAGES(HASH BLOB PRIMARY KEY NOT NULL,SENDER BLOB,RECEIVER BLOB,TIMESTAMP INTEGER,PAYLOAD BLOB);";
+            char *zErrMsg = nullptr;
+            int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+            if (ok != SQLITE_OK) {
+                sqlite3_free(zErrMsg);
+                return false;
+            }
 
             return true;
         }
