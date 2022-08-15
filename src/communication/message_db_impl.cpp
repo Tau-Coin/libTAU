@@ -107,7 +107,7 @@ namespace libTAU {
             return true;
         }
 
-        communication::message message_db_impl::get_message(const sha256_hash &hash) {
+        communication::message message_db_impl::get_message(const sha1_hash &hash) {
             std::string value;
             leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
 //            aux::bytes buffer;
@@ -119,7 +119,7 @@ namespace libTAU {
             if (msg.empty())
                 return false;
 
-            std::string key = msg.sha256().to_string();
+            std::string key = msg.sha1().to_string();
             // 注意：rlp返回的aux::bytes转换成std::string()的时候，切勿多次调用rlp()，
             // 即不要写成std::string(msg.rlp().begin(), msg.rlp().end())，
             // 这样begin()和end()两个迭代器不在同一个对象上面，会造成内存错误
@@ -130,7 +130,7 @@ namespace libTAU {
             return status.ok();
         }
 
-        bool message_db_impl::delete_message(const sha256_hash &hash) {
+        bool message_db_impl::delete_message(const sha1_hash &hash) {
             leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), hash.to_string());
             return status.ok();
         }

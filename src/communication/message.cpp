@@ -21,7 +21,7 @@ namespace libTAU {
 
             populate(m_entry);
             bencode(std::back_inserter(m_encode), m_entry);
-            m_hash = dht::item_target_id(m_encode);
+            m_hash = hasher(m_encode).final();
         }
 
         message::message(std::int64_t mTimestamp, dht::public_key mSender, dht::public_key mReceiver, aux::bytes mPayload) :
@@ -37,7 +37,7 @@ namespace libTAU {
             m_entry["p"] = entry(std::string(m_payload.begin(), m_payload.end()));
 
             bencode(std::back_inserter(m_encode), m_entry);
-            m_hash = dht::item_target_id(m_encode);
+            m_hash = hasher(m_encode).final();
         }
 
         void message::populate(const entry &e) {

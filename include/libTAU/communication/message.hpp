@@ -57,8 +57,8 @@ namespace libTAU {
             // @returns the message bencode
             const std::string &encode() const { return m_encode; }
 
-            // @returns the SHA256 hash of this message
-            const sha256_hash &sha256() const { return m_hash; }
+            // @returns the SHA1 hash of this message
+            const sha1_hash &sha1() const { return m_hash; }
 
             // @returns a pretty-printed string representation of message structure
             std::string to_string() const;
@@ -114,8 +114,8 @@ namespace libTAU {
             // encode
             std::string m_encode;
 
-            // sha256 hash
-            sha256_hash m_hash;
+            // sha1 hash
+            sha1_hash m_hash;
         };
 
 //        struct message_hasher

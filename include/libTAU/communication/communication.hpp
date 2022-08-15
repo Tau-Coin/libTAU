@@ -155,7 +155,7 @@ namespace libTAU {
 
             // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing message和confirmation root)
             void find_best_solution(const std::vector<message>& messages, const aux::bytes& hash_prefix_array,
-                                    std::vector<message> &missing_messages, std::vector<sha256_hash> &confirmation_roots);
+                                    std::vector<message> &missing_messages, std::vector<sha1_hash> &confirmation_roots);
 
             // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing message和confirmation root)
             void find_best_solution(const std::vector<message>& messages, const aux::bytes& hash_prefix_array,

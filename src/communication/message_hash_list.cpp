@@ -18,7 +18,7 @@ namespace libTAU {
             populate(e);
         }
 
-        message_hash_list::message_hash_list(std::vector<sha256_hash> message_hash_list) {
+        message_hash_list::message_hash_list(std::vector<sha1_hash> message_hash_list) {
             m_message_hash_list = std::move(message_hash_list);
         }
 

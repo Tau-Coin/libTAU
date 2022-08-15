@@ -28,10 +28,10 @@ namespace libTAU::communication {
         // @param Construct with bencode
         explicit message_hash_list(std::string encode);
 
-        explicit message_hash_list(std::vector<sha256_hash> message_hash_list);
+        explicit message_hash_list(std::vector<sha1_hash> message_hash_list);
 
         // @returns all message hash in this container
-        std::vector<sha256_hash> hash_list() const { return m_message_hash_list; }
+        std::vector<sha1_hash> hash_list() const { return m_message_hash_list; }
 
         // @returns the bencode
         std::string encode();
@@ -46,7 +46,7 @@ namespace libTAU::communication {
         void populate(const entry& e);
 
         // message hash list
-        std::vector<sha256_hash> m_message_hash_list;
+        std::vector<sha1_hash> m_message_hash_list;
     };
 }
 

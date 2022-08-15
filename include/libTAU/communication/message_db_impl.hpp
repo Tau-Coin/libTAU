@@ -39,13 +39,13 @@ namespace libTAU {
             bool create_table_messages() override;
 
             // get message by hash
-            communication::message get_message(const sha256_hash &hash) override;
+            communication::message get_message(const sha1_hash &hash) override;
 
             // save message
             bool save_message(const communication::message& msg) override;
 
             // delete message
-            bool delete_message(const sha256_hash &hash) override;
+            bool delete_message(const sha1_hash &hash) override;
 
             // get encode of the latest message hash list by key pair<my public key, peer public key>
             std::string get_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) override;

@@ -1391,13 +1391,13 @@ namespace {
 #else
         char buffer[256];
         std::snprintf(buffer, sizeof(buffer), "new message hash: %s"
-                , aux::toHex(msg.sha256().to_string()).c_str());
+                , aux::toHex(msg.sha1().to_string()).c_str());
         return buffer;
 #endif
     }
 
     communication_confirmation_root_alert::communication_confirmation_root_alert(aux::stack_allocator&
-            , dht::public_key p, std::vector<sha256_hash> s, std::int64_t t)
+            , dht::public_key p, std::vector<sha1_hash> s, std::int64_t t)
             : peer(p), confirmation_roots(std::move(s)), time(t)
     {}
 
@@ -1414,7 +1414,7 @@ namespace {
     }
 
     communication_syncing_message_alert::communication_syncing_message_alert(aux::stack_allocator&
-            , dht::public_key p, sha256_hash s, std::int64_t t)
+            , dht::public_key p, sha1_hash s, std::int64_t t)
             : peer(p), syncing_msg_hash(s), time(t)
     {}
 
@@ -1670,7 +1670,7 @@ namespace {
     }
 
     blockchain_tx_confirmation_alert::blockchain_tx_confirmation_alert(aux::stack_allocator&
-            , aux::bytes id, dht::public_key p, sha256_hash h)
+            , aux::bytes id, dht::public_key p, sha1_hash h)
             : chain_id(std::move(id)), peer(p), hash(h)
     {}
 
@@ -1703,7 +1703,7 @@ namespace {
 	}
 
     communication_message_arrived_alert::communication_message_arrived_alert(aux::stack_allocator&
-            , dht::public_key p, sha256_hash s, std::int64_t t)
+            , dht::public_key p, sha1_hash s, std::int64_t t)
             : peer(p), msg_arrived_hash(s), time(t)
     {}
 

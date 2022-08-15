@@ -45,13 +45,13 @@ namespace libTAU {
             virtual bool create_table_messages() = 0;
 
             // get message by hash
-            virtual communication::message get_message(const sha256_hash &hash) = 0;
+            virtual communication::message get_message(const sha1_hash &hash) = 0;
 
             // save message
             virtual bool save_message(const communication::message& msg) = 0;
 
             // delete message
-            virtual bool delete_message(const sha256_hash &hash) = 0;
+            virtual bool delete_message(const sha1_hash &hash) = 0;
 
             // get encode of the latest message hash list by key pair<my public key, peer public key>
             virtual std::string get_latest_message_hash_list_encode(

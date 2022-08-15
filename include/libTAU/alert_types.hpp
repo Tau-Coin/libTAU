@@ -1048,7 +1048,7 @@ namespace libTAU {
     struct TORRENT_EXPORT communication_confirmation_root_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, dht::public_key p, std::vector<sha256_hash> s, std::int64_t t);
+        TORRENT_UNEXPORT communication_confirmation_root_alert(aux::stack_allocator& alloc, dht::public_key p, std::vector<sha1_hash> s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_confirmation_root_alert, 33, alert_priority::critical)
 
@@ -1060,7 +1060,7 @@ namespace libTAU {
         dht::public_key peer;
 
         // confirmation root
-        std::vector<sha256_hash> confirmation_roots;
+        std::vector<sha1_hash> confirmation_roots;
 
         // confirmed time
         std::int64_t time;
@@ -1070,7 +1070,7 @@ namespace libTAU {
     struct TORRENT_EXPORT communication_syncing_message_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
+        TORRENT_UNEXPORT communication_syncing_message_alert(aux::stack_allocator& alloc, dht::public_key p, sha1_hash s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_syncing_message_alert, 34, alert_priority::critical)
 
@@ -1082,7 +1082,7 @@ namespace libTAU {
         dht::public_key peer;
 
         // syncing message hash
-        sha256_hash syncing_msg_hash;
+        sha1_hash syncing_msg_hash;
 
         // syncing msg time
         std::int64_t time;
@@ -1346,7 +1346,7 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_tx_confirmation_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_tx_confirmation_alert(aux::stack_allocator& alloc, aux::bytes id, dht::public_key p, sha256_hash h);
+        TORRENT_UNEXPORT blockchain_tx_confirmation_alert(aux::stack_allocator& alloc, aux::bytes id, dht::public_key p, sha1_hash h);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_tx_confirmation_alert, 49, alert_priority::critical)
 
@@ -1361,7 +1361,7 @@ namespace libTAU {
         dht::public_key peer;
 
         // message found from peers.
-        sha256_hash hash;
+        sha1_hash hash;
     };
 
 	// this alert is posted when 'dht_non_referrable' is set into 'false' from 'true'
@@ -1387,7 +1387,7 @@ namespace libTAU {
     struct TORRENT_EXPORT communication_message_arrived_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT communication_message_arrived_alert(aux::stack_allocator& alloc, dht::public_key p, sha256_hash s, std::int64_t t);
+        TORRENT_UNEXPORT communication_message_arrived_alert(aux::stack_allocator& alloc, dht::public_key p, sha1_hash s, std::int64_t t);
 
         TORRENT_DEFINE_ALERT_PRIO(communication_message_arrived_alert, 51, alert_priority::critical)
 
@@ -1399,7 +1399,7 @@ namespace libTAU {
         dht::public_key peer;
 
         // message sent hash
-        sha256_hash msg_arrived_hash;
+        sha1_hash msg_arrived_hash;
 
         // syncing msg time
         std::int64_t time;
