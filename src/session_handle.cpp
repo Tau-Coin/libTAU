@@ -240,6 +240,18 @@ namespace libTAU {
 		sync_call(&session_impl::new_account_seed, account_seed);
 	}
 
+    //disconnect network
+	void session_handle::disconnect()
+	{
+		sync_call(&session_impl::disconnect);
+	}
+
+    //reconnect network
+	void session_handle::reconnect()
+	{
+		sync_call(&session_impl::reconnect);
+	}
+
 	void session_handle::set_log_level(int logged)
 	{
 		sync_call(&session_impl::set_log_level, logged);

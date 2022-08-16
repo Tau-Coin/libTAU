@@ -1380,6 +1380,40 @@ namespace {
 		}
 	}
 
+    void session_impl::disconnect(){
+		auto remove_iter = m_listening_sockets.begin();
+		while (remove_iter != m_listening_sockets.end())
+		{
+			if (m_dht)
+				m_dht->delete_socket(*remove_iter);
+
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("disconnect, closing listen socket for %s on device \"%s\""
+					, print_endpoint((*remove_iter)->local_endpoint).c_str()
+					, (*remove_iter)->device.c_str());
+			}
+#endif
+			if ((*remove_iter)->udp_sock) (*remove_iter)->udp_sock->sock.close();
+			if ((*remove_iter)->natpmp_mapper) (*remove_iter)->natpmp_mapper->close();
+			if ((*remove_iter)->upnp_mapper) (*remove_iter)->upnp_mapper->close();
+			remove_iter = m_listening_sockets.erase(remove_iter);
+		}
+        //TODO: modify the tick
+    }
+
+    void session_impl::reconnect(){
+#ifndef TORRENT_DISABLE_LOGGING
+			if (should_log())
+			{
+				session_log("reconnect listen socket");
+			}
+#endif
+        reopen_listen_sockets(false);
+        //TODO: modify the tick
+    }
+
 	void session_impl::reopen_listen_sockets(bool const map_ports)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
@@ -3256,7 +3290,7 @@ namespace {
     bool session_impl::send_to_peer(const dht::public_key& pubkey, const aux::bytes& data)
     {
 		if(m_communication) {
-            m_communication->subscribe_from_peer(pubkey, data);
+            m_communication->send_to_peer(pubkey, data);
             return true;
         }
 		else

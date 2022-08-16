@@ -394,6 +394,8 @@ namespace aux {
 			void on_error(error_code const& ec) override;
 
 			void on_ip_change(error_code const& ec);
+			void disconnect();
+			void reconnect();
 			void reopen_listen_sockets(bool map_ports = true);
 			void reopen_outgoing_sockets();
 			void reopen_network_sockets(reopen_network_flags_t options);
