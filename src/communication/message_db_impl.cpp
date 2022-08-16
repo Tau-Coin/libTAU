@@ -165,6 +165,39 @@ namespace libTAU {
             return msg;
         }
 
+        std::vector<communication::message> message_db_impl::get_latest_ten_transactions(const dht::public_key &peer) {
+            std::vector<communication::message> messages;
+
+            sqlite3_stmt * stmt;
+            std::string sql = "SELECT HASH,SENDER,TIMESTAMP,PAYLOAD FROM MESSAGES WHERE RECEIVER=? ORDER BY TIMESTAMP DESC LIMIT 10";
+
+            int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+            if (ok == SQLITE_OK) {
+                for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                    const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                    sha1_hash hash(p);
+
+                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 1));
+                    dht::public_key sender(p);
+
+                    std::int64_t timestamp = sqlite3_column_int64(stmt, 2);
+
+                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 3));
+                    auto length = sqlite3_column_bytes(stmt, 3);
+                    aux::bytes payload(p, p + length);
+
+                    auto msg = message(timestamp, sender, peer, payload, hash);
+                    messages.push_back(msg);
+                }
+            }
+
+            sqlite3_finalize(stmt);
+
+            std::reverse(messages.begin(), messages.end());
+
+            return messages;
+        }
+
         bool message_db_impl::delete_message_by_hash(const sha1_hash &hash) {
             sqlite3_stmt * stmt;
             std::string sql = "DELETE FROM MESSAGES WHERE HASH=?";

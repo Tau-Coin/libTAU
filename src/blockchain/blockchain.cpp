@@ -2135,7 +2135,7 @@ namespace libTAU::blockchain {
 //    }
 
     void blockchain::request_chain_all_data(const bytes &chain_id, const dht::public_key &peer) {
-        common::signal_entry signalEntry(common::ALL_DATA, chain_id, get_total_milliseconds() / 1000);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_ALL_DATA, chain_id, get_total_milliseconds() / 1000);
 
         send_to(peer, signalEntry.get_entry());
     }
@@ -2206,7 +2206,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::request_all_blocks(const bytes &chain_id, const dht::public_key &peer) {
-        common::signal_entry signalEntry(common::ALL_BLOCKS, chain_id, get_total_milliseconds() / 1000);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_ALL_BLOCKS, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         log(LOG_INFO, "Chain[%s] Send peer[%s] all blocks request signal[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
@@ -2214,7 +2214,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::request_all_state(const bytes &chain_id, const dht::public_key &peer) {
-        common::signal_entry signalEntry(common::ALL_STATE, chain_id, get_total_milliseconds() / 1000);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_ALL_STATE, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         log(LOG_INFO, "Chain[%s] Send peer[%s] all state request signal[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
@@ -2222,7 +2222,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_online_signal(const aux::bytes &chain_id) {
-        common::signal_entry signalEntry(common::ONLINE, chain_id, get_total_milliseconds() / 1000);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_ONLINE, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -2233,7 +2233,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_new_head_block_signal(const bytes &chain_id) {
-        common::signal_entry signalEntry(common::NEW_HEAD_BLOCK, chain_id, get_total_milliseconds() / 1000);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -2244,7 +2244,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_new_transfer_tx_signal(const bytes &chain_id) {
-        common::signal_entry signalEntry(common::NEW_TRANSFER_TX, chain_id, get_total_milliseconds() / 1000);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -2255,7 +2255,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_new_note_tx_signal(const bytes &chain_id) {
-        common::signal_entry signalEntry(common::NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -3402,42 +3402,42 @@ namespace libTAU::blockchain {
                 aux::toHex(chain_id).c_str(), payload.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
 
             switch (signalEntry.m_pid) {
-                case common::ALL_DATA: {
+                case common::BLOCKCHAIN_ALL_DATA: {
                     //update time
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
                     put_chain_all_data(chain_id);
                     break;
                 }
-                case common::ALL_BLOCKS: {
+                case common::BLOCKCHAIN_ALL_BLOCKS: {
                     //update time
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
                     put_chain_all_blocks(chain_id);
                     break;
                 }
-                case common::ALL_STATE: {
+                case common::BLOCKCHAIN_ALL_STATE: {
                     //update time
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
                     put_chain_all_state(chain_id);
                     break;
                 }
-                case common::ONLINE: {
+                case common::BLOCKCHAIN_ONLINE: {
                     //update time
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
                     break;
                 }
-                case common::NEW_HEAD_BLOCK: {
+                case common::BLOCKCHAIN_NEW_HEAD_BLOCK: {
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
 
                     get_head_block_from_peer(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
-                case common::NEW_TRANSFER_TX: {
+                case common::BLOCKCHAIN_NEW_TRANSFER_TX: {
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
 
                     get_transfer_transaction(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
-                case common::NEW_NOTE_TX: {
+                case common::BLOCKCHAIN_NEW_NOTE_TX: {
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
 
                     get_new_note_tx_hash(chain_id, peer, signalEntry.m_timestamp - 3);

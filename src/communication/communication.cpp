@@ -230,11 +230,36 @@ namespace libTAU {
 
             // construct mutable data wrapper from entry
             try {
-                // data type id
-                if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type))) {
-                    auto data_type_id = i->integer();
-                    process_payload(peer, data_type_id, payload, false);
+                common::signal_entry signalEntry(payload);
+
+                log(LOG_INFO, "INFO: Got signal[%s] from peer[%s]",
+                    payload.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
+
+                switch (signalEntry.m_pid) {
+                    case common::COMMUNICATION_NEW_MESSAGE: {
+                        get_new_message_hash(peer, signalEntry.m_timestamp - 3);
+                        break;
+                    }
+                    case common::COMMUNICATION_MESSAGE_MISSING: {
+                        break;
+                    }
+                    case common::COMMUNICATION_PUT_DONE: {
+                        break;
+                    }
+                    case common::COMMUNICATION_CONFIRMATION: {
+                        break;
+                    }
+                    case common::COMMUNICATION_ATTENTION: {
+                        break;
+                    }
+                    default: {
+                    }
                 }
+//                // data type id
+//                if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type))) {
+//                    auto data_type_id = i->integer();
+//                    process_payload(peer, data_type_id, payload, false);
+//                }
             } catch (std::exception &e) {
                 log(LOG_ERR, "ERROR: Receive exception data.");
             }
@@ -251,12 +276,24 @@ namespace libTAU {
         }
 
         void communication::subscribe_from_peer(const dht::public_key &peer, const aux::bytes& key) {
-            subscribe(peer, std::string(key.begin(), key.end()));
+            std::string salt = std::string(key.begin(), key.end());
+
+            log(LOG_INFO, "INFO: Get user info from peer[%s], salt:[%s]",
+                aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::USER_INFO, 0);
         }
 
         void communication::send_to_peer(const dht::public_key &peer, const aux::bytes& data) {
             common::event_entry eventEntry(data, get_current_time());
             send_to(peer, eventEntry.get_entry());
+        }
+
+        void communication::pay_attention_to_peer(const dht::public_key &peer) {
+            common::signal_entry signalEntry(common::COMMUNICATION_ATTENTION, get_current_time() / 1000);
+            auto e = signalEntry.get_entry();
+            log(LOG_INFO, "Send peer[%s] attention signal[%s]",
+                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+            send_to(peer, e);
         }
 
         bool communication::add_new_friend(const dht::public_key &pubkey) {
@@ -767,8 +804,61 @@ namespace libTAU {
 
         // callback for dht_mutable_get
         void communication::get_mutable_callback(dht::item const& i
-                , bool const authoritative)
+                , bool const authoritative, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp, int times)
         {
+            TORRENT_ASSERT(i.is_mutable());
+
+            // construct mutable data wrapper from entry
+            try {
+                const auto& peer = i.pk();
+                const auto& salt = i.salt();
+//            GET_ITEM getItem(chain_id, peer, salt, type);
+
+                log(LOG_INFO, "=====INFO: Got callback[%s], type[%d],salt[%s], timestamp:%" PRId64,
+                    i.value().to_string(true).c_str(), type, aux::toHex(i.salt()).c_str(), timestamp);
+
+                if (!i.empty()) {
+                    switch (type) {
+                        case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH: {
+                            break;
+                        }
+                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE: {
+                            break;
+                        }
+                        case COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS: {
+                            break;
+                        }
+                        case COMMUNICATION_GET_ITEM_TYPE::USER_INFO: {
+                            break;
+                        }
+                        default: {
+                            log(LOG_DEBUG, "INFO: Unknown type.");
+                        }
+                    }
+                } else {
+                    log(LOG_INFO, "INFO: Fail to get item: type[%d],salt[%s], timestamp:%" PRId64,
+                        type, aux::toHex(i.salt()).c_str(), timestamp);
+
+                    switch (type) {
+                        case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH:
+                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE:
+                        case COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS: {
+                            break;
+                        }
+                        case COMMUNICATION_GET_ITEM_TYPE::USER_INFO: {
+                            break;
+                        }
+                        default: {
+                            log(LOG_DEBUG, "INFO: ignored type.");
+                        }
+                    }
+
+                }
+            } catch (std::exception &e) {
+                log(LOG_ERR, "ERROR: Exception in get mutable callback [CHAIN] %s in file[%s], func[%s], line[%d]",
+                    e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            }
+
             // 通知用户新的user event
             if (!i.empty()) {
                 m_ses.alerts().emplace_alert<communication_user_info_alert>(i.pk(),
@@ -776,25 +866,6 @@ namespace libTAU {
                                                                             aux::bytes(i.value().string().begin(),
                                                                                        i.value().string().end()));
             }
-//            TORRENT_ASSERT(i.is_mutable());
-//
-//            // construct mutable data wrapper from entry
-//            if (!i.empty()) {
-////                dht::public_key peer = i.pk();
-////
-////                // update latest item timestamp
-////                if (i.ts() > m_latest_item_timestamp[peer]) {
-////                    m_latest_item_timestamp[peer] = i.ts();
-////                }
-//
-//                auto salt = i.salt();
-//                std::string id(salt.begin() + communication_salt_pubkey_length, salt.end());
-//                std::int64_t data_type_id = std::strtol(id.c_str(), nullptr, 10);
-//                process_payload(i.pk(), data_type_id, i.value(), true);
-////                online_signal onlineSignal(i.value());
-////
-////                process_signal(onlineSignal, i.pk());
-//            }
         }
 
         // key is a 32-byte binary string, the public key to look up.
@@ -910,9 +981,9 @@ namespace libTAU {
                     , 1, 8, 16, salt);
         }
 
-        void communication::subscribe(const dht::public_key &peer, const std::string &salt) {
+        void communication::subscribe(const dht::public_key &peer, const std::string &salt, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp, int times) {
             if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(peer, std::bind(&communication::get_mutable_callback, self(), _1, _2), 1, 8, 16, salt);
+            m_ses.dht()->get_item(peer, std::bind(&communication::get_mutable_callback, self(), _1, _2, type, timestamp, times), 1, 8, 16, salt, timestamp);
         }
 
         void communication::send_to(const dht::public_key &peer, const entry &data) {
@@ -920,6 +991,74 @@ namespace libTAU {
             log(LOG_INFO, "Send [%s] to peer[%s]", data.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
             m_ses.dht()->send(peer, data, 1, 8, 16, 1,
                               std::bind(&communication::on_dht_relay_mutable_item, self(), _1, _2, peer));
+        }
+
+        void communication::send_new_message_signal(const dht::public_key &peer) {
+            common::signal_entry signalEntry(common::COMMUNICATION_NEW_MESSAGE, get_current_time() / 1000);
+            auto e = signalEntry.get_entry();
+            log(LOG_INFO, "Send peer[%s] new message signal[%s]",
+                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+            send_to(peer, e);
+        }
+
+        void communication::send_message_missing_signal(const dht::public_key &peer) {
+            common::signal_entry signalEntry(common::COMMUNICATION_MESSAGE_MISSING, get_current_time() / 1000);
+            auto e = signalEntry.get_entry();
+            log(LOG_INFO, "Send peer[%s] message missing signal[%s]",
+                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+            send_to(peer, e);
+        }
+
+        void communication::send_put_done_signal(const dht::public_key &peer) {
+            common::signal_entry signalEntry(common::COMMUNICATION_PUT_DONE, get_current_time() / 1000);
+            auto e = signalEntry.get_entry();
+            log(LOG_INFO, "Send peer[%s] message put done signal[%s]",
+                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+            send_to(peer, e);
+        }
+
+        void communication::send_confirmation_signal(const dht::public_key &peer) {
+            common::signal_entry signalEntry(common::COMMUNICATION_CONFIRMATION, get_current_time() / 1000);
+            auto e = signalEntry.get_entry();
+            log(LOG_INFO, "Send peer[%s] message confirmation signal[%s]",
+                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+            send_to(peer, e);
+        }
+
+        void communication::get_new_message_hash(const dht::public_key &peer, std::int64_t timestamp) {
+            // salt is x pubkey when request signal
+            std::string data(peer.bytes.begin(), peer.bytes.end());
+            data.insert(data.end(), key_suffix_new_message_hash.begin(), key_suffix_new_message_hash.end());
+            auto salt = hasher(data).final().to_string();
+
+            log(LOG_INFO, "INFO: Get new message hash from peer[%s], salt:[%s]",
+                aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH, timestamp);
+        }
+
+        void communication::put_new_message_hash(const dht::public_key &peer, const sha1_hash &hash) {
+            if (!hash.is_all_zeros()) {
+                std::string data(peer.bytes.begin(), peer.bytes.end());
+                data.insert(data.end(), key_suffix_new_message_hash.begin(), key_suffix_new_message_hash.end());
+                auto salt = hasher(data).final().to_string();
+
+                log(LOG_INFO, "INFO: Put new message hash salt[%s]", aux::toHex(salt).c_str());
+                publish(salt, hash.to_string());
+            }
+        }
+
+        void communication::get_message(const dht::public_key &peer, const sha1_hash &hash) {
+            if (!hash.is_all_zeros()) {
+                auto salt = hash.to_string();
+
+                log(LOG_INFO, "INFO: Get message from peer[%s], salt:[%s]",
+                    aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+                subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::MESSAGE, 0);
+            }
+        }
+
+        void communication::put_message(const message &msg) {
+
         }
 
 //        void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)

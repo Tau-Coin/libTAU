@@ -42,6 +42,8 @@ namespace libTAU {
 
             message get_message_by_hash(const sha1_hash &hash) override;
 
+            std::vector<communication::message> get_latest_ten_transactions(const dht::public_key &peer) override;
+
             bool delete_message_by_hash(const sha1_hash &hash) override;
 
             // get message by hash

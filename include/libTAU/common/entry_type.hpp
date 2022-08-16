@@ -35,13 +35,18 @@ namespace libTAU::common {
     const std::string entry_levenshtein_array = "l";
 
     enum signal_id {
-        ALL_DATA,
-        ALL_BLOCKS,
-        ALL_STATE,
-        ONLINE,
-        NEW_HEAD_BLOCK,
-        NEW_TRANSFER_TX,
-        NEW_NOTE_TX,
+        BLOCKCHAIN_ALL_DATA,
+        BLOCKCHAIN_ALL_BLOCKS,
+        BLOCKCHAIN_ALL_STATE,
+        BLOCKCHAIN_ONLINE,
+        BLOCKCHAIN_NEW_HEAD_BLOCK,
+        BLOCKCHAIN_NEW_TRANSFER_TX,
+        BLOCKCHAIN_NEW_NOTE_TX,
+        COMMUNICATION_NEW_MESSAGE,
+        COMMUNICATION_MESSAGE_MISSING,
+        COMMUNICATION_PUT_DONE,
+        COMMUNICATION_CONFIRMATION,
+        COMMUNICATION_ATTENTION,
     };
 
     struct TORRENT_EXPORT signal_entry {
@@ -50,6 +55,8 @@ namespace libTAU::common {
 
         // @param Construct with bencode
         explicit signal_entry(std::string encode): signal_entry(bdecode(encode)) {}
+
+        signal_entry(signal_id mPid, int64_t mTimestamp) : m_pid(mPid), m_timestamp(mTimestamp) {}
 
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp) : m_pid(mPid),
             m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp) {}

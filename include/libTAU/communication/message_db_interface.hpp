@@ -50,6 +50,9 @@ namespace libTAU {
             // get message by hash
             virtual communication::message get_message_by_hash(const sha1_hash &hash) = 0;
 
+            // get the latest 10 txs
+            virtual std::vector<communication::message> get_latest_ten_transactions(const dht::public_key &peer) = 0;
+
             // delete message
             virtual bool delete_message_by_hash(const sha1_hash &hash) = 0;
 

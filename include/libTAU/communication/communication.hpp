@@ -44,6 +44,18 @@ namespace libTAU {
 
         using system_clock = std::chrono::system_clock;
 
+        // new message key suffix
+        const std::string key_suffix_new_message_hash = "new_message_hash";
+        // new user event key suffix
+        const std::string key_suffix_new_user_event = "new_user_event_hash";
+
+        enum COMMUNICATION_GET_ITEM_TYPE {
+            NEW_MESSAGE_HASH,
+            MESSAGE,
+            CONFIRMATION_ROOTS,
+            USER_INFO,
+        };
+
         // default refresh time of main task(300)(s)
         constexpr int communication_default_refresh_time = 300;
 
@@ -99,6 +111,9 @@ namespace libTAU {
             // data length < 1k
             void send_to_peer(const dht::public_key &peer, const aux::bytes& data);
 
+            // pay attention to peer
+            void pay_attention_to_peer(const dht::public_key &peer);
+
             // add new friend in memory & db
             bool add_new_friend(const dht::public_key &pubkey);
 
@@ -139,10 +154,31 @@ namespace libTAU {
             void publish(const std::string& salt, const entry& data);
 
             // key length < 20 bytes
-            void subscribe(const dht::public_key &peer, const std::string& salt);
+            void subscribe(const dht::public_key &peer, const std::string& salt, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp = 0, int times = 1);
 
             // send data to peer
             void send_to(const dht::public_key &peer, entry const& data);
+
+            // send new message signal
+            void send_new_message_signal(const dht::public_key &peer);
+
+            // send message missing signal
+            void send_message_missing_signal(const dht::public_key &peer);
+
+            // send message put done signal
+            void send_put_done_signal(const dht::public_key &peer);
+
+            // send message put done signal
+            void send_confirmation_signal(const dht::public_key &peer);
+
+            void get_new_message_hash(const dht::public_key &peer, std::int64_t timestamp);
+
+            void put_new_message_hash(const dht::public_key &peer, const sha1_hash &hash);
+
+            void get_message(const dht::public_key &peer, const sha1_hash &hash);
+
+            // put message
+            void put_message(const message& msg);
 
             // save the latest message hash list in database
             // @param peer is Y public key
@@ -174,7 +210,7 @@ namespace libTAU {
 //                    , dht::item const& i);
 
             // mutable data callback
-            void get_mutable_callback(dht::item const& i, bool);
+            void get_mutable_callback(dht::item const& i, bool, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp = 0, int times = 1);
 
             // get immutable item from dht
 //            void dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
