@@ -281,7 +281,7 @@ namespace blockchain {
         void log(aux::LOG_LEVEL log_level, char const* fmt, ...) const noexcept override TORRENT_FORMAT(3,4);
         //#endif
 
-//        void refresh_timeout(error_code const& e);
+        void refresh_timeout(error_code const& e);
 
 //        void refresh_chain_status(error_code const &e, const aux::bytes &chain_id);
 

@@ -52,13 +52,9 @@ namespace libTAU::blockchain {
 
         m_stop = false;
 
-        // start all chains
-        for (auto const &chain_id: m_chains) {
-            connect_chain(chain_id);
-        }
+        m_refresh_timer.expires_after(milliseconds(100));
+        m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
 
-//        m_refresh_timer.expires_after(milliseconds(200));
-//        m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
         return true;
     }
 
@@ -66,7 +62,7 @@ namespace libTAU::blockchain {
     {
         m_stop = true;
 
-//        m_refresh_timer.cancel();
+        m_refresh_timer.cancel();
 
         for (auto& timer: m_chain_timers) {
             timer.second.cancel();
@@ -506,59 +502,31 @@ namespace libTAU::blockchain {
 //    }
 
 
-//    void blockchain::refresh_timeout(const error_code &e) {
-//        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
-//
-//        try {
-//            if (e.value() != boost::asio::error::operation_aborted) {
-//                if (!m_pause) {
-//
-////                    try_to_get_again();
-//
-//                    // 随机挑选一条
-//                    // log
-//                    for (auto const &chain_id: m_chains) {
-//                        if (!chain_id.empty()) {
-////                        log("INFO: Select chain:%s, status:%d", aux::toHex(chain_id).c_str(), m_chain_status[chain_id]);
-//
-//                            // current time
-//                            auto now = get_total_milliseconds();
-//
-////                            if (now > m_last_cache_gossip_peers_time[chain_id] + 6 * 60 * 60 * 1000) {
-////                                put_gossip_peers_to_cache(chain_id);
-////                                m_last_cache_gossip_peers_time[chain_id] = now;
-////                            }
-//
-//                            // log
-//                            print_acl_ban_list_info(chain_id);
-//
-////                            manage_peers_in_acl_ban_list(chain_id);
-//
-////                            if (m_chain_status[chain_id] == MINE) {
-////                                add_and_access_peers_in_acl(chain_id);
-//
-////                                if (!is_empty_chain(chain_id)) {
-//                                    // 1. try to sync block
-////                                    try_to_sync_block(chain_id);
-//
-//                                    // 2. try to re-branch to a more difficult chain
-////                                    try_to_rebranch_to_most_difficult_chain(chain_id);
-//
-//                                    // 3. try to re-branch to best vote
-////                                    try_to_rebranch_to_best_vote(chain_id);
-////                                }
-////                            }
-//                        }
-//                    }
-//                }
-//            }
-//
-//            m_refresh_timer.expires_after(milliseconds(m_refresh_time));
-//            m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
-//        } catch (std::exception &e) {
-//            log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
-//        }
-//    }
+    void blockchain::refresh_timeout(const error_code &e) {
+        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
+
+        try {
+            bool found = false;
+            // 随机挑选一条
+            for (auto const &chain_id: m_chains) {
+                if (!m_chain_connected[chain_id]) {
+                    log(LOG_INFO, "INFO: Select chain:%s", aux::toHex(chain_id).c_str());
+                    connect_chain(chain_id);
+
+                    found = true;
+
+                    break;
+                }
+            }
+
+            if (found) {
+                m_refresh_timer.expires_after(milliseconds(300));
+                m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
+            }
+        } catch (std::exception &e) {
+            log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+        }
+    }
 
 //    void blockchain::reset_chain_status(const aux::bytes &chain_id) {
 //        m_chain_status[chain_id] = GET_GOSSIP_PEERS;
