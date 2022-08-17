@@ -348,13 +348,6 @@ namespace libTAU {
                 return false;
             }
 
-            const auto &pk = m_ses.pubkey();
-
-            if (!m_message_db->delete_latest_message_hash_list_encode(std::make_pair(*pk, pubkey))) {
-                log(LOG_ERR, "ERROR: Delete friend message hash list encode failed!");
-                return false;
-            }
-
             return true;
         }
 
@@ -1141,7 +1134,7 @@ namespace libTAU {
 //        }
 
         void communication::put_new_message(const message &msg) {
-            auto last_message = m_message_db->get_latest_transaction(msg.receiver());
+            auto last_message = m_message_db->get_latest_transaction(msg.sender(), msg.receiver());
             message_wrapper messageWrapper(last_message.sha1(), msg);
             put_message_wrapper(messageWrapper);
             put_new_message_hash(msg.receiver(), messageWrapper.sha1());
@@ -1161,7 +1154,7 @@ namespace libTAU {
         }
 
         void communication::put_confirmation_roots(const dht::public_key &peer) {
-            auto messages = m_message_db->get_latest_ten_transactions(peer);
+            auto messages = m_message_db->get_latest_ten_transactions(*m_ses.pubkey(), peer);
             std::vector<sha1_hash> msgHashList;
             for (auto const& msg: messages) {
                 msgHashList.push_back(msg.sha1());
@@ -1177,7 +1170,7 @@ namespace libTAU {
         }
 
         void communication::put_all_messages(const dht::public_key &peer) {
-            auto messages = m_message_db->get_latest_ten_transactions(peer);
+            auto messages = m_message_db->get_latest_ten_transactions(*m_ses.pubkey(), peer);
             message_wrapper lastMessageWrapper;
             message_wrapper messageWrapper;
             for (auto const& msg: messages) {

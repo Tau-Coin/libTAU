@@ -14,12 +14,12 @@
 namespace libTAU {
     namespace communication {
 
-        namespace {
-            // friend info key suffix
-            const std::string key_suffix_friend_info = "fi";
-            // message hash list key suffix
-            const std::string key_suffix_message_hash_list = "mhl";
-        }
+//        namespace {
+//            // friend info key suffix
+//            const std::string key_suffix_friend_info = "fi";
+//            // message hash list key suffix
+//            const std::string key_suffix_message_hash_list = "mhl";
+//        }
 
         // table friends: public key
         bool message_db_impl::init() {
@@ -165,28 +165,28 @@ namespace libTAU {
             return msg;
         }
 
-        message message_db_impl::get_latest_transaction(const dht::public_key &peer) {
+        communication::message
+        message_db_impl::get_latest_transaction(const dht::public_key &sender, const dht::public_key &receiver) {
             communication::message msg;
 
             sqlite3_stmt * stmt;
-            std::string sql = "SELECT HASH,SENDER,TIMESTAMP,PAYLOAD FROM MESSAGES WHERE RECEIVER=? ORDER BY TIMESTAMP DESC LIMIT 1";
+            std::string sql = "SELECT HASH,TIMESTAMP,PAYLOAD FROM MESSAGES WHERE SENDER=? AND RECEIVER=? ORDER BY TIMESTAMP DESC LIMIT 1";
 
             int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
             if (ok == SQLITE_OK) {
+                sqlite3_bind_blob(stmt, 1, sender.bytes.data(), dht::public_key::len, nullptr);
+                sqlite3_bind_blob(stmt, 2, receiver.bytes.data(), dht::public_key::len, nullptr);
                 if (sqlite3_step(stmt) == SQLITE_ROW) {
                     const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                     sha1_hash hash(p);
 
-                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 1));
-                    dht::public_key sender(p);
+                    std::int64_t timestamp = sqlite3_column_int64(stmt, 1);
 
-                    std::int64_t timestamp = sqlite3_column_int64(stmt, 2);
-
-                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 3));
-                    auto length = sqlite3_column_bytes(stmt, 3);
+                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 2));
+                    auto length = sqlite3_column_bytes(stmt, 2);
                     aux::bytes payload(p, p + length);
 
-                    msg = message(timestamp, sender, peer, payload, hash);
+                    msg = message(timestamp, sender, receiver, payload, hash);
                 }
             }
 
@@ -195,28 +195,28 @@ namespace libTAU {
             return msg;
         }
 
-        std::vector<communication::message> message_db_impl::get_latest_ten_transactions(const dht::public_key &peer) {
+        std::vector<communication::message>
+        message_db_impl::get_latest_ten_transactions(const dht::public_key &sender, const dht::public_key &receiver) {
             std::vector<communication::message> messages;
 
             sqlite3_stmt * stmt;
-            std::string sql = "SELECT HASH,SENDER,TIMESTAMP,PAYLOAD FROM MESSAGES WHERE RECEIVER=? ORDER BY TIMESTAMP DESC LIMIT 10";
+            std::string sql = "SELECT HASH,TIMESTAMP,PAYLOAD FROM MESSAGES WHERE SENDER=? AND RECEIVER=? ORDER BY TIMESTAMP DESC LIMIT 10";
 
             int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
             if (ok == SQLITE_OK) {
+                sqlite3_bind_blob(stmt, 1, sender.bytes.data(), dht::public_key::len, nullptr);
+                sqlite3_bind_blob(stmt, 2, receiver.bytes.data(), dht::public_key::len, nullptr);
                 for (;sqlite3_step(stmt) == SQLITE_ROW;) {
                     const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                     sha1_hash hash(p);
 
-                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 1));
-                    dht::public_key sender(p);
+                    std::int64_t timestamp = sqlite3_column_int64(stmt, 1);
 
-                    std::int64_t timestamp = sqlite3_column_int64(stmt, 2);
-
-                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 3));
-                    auto length = sqlite3_column_bytes(stmt, 3);
+                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 2));
+                    auto length = sqlite3_column_bytes(stmt, 2);
                     aux::bytes payload(p, p + length);
 
-                    auto msg = message(timestamp, sender, peer, payload, hash);
+                    auto msg = message(timestamp, sender, receiver, payload, hash);
                     messages.push_back(msg);
                 }
             }
@@ -266,72 +266,6 @@ namespace libTAU {
             sqlite3_finalize(stmt);
 
             return ret;
-        }
-
-        communication::message message_db_impl::get_message(const sha1_hash &hash) {
-            std::string value;
-            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), hash.to_string(), &value);
-//            aux::bytes buffer;
-//            buffer.insert(buffer.end(), value.begin(), value.end());
-            return communication::message(value);
-        }
-
-        bool message_db_impl::save_message(const communication::message& msg) {
-            if (msg.empty())
-                return false;
-
-            std::string key = msg.sha1().to_string();
-            // 注意：rlp返回的aux::bytes转换成std::string()的时候，切勿多次调用rlp()，
-            // 即不要写成std::string(msg.rlp().begin(), msg.rlp().end())，
-            // 这样begin()和end()两个迭代器不在同一个对象上面，会造成内存错误
-//            auto encode = msg.rlp();
-//            std::string value(encode.begin(), encode.end());
-
-            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), key, msg.encode());
-            return status.ok();
-        }
-
-        bool message_db_impl::delete_message(const sha1_hash &hash) {
-            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), hash.to_string());
-            return status.ok();
-        }
-
-        std::string message_db_impl::get_latest_message_hash_list_encode(
-                const std::pair<dht::public_key, dht::public_key> &key) {
-            std::string sKey;
-            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
-            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
-            sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
-
-            std::string value;
-            leveldb::Status status = m_leveldb->Get(leveldb::ReadOptions(), sKey, &value);
-//            aux::bytes buffer;
-//            buffer.insert(buffer.end(), value.begin(), value.end());
-            return value;
-        }
-
-        bool message_db_impl::save_latest_message_hash_list_encode(
-                const std::pair<dht::public_key, dht::public_key> &key, const std::string& encode) {
-            std::string sKey;
-            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
-            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
-            sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
-
-//            std::string value(encode.begin(), encode.end());
-
-            leveldb::Status status = m_leveldb->Put(leveldb::WriteOptions(), sKey, encode);
-            return status.ok();
-        }
-
-        bool message_db_impl::delete_latest_message_hash_list_encode(
-                const std::pair<dht::public_key, dht::public_key> &key) {
-            std::string sKey;
-            sKey.insert(sKey.end(), key.first.bytes.begin(), key.first.bytes.end());
-            sKey.insert(sKey.end(), key.second.bytes.begin(), key.second.bytes.end());
-            sKey.insert(sKey.end(), key_suffix_message_hash_list.begin(), key_suffix_message_hash_list.end());
-
-            leveldb::Status status = m_leveldb->Delete(leveldb::WriteOptions(), sKey);
-            return status.ok();
         }
 
     }

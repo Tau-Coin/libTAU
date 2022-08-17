@@ -42,31 +42,15 @@ namespace libTAU {
 
             message get_message_by_hash(const sha1_hash &hash) override;
 
-            message get_latest_transaction(const dht::public_key &peer) override;
+            communication::message
+            get_latest_transaction(const dht::public_key &sender, const dht::public_key &receiver) override;
 
-            std::vector<communication::message> get_latest_ten_transactions(const dht::public_key &peer) override;
+            std::vector<communication::message>
+            get_latest_ten_transactions(const dht::public_key &sender, const dht::public_key &receiver) override;
 
             bool delete_message_by_hash(const sha1_hash &hash) override;
 
-            // get message by hash
-            communication::message get_message(const sha1_hash &hash) override;
-
-            // save message
-            bool save_message(const communication::message& msg) override;
-
-            // delete message
-            bool delete_message(const sha1_hash &hash) override;
-
             bool is_message_in_db(const sha1_hash &hash) override;
-
-            // get encode of the latest message hash list by key pair<my public key, peer public key>
-            std::string get_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) override;
-
-            // save encode of the latest message hash list with key pair<my public key, peer public key>
-            bool save_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key, const std::string& encode) override;
-
-            // delete encode of the latest message hash list by key pair<my public key, peer public key>
-            bool delete_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) override;
 
         private:
 

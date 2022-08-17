@@ -51,34 +51,17 @@ namespace libTAU {
             virtual communication::message get_message_by_hash(const sha1_hash &hash) = 0;
 
             // get the latest tx
-            virtual communication::message get_latest_transaction(const dht::public_key &peer) = 0;
+            virtual communication::message
+            get_latest_transaction(const dht::public_key &sender, const dht::public_key &receiver) = 0;
 
             // get the latest 10 txs
-            virtual std::vector<communication::message> get_latest_ten_transactions(const dht::public_key &peer) = 0;
+            virtual std::vector<communication::message>
+            get_latest_ten_transactions(const dht::public_key &sender, const dht::public_key &receiver) = 0;
 
             // delete message
             virtual bool delete_message_by_hash(const sha1_hash &hash) = 0;
 
-            // get message by hash
-            virtual communication::message get_message(const sha1_hash &hash) = 0;
-
-            // save message
-            virtual bool save_message(const communication::message& msg) = 0;
-
-            // delete message
-            virtual bool delete_message(const sha1_hash &hash) = 0;
-
             virtual bool is_message_in_db(const sha1_hash &hash) = 0;
-
-            // get encode of the latest message hash list by key pair<my public key, peer public key>
-            virtual std::string get_latest_message_hash_list_encode(
-                    const std::pair<dht::public_key, dht::public_key> &key) = 0;
-
-            // save encode of the latest message hash list with key pair<my public key, peer public key>
-            virtual bool save_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key, const std::string& encode) = 0;
-
-            // delete encode of the latest message hash list by key pair<my public key, peer public key>
-            virtual bool delete_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) = 0;
 
             virtual ~message_db_interface() = default;
         };
