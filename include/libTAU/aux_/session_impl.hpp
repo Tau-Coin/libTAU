@@ -687,6 +687,8 @@ namespace aux {
 		    bool publish_data(const aux::bytes& key, const aux::bytes& value);
 		    bool subscribe_from_peer(const dht::public_key& pubkey, const aux::bytes& data);
 		    bool send_to_peer(const dht::public_key& pubkey, const aux::bytes& data);
+		    bool pay_attention_to_peer(const dht::public_key& pubkey);
+
             //2. blockchain
         	void create_chain_id(const aux::bytes& type, std::string community_name, std::vector<char>* id);
             bool create_new_community(const aux::bytes &chain_id, const std::set<blockchain::account>& accounts);

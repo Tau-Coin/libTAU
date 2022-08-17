@@ -327,6 +327,8 @@ namespace libTAU {
 
 		bool send_to_peer(const dht::public_key& pubkey, const std::vector<char>& data);
 
+		bool pay_attention_to_peer(const dht::public_key& pubkey);
+
 		// add new friend in memory & db
 		bool add_new_friend(const dht::public_key& pubkey);
 

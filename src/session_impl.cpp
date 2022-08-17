@@ -3290,7 +3290,19 @@ namespace {
     bool session_impl::send_to_peer(const dht::public_key& pubkey, const aux::bytes& data)
     {
 		if(m_communication) {
-            m_communication->send_to_peer(pubkey, data);
+            //m_communication->send_to_peer(pubkey, data);
+            //return true;
+            return false;
+        }
+		else
+			return false;
+
+    }
+
+    bool session_impl::pay_attention_to_peer(const dht::public_key& peer)
+    {
+		if(m_communication) {
+            m_communication->pay_attention_to_peer(peer);
             return true;
         }
 		else

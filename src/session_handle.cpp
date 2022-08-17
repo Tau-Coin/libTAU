@@ -277,6 +277,11 @@ namespace libTAU {
 		return sync_call_ret<bool>(&session_impl::send_to_peer, pubkey, data);
 	}
 
+	bool session_handle::pay_attention_to_peer(const dht::public_key& pubkey)
+	{
+		return sync_call_ret<bool>(&session_impl::pay_attention_to_peer, pubkey);
+	}
+
 	bool session_handle::add_new_friend(const dht::public_key& pubkey)
 	{
 		return sync_call_ret<bool>(&session_impl::add_new_friend, pubkey);

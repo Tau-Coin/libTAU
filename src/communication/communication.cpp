@@ -298,10 +298,10 @@ namespace libTAU {
             subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::USER_INFO, 0);
         }
 
-        void communication::send_to_peer(const dht::public_key &peer, const aux::bytes& data) {
-            common::event_entry eventEntry(data, get_current_time());
-            send_to(peer, eventEntry.get_entry());
-        }
+//        void communication::send_to_peer(const dht::public_key &peer, const aux::bytes& data) {
+//            common::event_entry eventEntry(data, get_current_time());
+//            send_to(peer, eventEntry.get_entry());
+//        }
 
         void communication::pay_attention_to_peer(const dht::public_key &peer) {
             common::signal_entry signalEntry(common::COMMUNICATION_ATTENTION, get_current_time() / 1000);
