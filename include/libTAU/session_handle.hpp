@@ -311,7 +311,14 @@ namespace libTAU {
 		// For more information on peer classes, see peer-classes_.
 		peer_class_t create_peer_class(char const* name);
 
+        //stop network
+		void disconnect();
+
+        //restartNetwork
+		void reconnect();
+
 		// set main loop time interval (ms)
+
 		void set_loop_time_interval(int milliseconds);
 
 		bool publish_data(const std::vector<char>& key, const std::vector<char>& value);
