@@ -66,7 +66,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 59;
+	constexpr int num_alert_types = 60;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1541,6 +1541,25 @@ namespace libTAU {
         dht::public_key peer;
 
         // syncing msg time
+        std::int64_t time;
+    };
+
+    // this alert is posted when user event found in new mutable data.
+    struct TORRENT_EXPORT communication_peer_attention_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT communication_peer_attention_alert(aux::stack_allocator& alloc, dht::public_key p, std::int64_t t);
+
+        TORRENT_DEFINE_ALERT_PRIO(communication_peer_attention_alert, 59, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::communication;
+
+        std::string message() const override;
+
+        // public key
+        dht::public_key peer;
+
+        // time
         std::int64_t time;
     };
 

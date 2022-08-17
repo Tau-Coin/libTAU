@@ -165,6 +165,36 @@ namespace libTAU {
             return msg;
         }
 
+        message message_db_impl::get_latest_transaction(const dht::public_key &peer) {
+            communication::message msg;
+
+            sqlite3_stmt * stmt;
+            std::string sql = "SELECT HASH,SENDER,TIMESTAMP,PAYLOAD FROM MESSAGES WHERE RECEIVER=? ORDER BY TIMESTAMP DESC LIMIT 1";
+
+            int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+            if (ok == SQLITE_OK) {
+                if (sqlite3_step(stmt) == SQLITE_ROW) {
+                    const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                    sha1_hash hash(p);
+
+                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 1));
+                    dht::public_key sender(p);
+
+                    std::int64_t timestamp = sqlite3_column_int64(stmt, 2);
+
+                    p = static_cast<const char *>(sqlite3_column_blob(stmt, 3));
+                    auto length = sqlite3_column_bytes(stmt, 3);
+                    aux::bytes payload(p, p + length);
+
+                    msg = message(timestamp, sender, peer, payload, hash);
+                }
+            }
+
+            sqlite3_finalize(stmt);
+
+            return msg;
+        }
+
         std::vector<communication::message> message_db_impl::get_latest_ten_transactions(const dht::public_key &peer) {
             std::vector<communication::message> messages;
 
@@ -214,6 +244,28 @@ namespace libTAU {
             sqlite3_finalize(stmt);
 
             return true;
+        }
+
+        bool message_db_impl::is_message_in_db(const sha1_hash &hash) {
+            bool ret = false;
+
+            sqlite3_stmt * stmt;
+            std::string sql = "SELECT COUNT(*) FROM MESSAGES WHERE HASH=?";
+
+            int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+            if (ok == SQLITE_OK) {
+                sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
+                if (sqlite3_step(stmt) == SQLITE_ROW) {
+                    int num = sqlite3_column_int(stmt, 0);
+                    if (num > 0) {
+                        ret = true;
+                    }
+                }
+            }
+
+            sqlite3_finalize(stmt);
+
+            return ret;
         }
 
         communication::message message_db_impl::get_message(const sha1_hash &hash) {

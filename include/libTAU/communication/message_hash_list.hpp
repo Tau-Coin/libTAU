@@ -25,13 +25,18 @@ namespace libTAU::communication {
     class TORRENT_EXPORT message_hash_list {
     public:
 
+        // @param Construct with entry
+        explicit message_hash_list(const entry& e);
+
         // @param Construct with bencode
-        explicit message_hash_list(std::string encode);
+        explicit message_hash_list(std::string encode): message_hash_list(bdecode(encode)) {}
 
         explicit message_hash_list(std::vector<sha1_hash> message_hash_list);
 
         // @returns all message hash in this container
         std::vector<sha1_hash> hash_list() const { return m_message_hash_list; }
+
+        entry get_entry() const;
 
         // @returns the bencode
         std::string encode();

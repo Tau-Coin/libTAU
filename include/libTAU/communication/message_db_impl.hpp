@@ -42,6 +42,8 @@ namespace libTAU {
 
             message get_message_by_hash(const sha1_hash &hash) override;
 
+            message get_latest_transaction(const dht::public_key &peer) override;
+
             std::vector<communication::message> get_latest_ten_transactions(const dht::public_key &peer) override;
 
             bool delete_message_by_hash(const sha1_hash &hash) override;
@@ -54,6 +56,8 @@ namespace libTAU {
 
             // delete message
             bool delete_message(const sha1_hash &hash) override;
+
+            bool is_message_in_db(const sha1_hash &hash) override;
 
             // get encode of the latest message hash list by key pair<my public key, peer public key>
             std::string get_latest_message_hash_list_encode(const std::pair<dht::public_key, dht::public_key> &key) override;

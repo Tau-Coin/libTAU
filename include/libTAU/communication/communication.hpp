@@ -29,6 +29,7 @@ see LICENSE file.
 #include "libTAU/aux_/session_interface.hpp"
 #include "libTAU/kademlia/item.hpp"
 #include "libTAU/common/entry_type.hpp"
+#include "libTAU/communication/message_wrapper.hpp"
 #include "libTAU/communication/message_db_impl.hpp"
 #include "libTAU/communication/message_db_interface.hpp"
 #include "libTAU/kademlia/node_entry.hpp"
@@ -46,12 +47,12 @@ namespace libTAU {
 
         // new message key suffix
         const std::string key_suffix_new_message_hash = "new_message_hash";
-        // new user event key suffix
-        const std::string key_suffix_new_user_event = "new_user_event_hash";
+        // confirmation roots key suffix
+        const std::string key_suffix_confirmation_roots = "confirmation_roots";
 
         enum COMMUNICATION_GET_ITEM_TYPE {
             NEW_MESSAGE_HASH,
-            MESSAGE,
+            MESSAGE_WRAPPER,
             CONFIRMATION_ROOTS,
             USER_INFO,
         };
@@ -109,7 +110,7 @@ namespace libTAU {
             void subscribe_from_peer(const dht::public_key &peer, const aux::bytes& key);
 
             // data length < 1k
-            void send_to_peer(const dht::public_key &peer, const aux::bytes& data);
+//            void send_to_peer(const dht::public_key &peer, const aux::bytes& data);
 
             // pay attention to peer
             void pay_attention_to_peer(const dht::public_key &peer);
@@ -149,9 +150,11 @@ namespace libTAU {
             void clear();
 
             // add a new message
-            bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
+//            bool add_new_message(const dht::public_key &peer, const message& msg, bool post_alert = false);
 
             void publish(const std::string& salt, const entry& data);
+
+            void publish_message_wrapper(dht::public_key const& peer, const sha1_hash &hash, const std::string& salt, const entry& data);
 
             // key length < 20 bytes
             void subscribe(const dht::public_key &peer, const std::string& salt, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp = 0, int times = 1);
@@ -175,19 +178,29 @@ namespace libTAU {
 
             void put_new_message_hash(const dht::public_key &peer, const sha1_hash &hash);
 
-            void get_message(const dht::public_key &peer, const sha1_hash &hash);
+            void get_message_wrapper(const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+
+            void put_message_wrapper(const message_wrapper &messageWrapper);
+
+//            void get_message(const dht::public_key &peer, const sha1_hash &hash);
 
             // put message
-            void put_message(const message& msg);
+            void put_new_message(const message& msg);
+
+            void get_confirmation_roots(const dht::public_key &peer, std::int64_t timestamp);
+
+            void put_confirmation_roots(const dht::public_key &peer);
+
+            void put_all_messages(const dht::public_key &peer);
 
             // save the latest message hash list in database
             // @param peer is Y public key
-            void save_friend_latest_message_hash_list(const dht::public_key &peer);
+//            void save_friend_latest_message_hash_list(const dht::public_key &peer);
 
             // try to update the latest message list
             // @param peer is Y public key
             // @return true if message list changed, false otherwise
-            bool try_to_update_Latest_message_list(const dht::public_key &peer, const message& msg, bool post_alert);
+//            bool try_to_update_Latest_message_list(const dht::public_key &peer, const message& msg, bool post_alert);
 
             // 使用LevenshteinDistance算法寻找最佳匹配，并提取相应解需要的中间信息(missing message和confirmation root)
             void find_best_solution(const std::vector<message>& messages, const aux::bytes& hash_prefix_array,
@@ -200,7 +213,7 @@ namespace libTAU {
             // make a salt on mutable channel
 //            static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
 
-            void process_payload(dht::public_key const& peer, std::int64_t data_type_id, entry const& payload, bool is_cache);
+//            void process_payload(dht::public_key const& peer, std::int64_t data_type_id, entry const& payload, bool is_cache);
 
             // validate message, check if message is oversize( >1000 bytes)
             bool validate_message(const message& msg);
@@ -240,6 +253,8 @@ namespace libTAU {
 
             void on_dht_put_mutable_item(dht::item const& i, int n);
 
+            void on_dht_put_message_wrapper(dht::public_key const& peer, const sha1_hash &hash, dht::item const& i, int n);
+
             void on_dht_relay_mutable_item(entry const& payload, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
 
             // device id
@@ -264,8 +279,11 @@ namespace libTAU {
             // all friends
             std::vector<dht::public_key> m_friends;
 
+            // message wrapper
+//            std::map<dht::public_key, message_wrapper> m_message_wrapper;
+
             // message list(map:key->Y public key, value->message list)
-            std::map<dht::public_key, std::list<message>> m_message_list_map;
+//            std::map<dht::public_key, std::list<message>> m_message_list_map;
         };
     }
 }

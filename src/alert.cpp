@@ -1830,5 +1830,18 @@ namespace {
 #endif
     }
 
+    communication_peer_attention_alert::communication_peer_attention_alert(aux::stack_allocator&
+            , dht::public_key p, std::int64_t t): peer(p), time(t)
+    {}
+
+    std::string communication_peer_attention_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        return "Alert: attention peer:" + aux::toHex(peer.bytes);
+#endif
+    }
+
 
 } // namespace libTAU

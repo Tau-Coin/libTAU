@@ -13,8 +13,7 @@ see LICENSE file.
 namespace libTAU {
     namespace communication {
 
-        message_hash_list::message_hash_list(std::string encode) {
-            entry e = bdecode(encode);
+        message_hash_list::message_hash_list(const entry &e) {
             populate(e);
         }
 
@@ -22,14 +21,19 @@ namespace libTAU {
             m_message_hash_list = std::move(message_hash_list);
         }
 
-        std::string message_hash_list::encode() {
+        entry message_hash_list::get_entry() const {
             entry::list_type l;
             if (!m_message_hash_list.empty()) {
                 for (auto const &hash: m_message_hash_list) {
                     l.push_back(entry(hash.to_string()));
                 }
             }
-            entry e(l);
+
+            return entry(l);
+        }
+
+        std::string message_hash_list::encode() {
+            auto e = get_entry();
             std::string encode;
             bencode(std::back_inserter(encode), e);
 

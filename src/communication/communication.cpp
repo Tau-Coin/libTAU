@@ -65,27 +65,27 @@ namespace libTAU {
                 dht::public_key *pk = m_ses.pubkey();
                 m_friends.push_back(*pk);
 
-                for (auto const & peer: m_friends) {
-                    log(LOG_INFO, "INFO: friend: %s", aux::toHex(peer.bytes).c_str());
-                    std::string encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(*pk, peer));
-
-                    if (!encode.empty()) {
-                        message_hash_list hashList(encode);
-                        log(LOG_INFO, "INFO: %s from peer[%s]", hashList.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-                        for (auto const &hash: hashList.hash_list()) {
-                            log(LOG_INFO, "INFO: Get message hash:%s", aux::toHex(hash).c_str());
-                            message msg = m_message_db->get_message(hash);
-                            if (!msg.empty()) {
-                                log(LOG_INFO, "INFO: Got message from db[%s]", msg.to_string().c_str());
-                                m_message_list_map[peer].push_back(msg);
-                            } else {
-                                log(LOG_INFO, "INFO: Cannot find message[%s] in db.", aux::toHex(hash).c_str());
-                            }
-                        }
-                    } else {
-                        log(LOG_INFO, "INFO: Message hash list is empty.");
-                    }
-                }
+//                for (auto const & peer: m_friends) {
+//                    log(LOG_INFO, "INFO: friend: %s", aux::toHex(peer.bytes).c_str());
+//                    std::string encode = m_message_db->get_latest_message_hash_list_encode(std::make_pair(*pk, peer));
+//
+//                    if (!encode.empty()) {
+//                        message_hash_list hashList(encode);
+//                        log(LOG_INFO, "INFO: %s from peer[%s]", hashList.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+//                        for (auto const &hash: hashList.hash_list()) {
+//                            log(LOG_INFO, "INFO: Get message hash:%s", aux::toHex(hash).c_str());
+//                            message msg = m_message_db->get_message(hash);
+//                            if (!msg.empty()) {
+//                                log(LOG_INFO, "INFO: Got message from db[%s]", msg.to_string().c_str());
+//                                m_message_list_map[peer].push_back(msg);
+//                            } else {
+//                                log(LOG_INFO, "INFO: Cannot find message[%s] in db.", aux::toHex(hash).c_str());
+//                            }
+//                        }
+//                    } else {
+//                        log(LOG_INFO, "INFO: Message hash list is empty.");
+//                    }
+//                }
             } catch (std::exception &e) {
                 log(LOG_ERR, "Exception init [COMM] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
                 return false;
@@ -96,7 +96,7 @@ namespace libTAU {
 
         void communication::clear() {
             m_friends.clear();
-            m_message_list_map.clear();
+//            m_message_list_map.clear();
         }
 
         void communication::account_changed() {
@@ -117,110 +117,110 @@ namespace libTAU {
             return total_milliseconds(system_clock::now().time_since_epoch());
         }
 
-        void communication::process_payload(const dht::public_key &peer, std::int64_t data_type_id, const entry &payload, bool is_cache) {
-            auto now = get_current_time();
-
-            log(LOG_INFO, "---------------Got entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
-            switch (data_type_id) {
-                case common::message_entry::data_type_id: {
-
-                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
-                    common::message_entry msg_entry(payload);
-                    log(LOG_INFO, "INFO: Got message, hash[%s].",
-                        aux::toHex(msg_entry.m_msg.sha1().to_string()).c_str());
-
-                    add_new_message(peer, msg_entry.m_msg, true);
-
-                    // find out missing messages and confirmation root
-                    std::vector<message> missing_messages;
-                    std::vector<sha1_hash> confirmation_roots;
-                    auto &message_list = m_message_list_map[peer];
-                    std::vector<message> messages(message_list.begin(), message_list.end());
-                    log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
-                    find_best_solution(messages, msg_entry.m_levenshtein_array,
-                                       missing_messages, confirmation_roots);
-
-                    if (!confirmation_roots.empty()) {
-                        m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
-                                                                                            confirmation_roots,
-                                                                                            now);
-                        log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
-                    }
-
-                    aux::bytes levenshtein_array;
-                    auto &msg_list = m_message_list_map[peer];
-                    for (auto const &msg: msg_list) {
-                        levenshtein_array.push_back(msg.sha1()[0]);
-                    }
-
-                    auto size = missing_messages.size();
-                    for(auto k = 0; k < size; k++) {
-                        common::message_entry messageEntry(missing_messages[k], levenshtein_array, get_current_time());
-                        send_to(peer, messageEntry.get_entry());
-                    }
-
-                    common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
-                    send_to(peer, msg_levenshtein_array.get_entry());
-
-
-                    break;
-                }
-                case common::message_levenshtein_array_entry::data_type_id: {
-
-                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
-                    common::message_levenshtein_array_entry levenshtein_array_entry(payload);
-                    log(LOG_INFO, "INFO: Got message levenshtein array[%s].",
-                        aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
-
-                    // find out missing messages and confirmation root
-                    std::vector<message> missing_messages;
-                    std::vector<sha1_hash> confirmation_roots;
-                    auto &message_list = m_message_list_map[peer];
-                    std::vector<message> messages(message_list.begin(), message_list.end());
-                    log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
-                    find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
-                                       missing_messages, confirmation_roots);
-
-                    if (!confirmation_roots.empty()) {
-                        m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
-                                                                                            confirmation_roots,
-                                                                                            now);
-                        log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
-                    }
-
-                    log(LOG_INFO, "INFO: Found missing message size %" PRIu64, missing_messages.size());
-                    aux::bytes levenshtein_array;
-                    auto &msg_list = m_message_list_map[peer];
-                    for (auto const &msg: msg_list) {
-                        levenshtein_array.push_back(msg.sha1()[0]);
-                    }
-
-                    auto size = missing_messages.size();
-                    for(auto k = 0; k < size; k++) {
-                        common::message_entry msg_entry(missing_messages[k], levenshtein_array, get_current_time());
-                        send_to(peer, msg_entry.get_entry());
-                    }
-
-                    break;
-                }
-                case common::event_entry::data_type_id: {
-
-                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
-
-                    common::event_entry eventEntry(payload);
-
-                    // 通知用户新的user event
-                    m_ses.alerts().emplace_alert<communication_user_event_alert>(peer, eventEntry.m_value);
-
-                    break;
-                }
-                default: {
-                }
-            }
-
-        }
+//        void communication::process_payload(const dht::public_key &peer, std::int64_t data_type_id, const entry &payload, bool is_cache) {
+//            auto now = get_current_time();
+//
+//            log(LOG_INFO, "---------------Got entry[%s] from peer[%s]", payload.to_string().c_str(), aux::toHex(peer.bytes).c_str());
+//            switch (data_type_id) {
+//                case common::message_entry::data_type_id: {
+//
+//                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+//
+//                    common::message_entry msg_entry(payload);
+//                    log(LOG_INFO, "INFO: Got message, hash[%s].",
+//                        aux::toHex(msg_entry.m_msg.sha1().to_string()).c_str());
+//
+//                    add_new_message(peer, msg_entry.m_msg, true);
+//
+//                    // find out missing messages and confirmation root
+//                    std::vector<message> missing_messages;
+//                    std::vector<sha1_hash> confirmation_roots;
+//                    auto &message_list = m_message_list_map[peer];
+//                    std::vector<message> messages(message_list.begin(), message_list.end());
+//                    log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
+//                    find_best_solution(messages, msg_entry.m_levenshtein_array,
+//                                       missing_messages, confirmation_roots);
+//
+//                    if (!confirmation_roots.empty()) {
+//                        m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+//                                                                                            confirmation_roots,
+//                                                                                            now);
+//                        log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
+//                    }
+//
+//                    aux::bytes levenshtein_array;
+//                    auto &msg_list = m_message_list_map[peer];
+//                    for (auto const &msg: msg_list) {
+//                        levenshtein_array.push_back(msg.sha1()[0]);
+//                    }
+//
+//                    auto size = missing_messages.size();
+//                    for(auto k = 0; k < size; k++) {
+//                        common::message_entry messageEntry(missing_messages[k], levenshtein_array, get_current_time());
+//                        send_to(peer, messageEntry.get_entry());
+//                    }
+//
+//                    common::message_levenshtein_array_entry msg_levenshtein_array(levenshtein_array, now);
+//                    send_to(peer, msg_levenshtein_array.get_entry());
+//
+//
+//                    break;
+//                }
+//                case common::message_levenshtein_array_entry::data_type_id: {
+//
+//                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+//
+//                    common::message_levenshtein_array_entry levenshtein_array_entry(payload);
+//                    log(LOG_INFO, "INFO: Got message levenshtein array[%s].",
+//                        aux::toHex(levenshtein_array_entry.m_levenshtein_array).c_str());
+//
+//                    // find out missing messages and confirmation root
+//                    std::vector<message> missing_messages;
+//                    std::vector<sha1_hash> confirmation_roots;
+//                    auto &message_list = m_message_list_map[peer];
+//                    std::vector<message> messages(message_list.begin(), message_list.end());
+//                    log(LOG_INFO, "INFO: Messages size:%" PRIu64, messages.size());
+//                    find_best_solution(messages, levenshtein_array_entry.m_levenshtein_array,
+//                                       missing_messages, confirmation_roots);
+//
+//                    if (!confirmation_roots.empty()) {
+//                        m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+//                                                                                            confirmation_roots,
+//                                                                                            now);
+//                        log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
+//                    }
+//
+//                    log(LOG_INFO, "INFO: Found missing message size %" PRIu64, missing_messages.size());
+//                    aux::bytes levenshtein_array;
+//                    auto &msg_list = m_message_list_map[peer];
+//                    for (auto const &msg: msg_list) {
+//                        levenshtein_array.push_back(msg.sha1()[0]);
+//                    }
+//
+//                    auto size = missing_messages.size();
+//                    for(auto k = 0; k < size; k++) {
+//                        common::message_entry msg_entry(missing_messages[k], levenshtein_array, get_current_time());
+//                        send_to(peer, msg_entry.get_entry());
+//                    }
+//
+//                    break;
+//                }
+//                case common::event_entry::data_type_id: {
+//
+//                    m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, now);
+//
+//                    common::event_entry eventEntry(payload);
+//
+//                    // 通知用户新的user event
+//                    m_ses.alerts().emplace_alert<communication_user_event_alert>(peer, eventEntry.m_value);
+//
+//                    break;
+//                }
+//                default: {
+//                }
+//            }
+//
+//        }
 
         void communication::on_dht_relay(dht::public_key const& peer, entry const& payload) {
             if(payload.type() != entry::dictionary_t){
@@ -237,19 +237,34 @@ namespace libTAU {
 
                 switch (signalEntry.m_pid) {
                     case common::COMMUNICATION_NEW_MESSAGE: {
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
+
                         get_new_message_hash(peer, signalEntry.m_timestamp - 3);
                         break;
                     }
                     case common::COMMUNICATION_MESSAGE_MISSING: {
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
+
+                        put_all_messages(peer);
                         break;
                     }
                     case common::COMMUNICATION_PUT_DONE: {
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
+
+                        get_new_message_hash(peer, signalEntry.m_timestamp - 3);
                         break;
                     }
                     case common::COMMUNICATION_CONFIRMATION: {
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
+
+                        get_confirmation_roots(peer, signalEntry.m_timestamp - 3);
                         break;
                     }
                     case common::COMMUNICATION_ATTENTION: {
+                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
+
+                        // 通知用户新的attention
+                        m_ses.alerts().emplace_alert<communication_peer_attention_alert>(peer, signalEntry.m_timestamp);
                         break;
                     }
                     default: {
@@ -344,36 +359,39 @@ namespace libTAU {
         }
 
         bool communication::add_new_message(const message &msg, bool post_alert) {
-            add_new_message(msg.receiver(), msg, post_alert);
-
-            aux::bytes levenshtein_array;
-            auto& msg_list = m_message_list_map[msg.receiver()];
-            for (auto const &m: msg_list) {
-                levenshtein_array.push_back(m.sha1()[0]);
+            if (!m_message_db->save_message_if_not_exist(msg)) {
+                log(LOG_ERR, "ERROR: Save message[%s] fail!", msg.to_string().c_str());
             }
 
-            std::int64_t now = get_current_time();
-            common::message_entry msg_entry(msg, levenshtein_array, now);
-            send_to(msg.receiver(), msg_entry.get_entry());
-
-//            update_communication_time(msg.receiver(), now);
+            put_new_message(msg);
+//            add_new_message(msg.receiver(), msg, post_alert);
+//
+//            aux::bytes levenshtein_array;
+//            auto& msg_list = m_message_list_map[msg.receiver()];
+//            for (auto const &m: msg_list) {
+//                levenshtein_array.push_back(m.sha1()[0]);
+//            }
+//
+//            std::int64_t now = get_current_time();
+//            common::message_entry msg_entry(msg, levenshtein_array, now);
+//            send_to(msg.receiver(), msg_entry.get_entry());
 
             return true;
         }
 
-        bool communication::add_new_message(const dht::public_key &peer, const message& msg, bool post_alert) {
-            if (msg.empty()) {
-                log(LOG_ERR, "ERROR: Message is empty.");
-                return false;
-            }
-
-            log(LOG_INFO, "INFO: Add new msg[%s]", msg.to_string().c_str());
-
-            if (!validate_message(msg))
-                return false;
-
-            return try_to_update_Latest_message_list(peer, msg, post_alert);
-        }
+//        bool communication::add_new_message(const dht::public_key &peer, const message& msg, bool post_alert) {
+//            if (msg.empty()) {
+//                log(LOG_ERR, "ERROR: Message is empty.");
+//                return false;
+//            }
+//
+//            log(LOG_INFO, "INFO: Add new msg[%s]", msg.to_string().c_str());
+//
+//            if (!validate_message(msg))
+//                return false;
+//
+//            return try_to_update_Latest_message_list(peer, msg, post_alert);
+//        }
 
         bool communication::validate_message(const message& msg) {
             // TODO: size==1000?
@@ -400,106 +418,106 @@ namespace libTAU {
 //            }
 //        }
 
-        void communication::save_friend_latest_message_hash_list(const dht::public_key &peer) {
-            auto message_list = m_message_list_map.at(peer);
-            if (!message_list.empty()) {
-                std::vector<sha1_hash> hash_list;
-                for (const auto & msg: message_list) {
-                    hash_list.push_back(msg.sha1());
-                }
+//        void communication::save_friend_latest_message_hash_list(const dht::public_key &peer) {
+//            auto message_list = m_message_list_map.at(peer);
+//            if (!message_list.empty()) {
+//                std::vector<sha1_hash> hash_list;
+//                for (const auto & msg: message_list) {
+//                    hash_list.push_back(msg.sha1());
+//                }
+//
+//                dht::public_key pubkey = *m_ses.pubkey();
+//
+//                message_hash_list messageHashList(hash_list);
+//                log(LOG_INFO, "INFO: Save message hash list %s", messageHashList.to_string().c_str());
+//                m_message_db->save_latest_message_hash_list_encode(std::make_pair(pubkey, peer),messageHashList.encode());
+//            }
+//        }
 
-                dht::public_key pubkey = *m_ses.pubkey();
-
-                message_hash_list messageHashList(hash_list);
-                log(LOG_INFO, "INFO: Save message hash list %s", messageHashList.to_string().c_str());
-                m_message_db->save_latest_message_hash_list_encode(std::make_pair(pubkey, peer),messageHashList.encode());
-            }
-        }
-
-        bool communication::try_to_update_Latest_message_list(const dht::public_key &peer, const message& msg, bool post_alert) {
-            if (msg.empty())
-                return false;
-
-            bool updated = false;
-
-            std::list<message> message_list = m_message_list_map[peer];
-            if (!message_list.empty()) {
-                // 先判断一下是否比最后一个消息时间戳大，如果是，则直接插入末尾
-                if (msg.timestamp() > message_list.back().timestamp()) {
-                    message_list.push_back(msg);
-                    updated = true;
-                } else {
-                    // 寻找从后往前寻找第一个时间小于当前消息时间的消息，将当前消息插入到到该消息后面
-                    auto it = message_list.rbegin();
-                    // 是否插入第一个位置，在没找到的情况下会插入到第一个位置
-                    bool insertFirst = true;
-                    for (; it != message_list.rend(); ++it) {
-                        message reference = *it;
-//                        signed long diff = reference.timestamp() - msg.timestamp();
-                        // 如果差值小于零，说明找到了比当前消息时间戳小的消息位置，将消息插入到目标位置后面一位
-                        if (reference.timestamp() < msg.timestamp()) {
-                            updated = true;
-                            insertFirst = false;
-                            message_list.insert(it.base(), msg);
-                            break;
-                        } else if (reference.timestamp() == msg.timestamp()) {
-                            // 如果时间戳一样，寻找第一个哈希比我小的消息
-                            auto reference_hash = reference.sha1();
-                            auto msg_hash = msg.sha1();
-                            if (reference_hash != msg_hash) {
-                                // 寻找第一个哈希比我小的消息，插入其前面，否则，继续往前找
-                                if (reference_hash < msg_hash) {
-                                    updated = true;
-                                    insertFirst = false;
-                                    message_list.insert(it.base(), msg);
-                                    break;
-                                }
-                            } else {
-                                // 如果哈希一样，则本身已经在列表中，也不再进行查找
-                                insertFirst = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (insertFirst) {
-                        updated = true;
-                        message_list.insert(std::begin(message_list), msg);
-                    }
-                }
-            } else {
-                message_list.push_back(msg);
-                updated = true;
-            }
-
-            // 更新成功
-            if (updated) {
-                log(LOG_INFO, "INFO: Add message[%s] into message list", msg.to_string().c_str());
-
-                // 通知用户新的message
-                if (post_alert) {
-                    log(LOG_INFO, "DEBUG: Post new message:%s", msg.to_string().c_str());
-                    m_ses.alerts().emplace_alert<communication_new_message_alert>(msg);
-                }
-
-                // save message in db
-                if (!m_message_db->save_message(msg)) {
-                    log(LOG_ERR, "ERROR: Save message in db fail[%s]", msg.to_string().c_str());
-                    return false;
-                }
-
-                // 如果更新了消息列表，则判断是否列表长度过长，过长则删掉旧数据，然后停止循环
-                if (message_list.size() > communication_max_message_list_size) {
-                    message_list.pop_front();
-                }
-
-                m_message_list_map[peer] = message_list;
-
-                save_friend_latest_message_hash_list(peer);
-            }
-
-            return updated;
-        }
+//        bool communication::try_to_update_Latest_message_list(const dht::public_key &peer, const message& msg, bool post_alert) {
+//            if (msg.empty())
+//                return false;
+//
+//            bool updated = false;
+//
+//            std::list<message> message_list = m_message_list_map[peer];
+//            if (!message_list.empty()) {
+//                // 先判断一下是否比最后一个消息时间戳大，如果是，则直接插入末尾
+//                if (msg.timestamp() > message_list.back().timestamp()) {
+//                    message_list.push_back(msg);
+//                    updated = true;
+//                } else {
+//                    // 寻找从后往前寻找第一个时间小于当前消息时间的消息，将当前消息插入到到该消息后面
+//                    auto it = message_list.rbegin();
+//                    // 是否插入第一个位置，在没找到的情况下会插入到第一个位置
+//                    bool insertFirst = true;
+//                    for (; it != message_list.rend(); ++it) {
+//                        message reference = *it;
+////                        signed long diff = reference.timestamp() - msg.timestamp();
+//                        // 如果差值小于零，说明找到了比当前消息时间戳小的消息位置，将消息插入到目标位置后面一位
+//                        if (reference.timestamp() < msg.timestamp()) {
+//                            updated = true;
+//                            insertFirst = false;
+//                            message_list.insert(it.base(), msg);
+//                            break;
+//                        } else if (reference.timestamp() == msg.timestamp()) {
+//                            // 如果时间戳一样，寻找第一个哈希比我小的消息
+//                            auto reference_hash = reference.sha1();
+//                            auto msg_hash = msg.sha1();
+//                            if (reference_hash != msg_hash) {
+//                                // 寻找第一个哈希比我小的消息，插入其前面，否则，继续往前找
+//                                if (reference_hash < msg_hash) {
+//                                    updated = true;
+//                                    insertFirst = false;
+//                                    message_list.insert(it.base(), msg);
+//                                    break;
+//                                }
+//                            } else {
+//                                // 如果哈希一样，则本身已经在列表中，也不再进行查找
+//                                insertFirst = false;
+//                                break;
+//                            }
+//                        }
+//                    }
+//
+//                    if (insertFirst) {
+//                        updated = true;
+//                        message_list.insert(std::begin(message_list), msg);
+//                    }
+//                }
+//            } else {
+//                message_list.push_back(msg);
+//                updated = true;
+//            }
+//
+//            // 更新成功
+//            if (updated) {
+//                log(LOG_INFO, "INFO: Add message[%s] into message list", msg.to_string().c_str());
+//
+//                // 通知用户新的message
+//                if (post_alert) {
+//                    log(LOG_INFO, "DEBUG: Post new message:%s", msg.to_string().c_str());
+//                    m_ses.alerts().emplace_alert<communication_new_message_alert>(msg);
+//                }
+//
+//                // save message in db
+//                if (!m_message_db->save_message(msg)) {
+//                    log(LOG_ERR, "ERROR: Save message in db fail[%s]", msg.to_string().c_str());
+//                    return false;
+//                }
+//
+//                // 如果更新了消息列表，则判断是否列表长度过长，过长则删掉旧数据，然后停止循环
+//                if (message_list.size() > communication_max_message_list_size) {
+//                    message_list.pop_front();
+//                }
+//
+//                m_message_list_map[peer] = message_list;
+//
+//                save_friend_latest_message_hash_list(peer);
+//            }
+//
+//            return updated;
+//        }
 
         namespace {
             /**
@@ -820,15 +838,51 @@ namespace libTAU {
                 if (!i.empty()) {
                     switch (type) {
                         case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH: {
+                            sha1_hash new_msg_hash(i.value().string().c_str());
+                            log(LOG_INFO, "INFO: Got new msg hash[%s]", aux::toHex(new_msg_hash).c_str());
+                            if (!new_msg_hash.is_all_zeros()) {
+                                if (!m_message_db->is_message_in_db(new_msg_hash)) {
+                                    get_message_wrapper(peer, new_msg_hash);
+                                }
+                            }
+
                             break;
                         }
-                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE: {
+                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE_WRAPPER: {
+                            message_wrapper messageWrapper(i.value());
+                            if (!messageWrapper.empty()) {
+                                log(LOG_INFO, "INFO: Got new msg [%s]", messageWrapper.msg().to_string().c_str());
+
+                                m_ses.alerts().emplace_alert<communication_new_message_alert>(messageWrapper.msg());
+
+                                if (!m_message_db->save_message_if_not_exist(messageWrapper.msg())) {
+                                    log(LOG_ERR, "INFO: Save message[%s] fail.", messageWrapper.msg().to_string().c_str());
+                                }
+
+                                if (times < 10 && !messageWrapper.previousHash().is_all_zeros() && !m_message_db->is_message_in_db(messageWrapper.previousHash())) {
+                                    get_message_wrapper(peer, messageWrapper.previousHash(), times + 1);
+                                }
+                            }
+
                             break;
                         }
                         case COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS: {
+                            message_hash_list messageHashList(i.value());
+                            auto confirmation_roots = messageHashList.hash_list();
+                            if (!confirmation_roots.empty()) {
+                                m_ses.alerts().emplace_alert<communication_confirmation_root_alert>(peer,
+                                                                                                    confirmation_roots,
+                                                                                                    i.ts().value);
+                                log(LOG_INFO, "INFO: Confirmation roots:%" PRIu64, confirmation_roots.size());
+                            }
+
                             break;
                         }
                         case COMMUNICATION_GET_ITEM_TYPE::USER_INFO: {
+                            m_ses.alerts().emplace_alert<communication_user_info_alert>(peer,
+                                                                                        aux::bytes(salt.begin(), salt.end()),
+                                                                                        aux::bytes(i.value().string().begin(),
+                                                                                                   i.value().string().end()));
                             break;
                         }
                         default: {
@@ -841,7 +895,11 @@ namespace libTAU {
 
                     switch (type) {
                         case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH:
-                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE:
+                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE_WRAPPER: {
+                            send_message_missing_signal(peer);
+
+                            break;
+                        }
                         case COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS: {
                             break;
                         }
@@ -857,14 +915,6 @@ namespace libTAU {
             } catch (std::exception &e) {
                 log(LOG_ERR, "ERROR: Exception in get mutable callback [CHAIN] %s in file[%s], func[%s], line[%d]",
                     e.what(), __FILE__, __FUNCTION__ , __LINE__);
-            }
-
-            // 通知用户新的user event
-            if (!i.empty()) {
-                m_ses.alerts().emplace_alert<communication_user_info_alert>(i.pk(),
-                                                                            aux::bytes(i.salt().begin(),i.salt().end()),
-                                                                            aux::bytes(i.value().string().begin(),
-                                                                                       i.value().string().end()));
             }
         }
 
@@ -903,30 +953,36 @@ namespace libTAU {
 //            }
         }
 
+        void communication::on_dht_put_message_wrapper(dht::public_key const& peer, const sha1_hash &hash, const dht::item &i, int n) {
+            if (n > 0) {
+                m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer, hash, get_current_time());
+            }
+        }
+
         void communication::on_dht_relay_mutable_item(const entry &payload,
                                                       const std::vector<std::pair<dht::node_entry, bool>> &nodes,
                                                       const dht::public_key &peer) {
-            // data type id
-            if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type)))
-            {
-                auto data_type_id = i->integer();
-                if (data_type_id == common::message_entry::data_type_id) {
-                    for (auto const& n: nodes) {
-                        log(LOG_DEBUG, "nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
-                    }
-
-                    common::message_entry msgEntry(payload);
-                    auto now = get_current_time();
-                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, msgEntry.m_msg.sha1(), now);
-                    for (auto const& n: nodes) {
-                        if (n.second) {
-                            m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer,
-                                                                                              msgEntry.m_msg.sha1(), now);
-                            break;
-                        }
-                    }
-                }
-            }
+//            // data type id
+//            if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type)))
+//            {
+//                auto data_type_id = i->integer();
+//                if (data_type_id == common::message_entry::data_type_id) {
+//                    for (auto const& n: nodes) {
+//                        log(LOG_DEBUG, "nodes:%s, bool:%d", n.first.addr().to_string().c_str(), n.second);
+//                    }
+//
+//                    common::message_entry msgEntry(payload);
+//                    auto now = get_current_time();
+//                    m_ses.alerts().emplace_alert<communication_syncing_message_alert>(peer, msgEntry.m_msg.sha1(), now);
+//                    for (auto const& n: nodes) {
+//                        if (n.second) {
+//                            m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer,
+//                                                                                              msgEntry.m_msg.sha1(), now);
+//                            break;
+//                        }
+//                    }
+//                }
+//            }
         }
 
 //        namespace {
@@ -981,6 +1037,13 @@ namespace libTAU {
                     , 1, 8, 16, salt);
         }
 
+        void communication::publish_message_wrapper(dht::public_key const& peer, const sha1_hash &hash, const std::string &salt, const entry &data) {
+            if (!m_ses.dht()) return;
+            log(LOG_INFO, "INFO: Publish message wrapper salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
+            m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_message_wrapper, self(), peer, hash, _1, _2)
+                    , 1, 8, 16, salt);
+        }
+
         void communication::subscribe(const dht::public_key &peer, const std::string &salt, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp, int times) {
             if (!m_ses.dht()) return;
             m_ses.dht()->get_item(peer, std::bind(&communication::get_mutable_callback, self(), _1, _2, type, timestamp, times), 1, 8, 16, salt, timestamp);
@@ -1027,7 +1090,8 @@ namespace libTAU {
 
         void communication::get_new_message_hash(const dht::public_key &peer, std::int64_t timestamp) {
             // salt is x pubkey when request signal
-            std::string data(peer.bytes.begin(), peer.bytes.end());
+            auto pubKey = *m_ses.pubkey();
+            std::string data(pubKey.bytes.begin(), pubKey.bytes.end());
             data.insert(data.end(), key_suffix_new_message_hash.begin(), key_suffix_new_message_hash.end());
             auto salt = hasher(data).final().to_string();
 
@@ -1047,18 +1111,84 @@ namespace libTAU {
             }
         }
 
-        void communication::get_message(const dht::public_key &peer, const sha1_hash &hash) {
+        void communication::get_message_wrapper(const dht::public_key &peer, const sha1_hash &hash, int times) {
             if (!hash.is_all_zeros()) {
                 auto salt = hash.to_string();
 
-                log(LOG_INFO, "INFO: Get message from peer[%s], salt:[%s]",
+                log(LOG_INFO, "INFO: Get message wrapper from peer[%s], salt:[%s]",
                     aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-                subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::MESSAGE, 0);
+                subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::MESSAGE_WRAPPER, 0, times);
             }
         }
 
-        void communication::put_message(const message &msg) {
+        void communication::put_message_wrapper(const message_wrapper &messageWrapper) {
+            if (!messageWrapper.empty()) {
+                auto salt = messageWrapper.sha1().to_string();
 
+                log(LOG_INFO, "INFO: Put message wrapper salt[%s]", aux::toHex(salt).c_str());
+                publish_message_wrapper(messageWrapper.msg().receiver(), messageWrapper.msg().sha1(), salt, messageWrapper.get_entry());
+            }
+        }
+
+//        void communication::get_message(const dht::public_key &peer, const sha1_hash &hash) {
+//            if (!hash.is_all_zeros()) {
+//                auto salt = hash.to_string();
+//
+//                log(LOG_INFO, "INFO: Get message from peer[%s], salt:[%s]",
+//                    aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+//                subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::MESSAGE, 0);
+//            }
+//        }
+
+        void communication::put_new_message(const message &msg) {
+            auto last_message = m_message_db->get_latest_transaction(msg.receiver());
+            message_wrapper messageWrapper(last_message.sha1(), msg);
+            put_message_wrapper(messageWrapper);
+            put_new_message_hash(msg.receiver(), messageWrapper.sha1());
+            send_new_message_signal(msg.receiver());
+        }
+
+        void communication::get_confirmation_roots(const dht::public_key &peer, std::int64_t timestamp) {
+            // salt is x pubkey when request signal
+            auto pubKey = *m_ses.pubkey();
+            std::string data(pubKey.bytes.begin(), pubKey.bytes.end());
+            data.insert(data.end(), key_suffix_confirmation_roots.begin(), key_suffix_confirmation_roots.end());
+            auto salt = hasher(data).final().to_string();
+
+            log(LOG_INFO, "INFO: Get confirmation roots from peer[%s], salt:[%s]",
+                aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS, timestamp);
+        }
+
+        void communication::put_confirmation_roots(const dht::public_key &peer) {
+            auto messages = m_message_db->get_latest_ten_transactions(peer);
+            std::vector<sha1_hash> msgHashList;
+            for (auto const& msg: messages) {
+                msgHashList.push_back(msg.sha1());
+            }
+            message_hash_list messageHashList(msgHashList);
+
+            std::string data(peer.bytes.begin(), peer.bytes.end());
+            data.insert(data.end(), key_suffix_confirmation_roots.begin(), key_suffix_confirmation_roots.end());
+            auto salt = hasher(data).final().to_string();
+
+            log(LOG_INFO, "INFO: Put confirmation roots salt[%s]", aux::toHex(salt).c_str());
+            publish(salt, messageHashList.get_entry());
+        }
+
+        void communication::put_all_messages(const dht::public_key &peer) {
+            auto messages = m_message_db->get_latest_ten_transactions(peer);
+            message_wrapper lastMessageWrapper;
+            message_wrapper messageWrapper;
+            for (auto const& msg: messages) {
+                messageWrapper = message_wrapper(lastMessageWrapper.sha1(), msg);
+                put_message_wrapper(messageWrapper);
+
+                lastMessageWrapper = messageWrapper;
+            }
+            put_new_message_hash(peer, messageWrapper.sha1());
+
+            send_put_done_signal(peer);
         }
 
 //        void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)

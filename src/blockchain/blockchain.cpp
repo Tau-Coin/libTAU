@@ -2748,7 +2748,7 @@ namespace libTAU::blockchain {
                                     }
 
                                     // get history tx
-                                    if (times < 10 && !pool.is_transaction_in_time_pool(txWrapper.previousHash())) {
+                                    if (times < 10 && !txWrapper.previousHash().is_all_zeros() && !pool.is_transaction_in_time_pool(txWrapper.previousHash())) {
                                         get_transaction_wrapper(chain_id, peer, txWrapper.previousHash(), times + 1);
                                     }
                                 }
