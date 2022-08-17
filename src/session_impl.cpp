@@ -3423,7 +3423,7 @@ namespace {
 
 	bool session_impl::start_chain(const aux::bytes &chain_id) {
 		if(m_blockchain)
-			return m_blockchain->start_chain(chain_id);
+			return m_blockchain->connect_chain(chain_id);
 		return false;
 	}
 

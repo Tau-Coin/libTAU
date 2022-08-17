@@ -31,6 +31,9 @@ namespace libTAU::blockchain {
 
             // get all chains
             m_chains = m_repository->get_all_chains();
+            for (auto const& chain_id: m_chains) {
+                m_chain_connected[chain_id] = false;
+            }
         } catch (std::exception &e) {
             log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
             return false;
@@ -51,7 +54,7 @@ namespace libTAU::blockchain {
 
         // start all chains
         for (auto const &chain_id: m_chains) {
-            start_chain(chain_id);
+            connect_chain(chain_id);
         }
 
 //        m_refresh_timer.expires_after(milliseconds(200));
@@ -152,8 +155,10 @@ namespace libTAU::blockchain {
             }
             m_chains.insert(chain_id);
 
+            m_chain_connected[chain_id] = false;
+
             // start chain
-            start_chain(chain_id);
+            connect_chain(chain_id);
 
             return true;
         } else {
@@ -278,38 +283,37 @@ namespace libTAU::blockchain {
         }
     }
 
-    bool blockchain::start_chain(const aux::bytes &chain_id) {
-        log(LOG_INFO, "INFO: start chain[%s]", aux::toHex(chain_id).c_str());
+    bool blockchain::connect_chain(const aux::bytes &chain_id) {
+        log(LOG_INFO, "INFO: connect chain[%s]", aux::toHex(chain_id).c_str());
 
-        aux::bytes short_chain_id;
-        if (chain_id.size() > short_chain_id_length) {
-            short_chain_id.insert(short_chain_id.end(), chain_id.begin(), chain_id.begin() + short_chain_id_length);
-        } else {
-            short_chain_id = chain_id;
-        }
-        m_short_chain_id_table[short_chain_id] = chain_id;
+        if (!m_chain_connected[chain_id]) {
+            aux::bytes short_chain_id;
+            if (chain_id.size() > short_chain_id_length) {
+                short_chain_id.insert(short_chain_id.end(), chain_id.begin(), chain_id.begin() + short_chain_id_length);
+            } else {
+                short_chain_id = chain_id;
+            }
+            m_short_chain_id_table[short_chain_id] = chain_id;
 
-        m_chain_getting_times[chain_id] = 0;
+            m_chain_getting_times[chain_id] = 0;
 
-        // create tx pool
-        m_tx_pools[chain_id] = tx_pool(m_repository.get());
+            // create tx pool
+            m_tx_pools[chain_id] = tx_pool(m_repository.get());
 
-        // load key point block in memory
-        // load head/tail/consensus block
-        auto head_block = m_repository->get_head_block(chain_id);
-        if (!head_block.empty()) {
-            m_head_blocks[chain_id] = head_block;
-            log(LOG_INFO, "INFO: Head block: %s", head_block.to_string().c_str());
-        }
+            // load key point block in memory
+            // load head/tail/consensus block
+            auto head_block = m_repository->get_head_block(chain_id);
+            if (!head_block.empty()) {
+                m_head_blocks[chain_id] = head_block;
+                log(LOG_INFO, "INFO: Head block: %s", head_block.to_string().c_str());
+            }
 
-        peer_preparation(chain_id);
+            peer_preparation(chain_id);
 
 //        get_pool_from_peer(chain_id, *m_ses.pubkey());
-        get_transfer_transaction(chain_id, *m_ses.pubkey());
+            get_transfer_transaction(chain_id, *m_ses.pubkey());
 
-        send_online_signal(chain_id);
-
-        // create chain status timer
+            // create chain status timer
 //        m_chain_status_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
 //        // set chain status
 //        auto i = m_chain_status_timers.find(chain_id);
@@ -318,14 +322,19 @@ namespace libTAU::blockchain {
 //            i->second.async_wait(std::bind(&blockchain::refresh_chain_status, self(), _1, chain_id));
 //        }
 
-        // create chain timer
-        m_chain_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
-        // start mining
-        auto it = m_chain_timers.find(chain_id);
-        if (it != m_chain_timers.end()) {
-            it->second.expires_after(milliseconds (150));
-            it->second.async_wait(std::bind(&blockchain::refresh_mining_timeout, self(), _1, chain_id));
+            // create chain timer
+            m_chain_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
+            // start mining
+            auto it = m_chain_timers.find(chain_id);
+            if (it != m_chain_timers.end()) {
+                it->second.expires_after(milliseconds(150));
+                it->second.async_wait(std::bind(&blockchain::refresh_mining_timeout, self(), _1, chain_id));
+            }
+
+            m_chain_connected[chain_id] = true;
         }
+
+        send_online_signal(chain_id);
 
         return true;
     }
@@ -478,6 +487,7 @@ namespace libTAU::blockchain {
     void blockchain::clear_chain_cache(const aux::bytes &chain_id) {
 //        m_chains.erase(chain_id);
         m_tx_pools[chain_id].clear();
+        m_chain_connected.erase(chain_id);
 //        m_chain_status.erase(chain_id);
         m_chain_timers.erase(chain_id);
 //        m_chain_status_timers.erase(chain_id);

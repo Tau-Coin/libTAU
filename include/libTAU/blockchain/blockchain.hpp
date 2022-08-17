@@ -180,8 +180,8 @@ namespace blockchain {
         // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
-        // start chain
-        bool start_chain(const aux::bytes &chain_id);
+        // connect chain
+        bool connect_chain(const aux::bytes &chain_id);
 
         // add new bootstrap peers
         bool add_new_bootstrap_peers(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
@@ -230,8 +230,6 @@ namespace blockchain {
         void request_all_state(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void request_all_blocks(const aux::bytes &chain_id, const dht::public_key& peer);
-
-        void send_online_signal(const aux::bytes &chain_id);
 
         // return access list
 //        std::set<dht::public_key> get_gossip_peers(const aux::bytes &chain_id);
@@ -413,6 +411,8 @@ namespace blockchain {
 
 //        void put_voting_block(const aux::bytes &chain_id, const block &blk);
 
+        void send_online_signal(const aux::bytes &chain_id);
+
         void send_new_head_block_signal(const aux::bytes &chain_id);
 
         void send_new_transfer_tx_signal(const aux::bytes &chain_id);
@@ -567,6 +567,9 @@ namespace blockchain {
 
         // short chain id table<short chain id, chain id>
         std::map<aux::bytes, aux::bytes> m_short_chain_id_table;
+
+        // chain connected flag
+        std::map<aux::bytes, bool> m_chain_connected;
 
         std::map<aux::bytes, int> m_chain_getting_times;
 
