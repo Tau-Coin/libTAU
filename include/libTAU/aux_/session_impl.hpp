@@ -708,7 +708,8 @@ namespace aux {
         	bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash& txid);
         	void request_chain_data(const aux::bytes &chain_id, const dht::public_key &peer);
         	void put_all_chain_data(const aux::bytes &chain_id);
-        	void send_online_signal(const aux::bytes &chain_id);
+        	bool send_online_signal(const aux::bytes &chain_id);
+        	bool connect_chain(const aux::bytes &chain_id);
             void get_all_chains(std::set<std::vector<char>>* cids);
 
 			std::int64_t session_current_time_ms() const

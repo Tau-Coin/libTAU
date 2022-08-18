@@ -476,9 +476,15 @@ namespace libTAU {
 	}
 
 	// send online signal
-    void session_handle::send_online_signal(std::vector<char> chain_id)
+    bool session_handle::send_online_signal(std::vector<char> chain_id)
 	{
-		return sync_call(&session_impl::send_online_signal, chain_id);
+		return sync_call_ret<bool>(&session_impl::send_online_signal, chain_id);
+	}
+
+	// connect chain
+    bool session_handle::connect_chain(std::vector<char> chain_id)
+	{
+		return sync_call_ret<bool>(&session_impl::connect_chain, chain_id);
 	}
 
 	// get current time
