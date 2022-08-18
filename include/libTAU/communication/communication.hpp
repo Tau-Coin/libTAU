@@ -57,6 +57,9 @@ namespace libTAU {
             USER_INFO,
         };
 
+        // communication last put time(5min)
+        constexpr std::int64_t communication_min_put_interval = 5 * 60 * 1000;
+
         // default refresh time of main task(300)(s)
         constexpr int communication_default_refresh_time = 300;
 
@@ -278,6 +281,8 @@ namespace libTAU {
 
             // all friends
             std::vector<dht::public_key> m_friends;
+
+            std::map<dht::public_key, std::int64_t> m_all_messages_last_put_time;
 
             // message wrapper
 //            std::map<dht::public_key, message_wrapper> m_message_wrapper;

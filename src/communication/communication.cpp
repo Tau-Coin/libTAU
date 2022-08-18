@@ -948,7 +948,7 @@ namespace libTAU {
 
         void communication::on_dht_put_message_wrapper(dht::public_key const& peer, const sha1_hash &hash, const dht::item &i, int n) {
             if (n > 0) {
-                m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer, hash, get_current_time());
+                m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer, hash, get_current_time() / 1000);
             }
         }
 
@@ -1170,6 +1170,13 @@ namespace libTAU {
         }
 
         void communication::put_all_messages(const dht::public_key &peer) {
+            auto now = get_current_time();
+            if (now < m_all_messages_last_put_time[peer] + communication_min_put_interval) {
+                log(LOG_INFO, "Peer[%s] Already put it", aux::toHex(peer.bytes).c_str());
+                return;
+            }
+            m_all_messages_last_put_time[peer] = now;
+
             auto messages = m_message_db->get_latest_ten_transactions(*m_ses.pubkey(), peer);
             message_wrapper lastMessageWrapper;
             message_wrapper messageWrapper;
