@@ -848,6 +848,8 @@ namespace libTAU {
 
                                 m_ses.alerts().emplace_alert<communication_new_message_alert>(messageWrapper.msg());
 
+                                put_confirmation_roots(peer);
+
                                 if (!m_message_db->save_message_if_not_exist(messageWrapper.msg())) {
                                     log(LOG_ERR, "INFO: Save message[%s] fail.", messageWrapper.msg().to_string().c_str());
                                 }
@@ -1167,6 +1169,8 @@ namespace libTAU {
 
             log(LOG_INFO, "INFO: Put confirmation roots salt[%s]", aux::toHex(salt).c_str());
             publish(salt, messageHashList.get_entry());
+
+            send_confirmation_signal(peer);
         }
 
         void communication::put_all_messages(const dht::public_key &peer) {
