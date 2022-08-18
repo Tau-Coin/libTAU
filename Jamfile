@@ -942,6 +942,7 @@ COMMUNICATION_SOURCES =
 	online_signal
 	message
 	message_db_impl
+	message_wrapper
 	communication
 	message_hash_list
 	immutable_data_info
