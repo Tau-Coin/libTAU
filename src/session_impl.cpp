@@ -3489,10 +3489,21 @@ namespace {
 		return -1; //error
 	}
 
-	void session_impl::send_online_signal(const aux::bytes &chain_id) {
+	bool session_impl::send_online_signal(const aux::bytes &chain_id) {
 		if(m_blockchain) {
-            m_blockchain->send_online_signal(chain_id);
+            //m_blockchain->send_online_signal(chain_id);
+            //return true;
+            return false;
 		}
+        return false;
+	}
+
+	bool session_impl::connect_chain(const aux::bytes &chain_id) {
+		if(m_blockchain) {
+            m_blockchain->connect_chain(chain_id);
+            return true;
+		}
+        return false;
 	}
 
 	void session_impl::set_priority_chain(const aux::bytes &chain_id) {

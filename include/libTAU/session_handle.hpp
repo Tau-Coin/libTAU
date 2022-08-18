@@ -400,7 +400,10 @@ namespace libTAU {
         void set_priority_chain(std::vector<char> chain_id);
 
 		// send online signal
-        void send_online_signal(std::vector<char> chain_id);
+        bool send_online_signal(std::vector<char> chain_id);
+
+		// connect chain
+        bool connect_chain(std::vector<char> chain_id);
 
 		// un-focus on chain
         void unset_priority_chain();
