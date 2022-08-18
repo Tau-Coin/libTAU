@@ -825,14 +825,14 @@ namespace libTAU {
                 const auto& salt = i.salt();
 //            GET_ITEM getItem(chain_id, peer, salt, type);
 
-                log(LOG_INFO, "=====INFO: Got callback[%s], type[%d],salt[%s], timestamp:%" PRId64,
+                log(LOG_INFO, "=====INFO: Got callback[%s], type[%d], salt[%s], timestamp:%" PRId64,
                     i.value().to_string(true).c_str(), type, aux::toHex(i.salt()).c_str(), timestamp);
 
                 if (!i.empty()) {
                     switch (type) {
                         case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH: {
                             sha1_hash new_msg_hash(i.value().string().c_str());
-                            log(LOG_INFO, "INFO: Got new msg hash[%s]", aux::toHex(new_msg_hash).c_str());
+                            log(LOG_INFO, "INFO: Got new message hash[%s]", aux::toHex(new_msg_hash).c_str());
                             if (!new_msg_hash.is_all_zeros()) {
                                 if (!m_message_db->is_message_in_db(new_msg_hash)) {
                                     get_message_wrapper(peer, new_msg_hash);
@@ -844,7 +844,7 @@ namespace libTAU {
                         case COMMUNICATION_GET_ITEM_TYPE::MESSAGE_WRAPPER: {
                             message_wrapper messageWrapper(i.value());
                             if (!messageWrapper.empty()) {
-                                log(LOG_INFO, "INFO: Got new msg [%s]", messageWrapper.msg().to_string().c_str());
+                                log(LOG_INFO, "INFO: Got new message [%s]", messageWrapper.msg().to_string().c_str());
 
                                 m_ses.alerts().emplace_alert<communication_new_message_alert>(messageWrapper.msg());
 

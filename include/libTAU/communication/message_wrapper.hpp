@@ -27,8 +27,10 @@ namespace libTAU {
             // @param Construct with bencode
             explicit message_wrapper(std::string encode): message_wrapper(bdecode(encode)) {}
 
+            explicit message_wrapper(message mMessage) : m_message(std::move(mMessage)), m_hash(m_message.sha1()) {}
+
             message_wrapper(const sha1_hash &mPreviousHash, message mMessage) : m_previous_hash(mPreviousHash),
-                                                                                       m_message(std::move(mMessage)) {}
+                            m_message(std::move(mMessage)), m_hash(m_message.sha1()) {}
 
             const sha1_hash &previousHash() const { return m_previous_hash; }
 
