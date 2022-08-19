@@ -800,8 +800,10 @@ namespace libTAU::blockchain {
         }
 
         if (!tx.empty() && tx.type() == tx_type::type_transfer) {
-            auto miner_act = m_repository->get_account(chain_id, b.miner());
-            if (miner_act.balance() < tx.cost()) {
+            auto sender_act = m_repository->get_account(chain_id, b.tx().sender());
+            if (sender_act.balance() < tx.cost()) {
+                log(LOG_ERR, "INFO chain[%s] sender account[%s] cannot cover cost:%" PRId64,
+                    aux::toHex(chain_id).c_str(), sender_act.to_string().c_str(), tx.cost());
                 return FAIL;
             }
         }
