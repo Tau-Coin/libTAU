@@ -11,8 +11,8 @@ see LICENSE file.
 
 
 #include <sqlite3.h>
-#include <leveldb/db.h>
-#include <leveldb/write_batch.h>
+//#include <leveldb/db.h>
+//#include <leveldb/write_batch.h>
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/repository_track.hpp"
 

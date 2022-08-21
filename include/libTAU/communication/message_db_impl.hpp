@@ -11,7 +11,7 @@ see LICENSE file.
 
 
 #include <sqlite3.h>
-#include <leveldb/db.h>
+//#include <leveldb/db.h>
 
 #include "libTAU/communication/message_db_interface.hpp"
 
@@ -20,7 +20,7 @@ namespace libTAU {
 
         struct message_db_impl final : message_db_interface {
 
-            message_db_impl(sqlite3 *mSqlite, leveldb::DB *mLeveldb) : m_sqlite(mSqlite), m_leveldb(mLeveldb) {}
+            explicit message_db_impl(sqlite3 *mSqlite) : m_sqlite(mSqlite) {}
 
             // init db
             bool init() override;
@@ -58,7 +58,7 @@ namespace libTAU {
             sqlite3 *m_sqlite;
 
             // level db instance
-            leveldb::DB* m_leveldb;
+//            leveldb::DB* m_leveldb;
         };
     }
 }
