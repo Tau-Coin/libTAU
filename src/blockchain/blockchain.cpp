@@ -168,6 +168,11 @@ namespace libTAU::blockchain {
             return false;
         }
 
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+            return false;
+        }
+
         // add peer into db
         for (auto const &peer: peers) {
             log(LOG_INFO, "INFO: chain:%s, add peer:%s", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
@@ -2121,6 +2126,14 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::put_chain_all_data(const bytes &chain_id) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
+            log(LOG_INFO, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+        }
+
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+        }
+
         log(LOG_INFO, "Chain[%s] Put all chain data", aux::toHex(chain_id).c_str());
 
         auto now = get_total_milliseconds();
@@ -2145,6 +2158,14 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::put_chain_all_state(const bytes &chain_id) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
+            log(LOG_INFO, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+        }
+
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+        }
+
         log(LOG_INFO, "Chain[%s] Put all chain state", aux::toHex(chain_id).c_str());
 
         auto now = get_total_milliseconds();
@@ -2164,6 +2185,14 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::put_chain_all_blocks(const bytes &chain_id) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
+            log(LOG_INFO, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+        }
+
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+        }
+
         log(LOG_INFO, "Chain[%s] Put chain blocks", aux::toHex(chain_id).c_str());
 
         auto now = get_total_milliseconds();
@@ -3054,6 +3083,11 @@ namespace libTAU::blockchain {
                     return false;
                 }
 
+                if (!m_chain_connected[chain_id]) {
+                    log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+                    return false;
+                }
+
                 m_tx_pools[chain_id].add_tx(tx);
 
                 if (tx.type() == tx_type::type_transfer) {
@@ -3078,6 +3112,11 @@ namespace libTAU::blockchain {
             return false;
         }
 
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+            return false;
+        }
+
         return m_tx_pools[chain_id].is_transaction_in_fee_pool(txid);
     }
 
@@ -3096,6 +3135,11 @@ namespace libTAU::blockchain {
     std::vector<block> blockchain::getTopTipBlocks(const aux::bytes &chain_id, int topNum) {
         if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return std::vector<block>();
+        }
+
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
             return std::vector<block>();
         }
 
@@ -3125,6 +3169,11 @@ namespace libTAU::blockchain {
             return 0;
         }
 
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+            return 0;
+        }
+
         std::vector<transaction> txs = m_tx_pools[chain_id].get_top_ten_fee_transactions();
         auto size = txs.size();
         if (size > 0) {
@@ -3137,6 +3186,11 @@ namespace libTAU::blockchain {
     std::int64_t blockchain::getMiningTime(const aux::bytes &chain_id) {
         if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return -1;
+        }
+
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
             return -1;
         }
 
@@ -3184,6 +3238,11 @@ namespace libTAU::blockchain {
             return std::set<dht::public_key>();
         }
 
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+            return std::set<dht::public_key>();
+        }
+
         std::set<dht::public_key> peers;
         auto& access_list = m_access_list[chain_id];
         for (auto const& item: access_list) {
@@ -3196,6 +3255,11 @@ namespace libTAU::blockchain {
     std::set<dht::public_key> blockchain::get_ban_list(const aux::bytes &chain_id) {
         if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return std::set<dht::public_key>();
+        }
+
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
             return std::set<dht::public_key>();
         }
 
@@ -3373,6 +3437,11 @@ namespace libTAU::blockchain {
 
             if (m_chains.find(chain_id) == m_chains.end()) {
                 log(LOG_INFO, "INFO: Data from unfollowed chain chain[%s]", aux::toHex(chain_id).c_str());
+                return;
+            }
+
+            if (!m_chain_connected[chain_id]) {
+                log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
                 return;
             }
 
