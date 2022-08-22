@@ -50,6 +50,19 @@ namespace libTAU::blockchain {
             return false;
         }
 
+        for (auto const& chain_id: m_chains) {
+            try {
+                if (!init_chain(chain_id)) {
+                    log(LOG_ERR, "INFO: Init chain[%s] fail", aux::toHex(chain_id).c_str());
+                    m_chain_connected[chain_id] = true;
+                    return false;
+                }
+            } catch(std::exception &e) {
+                log(LOG_ERR, "Exception init chain %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+                continue;
+            }
+        }
+
         m_stop = false;
 
         m_refresh_timer.expires_after(milliseconds(100));
@@ -151,9 +164,14 @@ namespace libTAU::blockchain {
             }
             m_chains.insert(chain_id);
 
+            if (!init_chain(chain_id)) {
+                log(LOG_ERR, "INFO: Init chain[%s] fail", aux::toHex(chain_id).c_str());
+                return false;
+            }
+
             m_chain_connected[chain_id] = false;
 
-            // start chain
+            // connect chain
             connect_chain(chain_id);
 
             return true;
@@ -284,31 +302,35 @@ namespace libTAU::blockchain {
         }
     }
 
+    bool blockchain::init_chain(const bytes &chain_id) {
+        aux::bytes short_chain_id;
+        if (chain_id.size() > short_chain_id_length) {
+            short_chain_id.insert(short_chain_id.end(), chain_id.begin(), chain_id.begin() + short_chain_id_length);
+        } else {
+            short_chain_id = chain_id;
+        }
+        m_short_chain_id_table[short_chain_id] = chain_id;
+
+        m_chain_getting_times[chain_id] = 0;
+
+        // create tx pool
+        m_tx_pools[chain_id] = tx_pool(m_repository.get());
+
+        // load key point block in memory
+        // load head/tail/consensus block
+        auto head_block = m_repository->get_head_block(chain_id);
+        if (!head_block.empty()) {
+            m_head_blocks[chain_id] = head_block;
+            log(LOG_INFO, "INFO: Head block: %s", head_block.to_string().c_str());
+        }
+
+        return true;
+    }
+
     bool blockchain::connect_chain(const aux::bytes &chain_id) {
         log(LOG_INFO, "INFO: connect chain[%s]", aux::toHex(chain_id).c_str());
 
         if (!m_chain_connected[chain_id]) {
-            aux::bytes short_chain_id;
-            if (chain_id.size() > short_chain_id_length) {
-                short_chain_id.insert(short_chain_id.end(), chain_id.begin(), chain_id.begin() + short_chain_id_length);
-            } else {
-                short_chain_id = chain_id;
-            }
-            m_short_chain_id_table[short_chain_id] = chain_id;
-
-            m_chain_getting_times[chain_id] = 0;
-
-            // create tx pool
-            m_tx_pools[chain_id] = tx_pool(m_repository.get());
-
-            // load key point block in memory
-            // load head/tail/consensus block
-            auto head_block = m_repository->get_head_block(chain_id);
-            if (!head_block.empty()) {
-                m_head_blocks[chain_id] = head_block;
-                log(LOG_INFO, "INFO: Head block: %s", head_block.to_string().c_str());
-            }
-
             peer_preparation(chain_id);
 
 //        get_pool_from_peer(chain_id, *m_ses.pubkey());
