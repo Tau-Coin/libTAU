@@ -30,7 +30,8 @@ namespace libTAU {
         m_timestamp(mTimestamp), m_sender(mSender),
         m_receiver(mReceiver), m_payload(std::move(mPayload)) {
             // timestamp
-            m_entry["t"] = entry(m_timestamp);
+            auto timestamp = aux::toLittleEndianString(m_timestamp);
+            m_entry["t"] = entry(timestamp);
             // sender
             m_entry["s"] = entry(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
             // receiver
@@ -47,7 +48,9 @@ namespace libTAU {
             // timestamp
             if (auto* i = const_cast<entry *>(e.find_key("t")))
             {
-                m_timestamp = i->integer();
+                auto timestamp = i->string();
+                m_timestamp = aux::fromLittleEndianString<std::int64_t>(timestamp);
+//                m_timestamp = i->integer();
             }
             // sender
             if (auto* i = const_cast<entry *>(e.find_key("s")))
