@@ -2255,6 +2255,8 @@ namespace libTAU::blockchain {
     void blockchain::send_new_transfer_tx_signal(const bytes &chain_id) {
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
+        auto encode = signalEntry.get_encode();
+        log(LOG_INFO, "=======================length:%lu", encode.size());
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
             log(LOG_INFO, "Chain[%s] Send peer[%s] new transfer tx signal[%s]", aux::toHex(chain_id).c_str(),
@@ -2266,6 +2268,8 @@ namespace libTAU::blockchain {
     void blockchain::send_new_note_tx_signal(const bytes &chain_id) {
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
+        auto encode = signalEntry.get_encode();
+        log(LOG_INFO, "=======================length:%lu", encode.size());
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
             log(LOG_INFO, "Chain[%s] Send peer[%s] new note tx signal[%s]", aux::toHex(chain_id).c_str(),

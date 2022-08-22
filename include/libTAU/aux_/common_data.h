@@ -89,6 +89,31 @@ inline bytes asBytes(std::string const& _b)
 /// @example asNibbles("A")[0] == 4 && asNibbles("A")[1] == 1
 bytes asNibbles(bytesConstRef const& _s);
 
+template <typename T>
+inline std::string toLittleEndianString(T _val)
+{
+    std::string ret;
+    for (; _val != 0; _val >>= 8)
+    {
+        T v = _val & (T)0xff;
+        ret.push_back(static_cast<char>(v));
+    }
+
+    return ret;
+}
+
+template <typename T>
+inline T fromLittleEndianString(const std::string& _str)
+{
+    T ret = (T)0;
+    std::string str;
+    str.resize(_str.size());
+    std::reverse_copy(_str.begin(), _str.end(), str.begin());
+    for (auto i: str)
+        ret = (T)((ret << 8) | (char)(i));
+
+    return ret;
+}
 
 // Big-endian to/from host endian conversion functions.
 

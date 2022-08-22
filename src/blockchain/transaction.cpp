@@ -27,22 +27,28 @@ namespace libTAU::blockchain {
         // chain id
         e["i"] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // version
-        e["v"] = entry(m_version);
+        auto version = aux::toLittleEndianString((int)m_version);
+        e["v"] = entry(version);
         // type
-        e["e"] = entry(m_type);
+        auto type = aux::toLittleEndianString((int)m_type);
+        e["e"] = entry(type);
         // timestamp
-        e["t"] = entry(m_timestamp);
+        auto timestamp = aux::toLittleEndianString(m_timestamp);
+        e["t"] = entry(timestamp);
         // sender
         e["s"] = entry(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
         if (m_type == tx_type::type_transfer) {
             // receiver
             e["r"] = entry(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
             // nonce
-            e["n"] = entry(m_nonce);
+            auto nonce = aux::toLittleEndianString(m_nonce);
+            e["n"] = entry(nonce);
             // fee
-            e["f"] = entry(m_fee);
+            auto fee = aux::toLittleEndianString(m_fee);
+            e["f"] = entry(fee);
             // amount
-            e["a"] = entry(m_amount);
+            auto amount = aux::toLittleEndianString(m_amount);
+            e["a"] = entry(amount);
         }
         // payload
         e["p"] = entry(std::string(m_payload.begin(), m_payload.end()));
@@ -112,17 +118,23 @@ namespace libTAU::blockchain {
         // version
         if (auto* i = const_cast<entry *>(e.find_key("v")))
         {
-            m_version = static_cast<tx_version>(i->integer());
+            auto str = i->string();
+            int version = aux::fromLittleEndianString<int>(str);
+            m_version = static_cast<tx_version>(version);
         }
         // type
         if (auto* i = const_cast<entry *>(e.find_key("e")))
         {
-            m_type = static_cast<tx_type>(i->integer());
+            auto str = i->string();
+            int type = aux::fromLittleEndianString<int>(str);
+            m_type = static_cast<tx_type>(type);
         }
         // timestamp
         if (auto* i = const_cast<entry *>(e.find_key("t")))
         {
-            m_timestamp = i->integer();
+            auto timestamp = i->string();
+            m_timestamp = aux::fromLittleEndianString<std::int64_t>(timestamp);
+//            m_timestamp = i->integer();
         }
         // sender
         if (auto* i = const_cast<entry *>(e.find_key("s")))
@@ -139,17 +151,23 @@ namespace libTAU::blockchain {
         // nonce
         if (auto* i = const_cast<entry *>(e.find_key("n")))
         {
-            m_nonce = i->integer();
+            auto nonce = i->string();
+            m_nonce = aux::fromLittleEndianString<std::int64_t>(nonce);
+//            m_nonce = i->integer();
         }
         // amount
         if (auto* i = const_cast<entry *>(e.find_key("a")))
         {
-            m_amount = i->integer();
+            auto amount = i->string();
+            m_amount = aux::fromLittleEndianString<std::int64_t>(amount);
+//            m_amount = i->integer();
         }
         // fee
         if (auto* i = const_cast<entry *>(e.find_key("f")))
         {
-            m_fee = i->integer();
+            auto fee = i->string();
+            m_fee = aux::fromLittleEndianString<std::int64_t>(fee);
+//            m_fee = i->integer();
         }
         // payload
         if (auto* i = const_cast<entry *>(e.find_key("p")))

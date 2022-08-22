@@ -14,13 +14,17 @@ namespace libTAU::common {
         // protocol id
         if (auto* i = const_cast<entry *>(e.find_key(protocol_type)))
         {
-            m_pid = static_cast<signal_id>(i->integer());
+            auto str = i->string();
+            int pid = aux::fromLittleEndianString<int>(str);
+            m_pid = static_cast<signal_id>(pid);
         }
 
         // timestamp
         if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
         {
-            m_timestamp = i->integer();
+            auto timestamp = i->string();
+            m_timestamp = aux::fromLittleEndianString<std::int64_t>(timestamp);
+//            m_timestamp = i->integer();
         }
 
         // short chain id
@@ -35,10 +39,12 @@ namespace libTAU::common {
         entry e(entry::dictionary_t);
 
         // protocol id
-        e[protocol_type] = entry(m_pid);
+        auto pid = aux::toLittleEndianString((int)m_pid);
+        e[protocol_type] = entry(pid);
 
+        auto timestamp = aux::toLittleEndianString(m_timestamp);
         // timestamp
-        e[entry_time] = entry(m_timestamp);
+        e[entry_time] = entry(timestamp);
 
         // short chain id
         if (!m_short_chain_id.empty()) {

@@ -23,11 +23,13 @@ namespace libTAU::blockchain {
         e["p"] = entry(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
         // balance
         if (m_balance != 0) {
-            e["b"] = entry(m_balance);
+            auto balance = aux::toLittleEndianString(m_balance);
+            e["b"] = entry(balance);
         }
         // nonce
         if (m_nonce != 0) {
-            e["n"] = entry(m_nonce);
+            auto nonce = aux::toLittleEndianString(m_nonce);
+            e["n"] = entry(nonce);
         }
 //        // effective power
 //        if (m_effective_power != 0) {
@@ -51,12 +53,16 @@ namespace libTAU::blockchain {
         // balance
         if (auto* i = const_cast<entry *>(e.find_key("b")))
         {
-            m_balance = i->integer();
+            auto balance = i->string();
+            m_balance = aux::fromLittleEndianString<std::int64_t>(balance);
+//            m_balance = i->integer();
         }
         // nonce
         if (auto* i = const_cast<entry *>(e.find_key("n")))
         {
-            m_nonce = i->integer();
+            auto nonce = i->string();
+            m_nonce = aux::fromLittleEndianString<std::int64_t>(nonce);
+//            m_nonce = i->integer();
         }
 //        // effective power
 //        if (auto* i = const_cast<entry *>(e.find_key("p")))

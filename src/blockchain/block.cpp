@@ -77,17 +77,22 @@ namespace libTAU::blockchain {
         // chain id
         e["i"] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
         // version
-        e["v"] = entry(m_version);
+        auto version = aux::toLittleEndianString((int)m_version);
+        e["v"] = entry(version);
         // timestamp
-        e["t"] = entry(m_timestamp);
+        auto timestamp = aux::toLittleEndianString(m_timestamp);
+        e["t"] = entry(timestamp);
         // block number
-        e["n"] = entry(m_block_number);
+        auto block_number = aux::toLittleEndianString(m_block_number);
+        e["n"] = entry(block_number);
         // previous block hash
         e["h"] = entry(m_previous_block_hash.to_string());
         // base target
-        e["b"] = entry(static_cast<std::int64_t>(m_base_target));
+        auto base_target = aux::toLittleEndianString(m_base_target);
+        e["b"] = entry(base_target);
         // cumulative difficulty
-        e["d"] = entry(static_cast<std::int64_t>(m_cumulative_difficulty));
+        auto cumulative_difficulty = aux::toLittleEndianString(m_cumulative_difficulty);
+        e["d"] = entry(cumulative_difficulty);
         // generation signature
         e["g"] = entry(m_generation_signature.to_string());
         // multiplex hash
@@ -113,17 +118,23 @@ namespace libTAU::blockchain {
         // version
         if (auto* i = const_cast<entry *>(e.find_key("v")))
         {
-            m_version = static_cast<block_version>(i->integer());
+            auto str = i->string();
+            int version = aux::fromLittleEndianString<int>(str);
+            m_version = static_cast<block_version>(version);
         }
         // timestamp
         if (auto* i = const_cast<entry *>(e.find_key("t")))
         {
-            m_timestamp = i->integer();
+            auto timestamp = i->string();
+            m_timestamp = aux::fromLittleEndianString<std::int64_t>(timestamp);
+//            m_timestamp = i->integer();
         }
         // block number
         if (auto* i = const_cast<entry *>(e.find_key("n")))
         {
-            m_block_number = i->integer();
+            auto block_number = i->string();
+            m_block_number = aux::fromLittleEndianString<std::int64_t>(block_number);
+//            m_block_number = i->integer();
         }
         // previous block hash
         if (auto* i = const_cast<entry *>(e.find_key("h")))
@@ -134,12 +145,16 @@ namespace libTAU::blockchain {
         // base target
         if (auto* i = const_cast<entry *>(e.find_key("b")))
         {
-            m_base_target = static_cast<std::uint64_t>(i->integer());
+            auto base_target = i->string();
+            m_base_target = aux::fromLittleEndianString<std::uint64_t>(base_target);
+//            m_base_target = static_cast<std::uint64_t>(i->integer());
         }
         // cumulative difficulty
         if (auto* i = const_cast<entry *>(e.find_key("d")))
         {
-            m_cumulative_difficulty = static_cast<std::uint64_t>(i->integer());
+            auto cumulative_difficulty = i->string();
+            m_cumulative_difficulty = aux::fromLittleEndianString<std::uint64_t>(cumulative_difficulty);
+//            m_cumulative_difficulty = static_cast<std::uint64_t>(i->integer());
         }
         // generation signature
         if (auto* i = const_cast<entry *>(e.find_key("g")))
