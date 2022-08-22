@@ -1067,14 +1067,16 @@ namespace libTAU::blockchain {
                     }
                 }
 
-                if (it->second.m_head_block.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty() &&
+                if ((it->second.m_head_block.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty() ||
+                    (it->second.m_head_block.cumulative_difficulty() == m_head_blocks[chain_id].cumulative_difficulty() && peer > *m_ses.pubkey())) &&
                     it->second.m_head_block.genesis_block_hash() != m_head_blocks[chain_id].genesis_block_hash()) {
                     clear_chain_all_state_in_cache_and_db(chain_id);
                 }
 
                 process_genesis_block(chain_id, it->second.m_genesis_block, arrays);
 
-                if (it->second.m_head_block.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
+                if (it->second.m_head_block.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty() ||
+                    (it->second.m_head_block.cumulative_difficulty() == m_head_blocks[chain_id].cumulative_difficulty() && peer > *m_ses.pubkey())) {
                     try_to_rebranch(chain_id, it->second.m_head_block, false, peer);
                 }
             }
@@ -1544,7 +1546,8 @@ namespace libTAU::blockchain {
         log(LOG_ERR, "INFO: chain:%s, remote head block[%s] local head block[%s].",
             aux::toHex(chain_id).c_str(), it->second.m_head_block.to_string().c_str(), head_block.to_string().c_str());
 
-        if (it->second.m_head_block.cumulative_difficulty() > head_block.cumulative_difficulty()) {
+        if (it->second.m_head_block.cumulative_difficulty() > head_block.cumulative_difficulty() ||
+                (it->second.m_head_block.cumulative_difficulty() == head_block.cumulative_difficulty() && peer > *m_ses.pubkey())) {
             log(LOG_ERR, "INFO: chain:%s, remote head block genesis block hash[%s] local head block genesis block hash[%s].",
                 aux::toHex(chain_id).c_str(), aux::toHex(it->second.m_head_block.genesis_block_hash()).c_str(),
                 aux::toHex(head_block.genesis_block_hash()).c_str());
