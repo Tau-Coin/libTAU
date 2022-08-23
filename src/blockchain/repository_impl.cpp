@@ -708,7 +708,7 @@ namespace libTAU::blockchain {
             sqlite3_bind_null(stmt, 11);
         } else {
             auto tx_encode = blk.tx().get_encode();
-            sqlite3_bind_blob(stmt, 11, tx_encode.data(), tx_encode.size(), nullptr);
+            sqlite3_bind_blob(stmt, 11, tx_encode.data(), tx_encode.size(), SQLITE_TRANSIENT);
         }
         sqlite3_bind_blob(stmt, 12, blk.miner().bytes.data(), dht::public_key::len, nullptr);
         sqlite3_bind_blob(stmt, 13, blk.signature().bytes.data(), dht::signature::len, nullptr);
