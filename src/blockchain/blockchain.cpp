@@ -1971,7 +1971,7 @@ namespace libTAU::blockchain {
             std::vector<account> states;
             for (auto const &state: all_state) {
                 states.push_back(state);
-                if (states.size() == 20) {
+                if (states.size() == MAX_STATE_ARRAY_SIZE) {
                     state_array stateArray(states);
                     arrays.push_back(stateArray);
 

@@ -43,7 +43,9 @@ namespace libTAU::blockchain {
 
     constexpr int OUTDATED_BLOCK_NUMBER = 2 * 30 * 288;
 
-    constexpr int MAX_ACCOUNT_SIZE = 1000;
+    constexpr int MAX_ACCOUNT_SIZE = 645;
+
+    constexpr int MAX_STATE_ARRAY_SIZE = 15;
 
     constexpr int short_chain_id_length = 4;
 
