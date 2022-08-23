@@ -43,9 +43,9 @@ namespace libTAU::blockchain {
 
     constexpr int OUTDATED_BLOCK_NUMBER = 2 * 30 * 288;
 
-    constexpr int MAX_ACCOUNT_SIZE = 645;
+    constexpr int MAX_ACCOUNT_SIZE = 688;
 
-    constexpr int MAX_STATE_ARRAY_SIZE = 15;
+    constexpr int MAX_STATE_ARRAY_SIZE = MAX_ACCOUNT_SIZE / 43;
 
     constexpr int short_chain_id_length = 4;
 
@@ -62,7 +62,7 @@ namespace libTAU::blockchain {
     constexpr int MAX_RATIO = 335;
 
     // genesis block balance
-    constexpr int64_t GENESIS_BLOCK_BALANCE = 100000000000000;
+    constexpr int64_t GENESIS_BLOCK_BALANCE = 1000000;
 
     constexpr uint64_t MAX_BASE_TARGET = UINT64_MAX / 2;
 
