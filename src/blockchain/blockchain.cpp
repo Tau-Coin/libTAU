@@ -3454,10 +3454,10 @@ namespace libTAU::blockchain {
             return;
         }
 
-        if(payload.type() != entry::dictionary_t){
-            log(LOG_ERR, "ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
-            return;
-        }
+//        if(payload.type() != entry::dictionary_t){
+//            log(LOG_ERR, "ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
+//            return;
+//        }
 
         try {
             common::signal_entry signalEntry(payload);

@@ -223,10 +223,10 @@ namespace libTAU {
 //        }
 
         void communication::on_dht_relay(dht::public_key const& peer, entry const& payload) {
-            if(payload.type() != entry::dictionary_t){
-                log(LOG_ERR, "ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
-                return;
-            }
+//            if(payload.type() != entry::dictionary_t){
+//                log(LOG_ERR, "ERROR: relay data not dict. to string: %s", payload.to_string().c_str());
+//                return;
+//            }
 
             // construct mutable data wrapper from entry
             try {

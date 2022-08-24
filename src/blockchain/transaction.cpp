@@ -22,44 +22,44 @@ namespace libTAU::blockchain {
     }
 
     entry transaction::get_entry_without_signature() const {
-        entry e(entry::dictionary_t);
+        entry::list_type lst;
 
         // chain id
-        e["i"] = entry(std::string(m_chain_id.begin(), m_chain_id.end()));
+        lst.push_back(std::string(m_chain_id.begin(), m_chain_id.end()));
         // version
         auto version = aux::toLittleEndianString((int)m_version);
-        e["v"] = entry(version);
+        lst.push_back(version);
         // type
         auto type = aux::toLittleEndianString((int)m_type);
-        e["e"] = entry(type);
+        lst.push_back(type);
         // timestamp
         auto timestamp = aux::toLittleEndianString(m_timestamp);
-        e["t"] = entry(timestamp);
+        lst.push_back(timestamp);
         // sender
-        e["s"] = entry(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
+        lst.push_back(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
         if (m_type == tx_type::type_transfer) {
             // receiver
-            e["r"] = entry(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
+            lst.push_back(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
             // nonce
             auto nonce = aux::toLittleEndianString(m_nonce);
-            e["n"] = entry(nonce);
+            lst.push_back(nonce);
             // fee
             auto fee = aux::toLittleEndianString(m_fee);
-            e["f"] = entry(fee);
+            lst.push_back(fee);
             // amount
             auto amount = aux::toLittleEndianString(m_amount);
-            e["a"] = entry(amount);
+            lst.push_back(amount);
         }
         // payload
-        e["p"] = entry(std::string(m_payload.begin(), m_payload.end()));
+        lst.push_back(std::string(m_payload.begin(), m_payload.end()));
 
-        return e;
+        return lst;
     }
 
     entry transaction::get_entry() const {
         entry e = get_entry_without_signature();
         // signature
-        e["sig"] = entry(std::string(m_signature.bytes.begin(), m_signature.bytes.end()));
+        e.list().push_back(std::string(m_signature.bytes.begin(), m_signature.bytes.end()));
 
         return e;
     }
@@ -109,77 +109,61 @@ namespace libTAU::blockchain {
     }
 
     void transaction::populate(const entry &e) {
-        // chain id
-        if (auto* i = const_cast<entry *>(e.find_key("i")))
-        {
-            auto chain_id = i->string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-        }
-        // version
-        if (auto* i = const_cast<entry *>(e.find_key("v")))
-        {
-            auto str = i->string();
-            int version = aux::fromLittleEndianString<int>(str);
-            m_version = static_cast<tx_version>(version);
-        }
-        // type
-        if (auto* i = const_cast<entry *>(e.find_key("e")))
-        {
-            auto str = i->string();
-            int type = aux::fromLittleEndianString<int>(str);
+        auto const& lst = e.list();
+
+        if (lst.size() == 7) {
+            // type
+            int type = aux::fromLittleEndianString<int>(lst[2].string());
             m_type = static_cast<tx_type>(type);
-        }
-        // timestamp
-        if (auto* i = const_cast<entry *>(e.find_key("t")))
-        {
-            auto timestamp = i->string();
-            m_timestamp = aux::fromLittleEndianString<std::int64_t>(timestamp);
-//            m_timestamp = i->integer();
-        }
-        // sender
-        if (auto* i = const_cast<entry *>(e.find_key("s")))
-        {
-            auto sender = i->string();
-            m_sender = dht::public_key(sender.data());
-        }
-        // receiver
-        if (auto* i = const_cast<entry *>(e.find_key("r")))
-        {
-            auto receiver = i->string();
-            m_receiver = dht::public_key(receiver.data());
-        }
-        // nonce
-        if (auto* i = const_cast<entry *>(e.find_key("n")))
-        {
-            auto nonce = i->string();
-            m_nonce = aux::fromLittleEndianString<std::int64_t>(nonce);
-//            m_nonce = i->integer();
-        }
-        // amount
-        if (auto* i = const_cast<entry *>(e.find_key("a")))
-        {
-            auto amount = i->string();
-            m_amount = aux::fromLittleEndianString<std::int64_t>(amount);
-//            m_amount = i->integer();
-        }
-        // fee
-        if (auto* i = const_cast<entry *>(e.find_key("f")))
-        {
-            auto fee = i->string();
-            m_fee = aux::fromLittleEndianString<std::int64_t>(fee);
-//            m_fee = i->integer();
-        }
-        // payload
-        if (auto* i = const_cast<entry *>(e.find_key("p")))
-        {
-            auto payload = i->string();
+            if (m_type != tx_type::type_note)
+                return;
+
+            // chain id
+            auto chain_id = lst[0].string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+            // version
+            int version = aux::fromLittleEndianString<int>(lst[1].string());
+            m_version = static_cast<tx_version>(version);
+            // balance
+            m_timestamp = aux::fromLittleEndianString<std::int64_t>(lst[3].string());
+            // sender
+            m_sender = dht::public_key(lst[4].string().data());
+            // payload
+            auto payload = lst[5].string();
             m_payload = aux::bytes(payload.begin(), payload.end());
+            // signature
+            m_signature = dht::signature(lst[6].string().data());
         }
-        // signature
-        if (auto* i = const_cast<entry *>(e.find_key("sig")))
-        {
-            auto signature = i->string();
-            m_signature = dht::signature(signature.data());
+
+        if (lst.size() == 11) {
+            int type = aux::fromLittleEndianString<int>(lst[2].string());
+            m_type = static_cast<tx_type>(type);
+            if (m_type != tx_type::type_transfer)
+                return;
+
+            // chain id
+            auto chain_id = lst[0].string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+            // version
+            int version = aux::fromLittleEndianString<int>(lst[1].string());
+            m_version = static_cast<tx_version>(version);
+            // balance
+            m_timestamp = aux::fromLittleEndianString<std::int64_t>(lst[3].string());
+            // sender
+            m_sender = dht::public_key(lst[4].string().data());
+            // receiver
+            m_receiver = dht::public_key(lst[5].string().data());
+            // nonce
+            m_nonce = aux::fromLittleEndianString<std::int64_t>(lst[6].string());
+            // fee
+            m_fee = aux::fromLittleEndianString<std::int64_t>(lst[7].string());
+            // amount
+            m_amount = aux::fromLittleEndianString<std::int64_t>(lst[8].string());
+            // payload
+            auto payload = lst[9].string();
+            m_payload = aux::bytes(payload.begin(), payload.end());
+            // signature
+            m_signature = dht::signature(lst[10].string().data());
         }
     }
 

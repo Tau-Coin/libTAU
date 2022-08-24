@@ -17,63 +17,34 @@ namespace libTAU::blockchain {
     }
 
     entry account::get_entry() const {
-        entry e(entry::dictionary_t);
+        entry::list_type lst;
 
         // peer
-        e["p"] = entry(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
+        auto peer = std::string(m_peer.bytes.begin(), m_peer.bytes.end());
+        lst.push_back(peer);
         // balance
-        if (m_balance != 0) {
-            auto balance = aux::toLittleEndianString(m_balance);
-            e["b"] = entry(balance);
-        }
+        auto balance = aux::toLittleEndianString(m_balance);
+        lst.push_back(balance);
         // nonce
-        if (m_nonce != 0) {
-            auto nonce = aux::toLittleEndianString(m_nonce);
-            e["n"] = entry(nonce);
-        }
-//        // effective power
-//        if (m_effective_power != 0) {
-//            e["p"] = entry(m_effective_power);
-//        }
-//        // block number
-//        if (m_block_number != 0) {
-//            e["r"] = entry(m_block_number);
-//        }
+        auto nonce = aux::toLittleEndianString(m_nonce);
+        lst.push_back(nonce);
 
-        return e;
+        return lst;
     }
 
     void account::populate(const entry &e) {
+        auto const& lst = e.list();
+
+        if (lst.size() != 3)
+            return;
+
         // peer
-        if (auto* i = const_cast<entry *>(e.find_key("p")))
-        {
-            auto peer = i->string();
-            m_peer = dht::public_key(peer.data());
-        }
+        m_peer = dht::public_key(lst[0].string().data());
+
         // balance
-        if (auto* i = const_cast<entry *>(e.find_key("b")))
-        {
-            auto balance = i->string();
-            m_balance = aux::fromLittleEndianString<std::int64_t>(balance);
-//            m_balance = i->integer();
-        }
+        m_balance = aux::fromLittleEndianString<std::int64_t>(lst[1].string());
         // nonce
-        if (auto* i = const_cast<entry *>(e.find_key("n")))
-        {
-            auto nonce = i->string();
-            m_nonce = aux::fromLittleEndianString<std::int64_t>(nonce);
-//            m_nonce = i->integer();
-        }
-//        // effective power
-//        if (auto* i = const_cast<entry *>(e.find_key("p")))
-//        {
-//            m_effective_power = i->integer();
-//        }
-//        // block number
-//        if (auto* i = const_cast<entry *>(e.find_key("r")))
-//        {
-//            m_block_number = i->integer();
-//        }
+        m_nonce = aux::fromLittleEndianString<std::int64_t>(lst[2].string());
     }
 
     std::string account::to_string() const {

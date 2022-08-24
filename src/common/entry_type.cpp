@@ -11,53 +11,47 @@ see LICENSE file.
 namespace libTAU::common {
 
     signal_entry::signal_entry(const entry &e) {
-        // protocol id
-        if (auto* i = const_cast<entry *>(e.find_key(protocol_type)))
-        {
-            auto str = i->string();
-            int pid = aux::fromLittleEndianString<int>(str);
+        auto const& lst = e.list();
+
+        if (lst.size() == 2) {
+            // protocol id
+            int pid = aux::fromLittleEndianString<int>(lst[0].string());
             m_pid = static_cast<signal_id>(pid);
+            // timestamp
+            m_timestamp = aux::fromLittleEndianString<std::int64_t>(lst[1].string());
         }
 
-        // timestamp
-        if (auto* i = const_cast<entry *>(e.find_key(entry_time)))
-        {
-            auto timestamp = i->string();
-            m_timestamp = aux::fromLittleEndianString<std::int64_t>(timestamp);
-//            m_timestamp = i->integer();
-        }
-
-        // short chain id
-        if (auto* i = const_cast<entry *>(e.find_key(entry_short_chain_id)))
-        {
-            auto chain_id = i->string();
+        if (lst.size() == 3) {
+            // protocol id
+            int pid = aux::fromLittleEndianString<int>(lst[0].string());
+            m_pid = static_cast<signal_id>(pid);
+            // timestamp
+            m_timestamp = aux::fromLittleEndianString<std::int64_t>(lst[1].string());
+            // short chain id
+            auto chain_id = lst[2].string();
             m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
         }
     }
 
     entry signal_entry::get_entry() {
-        entry e(entry::dictionary_t);
+        entry::list_type lst;
 
         // protocol id
         auto pid = aux::toLittleEndianString((int)m_pid);
-        e[protocol_type] = entry(pid);
-
-        auto timestamp = aux::toLittleEndianString(m_timestamp);
+        lst.push_back(pid);
         // timestamp
-        e[entry_time] = entry(timestamp);
-
+        auto timestamp = aux::toLittleEndianString(m_timestamp);
+        lst.push_back(timestamp);
         // short chain id
         if (!m_short_chain_id.empty()) {
             if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
-                e[entry_short_chain_id] = entry(
-                        std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
+                lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
             } else {
-                e[entry_short_chain_id] = entry(
-                        std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
+                lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
             }
         }
 
-        return e;
+        return lst;
     }
 
     std::string signal_entry::get_encode() {

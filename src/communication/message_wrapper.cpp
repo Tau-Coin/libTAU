@@ -14,31 +14,28 @@ namespace libTAU::communication {
     }
 
     entry message_wrapper::get_entry() const {
-        entry e(entry::dictionary_t);
+        entry::list_type lst;
 
         // previous hash
-        e["h"] = entry(m_previous_hash.to_string());
-        if (!m_message.empty()) {
-            // message
-            e["m"] = m_message.get_entry();
-        }
+        lst.push_back(m_previous_hash.to_string());
+        // message
+        lst.push_back(m_message.get_entry());
 
-        return e;
+        return lst;
     }
 
     void message_wrapper::populate(const entry &e) {
+        auto const& lst = e.list();
+
+        if (lst.size() != 2)
+            return;
+
         // previous hash
-        if (auto* i = const_cast<entry *>(e.find_key("h")))
-        {
-            auto previous_block_hash = i->string();
-            m_previous_hash = sha1_hash(previous_block_hash.data());
-        }
+        m_previous_hash = sha1_hash(lst[0].string().data());
+
         // message
-        if (auto* i = const_cast<entry *>(e.find_key("m")))
-        {
-            m_message = message(*i);
-            m_hash = m_message.sha1();
-        }
+        m_message = message(lst[1]);
+        m_hash = m_message.sha1();
     }
 
     std::string message_wrapper::get_encode() const {

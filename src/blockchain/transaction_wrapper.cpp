@@ -15,31 +15,28 @@ namespace libTAU::blockchain {
     }
 
     entry transaction_wrapper::get_entry() const {
-        entry e(entry::dictionary_t);
+        entry::list_type lst;
 
         // previous hash
-        e["h"] = entry(m_previous_hash.to_string());
-        if (!m_tx.empty()) {
-            // tx
-            e["t"] = m_tx.get_entry();
-        }
+        lst.push_back(m_previous_hash.to_string());
+        // tx
+        lst.push_back(m_tx.get_entry());
 
-        return e;
+        return lst;
     }
 
     void transaction_wrapper::populate(const entry &e) {
+        auto const& lst = e.list();
+
+        if (lst.size() != 2)
+            return;
+
         // previous hash
-        if (auto* i = const_cast<entry *>(e.find_key("h")))
-        {
-            auto previous_block_hash = i->string();
-            m_previous_hash = sha1_hash(previous_block_hash.data());
-        }
-        // transaction
-        if (auto* i = const_cast<entry *>(e.find_key("t")))
-        {
-            m_tx = transaction(*i);
-            m_hash = m_tx.sha1();
-        }
+        m_previous_hash = sha1_hash(lst[0].string().data());
+
+        // tx
+        m_tx = transaction(lst[1]);
+        m_hash = m_tx.sha1();
     }
 
     std::string transaction_wrapper::get_encode() const {
