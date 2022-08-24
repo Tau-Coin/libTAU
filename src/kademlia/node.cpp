@@ -21,6 +21,7 @@ see LICENSE file.
 #include <tuple>
 #include <array>
 #include <chrono>
+#include <random>
 
 #ifndef TORRENT_DISABLE_LOGGING
 #include "libTAU/hex.hpp" // to_hex
@@ -85,7 +86,7 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	, get_foreign_node_t get_foreign_node
 	, dht_storage_interface& storage
 	, std::shared_ptr<account_manager> account_manager
-	, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage)
+	, bs_nodes_storage_interface& bs_nodes_storage)
 	: m_settings(settings)
 	, m_id(nid)
 	, m_table(m_id, aux::is_v4(sock.get_local_endpoint()) ? udp::v4() : udp::v6(), 8, settings, observer)
@@ -103,7 +104,8 @@ node::node(aux::listen_socket_handle const& sock, socket_manager* sock_man
 	, m_counters(cnt)
 	, m_storage(storage)
 	, m_account_manager(std::move(account_manager))
-	, m_bs_nodes_storage(std::move(bs_nodes_storage))
+	, m_bs_nodes_storage(bs_nodes_storage)
+	, m_bs_nodes_learner(m_id, m_settings, m_table, bs_nodes_storage, observer)
 {
 	aux::crypto_random_bytes(m_secret[0]);
 	aux::crypto_random_bytes(m_secret[1]);
@@ -183,6 +185,96 @@ std::string node::generate_token(udp::endpoint const& addr
 	return libtau_token;
 }
 
+void node::prepare_bootstrap_nodes(std::vector<node_entry>& nodes
+	, node_id const& target, bool first_bootstrap)
+{
+	if (first_bootstrap)
+	{
+		std::vector<node_entry> community_nodes(m_table.begin(), m_table.end());
+		auto rng = std::default_random_engine {};
+		std::shuffle(std::begin(community_nodes), std::end(community_nodes), rng);
+
+		// copy first 4 nodes
+		int i = 0;
+		for (auto it = community_nodes.begin(), end = community_nodes.end()
+			; it != end && i < 4; ++it, ++i)
+		{
+			nodes.push_back(*it);
+
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_observer != nullptr
+				&& m_observer->should_log(dht_logger::node, aux::LOG_DEBUG))
+			{
+				m_observer->log(dht_logger::node, "add bs tau community node:%s, %s"
+					, aux::to_hex(it->id).c_str()
+					, aux::print_endpoint(it->ep()).c_str());
+			}
+#endif
+		}
+
+		std::vector<bs_node_entry> referred_nodes;
+		m_bs_nodes_learner.get_bootstrap_nodes(referred_nodes, 4);
+		for (auto& bsn : referred_nodes)
+		{
+			nodes.push_back(node_entry(bsn.m_nid, bsn.m_ep));
+
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_observer != nullptr
+				&& m_observer->should_log(dht_logger::node, aux::LOG_DEBUG))
+			{
+				m_observer->log(dht_logger::node, "add bs referred node:%s, %s"
+					, aux::to_hex(bsn.m_nid).c_str()
+					, aux::print_endpoint(bsn.m_ep).c_str());
+			}
+#endif
+		}
+	}
+	else
+	{
+		std::vector<bs_node_entry> referred_nodes;
+		m_bs_nodes_learner.get_bootstrap_nodes(referred_nodes, 4);
+		for (auto& bsn : referred_nodes)
+		{
+			nodes.push_back(node_entry(bsn.m_nid, bsn.m_ep));
+
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_observer != nullptr
+				&& m_observer->should_log(dht_logger::node, aux::LOG_DEBUG))
+			{
+				m_observer->log(dht_logger::node, "add bs referred node:%s, %s"
+					, aux::to_hex(bsn.m_nid).c_str()
+					, aux::print_endpoint(bsn.m_ep).c_str());
+			}
+#endif
+		}
+
+		std::vector<node_entry> live_nodes = m_table.find_node(
+			target, routing_table::include_pinged, 8 - referred_nodes.size());
+
+		if (live_nodes.size() < 8 - referred_nodes.size())
+		{
+			live_nodes.clear();
+			live_nodes = m_table.find_node(target
+				, routing_table::include_failed, 8 - referred_nodes.size());
+		}
+
+		for (auto& n : live_nodes)
+		{
+			nodes.push_back(n);
+
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_observer != nullptr
+				&& m_observer->should_log(dht_logger::node, aux::LOG_DEBUG))
+			{
+				m_observer->log(dht_logger::node, "add bs live node:%s, %s"
+					, aux::to_hex(n.id).c_str()
+					, aux::print_endpoint(n.ep()).c_str());
+			}
+#endif
+		}
+	}
+}
+
 void node::bootstrap(std::vector<node_entry> const& nodes
 	, find_data::nodes_callback const& f)
 {
@@ -196,7 +288,14 @@ void node::bootstrap(std::vector<node_entry> const& nodes
 	int count = 0;
 #endif
 
-	for (auto const& n : nodes)
+	std::vector<node_entry> bs_nodes(nodes.begin(), nodes.end());
+
+	if (nodes.size() == 0)
+	{
+		prepare_bootstrap_nodes(bs_nodes, target, true);
+	}
+
+	for (auto const& n : bs_nodes)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
 		++count;
@@ -504,6 +603,17 @@ void node::add_router_node(node_entry const& router)
 	}
 #endif
 	m_table.add_router_node(router);
+}
+
+void node::add_bootstrap_nodes(std::vector<node_entry> const& nodes)
+{
+	std::vector<bs_node_entry> bs_nodes;
+	for (auto& n: nodes)
+	{
+		bs_nodes.push_back(bs_node_entry(n.id, n.ep()));
+	}
+
+	m_bs_nodes_learner.add_bootstrap_nodes(bs_nodes);
 }
 
 void node::add_node(node_entry const& node)
@@ -1063,12 +1173,23 @@ void node::tick()
 	// expanding the routing table buckets closer to us.
 	// So by these nodes closer to us other nodes can send data by 'push' protocol. 
 	time_point const now = aux::time_now();
-	if (m_last_self_refresh + seconds(bootstrap_interval()) < now /*&& m_table.depth() < 4*/)
+	int live_nodes_count;
+	std::tie(live_nodes_count, std::ignore, std::ignore) = size();
+	if (m_last_self_refresh + seconds(bootstrap_interval()) < now
+		&& live_nodes_count < 100 /*&& m_table.depth() < 4*/)
 	{
 		node_id target = m_id;
 		make_id_secret(target);
 
 		auto const r = std::make_shared<dht::bootstrap>(*this, target, std::bind(&nop));
+
+		std::vector<node_entry> nodes;
+		prepare_bootstrap_nodes(nodes, target, false);
+		for (auto const& n : nodes)
+		{
+			r->add_entry(n.id, n.ep(), observer::flag_initial);
+		}
+
 		// set referrable nodes' max XOR distance into 256
 		r->set_fixed_distance(256);
 		r->start();
@@ -1197,6 +1318,7 @@ time_duration node::connection_timeout()
 
 	m_storage.tick();
 	m_incoming_table.tick();
+	m_bs_nodes_learner.tick();
 
 	return d;
 }

@@ -159,6 +159,8 @@ void bs_nodes_db_sqlite::prepare_statements()
 
 bool bs_nodes_db_sqlite::put(std::vector<bs_node_entry> const& nodes)
 {
+	if (nodes.empty()) return true;
+
 	sqlite3* db = m_observer->get_items_database();
 
 	if (db != NULL && m_insert_or_replace_nodes_stmt != NULL)
@@ -250,7 +252,7 @@ bool bs_nodes_db_sqlite::get(std::vector<bs_node_entry>& nodes
 
 		time_point const start = aux::time_now();
 
-		while (sqlite3_step(m_select_nodes_stmt) != SQLITE_ROW)
+		while (sqlite3_step(m_select_nodes_stmt) == SQLITE_ROW)
 		{
 			const unsigned char* nid_ptr = static_cast<const unsigned char*>(
 				sqlite3_column_text(m_select_nodes_stmt, 0));
@@ -298,6 +300,57 @@ bool bs_nodes_db_sqlite::get(std::vector<bs_node_entry>& nodes
     }
 }
 
+std::size_t bs_nodes_db_sqlite::size()
+{
+	sqlite3* db = m_observer->get_items_database();
+
+	if (db != NULL && m_nodes_count_stmt != NULL)
+	{
+		int count = 0;
+
+		sqlite3_reset(m_nodes_count_stmt);
+
+		time_point const start = aux::time_now();
+		int ok = sqlite3_step(m_nodes_count_stmt);
+		int const cost = aux::numeric_cast<int>(total_microseconds(aux::time_now() - start));
+		if (ok == SQLITE_ROW)
+		{
+			sql_time_cost(cost, "count:");
+
+			count = sqlite3_column_int(m_nodes_count_stmt, 0);
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_observer->should_log(dht_logger::bs_nodes_db, aux::LOG_INFO))
+			{
+				m_observer->log(dht_logger::bs_nodes_db, "nodes count:%d", count);
+			}
+#endif
+
+			// move to the end
+			sqlite3_step(m_nodes_count_stmt);
+
+			m_size = std::size_t(count);
+
+			return m_size;
+		}
+		else
+		{
+			sql_error(ok, nodes_count.c_str());
+			return m_size;
+		}
+	}
+	else
+	{
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_observer->should_log(dht_logger::bs_nodes_db, aux::LOG_ERR))
+		{
+			m_observer->log(dht_logger::bs_nodes_db, "size: sqlite databse is invalid");
+		}
+#endif
+
+		return m_size;
+	}
+}
+
 std::size_t bs_nodes_db_sqlite::tick()
 {
 	time_point const now = aux::time_now();
@@ -326,7 +379,7 @@ std::size_t bs_nodes_db_sqlite::tick()
 #ifndef TORRENT_DISABLE_LOGGING
 			if (m_observer->should_log(dht_logger::bs_nodes_db, aux::LOG_INFO))
 			{
-				m_observer->log(dht_logger::bs_nodes_db, "items count:%d, max:%d"
+				m_observer->log(dht_logger::bs_nodes_db, "nodes count:%d, max:%d"
 					, count, max);
 			}
 #endif
@@ -334,7 +387,7 @@ std::size_t bs_nodes_db_sqlite::tick()
 			// move to the end
 			sqlite3_step(m_nodes_count_stmt);
 
-			m_size = std::size_t(count);
+			m_size = static_cast<std::size_t>(count);
         }
 		else
 		{
@@ -392,7 +445,7 @@ std::size_t bs_nodes_db_sqlite::tick()
 				}
 #endif
 
-				m_size = std::size_t(max);
+				m_size = static_cast<std::size_t>(max);
 				return m_size;
 			}
 			else
@@ -401,6 +454,8 @@ std::size_t bs_nodes_db_sqlite::tick()
 				return m_size;
 			}
 		}
+
+		return m_size;
 	}
 	else
 	{

@@ -30,6 +30,7 @@ see LICENSE file.
 #include <libTAU/kademlia/item.hpp>
 #include <libTAU/kademlia/announce_flags.hpp>
 #include <libTAU/kademlia/bs_nodes_storage.hpp>
+#include <libTAU/kademlia/bs_nodes_learner.hpp>
 
 #include <libTAU/account_manager.hpp>
 #include <libTAU/fwd.hpp>
@@ -159,7 +160,7 @@ public:
 		, get_foreign_node_t get_foreign_node
 		, dht_storage_interface& storage
 		, std::shared_ptr<account_manager> account_manager
-		, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage);
+		, bs_nodes_storage_interface& bs_nodes_storage);
 
 	~node();
 
@@ -169,9 +170,12 @@ public:
 	node& operator=(node&&) = delete;
 
 	void tick();
+	void prepare_bootstrap_nodes(std::vector<node_entry>& nodes
+		, node_id const& target, bool first_bootstrap);
 	void bootstrap(std::vector<node_entry> const& nodes
 		, find_data::nodes_callback const& f);
 	void add_router_node(node_entry const& router);
+	void add_bootstrap_nodes(std::vector<node_entry> const& nodes);
 
 	void unreachable(udp::endpoint const& ep);
 	void incoming(aux::listen_socket_handle const& s, msg const& m, node_id const& from);
@@ -404,6 +408,7 @@ public:
 	routing_table m_table;
 	incoming_table m_incoming_table;
 	rpc_manager m_rpc;
+	bs_nodes_learner m_bs_nodes_learner;
 	aux::listen_socket_handle const m_sock;
 	dht_storage_interface& m_storage;
 
@@ -447,7 +452,7 @@ private:
 
 	relay_pkt_deduplicater m_relay_pkt_deduplicater;
 
-	std::shared_ptr<bs_nodes_storage_interface> m_bs_nodes_storage;
+	bs_nodes_storage_interface& m_bs_nodes_storage;
 
 #ifndef TORRENT_DISABLE_LOGGING
 	std::uint32_t m_search_id = 0;

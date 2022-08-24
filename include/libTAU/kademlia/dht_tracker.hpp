@@ -21,6 +21,7 @@ see LICENSE file.
 #include <libTAU/kademlia/dos_blocker.hpp>
 #include <libTAU/kademlia/dht_state.hpp>
 #include <libTAU/kademlia/bs_nodes_storage.hpp>
+#include <libTAU/kademlia/bs_nodes_manager.hpp>
 
 #include <libTAU/aux_/listen_socket_handle.hpp>
 #include "libTAU/account_manager.hpp"
@@ -64,7 +65,8 @@ namespace libTAU::dht {
 			, dht_storage_interface& storage
 			, dht_state&& state
 			, std::shared_ptr<account_manager> account_manager
-			, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage);
+			, bs_nodes_storage_interface& bs_nodes_storage
+			, std::string const& bs_nodes_dir);
 
 		// the dht_state must be moved in!
 		dht_tracker(dht_observer* observer
@@ -81,6 +83,8 @@ namespace libTAU::dht {
 		// and fails because tracker_node is not copyable
 		dht_tracker(dht_tracker const&) = delete;
 #endif
+
+		void install_bootstrap_nodes();
 
 		void start(find_data::nodes_callback const& f);
 		void stop();
@@ -256,7 +260,7 @@ namespace libTAU::dht {
 				, get_foreign_node_t get_foreign_node
 				, dht_storage_interface& storage
 				, std::shared_ptr<account_manager> account_manager
-				, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage);
+				, bs_nodes_storage_interface& bs_nodes_storage);
 			tracker_node(tracker_node const&) = delete;
 			tracker_node(tracker_node&&) = delete;
 
@@ -314,7 +318,8 @@ namespace libTAU::dht {
 
 		std::shared_ptr<account_manager> m_account_manager;
 
-		std::shared_ptr<bs_nodes_storage_interface> m_bs_nodes_storage;
+		bs_nodes_storage_interface& m_bs_nodes_storage;
+		bs_nodes_manager m_bs_nodes_manager;
 	};
 } // namespace libTAU::dht
 

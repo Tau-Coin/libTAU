@@ -904,7 +904,8 @@ namespace aux {
 
 			std::unique_ptr<dht::dht_storage_interface> m_dht_storage;
 			std::shared_ptr<dht::items_db_sqlite> m_items_db;
-			std::shared_ptr<dht::bs_nodes_storage_interface> m_bs_nodes_storage;
+			std::unique_ptr<dht::bs_nodes_storage_interface> m_bs_nodes_storage;
+			std::string m_bs_nodes_dir;
 			std::shared_ptr<dht::dht_tracker> m_dht;
 			dht::dht_storage_constructor_type m_dht_storage_constructor
 				= dht::dht_default_storage_constructor;
