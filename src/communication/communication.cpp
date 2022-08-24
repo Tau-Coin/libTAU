@@ -1156,7 +1156,7 @@ namespace libTAU {
         }
 
         void communication::put_confirmation_roots(const dht::public_key &peer) {
-            auto messages = m_message_db->get_latest_ten_transactions(*m_ses.pubkey(), peer);
+            auto messages = m_message_db->get_latest_ten_transactions(peer, *m_ses.pubkey());
             std::vector<sha1_hash> msgHashList;
             for (auto const& msg: messages) {
                 msgHashList.push_back(msg.sha1());
