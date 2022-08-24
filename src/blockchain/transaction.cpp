@@ -27,13 +27,13 @@ namespace libTAU::blockchain {
         // chain id
         lst.push_back(std::string(m_chain_id.begin(), m_chain_id.end()));
         // version
-        auto version = aux::toLittleEndianString((int)m_version);
+        auto version = aux::intToLittleEndianString((int)m_version);
         lst.push_back(version);
         // type
-        auto type = aux::toLittleEndianString((int)m_type);
+        auto type = aux::intToLittleEndianString((int)m_type);
         lst.push_back(type);
         // timestamp
-        auto timestamp = aux::toLittleEndianString(m_timestamp);
+        auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
         lst.push_back(timestamp);
         // sender
         lst.push_back(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
@@ -41,13 +41,13 @@ namespace libTAU::blockchain {
             // receiver
             lst.push_back(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
             // nonce
-            auto nonce = aux::toLittleEndianString(m_nonce);
+            auto nonce = aux::int64ToLittleEndianString(m_nonce);
             lst.push_back(nonce);
             // fee
-            auto fee = aux::toLittleEndianString(m_fee);
+            auto fee = aux::int64ToLittleEndianString(m_fee);
             lst.push_back(fee);
             // amount
-            auto amount = aux::toLittleEndianString(m_amount);
+            auto amount = aux::int64ToLittleEndianString(m_amount);
             lst.push_back(amount);
         }
         // payload
@@ -113,7 +113,7 @@ namespace libTAU::blockchain {
 
         if (lst.size() == 7) {
             // type
-            int type = aux::fromLittleEndianString<int>(lst[2].string());
+            int type = aux::intFromLittleEndianString(lst[2].string());
             m_type = static_cast<tx_type>(type);
             if (m_type != tx_type::type_note)
                 return;
@@ -122,10 +122,10 @@ namespace libTAU::blockchain {
             auto chain_id = lst[0].string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
             // version
-            int version = aux::fromLittleEndianString<int>(lst[1].string());
+            int version = aux::intFromLittleEndianString(lst[1].string());
             m_version = static_cast<tx_version>(version);
             // balance
-            m_timestamp = aux::fromLittleEndianString<std::int64_t>(lst[3].string());
+            m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
             // sender
             m_sender = dht::public_key(lst[4].string().data());
             // payload
@@ -136,7 +136,7 @@ namespace libTAU::blockchain {
         }
 
         if (lst.size() == 11) {
-            int type = aux::fromLittleEndianString<int>(lst[2].string());
+            int type = aux::intFromLittleEndianString(lst[2].string());
             m_type = static_cast<tx_type>(type);
             if (m_type != tx_type::type_transfer)
                 return;
@@ -145,20 +145,20 @@ namespace libTAU::blockchain {
             auto chain_id = lst[0].string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
             // version
-            int version = aux::fromLittleEndianString<int>(lst[1].string());
+            int version = aux::intFromLittleEndianString(lst[1].string());
             m_version = static_cast<tx_version>(version);
             // balance
-            m_timestamp = aux::fromLittleEndianString<std::int64_t>(lst[3].string());
+            m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
             // sender
             m_sender = dht::public_key(lst[4].string().data());
             // receiver
             m_receiver = dht::public_key(lst[5].string().data());
             // nonce
-            m_nonce = aux::fromLittleEndianString<std::int64_t>(lst[6].string());
+            m_nonce = aux::int64FromLittleEndianString(lst[6].string());
             // fee
-            m_fee = aux::fromLittleEndianString<std::int64_t>(lst[7].string());
+            m_fee = aux::int64FromLittleEndianString(lst[7].string());
             // amount
-            m_amount = aux::fromLittleEndianString<std::int64_t>(lst[8].string());
+            m_amount = aux::int64FromLittleEndianString(lst[8].string());
             // payload
             auto payload = lst[9].string();
             m_payload = aux::bytes(payload.begin(), payload.end());

@@ -23,10 +23,10 @@ namespace libTAU::blockchain {
         auto peer = std::string(m_peer.bytes.begin(), m_peer.bytes.end());
         lst.push_back(peer);
         // balance
-        auto balance = aux::toLittleEndianString(m_balance);
+        auto balance = aux::int64ToLittleEndianString(m_balance);
         lst.push_back(balance);
         // nonce
-        auto nonce = aux::toLittleEndianString(m_nonce);
+        auto nonce = aux::int64ToLittleEndianString(m_nonce);
         lst.push_back(nonce);
 
         return lst;
@@ -42,9 +42,9 @@ namespace libTAU::blockchain {
         m_peer = dht::public_key(lst[0].string().data());
 
         // balance
-        m_balance = aux::fromLittleEndianString<std::int64_t>(lst[1].string());
+        m_balance = aux::int64FromLittleEndianString(lst[1].string());
         // nonce
-        m_nonce = aux::fromLittleEndianString<std::int64_t>(lst[2].string());
+        m_nonce = aux::int64FromLittleEndianString(lst[2].string());
     }
 
     std::string account::to_string() const {

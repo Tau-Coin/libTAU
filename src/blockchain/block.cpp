@@ -78,21 +78,21 @@ namespace libTAU::blockchain {
         // chain id
         lst.push_back(std::string(m_chain_id.begin(), m_chain_id.end()));
         // version
-        auto version = aux::toLittleEndianString((int)m_version);
+        auto version = aux::intToLittleEndianString((int)m_version);
         lst.push_back(version);
         // timestamp
-        auto timestamp = aux::toLittleEndianString(m_timestamp);
+        auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
         lst.push_back(timestamp);
         // block number
-        auto block_number = aux::toLittleEndianString(m_block_number);
+        auto block_number = aux::int64ToLittleEndianString(m_block_number);
         lst.push_back(block_number);
         // previous block hash
         lst.push_back(m_previous_block_hash.to_string());
         // base target
-        auto base_target = aux::toLittleEndianString(m_base_target);
+        auto base_target = aux::uint64ToLittleEndianString(m_base_target);
         lst.push_back(base_target);
         // cumulative difficulty
-        auto cumulative_difficulty = aux::toLittleEndianString(m_cumulative_difficulty);
+        auto cumulative_difficulty = aux::uint64ToLittleEndianString(m_cumulative_difficulty);
         lst.push_back(cumulative_difficulty);
         // generation signature
         lst.push_back(m_generation_signature.to_string());
@@ -117,18 +117,18 @@ namespace libTAU::blockchain {
             auto chain_id = lst[0].string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
             // version
-            int version = aux::fromLittleEndianString<int>(lst[1].string());
+            int version = aux::intFromLittleEndianString(lst[1].string());
             m_version = static_cast<block_version>(version);
             // timestamp
-            m_timestamp = aux::fromLittleEndianString<std::int64_t>(lst[2].string());
+            m_timestamp = aux::int64FromLittleEndianString(lst[2].string());
             // block number
-            m_block_number = aux::fromLittleEndianString<std::int64_t>(lst[3].string());
+            m_block_number = aux::int64FromLittleEndianString(lst[3].string());
             // previous block hash
             m_previous_block_hash = sha1_hash(lst[4].string().data());
             // base target
-            m_base_target = aux::fromLittleEndianString<std::uint64_t>(lst[5].string());
+            m_base_target = aux::uint64FromLittleEndianString(lst[5].string());
             // cumulative difficulty
-            m_cumulative_difficulty = aux::fromLittleEndianString<std::uint64_t>(lst[6].string());
+            m_cumulative_difficulty = aux::uint64FromLittleEndianString(lst[6].string());
             // generation signature
             m_generation_signature = sha1_hash(lst[7].string().data());
             // multiplex hash
@@ -144,18 +144,18 @@ namespace libTAU::blockchain {
             auto chain_id = lst[0].string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
             // version
-            int version = aux::fromLittleEndianString<int>(lst[1].string());
+            int version = aux::intFromLittleEndianString(lst[1].string());
             m_version = static_cast<block_version>(version);
             // timestamp
-            m_timestamp = aux::fromLittleEndianString<std::int64_t>(lst[2].string());
+            m_timestamp = aux::int64FromLittleEndianString(lst[2].string());
             // block number
-            m_block_number = aux::fromLittleEndianString<std::int64_t>(lst[3].string());
+            m_block_number = aux::int64FromLittleEndianString(lst[3].string());
             // previous block hash
             m_previous_block_hash = sha1_hash(lst[4].string().data());
             // base target
-            m_base_target = aux::fromLittleEndianString<std::uint64_t>(lst[5].string());
+            m_base_target = aux::uint64FromLittleEndianString(lst[5].string());
             // cumulative difficulty
-            m_cumulative_difficulty = aux::fromLittleEndianString<std::uint64_t>(lst[6].string());
+            m_cumulative_difficulty = aux::uint64FromLittleEndianString(lst[6].string());
             // generation signature
             m_generation_signature = sha1_hash(lst[7].string().data());
             // multiplex hash

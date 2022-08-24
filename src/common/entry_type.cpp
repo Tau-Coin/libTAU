@@ -16,21 +16,21 @@ namespace libTAU::common {
         if (encode.size() == 5) {
             // protocol id
             auto spid = encode.substr(0, 1);
-            int pid = aux::fromLittleEndianString<int>(spid);
+            int pid = aux::intFromLittleEndianString(spid);
             m_pid = static_cast<signal_id>(pid);
             // timestamp
             auto timestamp = encode.substr(1, 4);
-            m_timestamp = aux::fromLittleEndianString<std::int64_t>(timestamp);
+            m_timestamp = aux::int64FromLittleEndianString(timestamp);
         }
 
         if (encode.size() > 5) {
             // protocol id
             auto spid = encode.substr(0, 1);
-            int pid = aux::fromLittleEndianString<int>(spid);
+            int pid = aux::intFromLittleEndianString(spid);
             m_pid = static_cast<signal_id>(pid);
             // timestamp
             auto timestamp = encode.substr(1, 4);
-            m_timestamp = aux::fromLittleEndianString<std::int64_t>(timestamp);
+            m_timestamp = aux::int64FromLittleEndianString(timestamp);
             // short chain id
             auto chain_id = encode.substr(5);
             m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
@@ -41,10 +41,10 @@ namespace libTAU::common {
         std::string encode;
 
         // protocol id
-        auto pid = aux::toLittleEndianString((int)m_pid);
+        auto pid = aux::intToLittleEndianString((int)m_pid);
         encode.append(pid);
         // timestamp
-        auto timestamp = aux::toLittleEndianString(m_timestamp);
+        auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
         encode.append(timestamp);
         // short chain id
         if (!m_short_chain_id.empty()) {

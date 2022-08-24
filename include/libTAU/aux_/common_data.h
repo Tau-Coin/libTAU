@@ -89,31 +89,99 @@ inline bytes asBytes(std::string const& _b)
 /// @example asNibbles("A")[0] == 4 && asNibbles("A")[1] == 1
 bytes asNibbles(bytesConstRef const& _s);
 
-template <typename T>
-inline std::string toLittleEndianString(T _val)
+inline std::string uintToLittleEndianString(uint _val)
 {
     std::string ret;
     for (; _val != 0; _val >>= 8)
     {
-        T v = _val & (T)0xff;
+        uint v = _val & (uint)0xff;
         ret.push_back(static_cast<char>(v));
     }
 
     return ret;
 }
 
-template <typename T>
-inline T fromLittleEndianString(const std::string& _str)
+inline std::string intToLittleEndianString(int _val)
 {
-    T ret = (T)0;
-    std::string str;
-    str.resize(_str.size());
-    std::reverse_copy(_str.begin(), _str.end(), str.begin());
-    for (auto i: str)
-        ret = (T)((ret << 8) | (char)(i));
+    return uintToLittleEndianString(static_cast<uint>(_val));
+}
+
+inline uint uintFromLittleEndianString(const std::string& _str)
+{
+    auto ret = (uint)0;
+    for (std::string::const_reverse_iterator it = _str.rbegin(); it != _str.rend(); it++) {
+        ret = (uint)((ret << 8) | (char)(*it));
+    }
 
     return ret;
 }
+
+inline int intFromLittleEndianString(const std::string& _str)
+{
+    auto ret = uintFromLittleEndianString(_str);
+
+    return static_cast<int>(ret);
+}
+
+inline std::string uint64ToLittleEndianString(std::uint64_t _val)
+{
+    std::string ret;
+    for (; _val != 0; _val >>= 8)
+    {
+        std::uint64_t v = _val & (std::uint64_t)0xff;
+        ret.push_back(static_cast<char>(v));
+    }
+
+    return ret;
+}
+
+inline std::string int64ToLittleEndianString(std::int64_t _val)
+{
+    return uint64ToLittleEndianString(static_cast<std::uint64_t>(_val));
+}
+
+inline std::uint64_t uint64FromLittleEndianString(const std::string& _str)
+{
+    auto ret = (std::uint64_t)0;
+    for (std::string::const_reverse_iterator it = _str.rbegin(); it != _str.rend(); it++) {
+        ret = (std::uint64_t)((ret << 8) | (char)(*it));
+    }
+
+    return ret;
+}
+
+inline std::int64_t int64FromLittleEndianString(const std::string& _str)
+{
+    auto ret = uint64FromLittleEndianString(_str);
+
+    return static_cast<std::int64_t>(ret);
+}
+
+//template <typename T>
+//inline std::string toLittleEndianString(T _val)
+//{
+//    std::string ret;
+//    for (; _val != 0; _val >>= 8)
+//    {
+//        T v = _val & (T)0xff;
+//        ret.push_back(static_cast<char>(v));
+//    }
+//
+//    return ret;
+//}
+
+//template <typename T>
+//inline T fromLittleEndianString(const std::string& _str)
+//{
+//    T ret = (T)0;
+//    std::string str;
+//    str.resize(_str.size());
+//    std::reverse_copy(_str.begin(), _str.end(), str.begin());
+//    for (auto i: str)
+//        ret = (T)((ret << 8) | (char)(i));
+//
+//    return ret;
+//}
 
 // Big-endian to/from host endian conversion functions.
 

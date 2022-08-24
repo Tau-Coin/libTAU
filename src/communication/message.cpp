@@ -31,7 +31,7 @@ namespace libTAU {
         m_receiver(mReceiver), m_payload(std::move(mPayload)) {
             entry::list_type lst;
             // timestamp
-            auto timestamp = aux::toLittleEndianString(m_timestamp);
+            auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
             lst.push_back(timestamp);
             // sender
             lst.push_back(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
@@ -53,7 +53,7 @@ namespace libTAU {
                 return;
 
             // balance
-            m_timestamp = aux::fromLittleEndianString<std::int64_t>(lst[0].string());
+            m_timestamp = aux::int64FromLittleEndianString(lst[0].string());
             // sender
             m_sender = dht::public_key(lst[1].string().data());
             // receiver
