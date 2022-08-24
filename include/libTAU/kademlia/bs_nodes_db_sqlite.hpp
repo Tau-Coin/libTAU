@@ -33,7 +33,7 @@ namespace dht {
 		"INSERT OR REPLACE INTO bs_nodes(nid, ts, endpoint, v4) VALUES (?, ?, ?, ?);";
 
 	static const std::string select_nodes =
-		"SELECT * FROM bs_nodes LIMIT ?, ?;";
+		"SELECT * FROM bs_nodes ORDER BY ts DESC LIMIT ?, ?;";
 
 	static const std::string nodes_count =
 		"SELECT COUNT(*) FROM bs_nodes;";
@@ -65,6 +65,8 @@ namespace dht {
 
 		virtual bool get(std::vector<bs_node_entry>& nodes
 			 , int offset, int count) const override;
+
+		virtual std::size_t size() override;
 
 		virtual std::size_t tick() override;
 

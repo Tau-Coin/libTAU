@@ -77,7 +77,8 @@ namespace libTAU::dht {
 		, dht_storage_interface& storage
 		, dht_state&& state
 		, std::shared_ptr<account_manager> account_manager
-		, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage)
+		, bs_nodes_storage_interface& bs_nodes_storage
+		, std::string const& bs_nodes_dir)
 		: m_counters(cnt)
 		, m_storage(storage)
 		, m_state(std::move(state))
@@ -93,10 +94,16 @@ namespace libTAU::dht {
 		, m_last_tick(aux::time_now())
 		, m_ioc(ios)
 		, m_account_manager(std::move(account_manager))
-		, m_bs_nodes_storage(std::move(bs_nodes_storage))
+		, m_bs_nodes_storage(bs_nodes_storage)
+		, m_bs_nodes_manager(bs_nodes_dir, m_bs_nodes_storage, observer)
 	{
 		m_blocker.set_block_timer(m_settings.get_int(settings_pack::dht_block_timeout));
 		m_blocker.set_rate_limit(m_settings.get_int(settings_pack::dht_block_ratelimit));
+	}
+
+	void dht_tracker::install_bootstrap_nodes()
+	{
+		m_bs_nodes_manager.load_bootstrap_nodes();
 	}
 
 	void dht_tracker::update_node_id()
@@ -932,7 +939,7 @@ namespace libTAU::dht {
 		, get_foreign_node_t get_foreign_node
 		, dht_storage_interface& storage
 		, std::shared_ptr<account_manager> account_manager
-		, std::shared_ptr<bs_nodes_storage_interface> bs_nodes_storage)
+		, bs_nodes_storage_interface& bs_nodes_storage)
 		: dht(s, sock, settings, nid, observer, cnt
 				, std::move(get_foreign_node), storage, account_manager
 				, bs_nodes_storage)

@@ -63,6 +63,8 @@ namespace dht {
 		virtual bool get(std::vector<bs_node_entry>& nodes
 			, int offset, int count) const = 0;
 
+		virtual std::size_t size() = 0;
+
 		// This function is called periodically (non-constant frequency).
 		//
 		// For implementers:

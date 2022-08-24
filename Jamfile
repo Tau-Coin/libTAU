@@ -932,6 +932,8 @@ KADEMLIA_SOURCES =
 	dht_settings
 	items_db_sqlite
 	bs_nodes_db_sqlite
+	bs_nodes_learner
+	bs_nodes_manager
 	;
 
 COMMON_SOURCES =

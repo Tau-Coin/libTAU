@@ -2782,6 +2782,8 @@ namespace {
         std::string const& sqldb_dir = home_dir + m_settings.get_str(settings_pack::db_dir)+ "/sqldb";
 #endif
 
+		m_bs_nodes_dir = sqldb_dir;
+
         std::string const& sqldb_path = sqldb_dir + "/tau_sql.db";
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -3154,9 +3156,10 @@ namespace {
 		m_dht_storage = m_dht_storage_constructor(m_settings);
 		m_items_db = std::make_shared<dht::items_db_sqlite>(
 			m_settings, static_cast<dht::dht_observer*>(this));
-		m_bs_nodes_storage = std::make_shared<dht::bs_nodes_db_sqlite>(
-			m_settings, static_cast<dht::dht_observer*>(this));
 		m_dht_storage->set_backend(m_items_db);
+		m_bs_nodes_storage = std::make_unique<dht::bs_nodes_db_sqlite>(
+			m_settings, static_cast<dht::dht_observer*>(this));
+
 		m_dht = std::make_shared<dht::dht_tracker>(
 			static_cast<dht::dht_observer*>(this)
 			, m_io_context
@@ -3172,7 +3175,10 @@ namespace {
 			, *m_dht_storage
 			, std::move(m_dht_state)
 			, m_account_manager
-			, m_bs_nodes_storage);
+			, *m_bs_nodes_storage
+			, m_bs_nodes_dir);
+
+		m_dht->install_bootstrap_nodes();
 
 		for (auto& s : m_listening_sockets)
 		{
