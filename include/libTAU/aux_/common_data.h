@@ -110,7 +110,7 @@ inline uint uintFromLittleEndianString(const std::string& _str)
 {
     auto ret = (uint)0;
     for (std::string::const_reverse_iterator it = _str.rbegin(); it != _str.rend(); it++) {
-        ret = (uint)((ret << 8) | (char)(*it));
+        ret = (uint)((ret << 8) | (uint8_t)(*it));
     }
 
     return ret;
@@ -144,7 +144,7 @@ inline std::uint64_t uint64FromLittleEndianString(const std::string& _str)
 {
     auto ret = (std::uint64_t)0;
     for (std::string::const_reverse_iterator it = _str.rbegin(); it != _str.rend(); it++) {
-        ret = (std::uint64_t)((ret << 8) | (char)(*it));
+        ret = (std::uint64_t)((ret << 8) | (uint8_t)(*it));
     }
 
     return ret;
