@@ -123,6 +123,14 @@ inline int intFromLittleEndianString(const std::string& _str)
     return static_cast<int>(ret);
 }
 
+/*
+* C++中与位相关的操作，最好都是用unsigned类型，包括<<,>>,|,&等，signed类型最好转换成unsigned类型，
+* 因为这些操作在不同的机器中，定义的操作可能不同，依赖与其机器实现；
+* 另外，C++中char比较特殊，是独立与unsigned char,signed char存在的第三种类型，但在具体的机器中，
+* 也会有不同的实现，有的机器中char = signed char,有的则char = unsigned char,并在做算术运算的过程中，
+* 三种类型的char会首先进行整形提升，转换成相应的int或者unsigned int
+* */
+
 inline std::string uint64ToLittleEndianString(std::uint64_t _val)
 {
     std::string ret;
