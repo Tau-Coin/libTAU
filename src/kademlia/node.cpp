@@ -1410,7 +1410,7 @@ std::tuple<bool, bool> node::incoming_request(msg const& m, entry& e
 	entry& reply = e["r"];
 
 	// mirror back the other node's external port
-	reply["p"] = m.addr.port();
+	// reply["p"] = m.addr.port();
 
 	string_view const query = top_level[0].string_value();
 
@@ -1866,7 +1866,7 @@ bool node::incoming_push(msg const& m, entry& e, node_id const& id, item& i)
 
 	entry& reply = e["r"];
 	// mirror back the other node's external port
-	reply["p"] = m.addr.port();
+	// reply["p"] = m.addr.port();
 
 	static key_desc_t const top_desc[] = {
 		{"q", bdecode_node::string_t, 0, 0},
@@ -2019,7 +2019,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 
 	entry& reply = e["r"];
 	// mirror back the other node's external port
-	reply["p"] = m.addr.port();
+	// reply["p"] = m.addr.port();
 
 	static key_desc_t const top_desc[] = {
 		{"q", bdecode_node::string_t, 0, 0},
