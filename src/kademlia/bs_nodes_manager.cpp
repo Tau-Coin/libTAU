@@ -22,9 +22,10 @@ see LICENSE file.
 #include <type_traits>
 #include <functional>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <tuple>
+#include <cstring>
+#include <cstdio>
+#include <unistd.h>
 
 namespace libTAU::dht {
 
@@ -32,8 +33,12 @@ namespace {
 
 	bool file_exists(std::string const& name)
 	{
-		std::ifstream f(name.c_str());
-		return f.good();
+		if (access(name.c_str(), F_OK) == 0)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 }
@@ -124,52 +129,69 @@ void bs_nodes_manager::read_version_file()
 
 	if (file_exists(file))
 	{
-		std::fstream version_file;
-		version_file.open(file.c_str());
-		std::string version;
-		if (std::getline(version_file, version))
+		FILE* version_file = fopen(file.c_str(), "r+");
+		if (version_file == NULL)
 		{
-			if (bs_nodes_version == version)
-			{
 #ifndef TORRENT_DISABLE_LOGGING
-				if (m_log->should_log(dht_logger::bs_nodes_db, aux::LOG_INFO))
-				{
-					m_log->log(dht_logger::bs_nodes_db, "version not changed:%s"
-						, version.c_str());
-				}
+			if (m_log != NULL
+				&& m_log->should_log(dht_logger::bs_nodes_db, aux::LOG_ERR))
+			{
+				m_log->log(dht_logger::bs_nodes_db, "open file error:%s"
+					, file.c_str());
+			}
 #endif
 
-				version_file.close();
-				return;
-			}
+			return;
+		}
 
+		std::string version;
+		char buf[10] = {0};
+		fscanf(version_file, "%s\n", buf);
+		version.append(buf, strlen(buf));
+
+		if (bs_nodes_version == version)
+		{
 #ifndef TORRENT_DISABLE_LOGGING
 			if (m_log->should_log(dht_logger::bs_nodes_db, aux::LOG_INFO))
 			{
-				m_log->log(dht_logger::bs_nodes_db, "version changed: old:%s, new:%s"
-                        , version.c_str(), bs_nodes_version.c_str());
+				m_log->log(dht_logger::bs_nodes_db, "version not changed:%s"
+					, version.c_str());
 			}
 #endif
 
-			m_need_upgrade = true;
-			std::filesystem::resize_file(file, 0);
-			version_file.seekp(0);
-			version_file << bs_nodes_version << std::endl;
-			version_file.close();
+			fclose(version_file);
+			return;
 		}
-		else
+
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_log->should_log(dht_logger::bs_nodes_db, aux::LOG_INFO))
+		{
+			m_log->log(dht_logger::bs_nodes_db, "version changed: old:%s, new:%s"
+				, version.c_str(), bs_nodes_version.c_str());
+		}
+#endif
+
+		m_need_upgrade = true;
+
+		// reopen file and truncate file
+		fclose(version_file);
+		version_file = fopen(file.c_str(), "w");
+		if (version_file == NULL)
 		{
 #ifndef TORRENT_DISABLE_LOGGING
-			if (m_log->should_log(dht_logger::bs_nodes_db, aux::LOG_ERR))
+			if (m_log != NULL
+				&& m_log->should_log(dht_logger::bs_nodes_db, aux::LOG_ERR))
 			{
-				m_log->log(dht_logger::bs_nodes_db, "read version error");
+				m_log->log(dht_logger::bs_nodes_db, "reopen file error:%s"
+					, file.c_str());
 			}
 #endif
 
-			m_need_upgrade = true;
-			version_file << bs_nodes_version << std::endl;
-			version_file.close();
+			return;
 		}
+
+		fprintf(version_file, "%s\n", bs_nodes_version.c_str());
+		fclose(version_file);
 	}
 	else
 	{
@@ -182,10 +204,23 @@ void bs_nodes_manager::read_version_file()
 
 		m_need_upgrade = true;
 
-		// new version file and write version.
-		std::ofstream outfile(file.c_str());
-		outfile << bs_nodes_version << std::endl;
-		outfile.close();
+		FILE* version_file = fopen(file.c_str(), "w");
+		if (version_file == NULL)
+		{
+#ifndef TORRENT_DISABLE_LOGGING
+			if (m_log != NULL
+				&& m_log->should_log(dht_logger::bs_nodes_db, aux::LOG_ERR))
+			{
+				m_log->log(dht_logger::bs_nodes_db, "open file error:%s"
+					, file.c_str());
+			}
+#endif
+
+			return;
+		}
+
+		fprintf(version_file, "%s\n", bs_nodes_version.c_str());
+		fclose(version_file);
 	}
 }
 
