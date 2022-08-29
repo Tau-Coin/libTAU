@@ -23,6 +23,7 @@ see LICENSE file.
 #include <libTAU/kademlia/item.hpp>
 #include <libTAU/kademlia/node_id.hpp>
 #include <libTAU/kademlia/types.hpp>
+#include <libTAU/kademlia/version.hpp>
 
 #include <libTAU/bencode.hpp>
 #include <libTAU/version.hpp>
@@ -1041,11 +1042,14 @@ namespace {
 	{
 		TORRENT_ASSERT(m_nodes.find(s) != m_nodes.end());
 
+		/*
 		static_assert(lt::version_minor < 16, "version number not supported by DHT");
 		static_assert(lt::version_tiny < 16, "version number not supported by DHT");
 		static char const ver[] = {'L', 'T'
 			, lt::version_major, (lt::version_minor << 4) | lt::version_tiny};
 		e["v"] = std::string(ver, ver+ 4);
+		 */
+		e["v"] = dht::version;
 
 		m_send_buf.clear();
 		bencode(std::back_inserter(m_send_buf), e);

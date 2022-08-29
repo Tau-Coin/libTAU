@@ -69,6 +69,9 @@ static const std::string protocol_decryption_error = "decryption error";
 // decryption error code
 static constexpr int protocol_decryption_error_code = 303;
 
+static constexpr int protocol_version_error_code = 401;
+static constexpr int protocol_version_mismatch_error_code = 402;
+
 TORRENT_EXTRA_EXPORT entry write_nodes_entry(std::vector<node_entry> const& nodes);
 
 struct socket_manager

@@ -54,6 +54,7 @@ see LICENSE file.
 #include "libTAU/kademlia/msg.hpp"
 #include <libTAU/kademlia/put_data.hpp>
 #include <libTAU/kademlia/relay.hpp>
+#include <libTAU/kademlia/version.hpp>
 
 using namespace std::placeholders;
 using namespace std::chrono;
@@ -375,6 +376,39 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 //		entry e;
 //		incoming_error(e, "missing 'y' entry");
 //		m_sock.send_packet(e, m.addr);
+		return;
+	}
+
+	// version match or not
+	bdecode_node const version_ent = m.message.dict_find_string("v");
+	if (!version_ent || version_ent.string_length() != dht::version_length)
+	{
+		// entry e;
+		// incoming_error(e, "version format error", protocol_version_error_code);
+		// m_sock_man->send_packet(m_sock, e, m.addr, from);
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_observer != nullptr
+			&& m_observer->should_log(dht_logger::node, aux::LOG_ERR))
+		{
+			m_observer->log(dht_logger::node, "version fromat error");
+		}
+#endif
+		return;
+	}
+	std::string ver(version_ent.string_ptr(), version_ent.string_length());
+	if (!dht::version_match(ver))
+	{
+		// entry e;
+		// incoming_error(e, "version mismatch", protocol_version_mismatch_error_code);
+		// m_sock_man->send_packet(m_sock, e, m.addr, from);
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_observer != nullptr
+			&& m_observer->should_log(dht_logger::node, aux::LOG_ERR))
+		{
+			m_observer->log(dht_logger::node, "version mismatch, peer:%s, ourself:%s"
+				, ver.c_str(), dht::version.c_str());
+		}
+#endif
 		return;
 	}
 
