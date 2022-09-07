@@ -819,6 +819,10 @@ namespace libTAU {
         {
             TORRENT_ASSERT(i.is_mutable());
 
+            // authoritative used in immutable item(timestamp==0)
+            if(!timestamp && !authoritative)
+                return;
+
             // construct mutable data wrapper from entry
             try {
                 const auto& peer = i.pk();

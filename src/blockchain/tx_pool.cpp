@@ -150,18 +150,17 @@ namespace libTAU::blockchain {
             if (it_tx != m_all_txs_by_fee.end()) {
                 auto old_tx = it_tx->second;
                 if (tx.fee() > old_tx.fee()) {
-                    // replace old tx with new one
-                    m_all_txs_by_fee[tx.sha1()] = tx;
-                    m_account_tx_by_fee[tx.sender()] = tx.sha1();
+                    // remove old tx
+                    m_all_txs_by_fee.erase(old_tx.sha1());
+                    m_account_tx_by_fee.erase(old_tx.sender());
                     m_ordered_txs_by_fee.erase(tx_entry_with_fee(old_tx.sha1(), old_tx.fee()));
-                    m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha1(), tx.fee()));
                 } else {
                     return false;
                 }
             }
         }
 
-        // insert if cannot find in local
+        // insert new tx
         m_all_txs_by_fee[tx.sha1()] = tx;
         m_account_tx_by_fee[tx.sender()] = tx.sha1();
         m_ordered_txs_by_fee.insert(tx_entry_with_fee(tx.sha1(), tx.fee()));
@@ -184,18 +183,17 @@ namespace libTAU::blockchain {
             if (it_tx != m_all_txs_by_timestamp.end()) {
                 auto old_tx = it_tx->second;
                 if (tx.timestamp() > old_tx.timestamp()) {
-                    // replace old tx with new one
-                    m_all_txs_by_timestamp[tx.sha1()] = tx;
-                    m_account_tx_by_timestamp[tx.sender()] = tx.sha1();
+                    // remove old tx
+                    m_all_txs_by_timestamp.erase(old_tx.sha1());
+                    m_account_tx_by_timestamp.erase(old_tx.sender());
                     m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(old_tx.sha1(), old_tx.timestamp()));
-                    m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha1(), tx.timestamp()));
                 } else {
                     return false;
                 }
             }
         }
 
-        // insert if cannot find in local
+        // insert new tx
         m_all_txs_by_timestamp[tx.sha1()] = tx;
         m_account_tx_by_timestamp[tx.sender()] = tx.sha1();
         m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha1(), tx.timestamp()));
@@ -382,18 +380,22 @@ namespace libTAU::blockchain {
     }
 
     std::int64_t tx_pool::get_min_allowed_fee() {
-        auto it = m_ordered_txs_by_fee.begin();
-        if (it != m_ordered_txs_by_fee.end()) {
-            return it->fee();
+        if (m_ordered_txs_by_fee.size() >= tx_pool_max_size_by_fee) {
+            auto it = m_ordered_txs_by_fee.begin();
+            if (it != m_ordered_txs_by_fee.end()) {
+                return it->fee();
+            }
         }
 
         return 0;
     }
 
     std::int64_t tx_pool::get_oldest_allowed_timestamp() {
-        auto it = m_ordered_txs_by_timestamp.begin();
-        if (it != m_ordered_txs_by_timestamp.end()) {
-            return it->timestamp();
+        if (m_ordered_txs_by_timestamp.size() >= tx_pool_max_size_by_timestamp) {
+            auto it = m_ordered_txs_by_timestamp.begin();
+            if (it != m_ordered_txs_by_timestamp.end()) {
+                return it->timestamp();
+            }
         }
 
         return 0;

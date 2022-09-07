@@ -2281,7 +2281,6 @@ namespace libTAU::blockchain {
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto encode = signalEntry.get_encode();
-        log(LOG_INFO, "=======================length:%lu", encode.size());
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
             log(LOG_INFO, "Chain[%s] Send peer[%s] new transfer tx signal[%s]", aux::toHex(chain_id).c_str(),
@@ -2294,7 +2293,6 @@ namespace libTAU::blockchain {
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto encode = signalEntry.get_encode();
-        log(LOG_INFO, "=======================length:%lu", encode.size());
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
             log(LOG_INFO, "Chain[%s] Send peer[%s] new note tx signal[%s]", aux::toHex(chain_id).c_str(),
@@ -2522,7 +2520,7 @@ namespace libTAU::blockchain {
 
         log(LOG_INFO, "INFO: Get tx from chain[%s] peer[%s], salt:[%s], times[%d]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
-        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TX_WRAPPER, times);
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TX_WRAPPER, 0, times);
     }
 
     void blockchain::put_transaction_wrapper(const bytes &chain_id, const transaction_wrapper &txWrapper) {
