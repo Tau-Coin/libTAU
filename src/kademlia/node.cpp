@@ -1077,7 +1077,7 @@ void node::send(public_key const& to
 	// encoding payload
 	std::string encoding_payload;
 	bencode(std::back_inserter(encoding_payload), payload);
-	if (encoding_payload.size() > 1000)
+	if (encoding_payload.size() > 48)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
 		if (m_observer != nullptr && m_observer->should_log(dht_logger::node, aux::LOG_ERR))
@@ -2135,7 +2135,7 @@ bool node::incoming_relay(msg const& m, entry& e, entry& payload
 		// for 'relay' protocol, tha max size of decrypted 'payload' is 16 bytes.
 		// and the encyption algorithm is AES(encryption block size is 16 bytes).
 		span<char const> buffer = msg_keys[1].data_section();
-		if (buffer.size() > 1024 || buffer.empty())
+		if (buffer.size() > 64 || buffer.empty())
 		{
 			incoming_relay_error("message too big");
 			return false;
