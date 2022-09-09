@@ -858,11 +858,11 @@ namespace libTAU {
 
                                 m_ses.alerts().emplace_alert<communication_new_message_alert>(messageWrapper.msg());
 
-                                put_confirmation_roots(peer);
-
                                 if (!m_message_db->save_message_if_not_exist(messageWrapper.msg())) {
                                     log(LOG_ERR, "INFO: Save message[%s] fail.", messageWrapper.msg().to_string().c_str());
                                 }
+
+                                put_confirmation_roots(peer);
 
                                 if (times < 10 && !messageWrapper.previousHash().is_all_zeros() && !m_message_db->is_message_in_db(messageWrapper.previousHash())) {
                                     get_message_wrapper(peer, messageWrapper.previousHash(), times + 1);
