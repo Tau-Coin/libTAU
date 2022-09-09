@@ -40,6 +40,11 @@ namespace libTAU {
             return encode;
         }
 
+        sha1_hash message_hash_list::sha1() {
+            std::string code = encode();
+            return hasher(code).final();
+        }
+
         void message_hash_list::populate(const entry &e) {
             entry::list_type l = e.list();
             for (auto const& h: l) {

@@ -48,7 +48,7 @@ namespace libTAU {
         // new message key suffix
         const std::string key_suffix_new_message_hash = "new_message_hash";
         // confirmation roots key suffix
-        const std::string key_suffix_confirmation_roots = "confirmation_roots";
+//        const std::string key_suffix_confirmation_roots = "confirmation_roots";
 
         enum COMMUNICATION_GET_ITEM_TYPE {
             NEW_MESSAGE_HASH,
@@ -175,7 +175,7 @@ namespace libTAU {
             void send_put_done_signal(const dht::public_key &peer);
 
             // send message put done signal
-            void send_confirmation_signal(const dht::public_key &peer);
+            void send_confirmation_signal(const dht::public_key &peer, const sha1_hash &hash);
 
             void get_new_message_hash(const dht::public_key &peer, std::int64_t timestamp);
 
@@ -190,7 +190,7 @@ namespace libTAU {
             // put message
             void put_new_message(const message& msg);
 
-            void get_confirmation_roots(const dht::public_key &peer, std::int64_t timestamp);
+            void get_confirmation_roots(const dht::public_key &peer, const sha1_hash &hash, int times = 1);
 
             void put_confirmation_roots(const dht::public_key &peer);
 

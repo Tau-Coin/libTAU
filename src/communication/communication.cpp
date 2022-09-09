@@ -264,7 +264,7 @@ namespace libTAU {
                     case common::COMMUNICATION_CONFIRMATION: {
                         m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
 
-                        get_confirmation_roots(peer, signalEntry.m_timestamp - 3);
+                        get_confirmation_roots(peer, signalEntry.m_hash);
                         break;
                     }
                     case common::COMMUNICATION_ATTENTION: {
@@ -895,17 +895,24 @@ namespace libTAU {
                         }
                     }
                 } else {
-                    log(LOG_INFO, "INFO: Fail to get item: type[%d],salt[%s], timestamp:%" PRId64,
+                    log(LOG_INFO, "INFO: Fail to get item: type[%d], salt[%s], timestamp:%" PRId64,
                         type, aux::toHex(i.salt()).c_str(), timestamp);
 
                     switch (type) {
                         case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH:
                         case COMMUNICATION_GET_ITEM_TYPE::MESSAGE_WRAPPER: {
-                            send_message_missing_signal(peer);
+                            if (times == 1) {
+                                get_message_wrapper(peer, sha1_hash(salt.data()), times + 1);
+                            } else if (times >= 2) {
+                                send_message_missing_signal(peer);
+                            }
 
                             break;
                         }
                         case COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS: {
+                            if (times == 1) {
+                                get_confirmation_roots(peer, sha1_hash(salt.data()), times + 1);
+                            }
                             break;
                         }
                         case COMMUNICATION_GET_ITEM_TYPE::USER_INFO: {
@@ -1085,8 +1092,8 @@ namespace libTAU {
             send_to(peer, e);
         }
 
-        void communication::send_confirmation_signal(const dht::public_key &peer) {
-            common::signal_entry signalEntry(common::COMMUNICATION_CONFIRMATION, get_current_time() / 1000);
+        void communication::send_confirmation_signal(const dht::public_key &peer, const sha1_hash &hash) {
+            common::signal_entry signalEntry(common::COMMUNICATION_CONFIRMATION, get_current_time() / 1000, hash);
             auto e = signalEntry.get_entry();
             log(LOG_INFO, "Send peer[%s] message confirmation signal[%s]",
                 aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
@@ -1153,16 +1160,17 @@ namespace libTAU {
             send_new_message_signal(msg.receiver(), messageWrapper.sha1());
         }
 
-        void communication::get_confirmation_roots(const dht::public_key &peer, std::int64_t timestamp) {
+        void communication::get_confirmation_roots(const dht::public_key &peer, const sha1_hash &hash, int times) {
             // salt is x pubkey when request signal
-            auto pubKey = *m_ses.pubkey();
-            std::string data(pubKey.bytes.begin(), pubKey.bytes.end());
-            data.insert(data.end(), key_suffix_confirmation_roots.begin(), key_suffix_confirmation_roots.end());
-            auto salt = hasher(data).final().to_string();
+            auto salt = hash.to_string();
+//            auto pubKey = *m_ses.pubkey();
+//            std::string data(pubKey.bytes.begin(), pubKey.bytes.end());
+//            data.insert(data.end(), key_suffix_confirmation_roots.begin(), key_suffix_confirmation_roots.end());
+//            auto salt = hasher(data).final().to_string();
 
-            log(LOG_INFO, "INFO: Get confirmation roots from peer[%s], salt:[%s]",
-                aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS, timestamp);
+            log(LOG_INFO, "INFO: Get confirmation roots from peer[%s], salt:[%s], times[%d]",
+                aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
+            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS, 0, times);
         }
 
         void communication::put_confirmation_roots(const dht::public_key &peer) {
@@ -1172,15 +1180,18 @@ namespace libTAU {
                 msgHashList.push_back(msg.sha1());
             }
             message_hash_list messageHashList(msgHashList);
+            auto hash = messageHashList.sha1();
 
-            std::string data(peer.bytes.begin(), peer.bytes.end());
-            data.insert(data.end(), key_suffix_confirmation_roots.begin(), key_suffix_confirmation_roots.end());
-            auto salt = hasher(data).final().to_string();
+            auto salt = hash.to_string();
+
+//            std::string data(peer.bytes.begin(), peer.bytes.end());
+//            data.insert(data.end(), key_suffix_confirmation_roots.begin(), key_suffix_confirmation_roots.end());
+//            auto salt = hasher(data).final().to_string();
 
             log(LOG_INFO, "INFO: Put confirmation roots salt[%s]", aux::toHex(salt).c_str());
             publish(salt, messageHashList.get_entry());
 
-            send_confirmation_signal(peer);
+            send_confirmation_signal(peer, hash);
         }
 
         void communication::put_all_messages(const dht::public_key &peer) {

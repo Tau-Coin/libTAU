@@ -18,6 +18,7 @@ see LICENSE file.
 #include "libTAU/bencode.hpp"
 #include "libTAU/bdecode.hpp"
 #include "libTAU/sha1_hash.hpp"
+#include "libTAU/hasher.hpp"
 
 namespace libTAU::communication {
 
@@ -37,6 +38,9 @@ namespace libTAU::communication {
         std::vector<sha1_hash> hash_list() const { return m_message_hash_list; }
 
         entry get_entry() const;
+
+        // @returns the SHA1 hash
+        sha1_hash sha1();
 
         // @returns the bencode
         std::string encode();
