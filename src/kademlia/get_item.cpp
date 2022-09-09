@@ -19,6 +19,7 @@ see LICENSE file.
 #include <libTAU/kademlia/node.hpp>
 #include <libTAU/kademlia/dht_observer.hpp>
 #include <libTAU/performance_counters.hpp>
+#include <libTAU/hex.hpp>
 
 namespace libTAU { namespace dht {
 
@@ -121,6 +122,7 @@ get_item::get_item(
 	: find_data(dht_node, item_target_id(salt, pk), std::move(ncallback))
 	, m_data_callback(std::move(dcallback))
 	, m_data(pk, salt)
+	, m_pk(pk)
 	, m_immutable(false)
 {
 }
@@ -131,6 +133,26 @@ void get_item::start()
 	// nodes from routing table.
 	if (m_results.empty() && !m_direct_invoking)
 	{
+		if (!m_immutable)
+		{
+			// fill aux endpoints
+			std::vector<node_entry> aux_nodes;
+			sha256_hash target;
+			std::memcpy(&target[0], m_pk.bytes.begin(), 32);
+			m_node.m_storage.find_relays(target, aux_nodes
+				, invoke_window(), m_node.protocol());
+			for (auto& an : aux_nodes)
+			{
+#ifndef TORRENT_DISABLE_LOGGING
+				get_node().observer()->log(dht_logger::traversal, "add relay, id: %s, ep:%s"
+					, aux::to_hex(an.id).c_str()
+					, aux::print_endpoint(an.ep()).c_str());
+#endif
+				add_entry(an.id, an.ep()
+					, observer::flag_initial | observer::flag_high_priority);
+			}
+		}
+
 		std::vector<node_entry> nodes = m_node.m_table.find_node(
 				target(), routing_table::include_pinged, invoke_window());
 

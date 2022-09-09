@@ -66,6 +66,7 @@ protected:
 	data_callback m_data_callback;
 	item m_data;
 	bool m_immutable;
+	public_key m_pk;
 
 	std::int64_t m_timestamp = -1;
 	int m_got_items_count = 0;
