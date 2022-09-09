@@ -2266,8 +2266,8 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::send_new_head_block_signal(const bytes &chain_id) {
-        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id, get_total_milliseconds() / 1000);
+    void blockchain::send_new_head_block_signal(const bytes &chain_id, const sha1_hash &hash) {
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id, get_total_milliseconds() / 1000, hash);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -2289,8 +2289,8 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::send_new_note_tx_signal(const bytes &chain_id) {
-        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000);
+    void blockchain::send_new_note_tx_signal(const bytes &chain_id, const sha1_hash &hash) {
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash);
         auto e = signalEntry.get_entry();
         auto encode = signalEntry.get_encode();
         auto const& acl = m_access_list[chain_id];
@@ -2311,7 +2311,7 @@ namespace libTAU::blockchain {
             put_block(chain_id, blk);
             put_head_block_hash(chain_id, blk.sha1());
 
-            send_new_head_block_signal(chain_id);
+            send_new_head_block_signal(chain_id, blk.sha1());
         }
     }
 
@@ -2327,7 +2327,7 @@ namespace libTAU::blockchain {
 
             put_head_block_hash(chain_id, blk.sha1());
 
-            send_new_head_block_signal(chain_id);
+            send_new_head_block_signal(chain_id, blk.sha1());
         }
     }
 
@@ -2372,7 +2372,7 @@ namespace libTAU::blockchain {
             put_transaction_wrapper(chain_id, txWrapper);
             put_new_note_tx_hash(chain_id, tx.sha1());
 
-            send_new_note_tx_signal(chain_id);
+            send_new_note_tx_signal(chain_id, tx.sha1());
         }
     }
 
@@ -3507,7 +3507,18 @@ namespace libTAU::blockchain {
                 case common::BLOCKCHAIN_NEW_HEAD_BLOCK: {
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
 
-                    get_head_block_from_peer(chain_id, peer, signalEntry.m_timestamp - 3);
+                    auto head_block_hash = signalEntry.m_hash;
+                    if (!head_block_hash.is_all_zeros()) {
+                        auto blk = m_repository->get_block_by_hash(chain_id, head_block_hash);
+                        if (blk.empty()) {
+                            log(LOG_INFO, "INFO: Cannot get block hash[%s] in local", aux::toHex(head_block_hash).c_str());
+                            get_head_block(chain_id, peer, head_block_hash);
+                        } else {
+                            block_reception_event(chain_id, peer, blk);
+                        }
+                    }
+
+//                    get_head_block_from_peer(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
                 case common::BLOCKCHAIN_NEW_TRANSFER_TX: {
@@ -3519,7 +3530,14 @@ namespace libTAU::blockchain {
                 case common::BLOCKCHAIN_NEW_NOTE_TX: {
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
 
-                    get_new_note_tx_hash(chain_id, peer, signalEntry.m_timestamp - 3);
+                    auto new_tx_hash = signalEntry.m_hash;
+                    if (!new_tx_hash.is_all_zeros()) {
+                        if (!is_transaction_in_pool(chain_id, new_tx_hash)) {
+                            get_transaction_wrapper(chain_id, peer, new_tx_hash);
+                        }
+                    }
+
+//                    get_new_note_tx_hash(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
                 default: {

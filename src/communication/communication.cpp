@@ -239,7 +239,14 @@ namespace libTAU {
                     case common::COMMUNICATION_NEW_MESSAGE: {
                         m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
 
-                        get_new_message_hash(peer, signalEntry.m_timestamp - 3);
+                        auto new_msg_hash = signalEntry.m_hash;
+                        if (!new_msg_hash.is_all_zeros()) {
+                            if (!m_message_db->is_message_in_db(new_msg_hash)) {
+                                get_message_wrapper(peer, new_msg_hash);
+                            }
+                        }
+
+//                        get_new_message_hash(peer, signalEntry.m_timestamp - 3);
                         break;
                     }
                     case common::COMMUNICATION_MESSAGE_MISSING: {
@@ -1054,8 +1061,8 @@ namespace libTAU {
                               std::bind(&communication::on_dht_relay_mutable_item, self(), _1, _2, peer));
         }
 
-        void communication::send_new_message_signal(const dht::public_key &peer) {
-            common::signal_entry signalEntry(common::COMMUNICATION_NEW_MESSAGE, get_current_time() / 1000);
+        void communication::send_new_message_signal(const dht::public_key &peer, const sha1_hash &hash) {
+            common::signal_entry signalEntry(common::COMMUNICATION_NEW_MESSAGE, get_current_time() / 1000, hash);
             auto e = signalEntry.get_entry();
             log(LOG_INFO, "Send peer[%s] new message signal[%s]",
                 aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
@@ -1143,7 +1150,7 @@ namespace libTAU {
             message_wrapper messageWrapper(last_message.sha1(), msg);
             put_message_wrapper(messageWrapper);
             put_new_message_hash(msg.receiver(), messageWrapper.sha1());
-            send_new_message_signal(msg.receiver());
+            send_new_message_signal(msg.receiver(), messageWrapper.sha1());
         }
 
         void communication::get_confirmation_roots(const dht::public_key &peer, std::int64_t timestamp) {

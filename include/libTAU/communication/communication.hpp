@@ -166,7 +166,7 @@ namespace libTAU {
             void send_to(const dht::public_key &peer, entry const& data);
 
             // send new message signal
-            void send_new_message_signal(const dht::public_key &peer);
+            void send_new_message_signal(const dht::public_key &peer, const sha1_hash &hash);
 
             // send message missing signal
             void send_message_missing_signal(const dht::public_key &peer);

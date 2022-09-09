@@ -416,11 +416,11 @@ namespace blockchain {
 
         void send_online_signal(const aux::bytes &chain_id);
 
-        void send_new_head_block_signal(const aux::bytes &chain_id);
+        void send_new_head_block_signal(const aux::bytes &chain_id, const sha1_hash &hash);
 
         void send_new_transfer_tx_signal(const aux::bytes &chain_id);
 
-        void send_new_note_tx_signal(const aux::bytes &chain_id);
+        void send_new_note_tx_signal(const aux::bytes &chain_id, const sha1_hash &hash);
 
         void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 

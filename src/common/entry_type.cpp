@@ -13,7 +13,8 @@ namespace libTAU::common {
     signal_entry::signal_entry(const entry &e) {
         auto const& encode = e.string();
 
-        if (encode.size() == 5) {
+        auto size = encode.size();
+        if (size == 5) {
             // protocol id
             auto spid = encode.substr(0, 1);
             int pid = aux::intFromLittleEndianString(spid);
@@ -21,9 +22,30 @@ namespace libTAU::common {
             // timestamp
             auto timestamp = encode.substr(1, 4);
             m_timestamp = aux::int64FromLittleEndianString(timestamp);
-        }
-
-        if (encode.size() > 5) {
+        } else if (size == 25) {
+            // protocol id
+            auto spid = encode.substr(0, 1);
+            int pid = aux::intFromLittleEndianString(spid);
+            m_pid = static_cast<signal_id>(pid);
+            // timestamp
+            auto timestamp = encode.substr(1, 4);
+            m_timestamp = aux::int64FromLittleEndianString(timestamp);
+            // hash
+            m_hash = sha1_hash(encode.substr(5).data());
+        } else if (size > 25) {
+            // protocol id
+            auto spid = encode.substr(0, 1);
+            int pid = aux::intFromLittleEndianString(spid);
+            m_pid = static_cast<signal_id>(pid);
+            // timestamp
+            auto timestamp = encode.substr(1, 4);
+            m_timestamp = aux::int64FromLittleEndianString(timestamp);
+            // hash
+            m_hash = sha1_hash(encode.substr(5, 20).data());
+            // short chain id
+            auto chain_id = encode.substr(25);
+            m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        } else if (size > 5 && size <= 9) {
             // protocol id
             auto spid = encode.substr(0, 1);
             int pid = aux::intFromLittleEndianString(spid);
@@ -40,13 +62,17 @@ namespace libTAU::common {
     entry signal_entry::get_entry() {
         std::string encode;
 
-        // protocol id
+        // protocol id:1 byte
         auto pid = aux::intToLittleEndianString((int)m_pid);
         encode.append(pid);
-        // timestamp
+        // timestamp:4 bytes
         auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
         encode.append(timestamp);
-        // short chain id
+        // hash:20 bytes
+        if (!m_hash.is_all_zeros()) {
+            encode.append(m_hash.to_string());
+        }
+        // short chain id <= 4 bytes
         if (!m_short_chain_id.empty()) {
             if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
                 encode.append(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
