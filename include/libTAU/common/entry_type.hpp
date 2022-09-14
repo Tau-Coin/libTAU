@@ -35,7 +35,7 @@ namespace libTAU::common {
     const std::string entry_levenshtein_array = "l";
 
     enum signal_id {
-        BLOCKCHAIN_ALL_DATA = 20, // 0
+        BLOCKCHAIN_ALL_DATA = 40, // 0
         BLOCKCHAIN_ALL_BLOCKS, // 1
         BLOCKCHAIN_ALL_STATE, // 2
         BLOCKCHAIN_ONLINE, // 3
@@ -61,6 +61,10 @@ namespace libTAU::common {
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp) : m_pid(mPid),
             m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp) {}
 
+        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp,
+                     const dht::public_key &mGossipPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
+                                                           m_timestamp(mTimestamp), m_gossip_peer(mGossipPeer) {}
+
         signal_entry(signal_id mPid, int64_t mTimestamp, const sha1_hash &mHash)
                 : m_pid(mPid), m_timestamp(mTimestamp), m_hash(mHash) {}
 
@@ -82,6 +86,9 @@ namespace libTAU::common {
 
         // hash
         sha1_hash m_hash;
+
+        // gossip peer
+        dht::public_key m_gossip_peer;
     };
 
     struct TORRENT_EXPORT gossip_cache_peers_entry {

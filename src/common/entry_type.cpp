@@ -32,7 +32,20 @@ namespace libTAU::common {
             m_timestamp = aux::int64FromLittleEndianString(timestamp);
             // hash
             m_hash = sha1_hash(encode.substr(5).data());
-        } else if (size > 25) {
+        } else if (size == 41) {
+            // protocol id
+            auto spid = encode.substr(0, 1);
+            int pid = aux::intFromLittleEndianString(spid);
+            m_pid = static_cast<signal_id>(pid);
+            // timestamp
+            auto timestamp = encode.substr(1, 4);
+            m_timestamp = aux::int64FromLittleEndianString(timestamp);
+            // gossip peer
+            m_gossip_peer = dht::public_key(encode.substr(5, 32).data());
+            // short chain id
+            auto chain_id = encode.substr(37);
+            m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+        } else if (size > 25 && size <= 29) {
             // protocol id
             auto spid = encode.substr(0, 1);
             int pid = aux::intFromLittleEndianString(spid);
@@ -71,6 +84,9 @@ namespace libTAU::common {
         // hash:20 bytes
         if (!m_hash.is_all_zeros()) {
             encode.append(m_hash.to_string());
+        }
+        if (!m_gossip_peer.is_all_zeros()) {
+            encode.append(m_gossip_peer.bytes.data());
         }
         // short chain id <= 4 bytes
         if (!m_short_chain_id.empty()) {
