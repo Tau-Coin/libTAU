@@ -43,6 +43,13 @@ namespace libTAU::blockchain {
         return "t" + aux::toHex(hash) + table_peer;
     }
 
+    std::string repository::acl_db_name(const aux::bytes &chain_id) {
+        // prevent SQL injection
+        sha1_hash hash = hasher(chain_id).final();
+        // 't' + hex(sha1(chain id))
+        return "t" + aux::toHex(hash) + table_acl;
+    }
+
 //    bool repository::save_main_chain_block(const block &blk) {
 //        return save_block(blk, true);
 //    }

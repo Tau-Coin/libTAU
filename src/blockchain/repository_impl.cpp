@@ -973,6 +973,93 @@ namespace libTAU::blockchain {
         return true;
     }
 
+    bool repository_impl::create_acl_db(const aux::bytes &chain_id) {
+        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+        sql.append(acl_db_name(chain_id));
+        sql.append("(PUBKEY BLOB PRIMARY KEY NOT NULL);");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool repository_impl::delete_acl_db(const aux::bytes &chain_id) {
+        std::string sql = "DROP TABLE ";
+        sql.append(acl_db_name(chain_id));
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
+    }
+
+    std::set<dht::public_key> repository_impl::get_all_peer_in_acl_db(const aux::bytes &chain_id) {
+        std::set<dht::public_key> peers;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT PUBKEY FROM ";
+        sql.append(acl_db_name(chain_id));
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                peers.insert(dht::public_key(p));
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return peers;
+    }
+
+    bool repository_impl::clear_acl_db(const aux::bytes &chain_id) {
+        sqlite3_stmt * stmt;
+        std::string sql = "DELETE FROM ";
+        sql.append(acl_db_name(chain_id));
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
+    }
+
+    bool repository_impl::add_peer_in_acl_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        sqlite3_stmt * stmt;
+        std::string sql = "REPLACE INTO ";
+        sql.append(acl_db_name(chain_id));
+        sql.append(" VALUES(?)");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+        sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
+    }
+
 //    bool repository_impl::create_peer_db(const aux::bytes &chain_id) {
 //        std::string sql = "CREATE TABLE IF NOT EXISTS ";
 //        sql.append(chain_id_to_short_hash(chain_id));

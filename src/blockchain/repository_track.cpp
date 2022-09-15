@@ -178,6 +178,26 @@ namespace libTAU::blockchain {
         return 0;
     }
 
+    bool repository_track::create_acl_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::delete_acl_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    std::set<dht::public_key> repository_track::get_all_peer_in_acl_db(const aux::bytes &chain_id) {
+        return std::set<dht::public_key>();
+    }
+
+    bool repository_track::clear_acl_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::add_peer_in_acl_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        return false;
+    }
+
 //    bool repository_track::create_peer_db(const aux::bytes &chain_id) {
 //        return false;
 //    }
