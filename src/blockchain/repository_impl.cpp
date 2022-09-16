@@ -342,6 +342,27 @@ namespace libTAU::blockchain {
         return act;
     }
 
+    bool repository_impl::is_account_existed(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        bool is_existed = false;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT * FROM ";
+        sql.append(state_db_name(chain_id));
+        sql.append(" WHERE PUBKEY=?");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                is_existed = true;
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return is_existed;
+    }
+
     bool repository_impl::save_account(const aux::bytes &chain_id, const account &act) {
         sqlite3_stmt * stmt;
         std::string sql = "REPLACE INTO ";

@@ -57,6 +57,8 @@ namespace libTAU::blockchain {
 
         account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
+        bool is_account_existed(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
+
         bool save_account(const aux::bytes &chain_id, const account &act) override;
 
         bool delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) override;

@@ -518,6 +518,8 @@ namespace blockchain {
 
         void add_peer_into_acl(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
+        dht::public_key select_peer_randomly_from_acl(aux::bytes const& chain_id);
+
 //        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score,
 //                                     const std::unique_ptr<common::blockchain_entry_base>& ptr);
 

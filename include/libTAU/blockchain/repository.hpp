@@ -106,6 +106,8 @@ namespace libTAU::blockchain {
 
         virtual account get_account(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
+        virtual bool is_account_existed(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
         virtual bool save_account(const aux::bytes &chain_id, const account &act) = 0;
 
         virtual bool delete_account(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
