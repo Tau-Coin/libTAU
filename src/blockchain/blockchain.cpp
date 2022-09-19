@@ -2304,15 +2304,22 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::send_new_transfer_tx_signal(const bytes &chain_id) {
+    void blockchain::send_new_transfer_tx_signal(const bytes &chain_id, const dht::public_key& tx_receiver) {
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id, get_total_milliseconds() / 1000);
         auto e = signalEntry.get_entry();
         auto encode = signalEntry.get_encode();
         auto const& acl = m_access_list[chain_id];
+        std::set<dht::public_key> peers;
         for (auto const& item: acl) {
+            peers.insert(item.first);
+        }
+        if (tx_receiver != *m_ses.pubkey()) {
+            peers.insert(tx_receiver);
+        }
+        for (auto const& peer: peers) {
             log(LOG_INFO, "Chain[%s] Send peer[%s] new transfer tx signal[%s]", aux::toHex(chain_id).c_str(),
-                aux::toHex(item.first.bytes).c_str(), e.to_string(true).c_str());
-            send_to(item.first, e);
+                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+            send_to(peer, e);
         }
     }
 
@@ -2387,7 +2394,7 @@ namespace libTAU::blockchain {
             log(LOG_INFO, "INFO: Chain id[%s] Put transfer tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, tx.get_entry());
 
-            send_new_transfer_tx_signal(chain_id);
+            send_new_transfer_tx_signal(chain_id, tx.receiver());
         }
     }
 
