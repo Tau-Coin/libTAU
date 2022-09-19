@@ -2283,7 +2283,10 @@ namespace libTAU::blockchain {
 
     void blockchain::send_online_signal(const aux::bytes &chain_id) {
         auto peer = select_peer_randomly_from_acl(chain_id);
+        log(LOG_INFO, "Chain[%s] select gossip peer[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str());
         common::signal_entry signalEntry(common::BLOCKCHAIN_ONLINE, chain_id, get_total_milliseconds() / 1000, peer);
+
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {

@@ -86,7 +86,7 @@ namespace libTAU::common {
             encode.append(m_hash.to_string());
         }
         if (!m_gossip_peer.is_all_zeros()) {
-            encode.append(m_gossip_peer.bytes.data());
+            encode.append(std::string(m_gossip_peer.bytes.begin(), m_gossip_peer.bytes.end()));
         }
         // short chain id <= 4 bytes
         if (!m_short_chain_id.empty()) {
