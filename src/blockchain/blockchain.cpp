@@ -2843,7 +2843,8 @@ namespace libTAU::blockchain {
                             if (pool.add_tx_to_fee_pool(tx)) {
                                 auto self_tx = pool.get_transaction_by_account(*m_ses.pubkey());
                                 auto best_tx = pool.get_best_fee_transaction();
-                                if (self_tx.empty() && best_tx != tx) {
+                                if (self_tx.empty() && best_tx == tx) {
+                                    // transfer tx only when self tx is not in pool and this tx is not the best
                                     put_transfer_transaction(chain_id, tx);
                                 }
                             }
