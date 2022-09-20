@@ -3542,13 +3542,16 @@ namespace libTAU::blockchain {
     dht::public_key blockchain::select_peer_randomly_from_acl(const bytes &chain_id) {
         auto const &acl = m_access_list[chain_id];
         srand(get_total_microseconds());
-        auto index = rand() % acl.size();
-        int i = 0;
-        for (const auto & it : acl) {
-            if (i == index) {
-                return it.first;
+        // note: acl may be empty, if acl size == 0, maybe crush
+        if (!acl.empty()) {
+            auto index = rand() % acl.size();
+            int i = 0;
+            for (const auto &it : acl) {
+                if (i == index) {
+                    return it.first;
+                }
+                i++;
             }
-            i++;
         }
 
         return dht::public_key();
