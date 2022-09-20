@@ -335,6 +335,12 @@ namespace libTAU::blockchain {
         // create tx pool
         m_tx_pools[chain_id] = tx_pool(m_repository.get());
 
+        // TODO: remove in the future
+        if (!m_repository->create_acl_db(chain_id)) {
+            log(LOG_ERR, "INFO: chain:[%s] create acl db fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
+
         // load key point block in memory
         // load head/tail/consensus block
         auto head_block = m_repository->get_head_block(chain_id);
@@ -2814,20 +2820,28 @@ namespace libTAU::blockchain {
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
 
                             auto &pool = m_tx_pools[chain_id];
-                            if (pool.add_tx_to_time_pool(txWrapper.tx())) {
-                                if (peer != *m_ses.pubkey()) {
-                                    put_note_transaction(chain_id, txWrapper.tx());
-                                } else {
-                                    // update last tx wrapper
-                                    if (m_current_tx_wrapper[chain_id].empty()) {
-                                        m_current_tx_wrapper[chain_id] = txWrapper;
-                                    }
 
-                                    // get history tx
-                                    if (times < 10 && !txWrapper.previousHash().is_all_zeros() && !pool.is_transaction_in_time_pool(txWrapper.previousHash())) {
-                                        get_transaction_wrapper(chain_id, peer, txWrapper.previousHash(), times + 1);
-                                    }
-                                }
+                            // get history tx
+                            if (times < 10 && !txWrapper.previousHash().is_all_zeros() && !pool.is_transaction_in_time_pool(txWrapper.previousHash())) {
+                                get_transaction_wrapper(chain_id, peer, txWrapper.previousHash(), times + 1);
+                            }
+
+                            if (pool.add_tx_to_time_pool(txWrapper.tx())) {
+                                put_note_transaction(chain_id, txWrapper.tx());
+
+//                                if (peer != *m_ses.pubkey()) {
+//                                    put_note_transaction(chain_id, txWrapper.tx());
+//                                } else {
+//                                    // update last tx wrapper
+//                                    if (m_current_tx_wrapper[chain_id].empty()) {
+//                                        m_current_tx_wrapper[chain_id] = txWrapper;
+//                                    }
+//
+//                                    // get history tx
+//                                    if (times < 10 && !txWrapper.previousHash().is_all_zeros() && !pool.is_transaction_in_time_pool(txWrapper.previousHash())) {
+//                                        get_transaction_wrapper(chain_id, peer, txWrapper.previousHash(), times + 1);
+//                                    }
+//                                }
                             }
                         }
 
@@ -3471,7 +3485,7 @@ namespace libTAU::blockchain {
             return;
         }
 
-        bool is_new = false;
+//        bool is_new = false;
         
         auto &acl = m_access_list[chain_id];
 
@@ -3485,7 +3499,7 @@ namespace libTAU::blockchain {
         } else {
             acl[peer] = peer_info(timestamp);
 
-            is_new = true;
+//            is_new = true;
         }
 
         if (acl.size() > blockchain_acl_max_peers) {
@@ -3530,13 +3544,13 @@ namespace libTAU::blockchain {
             }
         }
 
-        if (is_new) {
-            auto iter = acl.find(peer);
-            if (iter != acl.end()) {
-                // get note tx
-                get_new_note_tx_hash(chain_id, peer, 0);
-            }
-        }
+//        if (is_new) {
+//            auto iter = acl.find(peer);
+//            if (iter != acl.end()) {
+//                // get note tx
+//                get_new_note_tx_hash(chain_id, peer, 0);
+//            }
+//        }
     }
 
     dht::public_key blockchain::select_peer_randomly_from_acl(const bytes &chain_id) {
