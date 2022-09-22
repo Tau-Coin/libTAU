@@ -384,6 +384,12 @@ namespace libTAU::blockchain {
 
         send_online_signal(chain_id);
 
+        auto const& acl = m_access_list[chain_id];
+        for (auto const& item: acl) {
+            // get note tx
+            get_new_note_tx_hash(chain_id, item.first, 0);
+        }
+
         return true;
     }
 
@@ -2875,7 +2881,7 @@ namespace libTAU::blockchain {
 
                         if (!new_tx_hash.is_all_zeros()) {
                             if (!is_transaction_in_pool(chain_id, new_tx_hash)) {
-                                get_transaction_wrapper(chain_id, peer, new_tx_hash);
+                                get_transaction_wrapper(chain_id, peer, new_tx_hash, 10);
                             }
                         }
 
