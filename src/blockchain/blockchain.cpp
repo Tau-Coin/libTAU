@@ -2407,7 +2407,8 @@ namespace libTAU::blockchain {
             auto salt = make_salt(key);
 
             log(LOG_INFO, "INFO: Chain id[%s] Put transfer tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-            publish(salt, tx.get_entry());
+//            publish(salt, tx.get_entry());
+            publish_transaction(chain_id, tx.sha1(), salt, tx.get_entry());
 
             send_new_transfer_tx_signal(chain_id, tx.receiver());
         }
