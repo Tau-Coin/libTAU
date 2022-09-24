@@ -96,6 +96,24 @@ namespace blockchain {
         NO_FORK_POINT,
     };
 
+    enum dht_item_type {
+        DHT_SEND,
+        DHT_PUT,
+        DHT_PUT_TX,
+        DHT_GET,
+    };
+
+    struct dht_item {
+        dht_item_type m_type;
+        aux::bytes m_chain_id;
+        dht::public_key m_peer;
+        entry m_data;
+        std::string m_salt;
+        std::int64_t m_timestamp;
+        int m_times;
+        sha1_hash m_hash;
+    };
+
     struct GET_ITEM {
         GET_ITEM(aux::bytes mChainId, const dht::public_key &mPeer, std::string mSalt, GET_ITEM_TYPE mType) :
                 m_chain_id(std::move(mChainId)), m_peer(mPeer), m_salt(std::move(mSalt)), m_type(mType) {}
