@@ -178,7 +178,7 @@ namespace blockchain {
             public std::enable_shared_from_this<blockchain>, blockchain_logger  {
     public:
         blockchain(io_context& mIoc, aux::session_interface &mSes, counters &mCounters) :
-        m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc) {
+        m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc), m_dht_tasks_timer(mIoc) {
             m_repository = std::make_shared<repository_impl>(m_ses.sqldb());
         }
         // start blockchain
@@ -303,6 +303,8 @@ namespace blockchain {
         //#endif
 
         void refresh_timeout(error_code const& e);
+
+        void refresh_dht_task_timer(error_code const& e);
 
 //        void refresh_chain_status(error_code const &e, const aux::bytes &chain_id);
 
@@ -562,6 +564,9 @@ namespace blockchain {
 
         // deadline timer
         aux::deadline_timer m_refresh_timer;
+
+        // dht task deadline timer
+        aux::deadline_timer m_dht_tasks_timer;
 
         bool m_pause = false;
 

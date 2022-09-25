@@ -65,6 +65,9 @@ namespace libTAU::blockchain {
 
         m_stop = false;
 
+        m_dht_tasks_timer.expires_after(milliseconds(50));
+        m_dht_tasks_timer.async_wait(std::bind(&blockchain::refresh_dht_task_timer, self(), _1));
+
         m_refresh_timer.expires_after(milliseconds(100));
         m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
 
@@ -80,6 +83,8 @@ namespace libTAU::blockchain {
         for (auto& timer: m_chain_timers) {
             timer.second.cancel();
         }
+
+        m_dht_tasks_timer.cancel();
 
         for (auto const& chain_id: m_chains) {
             m_repository->clear_acl_db(chain_id);
@@ -581,6 +586,17 @@ namespace libTAU::blockchain {
                 m_refresh_timer.expires_after(milliseconds(300));
                 m_refresh_timer.async_wait(std::bind(&blockchain::refresh_timeout, self(), _1));
             }
+        } catch (std::exception &e) {
+            log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+        }
+    }
+
+    void blockchain::refresh_dht_task_timer(const error_code &e) {
+        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
+
+        try {
+            m_dht_tasks_timer.expires_after(milliseconds(5000));
+            m_dht_tasks_timer.async_wait(std::bind(&blockchain::refresh_dht_task_timer, self(), _1));
         } catch (std::exception &e) {
             log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
         }
