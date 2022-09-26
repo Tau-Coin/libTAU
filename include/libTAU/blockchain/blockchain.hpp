@@ -104,14 +104,94 @@ namespace blockchain {
     };
 
     struct dht_item {
+        // send
+        dht_item(const dht::public_key &mPeer, entry mData) : m_peer(mPeer), m_data(std::move(mData)) {
+            m_type = dht_item_type::DHT_SEND;
+        }
+
+        // put
+        dht_item(std::string mSalt, entry mData) : m_salt(std::move(mSalt)), m_data(std::move(mData)) {
+            m_type = dht_item_type::DHT_PUT;
+        }
+
+        // put tx
+        dht_item(aux::bytes mChainId, const sha1_hash &mHash, std::string mSalt, entry mData)
+                : m_chain_id(std::move(mChainId)), m_hash(mHash), m_salt(std::move(mSalt)), m_data(std::move(mData)) {
+            m_type = dht_item_type::DHT_PUT_TX;
+        }
+
+        // get
+        dht_item(aux::bytes mChainId, const dht::public_key &mPeer, std::string mSalt,
+                 GET_ITEM_TYPE mGetItemType, int64_t mTimestamp, int mTimes) : m_chain_id(std::move(mChainId)), m_peer(mPeer),
+                                                                               m_salt(std::move(mSalt)),
+                                                                               m_get_item_type(mGetItemType),
+                                                                               m_timestamp(mTimestamp),
+                                                                               m_times(mTimes) {
+            m_type = dht_item_type::DHT_GET;
+        }
+
+        bool operator<(const dht_item &rhs) const {
+            if (m_type < rhs.m_type)
+                return true;
+            if (rhs.m_type < m_type)
+                return false;
+            if (m_type == dht_item_type::DHT_GET && m_timestamp == 0 && rhs.m_timestamp == 0 && m_salt == rhs.m_salt) {
+                // immutable get
+                return false;
+            } else {
+                if (m_chain_id < rhs.m_chain_id)
+                    return true;
+                if (rhs.m_chain_id < m_chain_id)
+                    return false;
+                if (m_peer < rhs.m_peer)
+                    return true;
+                if (rhs.m_peer < m_peer)
+                    return false;
+                if (m_hash < rhs.m_hash)
+                    return true;
+                if (rhs.m_hash < m_hash)
+                    return false;
+                if (m_salt < rhs.m_salt)
+                    return true;
+                if (rhs.m_salt < m_salt)
+                    return false;
+                if (m_data < rhs.m_data)
+                    return true;
+                if (rhs.m_data < m_data)
+                    return false;
+                if (m_get_item_type < rhs.m_get_item_type)
+                    return true;
+                if (rhs.m_get_item_type < m_get_item_type)
+                    return false;
+                if (m_timestamp < rhs.m_timestamp)
+                    return true;
+                if (rhs.m_timestamp < m_timestamp)
+                    return false;
+                return m_times < rhs.m_times;
+            }
+        }
+
+        bool operator>(const dht_item &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const dht_item &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const dht_item &rhs) const {
+            return !(*this < rhs);
+        }
+
         dht_item_type m_type;
         aux::bytes m_chain_id;
         dht::public_key m_peer;
-        entry m_data;
+        sha1_hash m_hash;
         std::string m_salt;
+        entry m_data;
+        GET_ITEM_TYPE m_get_item_type;
         std::int64_t m_timestamp;
         int m_times;
-        sha1_hash m_hash;
     };
 
     struct GET_ITEM {
@@ -600,6 +680,10 @@ namespace blockchain {
         std::map<aux::bytes, bool> m_chain_connected;
 
         std::map<aux::bytes, int> m_chain_getting_times;
+
+        // all tasks
+        std::queue<dht_item> m_tasks;
+        std::set<dht_item> m_tasks_set;
 
 //        std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
