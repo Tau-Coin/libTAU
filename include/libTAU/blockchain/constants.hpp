@@ -63,6 +63,8 @@ namespace libTAU::blockchain {
 
     // genesis block balance
     constexpr int64_t GENESIS_BLOCK_BALANCE = 1000000;
+    // miner bonus
+    constexpr int64_t MINER_BONUS = 10;
 
     constexpr uint64_t MAX_BASE_TARGET = UINT64_MAX / 2;
 

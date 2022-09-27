@@ -961,6 +961,40 @@ namespace libTAU::blockchain {
                     }
                 }
 
+                auto const& tx = blk.tx();
+                if (!tx.empty() && tx.type() == type_transfer) {
+                    std::map<dht::public_key, account> accounts;
+                    for (auto const& peer: peers) {
+                        accounts[peer] = m_repository->get_account(chain_id, peer);
+                    }
+
+                    accounts[blk.miner()].add_balance(tx.fee());
+                    accounts[tx.receiver()].add_balance(tx.amount());
+                    accounts[tx.sender()].subtract_balance(tx.cost());
+                    accounts[tx.sender()].increase_nonce();
+
+                    for (auto const& item: accounts) {
+                        if (!m_repository->save_account(chain_id, item.second)) {
+                            log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                                aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
+                            m_repository->rollback();
+                            return FAIL;
+                        }
+                    }
+                } else {
+                    // miner balance +=10
+                    auto miner_account = m_repository->get_account(chain_id, blk.miner());
+
+                    miner_account.add_balance(MINER_BONUS);
+
+                    if (!m_repository->save_account(chain_id, miner_account)) {
+                        log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
+                            aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
+                        m_repository->rollback();
+                        return FAIL;
+                    }
+                }
+
                 if (!m_repository->save_main_chain_block(blk)) {
                     log(LOG_ERR, "INFO: chain:%s, save main chain block[%s] fail.",
                         aux::toHex(chain_id).c_str(), blk.to_string().c_str());
@@ -998,6 +1032,40 @@ namespace libTAU::blockchain {
                         m_repository->rollback();
                         return FAIL;
                     }
+                }
+            }
+
+            auto const& tx = blk.tx();
+            if (!tx.empty() && tx.type() == type_transfer) {
+                std::map<dht::public_key, account> accounts;
+                for (auto const& peer: peers) {
+                    accounts[peer] = m_repository->get_account(chain_id, peer);
+                }
+
+                accounts[blk.miner()].add_balance(tx.fee());
+                accounts[tx.receiver()].add_balance(tx.amount());
+                accounts[tx.sender()].subtract_balance(tx.cost());
+                accounts[tx.sender()].increase_nonce();
+
+                for (auto const& item: accounts) {
+                    if (!m_repository->save_account(chain_id, item.second)) {
+                        log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                            aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
+                        m_repository->rollback();
+                        return FAIL;
+                    }
+                }
+            } else {
+                // miner balance +=10
+                auto miner_account = m_repository->get_account(chain_id, blk.miner());
+
+                miner_account.add_balance(MINER_BONUS);
+
+                if (!m_repository->save_account(chain_id, miner_account)) {
+                    log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
+                        aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
+                    m_repository->rollback();
+                    return FAIL;
                 }
             }
 
@@ -1066,6 +1134,18 @@ namespace libTAU::blockchain {
                             m_repository->rollback();
                             return FAIL;
                         }
+                    }
+                } else {
+                    // miner balance +=10
+                    auto miner_account = m_repository->get_account(chain_id, blk.miner());
+
+                    miner_account.add_balance(MINER_BONUS);
+
+                    if (!m_repository->save_account(chain_id, miner_account)) {
+                        log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
+                            aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
+                        m_repository->rollback();
+                        return FAIL;
                     }
                 }
 
@@ -1497,6 +1577,18 @@ namespace libTAU::blockchain {
                         return FAIL;
                     }
                 }
+            } else {
+                // miner balance -=10
+                auto miner_account = m_repository->get_account(chain_id, blk.miner());
+
+                miner_account.subtract_balance(MINER_BONUS);
+
+                if (!m_repository->save_account(chain_id, miner_account)) {
+                    log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
+                        aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
+                    m_repository->rollback();
+                    return FAIL;
+                }
             }
 
             if (!m_repository->set_block_non_main_chain(chain_id, blk.sha1())) {
@@ -1541,6 +1633,18 @@ namespace libTAU::blockchain {
                         m_repository->rollback();
                         return FAIL;
                     }
+                }
+            } else {
+                // miner balance +=10
+                auto miner_account = m_repository->get_account(chain_id, blk.miner());
+
+                miner_account.add_balance(MINER_BONUS);
+
+                if (!m_repository->save_account(chain_id, miner_account)) {
+                    log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
+                        aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
+                    m_repository->rollback();
+                    return FAIL;
                 }
             }
 
