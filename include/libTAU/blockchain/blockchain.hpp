@@ -491,6 +491,8 @@ namespace blockchain {
         // send data to peer
         void send_to(const dht::public_key &peer, entry const& data);
 
+        void add_into_dht_task_queue(const dht_item &dhtItem);
+
 //        void transfer_to_acl_peers(const aux::bytes &chain_id, entry const& data,
 //                                   const dht::public_key &incoming_peer = dht::public_key());
 

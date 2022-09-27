@@ -595,7 +595,48 @@ namespace libTAU::blockchain {
         if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
 
         try {
-            m_dht_tasks_timer.expires_after(milliseconds(5000));
+            log(LOG_ERR, "INFO: DHT item size[%lu]", m_tasks_set.size());
+            if (!m_pause && !m_tasks_set.empty()) {
+                auto const &dhtItem = m_tasks.front();
+                switch (dhtItem.m_type) {
+                    case dht_item_type::DHT_GET: {
+
+                        m_ses.dht()->get_item(dhtItem.m_peer,
+                                              std::bind(&blockchain::get_mutable_callback, self(), dhtItem.m_chain_id, _1, _2, dhtItem.m_get_item_type, dhtItem.m_timestamp, dhtItem.m_times),
+                                              1, 8, 16, dhtItem.m_salt, dhtItem.m_timestamp);
+
+                        break;
+                    }
+                    case dht_item_type::DHT_PUT: {
+                        m_ses.dht()->put_item(dhtItem.m_data,
+                                              std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2),
+                                              1, 8, 16, dhtItem.m_salt);
+
+                        break;
+                    }
+                    case dht_item_type::DHT_PUT_TX: {
+                        m_ses.dht()->put_item(dhtItem.m_data,
+                                              std::bind(&blockchain::on_dht_put_transaction, self(), dhtItem.m_chain_id, dhtItem.m_hash, _1, _2),
+                                              1, 8, 16, dhtItem.m_salt);
+
+                        break;
+                    }
+                    case dht_item_type::DHT_SEND: {
+                        m_ses.dht()->send(dhtItem.m_peer, dhtItem.m_data, 1, 8, 16, 1
+                                , std::bind(&blockchain::on_dht_relay_mutable_item, self(), _1, _2, dhtItem.m_peer));
+
+                        break;
+                    }
+                    default: {
+                        log(LOG_ERR, "INFO: Unknown type[%d]", dhtItem.m_type);
+                    }
+                }
+
+                m_tasks_set.erase(dhtItem);
+                m_tasks.pop();
+            }
+
+            m_dht_tasks_timer.expires_after(milliseconds(200));
             m_dht_tasks_timer.async_wait(std::bind(&blockchain::refresh_dht_task_timer, self(), _1));
         } catch (std::exception &e) {
             log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
@@ -2065,20 +2106,26 @@ namespace libTAU::blockchain {
     void blockchain::publish(const std::string &salt, const entry& data) {
         if (!m_ses.dht()) return;
         log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
-        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2), 1, 8, 16, salt);
+//        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_mutable_item, self(), _1, _2), 1, 8, 16, salt);
+        dht_item dhtItem(salt, data);
+        add_into_dht_task_queue(dhtItem);
     }
 
     void blockchain::publish_transaction(const bytes &chain_id, const sha1_hash &hash, const std::string &salt, const entry &data) {
         if (!m_ses.dht()) return;
         log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
-        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_transaction, self(), chain_id, hash, _1, _2), 1, 8, 16, salt);
+//        m_ses.dht()->put_item(data, std::bind(&blockchain::on_dht_put_transaction, self(), chain_id, hash, _1, _2), 1, 8, 16, salt);
+        dht_item dhtItem(chain_id, hash, salt, data);
+        add_into_dht_task_queue(dhtItem);
     }
 
     void blockchain::subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string &salt,
                                GET_ITEM_TYPE type, std::int64_t timestamp, int times) {
         if (!m_ses.dht()) return;
 
-        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type, timestamp, times), 1, 8, 16, salt, timestamp);
+//        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type, timestamp, times), 1, 8, 16, salt, timestamp);
+        dht_item dhtItem(chain_id, peer, salt, type, timestamp, times);
+        add_into_dht_task_queue(dhtItem);
     }
 
 //    std::string blockchain::make_salt(dht::public_key peer, std::int64_t data_type_id) {
@@ -2093,8 +2140,17 @@ namespace libTAU::blockchain {
     void blockchain::send_to(const dht::public_key &peer, const entry &data) {
         if (!m_ses.dht()) return;
         log(LOG_INFO, "Send [%s] to peer[%s]", data.to_string(true).c_str(), aux::toHex(peer.bytes).c_str());
-        m_ses.dht()->send(peer, data, 1, 8, 16, 1
-                , std::bind(&blockchain::on_dht_relay_mutable_item, self(), _1, _2, peer));
+//        m_ses.dht()->send(peer, data, 1, 8, 16, 1
+//                , std::bind(&blockchain::on_dht_relay_mutable_item, self(), _1, _2, peer));
+        dht_item dhtItem(peer, data);
+        add_into_dht_task_queue(dhtItem);
+    }
+
+    void blockchain::add_into_dht_task_queue(const dht_item &dhtItem) {
+        if (m_tasks_set.find(dhtItem) == m_tasks_set.end()) {
+            m_tasks.push(dhtItem);
+            m_tasks_set.insert(dhtItem);
+        }
     }
 
 //    void blockchain::transfer_to_acl_peers(const aux::bytes &chain_id, const entry &data,
