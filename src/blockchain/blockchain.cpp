@@ -3330,7 +3330,7 @@ namespace libTAU::blockchain {
         }
 
         std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
-        account genesis_account(*pk, genesis_balance, 0, 2);
+        account genesis_account(*pk, genesis_balance, 0, 1);
         log(LOG_INFO, "INFO: chain[%s] save account:%s", aux::toHex(chain_id).c_str(), genesis_account.to_string().c_str());
         if (!m_repository->save_account(chain_id, genesis_account)) {
             log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
