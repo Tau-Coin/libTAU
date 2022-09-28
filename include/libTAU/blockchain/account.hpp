@@ -34,7 +34,10 @@ namespace libTAU {
 
 //            account(int64_t mBalance, int64_t mNonce) : m_balance(mBalance), m_nonce(mNonce) {}
 
-            account(const dht::public_key &mPeer, int64_t mBalance, int64_t mNonce) : m_peer(mPeer), m_balance(mBalance), m_nonce(mNonce) {}
+            account(const dht::public_key &mPeer, int64_t mBalance, int64_t mNonce, int64_t mPower) : m_peer(mPeer),
+                                                                                                      m_balance(mBalance),
+                                                                                                      m_nonce(mNonce),
+                                                                                                      m_power(mPower) {}
 
 //            account(int64_t mBalance, int64_t mNonce, int64_t mEffectivePower, int64_t mBlockNumber) :
 //                m_balance(mBalance), m_nonce(mNonce), m_effective_power(mEffectivePower), m_block_number(mBlockNumber) {}
@@ -61,6 +64,16 @@ namespace libTAU {
 
             void set_nonce(int64_t mNonce) { m_nonce = mNonce; }
 
+            void set_power(int64_t mPower) { m_power = mPower; }
+
+            int64_t power() const { return m_power; }
+
+            void increase_power() { m_power++; }
+
+            void decrease_power() { m_power--; }
+
+//            int64_t block_number() const { return m_block_number; }
+
             bool operator<(const account &rhs) const {
                 return m_peer < rhs.m_peer;
             }
@@ -76,12 +89,6 @@ namespace libTAU {
             bool operator>=(const account &rhs) const {
                 return !(*this < rhs);
             }
-
-//            void set_effective_power(int64_t mEffectivePower) { m_effective_power = mEffectivePower; }
-//
-//            int64_t effective_power() const { return m_effective_power; }
-//
-//            int64_t block_number() const { return m_block_number; }
 
             // @returns the corresponding entry
             entry get_entry() const;
@@ -104,9 +111,9 @@ namespace libTAU {
             // nonce
             std::int64_t m_nonce{};
 
-//            // effective power
-//            std::int64_t m_effective_power{};
-//
+            // power
+            std::int64_t m_power{};
+
 //            // block number
 //            std::int64_t m_block_number{};
         };

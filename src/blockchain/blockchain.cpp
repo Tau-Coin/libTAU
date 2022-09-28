@@ -704,7 +704,7 @@ namespace libTAU::blockchain {
                         auto hit = consensus::calculate_random_hit(genSig);
                         auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit,
                                                                                                             base_target,
-                                                                                                            act.nonce()));
+                                                                                                            act.power()));
                         log(LOG_INFO,
                             "INFO: chain id[%s] generation signature[%s], base target[%" PRIu64 "], hit[%" PRIu64 "]",
                             aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
@@ -880,14 +880,14 @@ namespace libTAU::blockchain {
             return FAIL;
         }
 
-        auto necessary_interval = consensus::calculate_mining_time_interval(hit, base_target, act.nonce());
+        auto necessary_interval = consensus::calculate_mining_time_interval(hit, base_target, act.power());
         if (b.timestamp() - previous_block.timestamp() < necessary_interval) {
             log(LOG_ERR, "ERROR: Time is too short! hit:%" PRIu64 ", base target:%" PRIu64 ", power:%" PRId64 ", necessary interval:%" PRIu64 ", real interval:%" PRId64 "",
-                hit, base_target, act.nonce(), necessary_interval, b.timestamp() - previous_block.timestamp());
+                hit, base_target, act.power(), necessary_interval, b.timestamp() - previous_block.timestamp());
             return FAIL;
         }
         log(LOG_INFO, "hit:%" PRIu64 ", base target:%" PRIu64 ", power:%" PRId64 ", interval:%" PRIu64 ", real interval:%" PRId64 "",
-            hit, base_target, act.nonce(), necessary_interval, b.timestamp() - previous_block.timestamp());
+            hit, base_target, act.power(), necessary_interval, b.timestamp() - previous_block.timestamp());
         // notes: if use hit < base target * power * interval, data may be overflow
 //        if (!consensus::verify_hit(hit, base_target, power, interval)) {
 //            log("INFO chain[%s] block[%s] verify hit fail",
@@ -972,6 +972,8 @@ namespace libTAU::blockchain {
                     accounts[tx.receiver()].add_balance(tx.amount());
                     accounts[tx.sender()].subtract_balance(tx.cost());
                     accounts[tx.sender()].increase_nonce();
+                    // add bonus to miner
+                    accounts[blk.miner()].add_balance(MINER_BONUS);
 
                     for (auto const& item: accounts) {
                         if (!m_repository->save_account(chain_id, item.second)) {
@@ -982,9 +984,10 @@ namespace libTAU::blockchain {
                         }
                     }
                 } else {
-                    // miner balance +=10
+                    // miner balance +=10, power++
                     auto miner_account = m_repository->get_account(chain_id, blk.miner());
 
+                    miner_account.increase_power();
                     miner_account.add_balance(MINER_BONUS);
 
                     if (!m_repository->save_account(chain_id, miner_account)) {
@@ -1046,6 +1049,8 @@ namespace libTAU::blockchain {
                 accounts[tx.receiver()].add_balance(tx.amount());
                 accounts[tx.sender()].subtract_balance(tx.cost());
                 accounts[tx.sender()].increase_nonce();
+                // add bonus to miner
+                accounts[blk.miner()].add_balance(MINER_BONUS);
 
                 for (auto const& item: accounts) {
                     if (!m_repository->save_account(chain_id, item.second)) {
@@ -1056,9 +1061,10 @@ namespace libTAU::blockchain {
                     }
                 }
             } else {
-                // miner balance +=10
+                // miner balance +=10, power++
                 auto miner_account = m_repository->get_account(chain_id, blk.miner());
 
+                miner_account.increase_power();
                 miner_account.add_balance(MINER_BONUS);
 
                 if (!m_repository->save_account(chain_id, miner_account)) {
@@ -1126,6 +1132,8 @@ namespace libTAU::blockchain {
                     accounts[tx.receiver()].add_balance(tx.amount());
                     accounts[tx.sender()].subtract_balance(tx.cost());
                     accounts[tx.sender()].increase_nonce();
+                    // add bonus to miner
+                    accounts[blk.miner()].add_balance(MINER_BONUS);
 
                     for (auto const& item: accounts) {
                         if (!m_repository->save_account(chain_id, item.second)) {
@@ -1136,9 +1144,10 @@ namespace libTAU::blockchain {
                         }
                     }
                 } else {
-                    // miner balance +=10
+                    // miner balance +=10, power++
                     auto miner_account = m_repository->get_account(chain_id, blk.miner());
 
+                    miner_account.increase_power();
                     miner_account.add_balance(MINER_BONUS);
 
                     if (!m_repository->save_account(chain_id, miner_account)) {
@@ -1568,6 +1577,8 @@ namespace libTAU::blockchain {
                 accounts[tx.receiver()].subtract_balance(tx.amount());
                 accounts[tx.sender()].add_balance(tx.cost());
                 accounts[tx.sender()].decrease_nonce();
+                // subtract bonus
+                accounts[blk.miner()].subtract_balance(MINER_BONUS);
 
                 for (auto const& item: accounts) {
                     if (!m_repository->save_account(chain_id, item.second)) {
@@ -1578,9 +1589,10 @@ namespace libTAU::blockchain {
                     }
                 }
             } else {
-                // miner balance -=10
+                // miner balance -=10, power--
                 auto miner_account = m_repository->get_account(chain_id, blk.miner());
 
+                miner_account.decrease_power();
                 miner_account.subtract_balance(MINER_BONUS);
 
                 if (!m_repository->save_account(chain_id, miner_account)) {
@@ -1625,6 +1637,8 @@ namespace libTAU::blockchain {
                 accounts[tx.receiver()].add_balance(tx.amount());
                 accounts[tx.sender()].subtract_balance(tx.cost());
                 accounts[tx.sender()].increase_nonce();
+                // add bonus to miner
+                accounts[blk.miner()].add_balance(MINER_BONUS);
 
                 for (auto const& item: accounts) {
                     if (!m_repository->save_account(chain_id, item.second)) {
@@ -1635,9 +1649,10 @@ namespace libTAU::blockchain {
                     }
                 }
             } else {
-                // miner balance +=10
+                // miner balance +=10, power++
                 auto miner_account = m_repository->get_account(chain_id, blk.miner());
 
+                miner_account.increase_power();
                 miner_account.add_balance(MINER_BONUS);
 
                 if (!m_repository->save_account(chain_id, miner_account)) {
@@ -3315,7 +3330,7 @@ namespace libTAU::blockchain {
         }
 
         std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
-        account genesis_account(*pk, genesis_balance, 1);
+        account genesis_account(*pk, genesis_balance, 0, 2);
         log(LOG_INFO, "INFO: chain[%s] save account:%s", aux::toHex(chain_id).c_str(), genesis_account.to_string().c_str());
         if (!m_repository->save_account(chain_id, genesis_account)) {
             log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
@@ -3497,7 +3512,7 @@ namespace libTAU::blockchain {
             log(LOG_INFO, "INFO: chain id[%s] account[%s]", aux::toHex(chain_id).c_str(), act.to_string().c_str());
             auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
             auto hit = consensus::calculate_random_hit(genSig);
-            auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, act.nonce()));
+            auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, act.power()));
 
             std::int64_t now = get_total_milliseconds() / 1000; // second
             if (now >= head_block.timestamp() + interval) {

@@ -28,6 +28,9 @@ namespace libTAU::blockchain {
         // nonce
         auto nonce = aux::int64ToLittleEndianString(m_nonce);
         lst.push_back(nonce);
+        // power
+        auto power = aux::int64ToLittleEndianString(m_power);
+        lst.push_back(power);
 
         return lst;
     }
@@ -35,7 +38,7 @@ namespace libTAU::blockchain {
     void account::populate(const entry &e) {
         auto const& lst = e.list();
 
-        if (lst.size() != 3)
+        if (lst.size() != 4)
             return;
 
         // peer
@@ -45,6 +48,8 @@ namespace libTAU::blockchain {
         m_balance = aux::int64FromLittleEndianString(lst[1].string());
         // nonce
         m_nonce = aux::int64FromLittleEndianString(lst[2].string());
+        // power
+        m_power = aux::int64FromLittleEndianString(lst[3].string());
     }
 
     std::string account::to_string() const {
@@ -54,7 +59,8 @@ namespace libTAU::blockchain {
     }
 
     std::ostream &operator<<(std::ostream &os, const account &account) {
-        os << "m_peer: " << aux::toHex(account.m_peer.bytes) << " m_balance: " << account.m_balance << " m_nonce: " << account.m_nonce;
+        os << "m_peer: " << aux::toHex(account.m_peer.bytes) << " m_balance: " << account.m_balance
+           << " m_nonce: " << account.m_nonce << " m_power: " << account.m_power;
         return os;
     }
 }

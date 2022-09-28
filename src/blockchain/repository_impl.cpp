@@ -272,7 +272,7 @@ namespace libTAU::blockchain {
     bool repository_impl::create_state_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(state_db_name(chain_id));
-        sql.append("(PUBKEY BLOB PRIMARY KEY NOT NULL,BALANCE INTEGER,NONCE INTEGER);");
+        sql.append("(PUBKEY BLOB PRIMARY KEY NOT NULL,BALANCE INTEGER,NONCE INTEGER,POWER INTEGER);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -320,20 +320,21 @@ namespace libTAU::blockchain {
         account act(pubKey);
 
         sqlite3_stmt * stmt;
-        std::string sql = "SELECT BALANCE,NONCE FROM ";
+        std::string sql = "SELECT BALANCE,NONCE,POWER FROM ";
         sql.append(state_db_name(chain_id));
         sql.append(" WHERE PUBKEY=?");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
             sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
                 std::int64_t balance = sqlite3_column_int64(stmt, 0);
                 std::int64_t nonce = sqlite3_column_int64(stmt, 1);
+                std::int64_t power = sqlite3_column_int64(stmt, 2);
 
                 act.set_balance(balance);
                 act.set_nonce(nonce);
-                break;
+                act.set_power(power);
             }
         }
 
@@ -367,7 +368,7 @@ namespace libTAU::blockchain {
         sqlite3_stmt * stmt;
         std::string sql = "REPLACE INTO ";
         sql.append(state_db_name(chain_id));
-        sql.append(" VALUES(?,?,?)");
+        sql.append(" VALUES(?,?,?,?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
             return false;
@@ -375,6 +376,7 @@ namespace libTAU::blockchain {
         sqlite3_bind_blob(stmt, 1, act.peer().bytes.data(), dht::public_key::len, nullptr);
         sqlite3_bind_int64(stmt, 2, act.balance());
         sqlite3_bind_int64(stmt, 3, act.nonce());
+        sqlite3_bind_int64(stmt, 4, act.power());
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {
@@ -411,7 +413,7 @@ namespace libTAU::blockchain {
         sqlite3_stmt * stmt;
         std::string sql = "SELECT * FROM ";
         sql.append(state_db_name(chain_id));
-        sql.append(" ORDER BY BALANCE DESC,NONCE DESC,PUBKEY DESC LIMIT ?");
+        sql.append(" ORDER BY BALANCE DESC,POWER DESC,NONCE DESC,PUBKEY DESC LIMIT ?");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
@@ -422,8 +424,9 @@ namespace libTAU::blockchain {
 
                 std::int64_t balance = sqlite3_column_int64(stmt, 1);
                 std::int64_t nonce = sqlite3_column_int64(stmt, 2);
+                std::int64_t power = sqlite3_column_int64(stmt, 3);
 
-                accounts.emplace_back(peer, balance, nonce);
+                accounts.emplace_back(peer, balance, nonce, power);
             }
         }
 
