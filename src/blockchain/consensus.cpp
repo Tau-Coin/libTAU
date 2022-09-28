@@ -6,6 +6,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
+#include <cmath>
+
 #include "libTAU/blockchain/consensus.hpp"
 #include "libTAU/hasher.hpp"
 #include "libTAU/kademlia/item.hpp"
@@ -99,7 +101,11 @@ namespace libTAU::blockchain {
             return MAX_VALID_BLOCK_TIME;
         }
 
-        uint64_t real_power = std::sqrt(power);
+        uint64_t real_power = std::log2(power);
+        if (real_power == 0) {
+            return MAX_VALID_BLOCK_TIME;
+        }
+
         auto interval = hit / baseTarget / real_power;
 
         // make sure target > hit

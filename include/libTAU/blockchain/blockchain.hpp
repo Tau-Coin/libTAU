@@ -87,6 +87,7 @@ namespace blockchain {
         NEW_TRANSFER_TX,
         STATE_HASH_ARRAY,
         STATE_ARRAY,
+        UNKNOWN_GET_ITEM_TYPE,
     };
 
     enum RESULT {
@@ -101,6 +102,7 @@ namespace blockchain {
         DHT_PUT,
         DHT_PUT_TX,
         DHT_GET,
+        DHT_UNKNOWN,
     };
 
     struct dht_item {
@@ -155,10 +157,18 @@ namespace blockchain {
                     return true;
                 if (rhs.m_salt < m_salt)
                     return false;
-                if (m_data < rhs.m_data)
+                std::string encode;
+                bencode(std::back_inserter(encode), m_data);
+                std::string rhs_encode;
+                bencode(std::back_inserter(rhs_encode), rhs.m_data);
+                if (encode < rhs_encode)
                     return true;
-                if (rhs.m_data < m_data)
+                if (encode > rhs_encode)
                     return false;
+//                if (m_data < rhs.m_data)
+//                    return true;
+//                if (rhs.m_data < m_data)
+//                    return false;
                 if (m_get_item_type < rhs.m_get_item_type)
                     return true;
                 if (rhs.m_get_item_type < m_get_item_type)
@@ -183,15 +193,15 @@ namespace blockchain {
             return !(*this < rhs);
         }
 
-        dht_item_type m_type;
+        dht_item_type m_type = DHT_UNKNOWN;
         aux::bytes m_chain_id;
         dht::public_key m_peer;
         sha1_hash m_hash;
         std::string m_salt;
         entry m_data;
-        GET_ITEM_TYPE m_get_item_type;
-        std::int64_t m_timestamp;
-        int m_times;
+        GET_ITEM_TYPE m_get_item_type = UNKNOWN_GET_ITEM_TYPE;
+        std::int64_t m_timestamp{};
+        int m_times{};
     };
 
     struct GET_ITEM {
