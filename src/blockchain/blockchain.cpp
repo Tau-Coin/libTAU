@@ -595,9 +595,10 @@ namespace libTAU::blockchain {
         if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
 
         try {
-            log(LOG_ERR, "INFO: DHT item size[%lu]", m_tasks_set.size());
+            log(LOG_ERR, "INFO: DHT item size[%lu], queue size[%lu]", m_tasks_set.size(), m_tasks.size());
             if (!m_pause && !m_tasks_set.empty()) {
                 auto const &dhtItem = m_tasks.front();
+                log(LOG_ERR, "INFO: DHT item[%s]", dhtItem.to_string().c_str());
                 switch (dhtItem.m_type) {
                     case dht_item_type::DHT_GET: {
 
@@ -1934,7 +1935,7 @@ namespace libTAU::blockchain {
     }
 
 
-    void blockchain::on_dht_put_transaction(const bytes &chain_id, const sha1_hash &hash, const dht::item &i, int n) {
+    void blockchain::on_dht_put_transaction(bytes chain_id, sha1_hash hash, const dht::item &i, int n) {
         if (n > 0) {
             m_ses.alerts().emplace_alert<blockchain_tx_arrived_alert>(chain_id, hash, get_total_milliseconds() / 1000);
         }
@@ -1942,7 +1943,7 @@ namespace libTAU::blockchain {
 
     void blockchain::on_dht_relay_mutable_item(const entry &payload,
                                                const std::vector<std::pair<dht::node_entry, bool>> &nodes,
-                                               const dht::public_key &peer) {
+                                               dht::public_key peer) {
         // data type id
 //        if (auto* i = const_cast<entry *>(payload.find_key(common::entry_type)))
 //        {
@@ -2891,7 +2892,7 @@ namespace libTAU::blockchain {
 //    }
 
     // callback for dht_mutable_get
-    void blockchain::get_mutable_callback(aux::bytes const& chain_id, dht::item const& i
+    void blockchain::get_mutable_callback(aux::bytes chain_id, dht::item const& i
             , bool const authoritative, GET_ITEM_TYPE type, std::int64_t timestamp, int times)
     {
         TORRENT_ASSERT(i.is_mutable());
@@ -3509,7 +3510,8 @@ namespace libTAU::blockchain {
 
             auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
             auto act = m_repository->get_account(chain_id, *pk);
-            log(LOG_INFO, "INFO: chain id[%s] account[%s]", aux::toHex(chain_id).c_str(), act.to_string().c_str());
+            log(LOG_INFO, "INFO: chain id[%s] account[%s], head block[%s]", aux::toHex(chain_id).c_str(),
+                act.to_string().c_str(), head_block.to_string().c_str());
             auto genSig = consensus::calculate_generation_signature(head_block.generation_signature(), *pk);
             auto hit = consensus::calculate_random_hit(genSig);
             auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, act.power()));

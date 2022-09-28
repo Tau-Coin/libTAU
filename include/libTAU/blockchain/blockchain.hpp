@@ -15,6 +15,7 @@ see LICENSE file.
 #include <utility>
 #include <vector>
 #include <queue>
+#include <ostream>
 
 #include "libTAU/time.hpp"
 #include "libTAU/aux_/alert_manager.hpp" // for alert_manager
@@ -193,6 +194,50 @@ namespace blockchain {
             return !(*this < rhs);
         }
 
+        std::string to_string() const {
+            std::ostringstream os;
+            os << *this;
+            return os.str();
+        }
+
+        friend std::ostream &operator<<(std::ostream &os, const dht_item &item) {
+            switch (item.m_type) {
+                case dht_item_type::DHT_GET: {
+                    os << "dht get: " << " m_chain_id: " << aux::toHex(item.m_chain_id)
+                       << " m_peer: " << aux::toHex(item.m_peer.bytes) << " m_salt: " << aux::toHex(item.m_salt)
+                       << " m_get_item_type: " << item.m_get_item_type << " m_timestamp: " << item.m_timestamp
+                       << " m_times: " << item.m_times;
+
+                    break;
+                }
+                case dht_item_type::DHT_PUT: {
+                    os << "dht put: " << " m_salt: " << aux::toHex(item.m_salt)
+                       << " m_data: " << item.m_data.to_string(true);
+
+                    break;
+                }
+                case dht_item_type::DHT_PUT_TX: {
+                    os << "dht put tx: " << " m_chain_id: " << aux::toHex(item.m_chain_id)
+                       << " m_hash: " << aux::toHex(item.m_hash.to_string())
+                       << " m_salt: " << aux::toHex(item.m_salt)
+                       << " m_data: " << item.m_data.to_string(true);
+
+                    break;
+                }
+                case dht_item_type::DHT_SEND: {
+                    os << "dht send: " << " m_peer: " << aux::toHex(item.m_peer.bytes)
+                       << " m_data: " << item.m_data.to_string(true);
+
+                    break;
+                }
+                default: {
+                    os << "unknown type: " << item.m_type;
+                }
+            }
+
+            return os;
+        }
+
         dht_item_type m_type = DHT_UNKNOWN;
         aux::bytes m_chain_id;
         dht::public_key m_peer;
@@ -271,6 +316,7 @@ namespace blockchain {
         m_ioc(mIoc), m_ses(mSes), m_counters(mCounters), m_refresh_timer(mIoc), m_dht_tasks_timer(mIoc) {
             m_repository = std::make_shared<repository_impl>(m_ses.sqldb());
         }
+
         // start blockchain
         bool start();
 
@@ -605,16 +651,16 @@ namespace blockchain {
 //        void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
         // mutable data callback
-        void get_mutable_callback(aux::bytes const& chain_id, dht::item const& i, bool, GET_ITEM_TYPE type, std::int64_t timestamp, int times = 1);
+        void get_mutable_callback(aux::bytes chain_id, dht::item const& i, bool, GET_ITEM_TYPE type, std::int64_t timestamp, int times = 1);
 
         // get mutable item from dht
 //        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
 
         void on_dht_put_mutable_item(const dht::item &i, int n);
 
-        void on_dht_put_transaction(aux::bytes const& chain_id, const sha1_hash &hash, const dht::item &i, int n);
+        void on_dht_put_transaction(aux::bytes chain_id, sha1_hash hash, const dht::item &i, int n);
 
-        void on_dht_relay_mutable_item(entry const& payload, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
+        void on_dht_relay_mutable_item(entry const& payload, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key peer);
 
         // put immutable item to dht
 //        void dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target);
