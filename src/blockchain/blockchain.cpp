@@ -640,7 +640,7 @@ namespace libTAU::blockchain {
 //                }
             }
 
-            m_dht_tasks_timer.expires_after(milliseconds(100));
+            m_dht_tasks_timer.expires_after(milliseconds(30));
             m_dht_tasks_timer.async_wait(std::bind(&blockchain::refresh_dht_task_timer, self(), _1));
         } catch (std::exception &e) {
             log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
