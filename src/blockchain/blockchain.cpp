@@ -595,7 +595,7 @@ namespace libTAU::blockchain {
         if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
 
         try {
-            log(LOG_ERR, "INFO: DHT item size[%lu], queue size[%lu]", m_tasks_set.size(), m_tasks.size());
+            log(LOG_ERR, "INFO: DHT item size[%" PRIu64 "], queue size[%" PRIu64 "]", m_tasks_set.size(), m_tasks.size());
             if (!m_pause && !m_tasks_set.empty()) {
                 auto const &dhtItem = m_tasks.front();
                 log(LOG_ERR, "INFO: DHT item[%s]", dhtItem.to_string().c_str());
@@ -635,6 +635,9 @@ namespace libTAU::blockchain {
 
                 m_tasks_set.erase(dhtItem);
                 m_tasks.pop();
+                if (m_tasks_set.size() != m_tasks.size()) {
+                    log(LOG_ERR, "================:%s", dhtItem.to_string().c_str());
+                }
             }
 
             m_dht_tasks_timer.expires_after(milliseconds(200));
@@ -2267,7 +2270,9 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::add_into_dht_task_queue(const dht_item &dhtItem) {
+        log(LOG_INFO, "Try to add dht item [%s]", dhtItem.to_string().c_str());
         if (m_tasks_set.find(dhtItem) == m_tasks_set.end()) {
+            log(LOG_INFO, "Add dht item [%s]", dhtItem.to_string().c_str());
             m_tasks.push(dhtItem);
             m_tasks_set.insert(dhtItem);
         }
