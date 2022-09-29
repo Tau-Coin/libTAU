@@ -595,8 +595,8 @@ namespace libTAU::blockchain {
         if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
 
         try {
-            log(LOG_ERR, "INFO: DHT item size[%" PRIu64 "], queue size[%" PRIu64 "]", m_tasks_set.size(), m_tasks.size());
-            if (!m_pause && !m_tasks_set.empty()) {
+            log(LOG_ERR, "INFO: DHT item queue size[%" PRIu64 "]", m_tasks.size());
+            if (!m_pause && !m_tasks.empty()) {
                 auto const &dhtItem = m_tasks.front();
                 log(LOG_ERR, "INFO: DHT item[%s]", dhtItem.to_string().c_str());
                 switch (dhtItem.m_type) {
@@ -633,14 +633,14 @@ namespace libTAU::blockchain {
                     }
                 }
 
-                m_tasks_set.erase(dhtItem);
+//                m_tasks_set.erase(dhtItem);
                 m_tasks.pop();
-                if (m_tasks_set.size() != m_tasks.size()) {
-                    log(LOG_ERR, "================:%s", dhtItem.to_string().c_str());
-                }
+//                if (m_tasks_set.size() != m_tasks.size()) {
+//                    log(LOG_ERR, "================:%s", dhtItem.to_string().c_str());
+//                }
             }
 
-            m_dht_tasks_timer.expires_after(milliseconds(200));
+            m_dht_tasks_timer.expires_after(milliseconds(100));
             m_dht_tasks_timer.async_wait(std::bind(&blockchain::refresh_dht_task_timer, self(), _1));
         } catch (std::exception &e) {
             log(LOG_ERR, "Exception init [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
@@ -2270,12 +2270,14 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::add_into_dht_task_queue(const dht_item &dhtItem) {
-        log(LOG_INFO, "Try to add dht item [%s]", dhtItem.to_string().c_str());
-        if (m_tasks_set.find(dhtItem) == m_tasks_set.end()) {
-            log(LOG_INFO, "Add dht item [%s]", dhtItem.to_string().c_str());
-            m_tasks.push(dhtItem);
-            m_tasks_set.insert(dhtItem);
-        }
+//        log(LOG_INFO, "Try to add dht item [%s]", dhtItem.to_string().c_str());
+//        if (m_tasks_set.find(dhtItem) == m_tasks_set.end()) {
+            if (m_tasks.size() < 10000) {
+                log(LOG_INFO, "Add dht item [%s]", dhtItem.to_string().c_str());
+                m_tasks.push(dhtItem);
+            }
+//            m_tasks_set.insert(dhtItem);
+//        }
     }
 
 //    void blockchain::transfer_to_acl_peers(const aux::bytes &chain_id, const entry &data,

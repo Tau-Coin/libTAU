@@ -736,7 +736,7 @@ namespace blockchain {
 
         // all tasks
         std::queue<dht_item> m_tasks;
-        std::set<dht_item> m_tasks_set;
+//        std::set<dht_item> m_tasks_set;
 
 //        std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
