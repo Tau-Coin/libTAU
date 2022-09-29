@@ -275,7 +275,7 @@ namespace libTAU::blockchain {
     void blockchain::peer_preparation(const bytes &chain_id) {
         // add peer into acl
         std::set<dht::public_key> peers = m_repository->get_all_peer_in_acl_db(chain_id);
-        if (peers.empty()) {
+        if (peers.size() < blockchain_acl_max_peers) {
             if (!is_empty_chain(chain_id)) {
                 // get 8 peers from miner
                 auto blk = m_head_blocks[chain_id];
