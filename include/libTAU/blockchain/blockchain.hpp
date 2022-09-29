@@ -138,48 +138,43 @@ namespace blockchain {
                 return true;
             if (rhs.m_type < m_type)
                 return false;
-            if (m_type == dht_item_type::DHT_GET && m_timestamp == 0 && rhs.m_timestamp == 0 && m_salt == rhs.m_salt) {
-                // immutable get
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (rhs.m_chain_id < m_chain_id)
                 return false;
-            } else {
-                if (m_chain_id < rhs.m_chain_id)
-                    return true;
-                if (rhs.m_chain_id < m_chain_id)
-                    return false;
-                if (m_peer < rhs.m_peer)
-                    return true;
-                if (rhs.m_peer < m_peer)
-                    return false;
-                if (m_hash < rhs.m_hash)
-                    return true;
-                if (rhs.m_hash < m_hash)
-                    return false;
-                if (m_salt < rhs.m_salt)
-                    return true;
-                if (rhs.m_salt < m_salt)
-                    return false;
-                std::string encode;
-                bencode(std::back_inserter(encode), m_data);
-                std::string rhs_encode;
-                bencode(std::back_inserter(rhs_encode), rhs.m_data);
-                if (encode < rhs_encode)
-                    return true;
-                if (encode > rhs_encode)
-                    return false;
+            if (m_peer < rhs.m_peer)
+                return true;
+            if (rhs.m_peer < m_peer)
+                return false;
+            if (m_hash < rhs.m_hash)
+                return true;
+            if (rhs.m_hash < m_hash)
+                return false;
+            if (m_salt < rhs.m_salt)
+                return true;
+            if (rhs.m_salt < m_salt)
+                return false;
+            std::string encode;
+            bencode(std::back_inserter(encode), m_data);
+            std::string rhs_encode;
+            bencode(std::back_inserter(rhs_encode), rhs.m_data);
+            if (encode < rhs_encode)
+                return true;
+            if (encode > rhs_encode)
+                return false;
 //                if (m_data < rhs.m_data)
 //                    return true;
 //                if (rhs.m_data < m_data)
 //                    return false;
-                if (m_get_item_type < rhs.m_get_item_type)
-                    return true;
-                if (rhs.m_get_item_type < m_get_item_type)
-                    return false;
-                if (m_timestamp < rhs.m_timestamp)
-                    return true;
-                if (rhs.m_timestamp < m_timestamp)
-                    return false;
-                return m_times < rhs.m_times;
-            }
+            if (m_get_item_type < rhs.m_get_item_type)
+                return true;
+            if (rhs.m_get_item_type < m_get_item_type)
+                return false;
+            if (m_timestamp < rhs.m_timestamp)
+                return true;
+            if (rhs.m_timestamp < m_timestamp)
+                return false;
+            return m_times < rhs.m_times;
         }
 
         bool operator>(const dht_item &rhs) const {
