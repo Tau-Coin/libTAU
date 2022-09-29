@@ -595,10 +595,10 @@ namespace libTAU::blockchain {
         if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) return;
 
         try {
-            log(LOG_ERR, "INFO: DHT item queue size[%" PRIu64 "]", m_tasks.size());
+//            log(LOG_INFO, "INFO: DHT item queue size[%" PRIu64 "]", m_tasks.size());
             if (!m_pause && !m_tasks.empty()) {
                 auto const &dhtItem = m_tasks.front();
-                log(LOG_ERR, "INFO: DHT item[%s]", dhtItem.to_string().c_str());
+//                log(LOG_INFO, "INFO: DHT item[%s]", dhtItem.to_string().c_str());
                 switch (dhtItem.m_type) {
                     case dht_item_type::DHT_GET: {
 
