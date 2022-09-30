@@ -108,7 +108,7 @@ namespace libTAU::blockchain {
     void blockchain::account_changed() {
         log(LOG_INFO, "INFO: Change account..");
 
-        m_access_list.clear();
+//        m_access_list.clear();
     }
 
     void blockchain::on_pause() {

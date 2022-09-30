@@ -97,11 +97,11 @@ namespace libTAU::blockchain {
 
     // Note: DEFAULT_MIN_BLOCK_TIME/DEFAULT_MAX_BLOCK_TIME is different from nxt
     std::uint64_t consensus::calculate_mining_time_interval(uint64_t hit, uint64_t baseTarget, uint64_t power) {
-        if (power == 0) {
-            return MAX_VALID_BLOCK_TIME;
-        }
+//        if (power == 0) {
+//            return MAX_VALID_BLOCK_TIME;
+//        }
 
-        uint64_t real_power = std::log2(power);
+        uint64_t real_power = std::log2(power + 2);
         if (real_power == 0) {
             return MAX_VALID_BLOCK_TIME;
         }
