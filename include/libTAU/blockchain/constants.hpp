@@ -54,7 +54,7 @@ namespace libTAU::blockchain {
     constexpr int DEFAULT_MIN_BLOCK_TIME = 60;
 
     constexpr int MIN_VALID_BLOCK_TIME = 60;
-    constexpr int MAX_VALID_BLOCK_TIME = 15 * 60; // 15min
+    constexpr int MAX_VALID_BLOCK_TIME = 10 * 60; // 15min
 
     constexpr int EXCHANGE_TX_TIME = 60;
 

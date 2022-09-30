@@ -101,7 +101,7 @@ namespace libTAU::blockchain {
 //            return MAX_VALID_BLOCK_TIME;
 //        }
 
-        uint64_t real_power = std::log2(power + 2);
+        uint64_t real_power = ceil(std::log2(power + 2));
         if (real_power == 0) {
             return MAX_VALID_BLOCK_TIME;
         }
