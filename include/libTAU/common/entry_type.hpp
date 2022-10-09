@@ -71,6 +71,11 @@ namespace libTAU::common {
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash)
                 : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_hash(mHash) {}
 
+        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
+                     const dht::public_key &mGossipPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
+                                                           m_timestamp(mTimestamp), m_hash(mHash),
+                                                           m_gossip_peer(mGossipPeer) {}
+
         entry get_entry();
 
         std::string get_encode();

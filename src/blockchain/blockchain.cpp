@@ -2508,7 +2508,10 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_new_head_block_signal(const bytes &chain_id, const sha1_hash &hash) {
-        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id, get_total_milliseconds() / 1000, hash);
+        auto peer = select_peer_randomly_from_acl(chain_id);
+        log(LOG_INFO, "Chain[%s] select gossip peer[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str());
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id, get_total_milliseconds() / 1000, hash, peer);
         auto e = signalEntry.get_entry();
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
@@ -2519,7 +2522,10 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_new_transfer_tx_signal(const bytes &chain_id, const dht::public_key& tx_receiver) {
-        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id, get_total_milliseconds() / 1000);
+        auto peer = select_peer_randomly_from_acl(chain_id);
+        log(LOG_INFO, "Chain[%s] select gossip peer[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str());
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id, get_total_milliseconds() / 1000, peer);
         auto e = signalEntry.get_entry();
         auto encode = signalEntry.get_encode();
         auto const& acl = m_access_list[chain_id];
@@ -2538,7 +2544,10 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_new_note_tx_signal(const bytes &chain_id, const sha1_hash &hash) {
-        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash);
+        auto peer = select_peer_randomly_from_acl(chain_id);
+        log(LOG_INFO, "Chain[%s] select gossip peer[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str());
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash, peer);
         auto e = signalEntry.get_entry();
         auto encode = signalEntry.get_encode();
         auto const& acl = m_access_list[chain_id];
@@ -3838,6 +3847,9 @@ namespace libTAU::blockchain {
                 }
                 case common::BLOCKCHAIN_NEW_HEAD_BLOCK: {
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
+                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+                        add_peer_into_acl(chain_id, signalEntry.m_gossip_peer, 1);
+                    }
 
                     auto head_block_hash = signalEntry.m_hash;
                     if (!head_block_hash.is_all_zeros()) {
@@ -3855,12 +3867,18 @@ namespace libTAU::blockchain {
                 }
                 case common::BLOCKCHAIN_NEW_TRANSFER_TX: {
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
+                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+                        add_peer_into_acl(chain_id, signalEntry.m_gossip_peer, 1);
+                    }
 
                     get_transfer_transaction(chain_id, peer, signalEntry.m_timestamp - 3);
                     break;
                 }
                 case common::BLOCKCHAIN_NEW_NOTE_TX: {
                     add_peer_into_acl(chain_id, peer, signalEntry.m_timestamp);
+                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+                        add_peer_into_acl(chain_id, signalEntry.m_gossip_peer, 1);
+                    }
 
                     auto new_tx_hash = signalEntry.m_hash;
                     if (!new_tx_hash.is_all_zeros()) {
