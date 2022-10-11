@@ -1796,6 +1796,7 @@ namespace libTAU::blockchain {
                 auto result = try_to_rebranch(chain_id, peer_head_block, false, it->first);
                 // clear block cache if re-branch success/fail
                 if (result == FAIL) {
+                    log(LOG_ERR, "INFO: chain:%s, rebranch fail.", aux::toHex(chain_id).c_str());
                     // clear all blocks on the same chain
                     remove_all_same_chain_blocks_from_cache(peer_head_block);
 
