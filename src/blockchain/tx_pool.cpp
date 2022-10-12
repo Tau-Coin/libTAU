@@ -100,28 +100,11 @@ namespace libTAU::blockchain {
         return txs;
     }
 
-    std::set<sha1_hash> tx_pool::get_history_txid() {
+    std::set<sha1_hash> tx_pool::get_all_note_txid() {
         std::set<sha1_hash> txid_set;
-        int count = 0;
-        for (auto it = m_ordered_txs_by_fee.rbegin(); it != m_ordered_txs_by_fee.rend(); ++it) {
-            count++;
-            auto &tx = m_all_txs_by_fee[it->txid()];
-            txid_set.insert(tx.sha1());
-
-            if (10 == count) {
-                break;
-            }
-        }
-
-        count = 0;
         for (auto it = m_ordered_txs_by_timestamp.rbegin(); it != m_ordered_txs_by_timestamp.rend(); ++it) {
-            count++;
             auto &tx = m_all_txs_by_timestamp[it->txid()];
             txid_set.insert(tx.sha1());
-
-            if (10 == count) {
-                break;
-            }
         }
 
         return txid_set;

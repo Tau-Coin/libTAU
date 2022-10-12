@@ -26,9 +26,9 @@ namespace libTAU::blockchain {
     constexpr int tx_pool_max_size_by_fee = 200;
 
     // todo:comments
-    constexpr int tx_pool_max_size_by_timestamp = 100;
+    constexpr int tx_pool_max_size_by_timestamp = 40;
 
-    constexpr int tx_pool_max_active_friends_size = 10;
+//    constexpr int tx_pool_max_active_friends_size = 10;
 
     class tx_pool {
     public:
@@ -49,7 +49,7 @@ namespace libTAU::blockchain {
 
         std::vector<transaction> get_top_ten_timestamp_transactions();
 
-        std::set<sha1_hash> get_history_txid();
+        std::set<sha1_hash> get_all_note_txid();
 
         bool add_tx(const transaction& tx);
 
