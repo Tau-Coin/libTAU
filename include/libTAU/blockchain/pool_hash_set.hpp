@@ -31,7 +31,10 @@ namespace libTAU {
             // @param Construct with bencode
             explicit pool_hash_set(std::string encode) : pool_hash_set(bdecode(encode)) {}
 
-            explicit pool_hash_set(std::set<sha1_hash> mPoolHashSet) : m_pool_hash_set(std::move(mPoolHashSet)) {}
+            explicit pool_hash_set(std::set<sha1_hash> mPoolHashSet) : m_pool_hash_set(std::move(mPoolHashSet)) {
+                auto encode = get_encode();
+                m_hash = hasher(encode).final();
+            }
 
             const std::set<sha1_hash> &PoolHashSet() const { return m_pool_hash_set; }
 
