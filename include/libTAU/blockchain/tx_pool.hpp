@@ -49,6 +49,8 @@ namespace libTAU::blockchain {
 
         std::vector<transaction> get_top_ten_timestamp_transactions();
 
+        std::set<sha1_hash> get_top_40_note_txid();
+
         std::set<sha1_hash> get_all_note_txid();
 
         bool add_tx(const transaction& tx);

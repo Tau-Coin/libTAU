@@ -70,8 +70,8 @@ namespace blockchain {
     // blockchain max ban time(30min)
 //    constexpr std::int64_t blockchain_max_ban_time = 30 * 60 * 1000;
 
-    // new note tx key suffix
-    const std::string key_suffix_new_note_tx_hash = "new_note_tx_hash";
+    // note pool root key suffix
+    const std::string key_suffix_note_pool_root = "note_pool_root";
     // transfer tx key suffix
     const std::string key_suffix_transfer_tx = "transfer_tx";
     // head block key suffix
@@ -83,9 +83,11 @@ namespace blockchain {
         HEAD_BLOCK_HASH,
         HEAD_BLOCK,
         BLOCK,
-        TX_WRAPPER,
-        NEW_NOTE_TX_HASH,
-        NEW_TRANSFER_TX,
+//        TX_WRAPPER,
+        NOTE_POOL_ROOT,
+        NOTE_POOL_HASH_SET,
+        NOTE_TX,
+        TRANSFER_TX,
         STATE_HASH_ARRAY,
         STATE_ARRAY,
         UNKNOWN_GET_ITEM_TYPE,
@@ -597,9 +599,9 @@ namespace blockchain {
 
         void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void get_new_note_tx_hash(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
+        void get_new_note_pool_root(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
-        void put_new_note_tx_hash(const aux::bytes &chain_id, const sha1_hash &hash);
+        void put_note_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
 
 //        void get_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
 
@@ -617,17 +619,21 @@ namespace blockchain {
 
         void put_block_with_all_state(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
-        void get_transaction_wrapper(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+//        void get_transaction_wrapper(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 
-        void put_transaction_wrapper(const aux::bytes &chain_id, const transaction_wrapper &txWrapper);
+//        void put_transaction_wrapper(const aux::bytes &chain_id, const transaction_wrapper &txWrapper);
+
+        void get_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+
+        void put_transaction(const aux::bytes &chain_id, const transaction &tx);
 
         void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
         void put_state_array(const aux::bytes &chain_id, const state_array &stateArray);
 
-//        void get_pool_hash_set(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
-//
-//        void put_pool_hash_set(const aux::bytes &chain_id);
+        void get_note_pool_hash_set(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+
+        void put_note_pool_hash_set(const aux::bytes &chain_id);
 
         void get_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
@@ -718,7 +724,7 @@ namespace blockchain {
         std::map<aux::bytes, tx_pool> m_tx_pools;
 
         // note tx wrapper
-        std::map<aux::bytes, transaction_wrapper> m_current_tx_wrapper;
+//        std::map<aux::bytes, transaction_wrapper> m_current_tx_wrapper;
 
         // chain status
         bool m_stop = false;
