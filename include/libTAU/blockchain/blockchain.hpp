@@ -599,7 +599,7 @@ namespace blockchain {
 
         void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void get_new_note_pool_root(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
+        void get_note_pool_root(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
         void put_note_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
 

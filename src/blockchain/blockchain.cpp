@@ -392,7 +392,7 @@ namespace libTAU::blockchain {
         auto const& acl = m_access_list[chain_id];
         for (auto const& item: acl) {
             // get note tx
-            get_new_note_pool_root(chain_id, item.first, 0);
+            get_note_pool_root(chain_id, item.first, 0);
         }
 
         return true;
@@ -688,6 +688,8 @@ namespace libTAU::blockchain {
                         dht::public_key *pk = m_ses.pubkey();
 
                         const auto &head_block = m_head_blocks[chain_id];
+                        log(LOG_INFO, "INFO: chain id[%s] head block[%s]",
+                            aux::toHex(chain_id).c_str(), head_block.to_string().c_str());
 
                         block ancestor;
                         auto previous_hash = head_block.previous_block_hash();
@@ -2592,7 +2594,7 @@ namespace libTAU::blockchain {
     void blockchain::get_pool_from_peer(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
         log(LOG_INFO, "Chain[%s] get pool from peer[%s]", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
         get_transfer_transaction(chain_id, peer);
-        get_new_note_pool_root(chain_id, peer, timestamp);
+        get_note_pool_root(chain_id, peer, timestamp);
     }
 
     void blockchain::get_transfer_transaction(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
@@ -2681,7 +2683,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::get_new_note_pool_root(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
+    void blockchain::get_note_pool_root(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
         // salt is x pubkey when request signal
         std::string data(chain_id.begin(), chain_id.end());
         data.insert(data.end(), key_suffix_note_pool_root.begin(), key_suffix_note_pool_root.end());
