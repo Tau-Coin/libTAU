@@ -40,8 +40,9 @@ namespace blockchain {
 
     using system_clock = std::chrono::system_clock;
 
-    // default refresh time of main task(2000)(ms)
-//    constexpr int blockchain_default_refresh_time = 2000;
+    // default refresh time of main task(ms)
+    constexpr int blockchain_min_refresh_time = 10;
+    constexpr int blockchain_max_refresh_time = 3000;
 
     // max tx list size
     constexpr int blockchain_max_tx_list_size = 10;
@@ -743,6 +744,7 @@ namespace blockchain {
         // all tasks
         std::queue<dht_item> m_tasks;
 //        std::set<dht_item> m_tasks_set;
+        std::int64_t m_last_dht_time{};
 
 //        std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
