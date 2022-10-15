@@ -57,7 +57,7 @@ namespace blockchain {
 //    constexpr std::int64_t blockchain_acl_min_peers = 2;
 
     // blockchain max peers in acl
-    constexpr std::size_t blockchain_acl_max_peers = 16;
+    constexpr std::size_t blockchain_acl_max_peers = 12;
 
     // blockchain max getting times
     constexpr std::int64_t blockchain_max_getting_times = 10;
