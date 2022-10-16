@@ -37,11 +37,7 @@ namespace libTAU::blockchain {
     constexpr int CHAIN_ID_TYPE_MAX_LENGTH = 4;
     constexpr int CHAIN_ID_COMMUNITY_NAME_MAX_LENGTH = 24;
 
-//    constexpr int EFFECTIVE_BLOCK_NUMBER = 288 * 180;
-
     constexpr int CHAIN_EPOCH_BLOCK_SIZE = 50;
-
-    constexpr int OUTDATED_BLOCK_NUMBER = 2 * 30 * 288;
 
     constexpr int MAX_ACCOUNT_SIZE = 774;
 
@@ -51,12 +47,9 @@ namespace libTAU::blockchain {
 
     // block time
     constexpr int DEFAULT_BLOCK_TIME = 300;
-    constexpr int DEFAULT_MIN_BLOCK_TIME = 60;
 
-    constexpr int MIN_VALID_BLOCK_TIME = 60;
-    constexpr int MAX_VALID_BLOCK_TIME = 10 * 60; // 15min
-
-    constexpr int EXCHANGE_TX_TIME = 60;
+    constexpr int MIN_VALID_BLOCK_TIME = 60; // 1min
+    constexpr int MAX_VALID_BLOCK_TIME = 10 * 60; // 10min
 
     constexpr int MIN_RATIO = 265;
     constexpr int MAX_RATIO = 335;
