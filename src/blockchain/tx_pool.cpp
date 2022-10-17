@@ -175,17 +175,31 @@ namespace libTAU::blockchain {
         if (tx.timestamp() <= get_oldest_allowed_timestamp())
             return false;
 
-        auto it_txid = m_account_tx_by_timestamp.find(tx.sender());
+        auto it_account_txid_set = m_account_tx_by_timestamp.find(tx.sender());
         // find in local
-        if (it_txid != m_account_tx_by_timestamp.end()) { // has in local
-            auto it_tx = m_all_txs_by_timestamp.find(it_txid->second);
-            if (it_tx != m_all_txs_by_timestamp.end()) {
-                auto old_tx = it_tx->second;
-                if (tx.timestamp() > old_tx.timestamp()) {
-                    // remove old tx
-                    m_all_txs_by_timestamp.erase(old_tx.sha1());
-                    m_account_tx_by_timestamp.erase(old_tx.sender());
-                    m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(old_tx.sha1(), old_tx.timestamp()));
+        if (it_account_txid_set != m_account_tx_by_timestamp.end() &&
+            it_account_txid_set->second.size() >= time_pool_max_size_of_same_account) { // has in local
+            auto it_oldest_txid = it_account_txid_set->second.begin();
+            auto it_oldest_tx = m_all_txs_by_timestamp.find(*it_oldest_txid);
+            if (it_oldest_tx != m_all_txs_by_timestamp.end()) {
+                auto oldest_tx = it_oldest_tx->second;
+
+                // find oldest tx
+                for (auto const& txid: it_account_txid_set->second) {
+                    auto it_tx = m_all_txs_by_timestamp.find(txid);
+                    if (it_tx != m_all_txs_by_timestamp.end()) {
+                        if (it_tx->second.timestamp() < oldest_tx.timestamp()) {
+                            oldest_tx = it_tx->second;
+                        }
+                    }
+                }
+
+                // remove oldest tx
+                if (tx.timestamp() > oldest_tx.timestamp()) {
+                    // remove oldest tx
+                    m_all_txs_by_timestamp.erase(oldest_tx.sha1());
+                    it_account_txid_set->second.erase(oldest_tx.sha1());
+                    m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(oldest_tx.sha1(), oldest_tx.timestamp()));
                 } else {
                     return false;
                 }
@@ -194,7 +208,7 @@ namespace libTAU::blockchain {
 
         // insert new tx
         m_all_txs_by_timestamp[tx.sha1()] = tx;
-        m_account_tx_by_timestamp[tx.sender()] = tx.sha1();
+        m_account_tx_by_timestamp[tx.sender()].insert(tx.sha1());
         m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha1(), tx.timestamp()));
 
         if (m_all_txs_by_timestamp.size() > tx_pool_max_size_by_timestamp) {
@@ -283,8 +297,11 @@ namespace libTAU::blockchain {
         m_all_txs_by_timestamp.erase(tx.sha1());
         m_ordered_txs_by_timestamp.erase(tx_entry_with_timestamp(tx.sha1(), tx.timestamp()));
         auto it = m_account_tx_by_timestamp.find(tx.sender());
-        if (it != m_account_tx_by_timestamp.end() && it->second == tx.sha1()) {
-            m_account_tx_by_timestamp.erase(it);
+        if (it != m_account_tx_by_timestamp.end()) {
+            it->second.erase(tx.sha1());
+            if (it->second.empty()) {
+                m_account_tx_by_timestamp.erase(it);
+            }
         }
     }
 
@@ -303,7 +320,11 @@ namespace libTAU::blockchain {
         auto it_tx = m_all_txs_by_timestamp.find(it->txid());
         if (it_tx != m_all_txs_by_timestamp.end()) {
             m_all_txs_by_timestamp.erase(it_tx);
-            m_account_tx_by_timestamp.erase(it_tx->second.sender());
+
+            m_account_tx_by_timestamp[it_tx->second.sender()].erase(it_tx->first);
+            if (m_account_tx_by_timestamp[it_tx->second.sender()].empty()) {
+                m_account_tx_by_timestamp.erase(it_tx->second.sender());
+            }
         }
         m_ordered_txs_by_timestamp.erase(it);
     }

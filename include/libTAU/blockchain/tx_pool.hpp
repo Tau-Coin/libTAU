@@ -28,6 +28,8 @@ namespace libTAU::blockchain {
     // todo:comments
     constexpr int tx_pool_max_size_by_timestamp = 40;
 
+    constexpr int time_pool_max_size_of_same_account = 3;
+
 //    constexpr int tx_pool_max_active_friends_size = 10;
 
     class tx_pool {
@@ -113,8 +115,8 @@ namespace libTAU::blockchain {
         // ordered by timestamp
         std::set<tx_entry_with_timestamp> m_ordered_txs_by_timestamp;
 
-        // one account one tx
-        std::map<dht::public_key, sha1_hash> m_account_tx_by_timestamp;
+        // account tx
+        std::map<dht::public_key, std::set<sha1_hash>> m_account_tx_by_timestamp;
     };
 }
 
