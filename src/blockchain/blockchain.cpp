@@ -3613,8 +3613,10 @@ namespace libTAU::blockchain {
 
             std::int64_t now = get_total_milliseconds() / 1000; // second
             if (now >= head_block.timestamp() + interval) {
+                log(LOG_INFO, "INFO: chain id[%s] mining time:0", aux::toHex(chain_id).c_str());
                 return 0;
             } else {
+                log(LOG_INFO, "INFO: chain id[%s] mining time:%" PRId64 , aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - now);
                 return head_block.timestamp() + interval - now;
             }
         }
