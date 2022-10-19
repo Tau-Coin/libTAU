@@ -30,6 +30,8 @@ namespace libTAU::blockchain {
             dht::public_key(aux::fromHex("2a62868271f3d3455e4b1ea0c1f96263732d0347349f9daa3247107ce1b2b2f9").data()),
             dht::public_key(aux::fromHex("3e87c35d2079858d88dcb113edadaf1b339fcd4f74c539faa9a9bd59e787f124").data())};
 
+    constexpr int block_version2_time = 1666540800; // 2022-10-24
+
     // chain id
     // todo:validate
     constexpr int CHAIN_ID_MAX_LENGTH = 32;
