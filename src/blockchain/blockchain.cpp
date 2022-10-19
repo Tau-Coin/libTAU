@@ -3812,7 +3812,7 @@ namespace libTAU::blockchain {
 
 
             // remove the oldest peer
-            if (on_chain_peers.size() > blockchain_acl_max_peers * 2 / 3) {
+            if (on_chain_peers.size() > blockchain_acl_max_peers / 2) {
                 auto min_it = on_chain_peers.begin();
                 for (auto iter = on_chain_peers.begin(); iter != on_chain_peers.end(); iter++) {
                     if (iter->second.m_last_seen < min_it->second.m_last_seen) {
@@ -3825,7 +3825,7 @@ namespace libTAU::blockchain {
             }
 
             // remove randomly
-            if (off_chain_peers.size() > blockchain_acl_max_peers / 3) {
+            if (off_chain_peers.size() > blockchain_acl_max_peers / 2) {
 
                 srand(get_total_microseconds());
                 auto index = rand() % off_chain_peers.size();
