@@ -44,6 +44,9 @@ namespace blockchain {
     constexpr int blockchain_min_refresh_time = 10;
     constexpr int blockchain_max_refresh_time = 3000;
 
+    constexpr int blockchain_block_max_acceptable_time = 3 * 60; // 3min(s)
+
+
     // max tx list size
     constexpr int blockchain_max_tx_list_size = 10;
 

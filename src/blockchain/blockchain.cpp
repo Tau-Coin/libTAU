@@ -849,6 +849,11 @@ namespace libTAU::blockchain {
             return FAIL;
         }
 
+        if (b.timestamp() > get_total_milliseconds() / 1000 + blockchain_block_max_acceptable_time) {
+            log(LOG_ERR, "INFO chain[%s] block unacceptable timestamp.", aux::toHex(chain_id).c_str());
+            return FAIL;
+        }
+
         if (!b.verify_signature()) {
             log(LOG_ERR, "INFO chain[%s] block[%s] has bad signature",
                 aux::toHex(chain_id).c_str(), aux::toHex(b.sha1().to_string()).c_str());

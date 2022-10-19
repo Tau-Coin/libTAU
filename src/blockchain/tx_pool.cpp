@@ -7,6 +7,7 @@ see LICENSE file.
 */
 
 #include "libTAU/blockchain/tx_pool.hpp"
+#include "libTAU/time.hpp"
 
 
 namespace libTAU::blockchain {
@@ -127,6 +128,10 @@ namespace libTAU::blockchain {
     }
 
     bool tx_pool::add_tx_to_fee_pool(const transaction &tx) {
+        if (tx.timestamp() > total_milliseconds(std::chrono::system_clock::now().time_since_epoch()) + tx_max_acceptable_time) {
+            return false;
+        }
+
         if (tx.fee() < get_min_allowed_fee())
             return false;
 
@@ -172,6 +177,10 @@ namespace libTAU::blockchain {
     }
 
     bool tx_pool::add_tx_to_time_pool(const transaction &tx) {
+        if (tx.timestamp() > total_milliseconds(std::chrono::system_clock::now().time_since_epoch()) + tx_max_acceptable_time) {
+            return false;
+        }
+
         if (tx.timestamp() <= get_oldest_allowed_timestamp())
             return false;
 

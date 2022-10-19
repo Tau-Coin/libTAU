@@ -30,6 +30,8 @@ namespace libTAU::blockchain {
 
     constexpr int time_pool_max_size_of_same_account = 3;
 
+    constexpr int tx_max_acceptable_time = 10 * 60 * 1000; // 10min(ms)
+
 //    constexpr int tx_pool_max_active_friends_size = 10;
 
     class tx_pool {
