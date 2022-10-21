@@ -268,71 +268,51 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 			, [](listen_endpoint_t const& ep) { return !ep.addr.is_unspecified(); });
 		std::vector<listen_endpoint_t> unspecified_eps(unspecified_begin, eps.end());
 		eps.erase(unspecified_begin, eps.end());
-		//rx, tx max
-		unsigned long int total_bytes = 0;
 		for (auto const& uep : unspecified_eps)
 		{
+			bool const v4 = uep.addr.is_v4();
 			for (auto const& ipface : ifs)
-			{
-				if (!uep.device.empty() && uep.device != ipface.name)
-					continue;
-				if (std::any_of(eps.begin(), eps.end(), [&](listen_endpoint_t const& e)
-				{
-					// ignore device name because we don't want to create
-					// duplicates if the user explicitly configured an address
-					// without a device name
-					return e.addr == ipface.interface_address
-						&& e.port == uep.port;
-				}))
-				{
-					continue;
-				}
+            {
+                if (!ipface.preferred)
+                    continue;
+                if (ipface.interface_address.is_v4() != v4)
+                    continue;
+                if (!uep.device.empty() && uep.device != ipface.name)
+                    continue;
+                if (std::any_of(eps.begin(), eps.end(), [&](listen_endpoint_t const& e)
+                {
+                    // ignore device name because we don't want to create
+                    // duplicates if the user explicitly configured an address
+                    // without a device name
+                    return e.addr == ipface.interface_address
+                        && e.port == uep.port
+                        && e.ssl == uep.ssl;
+                }))
+                {
+                    continue;
+                }
 
-				// 1st
-				if(ipface.interface_address == uep.addr)
-				{
-					eps.emplace_back(ipface.interface_address, uep.port, uep.device
-						, uep.ssl, uep.flags | listen_socket_t::was_expanded
-					| listen_socket_flags_t{});
-					break;	
-				}
+                // ignore interfaces that are down
+                if (ipface.state != if_state::up && ipface.state != if_state::unknown)
+                    continue;
+                if (!(ipface.flags & if_flags::up))
+                    continue;
 
-				unsigned long int tmp_bytes = ipface.rx_bytes + ipface.tx_bytes
-                                 + ipface.rx_errors + ipface.tx_errors
-                                 + ipface.rx_dropped + ipface.tx_dropped;
+                // we assume this listen_socket_t is local-network under some
+                // conditions, meaning we won't announce it to internet trackers
+                bool const local
+                    = ipface.interface_address.is_loopback()
+                    || is_link_local(ipface.interface_address)
+                    || (ipface.flags & if_flags::loopback)
+                    || (!is_global(ipface.interface_address)
+                        && !(ipface.flags & if_flags::pointopoint)
+                        && !has_internet_route(ipface.name, family(ipface.interface_address), routes));
 
-				if_state ipface_state = if_state::unknown;
-
-				if(0 == total_bytes) {
-					eps.emplace_back(ipface.interface_address, uep.port, uep.device
-						, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
-					total_bytes = tmp_bytes;
-					ipface_state = ipface.state; 
-				}
-
-				if(ipface_state == if_state::unknown) {
-					if(ipface.state == if_state::up) {
-						eps.pop_back();
-						eps.emplace_back(ipface.interface_address, uep.port, uep.device
-							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
-						total_bytes = tmp_bytes;
-					} else if(tmp_bytes > total_bytes) {
-						eps.pop_back();
-						eps.emplace_back(ipface.interface_address, uep.port, uep.device
-							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
-						total_bytes = tmp_bytes;
-					}
-				} else {
-					if(ipface.state == if_state::up && tmp_bytes > total_bytes) {
-						eps.pop_back();
-						eps.emplace_back(ipface.interface_address, uep.port, uep.device
-							, uep.ssl, uep.flags | listen_socket_t::was_expanded | listen_socket_flags_t{});
-						total_bytes = tmp_bytes;
-					}
-					ipface_state = if_state::up;
-				}
-			}
-		}
+                eps.emplace_back(ipface.interface_address, uep.port, uep.device
+                    , uep.ssl, uep.flags | listen_socket_t::was_expanded
+                    | (local ? listen_socket_t::local_network : listen_socket_flags_t{}));
+            }
+        }
 	}
 
 	void expand_devices(span<ip_interface const> const ifs
@@ -1478,27 +1458,22 @@ namespace {
 					continue;
 				}
 
-				bool const local
-					= ipface.interface_address.is_loopback()
-					|| is_link_local(ipface.interface_address)
-					|| (ipface.flags & if_flags::loopback)
-					|| (!is_global(ipface.interface_address)
-						&& !(ipface.flags & if_flags::pointopoint)
-						&& !has_internet_route(ipface.name, family(ipface.interface_address), routes));
+				bool const local = ipface.interface_address.is_loopback();
 				if(local)
 				{
 					continue;
 				}
-
 #ifndef TORRENT_DISABLE_LOGGING
-			session_log("ip_interface preferred %d, name: %s, netmask: %s, address: %s, flags: %d, state: %d, rx_bytes: %u, tx_bytes: %u, rx_errors: %u, tx_errors: %u, rx_dropped: %u, tx_dropped: %u", 
-						 ipface.preferred, ipface.name, 
-						 print_address(ipface.netmask).c_str(), 
-						 print_address(ipface.interface_address).c_str(), 
-						 ipface.flags & if_flags::up, ipface.state,
-						 ipface.rx_bytes, ipface.tx_bytes,
-						 ipface.rx_errors, ipface.tx_errors,
-						 ipface.rx_dropped, ipface.tx_dropped);
+            session_log("ip_interface preferred %d, name: %s, netmask: %s, address: %s, flags: %d, state: %d, is_link_local: %d, fl: %d, !is_global: %d, !fpp: %d, !hir: %d", 
+                         ipface.preferred, ipface.name, 
+                         print_address(ipface.netmask).c_str(), 
+                         print_address(ipface.interface_address).c_str(), 
+                         ipface.flags & if_flags::up, ipface.state,
+						 is_link_local(ipface.interface_address),
+						 (ipface.flags & if_flags::loopback),
+						 !is_global(ipface.interface_address), 
+						 !(ipface.flags & if_flags::pointopoint),
+						 !has_internet_route(ipface.name, family(ipface.interface_address), routes));
 #endif
 				ifs_tau.push_back(ipface);
 			}

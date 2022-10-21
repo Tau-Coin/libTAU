@@ -176,12 +176,7 @@ namespace libTAU::aux {
 			aux::socket_type c(aux::instantiate_connection(m_ios, aux::proxy_settings(), m_ssl_context, this, true, false));
 
 			utp_stream* str = nullptr;
-#ifdef TORRENT_SSL_PEERS
-			if (is_ssl(c))
-				str = &std::get<ssl_stream<utp_stream>>(c).next_layer();
-			else
-#endif
-				str = std::get_if<utp_stream>(&c);
+			str = std::get_if<utp_stream>(&c);
 
 			TORRENT_ASSERT(str);
 			int const mtu = mtu_for_dest(ep.address());
