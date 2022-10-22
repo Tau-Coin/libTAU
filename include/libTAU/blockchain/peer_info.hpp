@@ -62,7 +62,7 @@ namespace libTAU::blockchain {
 
         block m_genesis_block;
 
-        state_hash_array m_state_hash_array;
+        std::map<sha1_hash, state_hash_array> m_state_hash_arrays;
 
         std::map<sha1_hash, state_array> m_state_arrays;
 

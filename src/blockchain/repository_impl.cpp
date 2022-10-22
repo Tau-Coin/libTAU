@@ -413,11 +413,11 @@ namespace libTAU::blockchain {
         sqlite3_stmt * stmt;
         std::string sql = "SELECT * FROM ";
         sql.append(state_db_name(chain_id));
-        sql.append(" ORDER BY BALANCE DESC,POWER DESC,NONCE DESC,PUBKEY DESC LIMIT ?");
+        sql.append(" ORDER BY BALANCE DESC,POWER DESC,NONCE DESC,PUBKEY DESC");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
-            sqlite3_bind_int(stmt, 1, MAX_ACCOUNT_SIZE);
+//            sqlite3_bind_int(stmt, 1, MAX_ACCOUNT_SIZE);
             for (;sqlite3_step(stmt) == SQLITE_ROW;) {
                 const char *pK = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 dht::public_key peer(pK);

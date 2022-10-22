@@ -27,7 +27,8 @@ namespace libTAU {
 namespace blockchain {
 
     enum block_version {
-        block_version1,
+        block_version_1,
+        block_version_2,
         block_unknown_version,
     };
 
@@ -157,7 +158,7 @@ namespace blockchain {
         aux::bytes m_chain_id;
 
         // block version
-        block_version m_version = block_version1;
+        block_version m_version = block_version_2;
 
         // timestamp
         std::int64_t m_timestamp{};

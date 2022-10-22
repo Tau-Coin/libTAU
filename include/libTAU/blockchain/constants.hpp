@@ -41,9 +41,13 @@ namespace libTAU::blockchain {
 
     constexpr int CHAIN_EPOCH_BLOCK_SIZE = 50;
 
-    constexpr int MAX_ACCOUNT_SIZE = 774;
+//    constexpr int MAX_ACCOUNT_SIZE = 774;
 
-    constexpr int MAX_STATE_ARRAY_SIZE = MAX_ACCOUNT_SIZE / 43;
+//    constexpr int MAX_STATE_ARRAY_SIZE = MAX_ACCOUNT_SIZE / 43;
+
+    constexpr int MAX_HASH_SIZE_IN_ENTRY = 43;
+
+    constexpr int MAX_ACCOUNT_SIZE_IN_ENTRY = 18;
 
     constexpr int short_chain_id_length = 4;
 

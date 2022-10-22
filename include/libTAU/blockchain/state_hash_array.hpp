@@ -47,6 +47,22 @@ namespace libTAU {
 
             std::string get_encode() const;
 
+            bool operator<(const state_hash_array &rhs) const {
+                return m_hash < rhs.m_hash;
+            }
+
+            bool operator>(const state_hash_array &rhs) const {
+                return rhs < *this;
+            }
+
+            bool operator<=(const state_hash_array &rhs) const {
+                return !(rhs < *this);
+            }
+
+            bool operator>=(const state_hash_array &rhs) const {
+                return !(*this < rhs);
+            }
+
             // @returns a pretty-printed string representation of block structure
             std::string to_string() const;
 

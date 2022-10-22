@@ -747,9 +747,9 @@ namespace libTAU::blockchain {
                                 get_genesis_state(chain_id, stateRoot, stateArrays);
                                 log(LOG_INFO, "INFO chain[%s] genesis block state root[%s]",
                                     aux::toHex(chain_id).c_str(), aux::toHex(stateRoot).c_str());
-                                block b = block(chain_id, block_version::block_version1, current_time,
+                                block b = block(chain_id, block_version::block_version_2, current_time,
                                           head_block.block_number() + 1, head_block.sha1(), base_target,
-                                          cumulative_difficulty, genSig, stateRoot, tx, *pk);
+                                                cumulative_difficulty, genSig, stateRoot, tx, *pk);
 
                                 b.sign(*pk, *sk);
 
@@ -759,7 +759,7 @@ namespace libTAU::blockchain {
 
                                 process_genesis_block(chain_id, b, stateArrays);
                             } else if (head_block.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                                block b = block(chain_id, block_version::block_version1, current_time,
+                                block b = block(chain_id, block_version::block_version_2, current_time,
                                                 head_block.block_number() + 1, head_block.sha1(), base_target,
                                                 cumulative_difficulty, genSig, head_block.sha1(), tx, *pk);
 
@@ -771,9 +771,9 @@ namespace libTAU::blockchain {
 
                                 process_block(chain_id, b);
                             } else {
-                                block b = block(chain_id, block_version::block_version1, current_time,
+                                block b = block(chain_id, block_version::block_version_2, current_time,
                                           head_block.block_number() + 1, head_block.sha1(), base_target,
-                                          cumulative_difficulty, genSig, head_block.multiplex_hash(), tx, *pk);
+                                                cumulative_difficulty, genSig, head_block.multiplex_hash(), tx, *pk);
 
                                 b.sign(*pk, *sk);
 
@@ -1273,7 +1273,8 @@ namespace libTAU::blockchain {
                 }
             } else {
                 if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                    get_all_state_from_peer(chain_id, peer, blk.state_root());
+                    // if genesis block
+                    get_all_state_with_genesis_block_from_peer(chain_id, peer, blk);
                 } else {
                     get_block(chain_id, peer, blk.genesis_block_hash());
                 }
@@ -1285,29 +1286,79 @@ namespace libTAU::blockchain {
         auto& acl = m_access_list[chain_id];
         auto it = acl.find(peer);
         if (it != acl.end()) {
-            if (!it->second.m_genesis_block.empty() && !it->second.m_state_hash_array.empty() &&
-                it->second.m_state_hash_array.sha1() == it->second.m_genesis_block.state_root()) {
-                std::vector<state_array> arrays;
-                for (auto const& hash: it->second.m_state_hash_array.HashArray()) {
-                    auto stateArray = m_repository->get_state_array_by_hash(chain_id, hash);
-                    if (!stateArray.empty()) {
-                        arrays.push_back(stateArray);
-                    } else {
-                        return;
+            // state ready
+            if (!it->second.m_genesis_block.empty()) {
+                if (it->second.m_genesis_block.version() == block_version_1) {
+                    auto it_state_hash_array = it->second.m_state_hash_arrays.find(it->second.m_genesis_block.state_root());
+                    if (it_state_hash_array != it->second.m_state_hash_arrays.end()) {
+                        std::vector<state_array> arrays;
+                        // get state array
+                        for (auto const &hash: it_state_hash_array->second.HashArray()) {
+                            auto stateArray = m_repository->get_state_array_by_hash(chain_id, hash);
+                            if (!stateArray.empty()) {
+                                arrays.push_back(stateArray);
+                            } else {
+                                return;
+                            }
+                        }
+
+                        if ((it->second.m_head_block.cumulative_difficulty() >
+                             m_head_blocks[chain_id].cumulative_difficulty() ||
+                             (it->second.m_head_block.cumulative_difficulty() ==
+                              m_head_blocks[chain_id].cumulative_difficulty() && peer > *m_ses.pubkey())) &&
+                            it->second.m_head_block.genesis_block_hash() !=
+                            m_head_blocks[chain_id].genesis_block_hash()) {
+                            clear_chain_all_state_in_cache_and_db(chain_id);
+                        }
+
+                        process_genesis_block(chain_id, it->second.m_genesis_block, arrays);
+
+                        if (it->second.m_head_block.cumulative_difficulty() >
+                            m_head_blocks[chain_id].cumulative_difficulty() ||
+                            (it->second.m_head_block.cumulative_difficulty() ==
+                             m_head_blocks[chain_id].cumulative_difficulty() && peer > *m_ses.pubkey())) {
+                            try_to_rebranch(chain_id, it->second.m_head_block, false, peer);
+                        }
                     }
-                }
+                } else if (it->second.m_genesis_block.version() == block_version_2) {
+                    auto it_level1_state_hash_array = it->second.m_state_hash_arrays.find(it->second.m_genesis_block.state_root());
+                    if (it_level1_state_hash_array != it->second.m_state_hash_arrays.end()) {
+                        std::vector<state_array> arrays;
+                        for (auto const &level0_hash: it_level1_state_hash_array->second.HashArray()) {
+                            auto it_level0_state_hash_array = it->second.m_state_hash_arrays.find(level0_hash);
+                            if (it_level0_state_hash_array == it->second.m_state_hash_arrays.end()) {
+                                return;
+                            }
 
-                if ((it->second.m_head_block.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty() ||
-                    (it->second.m_head_block.cumulative_difficulty() == m_head_blocks[chain_id].cumulative_difficulty() && peer > *m_ses.pubkey())) &&
-                    it->second.m_head_block.genesis_block_hash() != m_head_blocks[chain_id].genesis_block_hash()) {
-                    clear_chain_all_state_in_cache_and_db(chain_id);
-                }
+                            // get state array
+                            for (auto const &hash: it_level0_state_hash_array->second.HashArray()) {
+                                auto stateArray = m_repository->get_state_array_by_hash(chain_id, hash);
+                                if (!stateArray.empty()) {
+                                    arrays.push_back(stateArray);
+                                } else {
+                                    return;
+                                }
+                            }
+                        }
 
-                process_genesis_block(chain_id, it->second.m_genesis_block, arrays);
+                        if ((it->second.m_head_block.cumulative_difficulty() >
+                             m_head_blocks[chain_id].cumulative_difficulty() ||
+                             (it->second.m_head_block.cumulative_difficulty() ==
+                              m_head_blocks[chain_id].cumulative_difficulty() && peer > *m_ses.pubkey())) &&
+                            it->second.m_head_block.genesis_block_hash() !=
+                            m_head_blocks[chain_id].genesis_block_hash()) {
+                            clear_chain_all_state_in_cache_and_db(chain_id);
+                        }
 
-                if (it->second.m_head_block.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty() ||
-                    (it->second.m_head_block.cumulative_difficulty() == m_head_blocks[chain_id].cumulative_difficulty() && peer > *m_ses.pubkey())) {
-                    try_to_rebranch(chain_id, it->second.m_head_block, false, peer);
+                        process_genesis_block(chain_id, it->second.m_genesis_block, arrays);
+
+                        if (it->second.m_head_block.cumulative_difficulty() >
+                            m_head_blocks[chain_id].cumulative_difficulty() ||
+                            (it->second.m_head_block.cumulative_difficulty() ==
+                             m_head_blocks[chain_id].cumulative_difficulty() && peer > *m_ses.pubkey())) {
+                            try_to_rebranch(chain_id, it->second.m_head_block, false, peer);
+                        }
+                    }
                 }
             }
         }
@@ -1833,10 +1884,10 @@ namespace libTAU::blockchain {
                     if (blk.empty()) {
                         get_block(chain_id, peer, genesis_block_hash);
                     } else {
-                        get_all_state_from_peer(chain_id, peer, blk.state_root());
+                        get_all_state_with_genesis_block_from_peer(chain_id, peer, blk);
                     }
                 } else {
-                    get_all_state_from_peer(chain_id, peer, blk.state_root());
+                    get_all_state_with_genesis_block_from_peer(chain_id, peer, blk);
                 }
             }
         }
@@ -2210,7 +2261,7 @@ namespace libTAU::blockchain {
             std::vector<account> states;
             for (auto const &state: all_state) {
                 states.push_back(state);
-                if (states.size() == MAX_STATE_ARRAY_SIZE) {
+                if (states.size() == MAX_ACCOUNT_SIZE_IN_ENTRY) {
                     state_array stateArray(states);
                     arrays.push_back(stateArray);
 
@@ -2227,11 +2278,27 @@ namespace libTAU::blockchain {
             }
 
             if (!arrays.empty()) {
-                std::vector<sha1_hash> hashArray;
+                std::vector<sha1_hash> level0_hashArray;
+                std::vector<sha1_hash> level1_hashArray;
                 for (auto const &array: arrays) {
-                    hashArray.push_back(array.sha1());
+                    level0_hashArray.push_back(array.sha1());
+                    if (level0_hashArray.size() == MAX_HASH_SIZE_IN_ENTRY) {
+                        state_hash_array stateHashArray(level0_hashArray);
+                        level1_hashArray.push_back(stateHashArray.sha1());
+
+                        level0_hashArray.clear();
+                    }
                 }
-                state_hash_array stateHashArray(hashArray);
+
+                // the last one
+                if (!level0_hashArray.empty()) {
+                    state_hash_array stateHashArray(level0_hashArray);
+                    level1_hashArray.push_back(stateHashArray.sha1());
+
+                    level0_hashArray.clear();
+                }
+
+                state_hash_array stateHashArray(level1_hashArray);
                 stateRoot = stateHashArray.sha1();
             }
         }
@@ -2658,8 +2725,12 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::get_all_state_from_peer(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
-        get_state_hash_array(chain_id, peer, hash);
+    void blockchain::get_all_state_with_genesis_block_from_peer(const bytes &chain_id, const dht::public_key &peer, const block &genesis) {
+        if (genesis.version() == block_version_1) {
+            get_level_0_state_hash_array(chain_id, peer, genesis.state_root());
+        } else if (genesis.version() == block_version_2) {
+            get_level_1_state_hash_array(chain_id, peer, genesis.state_root());
+        }
     }
 
 //    void blockchain::put_all_state(const bytes &chain_id) {
@@ -2786,12 +2857,38 @@ namespace libTAU::blockchain {
 
             put_block(chain_id, blk);
 
-            std::vector<sha1_hash> hashArray;
-            for (auto const& stateArray: arrays) {
-                hashArray.push_back(stateArray.sha1());
-                put_state_array(chain_id, stateArray);
+
+            std::vector<sha1_hash> level0_hashArray;
+            std::vector<sha1_hash> level1_hashArray;
+            for (auto const &array: arrays) {
+                // put state array
+                put_state_array(chain_id, array);
+
+                level0_hashArray.push_back(array.sha1());
+                if (level0_hashArray.size() == MAX_HASH_SIZE_IN_ENTRY) {
+                    state_hash_array stateHashArray(level0_hashArray);
+                    // put level 0 stata hash array
+                    put_state_hash_array(chain_id, stateHashArray);
+
+                    level1_hashArray.push_back(stateHashArray.sha1());
+
+                    level0_hashArray.clear();
+                }
             }
-            state_hash_array stateHashArray(hashArray);
+
+            // the last one
+            if (!level0_hashArray.empty()) {
+                state_hash_array stateHashArray(level0_hashArray);
+                // put level 0 stata hash array
+                put_state_hash_array(chain_id, stateHashArray);
+
+                level1_hashArray.push_back(stateHashArray.sha1());
+
+                level0_hashArray.clear();
+            }
+
+            // put level 1 stata hash array
+            state_hash_array stateHashArray(level1_hashArray);
             put_state_hash_array(chain_id, stateHashArray);
         }
     }
@@ -2878,13 +2975,22 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::get_state_hash_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+    void blockchain::get_level_0_state_hash_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
-        log(LOG_INFO, "INFO: Get state hash array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+        log(LOG_INFO, "INFO: Get level 0 state hash array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::STATE_HASH_ARRAY);
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::LEVEL_0_STATE_HASH_ARRAY);
+    }
+
+    void blockchain::get_level_1_state_hash_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Get level 1 state hash array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::LEVEL_1_STATE_HASH_ARRAY);
     }
 
     void blockchain::put_state_hash_array(const bytes &chain_id, const state_hash_array &hashArray) {
@@ -3003,7 +3109,7 @@ namespace libTAU::blockchain {
                             }
 
                             if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                                get_all_state_from_peer(chain_id, peer, blk.state_root());
+                                get_all_state_with_genesis_block_from_peer(chain_id, peer, blk);
                             }
 
                             if (!m_repository->save_block_if_not_exist(blk)) {
@@ -3042,7 +3148,7 @@ namespace libTAU::blockchain {
                             }
 
                             if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                                get_all_state_from_peer(chain_id, peer, blk.state_root());
+                                get_all_state_with_genesis_block_from_peer(chain_id, peer, blk);
                             }
 
                             if (!m_repository->save_block_if_not_exist(blk)) {
@@ -3168,15 +3274,15 @@ namespace libTAU::blockchain {
 
                         break;
                     }
-                    case GET_ITEM_TYPE::STATE_HASH_ARRAY: {
+                    case GET_ITEM_TYPE::LEVEL_0_STATE_HASH_ARRAY: {
                         state_hash_array hashArray(i.value());
-                        log(LOG_INFO, "INFO: Got state hash array[%s].", hashArray.to_string().c_str());
+                        log(LOG_INFO, "INFO: Got level 0 state hash array[%s].", hashArray.to_string().c_str());
 
                         auto& acl = m_access_list[chain_id];
                         auto it = acl.find(peer);
                         if (it != acl.end()) {
                             // only peer in acl is allowed
-                            it->second.m_state_hash_array = hashArray;
+                            it->second.m_state_hash_arrays[hashArray.sha1()] = hashArray;
                         }
 
                         for (auto const& hash: hashArray.HashArray()) {
@@ -3186,6 +3292,23 @@ namespace libTAU::blockchain {
                         }
 
                         state_reception_event(chain_id, peer);
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::LEVEL_1_STATE_HASH_ARRAY: {
+                        state_hash_array hashArray(i.value());
+                        log(LOG_INFO, "INFO: Got level 1 state hash array[%s].", hashArray.to_string().c_str());
+
+                        auto& acl = m_access_list[chain_id];
+                        auto it = acl.find(peer);
+                        if (it != acl.end()) {
+                            // only peer in acl is allowed
+                            it->second.m_state_hash_arrays[hashArray.sha1()] = hashArray;
+                        }
+
+                        for (auto const& hash: hashArray.HashArray()) {
+                            get_level_0_state_hash_array(chain_id, peer, hash);
+                        }
 
                         break;
                     }
@@ -3246,7 +3369,8 @@ namespace libTAU::blockchain {
                         }
                         break;
                     }
-                    case GET_ITEM_TYPE::STATE_HASH_ARRAY:
+                    case GET_ITEM_TYPE::LEVEL_0_STATE_HASH_ARRAY:
+                    case GET_ITEM_TYPE::LEVEL_1_STATE_HASH_ARRAY:
                     case GET_ITEM_TYPE::STATE_ARRAY: {
                         request_all_state(chain_id, peer);
                         break;
@@ -3414,20 +3538,13 @@ namespace libTAU::blockchain {
 
 //        auto ep = m_ses.external_udp_endpoint();
 
-        int i = 0;
         for (auto const &act: accounts) {
-            if (i < MAX_ACCOUNT_SIZE) {
-                log(LOG_INFO, "INFO: chain[%s] save account:%s", aux::toHex(chain_id).c_str(), act.to_string().c_str());
-                if (!m_repository->save_account(chain_id, act)) {
-                    log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
-                        aux::toHex(chain_id).c_str(), act.to_string().c_str());
-                }
-                total_balance += act.balance();
-
-                i++;
-            } else {
-                break;
+            log(LOG_INFO, "INFO: chain[%s] save account:%s", aux::toHex(chain_id).c_str(), act.to_string().c_str());
+            if (!m_repository->save_account(chain_id, act)) {
+                log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
+                    aux::toHex(chain_id).c_str(), act.to_string().c_str());
             }
+            total_balance += act.balance();
         }
 
         std::int64_t genesis_balance = GENESIS_BLOCK_BALANCE > total_balance ? GENESIS_BLOCK_BALANCE - total_balance : 0;
@@ -3442,8 +3559,8 @@ namespace libTAU::blockchain {
         std::vector<state_array> stateArrays;
         get_genesis_state(chain_id, stateRoot, stateArrays);
 
-        block b = block(chain_id, block_version::block_version1, now, 0, sha1_hash(),
-                  GENESIS_BASE_TARGET, 0, genSig, stateRoot, transaction(), *pk);
+        block b = block(chain_id, block_version::block_version_2, now, 0, sha1_hash(),
+                        GENESIS_BASE_TARGET, 0, genSig, stateRoot, transaction(), *pk);
 
         b.sign(*pk, *sk);
 

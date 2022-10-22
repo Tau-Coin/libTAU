@@ -92,7 +92,8 @@ namespace blockchain {
         NOTE_POOL_HASH_SET,
         NOTE_TX,
         TRANSFER_TX,
-        STATE_HASH_ARRAY,
+        LEVEL_0_STATE_HASH_ARRAY,
+        LEVEL_1_STATE_HASH_ARRAY,
         STATE_ARRAY,
         UNKNOWN_GET_ITEM_TYPE,
     };
@@ -595,7 +596,7 @@ namespace blockchain {
 
         void put_note_transaction(const aux::bytes &chain_id, const transaction &tx);
 
-        void get_all_state_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+        void get_all_state_with_genesis_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const block &genesis);
 
 //        void put_all_state(const aux::bytes &chain_id);
 
@@ -639,7 +640,9 @@ namespace blockchain {
 
         void put_note_pool_hash_set(const aux::bytes &chain_id);
 
-        void get_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+        void get_level_0_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+
+        void get_level_1_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
         void put_state_hash_array(const aux::bytes &chain_id, const state_hash_array &hashArray);
 
