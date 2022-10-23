@@ -340,12 +340,6 @@ namespace libTAU::blockchain {
         // create tx pool
         m_tx_pools[chain_id] = tx_pool(m_repository.get());
 
-        // TODO: remove in the future
-        if (!m_repository->create_acl_db(chain_id)) {
-            log(LOG_ERR, "INFO: chain:[%s] create acl db fail.", aux::toHex(chain_id).c_str());
-            return false;
-        }
-
         // load key point block in memory
         // load head/tail/consensus block
         auto head_block = m_repository->get_head_block(chain_id);
