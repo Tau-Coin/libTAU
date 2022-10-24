@@ -50,6 +50,13 @@ namespace libTAU::blockchain {
         return "t" + aux::toHex(hash) + table_acl;
     }
 
+    std::string repository::online_list_db_name(const aux::bytes &chain_id) {
+        // prevent SQL injection
+        sha1_hash hash = hasher(chain_id).final();
+        // 't' + hex(sha1(chain id))
+        return "t" + aux::toHex(hash) + table_online_list;
+    }
+
 //    bool repository::save_main_chain_block(const block &blk) {
 //        return save_block(blk, true);
 //    }

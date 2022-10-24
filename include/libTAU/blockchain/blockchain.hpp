@@ -62,6 +62,9 @@ namespace blockchain {
     // blockchain max peers in acl
     constexpr std::size_t blockchain_acl_max_peers = 8;
 
+    // blockchain max peers in online peer list
+    constexpr std::size_t blockchain_online_list_max_peers = 64;
+
     // blockchain max getting times
     constexpr std::int64_t blockchain_max_getting_times = 10;
 
@@ -684,6 +687,8 @@ namespace blockchain {
 
         void add_peer_into_acl(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
+        void add_peer_into_online_list(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
+
         dht::public_key select_peer_randomly_from_acl(aux::bytes const& chain_id);
 
 //        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score,
@@ -756,6 +761,9 @@ namespace blockchain {
 
         // Forwarding list
         std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_access_list;
+
+        // online peer list
+        std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_online_list;
 
         // last get time(chain id <--> (peer <--> (salt <-->last get time)))
         std::map<aux::bytes, std::map<dht::public_key, std::map<std::string, std::int64_t>>> m_last_get_time;

@@ -94,6 +94,14 @@ namespace libTAU::blockchain {
             }
         }
 
+        for (auto const& chain_id: m_chains) {
+            m_repository->clear_online_list_db(chain_id);
+            auto const &online_list = m_online_list[chain_id];
+            for (auto const& item: online_list) {
+                m_repository->add_peer_in_online_list_db(chain_id, item.first);
+            }
+        }
+
 //        for (auto& timer: m_chain_status_timers) {
 //            timer.second.cancel();
 //        }
@@ -147,6 +155,10 @@ namespace libTAU::blockchain {
         }
         if (!m_repository->create_acl_db(chain_id)) {
             log(LOG_ERR, "INFO: chain:%s, create acl db fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
+        if (!m_repository->create_online_list_db(chain_id)) {
+            log(LOG_ERR, "INFO: chain:[%s] create online peer db fail.", aux::toHex(chain_id).c_str());
             return false;
         }
 
@@ -254,6 +266,10 @@ namespace libTAU::blockchain {
                 log(LOG_ERR, "INFO: chain:%s, delete acl db fail.", aux::toHex(chain_id).c_str());
                 return false;
             }
+            if (!m_repository->delete_online_list_db(chain_id)) {
+                log(LOG_ERR, "INFO: chain:%s, delete online list db fail.", aux::toHex(chain_id).c_str());
+                return false;
+            }
 
             // cancel
             auto it_chain_timer = m_chain_timers.find(chain_id);
@@ -339,6 +355,12 @@ namespace libTAU::blockchain {
 
         // create tx pool
         m_tx_pools[chain_id] = tx_pool(m_repository.get());
+
+        // TODO: remove in the future
+        if (!m_repository->create_online_list_db(chain_id)) {
+            log(LOG_ERR, "INFO: chain:[%s] create online peer db fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
 
         // load key point block in memory
         // load head/tail/consensus block
@@ -3964,6 +3986,38 @@ namespace libTAU::blockchain {
 //                get_new_note_tx_hash(chain_id, peer, 0);
 //            }
 //        }
+    }
+
+    void blockchain::add_peer_into_online_list(const bytes &chain_id, const dht::public_key &peer, std::int64_t timestamp) {
+        if (peer == *m_ses.pubkey()) {
+            return;
+        }
+
+        auto &online_list = m_online_list[chain_id];
+
+        log(LOG_INFO, "INFO: chain[%s] update online peer[%s] time:%" PRId64,
+            aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), timestamp);
+        auto it = online_list.find(peer);
+        if (it != online_list.end()) {
+            if (timestamp > it->second.m_last_seen) {
+                it->second.m_last_seen = timestamp;
+            }
+        } else {
+            online_list[peer] = peer_info(timestamp);
+        }
+
+        if (online_list.size() > blockchain_online_list_max_peers) {
+            // remove the oldest peer
+            auto min_it = online_list.begin();
+            for (auto iter = online_list.begin(); iter != online_list.end(); iter++) {
+                if (iter->second.m_last_seen < min_it->second.m_last_seen) {
+                    min_it = iter;
+                }
+            }
+
+            // remove from acl
+            online_list.erase(min_it->first);
+        }
     }
 
     dht::public_key blockchain::select_peer_randomly_from_acl(const bytes &chain_id) {
