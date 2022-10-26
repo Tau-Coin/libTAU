@@ -83,10 +83,10 @@ rule linking ( properties * )
         result += <library>sqlite3 ;
     }
 
-    if <compress>snappy in $(properties)
-    {
-        result += <library>snappy ;
-    }
+#    if <compress>snappy in $(properties)
+#    {
+#        result += <library>snappy ;
+#    }
 
     if <crashdump>breakpad in $(properties)
     {
@@ -574,21 +574,21 @@ rule sqlite-include-path ( properties * )
 
 # the search path to pick up the sqlite libraries from. This is the <search>
 # property of those libraries
-rule snappy-lib-path ( properties * )
-{
-    local result ;
-    result += <search>$(SNAPPY_ROOT)/lib ;
-    return $(result) ;
-}
+#rule snappy-lib-path ( properties * )
+#{
+#    local result ;
+#    result += <search>$(SNAPPY_ROOT)/lib ;
+#    return $(result) ;
+#}
 
 # the include path to pick up sqlite headers from. This is the
 # usage-requirement for the sqlite-related libraries
-rule snappy-include-path ( properties * )
-{
-    local result ;
-    result += <include>$(SNAPPY_ROOT)/include ;
-    return $(result) ;
-}
+#rule snappy-include-path ( properties * )
+#{
+#    local result ;
+#    result += <include>$(SNAPPY_ROOT)/include ;
+#    return $(result) ;
+#}
 
 # the search path to pick up the sqlite libraries from. This is the <search>
 # property of those libraries
@@ -616,8 +616,8 @@ feature openssl-include : : free path ;
 feature sqlite-lib : : free path ;
 feature sqlite-include : : free path ;
 
-feature snappy-lib : : free path ;
-feature snappy-include : : free path ;
+#feature snappy-lib : : free path ;
+#feature snappy-include : : free path ;
 
 feature breakpad-lib : : free path ;
 feature breakpad-include : : free path ;
@@ -700,7 +700,7 @@ feature.compose <kvdatabase>kvdb : <define>TORRENT_ENABLE_DB ;
 feature sqldatabase : sqldb : composite propagated ;
 feature.compose <sqldatabase>sqldb : <define>TORRENT_ABI_VERSION=3 ;
 
-feature compress : snappy : composite propagated ;
+#feature compress : snappy : composite propagated ;
 #feature.compose <compress>snappy : <define>TORRENT_ENABLE_UDP_COMPRESS ;
 
 #feature crashdump : breakpad : composite propagated ;
