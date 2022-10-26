@@ -100,7 +100,9 @@ see LICENSE file.
 
 #include <leveldb/db.h>
 #include <sqlite3.h>
+#ifdef TORRENT_ENABLE_UDP_COMPRESS
 #include <snappy-c.h>
+#endif
 #ifdef TORRENT_ENABLE_CRASH_ANA
 #include <breakpad/client/linux/handler/exception_handler.h>
 #endif
