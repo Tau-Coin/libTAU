@@ -24,20 +24,20 @@ namespace libTAU::blockchain {
     entry transaction::get_entry_without_signature() const {
         entry::list_type lst;
 
-        // chain id
-        lst.push_back(std::string(m_chain_id.begin(), m_chain_id.end()));
-        // version
-        auto version = aux::intToLittleEndianString((int)m_version);
-        lst.push_back(version);
-        // type
-        auto type = aux::intToLittleEndianString((int)m_type);
-        lst.push_back(type);
-        // timestamp
-        auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
-        lst.push_back(timestamp);
-        // sender
-        lst.push_back(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
         if (m_type == tx_type::type_transfer) {
+            // chain id
+            lst.push_back(std::string(m_chain_id.begin(), m_chain_id.end()));
+            // version
+            auto version = aux::intToLittleEndianString((int)m_version);
+            lst.push_back(version);
+            // type
+            auto type = aux::intToLittleEndianString((int)m_type);
+            lst.push_back(type);
+            // timestamp
+            auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+            lst.push_back(timestamp);
+            // sender
+            lst.push_back(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
             // receiver
             lst.push_back(std::string(m_receiver.bytes.begin(), m_receiver.bytes.end()));
             // nonce
@@ -49,9 +49,27 @@ namespace libTAU::blockchain {
             // amount
             auto amount = aux::int64ToLittleEndianString(m_amount);
             lst.push_back(amount);
+            // payload
+            lst.push_back(std::string(m_payload.begin(), m_payload.end()));
+        } else if (m_type == tx_type::type_note) {
+            // chain id
+            lst.push_back(std::string(m_chain_id.begin(), m_chain_id.end()));
+            // version
+            auto version = aux::intToLittleEndianString((int)m_version);
+            lst.push_back(version);
+            // type
+            auto type = aux::intToLittleEndianString((int)m_type);
+            lst.push_back(type);
+            // timestamp
+            auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+            lst.push_back(timestamp);
+            // sender
+            lst.push_back(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
+            // previous hash
+            lst.push_back(m_previous_hash.to_string());
+            // payload
+            lst.push_back(std::string(m_payload.begin(), m_payload.end()));
         }
-        // payload
-        lst.push_back(std::string(m_payload.begin(), m_payload.end()));
 
         return lst;
     }
@@ -105,13 +123,15 @@ namespace libTAU::blockchain {
     }
 
     bool transaction::verify_signature() const {
-        return ed25519_verify(m_signature, get_encode_without_signature(), m_sender);
+        // TODO
+        return true;
+//        return ed25519_verify(m_signature, get_encode_without_signature(), m_sender);
     }
 
     void transaction::populate(const entry &e) {
         auto const& lst = e.list();
 
-        if (lst.size() == 7) {
+        if (lst.size() == 8) {
             // type
             int type = aux::intFromLittleEndianString(lst[2].string());
             m_type = static_cast<tx_type>(type);
@@ -128,11 +148,13 @@ namespace libTAU::blockchain {
             m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
             // sender
             m_sender = dht::public_key(lst[4].string().data());
+            // previous hash
+            m_previous_hash = sha1_hash(lst[5].string().data());
             // payload
-            auto payload = lst[5].string();
+            auto payload = lst[6].string();
             m_payload = aux::bytes(payload.begin(), payload.end());
             // signature
-            m_signature = dht::signature(lst[6].string().data());
+            m_signature = dht::signature(lst[7].string().data());
         }
 
         if (lst.size() == 11) {
@@ -177,6 +199,7 @@ namespace libTAU::blockchain {
         os << "m_chain_id: " << aux::toHex(transaction.m_chain_id) << " m_version: " << transaction.m_version
            << " m_type: " << transaction.m_type << " m_timestamp: " << transaction.m_timestamp << " m_sender: "
            << aux::toHex(transaction.m_sender.bytes) << " m_receiver: " << aux::toHex(transaction.m_receiver.bytes)
+           << " m_previous_hash: " << aux::toHex(transaction.m_previous_hash.to_string())
            << " m_nonce: " << transaction.m_nonce << " m_amount: " << transaction.m_amount
            << " m_fee: " << transaction.m_fee << " m_hash: " << aux::toHex(transaction.m_hash.to_string());
         return os;
