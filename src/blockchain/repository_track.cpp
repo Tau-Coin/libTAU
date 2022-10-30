@@ -90,6 +90,10 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    bool repository_track::update_account(const aux::bytes &chain_id, const account &act) {
+        return false;
+    }
+
     bool repository_track::save_account(const aux::bytes &chain_id, const account &act) {
         return false;
     }

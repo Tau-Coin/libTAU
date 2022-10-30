@@ -364,6 +364,14 @@ namespace libTAU::blockchain {
         return is_existed;
     }
 
+    bool repository_impl::update_account(const aux::bytes &chain_id, const account &act) {
+        if (act.empty()) {
+            return delete_account(chain_id, act.peer());
+        } else {
+            return save_account(chain_id, act);
+        }
+    }
+
     bool repository_impl::save_account(const aux::bytes &chain_id, const account &act) {
         sqlite3_stmt * stmt;
         std::string sql = "REPLACE INTO ";

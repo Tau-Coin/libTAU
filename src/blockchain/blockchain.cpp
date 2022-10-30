@@ -1047,7 +1047,7 @@ namespace libTAU::blockchain {
                     log(LOG_ERR, "INFO: chain:%s process state array[%s].",
                         aux::toHex(chain_id).c_str(), stateArray.to_string().c_str());
                     for (auto const& act: stateArray.StateArray()) {
-                        if (!m_repository->save_account(chain_id, act)) {
+                        if (!m_repository->update_account(chain_id, act)) {
                             log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
                                 aux::toHex(chain_id).c_str(), act.to_string().c_str());
                             m_repository->rollback();
@@ -1071,7 +1071,7 @@ namespace libTAU::blockchain {
                     accounts[blk.miner()].add_balance(MINER_BONUS);
 
                     for (auto const& item: accounts) {
-                        if (!m_repository->save_account(chain_id, item.second)) {
+                        if (!m_repository->update_account(chain_id, item.second)) {
                             log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
                                 aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
                             m_repository->rollback();
@@ -1085,7 +1085,7 @@ namespace libTAU::blockchain {
                     miner_account.increase_power();
                     miner_account.add_balance(MINER_BONUS);
 
-                    if (!m_repository->save_account(chain_id, miner_account)) {
+                    if (!m_repository->update_account(chain_id, miner_account)) {
                         log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
                             aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
                         m_repository->rollback();
@@ -1131,7 +1131,7 @@ namespace libTAU::blockchain {
             }
             for (auto const& stateArray: arrays) {
                 for (auto const& act: stateArray.StateArray()) {
-                    if (!m_repository->save_account(chain_id, act)) {
+                    if (!m_repository->update_account(chain_id, act)) {
                         log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
                             aux::toHex(chain_id).c_str(), act.to_string().c_str());
                         m_repository->rollback();
@@ -1155,7 +1155,7 @@ namespace libTAU::blockchain {
                 accounts[blk.miner()].add_balance(MINER_BONUS);
 
                 for (auto const& item: accounts) {
-                    if (!m_repository->save_account(chain_id, item.second)) {
+                    if (!m_repository->update_account(chain_id, item.second)) {
                         log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
                             aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
                         m_repository->rollback();
@@ -1169,7 +1169,7 @@ namespace libTAU::blockchain {
                 miner_account.increase_power();
                 miner_account.add_balance(MINER_BONUS);
 
-                if (!m_repository->save_account(chain_id, miner_account)) {
+                if (!m_repository->update_account(chain_id, miner_account)) {
                     log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
                         aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
                     m_repository->rollback();
@@ -1246,7 +1246,7 @@ namespace libTAU::blockchain {
                     accounts[blk.miner()].add_balance(MINER_BONUS);
 
                     for (auto const& item: accounts) {
-                        if (!m_repository->save_account(chain_id, item.second)) {
+                        if (!m_repository->update_account(chain_id, item.second)) {
                             log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
                                 aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
                             m_repository->rollback();
@@ -1260,7 +1260,7 @@ namespace libTAU::blockchain {
                     miner_account.increase_power();
                     miner_account.add_balance(MINER_BONUS);
 
-                    if (!m_repository->save_account(chain_id, miner_account)) {
+                    if (!m_repository->update_account(chain_id, miner_account)) {
                         log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
                             aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
                         m_repository->rollback();
@@ -1743,7 +1743,7 @@ namespace libTAU::blockchain {
                 accounts[blk.miner()].subtract_balance(MINER_BONUS);
 
                 for (auto const& item: accounts) {
-                    if (!m_repository->save_account(chain_id, item.second)) {
+                    if (!m_repository->update_account(chain_id, item.second)) {
                         log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
                             aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
                         m_repository->rollback();
@@ -1757,7 +1757,7 @@ namespace libTAU::blockchain {
                 miner_account.decrease_power();
                 miner_account.subtract_balance(MINER_BONUS);
 
-                if (!m_repository->save_account(chain_id, miner_account)) {
+                if (!m_repository->update_account(chain_id, miner_account)) {
                     log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
                         aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
                     m_repository->rollback();
@@ -1805,7 +1805,7 @@ namespace libTAU::blockchain {
                 accounts[blk.miner()].add_balance(MINER_BONUS);
 
                 for (auto const& item: accounts) {
-                    if (!m_repository->save_account(chain_id, item.second)) {
+                    if (!m_repository->update_account(chain_id, item.second)) {
                         log(LOG_ERR, "INFO: chain:%s, save account[%s] fail.",
                             aux::toHex(chain_id).c_str(), item.second.to_string().c_str());
                         m_repository->rollback();
@@ -1819,7 +1819,7 @@ namespace libTAU::blockchain {
                 miner_account.increase_power();
                 miner_account.add_balance(MINER_BONUS);
 
-                if (!m_repository->save_account(chain_id, miner_account)) {
+                if (!m_repository->update_account(chain_id, miner_account)) {
                     log(LOG_ERR, "INFO: chain:%s, save miner account[%s] fail.",
                         aux::toHex(chain_id).c_str(), miner_account.to_string().c_str());
                     m_repository->rollback();
@@ -2585,18 +2585,20 @@ namespace libTAU::blockchain {
 //        m_all_data_last_put_time[chain_id] = now;
 
         if (!is_empty_chain(chain_id)) {
-            auto blk = m_head_blocks[chain_id];
-            while (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE != 0) {
-                put_block(chain_id, blk);
-                blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
+            if (m_repository->is_account_existed(chain_id, *m_ses.pubkey())) {
+                auto blk = m_head_blocks[chain_id];
+                while (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE != 0) {
+                    put_block(chain_id, blk);
+                    blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
+                }
+                sha1_hash stateRoot;
+                std::vector<state_array> stateArrays;
+                get_genesis_state(chain_id, stateRoot, stateArrays);
+                put_block_with_all_state(chain_id, blk, stateArrays);
+                put_head_block_hash(chain_id, m_head_blocks[chain_id].sha1());
             }
-            sha1_hash stateRoot;
-            std::vector<state_array> stateArrays;
-            get_genesis_state(chain_id, stateRoot, stateArrays);
-            put_block_with_all_state(chain_id, blk, stateArrays);
-            put_head_block_hash(chain_id, m_head_blocks[chain_id].sha1());
 
-            send_new_head_block_signal(chain_id, blk.sha1());
+            send_new_head_block_signal(chain_id, m_head_blocks[chain_id].sha1());
         }
     }
 
