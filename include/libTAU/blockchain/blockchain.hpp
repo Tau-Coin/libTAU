@@ -378,17 +378,17 @@ namespace blockchain {
         // return ban list
         std::set<dht::public_key> get_ban_list(const aux::bytes &chain_id);
 
-        void request_chain_all_data(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void request_chain_all_data(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void put_chain_all_data(const aux::bytes &chain_id);
 
-        void put_chain_all_state(const aux::bytes &chain_id);
+//        void put_chain_all_state(const aux::bytes &chain_id);
 
-        void put_chain_all_blocks(const aux::bytes &chain_id);
+//        void put_chain_all_blocks(const aux::bytes &chain_id);
 
-        void request_all_state(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void request_all_state(const aux::bytes &chain_id, const dht::public_key& peer);
 
-        void request_all_blocks(const aux::bytes &chain_id, const dht::public_key& peer);
+//        void request_all_blocks(const aux::bytes &chain_id, const dht::public_key& peer);
 
         // return access list
 //        std::set<dht::public_key> get_gossip_peers(const aux::bytes &chain_id);
@@ -587,9 +587,9 @@ namespace blockchain {
 
         void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
-        void put_head_block(const aux::bytes &chain_id, const block &blk);
+//        void put_head_block(const aux::bytes &chain_id, const block &blk);
 
-        void put_genesis_head_block(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
+//        void put_genesis_head_block(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
         void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
@@ -773,11 +773,11 @@ namespace blockchain {
         // head blocks
         std::map<aux::bytes, block> m_head_blocks;
 
-        std::map<aux::bytes, std::int64_t> m_all_data_last_put_time;
+//        std::map<aux::bytes, std::int64_t> m_all_data_last_put_time;
 
-        std::map<aux::bytes, std::int64_t> m_all_blocks_last_put_time;
+//        std::map<aux::bytes, std::int64_t> m_all_blocks_last_put_time;
 
-        std::map<aux::bytes, std::int64_t> m_all_state_last_put_time;
+//        std::map<aux::bytes, std::int64_t> m_all_state_last_put_time;
     };
 }
 }

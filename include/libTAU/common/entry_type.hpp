@@ -35,19 +35,16 @@ namespace libTAU::common {
     const std::string entry_levenshtein_array = "l";
 
     enum signal_id {
-        BLOCKCHAIN_ALL_DATA = 40, // 0
-        BLOCKCHAIN_ALL_BLOCKS, // 1
-        BLOCKCHAIN_ALL_STATE, // 2
-        BLOCKCHAIN_ONLINE, // 3
-        BLOCKCHAIN_NEW_HEAD_BLOCK, // 4
-        BLOCKCHAIN_NEW_TRANSFER_TX, // 5
-        BLOCKCHAIN_NEW_NOTE_TX, // 6
-        BLOCKCHAIN_GOSSIP_PEER, // 7
-        COMMUNICATION_NEW_MESSAGE, // 8
-        COMMUNICATION_MESSAGE_MISSING, // 9
-        COMMUNICATION_PUT_DONE, // 10
-        COMMUNICATION_CONFIRMATION, // 11
-        COMMUNICATION_ATTENTION, // 12
+        BLOCKCHAIN_ONLINE = 40, // 0
+        BLOCKCHAIN_NEW_HEAD_BLOCK, // 1
+        BLOCKCHAIN_NEW_TRANSFER_TX, // 2
+        BLOCKCHAIN_NEW_NOTE_TX, // 3
+        BLOCKCHAIN_GOSSIP_PEER, // 4
+        COMMUNICATION_NEW_MESSAGE, // 5
+        COMMUNICATION_MESSAGE_MISSING, // 6
+        COMMUNICATION_PUT_DONE, // 7
+        COMMUNICATION_CONFIRMATION, // 8
+        COMMUNICATION_ATTENTION, // 9
     };
 
     struct TORRENT_EXPORT signal_entry {
@@ -57,8 +54,13 @@ namespace libTAU::common {
         // @param Construct with bencode
         explicit signal_entry(std::string encode): signal_entry(bdecode(encode)) {}
 
+        // communication signal
         signal_entry(signal_id mPid, int64_t mTimestamp) : m_pid(mPid), m_timestamp(mTimestamp) {}
 
+        signal_entry(signal_id mPid, int64_t mTimestamp, const sha1_hash &mHash)
+                : m_pid(mPid), m_timestamp(mTimestamp), m_hash(mHash) {}
+
+        // blockchain signal
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp) : m_pid(mPid),
             m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp) {}
 
@@ -66,16 +68,18 @@ namespace libTAU::common {
                      const dht::public_key &mGossipPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
                                                            m_timestamp(mTimestamp), m_gossip_peer(mGossipPeer) {}
 
-        signal_entry(signal_id mPid, int64_t mTimestamp, const sha1_hash &mHash)
-                : m_pid(mPid), m_timestamp(mTimestamp), m_hash(mHash) {}
-
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash)
                 : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_hash(mHash) {}
 
+//        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
+//                     const dht::public_key &mGossipPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
+//                                                           m_timestamp(mTimestamp), m_hash(mHash),
+//                                                           m_gossip_peer(mGossipPeer) {}
+
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
-                     const dht::public_key &mGossipPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
+                     const dht::public_key &mSourcePeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
                                                            m_timestamp(mTimestamp), m_hash(mHash),
-                                                           m_gossip_peer(mGossipPeer) {}
+                                                           m_source_peer(mSourcePeer) {}
 
         entry get_entry();
 
@@ -95,6 +99,9 @@ namespace libTAU::common {
 
         // gossip peer
         dht::public_key m_gossip_peer;
+
+        // source peer
+        dht::public_key m_source_peer;
     };
 
     struct TORRENT_EXPORT gossip_cache_peers_entry {
