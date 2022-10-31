@@ -91,8 +91,8 @@ namespace blockchain {
         HEAD_BLOCK,
         BLOCK,
 //        TX_WRAPPER,
-        NOTE_POOL_ROOT,
-        NOTE_POOL_HASH_SET,
+//        NOTE_POOL_ROOT,
+//        NOTE_POOL_HASH_SET,
         NOTE_TX,
         TRANSFER_TX,
         LEVEL_0_STATE_HASH_ARRAY,
@@ -583,7 +583,7 @@ namespace blockchain {
 
         void send_new_transfer_tx_signal(const aux::bytes &chain_id, const dht::public_key& tx_receiver);
 
-        void send_new_note_tx_signal(const aux::bytes &chain_id, const sha1_hash &hash);
+        void send_new_note_tx_signal(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
 
         void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
@@ -591,13 +591,13 @@ namespace blockchain {
 
 //        void put_genesis_head_block(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
 
-        void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
+//        void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
         void get_transfer_transaction(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
         void put_transfer_transaction(const aux::bytes &chain_id, const transaction &tx);
 
-        void put_note_transaction(const aux::bytes &chain_id, const transaction &tx);
+//        void put_note_transaction(const aux::bytes &chain_id, const transaction &tx);
 
         void get_all_state_with_genesis_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const block &genesis);
 
@@ -607,9 +607,9 @@ namespace blockchain {
 
         void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void get_note_pool_root(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
+//        void get_note_pool_root(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
-        void put_note_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
+//        void put_note_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
 
 //        void get_pool_root(const aux::bytes &chain_id, const dht::public_key& peer);
 
@@ -639,9 +639,9 @@ namespace blockchain {
 
         void put_state_array(const aux::bytes &chain_id, const state_array &stateArray);
 
-        void get_note_pool_hash_set(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+//        void get_note_pool_hash_set(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 
-        void put_note_pool_hash_set(const aux::bytes &chain_id);
+//        void put_note_pool_hash_set(const aux::bytes &chain_id);
 
         void get_level_0_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 

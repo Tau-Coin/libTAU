@@ -72,6 +72,8 @@ namespace libTAU {
 
             void decrease_power() { m_power--; }
 
+            bool empty() const { return m_balance == 0 && m_nonce == 0 && m_power == 0; }
+
 //            int64_t block_number() const { return m_block_number; }
 
             bool operator<(const account &rhs) const {

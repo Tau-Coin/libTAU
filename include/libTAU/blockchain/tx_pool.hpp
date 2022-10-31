@@ -77,6 +77,8 @@ namespace libTAU::blockchain {
 
         bool is_transaction_in_pool(const sha1_hash &txid) const;
 
+        transaction get_transaction_by_txid(const sha1_hash &txid) const;
+
         std::int64_t get_min_allowed_fee();
 
         std::int64_t get_oldest_allowed_timestamp();

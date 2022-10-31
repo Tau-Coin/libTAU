@@ -408,6 +408,20 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    transaction tx_pool::get_transaction_by_txid(const sha1_hash &txid) const {
+        auto it = m_all_txs_by_fee.find(txid);
+        if (it != m_all_txs_by_fee.end()) {
+            return it->second;
+        }
+
+        it = m_all_txs_by_timestamp.find(txid);
+        if (it != m_all_txs_by_timestamp.end()) {
+            return it->second;
+        }
+
+        return transaction();
+    }
+
     std::int64_t tx_pool::get_min_allowed_fee() {
         if (m_ordered_txs_by_fee.size() >= tx_pool_max_size_by_fee) {
             auto it = m_ordered_txs_by_fee.begin();
