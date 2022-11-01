@@ -286,7 +286,7 @@ namespace libTAU {
         SET(download_rate_limit, 0, nullptr),
         DEPRECATED_SET(local_upload_rate_limit, 0, nullptr),
         DEPRECATED_SET(local_download_rate_limit, 0, nullptr),
-		SET(dht_upload_rate_limit, 8000, &session_impl::update_dht_upload_rate_limit),
+		SET(dht_upload_rate_limit, 500000, &session_impl::update_dht_upload_rate_limit),
         SET(unchoke_slots_limit, 0, nullptr),
 		DEPRECATED_SET(half_open_limit, 0, nullptr),
 		SET(connections_limit, 200, &session_impl::update_connections_limit),
