@@ -64,12 +64,12 @@ namespace libTAU::common {
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp) : m_pid(mPid),
             m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp) {}
 
-        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp,
-                     const dht::public_key &mGossipPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
-                                                           m_timestamp(mTimestamp), m_gossip_peer(mGossipPeer) {}
+//        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp,
+//                     const dht::public_key &mGossipPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
+//                                                           m_timestamp(mTimestamp), m_gossip_peer(mGossipPeer) {}
 
-        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash)
-                : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_hash(mHash) {}
+//        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash)
+//                : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_hash(mHash) {}
 
 //        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
 //                     const dht::public_key &mGossipPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
@@ -98,7 +98,7 @@ namespace libTAU::common {
         sha1_hash m_hash;
 
         // gossip peer
-        dht::public_key m_gossip_peer;
+//        dht::public_key m_gossip_peer;
 
         // source peer
         dht::public_key m_source_peer;

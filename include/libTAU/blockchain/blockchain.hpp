@@ -449,6 +449,8 @@ namespace blockchain {
 
 //        void refresh_chain_status(error_code const &e, const aux::bytes &chain_id);
 
+        void refresh_acl(error_code const&, const aux::bytes &chain_id);
+
         void refresh_mining_timeout(error_code const&, const aux::bytes &chain_id);
 
         void peer_preparation(const aux::bytes &chain_id);
@@ -685,13 +687,13 @@ namespace blockchain {
 
         void print_acl_info(aux::bytes const& chain_id);
 
-        void update_peer_time(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
+//        void update_peer_time(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
         void add_peer_into_acl(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
-        void add_peer_into_online_list(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
+//        void add_peer_into_online_list(aux::bytes const& chain_id, const dht::public_key& peer, std::int64_t timestamp);
 
-        dht::public_key select_peer_randomly_from_online_list(aux::bytes const& chain_id);
+//        dht::public_key select_peer_randomly_from_online_list(aux::bytes const& chain_id);
 
 //        void data_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer, int score,
 //                                     const std::unique_ptr<common::blockchain_entry_base>& ptr);
@@ -725,6 +727,9 @@ namespace blockchain {
 
         // chain timers
         std::map<aux::bytes, aux::deadline_timer> m_chain_timers;
+
+        // acl timers
+        std::map<aux::bytes, aux::deadline_timer> m_acl_timers;
 
 //        std::map<GET_ITEM, GET_INFO> m_get_item_info;
 
@@ -765,7 +770,7 @@ namespace blockchain {
         std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_access_list;
 
         // online peer list
-        std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_online_list;
+//        std::map<aux::bytes, std::map<dht::public_key, peer_info>> m_online_list;
 
         // last get time(chain id <--> (peer <--> (salt <-->last get time)))
         std::map<aux::bytes, std::map<dht::public_key, std::map<std::string, std::int64_t>>> m_last_get_time;
