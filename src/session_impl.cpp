@@ -3532,9 +3532,11 @@ namespace {
 	}
 
 	void session_impl::request_chain_data(const aux::bytes &chain_id, const dht::public_key &peer) {
+    /*
 		if(m_blockchain) {
 			return m_blockchain->request_chain_all_data(chain_id, peer);
 		}
+    */
 	}
 
 	void session_impl::put_all_chain_data(const aux::bytes &chain_id) {
