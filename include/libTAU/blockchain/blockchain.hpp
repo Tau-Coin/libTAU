@@ -57,10 +57,10 @@ namespace blockchain {
 //    constexpr int blockchain_same_response_interval = 2 * 1000;
 
     // blockchain min peers in acl
-//    constexpr std::int64_t blockchain_acl_min_peers = 2;
+    constexpr std::size_t blockchain_acl_min_peers = 4;
 
     // blockchain max peers in acl
-    constexpr std::size_t blockchain_acl_max_peers = 8;
+    constexpr std::size_t blockchain_acl_max_peers = 7;
 
     // blockchain max peers in online peer list
     constexpr std::size_t blockchain_online_list_max_peers = 64;
@@ -579,7 +579,7 @@ namespace blockchain {
 
 //        void put_voting_block(const aux::bytes &chain_id, const block &blk);
 
-        void send_online_signal(const aux::bytes &chain_id);
+//        void send_online_signal(const aux::bytes &chain_id);
 
         void send_new_head_block_signal(const aux::bytes &chain_id, const sha1_hash &hash);
 
@@ -588,6 +588,10 @@ namespace blockchain {
         void send_new_note_tx_signal(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
 
         void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
+
+        void online_signal_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer);
+
+        void signal_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer);
 
 //        void put_head_block(const aux::bytes &chain_id, const block &blk);
 

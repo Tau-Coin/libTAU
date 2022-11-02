@@ -36,10 +36,10 @@ namespace libTAU::common {
 
     enum signal_id {
         BLOCKCHAIN_ONLINE = 40, // 0
-        BLOCKCHAIN_NEW_HEAD_BLOCK, // 1
-        BLOCKCHAIN_NEW_TRANSFER_TX, // 2
-        BLOCKCHAIN_NEW_NOTE_TX, // 3
-        BLOCKCHAIN_GOSSIP_PEER, // 4
+        BLOCKCHAIN_RECOMMEND, // 1
+        BLOCKCHAIN_NEW_HEAD_BLOCK, // 2
+        BLOCKCHAIN_NEW_TRANSFER_TX, // 3
+        BLOCKCHAIN_NEW_NOTE_TX, // 4
         COMMUNICATION_NEW_MESSAGE, // 5
         COMMUNICATION_MESSAGE_MISSING, // 6
         COMMUNICATION_PUT_DONE, // 7
@@ -64,9 +64,9 @@ namespace libTAU::common {
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp) : m_pid(mPid),
             m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp) {}
 
-//        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp,
-//                     const dht::public_key &mGossipPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
-//                                                           m_timestamp(mTimestamp), m_gossip_peer(mGossipPeer) {}
+        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp,
+                     const dht::public_key &mPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
+                                                           m_timestamp(mTimestamp), m_peer(mPeer) {}
 
 //        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash)
 //                : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_hash(mHash) {}
@@ -79,7 +79,7 @@ namespace libTAU::common {
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
                      const dht::public_key &mSourcePeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
                                                            m_timestamp(mTimestamp), m_hash(mHash),
-                                                           m_source_peer(mSourcePeer) {}
+                                                           m_peer(mSourcePeer) {}
 
         entry get_entry();
 
@@ -100,8 +100,8 @@ namespace libTAU::common {
         // gossip peer
 //        dht::public_key m_gossip_peer;
 
-        // source peer
-        dht::public_key m_source_peer;
+        // peer
+        dht::public_key m_peer;
     };
 
     struct TORRENT_EXPORT gossip_cache_peers_entry {

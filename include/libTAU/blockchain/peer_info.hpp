@@ -48,7 +48,7 @@ namespace libTAU::blockchain {
 
         friend std::ostream &operator<<(std::ostream &os, const peer_info &info);
 
-//        int m_score = 40;
+        int m_score = 3;
 
 //        STAGE m_stage = HEAD_BLOCK;
 
@@ -70,6 +70,8 @@ namespace libTAU::blockchain {
 
         // last seen time(s)
         std::int64_t m_last_seen = 0;
+
+        std::int64_t m_last_sent = 0;
 
 //        std::int64_t m_last_ping_time = 0;
 
