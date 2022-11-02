@@ -451,19 +451,17 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 			// responds to 'query' messages that it receives.
 			if (m_settings.get_bool(settings_pack::dht_read_only)) break;
 
+			if (m_settings.get_bool(settings_pack::dht_non_referrable)) break;
+
 			// ignore packets arriving on a different interface than the one we're
 			// associated with
 			if (s != m_sock) return;
 
-			/*
-			if (!m_sock_man->has_quota())
-			{
 			if (!m_sock_man->has_quota())
 			{
 				m_counters.inc_stats_counter(counters::dht_messages_in_dropped);
 				return;
 			}
-			 */
 
 			entry e;
 			node_id to;
