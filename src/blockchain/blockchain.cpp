@@ -1223,10 +1223,10 @@ namespace libTAU::blockchain {
                     }
                 }
 
-//                put_genesis_head_block(chain_id, blk, arrays);
-                put_chain_all_data(chain_id);
-
                 m_head_blocks[chain_id] = blk;
+
+                //                put_genesis_head_block(chain_id, blk, arrays);
+                put_chain_all_data(chain_id);
 
                 // chain changed, re-check tx pool
                 m_tx_pools[chain_id].recheck_account_txs(peers);
@@ -1307,10 +1307,10 @@ namespace libTAU::blockchain {
                 }
             }
 
-//            put_genesis_head_block(chain_id, blk, arrays);
-            put_chain_all_data(chain_id);
-
             m_head_blocks[chain_id] = blk;
+
+            //            put_genesis_head_block(chain_id, blk, arrays);
+            put_chain_all_data(chain_id);
 
             // chain changed, re-check tx pool
             m_tx_pools[chain_id].recheck_account_txs(peers);
@@ -1392,10 +1392,10 @@ namespace libTAU::blockchain {
 
                 m_repository->commit();
 
-//                put_head_block(chain_id, blk);
-                put_chain_all_data(chain_id);
-
                 m_head_blocks[chain_id] = blk;
+
+                //                put_head_block(chain_id, blk);
+                put_chain_all_data(chain_id);
 
                 // chain changed, re-check tx pool
                 m_tx_pools[chain_id].recheck_account_txs(peers);
@@ -2467,6 +2467,10 @@ namespace libTAU::blockchain {
                 states.push_back(state);
                 if (states.size() == MAX_ACCOUNT_SIZE_IN_ENTRY) {
                     state_array stateArray(states);
+                    if (!m_repository->save_state_array(chain_id, stateArray)) {
+                        log(LOG_ERR, "ERROR: chain:%s, save state array[%s] fail.",
+                            aux::toHex(chain_id).c_str(), stateArray.to_string().c_str());
+                    }
                     arrays.push_back(stateArray);
 
                     states.clear();
@@ -2476,6 +2480,10 @@ namespace libTAU::blockchain {
             // the last one
             if (!states.empty()) {
                 state_array stateArray(states);
+                if (!m_repository->save_state_array(chain_id, stateArray)) {
+                    log(LOG_ERR, "ERROR: chain:%s, save state array[%s] fail.",
+                        aux::toHex(chain_id).c_str(), stateArray.to_string().c_str());
+                }
                 arrays.push_back(stateArray);
 
                 states.clear();
@@ -2711,6 +2719,7 @@ namespace libTAU::blockchain {
                 }
 
                 if (!blk.empty()) {
+                    log(LOG_INFO, "Chain[%s] genesis block[%s]", aux::toHex(chain_id).c_str(), blk.to_string().c_str());
                     std::vector<state_hash_array> hashArrays;
                     std::vector<state_array> stateArrays;
                     if (blk.version() == block_version_1) {
@@ -2744,6 +2753,8 @@ namespace libTAU::blockchain {
                         }
                     }
                     put_block_with_all_state(chain_id, blk, hashArrays, stateArrays);
+                } else {
+                    log(LOG_INFO, "Chain[%s] empty block", aux::toHex(chain_id).c_str());
                 }
 
                 put_head_block_hash(chain_id, m_head_blocks[chain_id].sha1());
@@ -3164,19 +3175,16 @@ namespace libTAU::blockchain {
     void blockchain::put_block_with_all_state(const bytes &chain_id, const block &blk,
                                               const std::vector<state_hash_array> &hashArrays,
                                               const std::vector<state_array> &arrays) {
-        if (!blk.empty() && !arrays.empty()) {
+        put_block(chain_id, blk);
 
-            put_block(chain_id, blk);
+        for (auto const &hashArray: hashArrays) {
+            // put state hash array
+            put_state_hash_array(chain_id, hashArray);
+        }
 
-            for (auto const &hashArray: hashArrays) {
-                // put state hash array
-                put_state_hash_array(chain_id, hashArray);
-            }
-
-            for (auto const &array: arrays) {
-                // put state array
-                put_state_array(chain_id, array);
-            }
+        for (auto const &array: arrays) {
+            // put state array
+            put_state_array(chain_id, array);
         }
     }
 
