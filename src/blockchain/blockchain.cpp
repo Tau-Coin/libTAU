@@ -153,7 +153,7 @@ namespace libTAU::blockchain {
             log(LOG_ERR, "INFO: chain:%s, create state db fail.", aux::toHex(chain_id).c_str());
             return false;
         }
-        if (!m_repository->create_state_array_db(chain_id)) {
+        if (!m_repository->create_state_tree_db(chain_id)) {
             log(LOG_ERR, "INFO: chain:%s, create state array db fail.", aux::toHex(chain_id).c_str());
             return false;
         }
@@ -261,7 +261,7 @@ namespace libTAU::blockchain {
                 return false;
             }
 
-            if (!m_repository->delete_state_array_db(chain_id)) {
+            if (!m_repository->delete_state_tree_db(chain_id)) {
                 log(LOG_ERR, "INFO: chain:%s, delete state array db fail.", aux::toHex(chain_id).c_str());
                 return false;
             }
@@ -929,7 +929,7 @@ namespace libTAU::blockchain {
                             if ((head_block.block_number() + 1) % CHAIN_EPOCH_BLOCK_SIZE == 0) {
                                 sha1_hash stateRoot;
                                 std::vector<state_array> stateArrays;
-                                get_genesis_state(chain_id, stateRoot, stateArrays);
+                                generate_genesis_state(chain_id, stateRoot, stateArrays);
                                 log(LOG_INFO, "INFO chain[%s] genesis block state root[%s]",
                                     aux::toHex(chain_id).c_str(), aux::toHex(stateRoot).c_str());
                                 block b = block(chain_id, block_version::block_version_2, current_time,
@@ -2459,7 +2459,7 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::get_genesis_state(const bytes &chain_id, sha1_hash &stateRoot, std::vector<state_array> &arrays) {
+    void blockchain::generate_genesis_state(const bytes &chain_id, sha1_hash &stateRoot, std::vector<state_array> &arrays) {
         auto all_state = m_repository->get_all_effective_state(chain_id);
         if (!all_state.empty()) {
             std::vector<account> states;
@@ -2488,6 +2488,7 @@ namespace libTAU::blockchain {
                     level0_hashArray.push_back(array.sha1());
                     if (level0_hashArray.size() == MAX_HASH_SIZE_IN_ENTRY) {
                         state_hash_array stateHashArray(level0_hashArray);
+                        m_repository->save_state_hash_array(chain_id, stateHashArray);
                         level1_hashArray.push_back(stateHashArray.sha1());
 
                         level0_hashArray.clear();
@@ -2497,12 +2498,14 @@ namespace libTAU::blockchain {
                 // the last one
                 if (!level0_hashArray.empty()) {
                     state_hash_array stateHashArray(level0_hashArray);
+                    m_repository->save_state_hash_array(chain_id, stateHashArray);
                     level1_hashArray.push_back(stateHashArray.sha1());
 
                     level0_hashArray.clear();
                 }
 
                 state_hash_array stateHashArray(level1_hashArray);
+                m_repository->save_state_hash_array(chain_id, stateHashArray);
                 stateRoot = stateHashArray.sha1();
             }
         }
@@ -2706,10 +2709,43 @@ namespace libTAU::blockchain {
                     put_block(chain_id, blk);
                     blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
                 }
-                sha1_hash stateRoot;
-                std::vector<state_array> stateArrays;
-                get_genesis_state(chain_id, stateRoot, stateArrays);
-                put_block_with_all_state(chain_id, blk, stateArrays);
+
+                if (!blk.empty()) {
+                    std::vector<state_hash_array> hashArrays;
+                    std::vector<state_array> stateArrays;
+                    if (blk.version() == block_version_1) {
+                        auto hashArray = m_repository->get_state_hash_array_by_hash(chain_id, blk.state_root());
+                        if (!hashArray.empty()) {
+                            hashArrays.push_back(hashArray);
+                            for (auto const& hash: hashArray.HashArray()) {
+                                auto stateArray = m_repository->get_state_array_by_hash(chain_id, hash);
+                                if (!stateArray.empty()) {
+                                    stateArrays.push_back(stateArray);
+                                }
+                            }
+                        }
+                    } else {
+                        auto level1HashArray = m_repository->get_state_hash_array_by_hash(chain_id, blk.state_root());
+                        if (!level1HashArray.empty()) {
+                            hashArrays.push_back(level1HashArray);
+                            for (auto const& hash: level1HashArray.HashArray()) {
+                                auto level0HashArray = m_repository->get_state_hash_array_by_hash(chain_id, hash);
+                                if (!level0HashArray.empty()) {
+                                    hashArrays.push_back(level0HashArray);
+
+                                    for (auto const& state_array_hash: level0HashArray.HashArray()) {
+                                        auto stateArray = m_repository->get_state_array_by_hash(chain_id, state_array_hash);
+                                        if (!stateArray.empty()) {
+                                            stateArrays.push_back(stateArray);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    put_block_with_all_state(chain_id, blk, hashArrays, stateArrays);
+                }
+
                 put_head_block_hash(chain_id, m_head_blocks[chain_id].sha1());
             }
 
@@ -3125,44 +3161,22 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::put_block_with_all_state(const bytes &chain_id, const block &blk, const std::vector<state_array> &arrays) {
+    void blockchain::put_block_with_all_state(const bytes &chain_id, const block &blk,
+                                              const std::vector<state_hash_array> &hashArrays,
+                                              const std::vector<state_array> &arrays) {
         if (!blk.empty() && !arrays.empty()) {
 
             put_block(chain_id, blk);
 
+            for (auto const &hashArray: hashArrays) {
+                // put state hash array
+                put_state_hash_array(chain_id, hashArray);
+            }
 
-            std::vector<sha1_hash> level0_hashArray;
-            std::vector<sha1_hash> level1_hashArray;
             for (auto const &array: arrays) {
                 // put state array
                 put_state_array(chain_id, array);
-
-                level0_hashArray.push_back(array.sha1());
-                if (level0_hashArray.size() == MAX_HASH_SIZE_IN_ENTRY) {
-                    state_hash_array stateHashArray(level0_hashArray);
-                    // put level 0 stata hash array
-                    put_state_hash_array(chain_id, stateHashArray);
-
-                    level1_hashArray.push_back(stateHashArray.sha1());
-
-                    level0_hashArray.clear();
-                }
             }
-
-            // the last one
-            if (!level0_hashArray.empty()) {
-                state_hash_array stateHashArray(level0_hashArray);
-                // put level 0 stata hash array
-                put_state_hash_array(chain_id, stateHashArray);
-
-                level1_hashArray.push_back(stateHashArray.sha1());
-
-                level0_hashArray.clear();
-            }
-
-            // put level 1 stata hash array
-            state_hash_array stateHashArray(level1_hashArray);
-            put_state_hash_array(chain_id, stateHashArray);
         }
     }
 
@@ -3557,6 +3571,11 @@ namespace libTAU::blockchain {
                         state_hash_array hashArray(i.value());
                         log(LOG_INFO, "INFO: Got level 0 state hash array[%s].", hashArray.to_string().c_str());
 
+                        if (!m_repository->save_state_hash_array(chain_id, hashArray)) {
+                            log(LOG_ERR, "INFO: chain:%s, save level 0 state hash array[%s] fail.",
+                                aux::toHex(chain_id).c_str(), hashArray.to_string().c_str());
+                        }
+
                         auto& acl = m_access_list[chain_id];
                         auto it = acl.find(peer);
                         if (it != acl.end()) {
@@ -3565,7 +3584,7 @@ namespace libTAU::blockchain {
                         }
 
                         for (auto const& hash: hashArray.HashArray()) {
-                            if (!m_repository->is_state_array_in_db(chain_id, hash)) {
+                            if (!m_repository->is_data_in_state_tree_db(chain_id, hash)) {
                                 get_state_array(chain_id, peer, hash);
                             }
                         }
@@ -3577,6 +3596,11 @@ namespace libTAU::blockchain {
                     case GET_ITEM_TYPE::LEVEL_1_STATE_HASH_ARRAY: {
                         state_hash_array hashArray(i.value());
                         log(LOG_INFO, "INFO: Got level 1 state hash array[%s].", hashArray.to_string().c_str());
+
+                        if (!m_repository->save_state_hash_array(chain_id, hashArray)) {
+                            log(LOG_ERR, "INFO: chain:%s, save level 1 state hash array[%s] fail.",
+                                aux::toHex(chain_id).c_str(), hashArray.to_string().c_str());
+                        }
 
                         auto& acl = m_access_list[chain_id];
                         auto it = acl.find(peer);
@@ -3836,7 +3860,7 @@ namespace libTAU::blockchain {
 
         sha1_hash stateRoot;
         std::vector<state_array> stateArrays;
-        get_genesis_state(chain_id, stateRoot, stateArrays);
+        generate_genesis_state(chain_id, stateRoot, stateArrays);
 
         block b = block(chain_id, block_version::block_version_2, now, 0, sha1_hash(),
                         GENESIS_BASE_TARGET, 0, genSig, stateRoot, transaction(), *pk);

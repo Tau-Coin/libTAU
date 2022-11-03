@@ -39,17 +39,21 @@ namespace libTAU::blockchain {
 //
 //        bool delete_head_block_hash(const aux::bytes &chain_id) override;
 
-        bool create_state_array_db(const aux::bytes &chain_id) override;
+        bool create_state_tree_db(const aux::bytes &chain_id) override;
 
-        bool delete_state_array_db(const aux::bytes &chain_id) override;
+        bool delete_state_tree_db(const aux::bytes &chain_id) override;
+
+        bool save_state_hash_array(const aux::bytes &chain_id, const state_hash_array &stateHashArray) override;
+
+        state_hash_array get_state_hash_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
         state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
-        bool is_state_array_in_db(const aux::bytes &chain_id, const sha1_hash &hash) override;
-
         bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) override;
 
-        bool delete_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
+        bool is_data_in_state_tree_db(const aux::bytes &chain_id, const sha1_hash &hash) override;
+
+        bool delete_data_in_state_tree_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
         bool create_state_db(const aux::bytes &chain_id) override;
 

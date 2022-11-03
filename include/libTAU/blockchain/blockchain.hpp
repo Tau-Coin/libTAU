@@ -532,7 +532,7 @@ namespace blockchain {
         void find_best_solution(std::vector<transaction>& txs, const aux::bytes& hash_prefix_array,
                                 std::set<transaction> &missing_txs);
 
-        void get_genesis_state(const aux::bytes &chain_id, sha1_hash &stateRoot, std::vector<state_array> &arrays);
+        void generate_genesis_state(const aux::bytes &chain_id, sha1_hash &stateRoot, std::vector<state_array> &arrays);
 
         // make a salt on mutable channel
 //        static std::string make_salt(const aux::bytes &chain_id, std::int64_t data_type_id);
@@ -631,7 +631,9 @@ namespace blockchain {
 
         void put_block(const aux::bytes &chain_id, const block &blk);
 
-        void put_block_with_all_state(const aux::bytes &chain_id, const block &blk, const std::vector<state_array> &arrays);
+        void put_block_with_all_state(const aux::bytes &chain_id, const block &blk,
+                                      const std::vector<state_hash_array> &hashArrays,
+                                      const std::vector<state_array> &arrays);
 
 //        void get_transaction_wrapper(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 

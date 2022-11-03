@@ -18,6 +18,7 @@ see LICENSE file.
 #include "libTAU/blockchain/block.hpp"
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/state_array.hpp"
+#include "libTAU/blockchain/state_hash_array.hpp"
 #include "libTAU/blockchain/state_linker.hpp"
 #include "libTAU/blockchain/account_block_pointer.hpp"
 
@@ -87,18 +88,22 @@ namespace libTAU::blockchain {
 //
 //        virtual bool delete_head_block_hash(const aux::bytes &chain_id) = 0;
 
-        // state array db
-        virtual bool create_state_array_db(const aux::bytes &chain_id) = 0;
+        // state tree db
+        virtual bool create_state_tree_db(const aux::bytes &chain_id) = 0;
 
-        virtual bool delete_state_array_db(const aux::bytes &chain_id) = 0;
+        virtual bool delete_state_tree_db(const aux::bytes &chain_id) = 0;
+
+        virtual bool save_state_hash_array(const aux::bytes &chain_id, const state_hash_array &stateHashArray) = 0;
+
+        virtual state_hash_array get_state_hash_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         virtual state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
-        virtual bool is_state_array_in_db(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
-
         virtual bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) = 0;
 
-        virtual bool delete_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+        virtual bool is_data_in_state_tree_db(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+
+        virtual bool delete_data_in_state_tree_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         // state db api
         virtual bool create_state_db(const aux::bytes &chain_id) = 0;

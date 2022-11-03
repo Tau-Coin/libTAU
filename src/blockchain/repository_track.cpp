@@ -46,19 +46,27 @@ namespace libTAU::blockchain {
 //        return false;
 //    }
 
-    bool repository_track::create_state_array_db(const aux::bytes &chain_id) {
+    bool repository_track::create_state_tree_db(const aux::bytes &chain_id) {
         return false;
     }
 
-    bool repository_track::delete_state_array_db(const aux::bytes &chain_id) {
+    bool repository_track::delete_state_tree_db(const aux::bytes &chain_id) {
         return false;
+    }
+
+    bool repository_track::save_state_hash_array(const aux::bytes &chain_id, const state_hash_array &stateHashArray) {
+        return false;
+    }
+
+    state_hash_array repository_track::get_state_hash_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+        return state_hash_array();
     }
 
     state_array repository_track::get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
         return state_array(libTAU::entry());
     }
 
-    bool repository_track::is_state_array_in_db(const aux::bytes &chain_id, const sha1_hash &hash) {
+    bool repository_track::is_data_in_state_tree_db(const aux::bytes &chain_id, const sha1_hash &hash) {
         return false;
     }
 
@@ -66,7 +74,7 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool repository_track::delete_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+    bool repository_track::delete_data_in_state_tree_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
         return false;
     }
 
