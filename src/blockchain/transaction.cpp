@@ -65,8 +65,10 @@ namespace libTAU::blockchain {
             lst.push_back(timestamp);
             // sender
             lst.push_back(std::string(m_sender.bytes.begin(), m_sender.bytes.end()));
-            // previous hash
-            lst.push_back(m_previous_hash.to_string());
+            if (m_version != tx_version_1) {
+                // previous hash
+                lst.push_back(m_previous_hash.to_string());
+            }
             // payload
             lst.push_back(std::string(m_payload.begin(), m_payload.end()));
         }
@@ -131,6 +133,33 @@ namespace libTAU::blockchain {
     void transaction::populate(const entry &e) {
         auto const& lst = e.list();
 
+        if (lst.size() == 7) {
+            // type
+            int type = aux::intFromLittleEndianString(lst[2].string());
+            m_type = static_cast<tx_type>(type);
+            if (m_type != tx_type::type_note)
+                return;
+
+            // chain id
+            auto chain_id = lst[0].string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+            // version
+            int version = aux::intFromLittleEndianString(lst[1].string());
+            m_version = static_cast<tx_version>(version);
+            if (m_version != tx_version_1)
+                return;
+
+            // balance
+            m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
+            // sender
+            m_sender = dht::public_key(lst[4].string().data());
+            // payload
+            auto payload = lst[5].string();
+            m_payload = aux::bytes(payload.begin(), payload.end());
+            // signature
+            m_signature = dht::signature(lst[6].string().data());
+        }
+
         if (lst.size() == 8) {
             // type
             int type = aux::intFromLittleEndianString(lst[2].string());
@@ -144,6 +173,8 @@ namespace libTAU::blockchain {
             // version
             int version = aux::intFromLittleEndianString(lst[1].string());
             m_version = static_cast<tx_version>(version);
+            if (m_version == tx_version_1)
+                return;
             // balance
             m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
             // sender
