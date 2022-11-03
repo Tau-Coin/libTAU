@@ -625,7 +625,7 @@ namespace blockchain {
 //
 //        void put_time_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void get_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+        void get_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 
         void get_head_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 

@@ -3144,13 +3144,13 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::get_block(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash) {
+    void blockchain::get_block(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, int times) {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
-        log(LOG_INFO, "INFO: Get block from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
-            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::BLOCK);
+        log(LOG_INFO, "INFO: Get block from chain[%s] peer[%s], salt:[%s], times[%d]",
+            aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::BLOCK, 0, times);
     }
 
     void blockchain::get_head_block(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, int times) {
@@ -3658,10 +3658,12 @@ namespace libTAU::blockchain {
                         }*/
                         break;
                     }
-//                    case GET_ITEM_TYPE::BLOCK: {
-//                        request_all_blocks(chain_id, peer);
-//                        break;
-//                    }
+                    case GET_ITEM_TYPE::BLOCK: {
+                        if (times == 1) {
+                            get_block(chain_id, peer, sha1_hash(salt.data()), times + 1);
+                        }
+                        break;
+                    }
                     case GET_ITEM_TYPE::NOTE_TX: {
                         if (times == 1) {
                             get_transaction(chain_id, peer, sha1_hash(salt.data()), times + 1);
