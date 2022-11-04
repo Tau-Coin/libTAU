@@ -798,17 +798,24 @@ namespace libTAU::blockchain {
 
                     // calc score
                     for (auto& item: acl) {
-                        if (item.second.m_last_seen + 10 * 1000 < now) {
+                        if (item.second.m_last_seen + 10 * 1000 < now && item.second.m_score > 0) {
                             item.second.m_score--;
+                            if (item.second.m_score < 0) {
+                                item.second.m_score = 0;
+                            }
                         }
                     }
 
                     // kick out bad peer from acl and add it into ban list
-                    for (auto it = acl.begin(); it != acl.end();) {
-                        if (it->second.m_score <= 0) {
-                            acl.erase(it++);
-                        } else {
-                            it++;
+                    if (acl.size() >= blockchain_acl_min_peers) {
+                        for (auto it = acl.begin(); it != acl.end();) {
+                            if (it->second.m_score <= 0) {
+                                acl.erase(it++);
+                                // delete one by one
+                                break;
+                            } else {
+                                it++;
+                            }
                         }
                     }
 
@@ -839,12 +846,12 @@ namespace libTAU::blockchain {
                     auto tx = m_tx_pools[chain_id].get_latest_note_transaction();
                     common::signal_entry signalEntry(common::BLOCKCHAIN_ONLINE, chain_id, get_total_milliseconds() / 1000, tx.sha1(), tx.sender());
 
-                    auto e = signalEntry.get_entry();
+                    auto et = signalEntry.get_entry();
                     for (auto& item: acl) {
                         if (now >= item.second.m_last_sent + 5 * 1000) {
                             log(LOG_INFO, "Chain[%s] Send peer[%s] online signal[%s]", aux::toHex(chain_id).c_str(),
-                                aux::toHex(item.first.bytes).c_str(), e.to_string(true).c_str());
-                            send_to(item.first, e);
+                                aux::toHex(item.first.bytes).c_str(), et.to_string(true).c_str());
+                            send_to(item.first, et);
 
                             item.second.m_last_sent = now;
                         }
