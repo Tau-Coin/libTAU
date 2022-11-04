@@ -792,6 +792,8 @@ namespace libTAU::blockchain {
             if (!m_pause) {
                 // try to mine on the best chain
                 if (m_counters[counters::dht_nodes] > 0) {
+                    print_acl_info(chain_id);
+
                     auto now = get_total_milliseconds();
 
                     auto &acl = m_access_list[chain_id];
@@ -864,6 +866,8 @@ namespace libTAU::blockchain {
                 } else {
                     refresh_time = 5000;
                 }
+
+                print_acl_info(chain_id);
             } else {
                 log(LOG_INFO, "Now is paused.");
             }
