@@ -824,8 +824,13 @@ namespace libTAU::blockchain {
                         auto peer = m_repository->get_peer_from_state_db_randomly(chain_id);
                         log(LOG_INFO, "INFO: chain[%s] select peer[%s] from state db",
                             aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
-                        if (!peer.is_all_zeros()) {
-                            add_peer_into_acl(chain_id, peer, 0);
+                        if (peer.is_all_zeros()) {
+                            peer = m_repository->get_peer_from_peer_db_randomly(chain_id);
+                            log(LOG_INFO, "INFO: chain[%s] select peer[%s] from peer db",
+                                aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
+                            if (!peer.is_all_zeros()) {
+                                add_peer_into_acl(chain_id, peer, 0);
+                            }
                         }
                     }
 
