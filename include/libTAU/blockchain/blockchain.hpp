@@ -134,10 +134,12 @@ namespace blockchain {
         }
 
         // get
-        dht_item(aux::bytes mChainId, const dht::public_key &mPeer, std::string mSalt,
-                 GET_ITEM_TYPE mGetItemType, int64_t mTimestamp, int mTimes) : m_chain_id(std::move(mChainId)), m_peer(mPeer),
+        dht_item(aux::bytes mChainId, const dht::public_key &mPeer, std::string mSalt, GET_ITEM_TYPE mGetItemType,
+                 const dht::public_key &mSignalPeer, int64_t mTimestamp, int mTimes) : m_chain_id(std::move(mChainId)),
+                                                                               m_peer(mPeer),
                                                                                m_salt(std::move(mSalt)),
                                                                                m_get_item_type(mGetItemType),
+                                                                               m_signal_peer(mSignalPeer),
                                                                                m_timestamp(mTimestamp),
                                                                                m_times(mTimes) {
             m_type = dht_item_type::DHT_GET;
@@ -180,6 +182,10 @@ namespace blockchain {
                 return true;
             if (rhs.m_get_item_type < m_get_item_type)
                 return false;
+            if (m_signal_peer < rhs.m_signal_peer)
+                return true;
+            if (rhs.m_signal_peer < m_signal_peer)
+                return false;
             if (m_timestamp < rhs.m_timestamp)
                 return true;
             if (rhs.m_timestamp < m_timestamp)
@@ -211,7 +217,7 @@ namespace blockchain {
                     os << "dht get: " << " m_chain_id: " << aux::toHex(item.m_chain_id)
                        << " m_peer: " << aux::toHex(item.m_peer.bytes) << " m_salt: " << aux::toHex(item.m_salt)
                        << " m_get_item_type: " << item.m_get_item_type << " m_timestamp: " << item.m_timestamp
-                       << " m_times: " << item.m_times;
+                       << " m_times: " << item.m_times << " m_signal_peer: " << aux::toHex(item.m_signal_peer.bytes);
 
                     break;
                 }
@@ -250,6 +256,7 @@ namespace blockchain {
         std::string m_salt;
         entry m_data;
         GET_ITEM_TYPE m_get_item_type = UNKNOWN_GET_ITEM_TYPE;
+        dht::public_key m_signal_peer;
         std::int64_t m_timestamp{};
         int m_times{};
     };
@@ -476,9 +483,9 @@ namespace blockchain {
         // process block
         RESULT process_block(const aux::bytes &chain_id, const block &blk);
 
-        void block_reception_event(const aux::bytes &chain_id, const dht::public_key& peer, const block &blk);
+        void block_reception_event(const aux::bytes &chain_id, const dht::public_key& peer, const block &blk, const dht::public_key &signalPeer);
 
-        void state_reception_event(const aux::bytes &chain_id, const dht::public_key& peer);
+        void state_reception_event(const aux::bytes &chain_id, const dht::public_key& peer, const dht::public_key &signalPeer);
 
         // check if a chain is empty, true if has no info, false otherwise
         bool is_empty_chain(const aux::bytes &chain_id);
@@ -520,10 +527,10 @@ namespace blockchain {
 
 //        void try_to_rebranch_to_best_vote(const aux::bytes &chain_id);
 
-        void try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id, const dht::public_key& peer);
+        void try_to_rebranch_to_most_difficult_chain(const aux::bytes &chain_id, const dht::public_key& peer, const dht::public_key &signalPeer);
 
         // try to rebranch the most difficult chain, or a voting chain
-        RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute, dht::public_key peer = dht::public_key());
+        RESULT try_to_rebranch(const aux::bytes &chain_id, const block &target, bool absolute, dht::public_key peer, const dht::public_key &signalPeer);
 
         // count votes
 //        void count_votes(const aux::bytes &chain_id);
@@ -545,8 +552,8 @@ namespace blockchain {
         void publish_transaction(const aux::bytes &chain_id, const sha1_hash &hash, const std::string& salt, const entry& data);
 
         // key length < 20 bytes
-        void subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string& salt,
-                       GET_ITEM_TYPE type, std::int64_t timestamp = 0, int times = 1);
+        void subscribe(aux::bytes const& chain_id, const dht::public_key &peer, const std::string& salt, GET_ITEM_TYPE type,
+                       const dht::public_key &signalPeer = dht::public_key(), std::int64_t timestamp = 0, int times = 1);
 
         // make a salt on mutable channel
 //        static std::string make_salt(dht::public_key peer, std::int64_t data_type_id);
@@ -587,7 +594,7 @@ namespace blockchain {
 
         void send_new_note_tx_signal(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
 
-        void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
+//        void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
         void online_signal_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer);
 
@@ -599,17 +606,19 @@ namespace blockchain {
 
 //        void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
-        void get_transfer_transaction(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
+        void get_transfer_transaction(const aux::bytes &chain_id, const dht::public_key& peer,
+                                      const dht::public_key &signalPeer = dht::public_key(), std::int64_t timestamp = 0);
 
         void put_transfer_transaction(const aux::bytes &chain_id, const transaction &tx);
 
 //        void put_note_transaction(const aux::bytes &chain_id, const transaction &tx);
 
-        void get_all_state_with_genesis_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const block &genesis);
+        void get_all_state_with_genesis_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer,
+                                                        const block &genesis, const dht::public_key &signalPeer);
 
 //        void put_all_state(const aux::bytes &chain_id);
 
-        void get_head_block_hash(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp);
+        void get_head_block_hash(const aux::bytes &chain_id, const dht::public_key& peer);
 
         void put_head_block_hash(const aux::bytes &chain_id, const sha1_hash &hash);
 
@@ -625,9 +634,11 @@ namespace blockchain {
 //
 //        void put_time_pool_root(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void get_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+        void get_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash,
+                       const dht::public_key &signalPeer, int times = 1);
 
-        void get_head_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+        void get_head_block(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash,
+                            const dht::public_key &signalPeer, int times = 1);
 
         void put_block(const aux::bytes &chain_id, const block &blk);
 
@@ -639,11 +650,13 @@ namespace blockchain {
 
 //        void put_transaction_wrapper(const aux::bytes &chain_id, const transaction_wrapper &txWrapper);
 
-        void get_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+        void get_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash,
+                             const dht::public_key &signalPeer, int times = 1);
 
         void put_transaction(const aux::bytes &chain_id, const transaction &tx);
 
-        void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+        void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash,
+                             const dht::public_key &signalPeer);
 
         void put_state_array(const aux::bytes &chain_id, const state_array &stateArray);
 
@@ -651,9 +664,11 @@ namespace blockchain {
 
 //        void put_note_pool_hash_set(const aux::bytes &chain_id);
 
-        void get_level_0_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+        void get_level_0_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash,
+                                          const dht::public_key &signalPeer);
 
-        void get_level_1_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
+        void get_level_1_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash,
+                                          const dht::public_key &signalPeer);
 
         void put_state_hash_array(const aux::bytes &chain_id, const state_hash_array &hashArray);
 
@@ -670,7 +685,8 @@ namespace blockchain {
 //        void dht_get_immutable_tx_item(aux::bytes const& chain_id, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
 
         // mutable data callback
-        void get_mutable_callback(aux::bytes chain_id, dht::item const& i, bool, GET_ITEM_TYPE type, std::int64_t timestamp, int times = 1);
+        void get_mutable_callback(aux::bytes chain_id, dht::item const& i, bool, GET_ITEM_TYPE type,
+                                  dht::public_key signalPeer, std::int64_t timestamp, int times = 1);
 
         // get mutable item from dht
 //        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);
