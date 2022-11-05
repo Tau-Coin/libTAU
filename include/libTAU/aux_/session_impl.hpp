@@ -882,6 +882,7 @@ namespace aux {
 			std::int64_t m_session_time;
 			std::int64_t m_last_reopen = 0;
 			std::int64_t m_dht_nodes_non_zero = 0; //nodes number == 0
+                        bool m_net_swtich = true;
 
 			void on_tick(error_code const& e);
 			void session_time_modification(std::int64_t time = 0);
