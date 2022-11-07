@@ -2964,13 +2964,19 @@ namespace libTAU::blockchain {
             } else {
                 srand(get_total_microseconds());
                 // note: acl may be empty, if acl size == 0, maybe crush
-                if (!acl.empty()) {
-                    auto index = rand() % acl.size();
+                std::set<dht::public_key> peers;
+                for (auto const& item: acl) {
+                    if (item.second.m_score >= 3) {
+                        peers.insert(item.first);
+                    }
+                }
+                if (!peers.empty()) {
+                    auto index = rand() % peers.size();
                     int i = 0;
-                    for (const auto &it_acl : acl) {
+                    for (const auto &p : peers) {
                         if (i == index) {
                             // recommend peer
-                            common::signal_entry signalEntry(common::BLOCKCHAIN_RECOMMEND, chain_id, get_total_milliseconds() / 1000, it_acl.first);
+                            common::signal_entry signalEntry(common::BLOCKCHAIN_RECOMMEND, chain_id, get_total_milliseconds() / 1000, p);
                             auto e = signalEntry.get_entry();
                             log(LOG_INFO, "Chain[%s] Send peer[%s] recommend signal[%s]", aux::toHex(chain_id).c_str(),
                                 aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
