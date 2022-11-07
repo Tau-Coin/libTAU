@@ -2728,7 +2728,8 @@ namespace libTAU::blockchain {
 //        m_all_data_last_put_time[chain_id] = now;
 
         if (!is_empty_chain(chain_id)) {
-            if (m_repository->is_account_existed(chain_id, *m_ses.pubkey())) {
+            if (m_head_blocks[chain_id].miner() == *m_ses.pubkey()) {
+//            if (m_repository->is_account_existed(chain_id, *m_ses.pubkey())) {
                 auto blk = m_head_blocks[chain_id];
                 while (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE != 0) {
                     put_block(chain_id, blk);
