@@ -850,10 +850,19 @@ namespace libTAU::blockchain {
                     }
 
                     // say hi
-                    auto tx = m_tx_pools[chain_id].get_latest_note_transaction();
-                    common::signal_entry signalEntry(common::BLOCKCHAIN_ONLINE, chain_id, get_total_milliseconds() / 1000, tx.sha1(), tx.sender());
+                    entry et;
+                    srand(now);
+                    auto index = rand() % 100;
+                    if (index < 1) {
+                        auto tx = m_tx_pools[chain_id].get_latest_note_transaction();
+                        common::signal_entry signalEntry(common::BLOCKCHAIN_ONLINE, chain_id,
+                                                         get_total_milliseconds() / 1000, tx.sha1(), tx.sender());
+                        et = signalEntry.get_entry();
+                    } else {
+                        common::signal_entry signalEntry(common::BLOCKCHAIN_ONLINE, chain_id, get_total_milliseconds() / 1000);
+                        et = signalEntry.get_entry();
+                    }
 
-                    auto et = signalEntry.get_entry();
                     for (auto& item: acl) {
                         if (now >= item.second.m_last_sent + 5 * 1000) {
                             log(LOG_INFO, "Chain[%s] Send peer[%s] online signal[%s]", aux::toHex(chain_id).c_str(),
