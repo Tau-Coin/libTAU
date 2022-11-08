@@ -4537,7 +4537,8 @@ namespace libTAU::blockchain {
         // acl
         auto &acl = m_access_list[chain_id];
         for (auto const &item: acl) {
-            log(LOG_INFO, "-----ACL: peer[%s], info[%s]", aux::toHex(item.first.bytes).c_str(),
+            log(LOG_INFO, "-----chain id[%s] ACL: peer[%s], info[%s]",
+                aux::toHex(chain_id).c_str(), aux::toHex(item.first.bytes).c_str(),
                 item.second.to_string().c_str());
         }
     }
