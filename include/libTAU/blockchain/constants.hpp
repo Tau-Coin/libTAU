@@ -55,7 +55,9 @@ namespace libTAU::blockchain {
     constexpr int DEFAULT_BLOCK_TIME = 300;
 
     constexpr int MIN_VALID_BLOCK_TIME = 60; // 1min
-    constexpr int MAX_VALID_BLOCK_TIME = 30 * 60; // 10min
+    constexpr int MAX_VALID_BLOCK_TIME = 30 * 60; // 30min
+
+    constexpr int block_same_account_min_interval = 30 * 60; // 30min(s)
 
     constexpr int MIN_RATIO = 265;
     constexpr int MAX_RATIO = 335;

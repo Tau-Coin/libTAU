@@ -46,6 +46,8 @@ namespace blockchain {
 
     constexpr int blockchain_block_max_acceptable_time = 3 * 60; // 3min(s)
 
+    constexpr int blockchain_same_account_min_interval = 30 * 60; // 30min(s)
+
 
     // max tx list size
     constexpr int blockchain_max_tx_list_size = 10;
@@ -489,6 +491,8 @@ namespace blockchain {
 
         // check if a chain is empty, true if has no info, false otherwise
         bool is_empty_chain(const aux::bytes &chain_id);
+
+        std::int64_t get_last_mined_block_time(const aux::bytes &chain_id);
 
         // check if tx is in pool
         bool is_transaction_in_pool(const aux::bytes &chain_id, const sha1_hash &txid);

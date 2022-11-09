@@ -14,7 +14,11 @@ see LICENSE file.
 
 namespace libTAU::blockchain {
 
-    std::uint64_t consensus::calculate_required_base_target(const block &previousBlock, block &ancestor3) {
+    std::uint64_t consensus::calculate_required_base_target(std::int64_t latest_interval, const block &previousBlock, block &ancestor3) {
+        if (latest_interval >= MAX_VALID_BLOCK_TIME) {
+            return previousBlock.base_target();
+        }
+
         if (previousBlock.block_number() % CHAIN_EPOCH_BLOCK_SIZE <= 3) {
             return previousBlock.base_target();
         }

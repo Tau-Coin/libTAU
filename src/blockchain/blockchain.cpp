@@ -925,7 +925,8 @@ namespace libTAU::blockchain {
                             }
                         }
 
-                        auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
+                        std::int64_t current_time = get_total_milliseconds() / 1000; // second
+                        auto base_target = consensus::calculate_required_base_target(current_time - head_block.timestamp(), head_block, ancestor);
                         auto act = m_repository->get_account(chain_id, *pk);
                         log(LOG_INFO, "INFO: chain id[%s] pk[%s] account[%s]",
                             aux::toHex(chain_id).c_str(), aux::toHex(pk->bytes).c_str(), act.to_string().c_str());
@@ -941,7 +942,6 @@ namespace libTAU::blockchain {
                         auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(
                                 head_block.cumulative_difficulty(), base_target);
 
-                        std::int64_t current_time = get_total_milliseconds() / 1000; // second
                         if (current_time >= head_block.timestamp() + interval) {
                             transaction tx = m_tx_pools[chain_id].get_best_fee_transaction();
 
@@ -1088,7 +1088,7 @@ namespace libTAU::blockchain {
             }
         }
 
-        auto base_target = consensus::calculate_required_base_target(previous_block, ancestor);
+        auto base_target = consensus::calculate_required_base_target(b.timestamp() - previous_block.timestamp(), previous_block, ancestor);
         auto act = m_repository->get_account(chain_id, b.miner());
 
         log(LOG_INFO, "INFO chain[%s] Account[%s] in db",aux::toHex(chain_id).c_str(), act.to_string().c_str());
@@ -1597,6 +1597,23 @@ namespace libTAU::blockchain {
         auto &head_block = m_head_blocks[chain_id];
 
         return head_block.empty();
+    }
+
+    std::int64_t blockchain::get_last_mined_block_time(const bytes &chain_id) {
+        block blk = m_head_blocks[chain_id];
+
+        while (!blk.empty()) {
+            if (blk.miner() == *m_ses.pubkey()) {
+                return blk.timestamp();
+            }
+
+            if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                break;
+            }
+            blk = m_repository->get_block_by_hash(chain_id, blk.previous_block_hash());
+        }
+
+        return 0;
     }
 
     bool blockchain::is_transaction_in_pool(const bytes &chain_id, const sha1_hash &txid) {
@@ -4096,7 +4113,8 @@ namespace libTAU::blockchain {
                 }
             }
 
-            auto base_target = consensus::calculate_required_base_target(head_block, ancestor);
+            std::int64_t now = get_total_milliseconds() / 1000; // second
+            auto base_target = consensus::calculate_required_base_target(now - head_block.timestamp(), head_block, ancestor);
             auto act = m_repository->get_account(chain_id, *pk);
             log(LOG_INFO, "INFO: chain id[%s] account[%s], head block[%s]", aux::toHex(chain_id).c_str(),
                 act.to_string().c_str(), head_block.to_string().c_str());
@@ -4104,7 +4122,6 @@ namespace libTAU::blockchain {
             auto hit = consensus::calculate_random_hit(genSig);
             auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, act.power()));
 
-            std::int64_t now = get_total_milliseconds() / 1000; // second
             if (now >= head_block.timestamp() + interval) {
                 log(LOG_INFO, "INFO: chain id[%s] mining time:0", aux::toHex(chain_id).c_str());
                 return 0;
