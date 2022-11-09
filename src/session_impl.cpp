@@ -599,7 +599,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
             if(0 == num_dht_nodes) {
                 int max_time = m_settings.get_int(settings_pack::max_time_peers_zero);
-                if(m_session_time - m_dht_nodes_non_zero >= max_time && m_net_swtich) {
+                if(m_session_time - m_dht_nodes_non_zero >= max_time) {
                     reopen_listen_sockets(false);
                     m_dht_nodes_non_zero = m_session_time;
                 }
@@ -1413,25 +1413,25 @@ namespace {
 				session_log("reconnect listen socket");
 			}
 #endif
+		m_net_swtich = true;
+
         reopen_listen_sockets(false);
         //TODO: modify the tick
     }
 
 	void session_impl::reopen_listen_sockets(bool const map_ports)
 	{
-#ifndef TORRENT_DISABLE_LOGGING
-		session_log("reopen listen sockets");
-#endif
-
 		TORRENT_ASSERT(is_single_thread());
 
 		TORRENT_ASSERT(!m_abort);
 
 		error_code ec;
 
-		if (m_abort) return;
+		if (m_abort||!m_net_swtich) return;
 		
-		m_net_swtich = true;
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("reopen listen sockets");
+#endif
 
 		// first build a list of endpoints we should be listening on
 		// we need to remove any unneeded sockets first to avoid the possibility
