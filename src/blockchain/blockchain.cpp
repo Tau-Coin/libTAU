@@ -935,6 +935,8 @@ namespace libTAU::blockchain {
                         auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit,
                                                                                                             base_target,
                                                                                                             act.power()));
+                        std::int64_t last_time = get_peer_last_block_time(chain_id, *m_ses.pubkey(), head_block);
+
                         log(LOG_INFO,
                             "INFO: chain id[%s] generation signature[%s], base target[%" PRIu64 "], hit[%" PRIu64 "]",
                             aux::toHex(chain_id).c_str(), aux::toHex(genSig.to_string()).c_str(), base_target, hit);
@@ -942,7 +944,7 @@ namespace libTAU::blockchain {
                         auto cumulative_difficulty = consensus::calculate_cumulative_difficulty(
                                 head_block.cumulative_difficulty(), base_target);
 
-                        if (current_time >= head_block.timestamp() + interval) {
+                        if (current_time >= head_block.timestamp() + interval && current_time >= last_time + block_same_account_min_interval) {
                             transaction tx = m_tx_pools[chain_id].get_best_fee_transaction();
 
                             if (tx.empty()) {
@@ -996,9 +998,11 @@ namespace libTAU::blockchain {
 
                             refresh_time = 100;
                         } else {
+                            std::int64_t left_time = std::max(head_block.timestamp() + interval - current_time,
+                                                              last_time + block_same_account_min_interval - current_time);
                             log(LOG_INFO, "INFO: chain id[%s] left time[%" PRId64 "]s",
-                                aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - current_time);
-                            refresh_time = (head_block.timestamp() + interval - current_time) * 1000;
+                                aux::toHex(chain_id).c_str(), left_time);
+                            refresh_time = left_time * 1000;
                         }
                     } else {
                         if (m_chain_getting_times[chain_id] >= blockchain_max_getting_times) {
@@ -1119,6 +1123,12 @@ namespace libTAU::blockchain {
         if (b.timestamp() - previous_block.timestamp() < necessary_interval) {
             log(LOG_ERR, "ERROR: Time is too short! hit:%" PRIu64 ", base target:%" PRIu64 ", power:%" PRId64 ", necessary interval:%" PRIu64 ", real interval:%" PRId64 "",
                 hit, base_target, act.power(), necessary_interval, b.timestamp() - previous_block.timestamp());
+            return FAIL;
+        }
+        std::int64_t last_time = get_peer_last_block_time(chain_id, b.miner(), previous_block);
+        if (b.timestamp() - last_time < block_same_account_min_interval) {
+            log(LOG_ERR, "ERROR: Time is too short for same account! block time:%" PRId64 ", last block time:%" PRId64 ", interval:%" PRId64 "",
+                b.timestamp(), last_time, b.timestamp() - last_time);
             return FAIL;
         }
         log(LOG_INFO, "hit:%" PRIu64 ", base target:%" PRIu64 ", power:%" PRId64 ", interval:%" PRIu64 ", real interval:%" PRId64 "",
@@ -1599,11 +1609,11 @@ namespace libTAU::blockchain {
         return head_block.empty();
     }
 
-    std::int64_t blockchain::get_last_mined_block_time(const bytes &chain_id) {
-        block blk = m_head_blocks[chain_id];
+    std::int64_t blockchain::get_peer_last_block_time(const bytes &chain_id, const dht::public_key& peer, const block &head_block) {
+        block blk = head_block;
 
         while (!blk.empty()) {
-            if (blk.miner() == *m_ses.pubkey()) {
+            if (blk.miner() == peer) {
                 return blk.timestamp();
             }
 
@@ -4122,12 +4132,16 @@ namespace libTAU::blockchain {
             auto hit = consensus::calculate_random_hit(genSig);
             auto interval = static_cast<std::int64_t>(consensus::calculate_mining_time_interval(hit, base_target, act.power()));
 
-            if (now >= head_block.timestamp() + interval) {
+            std::int64_t last_time = get_peer_last_block_time(chain_id, *m_ses.pubkey(), head_block);
+
+            if (now >= head_block.timestamp() + interval && now >= last_time + block_same_account_min_interval) {
                 log(LOG_INFO, "INFO: chain id[%s] mining time:0", aux::toHex(chain_id).c_str());
                 return 0;
             } else {
-                log(LOG_INFO, "INFO: chain id[%s] mining time:%" PRId64 , aux::toHex(chain_id).c_str(), head_block.timestamp() + interval - now);
-                return head_block.timestamp() + interval - now;
+                std::int64_t left_time = std::max(head_block.timestamp() + interval - now,
+                                                  last_time + block_same_account_min_interval - now);
+                log(LOG_INFO, "INFO: chain id[%s] mining time:%" PRId64 , aux::toHex(chain_id).c_str(), left_time);
+                return left_time;
             }
         }
 

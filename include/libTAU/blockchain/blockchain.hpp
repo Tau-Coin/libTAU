@@ -492,7 +492,7 @@ namespace blockchain {
         // check if a chain is empty, true if has no info, false otherwise
         bool is_empty_chain(const aux::bytes &chain_id);
 
-        std::int64_t get_last_mined_block_time(const aux::bytes &chain_id);
+        std::int64_t get_peer_last_block_time(const aux::bytes &chain_id, const dht::public_key& peer, const block &head_block);
 
         // check if tx is in pool
         bool is_transaction_in_pool(const aux::bytes &chain_id, const sha1_hash &txid);
