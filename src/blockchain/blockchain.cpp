@@ -1220,6 +1220,8 @@ namespace libTAU::blockchain {
                     accounts[tx.sender()].increase_nonce();
                     // add bonus to miner
                     accounts[blk.miner()].add_balance(MINER_BONUS);
+                    // miner increase power
+                    accounts[blk.miner()].increase_power();
 
                     for (auto const& item: accounts) {
                         if (!m_repository->update_account(chain_id, item.second)) {
@@ -1304,6 +1306,8 @@ namespace libTAU::blockchain {
                 accounts[tx.sender()].increase_nonce();
                 // add bonus to miner
                 accounts[blk.miner()].add_balance(MINER_BONUS);
+                // miner increase power
+                accounts[blk.miner()].increase_power();
 
                 for (auto const& item: accounts) {
                     if (!m_repository->update_account(chain_id, item.second)) {
@@ -1395,6 +1399,8 @@ namespace libTAU::blockchain {
                     accounts[tx.sender()].increase_nonce();
                     // add bonus to miner
                     accounts[blk.miner()].add_balance(MINER_BONUS);
+                    // miner increase power
+                    accounts[blk.miner()].increase_power();
 
                     for (auto const& item: accounts) {
                         if (!m_repository->update_account(chain_id, item.second)) {
@@ -1909,6 +1915,8 @@ namespace libTAU::blockchain {
                 accounts[tx.sender()].decrease_nonce();
                 // subtract bonus
                 accounts[blk.miner()].subtract_balance(MINER_BONUS);
+                // miner decrease power
+                accounts[blk.miner()].decrease_power();
 
                 for (auto const& item: accounts) {
                     if (!m_repository->update_account(chain_id, item.second)) {
@@ -1971,6 +1979,8 @@ namespace libTAU::blockchain {
                 accounts[tx.sender()].increase_nonce();
                 // add bonus to miner
                 accounts[blk.miner()].add_balance(MINER_BONUS);
+                // miner increase power
+                accounts[blk.miner()].increase_power();
 
                 for (auto const& item: accounts) {
                     if (!m_repository->update_account(chain_id, item.second)) {
