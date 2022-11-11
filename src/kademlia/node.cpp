@@ -573,7 +573,10 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 					&to_ep, sender, from, decrypted_payload);
 			if (to != m_id)
 			{
-				m_sock_man->send_packet(m_sock, resp, m.addr, from);
+				if (!m_settings.get_bool(settings_pack::dht_non_referrable))
+				{
+					m_sock_man->send_packet(m_sock, resp, m.addr, from);
+				}
 			}
 
 			if (need_relay)
@@ -586,7 +589,10 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 				}
 				else
 				{
-					relay(to, to_ep, m, from);
+					if (!m_settings.get_bool(settings_pack::dht_non_referrable))
+					{
+						relay(to, to_ep, m, from);
+					}
 				}
 			}
 
