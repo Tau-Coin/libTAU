@@ -599,7 +599,7 @@ void apply_deprecated_dht_settings(settings_pack& sett, bdecode_node const& s)
 
             if(0 == num_dht_nodes) {
                 int max_time = m_settings.get_int(settings_pack::max_time_peers_zero);
-                if(m_session_time - m_dht_nodes_non_zero >= max_time && m_net_swtich) {
+                if(m_session_time - m_dht_nodes_non_zero >= max_time) {
                     reopen_listen_sockets(false);
                     m_dht_nodes_non_zero = m_session_time;
                 }
@@ -1413,25 +1413,25 @@ namespace {
 				session_log("reconnect listen socket");
 			}
 #endif
+		m_net_swtich = true;
+
         reopen_listen_sockets(false);
         //TODO: modify the tick
     }
 
 	void session_impl::reopen_listen_sockets(bool const map_ports)
 	{
-#ifndef TORRENT_DISABLE_LOGGING
-		session_log("reopen listen sockets");
-#endif
-
 		TORRENT_ASSERT(is_single_thread());
 
 		TORRENT_ASSERT(!m_abort);
 
 		error_code ec;
 
-		if (m_abort) return;
+		if (m_abort||!m_net_swtich) return;
 		
-		m_net_swtich = true;
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("reopen listen sockets");
+#endif
 
 		// first build a list of endpoints we should be listening on
 		// we need to remove any unneeded sockets first to avoid the possibility
@@ -3066,6 +3066,9 @@ namespace {
 		{
 			m_blockchain->on_pause();
 		}
+
+		// set dht keep interval to stop dht 'keep' protocol
+		m_settings.set_int(settings_pack::dht_keep_interval, 3600);
     }
 
     void session_impl::resume_service()
@@ -3075,6 +3078,9 @@ namespace {
 		{
 			m_blockchain->on_resume();
 		}
+
+		// reset dht keep interval to start dht 'keep' protocol
+		m_settings.set_int(settings_pack::dht_keep_interval, 20);
     }
 
 	void session_impl::start_communication()
@@ -4285,12 +4291,35 @@ namespace {
 
 		if (m_settings.get_bool(settings_pack::auto_relay))
 		{
+			// start natpmp and upnp
+			if (!m_settings.get_bool(settings_pack::enable_natpmp))
+			{
+				m_settings.set_bool(settings_pack::enable_natpmp, true);
+				start_natpmp();
+			}
+			if (!m_settings.get_bool(settings_pack::enable_upnp))
+			{
+				m_settings.set_bool(settings_pack::enable_upnp, true);
+				start_upnp();
+			}
+
 			m_refer_switch.set_enabled(true);
 			reset_refer_switch();
 		}
 		else
 		{
 			m_refer_switch.set_enabled(false);
+
+			if (m_settings.get_bool(settings_pack::enable_natpmp))
+			{
+				stop_natpmp();
+				m_settings.set_bool(settings_pack::enable_natpmp, false);
+			}
+			if (m_settings.get_bool(settings_pack::enable_upnp))
+			{
+				stop_upnp();
+				m_settings.set_bool(settings_pack::enable_upnp, false);
+			}
 		}
 	}
 
@@ -4361,6 +4390,18 @@ namespace {
 						session_log("can't open refer switch");
 					}
 #endif
+
+					// stop natpmp and upnp
+					if (m_settings.get_bool(settings_pack::enable_natpmp))
+					{
+						stop_natpmp();
+						m_settings.set_bool(settings_pack::enable_natpmp, false);
+					}
+					if (m_settings.get_bool(settings_pack::enable_upnp))
+					{
+						stop_upnp();
+						m_settings.set_bool(settings_pack::enable_upnp, false);
+					}
 				}
 			}
 		}
