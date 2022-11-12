@@ -417,6 +417,10 @@ namespace blockchain {
 
         void on_resume();
 
+        void set_foreground_mode();
+
+        void set_background_mode();
+
 
     private:
         // initialize member variables

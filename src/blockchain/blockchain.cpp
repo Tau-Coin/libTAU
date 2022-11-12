@@ -143,6 +143,14 @@ namespace libTAU::blockchain {
         }
     }
 
+    void blockchain::set_foreground_mode() {
+
+    }
+
+    void blockchain::set_background_mode() {
+
+    }
+
     bool blockchain::create_chain_db(const bytes &chain_id) {
         // create sqlite peer db
         if (!m_repository->create_block_db(chain_id)) {
