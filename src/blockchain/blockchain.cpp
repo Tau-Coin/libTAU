@@ -1298,7 +1298,8 @@ namespace libTAU::blockchain {
                         accounts[peer] = m_repository->get_account(chain_id, peer);
                     }
 
-                    accounts[blk.miner()].add_balance(tx.fee());
+                    // burn fee
+//                    accounts[blk.miner()].add_balance(tx.fee());
                     accounts[tx.receiver()].add_balance(tx.amount());
                     accounts[tx.sender()].subtract_balance(tx.cost());
                     accounts[tx.sender()].increase_nonce();
@@ -1384,7 +1385,8 @@ namespace libTAU::blockchain {
                     accounts[peer] = m_repository->get_account(chain_id, peer);
                 }
 
-                accounts[blk.miner()].add_balance(tx.fee());
+                // burn fee
+//                accounts[blk.miner()].add_balance(tx.fee());
                 accounts[tx.receiver()].add_balance(tx.amount());
                 accounts[tx.sender()].subtract_balance(tx.cost());
                 accounts[tx.sender()].increase_nonce();
@@ -1477,7 +1479,8 @@ namespace libTAU::blockchain {
                         accounts[peer] = m_repository->get_account(chain_id, peer);
                     }
 
-                    accounts[blk.miner()].add_balance(tx.fee());
+                    // burn fee
+//                    accounts[blk.miner()].add_balance(tx.fee());
                     accounts[tx.receiver()].add_balance(tx.amount());
                     accounts[tx.sender()].subtract_balance(tx.cost());
                     accounts[tx.sender()].increase_nonce();
@@ -1992,7 +1995,7 @@ namespace libTAU::blockchain {
                     accounts[block_peer] = m_repository->get_account(chain_id, block_peer);
                 }
 
-                accounts[blk.miner()].subtract_balance(tx.fee());
+//                accounts[blk.miner()].subtract_balance(tx.fee());
                 accounts[tx.receiver()].subtract_balance(tx.amount());
                 accounts[tx.sender()].add_balance(tx.cost());
                 accounts[tx.sender()].decrease_nonce();
@@ -2056,7 +2059,8 @@ namespace libTAU::blockchain {
                     accounts[block_peer] = m_repository->get_account(chain_id, block_peer);
                 }
 
-                accounts[blk.miner()].add_balance(tx.fee());
+                // burn fee
+//                accounts[blk.miner()].add_balance(tx.fee());
                 accounts[tx.receiver()].add_balance(tx.amount());
                 accounts[tx.sender()].subtract_balance(tx.cost());
                 accounts[tx.sender()].increase_nonce();
