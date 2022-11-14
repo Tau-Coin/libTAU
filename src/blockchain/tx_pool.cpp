@@ -469,6 +469,12 @@ namespace libTAU::blockchain {
         m_account_tx_by_timestamp.clear();
     }
 
+    void tx_pool::clear_fee_pool() {
+        m_all_txs_by_fee.clear();
+        m_ordered_txs_by_fee.clear();
+        m_account_tx_by_fee.clear();
+    }
+
     void tx_pool::recheck_account_tx(const dht::public_key &pubKey) {
         auto it_txid = m_account_tx_by_fee.find(pubKey);
         if (it_txid != m_account_tx_by_fee.end()) {

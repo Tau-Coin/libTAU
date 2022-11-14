@@ -1445,6 +1445,8 @@ namespace libTAU::blockchain {
             m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
         }
 
+        m_tx_pools[chain_id].clear_fee_pool();
+
 //        update_peer_time(chain_id, blk.miner(), blk.timestamp());
 //        auto const &tx = blk.tx();
 //        if (!tx.empty()) {
@@ -1540,6 +1542,8 @@ namespace libTAU::blockchain {
         } else {
             return FAIL;
         }
+
+        m_tx_pools[chain_id].clear_fee_pool();
 
         return SUCCESS;
     }
@@ -2110,7 +2114,7 @@ namespace libTAU::blockchain {
 
         for (auto &blk: rollback_blocks) {
             // send back rollback block tx to pool
-            m_tx_pools[chain_id].add_tx(blk.tx());
+//            m_tx_pools[chain_id].add_tx(blk.tx());
             // notify rollback block
             m_ses.alerts().emplace_alert<blockchain_rollback_block_alert>(blk);
         }

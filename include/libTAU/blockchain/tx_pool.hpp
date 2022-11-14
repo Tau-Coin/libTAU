@@ -87,6 +87,8 @@ namespace libTAU::blockchain {
 
         void clear();
 
+        void clear_fee_pool();
+
         void recheck_account_tx(const dht::public_key& pubKey);
 
         void recheck_all_transactions();
