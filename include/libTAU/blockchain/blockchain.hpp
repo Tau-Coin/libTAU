@@ -44,7 +44,7 @@ namespace blockchain {
     constexpr int blockchain_min_refresh_time = 10;
     constexpr int blockchain_max_refresh_time = 3000;
 
-    int blockchain_acl_refresh_time = 5 * 1000;
+    constexpr int blockchain_default_acl_refresh_time = 5 * 1000;
 
     constexpr int blockchain_block_max_acceptable_time = 3 * 60; // 3min(s)
 
@@ -626,7 +626,7 @@ namespace blockchain {
 
         void send_new_head_block_signal(const aux::bytes &chain_id, const sha1_hash &hash);
 
-        void send_new_transfer_tx_signal(const aux::bytes &chain_id, , const transaction &tx);
+        void send_new_transfer_tx_signal(const aux::bytes &chain_id, const transaction &tx);
 
         void send_new_note_tx_signal(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
 
@@ -765,7 +765,7 @@ namespace blockchain {
         counters& m_counters;
 
         // refresh time interval
-//        int m_refresh_time = blockchain_default_refresh_time;
+        int m_acl_refresh_time = blockchain_default_acl_refresh_time;
 
         // deadline timer
         aux::deadline_timer m_refresh_timer;

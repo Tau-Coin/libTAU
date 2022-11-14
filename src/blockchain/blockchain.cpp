@@ -152,11 +152,11 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::set_foreground_mode() {
-        blockchain_acl_refresh_time = 5 * 1000;
+        m_acl_refresh_time = 5 * 1000;
     }
 
     void blockchain::set_background_mode() {
-        blockchain_acl_refresh_time = 30 * 1000;
+        m_acl_refresh_time = 30 * 1000;
     }
 
     bool blockchain::create_chain_db(const bytes &chain_id) {
@@ -962,10 +962,10 @@ namespace libTAU::blockchain {
                 log(LOG_INFO, "Now is paused.");
             }
 
-            log(LOG_INFO, "refresh acl time:%d ", blockchain_acl_refresh_time);
+            log(LOG_INFO, "refresh acl time:%d ", m_acl_refresh_time);
             auto it = m_acl_timers.find(chain_id);
             if (it != m_acl_timers.end()) {
-                it->second.expires_after(milliseconds(blockchain_acl_refresh_time));
+                it->second.expires_after(milliseconds(m_acl_refresh_time));
                 it->second.async_wait(std::bind(&blockchain::refresh_acl, self(), _1, chain_id));
             }
         } catch (std::exception &e) {
@@ -3302,7 +3302,7 @@ namespace libTAU::blockchain {
 
         log(LOG_INFO, "INFO: Get head block hash from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::HEAD_BLOCK_HASH, peer);
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::HEAD_BLOCK_HASH);
     }
 
     void blockchain::put_head_block_hash(const bytes &chain_id, const sha1_hash &hash) {
