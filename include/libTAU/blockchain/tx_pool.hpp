@@ -45,6 +45,8 @@ namespace libTAU::blockchain {
 
         transaction get_latest_note_transaction() const;
 
+        transaction get_note_transaction_randomly() const;
+
         aux::bytes get_hash_prefix_array_by_fee() const;
 
         std::vector<transaction> get_top_ten_fee_transactions();

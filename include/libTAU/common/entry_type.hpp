@@ -35,19 +35,21 @@ namespace libTAU::common {
     const std::string entry_levenshtein_array = "l";
 
     enum signal_id {
-        BLOCKCHAIN_ONLINE = 40, // 0
+        COMMUNICATION_NEW_MESSAGE, // 0
+        COMMUNICATION_CONFIRMATION, // 1
+        COMMUNICATION_MESSAGE_MISSING, // 2
+        COMMUNICATION_PUT_DONE, // 3
+        COMMUNICATION_ATTENTION, // 4
+        BLOCKCHAIN_ONLINE = 10, // 0
         BLOCKCHAIN_RECOMMEND, // 1
         BLOCKCHAIN_NEW_HEAD_BLOCK, // 2
         BLOCKCHAIN_NEW_TRANSFER_TX, // 3
         BLOCKCHAIN_NEW_NOTE_TX, // 4
-        COMMUNICATION_NEW_MESSAGE, // 5
-        COMMUNICATION_MESSAGE_MISSING, // 6
-        COMMUNICATION_PUT_DONE, // 7
-        COMMUNICATION_CONFIRMATION, // 8
-        COMMUNICATION_ATTENTION, // 9
     };
 
     struct TORRENT_EXPORT signal_entry {
+        signal_entry() = default;
+
         // @param Construct with entry
         explicit signal_entry(const entry& e);
 
@@ -81,6 +83,20 @@ namespace libTAU::common {
                                                            m_timestamp(mTimestamp), m_hash(mHash),
                                                            m_peer(mSourcePeer) {}
 
+        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
+                     const dht::public_key &mPeer, int64_t fee) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
+                                                                     m_timestamp(mTimestamp), m_hash(mHash),
+                                                                     m_peer(mPeer), m_value(fee) {}
+
+        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
+                     const dht::public_key &mPeer, uint64_t difficulty) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
+                                                                  m_timestamp(mTimestamp), m_hash(mHash), m_peer(mPeer),
+                                                                  m_value(static_cast<std::int64_t>(difficulty)) {}
+
+        uint64_t cumulative_difficulty() const { return static_cast<uint64_t>(m_value); }
+
+        int64_t fee() const { return m_value; }
+
         entry get_entry();
 
         std::string get_encode();
@@ -102,6 +118,8 @@ namespace libTAU::common {
 
         // peer
         dht::public_key m_peer;
+
+        std::int64_t m_value{};
     };
 
     struct TORRENT_EXPORT gossip_cache_peers_entry {

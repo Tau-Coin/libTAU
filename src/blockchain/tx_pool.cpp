@@ -6,6 +6,7 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
+#include <random>
 #include "libTAU/blockchain/tx_pool.hpp"
 #include "libTAU/time.hpp"
 
@@ -36,6 +37,21 @@ namespace libTAU::blockchain {
 //                return it_tx->second;
 //        }
 
+        return transaction();
+    }
+
+    transaction tx_pool::get_note_transaction_randomly() const {
+        if (!m_all_txs_by_timestamp.empty()) {
+            std::default_random_engine e;
+            auto index = e() % m_all_txs_by_timestamp.size();
+            int i = 0;
+            for (const auto & it : m_all_txs_by_timestamp) {
+                if (i == index) {
+                    return it.second;
+                }
+                i++;
+            }
+        }
         return transaction();
     }
 

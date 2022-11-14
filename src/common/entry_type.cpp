@@ -11,6 +11,102 @@ see LICENSE file.
 namespace libTAU::common {
 
     signal_entry::signal_entry(const entry &e) {
+        auto const& lst = e.list();
+        if (lst.size() > 0) {
+            int spid = aux::intFromLittleEndianString(lst[0].string());
+            m_pid = static_cast<signal_id>(spid);
+            switch (m_pid) {
+                case COMMUNICATION_NEW_MESSAGE:
+                case COMMUNICATION_CONFIRMATION:{
+                    if (lst.size() == 3) {
+                        // timestamp
+                        auto timestamp = lst[1].string();
+                        m_timestamp = aux::int64FromLittleEndianString(timestamp);
+                        // hash
+                        m_hash = sha1_hash(lst[2].string().data());
+                    }
+
+                    break;
+                }
+                case COMMUNICATION_MESSAGE_MISSING:
+                case COMMUNICATION_PUT_DONE:
+                case COMMUNICATION_ATTENTION: {
+                    if (lst.size() == 2) {
+                        // timestamp
+                        auto timestamp = lst[1].string();
+                        m_timestamp = aux::int64FromLittleEndianString(timestamp);
+                    }
+
+                    break;
+                }
+                case BLOCKCHAIN_ONLINE: {
+                    if (lst.size() == 3) {
+                        // timestamp
+                        auto timestamp = lst[1].string();
+                        m_timestamp = aux::int64FromLittleEndianString(timestamp);
+                        // short chain id
+                        auto chain_id = lst[2].string();
+                        m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+                    }
+
+                    break;
+                }
+                case BLOCKCHAIN_RECOMMEND: {
+                    if (lst.size() == 4) {
+                        // timestamp
+                        auto timestamp = lst[1].string();
+                        m_timestamp = aux::int64FromLittleEndianString(timestamp);
+                        // short chain id
+                        auto chain_id = lst[2].string();
+                        m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+                        // peer
+                        m_peer = dht::public_key(lst[3].string().data());
+                    }
+
+                    break;
+                }
+                case BLOCKCHAIN_NEW_HEAD_BLOCK:
+                case BLOCKCHAIN_NEW_TRANSFER_TX: {
+                    if (lst.size() == 6) {
+                        // timestamp
+                        auto timestamp = lst[1].string();
+                        m_timestamp = aux::int64FromLittleEndianString(timestamp);
+                        // short chain id
+                        auto chain_id = lst[2].string();
+                        m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+                        // hash
+                        m_hash = sha1_hash(lst[3].string().data());
+                        // peer
+                        m_peer = dht::public_key(lst[4].string().data());
+                        // value
+                        auto value = lst[5].string();
+                        m_value = aux::int64FromLittleEndianString(value);
+                    }
+
+                    break;
+                }
+                case BLOCKCHAIN_NEW_NOTE_TX: {
+                    if (lst.size() == 5) {
+                        // timestamp
+                        auto timestamp = lst[1].string();
+                        m_timestamp = aux::int64FromLittleEndianString(timestamp);
+                        // short chain id
+                        auto chain_id = lst[2].string();
+                        m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+                        // hash
+                        m_hash = sha1_hash(lst[3].string().data());
+                        // peer
+                        m_peer = dht::public_key(lst[4].string().data());
+                    }
+
+                    break;
+                }
+                default: {
+
+                }
+            }
+        }
+
         auto const& encode = e.string();
 
         auto size = encode.size();
@@ -88,32 +184,141 @@ namespace libTAU::common {
     }
 
     entry signal_entry::get_entry() {
-        std::string encode;
+        entry::list_type lst;
 
-        // protocol id:1 byte
-        auto pid = aux::intToLittleEndianString((int)m_pid);
-        encode.append(pid);
-        // timestamp:4 bytes
-        auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
-        encode.append(timestamp);
-        // hash:20 bytes
-        if (!m_hash.is_all_zeros()) {
-            encode.append(m_hash.to_string());
-        }
-        // peer:32 bytes
-        if (!m_peer.is_all_zeros()) {
-            encode.append(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
-        }
-        // short chain id <= 4 bytes
-        if (!m_short_chain_id.empty()) {
-            if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
-                encode.append(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
-            } else {
-                encode.append(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
+        switch (m_pid) {
+            case COMMUNICATION_NEW_MESSAGE:
+            case COMMUNICATION_CONFIRMATION:{
+                // protocol id:1 byte
+                auto pid = aux::intToLittleEndianString((int)m_pid);
+                lst.push_back(pid);
+                // timestamp:4 bytes
+                auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+                lst.push_back(timestamp);
+                // hash:20 bytes
+                lst.push_back(m_hash.to_string());
+
+                break;
+            }
+            case COMMUNICATION_MESSAGE_MISSING:
+            case COMMUNICATION_PUT_DONE:
+            case COMMUNICATION_ATTENTION: {
+                // protocol id:1 byte
+                auto pid = aux::intToLittleEndianString((int)m_pid);
+                lst.push_back(pid);
+                // timestamp:4 bytes
+                auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+                lst.push_back(timestamp);
+
+                break;
+            }
+            case BLOCKCHAIN_ONLINE: {
+                // protocol id:1 byte
+                auto pid = aux::intToLittleEndianString((int)m_pid);
+                lst.push_back(pid);
+                // timestamp:4 bytes
+                auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+                lst.push_back(timestamp);
+                // short chain id <= 4 bytes
+                if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
+                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
+                } else {
+                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
+                }
+
+                break;
+            }
+            case BLOCKCHAIN_RECOMMEND: {
+                // protocol id:1 byte
+                auto pid = aux::intToLittleEndianString((int)m_pid);
+                lst.push_back(pid);
+                // timestamp:4 bytes
+                auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+                lst.push_back(timestamp);
+                // short chain id <= 4 bytes
+                if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
+                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
+                } else {
+                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
+                }
+                // peer:32 bytes
+                lst.push_back(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
+
+                break;
+            }
+            case BLOCKCHAIN_NEW_HEAD_BLOCK:
+            case BLOCKCHAIN_NEW_TRANSFER_TX: {
+                // protocol id:1 byte
+                auto pid = aux::intToLittleEndianString((int)m_pid);
+                lst.push_back(pid);
+                // timestamp:4 bytes
+                auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+                lst.push_back(timestamp);
+                // short chain id <= 4 bytes
+                if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
+                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
+                } else {
+                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
+                }
+                // hash:20 bytes
+                lst.push_back(m_hash.to_string());
+                // peer:32 bytes
+                lst.push_back(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
+                // value
+                auto value = aux::int64ToLittleEndianString(m_value);
+                lst.push_back(value);
+
+                break;
+            }
+            case BLOCKCHAIN_NEW_NOTE_TX: {
+                // protocol id:1 byte
+                auto pid = aux::intToLittleEndianString((int)m_pid);
+                lst.push_back(pid);
+                // timestamp:4 bytes
+                auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+                lst.push_back(timestamp);
+                // short chain id <= 4 bytes
+                if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
+                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
+                } else {
+                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
+                }
+                // hash:20 bytes
+                lst.push_back(m_hash.to_string());
+                // peer:32 bytes
+                lst.push_back(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
+
+                break;
+            }
+            default: {
+
             }
         }
 
-        return encode;
+//        // protocol id:1 byte
+//        auto pid = aux::intToLittleEndianString((int)m_pid);
+//        lst.push_back(pid);
+//        // timestamp:4 bytes
+//        auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+//        lst.push_back(timestamp);
+//        // hash:20 bytes
+//        if (!m_hash.is_all_zeros()) {
+//            lst.push_back(m_hash.to_string());
+//        }
+//        // peer:32 bytes
+//        if (!m_peer.is_all_zeros()) {
+//            lst.push_back(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
+//        }
+//        // short chain id <= 4 bytes
+//        if (!m_short_chain_id.empty()) {
+//            if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
+//                lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
+//            } else {
+//                lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
+//            }
+//        }
+
+        return lst;
     }
 
     std::string signal_entry::get_encode() {
