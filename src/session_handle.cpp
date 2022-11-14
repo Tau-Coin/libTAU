@@ -505,6 +505,18 @@ namespace libTAU {
 		return sync_call(&session_impl::restart_service);
 	}
 
+	// set foreground mode
+	void session_handle::set_foreground_mode()
+	{
+		return sync_call(&session_impl::set_foreground_mode);
+	}
+
+	// set background mode
+	void session_handle::set_background_mode()
+	{
+		return sync_call(&session_impl::set_background_mode);
+	}
+
 	// pause service
 	void session_handle::pause_service()
 	{

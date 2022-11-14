@@ -3059,6 +3059,24 @@ namespace {
         // TODO: coe to control timer interval when in 'doze' model
     }
 
+	void session_impl::set_foreground_mode()
+	{
+		if(m_blockchain)
+		{
+			m_blockchain->set_foreground_mode();
+		}
+
+	}
+
+	void session_impl::set_background_mode()
+	{
+		if(m_blockchain)
+		{
+			m_blockchain->set_background_mode();
+		}
+
+	}
+
     void session_impl::pause_service()
     {
         // TODO: coe to control timer interval when in 'doze' model
