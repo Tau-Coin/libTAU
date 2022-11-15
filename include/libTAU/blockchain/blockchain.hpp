@@ -370,7 +370,7 @@ namespace blockchain {
         // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
-        // connect chain
+        // connect chain: 启动链，libtau本身会对follow的各条链进行慢启动，但是UI提前点击社区调用此接口，也会进行链启动
         bool connect_chain(const aux::bytes &chain_id);
 
         // add new bootstrap peers
@@ -383,7 +383,7 @@ namespace blockchain {
         bool submitTransaction(const transaction& tx);
 
         // check if tx is in pool
-        bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid);
+//        bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid);
 
         // get account by public key
         account getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey);
