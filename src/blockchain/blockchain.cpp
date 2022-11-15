@@ -2116,7 +2116,7 @@ namespace libTAU::blockchain {
             // send back rollback block tx to pool
 //            m_tx_pools[chain_id].add_tx(blk.tx());
             // notify rollback block
-//            m_ses.alerts().emplace_alert<blockchain_rollback_block_alert>(blk);
+            m_ses.alerts().emplace_alert<blockchain_rollback_block_alert>(blk);
         }
         for (auto i = connect_blocks.size(); i > 1; i--) {
             m_tx_pools[chain_id].delete_tx_from_time_pool(connect_blocks[i - 2].tx());
@@ -4201,19 +4201,19 @@ namespace libTAU::blockchain {
         return false;
     }
 
-//    bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid) {
-//        if (m_chains.find(chain_id) == m_chains.end()) {
-//            log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
-//            return false;
-//        }
-//
-//        if (!m_chain_connected[chain_id]) {
-//            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
-//            return false;
-//        }
-//
-//        return m_tx_pools[chain_id].is_transaction_in_fee_pool(txid);
-//    }
+    bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
+            log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return false;
+        }
+
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+            return false;
+        }
+
+        return m_tx_pools[chain_id].is_transaction_in_fee_pool(txid);
+    }
 
     account blockchain::getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey) {
         return m_repository->get_account(chain_id, publicKey);
