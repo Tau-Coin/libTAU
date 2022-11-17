@@ -3566,7 +3566,8 @@ namespace {
 
 	bool session_impl::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash& txid) {
 		if(m_blockchain) {
-			return m_blockchain->is_transaction_in_fee_pool(chain_id, txid);
+			//return m_blockchain->is_transaction_in_fee_pool(chain_id, txid);
+			return false;
 		}
 	}
 
