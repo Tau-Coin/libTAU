@@ -383,7 +383,7 @@ namespace blockchain {
         bool submitTransaction(const transaction& tx);
 
         // check if tx is in pool
-        bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid);
+//        bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid);
 
         // get account by public key
         account getAccountInfo(const aux::bytes &chain_id, dht::public_key publicKey);
