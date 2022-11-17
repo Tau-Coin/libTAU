@@ -37,6 +37,7 @@ see LICENSE file.
 #include <libTAU/hasher.hpp>
 
 #include <boost/multi_index_container.hpp>
+#include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/member.hpp>
@@ -302,6 +303,7 @@ namespace {
 	struct key{};
 	struct time{};
 	struct receiver{};
+	struct receiver_time{};
 
 	// 'relay_table' can be treated as the relation table of 'relay entry'.
 	// This table has three index:
@@ -327,6 +329,15 @@ namespace {
 				tag<receiver>,
 				member<relay_entry, sha256_hash, &relay_entry::receiver>,
 				std::less<sha256_hash>
+			>,
+
+			ordered_non_unique<
+				tag<receiver_time>,
+				composite_key<
+					relay_entry,
+					member<relay_entry, sha256_hash, &relay_entry::receiver>,
+					member<relay_entry, time_point, &relay_entry::last_seen>
+				>
 			>
 		>
 	> relay_table;
@@ -334,6 +345,7 @@ namespace {
 	typedef relay_table::index<key>::type relay_table_by_key;
 	typedef relay_table::index<time>::type relay_table_by_time;
 	typedef relay_table::index<receiver>::type relay_table_by_receiver;
+	typedef relay_table::index<receiver_time>::type relay_table_by_receiver_time;
 
 	class dht_default_storage final : public dht_storage_interface
 	{
@@ -659,11 +671,25 @@ namespace {
 		bool get_random_relay_entry(sha256_hash const& recver
 			, sha256_hash& key) const override
 		{
-			const relay_table_by_receiver& receiver_index = m_relay_entries_table.get<receiver>();
+			const relay_table_by_receiver_time& receiver_time_index
+					= m_relay_entries_table.get<receiver_time>();
+			/*
 			relay_table_by_receiver::iterator it = receiver_index.find(recver);
 			if (it != receiver_index.end())
 			{
 				key = it->key;
+				return true;
+			}
+			 */
+
+			auto range = receiver_time_index.equal_range(recver);
+
+			if (range.first == receiver_time_index.end()) return false;
+
+			--range.second;
+			if (range.second->receiver == recver)
+			{
+				key = range.second->key;
 				return true;
 			}
 
