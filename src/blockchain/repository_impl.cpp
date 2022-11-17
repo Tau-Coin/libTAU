@@ -1012,6 +1012,27 @@ namespace libTAU::blockchain {
         return peer;
     }
 
+    std::set<dht::public_key> repository_impl::get_enough_peers_from_peer_db_randomly(const aux::bytes &chain_id) {
+        std::set<dht::public_key> peers;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT PUBKEY FROM ";
+        sql.append(peer_db_name(chain_id));
+        sql.append(" ORDER BY RANDOM() limit 10");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+                const char *pK = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                peers.insert(dht::public_key(pK));
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return peers;
+    }
+
     bool repository_impl::delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         sqlite3_stmt * stmt;
         std::string sql = "DELETE FROM ";
@@ -1042,6 +1063,24 @@ namespace libTAU::blockchain {
             return false;
         }
         sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
+    }
+
+    bool repository_impl::clear_peer_db(const aux::bytes &chain_id) {
+        sqlite3_stmt * stmt;
+        std::string sql = "DELETE FROM ";
+        sql.append(peer_db_name(chain_id));
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {

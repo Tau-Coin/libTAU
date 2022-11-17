@@ -1447,6 +1447,12 @@ namespace libTAU::blockchain {
 
         m_tx_pools[chain_id].clear_fee_pool();
 
+        auto peers = m_repository->get_enough_peers_from_peer_db_randomly(chain_id);
+        m_repository->clear_peer_db(chain_id);
+        for (auto const& peer: peers) {
+            m_repository->add_peer_in_peer_db(chain_id, peer);
+        }
+
 //        update_peer_time(chain_id, blk.miner(), blk.timestamp());
 //        auto const &tx = blk.tx();
 //        if (!tx.empty()) {
@@ -3883,6 +3889,9 @@ namespace libTAU::blockchain {
 
                         if (!stateArray.empty()) {
                             m_ses.alerts().emplace_alert<blockchain_state_array_alert>(chain_id, stateArray.StateArray());
+                            for (auto const& act: stateArray.StateArray()) {
+                                m_repository->add_peer_in_peer_db(chain_id, act.peer());
+                            }
                         }
 
                         if (!m_repository->save_state_array(chain_id, stateArray)) {

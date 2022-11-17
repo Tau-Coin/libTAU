@@ -178,11 +178,19 @@ namespace libTAU::blockchain {
         return dht::public_key();
     }
 
+    std::set<dht::public_key> repository_track::get_enough_peers_from_peer_db_randomly(const aux::bytes &chain_id) {
+        return std::set<dht::public_key>();
+    }
+
     bool repository_track::delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
         return false;
     }
 
     bool repository_track::add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) {
+        return false;
+    }
+
+    bool repository_track::clear_peer_db(const aux::bytes &chain_id) {
         return false;
     }
 

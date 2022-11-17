@@ -166,9 +166,13 @@ namespace libTAU::blockchain {
 
         virtual dht::public_key get_peer_from_peer_db_randomly(const aux::bytes &chain_id) = 0;
 
+        virtual std::set<dht::public_key> get_enough_peers_from_peer_db_randomly(const aux::bytes &chain_id) = 0;
+
         virtual bool delete_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
 
         virtual bool add_peer_in_peer_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
+        virtual bool clear_peer_db(const aux::bytes &chain_id) = 0;
 
         // acl db
         virtual bool create_acl_db(const aux::bytes &chain_id) = 0;
