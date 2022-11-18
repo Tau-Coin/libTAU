@@ -44,7 +44,7 @@ namespace blockchain {
     constexpr int blockchain_min_refresh_time = 10;
     constexpr int blockchain_max_refresh_time = 3000;
 
-    constexpr int blockchain_default_acl_refresh_time = 5 * 1000;
+    constexpr int blockchain_default_acl_refresh_time = 10 * 1000;
 
     constexpr int blockchain_block_max_acceptable_time = 3 * 60; // 3min(s)
 
@@ -61,10 +61,10 @@ namespace blockchain {
 //    constexpr int blockchain_same_response_interval = 2 * 1000;
 
     // blockchain min peers in acl
-    constexpr std::size_t blockchain_acl_min_peers = 4;
+    constexpr std::size_t blockchain_acl_min_peers = 3;
 
     // blockchain max peers in acl
-    constexpr std::size_t blockchain_acl_max_peers = 7;
+    constexpr std::size_t blockchain_acl_max_peers = 4;
 
     // blockchain max peers in online peer list
     constexpr std::size_t blockchain_online_list_max_peers = 64;
