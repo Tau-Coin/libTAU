@@ -152,7 +152,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::set_foreground_mode() {
-        m_acl_refresh_time = 10 * 1000;
+        m_acl_refresh_time = blockchain_default_acl_refresh_time;
     }
 
     void blockchain::set_background_mode() {
@@ -881,7 +881,7 @@ namespace libTAU::blockchain {
 
                     // calc score
                     for (auto& item: acl) {
-                        if (item.second.m_last_seen + 10 * 1000 < now && item.second.m_score > 0) {
+                        if (item.second.m_last_seen + 15 * 1000 < now && item.second.m_score > 0) {
                             item.second.m_score--;
                             if (item.second.m_score < 0) {
                                 item.second.m_score = 0;
