@@ -2713,47 +2713,47 @@ namespace libTAU::blockchain {
     }
 
     entry blockchain::select_signal_randomly(const bytes &chain_id) {
-//        auto now = get_total_milliseconds();
-//        srand(now);
-//        auto index = rand() % 10;
-//
-//        if (index < 4) {
-//            // 4/10 send head block
-//            auto const& headBlockInfo = m_head_block_info[chain_id];
-//            auto const& head_block = m_head_blocks[chain_id];
-//            if (headBlockInfo.m_cumulative_difficulty > head_block.cumulative_difficulty()) {
-//                common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id,
-//                                                 now / 1000, headBlockInfo.m_hash, headBlockInfo.m_peer,
-//                                                 headBlockInfo.m_cumulative_difficulty);
-//                return signalEntry.get_entry();
-//            } else {
-//                if (!head_block.empty()) {
-//                    common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id,
-//                                                     now / 1000, head_block.sha1(), head_block.miner(),
-//                                                     head_block.cumulative_difficulty());
-//                    return signalEntry.get_entry();
-//                }
-//            }
-//        }
-//
-//        index = rand() % 4;
-//        // 3/10 send note tx
-//        if (index < 2) {
-//            auto tx = m_tx_pools[chain_id].get_note_transaction_randomly();
-//            if (!tx.empty()) {
-//                common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id,
-//                                                 now / 1000, tx.sha1(), tx.sender());
-//                return signalEntry.get_entry();
-//            }
-//        }
-//
-//        // 3/10 send transfer tx
-//        auto const& best_tx_info = m_best_tx_info[chain_id];
-//        if (best_tx_info.m_fee > 0) {
-//            common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id,
-//                                             now / 1000, best_tx_info.m_hash, best_tx_info.m_peer, best_tx_info.m_fee);
-//            return signalEntry.get_entry();
-//        }
+        auto now = get_total_milliseconds();
+        srand(now);
+        auto index = rand() % 10;
+
+        if (index < 4) {
+            // 4/10 send head block
+            auto const& headBlockInfo = m_head_block_info[chain_id];
+            auto const& head_block = m_head_blocks[chain_id];
+            if (headBlockInfo.m_cumulative_difficulty > head_block.cumulative_difficulty()) {
+                common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id,
+                                                 now / 1000, headBlockInfo.m_hash, headBlockInfo.m_peer,
+                                                 headBlockInfo.m_cumulative_difficulty);
+                return signalEntry.get_entry();
+            } else {
+                if (!head_block.empty()) {
+                    common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id,
+                                                     now / 1000, head_block.sha1(), head_block.miner(),
+                                                     head_block.cumulative_difficulty());
+                    return signalEntry.get_entry();
+                }
+            }
+        }
+
+        index = rand() % 4;
+        // 3/10 send note tx
+        if (index < 2) {
+            auto tx = m_tx_pools[chain_id].get_note_transaction_randomly();
+            if (!tx.empty()) {
+                common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id,
+                                                 now / 1000, tx.sha1(), tx.sender());
+                return signalEntry.get_entry();
+            }
+        }
+
+        // 3/10 send transfer tx
+        auto const& best_tx_info = m_best_tx_info[chain_id];
+        if (best_tx_info.m_fee > 0) {
+            common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id,
+                                             now / 1000, best_tx_info.m_hash, best_tx_info.m_peer, best_tx_info.m_fee);
+            return signalEntry.get_entry();
+        }
 
         // send online signal
         common::signal_entry signalEntry(common::BLOCKCHAIN_ONLINE, chain_id, get_total_milliseconds() / 1000);
