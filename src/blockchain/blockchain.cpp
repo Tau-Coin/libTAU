@@ -758,7 +758,7 @@ namespace libTAU::blockchain {
                             break;
                         }
                         case dht_item_type::DHT_SEND: {
-                            m_ses.dht()->send(dhtItem.m_peer, dhtItem.m_data, 1, 8, 8, 1,
+                            m_ses.dht()->send(dhtItem.m_peer, dhtItem.m_data, 1, 8, 6, 1,
                                               std::bind(&blockchain::on_dht_relay_mutable_item, self(), _1, _2,
                                                         dhtItem.m_peer));
 
@@ -886,6 +886,11 @@ namespace libTAU::blockchain {
                             if (item.second.m_score < 0) {
                                 item.second.m_score = 0;
                             }
+                        }
+
+                        // set score = 0 if peer lost for 1min
+                        if (item.second.m_last_seen + 60 * 1000 < now && item.second.m_score > 0) {
+                            item.second.m_score = 0;
                         }
                     }
 
@@ -4183,19 +4188,19 @@ namespace libTAU::blockchain {
 //                    put_note_transaction(chain_id, tx);
                     put_transaction(chain_id, tx);
 
-                    if (!tx.previous_hash().is_all_zeros()) {
-                        auto previous_tx = m_tx_pools[chain_id].get_transaction_by_txid(tx.previous_hash());
-                        if (!previous_tx.empty()) {
-                            put_transaction(chain_id, previous_tx);
-
-                            if (!previous_tx.previous_hash().is_all_zeros()) {
-                                auto last_tx = m_tx_pools[chain_id].get_transaction_by_txid(previous_tx.previous_hash());
-                                if (!last_tx.empty()) {
-                                    put_transaction(chain_id, last_tx);
-                                }
-                            }
-                        }
-                    }
+//                    if (!tx.previous_hash().is_all_zeros()) {
+//                        auto previous_tx = m_tx_pools[chain_id].get_transaction_by_txid(tx.previous_hash());
+//                        if (!previous_tx.empty()) {
+//                            put_transaction(chain_id, previous_tx);
+//
+//                            if (!previous_tx.previous_hash().is_all_zeros()) {
+//                                auto last_tx = m_tx_pools[chain_id].get_transaction_by_txid(previous_tx.previous_hash());
+//                                if (!last_tx.empty()) {
+//                                    put_transaction(chain_id, last_tx);
+//                                }
+//                            }
+//                        }
+//                    }
 
                     send_new_note_tx_signal(chain_id, tx.sha1(), tx.sender());
                 }
