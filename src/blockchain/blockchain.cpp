@@ -1450,7 +1450,7 @@ namespace libTAU::blockchain {
             m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
         }
 
-        m_tx_pools[chain_id].clear_fee_pool();
+//        m_tx_pools[chain_id].clear_fee_pool();
 
         auto peers = m_repository->get_enough_peers_from_peer_db_randomly(chain_id);
         m_repository->clear_peer_db(chain_id);
@@ -1554,7 +1554,7 @@ namespace libTAU::blockchain {
             return FAIL;
         }
 
-        m_tx_pools[chain_id].clear_fee_pool();
+//        m_tx_pools[chain_id].clear_fee_pool();
 
         return SUCCESS;
     }
@@ -2123,12 +2123,12 @@ namespace libTAU::blockchain {
         // chain changed, re-check tx pool
         m_tx_pools[chain_id].recheck_account_txs(peers);
 
-//        for (auto &blk: rollback_blocks) {
-//            // send back rollback block tx to pool
-////            m_tx_pools[chain_id].add_tx(blk.tx());
-//            // notify rollback block
+        for (auto &blk: rollback_blocks) {
+            // send back rollback block tx to pool
+            m_tx_pools[chain_id].add_tx(blk.tx());
+            // notify rollback block
 //            m_ses.alerts().emplace_alert<blockchain_rollback_block_alert>(blk);
-//        }
+        }
         for (auto i = connect_blocks.size(); i > 1; i--) {
             m_tx_pools[chain_id].delete_tx_from_time_pool(connect_blocks[i - 2].tx());
             m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(connect_blocks[i - 2]);
