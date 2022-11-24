@@ -137,6 +137,16 @@ namespace libTAU::blockchain {
 
         bool add_peer_in_online_list_db(const aux::bytes &chain_id, const dht::public_key &pubKey) override;
 
+        bool create_community_info_db() override;
+
+        bool delete_community_info_db() override;
+
+        bool update_touching_time(const aux::bytes &chain_id, std::int64_t touching_time) override;
+
+        int64_t get_touching_time(const aux::bytes &chain_id) override;
+
+        bool delete_touching_time(const aux::bytes &chain_id) override;
+
 
 
 

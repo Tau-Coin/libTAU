@@ -286,6 +286,7 @@ namespace libTAU::blockchain {
                 log(LOG_ERR, "INFO: chain:%s, delete peer db fail.", aux::toHex(chain_id).c_str());
                 return false;
             }
+            m_repository->delete_touching_time(chain_id);
 //            if (!m_repository->delete_acl_db(chain_id)) {
 //                log(LOG_ERR, "INFO: chain:%s, delete acl db fail.", aux::toHex(chain_id).c_str());
 //                return false;
@@ -458,6 +459,9 @@ namespace libTAU::blockchain {
             m_head_blocks[chain_id] = head_block;
             log(LOG_INFO, "INFO: Head block: %s", head_block.to_string().c_str());
         }
+
+        m_touching_time[chain_id] = m_repository->get_touching_time(chain_id);
+        log(LOG_INFO, "INFO: Chain[%s] touching time: %" PRId64, aux::toHex(chain_id).c_str(), m_touching_time[chain_id]);
 
         return true;
     }
@@ -4153,6 +4157,13 @@ namespace libTAU::blockchain {
         process_genesis_block(chain_id, b, stateArrays);
 
         return true;
+    }
+
+    bool blockchain::touch_chain(const bytes &chain_id) {
+        // update time(s)
+        auto now = get_total_milliseconds() / 1000;
+        m_touching_time[chain_id] = now;
+        return m_repository->update_touching_time(chain_id, now);
     }
 
     std::set<aux::bytes> blockchain::get_all_chains() {

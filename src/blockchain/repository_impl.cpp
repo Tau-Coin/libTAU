@@ -33,7 +33,7 @@ namespace libTAU::blockchain {
             return false;
         }
 
-        return true;
+        return create_community_info_db();
     }
 
     bool repository_impl::begin_transaction() {
@@ -1255,6 +1255,98 @@ namespace libTAU::blockchain {
             return false;
         }
         sqlite3_bind_blob(stmt, 1, pubKey.bytes.data(), dht::public_key::len, nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
+    }
+
+    bool repository_impl::create_community_info_db() {
+        std::string sql = "CREATE TABLE IF NOT EXISTS ";
+        sql.append(community_info_db_name());
+        sql.append("(CHAIN_ID BLOB PRIMARY KEY NOT NULL,TOUCHING_TIME INTEGER);");
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool repository_impl::delete_community_info_db() {
+        std::string sql = "DROP TABLE ";
+        sql.append(community_info_db_name());
+
+        char *zErrMsg = nullptr;
+        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
+        if (ok != SQLITE_OK) {
+            sqlite3_free(zErrMsg);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool repository_impl::update_touching_time(const aux::bytes &chain_id, std::int64_t touching_time) {
+        sqlite3_stmt * stmt;
+        std::string sql = "REPLACE INTO ";
+        sql.append(community_info_db_name());
+        sql.append(" VALUES(?,?)");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+
+        sqlite3_bind_blob(stmt, 1, chain_id.data(), chain_id.size(), nullptr);
+        sqlite3_bind_int64(stmt, 2, touching_time);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
+    }
+
+    int64_t repository_impl::get_touching_time(const aux::bytes &chain_id) {
+        std::int64_t touching_time{};
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT TOUCHING_TIME FROM ";
+        sql.append(community_info_db_name());
+        sql.append(" WHERE CHAIN_ID=?");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            sqlite3_bind_blob(stmt, 1, chain_id.data(), chain_id.size(), nullptr);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                touching_time = sqlite3_column_int64(stmt, 0);
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return touching_time;
+    }
+
+    bool repository_impl::delete_touching_time(const aux::bytes &chain_id) {
+        sqlite3_stmt * stmt;
+        std::string sql = "DELETE FROM ";
+        sql.append(community_info_db_name());
+        sql.append(" WHERE CHAIN_ID=?");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+        sqlite3_bind_blob(stmt, 1, chain_id.data(), chain_id.size(), nullptr);
 
         ok = sqlite3_step(stmt);
         if (ok != SQLITE_DONE) {

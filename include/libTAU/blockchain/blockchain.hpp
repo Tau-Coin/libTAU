@@ -367,6 +367,9 @@ namespace blockchain {
 
         std::set<aux::bytes> get_all_chains();
 
+        // click on community
+        bool touch_chain(const aux::bytes &chain_id);
+
         // follow a chain by chain id and peers
         bool followChain(const aux::bytes &chain_id, const std::set<dht::public_key>& peers);
 
@@ -809,6 +812,8 @@ namespace blockchain {
 
         // chain connected flag
         std::map<aux::bytes, bool> m_chain_connected;
+
+        std::map<aux::bytes, std::int64_t> m_touching_time;
 
         std::map<aux::bytes, int> m_chain_getting_times;
 

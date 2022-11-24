@@ -57,6 +57,10 @@ namespace libTAU::blockchain {
         return "t" + aux::toHex(hash) + table_online_list;
     }
 
+    std::string repository::community_info_db_name() {
+        return "t" + community_info_list;
+    }
+
 //    bool repository::save_main_chain_block(const block &blk) {
 //        return save_block(blk, true);
 //    }

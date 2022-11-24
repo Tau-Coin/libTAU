@@ -31,6 +31,7 @@ namespace libTAU::blockchain {
     const std::string table_state_array = "state_array";
     const std::string table_acl = "acl";
     const std::string table_online_list = "online_list";
+    const std::string community_info_list = "community_info";
 
     // repository: 存储账户、区块、状态链接器以及相应高度的索引数据，每个账户的状态是一个通过状态链接器链接起来的一个链式结构。
     // 每个账户会指向一个block hash，通过block hash可以到区块里面查找到对应该账户的状态，同时，通过block hash也能获得对应
@@ -57,6 +58,8 @@ namespace libTAU::blockchain {
         static std::string acl_db_name(const aux::bytes &chain_id);
 
         static std::string online_list_db_name(const aux::bytes &chain_id);
+
+        static std::string community_info_db_name();
 
         // init db, create chains table
         virtual bool init() = 0;
@@ -195,6 +198,18 @@ namespace libTAU::blockchain {
         virtual bool clear_online_list_db(const aux::bytes &chain_id) = 0;
 
         virtual bool add_peer_in_online_list_db(const aux::bytes &chain_id, const dht::public_key &pubKey) = 0;
+
+        // community info db
+
+        virtual bool create_community_info_db() = 0;
+
+        virtual bool delete_community_info_db() = 0;
+
+        virtual bool update_touching_time(const aux::bytes &chain_id, std::int64_t touching_time) = 0;
+
+        virtual std::int64_t get_touching_time(const aux::bytes &chain_id) = 0;
+
+        virtual bool delete_touching_time(const aux::bytes &chain_id) = 0;
 
 
 

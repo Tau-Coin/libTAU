@@ -242,6 +242,26 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    bool repository_track::create_community_info_db() {
+        return false;
+    }
+
+    bool repository_track::delete_community_info_db() {
+        return false;
+    }
+
+    bool repository_track::update_touching_time(const aux::bytes &chain_id, std::int64_t touching_time) {
+        return false;
+    }
+
+    int64_t repository_track::get_touching_time(const aux::bytes &chain_id) {
+        return 0;
+    }
+
+    bool repository_track::delete_touching_time(const aux::bytes &chain_id) {
+        return false;
+    }
+
 //    bool repository_track::create_peer_db(const aux::bytes &chain_id) {
 //        return false;
 //    }
