@@ -44,7 +44,7 @@ namespace blockchain {
     constexpr int blockchain_min_refresh_time = 10;
     constexpr int blockchain_max_refresh_time = 3000;
 
-    constexpr int blockchain_default_acl_refresh_time = 10 * 1000;
+    constexpr int blockchain_default_acl_refresh_time = 5 * 1000;
 
     constexpr int blockchain_block_max_acceptable_time = 3 * 60; // 3min(s)
 
@@ -60,11 +60,14 @@ namespace blockchain {
     // min response interval to the same request(2s)
 //    constexpr int blockchain_same_response_interval = 2 * 1000;
 
+    constexpr std::size_t x1_size = 4;
+    constexpr std::size_t x2_size = 7;
+
     // blockchain min peers in acl
-    constexpr std::size_t blockchain_acl_min_peers = 3;
+    constexpr std::size_t blockchain_acl_min_peers = 7;
 
     // blockchain max peers in acl
-    constexpr std::size_t blockchain_acl_max_peers = 4;
+    constexpr std::size_t blockchain_acl_max_peers = 9;
 
     // blockchain max peers in online peer list
     constexpr std::size_t blockchain_online_list_max_peers = 64;
@@ -283,6 +286,38 @@ namespace blockchain {
 //        dht::public_key m_signal_peer;
         std::int64_t m_timestamp{};
         int m_times{};
+    };
+
+    struct entry_time {
+        entry_time(entry mEntry, int64_t mTimestamp) : m_entry(std::move(mEntry)), m_timestamp(mTimestamp) {}
+
+        bool operator<(const entry_time &rhs) const {
+            if (m_timestamp < rhs.m_timestamp)
+                return true;
+            if (rhs.m_timestamp < m_timestamp)
+                return false;
+
+            std::string encode;
+            bencode(std::back_inserter(encode), m_entry);
+            std::string rhs_encode;
+            bencode(std::back_inserter(rhs_encode), rhs.m_entry);
+            return encode < rhs_encode;
+        }
+
+        bool operator>(const entry_time &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const entry_time &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const entry_time &rhs) const {
+            return !(*this < rhs);
+        }
+
+        entry m_entry;
+        std::int64_t m_timestamp{};
     };
 
     struct GET_ITEM {
@@ -633,6 +668,10 @@ namespace blockchain {
 
         void send_new_note_tx_signal(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
 
+        void add_new_note_tx_signal_into_queue(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
+
+        void add_myself_entry_into_tasks(const aux::bytes &chain_id, const entry& e);
+
 //        void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
         void signal_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer);
@@ -815,12 +854,19 @@ namespace blockchain {
 
         std::map<aux::bytes, std::int64_t> m_touching_time;
 
+        std::map<aux::bytes, std::int64_t> m_last_discovery_time;
+
         std::map<aux::bytes, int> m_chain_getting_times;
 
         // all tasks
         std::queue<dht_item> m_tasks;
 //        std::set<dht_item> m_tasks_set;
         std::int64_t m_last_dht_time{};
+
+        std::map<aux::bytes, std::set<entry_time>> m_my_entry_tasks;
+        std::map<aux::bytes, std::queue<entry>> m_entry_tasks;
+
+        bool m_is_background = false;
 
 //        std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 

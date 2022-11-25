@@ -152,11 +152,11 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::set_foreground_mode() {
-        m_acl_refresh_time = blockchain_default_acl_refresh_time;
+        m_is_background = false;
     }
 
     void blockchain::set_background_mode() {
-        m_acl_refresh_time = 30 * 1000;
+        m_is_background = true;
     }
 
     bool blockchain::create_chain_db(const bytes &chain_id) {
@@ -939,7 +939,27 @@ namespace libTAU::blockchain {
                         acl.erase(min_it);
                     }
 
-                    send_discovery_signal(chain_id);
+                    std::int64_t interval = 30;
+                    if (now / 1000 > m_touching_time[chain_id]) {
+                        auto seconds = now / 1000 - m_touching_time[chain_id];
+                        if (seconds < 24 * 60 * 60) {
+                            interval = 30;
+                        } else if (seconds < 2 * 24 * 60 * 60) {
+                            interval = 60;
+                        } else if (seconds < 3 * 24 * 60 * 60) {
+                            interval = 120;
+                        }  else {
+                            interval = 240;
+                        }
+                    }
+                    if (!m_is_background) {
+                        interval /= 6;
+                    }
+                    if (now / 1000 >= m_last_discovery_time[chain_id] + interval) {
+                        send_discovery_signal(chain_id);
+
+                        m_last_discovery_time[chain_id] = now / 1000;
+                    }
 
 //                    // say hi
 //                    entry et;
@@ -2770,11 +2790,71 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::send_discovery_signal(const bytes &chain_id) {
-        entry e = select_signal_randomly(chain_id);
+        bool is_send = false;
+        auto const &acl = m_access_list[chain_id];
 
-        auto const& acl = m_access_list[chain_id];
-        for (auto const& item: acl) {
-            send_to(item.first, e);
+        if (!m_my_entry_tasks[chain_id].empty()) {
+            auto it = m_my_entry_tasks[chain_id].begin();
+            if (it->m_timestamp >= get_total_milliseconds() / 1000) {
+                std::set<peer_score> peer_set;
+                for (auto& item: acl) {
+                    peer_set.emplace(item.first, item.second.m_score);
+                }
+
+                int i = 0;
+                for (auto const& item: peer_set) {
+                    send_to(item.m_peer, it->m_entry);
+
+                    i++;
+                    if (i == x2_size) {
+                        break;
+                    }
+                }
+
+                m_my_entry_tasks[chain_id].erase(it);
+                is_send = true;
+            }
+        }
+
+        if (!is_send && !m_entry_tasks[chain_id].empty()) {
+            auto &e = m_entry_tasks[chain_id].front();
+
+            std::set<peer_score> peer_set;
+            for (auto& item: acl) {
+                peer_set.emplace(item.first, item.second.m_score);
+            }
+
+            int i = 0;
+            for (auto const& item: peer_set) {
+                send_to(item.m_peer, e);
+
+                i++;
+                if (i == x1_size) {
+                    break;
+                }
+            }
+
+            m_entry_tasks[chain_id].pop();
+            is_send = true;
+        }
+
+        if (!is_send){
+            entry e = select_signal_randomly(chain_id);
+
+            std::set<peer_score> peer_set;
+            for (auto& item: acl) {
+                peer_set.emplace(item.first, item.second.m_score);
+            }
+
+            int i = 0;
+            for (auto const& item: peer_set) {
+                send_to(item.m_peer, e);
+
+                i++;
+                if (i == x1_size) {
+                    break;
+                }
+            }
         }
     }
 
@@ -3095,13 +3175,29 @@ namespace libTAU::blockchain {
                                          get_total_milliseconds() / 1000, hash, m_head_blocks[chain_id].miner(),
                                          m_head_blocks[chain_id].cumulative_difficulty());
         auto e = signalEntry.get_entry();
-        auto& acl = m_access_list[chain_id];
-        for (auto& item: acl) {
-            log(LOG_INFO, "Chain[%s] Send peer[%s] new head block signal[%s]", aux::toHex(chain_id).c_str(),
-                aux::toHex(item.first.bytes).c_str(), e.to_string(true).c_str());
-            send_to(item.first, e);
 
-            item.second.m_last_sent = get_total_milliseconds();
+        if (m_head_blocks[chain_id].miner() == *m_ses.pubkey()) {
+            add_myself_entry_into_tasks(chain_id, e);
+
+            auto &acl = m_access_list[chain_id];
+            std::set<peer_score> peer_set;
+            for (auto &item: acl) {
+                peer_set.emplace(item.first, item.second.m_score);
+            }
+
+            int i = 0;
+            for (auto const &item: peer_set) {
+                log(LOG_INFO, "Chain[%s] Send peer[%s] new head block signal[%s]", aux::toHex(chain_id).c_str(),
+                    aux::toHex(item.m_peer.bytes).c_str(), e.to_string(true).c_str());
+                send_to(item.m_peer, e);
+
+                i++;
+                if (i == x2_size) {
+                    break;
+                }
+            }
+        } else {
+            m_entry_tasks[chain_id].push(e);
         }
     }
 
@@ -3112,14 +3208,27 @@ namespace libTAU::blockchain {
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id,
                                          get_total_milliseconds() / 1000, tx.sha1(), tx.sender(), tx.fee());
         auto e = signalEntry.get_entry();
-//        auto encode = signalEntry.get_encode();
-        auto& acl = m_access_list[chain_id];
-        std::set<dht::public_key> peers;
-        for (auto& item: acl) {
-            peers.insert(item.first);
 
-            item.second.m_last_sent = get_total_milliseconds();
+        add_myself_entry_into_tasks(chain_id, e);
+
+        std::set<dht::public_key> peers;
+
+        auto& acl = m_access_list[chain_id];
+        std::set<peer_score> peer_set;
+        for (auto& item: acl) {
+            peer_set.emplace(item.first, item.second.m_score);
         }
+
+        int i = 0;
+        for (auto const& item: peer_set) {
+            peers.insert(item.m_peer);
+
+            i++;
+            if (i == x2_size) {
+                break;
+            }
+        }
+
         if (tx.receiver() != *m_ses.pubkey()) {
             peers.insert(tx.receiver());
         }
@@ -3136,14 +3245,39 @@ namespace libTAU::blockchain {
 //            aux::toHex(peer.bytes).c_str());
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer);
         auto e = signalEntry.get_entry();
-        auto encode = signalEntry.get_encode();
-        auto& acl = m_access_list[chain_id];
-        for (auto& item: acl) {
-            log(LOG_INFO, "Chain[%s] Send peer[%s] new note tx signal[%s]", aux::toHex(chain_id).c_str(),
-                aux::toHex(item.first.bytes).c_str(), e.to_string(true).c_str());
-            send_to(item.first, e);
+        add_myself_entry_into_tasks(chain_id, e);
 
-            item.second.m_last_sent = get_total_milliseconds();
+        auto& acl = m_access_list[chain_id];
+        std::set<peer_score> peer_set;
+        for (auto& item: acl) {
+            peer_set.emplace(item.first, item.second.m_score);
+        }
+
+        int i = 0;
+        for (auto const& item: peer_set) {
+            log(LOG_INFO, "Chain[%s] Send peer[%s] new note tx signal[%s]", aux::toHex(chain_id).c_str(),
+                aux::toHex(item.m_peer.bytes).c_str(), e.to_string(true).c_str());
+            send_to(item.m_peer, e);
+
+            i++;
+            if (i == x2_size) {
+                break;
+            }
+        }
+    }
+
+    void blockchain::add_new_note_tx_signal_into_queue(const bytes &chain_id, const sha1_hash &hash,
+                                                       const dht::public_key &source_peer) {
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer);
+        auto e = signalEntry.get_entry();
+
+        m_entry_tasks[chain_id].push(e);
+    }
+
+    void blockchain::add_myself_entry_into_tasks(const bytes &chain_id, const entry& e) {
+        auto now = get_total_milliseconds() / 1000;
+        for (int i = 1; i < 10; i++) {
+            m_my_entry_tasks[chain_id].emplace(e, now + 30 * i);
         }
     }
 
@@ -3790,9 +3924,9 @@ namespace libTAU::blockchain {
                             auto &pool = m_tx_pools[chain_id];
 
                             if (pool.add_tx_to_time_pool(tx)) {
-                                if (times == 1) {
-                                    send_new_note_tx_signal(chain_id, tx.sha1(), tx.sender());
-                                }
+//                                if (times == 1) {
+                                    add_new_note_tx_signal_into_queue(chain_id, tx.sha1(), tx.sender());
+//                                }
                             }
 
                             if (times < 3 && !tx.previous_hash().is_all_zeros() && !m_tx_pools[chain_id].is_transaction_in_fee_pool(tx.previous_hash())) {

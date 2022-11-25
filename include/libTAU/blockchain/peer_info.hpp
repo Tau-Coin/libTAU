@@ -28,6 +28,36 @@ namespace libTAU::blockchain {
 //        NORMAL,
 //    };
 
+    struct peer_score {
+        peer_score() = default;
+
+        peer_score(const dht::public_key &mPeer, int mScore) : m_peer(mPeer), m_score(mScore) {}
+
+        bool operator<(const peer_score &rhs) const {
+            if (rhs.m_score < m_score)
+                return true;
+            if (m_score < rhs.m_score)
+                return false;
+            return m_peer < rhs.m_peer;
+        }
+
+        bool operator>(const peer_score &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const peer_score &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const peer_score &rhs) const {
+            return !(*this < rhs);
+        }
+
+        dht::public_key m_peer;
+
+        int m_score{};
+    };
+
     struct peer_info {
         peer_info() = default;
 
@@ -71,7 +101,7 @@ namespace libTAU::blockchain {
         // last seen time(s)
         std::int64_t m_last_seen = 0;
 
-        std::int64_t m_last_sent = 0;
+//        std::int64_t m_last_sent = 0;
 
 //        std::int64_t m_last_ping_time = 0;
 
