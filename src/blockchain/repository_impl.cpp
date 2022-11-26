@@ -281,13 +281,11 @@ namespace libTAU::blockchain {
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
             sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
                 int num = sqlite3_column_int(stmt, 0);
                 if (num > 0) {
                     ret = true;
                 }
-
-                break;
             }
         }
 
@@ -500,10 +498,9 @@ namespace libTAU::blockchain {
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
                 const char *pK = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 peer = dht::public_key(pK);
-                break;
             }
         }
 
@@ -584,15 +581,13 @@ namespace libTAU::blockchain {
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
                 auto tp = sqlite3_column_blob(stmt, 0);
                 auto length = sqlite3_column_bytes(stmt, 0);
                 if (length > 0) {
                     const char * p= static_cast<const char *>(tp);
                     ret = strlen(p);
                 }
-
-                break;
             }
         }
 
@@ -611,7 +606,7 @@ namespace libTAU::blockchain {
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
                 const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 auto length = sqlite3_column_bytes(stmt, 0);
                 aux::bytes chainID(p, p + length);
@@ -651,7 +646,6 @@ namespace libTAU::blockchain {
                 sha1_hash hash(p);
 
                 blk = block(chainID, version, timestamp, number, previous_hash, base_target, difficulty, generation_signature, state_root, tx, miner, sig, hash);
-                break;
             }
         }
 
@@ -671,7 +665,7 @@ namespace libTAU::blockchain {
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
             sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
                 const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 auto length = sqlite3_column_bytes(stmt, 0);
                 aux::bytes chainID(p, p + length);
@@ -708,7 +702,6 @@ namespace libTAU::blockchain {
                 dht::signature sig(p);
 
                 blk = block(chainID, version, timestamp, number, previous_hash, base_target, difficulty, generation_signature, state_root, tx, miner, sig, hash);
-                break;
             }
         }
 
@@ -833,7 +826,7 @@ namespace libTAU::blockchain {
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
             sqlite3_bind_int64(stmt, 1, block_number);
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
                 const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 auto length = sqlite3_column_bytes(stmt, 0);
                 aux::bytes chainID(p, p + length);
@@ -873,7 +866,6 @@ namespace libTAU::blockchain {
                 sha1_hash hash(p);
 
                 blk = block(chainID, version, timestamp, number, previous_hash, base_target, difficulty, generation_signature, state_root, tx, miner, sig, hash);
-                break;
             }
         }
 
@@ -1000,10 +992,9 @@ namespace libTAU::blockchain {
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok == SQLITE_OK) {
-            for (;sqlite3_step(stmt) == SQLITE_ROW;) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
                 const char *pK = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
                 peer = dht::public_key(pK);
-                break;
             }
         }
 
