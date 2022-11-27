@@ -734,7 +734,7 @@ namespace libTAU::blockchain {
             if (!m_pause && !m_tasks.empty()) {
                 if (now >= m_last_dht_time + blockchain_min_refresh_time) {
                     auto const &dhtItem = m_tasks.front();
-//                log(LOG_INFO, "INFO: DHT item[%s]", dhtItem.to_string().c_str());
+                    log(LOG_INFO, "INFO: DHT item[%s]", dhtItem.to_string().c_str());
                     switch (dhtItem.m_type) {
                         case dht_item_type::DHT_GET: {
 
