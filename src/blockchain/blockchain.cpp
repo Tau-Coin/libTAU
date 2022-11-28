@@ -1295,10 +1295,9 @@ namespace libTAU::blockchain {
             if (blk.previous_block_hash() == head_block.sha1()) {
                 std::set<dht::public_key> peers = blk.get_block_peers();
 
-                // TODO
-//                auto result = verify_block(chain_id, blk, head_block);
-//                if (result != SUCCESS)
-//                    return result;
+                auto result = verify_block(chain_id, blk, head_block);
+                if (result != SUCCESS)
+                    return result;
 
                 m_repository->begin_transaction();
 
@@ -1502,10 +1501,9 @@ namespace libTAU::blockchain {
             if (blk.previous_block_hash() == head_block.sha1()) {
                 std::set<dht::public_key> peers = blk.get_block_peers();
 
-                // TODO
-//                auto result = verify_block(chain_id, blk, head_block);
-//                if (result != SUCCESS)
-//                    return result;
+                auto result = verify_block(chain_id, blk, head_block);
+                if (result != SUCCESS)
+                    return result;
 
                 m_repository->begin_transaction();
 
@@ -2080,13 +2078,13 @@ namespace libTAU::blockchain {
             auto &previous_block = connect_blocks[i - 1];
 
 //            log("INFO: try to connect block:%s", blk.to_string().c_str());
-            // TODO
-//            auto result = verify_block(chain_id, blk, previous_block);
-//            if (result != SUCCESS) {
-//                log(LOG_ERR, "INFO: chain:%s, rollback data.", aux::toHex(chain_id).c_str());
-//                m_repository->rollback();
-//                return result;
-//            }
+
+            auto result = verify_block(chain_id, blk, previous_block);
+            if (result != SUCCESS) {
+                log(LOG_ERR, "INFO: chain:%s, rollback data.", aux::toHex(chain_id).c_str());
+                m_repository->rollback();
+                return result;
+            }
 
             auto block_peers = blk.get_block_peers();
             peers.insert(block_peers.begin(), block_peers.end());
