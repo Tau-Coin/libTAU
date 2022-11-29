@@ -1112,6 +1112,10 @@ namespace libTAU::blockchain {
                                                               last_time + block_same_account_min_interval - current_time);
                             log(LOG_INFO, "INFO: chain id[%s] left time[%" PRId64 "]s",
                                 aux::toHex(chain_id).c_str(), left_time);
+                            // set max mining checking time
+                            if (left_time >= 5) {
+                                left_time = 5;
+                            }
                             refresh_time = left_time * 1000;
                         }
                     } else {
