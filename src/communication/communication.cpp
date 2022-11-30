@@ -897,30 +897,30 @@ namespace libTAU {
                 } else {
                     log(LOG_INFO, "INFO: Fail to get item: type[%d], salt[%s]", type, aux::toHex(i.salt()).c_str());
 
-                    switch (type) {
-//                        case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH:
-                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE: {
-                            if (times == 1) {
-                                get_message(peer, sha1_hash(salt.data()), times + 1);
-                            }/* else if (times >= 2) {
-                                send_message_missing_signal(peer);
-                            }*/
-
-                            break;
-                        }
-                        case COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS: {
-                            if (times == 1) {
-                                get_confirmation_roots(peer, sha1_hash(salt.data()), times + 1);
-                            }
-                            break;
-                        }
-                        case COMMUNICATION_GET_ITEM_TYPE::USER_INFO: {
-                            break;
-                        }
-                        default: {
-                            log(LOG_DEBUG, "INFO: ignored type.");
-                        }
-                    }
+//                    switch (type) {
+////                        case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH:
+//                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE: {
+//                            if (times == 1) {
+//                                get_message(peer, sha1_hash(salt.data()), times + 1);
+//                            }/* else if (times >= 2) {
+//                                send_message_missing_signal(peer);
+//                            }*/
+//
+//                            break;
+//                        }
+//                        case COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS: {
+//                            if (times == 1) {
+//                                get_confirmation_roots(peer, sha1_hash(salt.data()), times + 1);
+//                            }
+//                            break;
+//                        }
+//                        case COMMUNICATION_GET_ITEM_TYPE::USER_INFO: {
+//                            break;
+//                        }
+//                        default: {
+//                            log(LOG_DEBUG, "INFO: ignored type.");
+//                        }
+//                    }
 
                 }
             } catch (std::exception &e) {
@@ -964,9 +964,23 @@ namespace libTAU {
 //            }
         }
 
+        void communication::on_dht_put_confirmation_roots(const dht::public_key &peer, const sha1_hash &hash, const dht::item &i, int n) {
+            log(LOG_INFO, "INFO: on_dht_put_confirmation_roots peer[%s], hash[%s], n[%d]",
+                aux::toHex(peer.bytes).c_str(), aux::toHex(hash.to_string()).c_str(), n);
+
+            if (n > 0) {
+                send_confirmation_signal(peer, hash);
+            }
+        }
+
         void communication::on_dht_put_message(dht::public_key const& peer, const sha1_hash &hash, const dht::item &i, int n) {
+            log(LOG_INFO, "INFO: on_dht_put_message peer[%s], hash[%s], n[%d]",
+                aux::toHex(peer.bytes).c_str(), aux::toHex(hash.to_string()).c_str(), n);
+
             if (n > 0) {
                 m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer, hash, get_current_time() / 1000);
+
+                send_new_message_signal(peer, hash);
             }
         }
 
@@ -1045,6 +1059,13 @@ namespace libTAU {
             if (!m_ses.dht()) return;
             log(LOG_INFO, "INFO: Publish salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
             m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_mutable_item, self(), _1, _2)
+                    , 1, 8, 16, salt);
+        }
+
+        void communication::publish_confirmation_roots(const dht::public_key &peer, const sha1_hash &hash, const std::string &salt, const entry &data) {
+            if (!m_ses.dht()) return;
+            log(LOG_INFO, "INFO: Publish confirmation roots salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
+            m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_confirmation_roots, self(), peer, hash, _1, _2)
                     , 1, 8, 16, salt);
         }
 
@@ -1159,7 +1180,7 @@ namespace libTAU {
 //            message_wrapper messageWrapper(last_message.sha1(), msg);
 //            put_message_wrapper(messageWrapper);
 //            put_new_message_hash(msg.receiver(), messageWrapper.sha1());
-            send_new_message_signal(msg.receiver(), msg.sha1());
+//            send_new_message_signal(msg.receiver(), msg.sha1());
         }
 
         void communication::get_confirmation_roots(const dht::public_key &peer, const sha1_hash &hash, int times) {
@@ -1191,9 +1212,10 @@ namespace libTAU {
 //            auto salt = hasher(data).final().to_string();
 
             log(LOG_INFO, "INFO: Put confirmation roots salt[%s]", aux::toHex(salt).c_str());
-            publish(salt, messageHashList.get_entry());
+//            publish(salt, messageHashList.get_entry());
+            publish_confirmation_roots(peer, hash, salt, messageHashList.get_entry());
 
-            send_confirmation_signal(peer, hash);
+//            send_confirmation_signal(peer, hash);
         }
 
 //        void communication::put_all_messages(const dht::public_key &peer) {

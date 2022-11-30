@@ -157,6 +157,8 @@ namespace libTAU {
 
             void publish(const std::string& salt, const entry& data);
 
+            void publish_confirmation_roots(dht::public_key const& peer, const sha1_hash &hash, const std::string& salt, const entry& data);
+
             void publish_message(dht::public_key const& peer, const sha1_hash &hash, const std::string& salt, const entry& data);
 
             // key length < 20 bytes
@@ -255,6 +257,8 @@ namespace libTAU {
 //            void send_all_unconfirmed_messages(dht::public_key const& peer);
 
             void on_dht_put_mutable_item(dht::item const& i, int n);
+
+            void on_dht_put_confirmation_roots(dht::public_key const& peer, const sha1_hash &hash, dht::item const& i, int n);
 
             void on_dht_put_message(dht::public_key const& peer, const sha1_hash &hash, dht::item const& i, int n);
 
