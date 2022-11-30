@@ -32,6 +32,8 @@ namespace libTAU::blockchain {
 
     constexpr int block_version2_time = 1667145600; // 2022-10-31
 
+    constexpr int MAX_TX_ENCODE_SIZE = 700; // 950 - 243 ~= 700 bytes
+
     // chain id
     // todo:validate
     constexpr int CHAIN_ID_MAX_LENGTH = 32;
