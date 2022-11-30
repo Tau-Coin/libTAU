@@ -28,8 +28,8 @@ namespace libTAU::common {
 
                     break;
                 }
-                case COMMUNICATION_MESSAGE_MISSING:
-                case COMMUNICATION_PUT_DONE:
+//                case COMMUNICATION_MESSAGE_MISSING:
+//                case COMMUNICATION_PUT_DONE:
                 case COMMUNICATION_ATTENTION: {
                     if (lst.size() == 2) {
                         // timestamp
@@ -125,8 +125,8 @@ namespace libTAU::common {
 
                 break;
             }
-            case COMMUNICATION_MESSAGE_MISSING:
-            case COMMUNICATION_PUT_DONE:
+//            case COMMUNICATION_MESSAGE_MISSING:
+//            case COMMUNICATION_PUT_DONE:
             case COMMUNICATION_ATTENTION: {
                 // protocol id:1 byte
                 auto pid = aux::intToLittleEndianString((int)m_pid);

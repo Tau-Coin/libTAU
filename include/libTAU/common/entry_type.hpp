@@ -35,12 +35,12 @@ namespace libTAU::common {
     const std::string entry_levenshtein_array = "l";
 
     enum signal_id {
-        COMMUNICATION_NEW_MESSAGE, // 0
+        COMMUNICATION_NEW_MESSAGE = 40, // 0
         COMMUNICATION_CONFIRMATION, // 1
-        COMMUNICATION_MESSAGE_MISSING, // 2
-        COMMUNICATION_PUT_DONE, // 3
-        COMMUNICATION_ATTENTION, // 4
-        BLOCKCHAIN_ONLINE = 10, // 0
+        COMMUNICATION_ATTENTION, // 3
+//        COMMUNICATION_MESSAGE_MISSING, // 4
+//        COMMUNICATION_PUT_DONE, // 5
+        BLOCKCHAIN_ONLINE, // 0
         BLOCKCHAIN_RECOMMEND, // 1
         BLOCKCHAIN_NEW_HEAD_BLOCK, // 2
         BLOCKCHAIN_NEW_TRANSFER_TX, // 3

@@ -242,25 +242,25 @@ namespace libTAU {
                         auto new_msg_hash = signalEntry.m_hash;
                         if (!new_msg_hash.is_all_zeros()) {
                             if (!m_message_db->is_message_in_db(new_msg_hash)) {
-                                get_message_wrapper(peer, new_msg_hash);
+                                get_message(peer, new_msg_hash);
                             }
                         }
 
 //                        get_new_message_hash(peer, signalEntry.m_timestamp - 3);
                         break;
                     }
-                    case common::COMMUNICATION_MESSAGE_MISSING: {
-                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
-
-                        put_all_messages(peer);
-                        break;
-                    }
-                    case common::COMMUNICATION_PUT_DONE: {
-                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
-
-                        get_new_message_hash(peer, signalEntry.m_timestamp - 3);
-                        break;
-                    }
+//                    case common::COMMUNICATION_MESSAGE_MISSING: {
+//                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
+//
+//                        put_all_messages(peer);
+//                        break;
+//                    }
+//                    case common::COMMUNICATION_PUT_DONE: {
+//                        m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
+//
+//                        get_new_message_hash(peer, signalEntry.m_timestamp - 3);
+//                        break;
+//                    }
                     case common::COMMUNICATION_CONFIRMATION: {
                         m_ses.alerts().emplace_alert<communication_last_seen_alert>(peer, signalEntry.m_timestamp);
 
@@ -302,7 +302,7 @@ namespace libTAU {
 
             log(LOG_INFO, "INFO: Get user info from peer[%s], salt:[%s]",
                 aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::USER_INFO, 0);
+            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::USER_INFO);
         }
 
 //        void communication::send_to_peer(const dht::public_key &peer, const aux::bytes& data) {
@@ -822,7 +822,7 @@ namespace libTAU {
 
         // callback for dht_mutable_get
         void communication::get_mutable_callback(dht::item const& i
-                , bool const authoritative, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp, int times)
+                , bool const authoritative, COMMUNICATION_GET_ITEM_TYPE type, int times)
         {
             TORRENT_ASSERT(i.is_mutable());
 
@@ -835,38 +835,38 @@ namespace libTAU {
                 const auto& salt = i.salt();
 //            GET_ITEM getItem(chain_id, peer, salt, type);
 
-                log(LOG_INFO, "=====INFO: Got callback[%s], type[%d], salt[%s], timestamp:%" PRId64,
-                    i.value().to_string(true).c_str(), type, aux::toHex(i.salt()).c_str(), timestamp);
+                log(LOG_INFO, "=====INFO: Got callback[%s], type[%d], salt[%s]",
+                    i.value().to_string(true).c_str(), type, aux::toHex(i.salt()).c_str());
 
                 if (!i.empty()) {
                     switch (type) {
-                        case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH: {
-                            sha1_hash new_msg_hash(i.value().string().c_str());
-                            log(LOG_INFO, "INFO: Got new message hash[%s]", aux::toHex(new_msg_hash).c_str());
-                            if (!new_msg_hash.is_all_zeros()) {
-                                if (!m_message_db->is_message_in_db(new_msg_hash)) {
-                                    get_message_wrapper(peer, new_msg_hash);
-                                }
-                            }
+//                        case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH: {
+//                            sha1_hash new_msg_hash(i.value().string().c_str());
+//                            log(LOG_INFO, "INFO: Got new message hash[%s]", aux::toHex(new_msg_hash).c_str());
+//                            if (!new_msg_hash.is_all_zeros()) {
+//                                if (!m_message_db->is_message_in_db(new_msg_hash)) {
+//                                    get_message_wrapper(peer, new_msg_hash);
+//                                }
+//                            }
+//
+//                            break;
+//                        }
+                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE: {
+                            message msg(i.value());
+                            if (!msg.empty()) {
+                                log(LOG_INFO, "INFO: Got new message [%s]", msg.to_string().c_str());
 
-                            break;
-                        }
-                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE_WRAPPER: {
-                            message_wrapper messageWrapper(i.value());
-                            if (!messageWrapper.empty()) {
-                                log(LOG_INFO, "INFO: Got new message [%s]", messageWrapper.msg().to_string().c_str());
+                                m_ses.alerts().emplace_alert<communication_new_message_alert>(msg);
 
-                                m_ses.alerts().emplace_alert<communication_new_message_alert>(messageWrapper.msg());
-
-                                if (!m_message_db->save_message_if_not_exist(messageWrapper.msg())) {
-                                    log(LOG_ERR, "INFO: Save message[%s] fail.", messageWrapper.msg().to_string().c_str());
+                                if (!m_message_db->save_message_if_not_exist(msg)) {
+                                    log(LOG_ERR, "INFO: Save message[%s] fail.", msg.to_string().c_str());
                                 }
 
                                 put_confirmation_roots(peer);
 
-                                if (times < 10 && !messageWrapper.previousHash().is_all_zeros() && !m_message_db->is_message_in_db(messageWrapper.previousHash())) {
-                                    get_message_wrapper(peer, messageWrapper.previousHash(), times + 1);
-                                }
+//                                if (times < 10 && !messageWrapper.previousHash().is_all_zeros() && !m_message_db->is_message_in_db(messageWrapper.previousHash())) {
+//                                    get_message_wrapper(peer, messageWrapper.previousHash(), times + 1);
+//                                }
                             }
 
                             break;
@@ -895,17 +895,16 @@ namespace libTAU {
                         }
                     }
                 } else {
-                    log(LOG_INFO, "INFO: Fail to get item: type[%d], salt[%s], timestamp:%" PRId64,
-                        type, aux::toHex(i.salt()).c_str(), timestamp);
+                    log(LOG_INFO, "INFO: Fail to get item: type[%d], salt[%s]", type, aux::toHex(i.salt()).c_str());
 
                     switch (type) {
-                        case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH:
-                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE_WRAPPER: {
+//                        case COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH:
+                        case COMMUNICATION_GET_ITEM_TYPE::MESSAGE: {
                             if (times == 1) {
-                                get_message_wrapper(peer, sha1_hash(salt.data()), times + 1);
-                            } else if (times >= 2) {
+                                get_message(peer, sha1_hash(salt.data()), times + 1);
+                            }/* else if (times >= 2) {
                                 send_message_missing_signal(peer);
-                            }
+                            }*/
 
                             break;
                         }
@@ -965,7 +964,7 @@ namespace libTAU {
 //            }
         }
 
-        void communication::on_dht_put_message_wrapper(dht::public_key const& peer, const sha1_hash &hash, const dht::item &i, int n) {
+        void communication::on_dht_put_message(dht::public_key const& peer, const sha1_hash &hash, const dht::item &i, int n) {
             if (n > 0) {
                 m_ses.alerts().emplace_alert<communication_message_arrived_alert>(peer, hash, get_current_time() / 1000);
             }
@@ -1049,16 +1048,16 @@ namespace libTAU {
                     , 1, 8, 16, salt);
         }
 
-        void communication::publish_message_wrapper(dht::public_key const& peer, const sha1_hash &hash, const std::string &salt, const entry &data) {
+        void communication::publish_message(dht::public_key const& peer, const sha1_hash &hash, const std::string &salt, const entry &data) {
             if (!m_ses.dht()) return;
-            log(LOG_INFO, "INFO: Publish message wrapper salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
-            m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_message_wrapper, self(), peer, hash, _1, _2)
+            log(LOG_INFO, "INFO: Publish message salt[%s], data[%s]", aux::toHex(salt).c_str(), data.to_string(true).c_str());
+            m_ses.dht()->put_item(data, std::bind(&communication::on_dht_put_message, self(), peer, hash, _1, _2)
                     , 1, 8, 16, salt);
         }
 
-        void communication::subscribe(const dht::public_key &peer, const std::string &salt, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp, int times) {
+        void communication::subscribe(const dht::public_key &peer, const std::string &salt, COMMUNICATION_GET_ITEM_TYPE type, int times) {
             if (!m_ses.dht()) return;
-            m_ses.dht()->get_item(peer, std::bind(&communication::get_mutable_callback, self(), _1, _2, type, timestamp, times), 1, 8, 16, salt, timestamp);
+            m_ses.dht()->get_item(peer, std::bind(&communication::get_mutable_callback, self(), _1, _2, type, times), 1, 8, 16, salt, 0);
         }
 
         void communication::send_to(const dht::public_key &peer, const entry &data) {
@@ -1076,21 +1075,21 @@ namespace libTAU {
             send_to(peer, e);
         }
 
-        void communication::send_message_missing_signal(const dht::public_key &peer) {
-            common::signal_entry signalEntry(common::COMMUNICATION_MESSAGE_MISSING, get_current_time() / 1000);
-            auto e = signalEntry.get_entry();
-            log(LOG_INFO, "Send peer[%s] message missing signal[%s]",
-                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
-            send_to(peer, e);
-        }
+//        void communication::send_message_missing_signal(const dht::public_key &peer) {
+//            common::signal_entry signalEntry(common::COMMUNICATION_MESSAGE_MISSING, get_current_time() / 1000);
+//            auto e = signalEntry.get_entry();
+//            log(LOG_INFO, "Send peer[%s] message missing signal[%s]",
+//                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+//            send_to(peer, e);
+//        }
 
-        void communication::send_put_done_signal(const dht::public_key &peer) {
-            common::signal_entry signalEntry(common::COMMUNICATION_PUT_DONE, get_current_time() / 1000);
-            auto e = signalEntry.get_entry();
-            log(LOG_INFO, "Send peer[%s] message put done signal[%s]",
-                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
-            send_to(peer, e);
-        }
+//        void communication::send_put_done_signal(const dht::public_key &peer) {
+//            common::signal_entry signalEntry(common::COMMUNICATION_PUT_DONE, get_current_time() / 1000);
+//            auto e = signalEntry.get_entry();
+//            log(LOG_INFO, "Send peer[%s] message put done signal[%s]",
+//                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+//            send_to(peer, e);
+//        }
 
         void communication::send_confirmation_signal(const dht::public_key &peer, const sha1_hash &hash) {
             common::signal_entry signalEntry(common::COMMUNICATION_CONFIRMATION, get_current_time() / 1000, hash);
@@ -1100,64 +1099,67 @@ namespace libTAU {
             send_to(peer, e);
         }
 
-        void communication::get_new_message_hash(const dht::public_key &peer, std::int64_t timestamp) {
-            // salt is x pubkey when request signal
-            auto pubKey = *m_ses.pubkey();
-            std::string data(pubKey.bytes.begin(), pubKey.bytes.end());
-            data.insert(data.end(), key_suffix_new_message_hash.begin(), key_suffix_new_message_hash.end());
-            auto salt = hasher(data).final().to_string();
-
-            log(LOG_INFO, "INFO: Get new message hash from peer[%s], salt:[%s]",
-                aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH, timestamp);
-        }
-
-        void communication::put_new_message_hash(const dht::public_key &peer, const sha1_hash &hash) {
-            if (!hash.is_all_zeros()) {
-                std::string data(peer.bytes.begin(), peer.bytes.end());
-                data.insert(data.end(), key_suffix_new_message_hash.begin(), key_suffix_new_message_hash.end());
-                auto salt = hasher(data).final().to_string();
-
-                log(LOG_INFO, "INFO: Put new message hash salt[%s]", aux::toHex(salt).c_str());
-                publish(salt, hash.to_string());
-            }
-        }
-
-        void communication::get_message_wrapper(const dht::public_key &peer, const sha1_hash &hash, int times) {
-            if (!hash.is_all_zeros()) {
-                auto salt = hash.to_string();
-
-                log(LOG_INFO, "INFO: Get message wrapper from peer[%s], salt:[%s]",
-                    aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-                subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::MESSAGE_WRAPPER, 0, times);
-            }
-        }
-
-        void communication::put_message_wrapper(const message_wrapper &messageWrapper) {
-            if (!messageWrapper.empty()) {
-                auto salt = messageWrapper.sha1().to_string();
-
-                log(LOG_INFO, "INFO: Put message wrapper salt[%s]", aux::toHex(salt).c_str());
-                publish_message_wrapper(messageWrapper.msg().receiver(), messageWrapper.msg().sha1(), salt, messageWrapper.get_entry());
-            }
-        }
-
-//        void communication::get_message(const dht::public_key &peer, const sha1_hash &hash) {
-//            if (!hash.is_all_zeros()) {
-//                auto salt = hash.to_string();
+//        void communication::get_new_message_hash(const dht::public_key &peer, std::int64_t timestamp) {
+//            // salt is x pubkey when request signal
+//            auto pubKey = *m_ses.pubkey();
+//            std::string data(pubKey.bytes.begin(), pubKey.bytes.end());
+//            data.insert(data.end(), key_suffix_new_message_hash.begin(), key_suffix_new_message_hash.end());
+//            auto salt = hasher(data).final().to_string();
 //
-//                log(LOG_INFO, "INFO: Get message from peer[%s], salt:[%s]",
-//                    aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
-//                subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::MESSAGE, 0);
+//            log(LOG_INFO, "INFO: Get new message hash from peer[%s], salt:[%s]",
+//                aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+//            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::NEW_MESSAGE_HASH, timestamp);
+//        }
+
+//        void communication::put_new_message_hash(const dht::public_key &peer, const sha1_hash &hash) {
+//            if (!hash.is_all_zeros()) {
+//                std::string data(peer.bytes.begin(), peer.bytes.end());
+//                data.insert(data.end(), key_suffix_new_message_hash.begin(), key_suffix_new_message_hash.end());
+//                auto salt = hasher(data).final().to_string();
+//
+//                log(LOG_INFO, "INFO: Put new message hash salt[%s]", aux::toHex(salt).c_str());
+//                publish(salt, hash.to_string());
 //            }
 //        }
 
+//        void communication::get_message_wrapper(const dht::public_key &peer, const sha1_hash &hash, int times) {
+//            if (!hash.is_all_zeros()) {
+//                auto salt = hash.to_string();
+//
+//                log(LOG_INFO, "INFO: Get message wrapper from peer[%s], salt:[%s]",
+//                    aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+//                subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::MESSAGE_WRAPPER, 0, times);
+//            }
+//        }
+
+//        void communication::put_message_wrapper(const message_wrapper &messageWrapper) {
+//            if (!messageWrapper.empty()) {
+//                auto salt = messageWrapper.sha1().to_string();
+//
+//                log(LOG_INFO, "INFO: Put message wrapper salt[%s]", aux::toHex(salt).c_str());
+//                publish_message(messageWrapper.msg().receiver(), messageWrapper.msg().sha1(), salt,
+//                                messageWrapper.get_entry());
+//            }
+//        }
+
+        void communication::get_message(const dht::public_key &peer, const sha1_hash &hash, int times) {
+            if (!hash.is_all_zeros()) {
+                auto salt = hash.to_string();
+
+                log(LOG_INFO, "INFO: Get message from peer[%s], salt:[%s]",
+                    aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+                subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::MESSAGE, times);
+            }
+        }
+
         void communication::put_new_message(const message &msg) {
-            auto last_message = m_message_db->get_latest_transaction(msg.sender(), msg.receiver());
-            message_wrapper messageWrapper(last_message.sha1(), msg);
-            put_message_wrapper(messageWrapper);
-            put_new_message_hash(msg.receiver(), messageWrapper.sha1());
-            send_new_message_signal(msg.receiver(), messageWrapper.sha1());
+            publish_message(msg.receiver(), msg.sha1(), msg.sha1().to_string(), msg.get_entry());
+
+//            auto last_message = m_message_db->get_latest_transaction(msg.sender(), msg.receiver());
+//            message_wrapper messageWrapper(last_message.sha1(), msg);
+//            put_message_wrapper(messageWrapper);
+//            put_new_message_hash(msg.receiver(), messageWrapper.sha1());
+            send_new_message_signal(msg.receiver(), msg.sha1());
         }
 
         void communication::get_confirmation_roots(const dht::public_key &peer, const sha1_hash &hash, int times) {
@@ -1170,7 +1172,7 @@ namespace libTAU {
 
             log(LOG_INFO, "INFO: Get confirmation roots from peer[%s], salt:[%s], times[%d]",
                 aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
-            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS, 0, times);
+            subscribe(peer, salt, COMMUNICATION_GET_ITEM_TYPE::CONFIRMATION_ROOTS, times);
         }
 
         void communication::put_confirmation_roots(const dht::public_key &peer) {
@@ -1194,27 +1196,27 @@ namespace libTAU {
             send_confirmation_signal(peer, hash);
         }
 
-        void communication::put_all_messages(const dht::public_key &peer) {
-            auto now = get_current_time();
-            if (now < m_all_messages_last_put_time[peer] + communication_min_put_interval) {
-                log(LOG_INFO, "Peer[%s] Already put it", aux::toHex(peer.bytes).c_str());
-                return;
-            }
-            m_all_messages_last_put_time[peer] = now;
-
-            auto messages = m_message_db->get_latest_ten_transactions(*m_ses.pubkey(), peer);
-            message_wrapper lastMessageWrapper;
-            message_wrapper messageWrapper;
-            for (auto const& msg: messages) {
-                messageWrapper = message_wrapper(lastMessageWrapper.sha1(), msg);
-                put_message_wrapper(messageWrapper);
-
-                lastMessageWrapper = messageWrapper;
-            }
-            put_new_message_hash(peer, messageWrapper.sha1());
-
-            send_put_done_signal(peer);
-        }
+//        void communication::put_all_messages(const dht::public_key &peer) {
+//            auto now = get_current_time();
+//            if (now < m_all_messages_last_put_time[peer] + communication_min_put_interval) {
+//                log(LOG_INFO, "Peer[%s] Already put it", aux::toHex(peer.bytes).c_str());
+//                return;
+//            }
+//            m_all_messages_last_put_time[peer] = now;
+//
+//            auto messages = m_message_db->get_latest_ten_transactions(*m_ses.pubkey(), peer);
+//            message_wrapper lastMessageWrapper;
+//            message_wrapper messageWrapper;
+//            for (auto const& msg: messages) {
+//                messageWrapper = message_wrapper(lastMessageWrapper.sha1(), msg);
+//                put_message_wrapper(messageWrapper);
+//
+//                lastMessageWrapper = messageWrapper;
+//            }
+//            put_new_message_hash(peer, messageWrapper.sha1());
+//
+//            send_put_done_signal(peer);
+//        }
 
 //        void communication::dht_put_immutable_item(entry const& data, std::vector<dht::node_entry> const& eps, sha256_hash target)
 //        {

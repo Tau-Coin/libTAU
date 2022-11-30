@@ -51,8 +51,8 @@ namespace libTAU {
 //        const std::string key_suffix_confirmation_roots = "confirmation_roots";
 
         enum COMMUNICATION_GET_ITEM_TYPE {
-            NEW_MESSAGE_HASH,
-            MESSAGE_WRAPPER,
+//            NEW_MESSAGE_HASH,
+            MESSAGE,
             CONFIRMATION_ROOTS,
             USER_INFO,
         };
@@ -157,10 +157,10 @@ namespace libTAU {
 
             void publish(const std::string& salt, const entry& data);
 
-            void publish_message_wrapper(dht::public_key const& peer, const sha1_hash &hash, const std::string& salt, const entry& data);
+            void publish_message(dht::public_key const& peer, const sha1_hash &hash, const std::string& salt, const entry& data);
 
             // key length < 20 bytes
-            void subscribe(const dht::public_key &peer, const std::string& salt, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp = 0, int times = 1);
+            void subscribe(const dht::public_key &peer, const std::string& salt, COMMUNICATION_GET_ITEM_TYPE type, int times = 1);
 
             // send data to peer
             void send_to(const dht::public_key &peer, entry const& data);
@@ -169,23 +169,23 @@ namespace libTAU {
             void send_new_message_signal(const dht::public_key &peer, const sha1_hash &hash);
 
             // send message missing signal
-            void send_message_missing_signal(const dht::public_key &peer);
+//            void send_message_missing_signal(const dht::public_key &peer);
 
             // send message put done signal
-            void send_put_done_signal(const dht::public_key &peer);
+//            void send_put_done_signal(const dht::public_key &peer);
 
             // send message put done signal
             void send_confirmation_signal(const dht::public_key &peer, const sha1_hash &hash);
 
-            void get_new_message_hash(const dht::public_key &peer, std::int64_t timestamp);
+//            void get_new_message_hash(const dht::public_key &peer, std::int64_t timestamp);
 
-            void put_new_message_hash(const dht::public_key &peer, const sha1_hash &hash);
+//            void put_new_message_hash(const dht::public_key &peer, const sha1_hash &hash);
 
-            void get_message_wrapper(const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+//            void get_message_wrapper(const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 
-            void put_message_wrapper(const message_wrapper &messageWrapper);
+//            void put_message_wrapper(const message_wrapper &messageWrapper);
 
-//            void get_message(const dht::public_key &peer, const sha1_hash &hash);
+            void get_message(const dht::public_key &peer, const sha1_hash &hash, int times = 1);
 
             // put message
             void put_new_message(const message& msg);
@@ -194,7 +194,7 @@ namespace libTAU {
 
             void put_confirmation_roots(const dht::public_key &peer);
 
-            void put_all_messages(const dht::public_key &peer);
+//            void put_all_messages(const dht::public_key &peer);
 
             // save the latest message hash list in database
             // @param peer is Y public key
@@ -226,7 +226,7 @@ namespace libTAU {
 //                    , dht::item const& i);
 
             // mutable data callback
-            void get_mutable_callback(dht::item const& i, bool, COMMUNICATION_GET_ITEM_TYPE type, std::int64_t timestamp = 0, int times = 1);
+            void get_mutable_callback(dht::item const& i, bool, COMMUNICATION_GET_ITEM_TYPE type, int times = 1);
 
             // get immutable item from dht
 //            void dht_get_immutable_item(const dht::public_key &peer, sha256_hash const& target, std::vector<dht::node_entry> const& eps);
@@ -256,7 +256,7 @@ namespace libTAU {
 
             void on_dht_put_mutable_item(dht::item const& i, int n);
 
-            void on_dht_put_message_wrapper(dht::public_key const& peer, const sha1_hash &hash, dht::item const& i, int n);
+            void on_dht_put_message(dht::public_key const& peer, const sha1_hash &hash, dht::item const& i, int n);
 
             void on_dht_relay_mutable_item(entry const& payload, std::vector<std::pair<dht::node_entry, bool>> const& nodes, dht::public_key const& peer);
 
@@ -282,7 +282,7 @@ namespace libTAU {
             // all friends
             std::vector<dht::public_key> m_friends;
 
-            std::map<dht::public_key, std::int64_t> m_all_messages_last_put_time;
+//            std::map<dht::public_key, std::int64_t> m_all_messages_last_put_time;
 
             // message wrapper
 //            std::map<dht::public_key, message_wrapper> m_message_wrapper;
