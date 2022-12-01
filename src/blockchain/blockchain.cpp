@@ -4297,6 +4297,7 @@ namespace libTAU::blockchain {
 
     bool blockchain::touch_chain(const bytes &chain_id) {
         // update time(s)
+        log(LOG_INFO, "INFO: touch chain:%s", aux::toHex(chain_id).c_str());
         auto now = get_total_milliseconds() / 1000;
         m_touching_time[chain_id] = now;
         return m_repository->update_touching_time(chain_id, now);
