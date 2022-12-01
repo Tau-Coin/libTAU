@@ -487,6 +487,12 @@ namespace libTAU {
 		return sync_call_ret<bool>(&session_impl::connect_chain, chain_id);
 	}
 
+	// touch chain
+    bool session_handle::touch_chain(std::vector<char> chain_id)
+	{
+		return sync_call_ret<bool>(&session_impl::touch_chain, chain_id);
+	}
+
 	// get current time
 	std::int64_t session_handle::get_session_time()
 	{

@@ -3536,6 +3536,13 @@ namespace {
         return false;
 	}
 
+	bool session_impl::touch_chain(const aux::bytes &chain_id) {
+		if(m_blockchain) {
+			return m_blockchain->touch_chain(chain_id);
+		}
+		return false;
+	}
+
 	void session_impl::set_priority_chain(const aux::bytes &chain_id) {
         /*
 		if(m_blockchain) {

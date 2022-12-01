@@ -405,6 +405,9 @@ namespace libTAU {
 		// connect chain
         bool connect_chain(std::vector<char> chain_id);
 
+		// touch chain
+        bool touch_chain(std::vector<char> chain_id);
+
 		// un-focus on chain
         void unset_priority_chain();
 

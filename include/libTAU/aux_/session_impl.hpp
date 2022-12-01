@@ -714,6 +714,7 @@ namespace aux {
         	void put_all_chain_data(const aux::bytes &chain_id);
         	bool send_online_signal(const aux::bytes &chain_id);
         	bool connect_chain(const aux::bytes &chain_id);
+        	bool touch_chain(const aux::bytes &chain_id);
             void get_all_chains(std::set<std::vector<char>>* cids);
 
 			std::int64_t session_current_time_ms() const
