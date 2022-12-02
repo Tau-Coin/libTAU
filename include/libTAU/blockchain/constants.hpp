@@ -34,6 +34,8 @@ namespace libTAU::blockchain {
 
     constexpr int MAX_TX_ENCODE_SIZE = 700; // 950 - 243 ~= 700 bytes
 
+    constexpr int MAX_OVERDRAFT = 100;
+
     // chain id
     // todo:validate
     constexpr int CHAIN_ID_MAX_LENGTH = 32;
