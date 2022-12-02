@@ -1277,11 +1277,33 @@ namespace libTAU::blockchain {
         }
 
         if (!tx.empty() && tx.type() == tx_type::type_transfer) {
-            auto sender_act = m_repository->get_account(chain_id, b.tx().sender());
-            if (sender_act.balance() < tx.cost()) {
-                log(LOG_ERR, "INFO chain[%s] sender account[%s] cannot cover cost:%" PRId64,
-                    aux::toHex(chain_id).c_str(), sender_act.to_string().c_str(), tx.cost());
+            if (tx.amount() < 0) {
+                log(LOG_ERR, "INFO chain[%s] invalid amount:%" PRId64,
+                    aux::toHex(chain_id).c_str(), tx.amount());
                 return FAIL;
+            }
+
+            auto sender_act = m_repository->get_account(chain_id, b.tx().sender());
+            if (sender_act.nonce() + 1 != tx.nonce()) {
+                log(LOG_ERR, "INFO chain[%s] invalid nonce:%" PRId64,
+                    aux::toHex(chain_id).c_str(), tx.nonce());
+                return FAIL;
+            }
+
+            if (tx.amount() != 0) {
+                // transfer tx
+                if (sender_act.balance() < tx.cost()) {
+                    log(LOG_ERR, "INFO chain[%s] sender account[%s] cannot cover cost:%" PRId64,
+                        aux::toHex(chain_id).c_str(), sender_act.to_string().c_str(), tx.cost());
+                    return FAIL;
+                }
+            } else {
+                // news tx
+                if (sender_act.balance() + MAX_OVERDRAFT < tx.fee()) {
+                    log(LOG_ERR, "INFO chain[%s] sender account[%s] cannot cover fee:%" PRId64,
+                        aux::toHex(chain_id).c_str(), sender_act.to_string().c_str(), tx.fee());
+                    return FAIL;
+                }
             }
         }
 

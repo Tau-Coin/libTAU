@@ -154,8 +154,18 @@ namespace libTAU::blockchain {
         // validate tx state
         auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
 //        if (tx.type() == tx_type::type_transfer) {
-            if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost())
+            if (sender_account.nonce() + 1 != tx.nonce())
                 return false;
+
+            if (tx.amount() != 0) {
+                // transfer tx
+                if (sender_account.balance() < tx.cost())
+                    return false;
+            } else {
+                // news tx
+                if (sender_account.balance() + MAX_OVERDRAFT < tx.fee())
+                    return false;
+            }
 //        } else if (tx.type() == tx_type::type_note) {
 //            if (tx.timestamp() <= sender_account.note_timestamp() || sender_account.balance() < tx.cost())
 //                return false;
@@ -483,7 +493,22 @@ namespace libTAU::blockchain {
                 auto tx = it->second;
                 // validate tx state
                 auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
-                if (sender_account.nonce() + 1 != tx.nonce() || sender_account.balance() < tx.cost()) {
+                bool valid = true;
+                if (sender_account.nonce() + 1 != tx.nonce()) {
+                    valid = false;
+                }
+
+                if (tx.amount() != 0) {
+                    // transfer tx
+                    if (sender_account.balance() < tx.cost())
+                        valid = false;
+                } else {
+                    // news tx
+                    if (sender_account.balance() + MAX_OVERDRAFT < tx.fee())
+                        valid = false;
+                }
+
+                if (!valid) {
                     m_ordered_txs_by_fee.erase(tx_entry_with_fee(tx.sha1(), tx.fee()));
                     m_all_txs_by_fee.erase(it);
                     m_account_tx_by_fee.erase(it_txid);
