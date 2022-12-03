@@ -484,28 +484,39 @@ namespace libTAU::blockchain {
 //            i->second.async_wait(std::bind(&blockchain::refresh_chain_status, self(), _1, chain_id));
 //        }
 
-            // create getting timer
-            m_getting_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
+            m_chain_stop[chain_id] = false;
+
             // start mining
             auto it_getting = m_getting_timers.find(chain_id);
+            if (it_getting == m_getting_timers.end()) {
+                // create getting timer
+                m_getting_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
+                it_getting = m_getting_timers.find(chain_id);
+            }
             if (it_getting != m_getting_timers.end()) {
                 it_getting->second.expires_after(milliseconds(10));
                 it_getting->second.async_wait(std::bind(&blockchain::refresh_getting, self(), _1, chain_id));
             }
 
-            // create acl timer
-            m_acl_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
             // start mining
             auto it_acl = m_acl_timers.find(chain_id);
+            if (it_acl == m_acl_timers.end()) {
+                // create acl timer
+                m_acl_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
+                it_acl = m_acl_timers.find(chain_id);
+            }
             if (it_acl != m_acl_timers.end()) {
                 it_acl->second.expires_after(milliseconds(10));
                 it_acl->second.async_wait(std::bind(&blockchain::refresh_acl, self(), _1, chain_id));
             }
 
-            // create chain timer
-            m_chain_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
             // start mining
             auto it = m_chain_timers.find(chain_id);
+            if (it == m_chain_timers.end()) {
+                // create chain timer
+                m_chain_timers.emplace(chain_id, aux::deadline_timer(m_ioc));
+                it = m_chain_timers.find(chain_id);
+            }
             if (it != m_chain_timers.end()) {
                 it->second.expires_after(milliseconds(150));
                 it->second.async_wait(std::bind(&blockchain::refresh_mining_timeout, self(), _1, chain_id));
@@ -816,7 +827,7 @@ namespace libTAU::blockchain {
 //    }
 
     void blockchain::refresh_getting(const error_code &e, const bytes &chain_id) {
-        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) {
+        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop || m_chain_stop[chain_id]) {
             log(LOG_ERR, "ERROR: refresh_getting:%d", e.value());
             return;
         }
@@ -864,7 +875,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::refresh_acl(const error_code &e, const bytes &chain_id) {
-        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) {
+        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop || m_chain_stop[chain_id]) {
             log(LOG_ERR, "ERROR: refresh_acl:%d", e.value());
             return;
         }
@@ -991,7 +1002,7 @@ namespace libTAU::blockchain {
                 log(LOG_INFO, "Now is paused.");
             }
 
-            log(LOG_INFO, "refresh acl time:%d ", m_acl_refresh_time);
+            log(LOG_INFO, "chain[%s] refresh acl time:%d ", aux::toHex(chain_id).c_str(), m_acl_refresh_time);
             auto it = m_acl_timers.find(chain_id);
             if (it != m_acl_timers.end()) {
                 it->second.expires_after(milliseconds(m_acl_refresh_time));
@@ -1003,7 +1014,7 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::refresh_mining_timeout(const error_code &e, const aux::bytes &chain_id) {
-        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop) {
+        if ((e.value() != 0 && e.value() != boost::asio::error::operation_aborted) || m_stop || m_chain_stop[chain_id]) {
             log(LOG_ERR, "ERROR: refresh_mining_timeout:%d", e.value());
             return;
         }
@@ -1121,6 +1132,23 @@ namespace libTAU::blockchain {
                     } else {
                         if (m_chain_getting_times[chain_id] >= blockchain_max_getting_times) {
                             m_ses.alerts().emplace_alert<blockchain_fail_to_get_chain_data_alert>(chain_id);
+
+                            m_chain_getting_times[chain_id] = 0;
+                            m_chain_connected[chain_id] = false;
+                            m_chain_stop[chain_id] = true;
+
+                            // start mining
+                            auto it_getting = m_getting_timers.find(chain_id);
+                            if (it_getting != m_getting_timers.end()) {
+                                it_getting->second.cancel();
+                            }
+
+                            // start mining
+                            auto it_acl = m_acl_timers.find(chain_id);
+                            if (it_acl != m_acl_timers.end()) {
+                                it_acl->second.cancel();
+                            }
+
                             return;
                         }
 

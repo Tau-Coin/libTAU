@@ -852,6 +852,9 @@ namespace blockchain {
         // chain connected flag
         std::map<aux::bytes, bool> m_chain_connected;
 
+        // chain stop flag
+        std::map<aux::bytes, bool> m_chain_stop;
+
         std::map<aux::bytes, std::int64_t> m_touching_time;
 
         std::map<aux::bytes, std::int64_t> m_last_discovery_time;
