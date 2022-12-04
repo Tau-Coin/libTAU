@@ -133,90 +133,77 @@ namespace libTAU::blockchain {
     void transaction::populate(const entry &e) {
         auto const& lst = e.list();
 
-        if (lst.size() == 7) {
+        if (lst.size() > 2) {
             // type
             int type = aux::intFromLittleEndianString(lst[2].string());
             m_type = static_cast<tx_type>(type);
-            if (m_type != tx_type::type_note)
-                return;
 
-            // chain id
-            auto chain_id = lst[0].string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-            // version
-            int version = aux::intFromLittleEndianString(lst[1].string());
-            m_version = static_cast<tx_version>(version);
-            if (m_version != tx_version_1)
-                return;
+            if (m_type == tx_type::type_transfer && lst.size() == 11) {
+                // chain id
+                auto chain_id = lst[0].string();
+                m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+                // version
+                int version = aux::intFromLittleEndianString(lst[1].string());
+                m_version = static_cast<tx_version>(version);
+                // balance
+                m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
+                // sender
+                m_sender = dht::public_key(lst[4].string().data());
+                // receiver
+                m_receiver = dht::public_key(lst[5].string().data());
+                // nonce
+                m_nonce = aux::int64FromLittleEndianString(lst[6].string());
+                // fee
+                m_fee = aux::int64FromLittleEndianString(lst[7].string());
+                // amount
+                m_amount = aux::int64FromLittleEndianString(lst[8].string());
+                // payload
+                auto payload = lst[9].string();
+                m_payload = aux::bytes(payload.begin(), payload.end());
+                // signature
+                m_signature = dht::signature(lst[10].string().data());
+            } else if (m_type == tx_type::type_note) {
+                if (lst.size() == 7) {
+                    // chain id
+                    auto chain_id = lst[0].string();
+                    m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+                    // version
+                    int version = aux::intFromLittleEndianString(lst[1].string());
+                    m_version = static_cast<tx_version>(version);
+                    if (m_version != tx_version_1)
+                        return;
 
-            // balance
-            m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
-            // sender
-            m_sender = dht::public_key(lst[4].string().data());
-            // payload
-            auto payload = lst[5].string();
-            m_payload = aux::bytes(payload.begin(), payload.end());
-            // signature
-            m_signature = dht::signature(lst[6].string().data());
-        }
-
-        if (lst.size() == 8) {
-            // type
-            int type = aux::intFromLittleEndianString(lst[2].string());
-            m_type = static_cast<tx_type>(type);
-            if (m_type != tx_type::type_note)
-                return;
-
-            // chain id
-            auto chain_id = lst[0].string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-            // version
-            int version = aux::intFromLittleEndianString(lst[1].string());
-            m_version = static_cast<tx_version>(version);
-            if (m_version == tx_version_1)
-                return;
-            // balance
-            m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
-            // sender
-            m_sender = dht::public_key(lst[4].string().data());
-            // previous hash
-            m_previous_hash = sha1_hash(lst[5].string().data());
-            // payload
-            auto payload = lst[6].string();
-            m_payload = aux::bytes(payload.begin(), payload.end());
-            // signature
-            m_signature = dht::signature(lst[7].string().data());
-        }
-
-        if (lst.size() == 11) {
-            int type = aux::intFromLittleEndianString(lst[2].string());
-            m_type = static_cast<tx_type>(type);
-            if (m_type != tx_type::type_transfer)
-                return;
-
-            // chain id
-            auto chain_id = lst[0].string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-            // version
-            int version = aux::intFromLittleEndianString(lst[1].string());
-            m_version = static_cast<tx_version>(version);
-            // balance
-            m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
-            // sender
-            m_sender = dht::public_key(lst[4].string().data());
-            // receiver
-            m_receiver = dht::public_key(lst[5].string().data());
-            // nonce
-            m_nonce = aux::int64FromLittleEndianString(lst[6].string());
-            // fee
-            m_fee = aux::int64FromLittleEndianString(lst[7].string());
-            // amount
-            m_amount = aux::int64FromLittleEndianString(lst[8].string());
-            // payload
-            auto payload = lst[9].string();
-            m_payload = aux::bytes(payload.begin(), payload.end());
-            // signature
-            m_signature = dht::signature(lst[10].string().data());
+                    // balance
+                    m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
+                    // sender
+                    m_sender = dht::public_key(lst[4].string().data());
+                    // payload
+                    auto payload = lst[5].string();
+                    m_payload = aux::bytes(payload.begin(), payload.end());
+                    // signature
+                    m_signature = dht::signature(lst[6].string().data());
+                } else if (lst.size() == 8) {
+                    // chain id
+                    auto chain_id = lst[0].string();
+                    m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+                    // version
+                    int version = aux::intFromLittleEndianString(lst[1].string());
+                    m_version = static_cast<tx_version>(version);
+                    if (m_version == tx_version_1)
+                        return;
+                    // balance
+                    m_timestamp = aux::int64FromLittleEndianString(lst[3].string());
+                    // sender
+                    m_sender = dht::public_key(lst[4].string().data());
+                    // previous hash
+                    m_previous_hash = sha1_hash(lst[5].string().data());
+                    // payload
+                    auto payload = lst[6].string();
+                    m_payload = aux::bytes(payload.begin(), payload.end());
+                    // signature
+                    m_signature = dht::signature(lst[7].string().data());
+                }
+            }
         }
     }
 
