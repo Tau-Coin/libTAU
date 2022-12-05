@@ -40,7 +40,7 @@ namespace blockchain {
         explicit block(const entry& e);
 
         // @param Construct with bencode
-        explicit block(std::string encode): block(bdecode(encode)) {}
+        explicit block(const std::string& encode): block(bdecode(encode)) {}
 
         block(aux::bytes mChainId, block_version mVersion, int64_t mTimestamp, int64_t mBlockNumber,
               const sha1_hash &mPreviousBlockHash, uint64_t mBaseTarget, uint64_t mCumulativeDifficulty,
@@ -155,7 +155,7 @@ namespace blockchain {
         void populate(const entry& e);
 
         // chain id
-        aux::bytes m_chain_id;
+        aux::bytes m_chain_id{};
 
         // block version
         block_version m_version = block_version_2;

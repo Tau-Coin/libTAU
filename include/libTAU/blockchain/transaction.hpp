@@ -43,7 +43,7 @@ namespace blockchain {
         explicit transaction(const entry& e);
 
         // @param Construct with bencode
-        explicit transaction(std::string encode): transaction(bdecode(encode)) {}
+        explicit transaction(const std::string& encode): transaction(bdecode(encode)) {}
 
         static transaction create_transfer_transaction(aux::bytes& mChainId, tx_version mVersion, int64_t mTimestamp,
                                                        const dht::public_key &mSender, const dht::public_key &mReceiver,
@@ -150,7 +150,7 @@ namespace blockchain {
         void populate(const entry& e);
 
         // chain id
-        aux::bytes m_chain_id;
+        aux::bytes m_chain_id{};
 
         // version
         tx_version m_version = tx_version_2;
@@ -180,7 +180,7 @@ namespace blockchain {
         sha1_hash m_previous_hash;
 
         // payload
-        aux::bytes m_payload;
+        aux::bytes m_payload{};
 
         // signature
         dht::signature m_signature{};
