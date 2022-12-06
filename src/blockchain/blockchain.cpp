@@ -857,6 +857,8 @@ namespace libTAU::blockchain {
                     auto const& best_tx_info = m_best_tx_info[chain_id];
                     if (!best_tx_info.m_hash.is_all_zeros()) {
                         get_transfer_transaction(chain_id, best_tx_info.m_peer, best_tx_info.m_hash);
+
+                        m_best_tx_info.erase(chain_id);
                     }
                 }
             } else {
@@ -2818,21 +2820,21 @@ namespace libTAU::blockchain {
         }
 
         index = rand() % 4;
-        // 3/10 send note tx
         if (index < 2) {
-            auto tx = m_tx_pools[chain_id].get_note_transaction_randomly();
+            // 3/10 send transfer tx
+            auto tx = m_tx_pools[chain_id].get_best_fee_transaction();
             if (!tx.empty()) {
-                common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id,
-                                                 now / 1000, tx.sha1(), tx.sender());
+                common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id,
+                                                 now / 1000, tx.sha1(), tx.sender(), tx.fee());
                 return signalEntry.get_entry();
             }
         }
 
-        // 3/10 send transfer tx
-        auto const& best_tx_info = m_best_tx_info[chain_id];
-        if (best_tx_info.m_fee > 0) {
-            common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id,
-                                             now / 1000, best_tx_info.m_hash, best_tx_info.m_peer, best_tx_info.m_fee);
+        // 3/10 send note tx
+        auto tx = m_tx_pools[chain_id].get_note_transaction_randomly();
+        if (!tx.empty()) {
+            common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id,
+                                             now / 1000, tx.sha1(), tx.sender());
             return signalEntry.get_entry();
         }
 
