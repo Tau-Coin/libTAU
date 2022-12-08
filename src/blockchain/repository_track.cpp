@@ -262,6 +262,42 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    bool repository_track::create_tx_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::delete_tx_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::save_tx(const aux::bytes &chain_id, const transaction &tx) {
+        return false;
+    }
+
+    bool repository_track::is_tx_in_tx_db(const aux::bytes &chain_id, const sha1_hash &hash) {
+        return false;
+    }
+
+    transaction repository_track::get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+        return transaction();
+    }
+
+    bool repository_track::create_news_tx_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::delete_news_tx_db(const aux::bytes &chain_id) {
+        return false;
+    }
+
+    bool repository_track::save_news_tx(const aux::bytes &chain_id, const transaction &tx) {
+        return false;
+    }
+
+    std::vector<transaction> repository_track::get_latest_news_txs(const aux::bytes &chain_id) {
+        return std::vector<transaction>();
+    }
+
 //    bool repository_track::create_peer_db(const aux::bytes &chain_id) {
 //        return false;
 //    }

@@ -58,7 +58,21 @@ namespace libTAU::blockchain {
     }
 
     std::string repository::community_info_db_name() {
-        return "t" + community_info_list;
+        return "t" + table_community_info_list;
+    }
+
+    std::string repository::txs_db_name(const aux::bytes &chain_id) {
+        // prevent SQL injection
+        sha1_hash hash = hasher(chain_id).final();
+        // 't' + hex(sha1(chain id))
+        return "t" + aux::toHex(hash) + table_txs;
+    }
+
+    std::string repository::news_txs_db_name(const aux::bytes &chain_id) {
+        // prevent SQL injection
+        sha1_hash hash = hasher(chain_id).final();
+        // 't' + hex(sha1(chain id))
+        return "t" + aux::toHex(hash) + table_news_txs;
     }
 
 //    bool repository::save_main_chain_block(const block &blk) {

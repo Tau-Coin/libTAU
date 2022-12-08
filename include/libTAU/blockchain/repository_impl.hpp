@@ -147,6 +147,24 @@ namespace libTAU::blockchain {
 
         bool delete_touching_time(const aux::bytes &chain_id) override;
 
+        bool create_tx_db(const aux::bytes &chain_id) override;
+
+        bool delete_tx_db(const aux::bytes &chain_id) override;
+
+        bool save_tx(const aux::bytes &chain_id, const transaction &tx) override;
+
+        bool is_tx_in_tx_db(const aux::bytes &chain_id, const sha1_hash &hash) override;
+
+        transaction get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
+
+        bool create_news_tx_db(const aux::bytes &chain_id) override;
+
+        bool delete_news_tx_db(const aux::bytes &chain_id) override;
+
+        bool save_news_tx(const aux::bytes &chain_id, const transaction &tx) override;
+
+        std::vector<transaction> get_latest_news_txs(const aux::bytes &chain_id) override;
+
 
 
 

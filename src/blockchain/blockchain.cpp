@@ -295,6 +295,14 @@ namespace libTAU::blockchain {
 //                log(LOG_ERR, "INFO: chain:%s, delete online list db fail.", aux::toHex(chain_id).c_str());
 //                return false;
 //            }
+            if (!m_repository->delete_tx_db(chain_id)) {
+                log(LOG_ERR, "INFO: chain:%s, delete tx db fail.", aux::toHex(chain_id).c_str());
+                return false;
+            }
+            if (!m_repository->delete_news_tx_db(chain_id)) {
+                log(LOG_ERR, "INFO: chain:%s, delete news tx db fail.", aux::toHex(chain_id).c_str());
+                return false;
+            }
 
             // cancel
             auto it_getting_timer = m_getting_timers.find(chain_id);
@@ -451,6 +459,14 @@ namespace libTAU::blockchain {
 //            log(LOG_ERR, "INFO: chain:[%s] create online peer db fail.", aux::toHex(chain_id).c_str());
 //            return false;
 //        }
+        if (!m_repository->create_tx_db(chain_id)) {
+            log(LOG_ERR, "INFO: chain:%s, create tx db fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
+        if (!m_repository->create_news_tx_db(chain_id)) {
+            log(LOG_ERR, "INFO: chain:%s, create news tx db fail.", aux::toHex(chain_id).c_str());
+            return false;
+        }
 
         // load key point block in memory
         // load head/tail/consensus block
