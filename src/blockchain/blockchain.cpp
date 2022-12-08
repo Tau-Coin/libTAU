@@ -151,12 +151,12 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::set_foreground_mode() {
-        m_is_background = false;
+    void blockchain::set_high_frequency_mode() {
+        m_is_low_frequency = false;
     }
 
-    void blockchain::set_background_mode() {
-        m_is_background = true;
+    void blockchain::set_low_frequency_mode() {
+        m_is_low_frequency = true;
     }
 
     bool blockchain::create_chain_db(const bytes &chain_id) {
@@ -965,7 +965,7 @@ namespace libTAU::blockchain {
                             interval = 240;
                         }
                     }
-                    if (!m_is_background) {
+                    if (!m_is_low_frequency) {
                         interval /= 6;
                     }
                     if (now / 1000 >= m_last_discovery_time[chain_id] + interval) {

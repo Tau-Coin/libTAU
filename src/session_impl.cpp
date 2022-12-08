@@ -3063,7 +3063,7 @@ namespace {
 	{
 		if(m_blockchain)
 		{
-			m_blockchain->set_foreground_mode();
+            m_blockchain->set_high_frequency_mode();
 		}
 
 	}
@@ -3072,7 +3072,7 @@ namespace {
 	{
 		if(m_blockchain)
 		{
-			m_blockchain->set_background_mode();
+            m_blockchain->set_low_frequency_mode();
 		}
 
 	}

@@ -477,9 +477,9 @@ namespace blockchain {
 
         void on_resume();
 
-        void set_foreground_mode();
+        void set_high_frequency_mode();
 
-        void set_background_mode();
+        void set_low_frequency_mode();
 
 
     private:
@@ -869,7 +869,7 @@ namespace blockchain {
         std::map<aux::bytes, std::set<entry_time>> m_my_entry_tasks;
         std::map<aux::bytes, std::queue<entry>> m_entry_tasks;
 
-        bool m_is_background = false;
+        bool m_is_low_frequency = false;
 
 //        std::map<aux::bytes, CHAIN_STATUS> m_chain_status;
 
