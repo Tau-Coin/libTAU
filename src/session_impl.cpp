@@ -3098,7 +3098,7 @@ namespace {
 		}
 
 		// reset dht keep interval to start dht 'keep' protocol
-		m_settings.set_int(settings_pack::dht_keep_interval, 20);
+		m_settings.set_int(settings_pack::dht_keep_interval, 2);
     }
 
 	void session_impl::start_communication()
