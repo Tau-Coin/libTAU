@@ -432,7 +432,7 @@ namespace aux {
 
             void set_high_frequency_mode();
 
-            void set_high_frequency_mode();
+            void set_low_frequency_mode();
 
             void pause_service();
 

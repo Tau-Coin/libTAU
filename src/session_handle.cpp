@@ -512,15 +512,15 @@ namespace libTAU {
 	}
 
 	// set foreground mode
-	void session_handle::set_foreground_mode()
+	void session_handle::set_high_frequency_mode()
 	{
-		return sync_call(&session_impl::set_foreground_mode);
+		return sync_call(&session_impl::set_high_frequency_mode);
 	}
 
 	// set background mode
-	void session_handle::set_background_mode()
+	void session_handle::set_low_frequency_mode()
 	{
-		return sync_call(&session_impl::set_background_mode);
+		return sync_call(&session_impl::set_low_frequency_mode);
 	}
 
 	// pause service
