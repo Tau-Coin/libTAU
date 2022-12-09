@@ -85,7 +85,8 @@ namespace libTAU::common {
 
                     break;
                 }
-                case BLOCKCHAIN_NEW_NOTE_TX: {
+                case BLOCKCHAIN_NEW_NOTE_TX:
+                case BLOCKCHAIN_NEW_NEWS_TX: {
                     if (lst.size() == 5) {
                         // timestamp
                         auto timestamp = lst[1].string();
@@ -195,7 +196,8 @@ namespace libTAU::common {
 
                 break;
             }
-            case BLOCKCHAIN_NEW_NOTE_TX: {
+            case BLOCKCHAIN_NEW_NOTE_TX:
+            case BLOCKCHAIN_NEW_NEWS_TX: {
                 // protocol id:1 byte
                 auto pid = aux::intToLittleEndianString((int)m_pid);
                 lst.push_back(pid);

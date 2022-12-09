@@ -1827,10 +1827,6 @@ namespace libTAU::blockchain {
         return 0;
     }
 
-    bool blockchain::is_transaction_in_pool(const bytes &chain_id, const sha1_hash &txid) {
-        return m_tx_pools[chain_id].is_transaction_in_pool(txid);
-    }
-
 //    bool blockchain::is_block_immutable_certainly(const aux::bytes &chain_id, const block &blk) {
 //        if (blk.block_number() <= 0) {
 //            return true;
@@ -2835,9 +2831,9 @@ namespace libTAU::blockchain {
             }
         }
 
-        index = rand() % 4;
+        index = rand() % 6;
         if (index < 2) {
-            // 3/10 send transfer tx
+            // 2/10 send transfer tx
             auto tx = m_tx_pools[chain_id].get_best_fee_transaction();
             if (!tx.empty()) {
                 common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id,
@@ -2846,7 +2842,18 @@ namespace libTAU::blockchain {
             }
         }
 
-        // 3/10 send note tx
+        index = rand() % 4;
+        if (index < 2) {
+            // 2/10 send news tx
+            auto tx = m_tx_pools[chain_id].get_news_transaction_randomly();
+            if (!tx.empty()) {
+                common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NEWS_TX, chain_id,
+                                                 now / 1000, tx.sha1(), tx.sender(), tx.fee());
+                return signalEntry.get_entry();
+            }
+        }
+
+        // 2/10 send note tx
         auto tx = m_tx_pools[chain_id].get_note_transaction_randomly();
         if (!tx.empty()) {
             common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id,
@@ -3336,9 +3343,42 @@ namespace libTAU::blockchain {
         }
     }
 
+    void blockchain::send_new_news_tx_signal(const bytes &chain_id, const sha1_hash &hash,
+                                             const dht::public_key &source_peer) {
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NEWS_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer);
+        auto e = signalEntry.get_entry();
+        add_myself_entry_into_tasks(chain_id, e);
+
+        auto& acl = m_access_list[chain_id];
+        std::set<peer_score> peer_set;
+        for (auto& item: acl) {
+            peer_set.emplace(item.first, item.second.m_score);
+        }
+
+        int i = 0;
+        for (auto const& item: peer_set) {
+            log(LOG_INFO, "Chain[%s] Send peer[%s] new news tx signal[%s]", aux::toHex(chain_id).c_str(),
+                aux::toHex(item.m_peer.bytes).c_str(), e.to_string(true).c_str());
+            send_to(item.m_peer, e);
+
+            i++;
+            if (i == x2_size) {
+                break;
+            }
+        }
+    }
+
     void blockchain::add_new_note_tx_signal_into_queue(const bytes &chain_id, const sha1_hash &hash,
                                                        const dht::public_key &source_peer) {
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer);
+        auto e = signalEntry.get_entry();
+
+        m_entry_tasks[chain_id].push(e);
+    }
+
+    void blockchain::add_new_news_tx_signal_into_queue(const bytes &chain_id, const sha1_hash &hash,
+                                                       const dht::public_key &source_peer) {
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NEWS_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer);
         auto e = signalEntry.get_entry();
 
         m_entry_tasks[chain_id].push(e);
@@ -3670,6 +3710,25 @@ namespace libTAU::blockchain {
             auto salt = make_salt(tx.sha1());
 
             log(LOG_INFO, "INFO: Chain id[%s] Put note tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            publish_transaction(chain_id, tx.sha1(), salt, tx.get_entry());
+        }
+    }
+
+    void blockchain::get_news_transaction(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, int times) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Get news tx from chain[%s] peer[%s], salt:[%s], times[%d]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::NEWS_TX, 0, times);
+    }
+
+    void blockchain::put_news_transaction(const bytes &chain_id, const transaction &tx) {
+        if (!tx.empty()) {
+            // salt is y pubkey when publish signal
+            auto salt = make_salt(tx.sha1());
+
+            log(LOG_INFO, "INFO: Chain id[%s] Put news tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish_transaction(chain_id, tx.sha1(), salt, tx.get_entry());
         }
     }
@@ -4021,6 +4080,18 @@ namespace libTAU::blockchain {
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
 
                             auto &pool = m_tx_pools[chain_id];
+
+                            if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+                                if (!m_repository->save_news_tx(chain_id, tx)) {
+                                    log(LOG_ERR, "INFO: chain:%s, save news tx[%s] fail.",
+                                        aux::toHex(chain_id).c_str(), tx.to_string().c_str());
+                                }
+
+                                if (pool.add_tx_to_news_pool(tx)) {
+                                    add_new_news_tx_signal_into_queue(chain_id, tx.sha1(), tx.sender());
+                                }
+                            }
+
                             if (pool.add_tx_to_fee_pool(tx)) {
 //                                auto self_tx = pool.get_transaction_by_account(*m_ses.pubkey());
 //                                auto best_tx = pool.get_best_fee_transaction();
@@ -4028,6 +4099,34 @@ namespace libTAU::blockchain {
 //                                    // transfer tx only when self tx is not in pool and this tx is not the best
 //                                    put_transfer_transaction(chain_id, tx);
 //                                }
+                            }
+                        }
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::NEWS_TX: {
+                        transaction tx(i.value());
+
+                        if (!tx.empty() && tx.verify_signature()) {
+
+                            log(LOG_INFO, "INFO: Got news transaction[%s].", tx.to_string().c_str());
+
+                            m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
+
+                            if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+                                if (!m_repository->save_news_tx(chain_id, tx)) {
+                                    log(LOG_ERR, "INFO: chain:%s, save news tx[%s] fail.",
+                                        aux::toHex(chain_id).c_str(), tx.to_string().c_str());
+                                }
+                            }
+
+                            auto &pool = m_tx_pools[chain_id];
+                            if (pool.add_tx_to_news_pool(tx)) {
+                                add_new_news_tx_signal_into_queue(chain_id, tx.sha1(), tx.sender());
+                            }
+
+                            if (tx.type() == tx_type::type_transfer) {
+                                pool.add_tx_to_fee_pool(tx);
                             }
                         }
 
@@ -4148,6 +4247,12 @@ namespace libTAU::blockchain {
                     case GET_ITEM_TYPE::NOTE_TX: {
                         if (times == 1) {
                             get_note_transaction(chain_id, peer, sha1_hash(salt.data()), times + 1);
+                        }
+                        break;
+                    }
+                    case GET_ITEM_TYPE::NEWS_TX: {
+                        if (times == 1) {
+                            get_news_transaction(chain_id, peer, sha1_hash(salt.data()), times + 1);
                         }
                         break;
                     }
@@ -4404,7 +4509,13 @@ namespace libTAU::blockchain {
                 m_tx_pools[chain_id].add_tx(tx);
 
                 if (tx.type() == tx_type::type_transfer) {
-                    put_transfer_transaction(chain_id, tx);
+                    if (tx.amount() == 0) {
+                        put_news_transaction(chain_id, tx);
+
+                        send_new_news_tx_signal(chain_id, tx.sha1(), tx.sender());
+                    } else {
+                        put_transfer_transaction(chain_id, tx);
+                    }
                 } else if (tx.type() == tx_type::type_note) {
 //                    put_note_transaction(chain_id, tx);
                     put_note_transaction(chain_id, tx);
@@ -4981,6 +5092,24 @@ namespace libTAU::blockchain {
 
                     if (!m_repository->is_tx_in_tx_db(chain_id, signalEntry.m_hash)) {
                         get_note_transaction(chain_id, signalEntry.m_peer, signalEntry.m_hash);
+                    }
+//                    auto note_pool_root = signalEntry.m_hash;
+//                    if (!note_pool_root.is_all_zeros()) {
+//                        get_note_pool_hash_set(chain_id, peer, note_pool_root);
+//                    }
+
+//                    get_new_note_tx_hash(chain_id, peer, signalEntry.m_timestamp - 3);
+                    break;
+                }
+                case common::BLOCKCHAIN_NEW_NEWS_TX: {
+                    signal_received_from_peer(chain_id, peer);
+//                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
+//                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+//                        update_peer_time(chain_id, signalEntry.m_gossip_peer, 1);
+//                    }
+
+                    if (!m_repository->is_tx_in_tx_db(chain_id, signalEntry.m_hash)) {
+                        get_news_transaction(chain_id, signalEntry.m_peer, signalEntry.m_hash);
                     }
 //                    auto note_pool_root = signalEntry.m_hash;
 //                    if (!note_pool_root.is_all_zeros()) {

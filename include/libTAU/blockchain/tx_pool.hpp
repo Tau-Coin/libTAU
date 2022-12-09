@@ -47,6 +47,8 @@ namespace libTAU::blockchain {
 
         transaction get_note_transaction_randomly() const;
 
+        transaction get_news_transaction_randomly() const;
+
         aux::bytes get_hash_prefix_array_by_fee() const;
 
         std::vector<transaction> get_top_ten_fee_transactions();
@@ -83,7 +85,9 @@ namespace libTAU::blockchain {
 
         std::int64_t get_min_allowed_fee();
 
-        std::int64_t get_oldest_allowed_timestamp();
+        std::int64_t get_time_pool_oldest_allowed_timestamp();
+
+        std::int64_t get_news_pool_oldest_allowed_timestamp();
 
         void clear();
 
@@ -99,11 +103,15 @@ namespace libTAU::blockchain {
 
         bool add_tx_to_time_pool(const transaction& tx);
 
+        bool add_tx_to_news_pool(const transaction& tx);
+
     private:
 
         void remove_min_fee_tx();
 
-        void remove_oldest_tx();
+        void remove_time_pool_oldest_tx();
+
+        void remove_news_pool_oldest_tx();
 
         // blockchain db
         repository* m_repository{};
@@ -125,6 +133,15 @@ namespace libTAU::blockchain {
 
         // account tx
         std::map<dht::public_key, std::set<sha1_hash>> m_account_tx_by_timestamp;
+
+        // tx set
+        std::map<sha1_hash, transaction> m_all_news_txs;
+
+        // ordered by timestamp
+        std::set<tx_entry_with_timestamp> m_ordered_news_txs;
+
+        // account tx
+        std::map<dht::public_key, std::set<sha1_hash>> m_account_news_tx;
     };
 }
 

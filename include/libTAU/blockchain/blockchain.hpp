@@ -102,6 +102,7 @@ namespace blockchain {
 //        NOTE_POOL_HASH_SET,
         NOTE_TX,
         TRANSFER_TX,
+        NEWS_TX,
         LEVEL_0_STATE_HASH_ARRAY,
         LEVEL_1_STATE_HASH_ARRAY,
         STATE_ARRAY,
@@ -560,9 +561,6 @@ namespace blockchain {
 
         std::int64_t get_peer_last_block_time(const aux::bytes &chain_id, const dht::public_key& peer, const block &head_block);
 
-        // check if tx is in pool
-        bool is_transaction_in_pool(const aux::bytes &chain_id, const sha1_hash &txid);
-
         // check if a block immutable certainly
 //        bool is_block_immutable_certainly(const aux::bytes &chain_id, const block &blk);
 
@@ -668,7 +666,11 @@ namespace blockchain {
 
         void send_new_note_tx_signal(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
 
+        void send_new_news_tx_signal(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
+
         void add_new_note_tx_signal_into_queue(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
+
+        void add_new_news_tx_signal_into_queue(const aux::bytes &chain_id, const sha1_hash &hash, const dht::public_key& source_peer);
 
         void add_myself_entry_into_tasks(const aux::bytes &chain_id, const entry& e);
 
@@ -727,6 +729,10 @@ namespace blockchain {
         void get_note_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 
         void put_note_transaction(const aux::bytes &chain_id, const transaction &tx);
+
+        void get_news_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+
+        void put_news_transaction(const aux::bytes &chain_id, const transaction &tx);
 
         void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 

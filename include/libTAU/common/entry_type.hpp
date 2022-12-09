@@ -35,7 +35,7 @@ namespace libTAU::common {
     const std::string entry_levenshtein_array = "l";
 
     enum signal_id {
-        COMMUNICATION_NEW_MESSAGE = 40, // 0
+        COMMUNICATION_NEW_MESSAGE = 60, // 0
         COMMUNICATION_CONFIRMATION, // 1
         COMMUNICATION_ATTENTION, // 3
 //        COMMUNICATION_MESSAGE_MISSING, // 4
@@ -45,6 +45,7 @@ namespace libTAU::common {
         BLOCKCHAIN_NEW_HEAD_BLOCK, // 2
         BLOCKCHAIN_NEW_TRANSFER_TX, // 3
         BLOCKCHAIN_NEW_NOTE_TX, // 4
+        BLOCKCHAIN_NEW_NEWS_TX, // 5
     };
 
     struct TORRENT_EXPORT signal_entry {

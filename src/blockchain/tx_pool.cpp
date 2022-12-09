@@ -55,6 +55,21 @@ namespace libTAU::blockchain {
         return transaction();
     }
 
+    transaction tx_pool::get_news_transaction_randomly() const {
+        if (!m_all_news_txs.empty()) {
+            std::default_random_engine e;
+            auto index = e() % m_all_news_txs.size();
+            int i = 0;
+            for (const auto & it : m_all_news_txs) {
+                if (i == index) {
+                    return it.second;
+                }
+                i++;
+            }
+        }
+        return transaction();
+    }
+
     aux::bytes tx_pool::get_hash_prefix_array_by_fee() const {
         libTAU::aux::bytes hash_prefix_array;
         int count = 0;
@@ -207,7 +222,7 @@ namespace libTAU::blockchain {
             return false;
         }
 
-        if (tx.timestamp() <= get_oldest_allowed_timestamp())
+        if (tx.timestamp() <= get_time_pool_oldest_allowed_timestamp())
             return false;
 
         auto it_account_txid_set = m_account_tx_by_timestamp.find(tx.sender());
@@ -247,7 +262,58 @@ namespace libTAU::blockchain {
         m_ordered_txs_by_timestamp.insert(tx_entry_with_timestamp(tx.sha1(), tx.timestamp()));
 
         if (m_all_txs_by_timestamp.size() > tx_pool_max_size_by_timestamp) {
-            remove_oldest_tx();
+            remove_time_pool_oldest_tx();
+        }
+
+        return true;
+    }
+
+    bool tx_pool::add_tx_to_news_pool(const transaction &tx) {
+        if (tx.timestamp() > total_milliseconds(std::chrono::system_clock::now().time_since_epoch()) + tx_max_acceptable_time) {
+            return false;
+        }
+
+        if (tx.timestamp() <= get_news_pool_oldest_allowed_timestamp())
+            return false;
+
+        auto it_account_txid_set = m_account_news_tx.find(tx.sender());
+        // find in local
+        if (it_account_txid_set != m_account_news_tx.end() &&
+            it_account_txid_set->second.size() >= time_pool_max_size_of_same_account) { // has in local
+            auto it_oldest_txid = it_account_txid_set->second.begin();
+            auto it_oldest_tx = m_all_news_txs.find(*it_oldest_txid);
+            if (it_oldest_tx != m_all_news_txs.end()) {
+                auto oldest_tx = it_oldest_tx->second;
+
+                // find oldest tx
+                for (auto const& txid: it_account_txid_set->second) {
+                    auto it_tx = m_all_news_txs.find(txid);
+                    if (it_tx != m_all_news_txs.end()) {
+                        if (it_tx->second.timestamp() < oldest_tx.timestamp()) {
+                            oldest_tx = it_tx->second;
+                        }
+                    }
+                }
+
+                // remove oldest tx
+                if (tx.timestamp() > oldest_tx.timestamp()) {
+                    // remove oldest tx
+                    m_all_news_txs.erase(oldest_tx.sha1());
+                    it_account_txid_set->second.erase(oldest_tx.sha1());
+                    m_ordered_news_txs.erase(tx_entry_with_timestamp(oldest_tx.sha1(), oldest_tx.timestamp()));
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        // insert new tx
+        m_all_news_txs[tx.sha1()] = tx;
+        m_account_news_tx[tx.sender()].insert(tx.sha1());
+        m_ordered_news_txs.insert(tx_entry_with_timestamp(tx.sha1(), tx.timestamp()));
+
+        if (m_all_news_txs.size() > tx_pool_max_size_by_timestamp) {
+            remove_news_pool_oldest_tx();
         }
 
         return true;
@@ -261,6 +327,10 @@ namespace libTAU::blockchain {
             return false;
 
         if (tx.type() == tx_type::type_transfer) {
+            if (tx.amount() == 0) {
+                add_tx_to_news_pool(tx);
+            }
+
             return add_tx_to_fee_pool(tx);
         } else if (tx.type() == tx_type::type_note) {
             return add_tx_to_time_pool(tx);
@@ -350,7 +420,7 @@ namespace libTAU::blockchain {
         m_ordered_txs_by_fee.erase(it);
     }
 
-    void tx_pool::remove_oldest_tx() {
+    void tx_pool::remove_time_pool_oldest_tx() {
         auto it = m_ordered_txs_by_timestamp.begin();
         auto it_tx = m_all_txs_by_timestamp.find(it->txid());
         if (it_tx != m_all_txs_by_timestamp.end()) {
@@ -362,6 +432,20 @@ namespace libTAU::blockchain {
             }
         }
         m_ordered_txs_by_timestamp.erase(it);
+    }
+
+    void tx_pool::remove_news_pool_oldest_tx() {
+        auto it = m_ordered_news_txs.begin();
+        auto it_tx = m_all_news_txs.find(it->txid());
+        if (it_tx != m_all_news_txs.end()) {
+            m_all_news_txs.erase(it_tx);
+
+            m_account_news_tx[it_tx->second.sender()].erase(it_tx->first);
+            if (m_account_news_tx[it_tx->second.sender()].empty()) {
+                m_account_news_tx.erase(it_tx->second.sender());
+            }
+        }
+        m_ordered_news_txs.erase(it);
     }
 
     transaction tx_pool::get_transaction_by_account(const dht::public_key& pubKey) const {
@@ -459,10 +543,21 @@ namespace libTAU::blockchain {
         return 0;
     }
 
-    std::int64_t tx_pool::get_oldest_allowed_timestamp() {
+    std::int64_t tx_pool::get_time_pool_oldest_allowed_timestamp() {
         if (m_ordered_txs_by_timestamp.size() >= tx_pool_max_size_by_timestamp) {
             auto it = m_ordered_txs_by_timestamp.begin();
             if (it != m_ordered_txs_by_timestamp.end()) {
+                return it->timestamp();
+            }
+        }
+
+        return 0;
+    }
+
+    std::int64_t tx_pool::get_news_pool_oldest_allowed_timestamp() {
+        if (m_ordered_news_txs.size() >= tx_pool_max_size_by_timestamp) {
+            auto it = m_ordered_news_txs.begin();
+            if (it != m_ordered_news_txs.end()) {
                 return it->timestamp();
             }
         }
@@ -477,6 +572,9 @@ namespace libTAU::blockchain {
         m_all_txs_by_timestamp.clear();
         m_ordered_txs_by_timestamp.clear();
         m_account_tx_by_timestamp.clear();
+        m_all_news_txs.clear();
+        m_ordered_news_txs.clear();
+        m_account_news_tx.clear();
     }
 
     void tx_pool::clear_fee_pool() {
