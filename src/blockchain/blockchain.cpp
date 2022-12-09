@@ -3655,21 +3655,21 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::get_transaction(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, int times) {
+    void blockchain::get_note_transaction(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, int times) {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);
 
-        log(LOG_INFO, "INFO: Get tx from chain[%s] peer[%s], salt:[%s], times[%d]", aux::toHex(chain_id).c_str(),
+        log(LOG_INFO, "INFO: Get note tx from chain[%s] peer[%s], salt:[%s], times[%d]", aux::toHex(chain_id).c_str(),
             aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::NOTE_TX, 0, times);
     }
 
-    void blockchain::put_transaction(const bytes &chain_id, const transaction &tx) {
+    void blockchain::put_note_transaction(const bytes &chain_id, const transaction &tx) {
         if (!tx.empty()) {
             // salt is y pubkey when publish signal
             auto salt = make_salt(tx.sha1());
 
-            log(LOG_INFO, "INFO: Chain id[%s] Put tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(LOG_INFO, "INFO: Chain id[%s] Put note tx salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish_transaction(chain_id, tx.sha1(), salt, tx.get_entry());
         }
     }
@@ -3991,6 +3991,11 @@ namespace libTAU::blockchain {
 
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
 
+                            if (!m_repository->save_tx(chain_id, tx)) {
+                                log(LOG_ERR, "INFO: chain:%s, save note tx[%s] fail.",
+                                    aux::toHex(chain_id).c_str(), tx.to_string().c_str());
+                            }
+
                             auto &pool = m_tx_pools[chain_id];
 
                             if (pool.add_tx_to_time_pool(tx)) {
@@ -3999,8 +4004,8 @@ namespace libTAU::blockchain {
 //                                }
                             }
 
-                            if (times < 3 && !tx.previous_hash().is_all_zeros() && !m_tx_pools[chain_id].is_transaction_in_fee_pool(tx.previous_hash())) {
-                                get_transaction(chain_id, peer, tx.previous_hash(), times + 1);
+                            if (times < 10 && !tx.previous_hash().is_all_zeros() && !m_repository->is_tx_in_tx_db(chain_id, tx.previous_hash())) {
+                                get_note_transaction(chain_id, peer, tx.previous_hash(), times + 1);
                             }
                         }
 
@@ -4142,7 +4147,7 @@ namespace libTAU::blockchain {
                     }
                     case GET_ITEM_TYPE::NOTE_TX: {
                         if (times == 1) {
-                            get_transaction(chain_id, peer, sha1_hash(salt.data()), times + 1);
+                            get_note_transaction(chain_id, peer, sha1_hash(salt.data()), times + 1);
                         }
                         break;
                     }
@@ -4402,7 +4407,7 @@ namespace libTAU::blockchain {
                     put_transfer_transaction(chain_id, tx);
                 } else if (tx.type() == tx_type::type_note) {
 //                    put_note_transaction(chain_id, tx);
-                    put_transaction(chain_id, tx);
+                    put_note_transaction(chain_id, tx);
 
 //                    if (!tx.previous_hash().is_all_zeros()) {
 //                        auto previous_tx = m_tx_pools[chain_id].get_transaction_by_txid(tx.previous_hash());
@@ -4974,8 +4979,8 @@ namespace libTAU::blockchain {
 //                        update_peer_time(chain_id, signalEntry.m_gossip_peer, 1);
 //                    }
 
-                    if (!m_tx_pools[chain_id].is_transaction_in_time_pool(signalEntry.m_hash)) {
-                        get_transaction(chain_id, signalEntry.m_peer, signalEntry.m_hash);
+                    if (!m_repository->is_tx_in_tx_db(chain_id, signalEntry.m_hash)) {
+                        get_note_transaction(chain_id, signalEntry.m_peer, signalEntry.m_hash);
                     }
 //                    auto note_pool_root = signalEntry.m_hash;
 //                    if (!note_pool_root.is_all_zeros()) {

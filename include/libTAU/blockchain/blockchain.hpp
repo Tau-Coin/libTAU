@@ -724,9 +724,9 @@ namespace blockchain {
 
 //        void put_transaction_wrapper(const aux::bytes &chain_id, const transaction_wrapper &txWrapper);
 
-        void get_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
+        void get_note_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 
-        void put_transaction(const aux::bytes &chain_id, const transaction &tx);
+        void put_note_transaction(const aux::bytes &chain_id, const transaction &tx);
 
         void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash);
 
