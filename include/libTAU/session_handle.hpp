@@ -436,9 +436,9 @@ namespace libTAU {
 
         void restart_service();
 
-        void set_foreground_mode();
+        void set_high_frequency_mode();
 
-        void set_background_mode();
+        void set_low_frequency_mode();
 
         void pause_service();
 

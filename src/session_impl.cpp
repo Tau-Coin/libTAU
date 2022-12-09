@@ -3059,22 +3059,26 @@ namespace {
         // TODO: coe to control timer interval when in 'doze' model
     }
 
-	void session_impl::set_foreground_mode()
+	void session_impl::set_high_frequency_mode()
 	{
 		if(m_blockchain)
 		{
             m_blockchain->set_high_frequency_mode();
 		}
 
+		// reset dht keep interval to start dht 'keep' protocol
+		m_settings.set_int(settings_pack::dht_keep_interval, 2);
 	}
 
-	void session_impl::set_background_mode()
+	void session_impl::set_low_frequency_mode()
 	{
 		if(m_blockchain)
 		{
             m_blockchain->set_low_frequency_mode();
 		}
 
+		// set dht keep interval to stop dht 'keep' protocol
+		m_settings.set_int(settings_pack::dht_keep_interval, 3600);
 	}
 
     void session_impl::pause_service()
