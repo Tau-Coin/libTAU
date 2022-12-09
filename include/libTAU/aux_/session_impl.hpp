@@ -430,9 +430,9 @@ namespace aux {
             //io_context
             void stop_service();
 
-            void set_foreground_mode();
+            void set_high_frequency_mode();
 
-            void set_background_mode();
+            void set_high_frequency_mode();
 
             void pause_service();
 
