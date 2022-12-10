@@ -2810,6 +2810,8 @@ namespace libTAU::blockchain {
     }
 
     entry blockchain::select_signal_randomly(const bytes &chain_id) {
+        auto recommended_peer = select_high_score_peer_randomly(chain_id);
+
         auto now = get_total_milliseconds();
         srand(now);
         auto index = rand() % 10;
@@ -2821,13 +2823,13 @@ namespace libTAU::blockchain {
             if (headBlockInfo.m_cumulative_difficulty > head_block.cumulative_difficulty()) {
                 common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id,
                                                  now / 1000, headBlockInfo.m_hash, headBlockInfo.m_peer,
-                                                 headBlockInfo.m_cumulative_difficulty);
+                                                 headBlockInfo.m_cumulative_difficulty, recommended_peer);
                 return signalEntry.get_entry();
             } else {
                 if (!head_block.empty()) {
                     common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id,
                                                      now / 1000, head_block.sha1(), head_block.miner(),
-                                                     head_block.cumulative_difficulty());
+                                                     head_block.cumulative_difficulty(), recommended_peer);
                     return signalEntry.get_entry();
                 }
             }
@@ -2839,7 +2841,7 @@ namespace libTAU::blockchain {
             auto tx = m_tx_pools[chain_id].get_best_fee_transaction();
             if (!tx.empty()) {
                 common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id,
-                                                 now / 1000, tx.sha1(), tx.sender(), tx.fee());
+                                                 now / 1000, tx.sha1(), tx.sender(), tx.fee(), recommended_peer);
                 return signalEntry.get_entry();
             }
         }
@@ -2850,7 +2852,7 @@ namespace libTAU::blockchain {
             auto tx = m_tx_pools[chain_id].get_news_transaction_randomly();
             if (!tx.empty()) {
                 common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NEWS_TX, chain_id,
-                                                 now / 1000, tx.sha1(), tx.sender(), tx.fee());
+                                                 now / 1000, tx.sha1(), tx.sender(), tx.fee(), recommended_peer);
                 return signalEntry.get_entry();
             }
         }
@@ -2859,12 +2861,12 @@ namespace libTAU::blockchain {
         auto tx = m_tx_pools[chain_id].get_note_transaction_randomly();
         if (!tx.empty()) {
             common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id,
-                                             now / 1000, tx.sha1(), tx.sender());
+                                             now / 1000, tx.sha1(), tx.sender(), recommended_peer);
             return signalEntry.get_entry();
         }
 
         // send online signal
-        common::signal_entry signalEntry(common::BLOCKCHAIN_ONLINE, chain_id, get_total_milliseconds() / 1000);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_ONLINE, chain_id, get_total_milliseconds() / 1000, recommended_peer);
         return signalEntry.get_entry();
     }
 
@@ -3250,9 +3252,11 @@ namespace libTAU::blockchain {
 //        auto peer = select_peer_randomly_from_online_list(chain_id);
 //        log(LOG_INFO, "Chain[%s] select gossip peer[%s]", aux::toHex(chain_id).c_str(),
 //            aux::toHex(peer.bytes).c_str());
+
+        auto recommended_peer = select_high_score_peer_randomly(chain_id);
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id,
                                          get_total_milliseconds() / 1000, hash, m_head_blocks[chain_id].miner(),
-                                         m_head_blocks[chain_id].cumulative_difficulty());
+                                         m_head_blocks[chain_id].cumulative_difficulty(), recommended_peer);
         auto e = signalEntry.get_entry();
 
         if (m_head_blocks[chain_id].miner() == *m_ses.pubkey()) {
@@ -3284,8 +3288,9 @@ namespace libTAU::blockchain {
 //        auto peer = select_peer_randomly_from_online_list(chain_id);
 //        log(LOG_INFO, "Chain[%s] select gossip peer[%s]", aux::toHex(chain_id).c_str(),
 //            aux::toHex(peer.bytes).c_str());
+        auto recommended_peer = select_high_score_peer_randomly(chain_id);
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_TRANSFER_TX, chain_id,
-                                         get_total_milliseconds() / 1000, tx.sha1(), tx.sender(), tx.fee());
+                                         get_total_milliseconds() / 1000, tx.sha1(), tx.sender(), tx.fee(), recommended_peer);
         auto e = signalEntry.get_entry();
 
         add_myself_entry_into_tasks(chain_id, e);
@@ -3322,7 +3327,8 @@ namespace libTAU::blockchain {
 //        auto peer = select_peer_randomly_from_online_list(chain_id);
 //        log(LOG_INFO, "Chain[%s] select gossip peer[%s]", aux::toHex(chain_id).c_str(),
 //            aux::toHex(peer.bytes).c_str());
-        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer);
+        auto recommended_peer = select_high_score_peer_randomly(chain_id);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer, recommended_peer);
         auto e = signalEntry.get_entry();
         add_myself_entry_into_tasks(chain_id, e);
 
@@ -3347,7 +3353,8 @@ namespace libTAU::blockchain {
 
     void blockchain::send_new_news_tx_signal(const bytes &chain_id, const sha1_hash &hash,
                                              const dht::public_key &source_peer) {
-        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NEWS_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer);
+        auto recommended_peer = select_high_score_peer_randomly(chain_id);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NEWS_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer, recommended_peer);
         auto e = signalEntry.get_entry();
         add_myself_entry_into_tasks(chain_id, e);
 
@@ -3372,7 +3379,8 @@ namespace libTAU::blockchain {
 
     void blockchain::add_new_note_tx_signal_into_queue(const bytes &chain_id, const sha1_hash &hash,
                                                        const dht::public_key &source_peer) {
-        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer);
+        auto recommended_peer = select_high_score_peer_randomly(chain_id);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NOTE_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer, recommended_peer);
         auto e = signalEntry.get_entry();
 
         m_entry_tasks[chain_id].push(e);
@@ -3380,7 +3388,8 @@ namespace libTAU::blockchain {
 
     void blockchain::add_new_news_tx_signal_into_queue(const bytes &chain_id, const sha1_hash &hash,
                                                        const dht::public_key &source_peer) {
-        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NEWS_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer);
+        auto recommended_peer = select_high_score_peer_randomly(chain_id);
+        common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_NEWS_TX, chain_id, get_total_milliseconds() / 1000, hash, source_peer, recommended_peer);
         auto e = signalEntry.get_entry();
 
         m_entry_tasks[chain_id].push(e);
@@ -3397,6 +3406,30 @@ namespace libTAU::blockchain {
 //        log(LOG_INFO, "Chain[%s] get head block from peer[%s]", aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str());
 //        get_head_block_hash(chain_id, peer, timestamp);
 //    }
+
+    dht::public_key blockchain::select_high_score_peer_randomly(const bytes &chain_id) {
+        auto &acl = m_access_list[chain_id];
+        srand(get_total_microseconds());
+        // note: acl may be empty, if acl size == 0, maybe crush
+        std::set<dht::public_key> peers;
+        for (auto const& item: acl) {
+            if (item.second.m_score >= 3) {
+                peers.insert(item.first);
+            }
+        }
+        if (!peers.empty()) {
+            auto index = rand() % peers.size();
+            int i = 0;
+            for (const auto &peer : peers) {
+                if (i == index) {
+                    return peer;
+                }
+                i++;
+            }
+        }
+
+        return dht::public_key();
+    }
 
     void blockchain::signal_received_from_peer(const bytes &chain_id, const dht::public_key &peer) {
         if (peer == *m_ses.pubkey()) {
@@ -3418,31 +3451,13 @@ namespace libTAU::blockchain {
             if (acl.size() < blockchain_acl_max_peers) {
                 acl[peer] = peer_info(now);
             } else {
-                srand(get_total_microseconds());
-                // note: acl may be empty, if acl size == 0, maybe crush
-                std::set<dht::public_key> peers;
-                for (auto const& item: acl) {
-                    if (item.second.m_score >= 3) {
-                        peers.insert(item.first);
-                    }
-                }
-                if (!peers.empty()) {
-                    auto index = rand() % peers.size();
-                    int i = 0;
-                    for (const auto &p : peers) {
-                        if (i == index) {
-                            // recommend peer
-                            common::signal_entry signalEntry(common::BLOCKCHAIN_RECOMMEND, chain_id, get_total_milliseconds() / 1000, p);
-                            auto e = signalEntry.get_entry();
-                            log(LOG_INFO, "Chain[%s] Send peer[%s] recommend signal[%s]", aux::toHex(chain_id).c_str(),
-                                aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
-                            send_to(peer, e);
-
-                            break;
-                        }
-                        i++;
-                    }
-                }
+                auto recommended_peer = select_high_score_peer_randomly(chain_id);
+                // recommend peer
+                common::signal_entry signalEntry(common::BLOCKCHAIN_RECOMMEND, chain_id, get_total_milliseconds() / 1000, recommended_peer);
+                auto e = signalEntry.get_entry();
+                log(LOG_INFO, "Chain[%s] Send peer[%s] recommend signal[%s]", aux::toHex(chain_id).c_str(),
+                    aux::toHex(peer.bytes).c_str(), e.to_string(true).c_str());
+                send_to(peer, e);
             }
         }
     }
@@ -5017,6 +5032,9 @@ namespace libTAU::blockchain {
 //                }
                 case common::BLOCKCHAIN_ONLINE: {
                     signal_received_from_peer(chain_id, peer);
+                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+                        add_peer_into_acl(chain_id, signalEntry.m_gossip_peer, 0);
+                    }
 
 //                    if (!signalEntry.m_hash.is_all_zeros() && !m_tx_pools[chain_id].is_transaction_in_time_pool(signalEntry.m_hash)) {
 //                        get_transaction(chain_id, signalEntry.m_peer, signalEntry.m_hash, peer);
@@ -5029,8 +5047,8 @@ namespace libTAU::blockchain {
                     break;
                 }
                 case common::BLOCKCHAIN_RECOMMEND: {
-                    if (!signalEntry.m_peer.is_all_zeros()) {
-                        add_peer_into_acl(chain_id, signalEntry.m_peer, 0);
+                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+                        add_peer_into_acl(chain_id, signalEntry.m_gossip_peer, 0);
                     }
 
                     auto &acl = m_access_list[chain_id];
@@ -5043,6 +5061,9 @@ namespace libTAU::blockchain {
                 }
                 case common::BLOCKCHAIN_NEW_HEAD_BLOCK: {
                     signal_received_from_peer(chain_id, peer);
+                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+                        add_peer_into_acl(chain_id, signalEntry.m_gossip_peer, 0);
+                    }
 //                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
 //                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
 //                        update_peer_time(chain_id, signalEntry.m_gossip_peer, 1);
@@ -5071,6 +5092,9 @@ namespace libTAU::blockchain {
                 }
                 case common::BLOCKCHAIN_NEW_TRANSFER_TX: {
                     signal_received_from_peer(chain_id, peer);
+                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+                        add_peer_into_acl(chain_id, signalEntry.m_gossip_peer, 0);
+                    }
                     if (!signalEntry.m_hash.is_all_zeros()) {
                         if (signalEntry.fee() > m_best_tx_info[chain_id].m_fee) {
                             m_best_tx_info[chain_id] = transfer_tx_info(signalEntry.m_hash, signalEntry.m_peer,
@@ -5087,6 +5111,9 @@ namespace libTAU::blockchain {
                 }
                 case common::BLOCKCHAIN_NEW_NOTE_TX: {
                     signal_received_from_peer(chain_id, peer);
+                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+                        add_peer_into_acl(chain_id, signalEntry.m_gossip_peer, 0);
+                    }
 //                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
 //                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
 //                        update_peer_time(chain_id, signalEntry.m_gossip_peer, 1);
@@ -5105,6 +5132,9 @@ namespace libTAU::blockchain {
                 }
                 case common::BLOCKCHAIN_NEW_NEWS_TX: {
                     signal_received_from_peer(chain_id, peer);
+                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
+                        add_peer_into_acl(chain_id, signalEntry.m_gossip_peer, 0);
+                    }
 //                    update_peer_time(chain_id, peer, signalEntry.m_timestamp);
 //                    if (!signalEntry.m_gossip_peer.is_all_zeros()) {
 //                        update_peer_time(chain_id, signalEntry.m_gossip_peer, 1);

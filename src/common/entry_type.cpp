@@ -39,7 +39,8 @@ namespace libTAU::common {
 
                     break;
                 }
-                case BLOCKCHAIN_ONLINE: {
+                case BLOCKCHAIN_ONLINE:
+                case BLOCKCHAIN_RECOMMEND: {
                     if (lst.size() == 3) {
                         // timestamp
                         auto timestamp = lst[1].string();
@@ -47,24 +48,33 @@ namespace libTAU::common {
                         // short chain id
                         auto chain_id = lst[2].string();
                         m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-                    }
-
-                    break;
-                }
-                case BLOCKCHAIN_RECOMMEND: {
-                    if (lst.size() == 4) {
+                    } else if (lst.size() == 4) {
                         // timestamp
                         auto timestamp = lst[1].string();
                         m_timestamp = aux::int64FromLittleEndianString(timestamp);
                         // short chain id
                         auto chain_id = lst[2].string();
                         m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-                        // peer
-                        m_peer = dht::public_key(lst[3].string().data());
+                        // gossip peer
+                        m_gossip_peer = dht::public_key(lst[3].string().data());
                     }
 
                     break;
                 }
+//                case BLOCKCHAIN_RECOMMEND: {
+//                    if (lst.size() == 4) {
+//                        // timestamp
+//                        auto timestamp = lst[1].string();
+//                        m_timestamp = aux::int64FromLittleEndianString(timestamp);
+//                        // short chain id
+//                        auto chain_id = lst[2].string();
+//                        m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+//                        // gossip peer
+//                        m_gossip_peer = dht::public_key(lst[3].string().data());
+//                    }
+//
+//                    break;
+//                }
                 case BLOCKCHAIN_NEW_HEAD_BLOCK:
                 case BLOCKCHAIN_NEW_TRANSFER_TX: {
                     if (lst.size() == 6) {
@@ -81,6 +91,22 @@ namespace libTAU::common {
                         // value
                         auto value = lst[5].string();
                         m_value = aux::int64FromLittleEndianString(value);
+                    } else if (lst.size() == 7) {
+                        // timestamp
+                        auto timestamp = lst[1].string();
+                        m_timestamp = aux::int64FromLittleEndianString(timestamp);
+                        // short chain id
+                        auto chain_id = lst[2].string();
+                        m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+                        // hash
+                        m_hash = sha1_hash(lst[3].string().data());
+                        // peer
+                        m_peer = dht::public_key(lst[4].string().data());
+                        // value
+                        auto value = lst[5].string();
+                        m_value = aux::int64FromLittleEndianString(value);
+                        // gossip peer
+                        m_gossip_peer = dht::public_key(lst[6].string().data());
                     }
 
                     break;
@@ -98,6 +124,19 @@ namespace libTAU::common {
                         m_hash = sha1_hash(lst[3].string().data());
                         // peer
                         m_peer = dht::public_key(lst[4].string().data());
+                    } else if (lst.size() == 6) {
+                        // timestamp
+                        auto timestamp = lst[1].string();
+                        m_timestamp = aux::int64FromLittleEndianString(timestamp);
+                        // short chain id
+                        auto chain_id = lst[2].string();
+                        m_short_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+                        // hash
+                        m_hash = sha1_hash(lst[3].string().data());
+                        // peer
+                        m_peer = dht::public_key(lst[4].string().data());
+                        // gossip peer
+                        m_gossip_peer = dht::public_key(lst[5].string().data());
                     }
 
                     break;
@@ -138,22 +177,7 @@ namespace libTAU::common {
 
                 break;
             }
-            case BLOCKCHAIN_ONLINE: {
-                // protocol id:1 byte
-                auto pid = aux::intToLittleEndianString((int)m_pid);
-                lst.push_back(pid);
-                // timestamp:4 bytes
-                auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
-                lst.push_back(timestamp);
-                // short chain id <= 4 bytes
-                if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
-                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
-                } else {
-                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
-                }
-
-                break;
-            }
+            case BLOCKCHAIN_ONLINE:
             case BLOCKCHAIN_RECOMMEND: {
                 // protocol id:1 byte
                 auto pid = aux::intToLittleEndianString((int)m_pid);
@@ -167,11 +191,31 @@ namespace libTAU::common {
                 } else {
                     lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
                 }
-                // peer:32 bytes
-                lst.push_back(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
+                // gossip peer:32 bytes
+                if (!m_gossip_peer.is_all_zeros()) {
+                    lst.push_back(std::string(m_gossip_peer.bytes.begin(), m_gossip_peer.bytes.end()));
+                }
 
                 break;
             }
+//            case BLOCKCHAIN_RECOMMEND: {
+//                // protocol id:1 byte
+//                auto pid = aux::intToLittleEndianString((int)m_pid);
+//                lst.push_back(pid);
+//                // timestamp:4 bytes
+//                auto timestamp = aux::int64ToLittleEndianString(m_timestamp);
+//                lst.push_back(timestamp);
+//                // short chain id <= 4 bytes
+//                if (m_short_chain_id.size() > blockchain::short_chain_id_length) {
+//                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.begin() + blockchain::short_chain_id_length));
+//                } else {
+//                    lst.push_back(std::string(m_short_chain_id.begin(), m_short_chain_id.end()));
+//                }
+//                // gossip peer:32 bytes
+//                lst.push_back(std::string(m_gossip_peer.bytes.begin(), m_gossip_peer.bytes.end()));
+//
+//                break;
+//            }
             case BLOCKCHAIN_NEW_HEAD_BLOCK:
             case BLOCKCHAIN_NEW_TRANSFER_TX: {
                 // protocol id:1 byte
@@ -193,6 +237,10 @@ namespace libTAU::common {
                 // value
                 auto value = aux::int64ToLittleEndianString(m_value);
                 lst.push_back(value);
+                // gossip peer:32 bytes
+                if (!m_gossip_peer.is_all_zeros()) {
+                    lst.push_back(std::string(m_gossip_peer.bytes.begin(), m_gossip_peer.bytes.end()));
+                }
 
                 break;
             }
@@ -214,6 +262,10 @@ namespace libTAU::common {
                 lst.push_back(m_hash.to_string());
                 // peer:32 bytes
                 lst.push_back(std::string(m_peer.bytes.begin(), m_peer.bytes.end()));
+                // gossip peer:32 bytes
+                if (!m_gossip_peer.is_all_zeros()) {
+                    lst.push_back(std::string(m_gossip_peer.bytes.begin(), m_gossip_peer.bytes.end()));
+                }
 
                 break;
             }

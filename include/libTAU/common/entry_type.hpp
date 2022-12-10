@@ -35,7 +35,7 @@ namespace libTAU::common {
     const std::string entry_levenshtein_array = "l";
 
     enum signal_id {
-        COMMUNICATION_NEW_MESSAGE = 60, // 0
+        COMMUNICATION_NEW_MESSAGE = 70, // 0
         COMMUNICATION_CONFIRMATION, // 1
         COMMUNICATION_ATTENTION, // 3
 //        COMMUNICATION_MESSAGE_MISSING, // 4
@@ -64,12 +64,12 @@ namespace libTAU::common {
                 : m_pid(mPid), m_timestamp(mTimestamp), m_hash(mHash) {}
 
         // blockchain signal
-        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp) : m_pid(mPid),
-            m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp) {}
+        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const dht::public_key &mGossipPeer) : m_pid(mPid),
+            m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_gossip_peer(mGossipPeer) {}
 
-        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp,
-                     const dht::public_key &mPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
-                                                           m_timestamp(mTimestamp), m_peer(mPeer) {}
+//        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp,
+//                     const dht::public_key &mPeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
+//                                                           m_timestamp(mTimestamp), m_peer(mPeer) {}
 
 //        signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash)
 //                : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_hash(mHash) {}
@@ -80,19 +80,19 @@ namespace libTAU::common {
 //                                                           m_gossip_peer(mGossipPeer) {}
 
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
-                     const dht::public_key &mSourcePeer) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
-                                                           m_timestamp(mTimestamp), m_hash(mHash),
-                                                           m_peer(mSourcePeer) {}
+                     const dht::public_key &mSourcePeer, const dht::public_key &mGossipPeer) : m_pid(mPid),
+                     m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_hash(mHash),
+                     m_peer(mSourcePeer), m_gossip_peer(mGossipPeer) {}
 
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
-                     const dht::public_key &mPeer, int64_t fee) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
-                                                                     m_timestamp(mTimestamp), m_hash(mHash),
-                                                                     m_peer(mPeer), m_value(fee) {}
+                     const dht::public_key &mPeer, int64_t fee, const dht::public_key &mGossipPeer) : m_pid(mPid),
+                     m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_hash(mHash),
+                     m_peer(mPeer), m_value(fee), m_gossip_peer(mGossipPeer) {}
 
         signal_entry(signal_id mPid, aux::bytes mShortChainId, int64_t mTimestamp, const sha1_hash &mHash,
-                     const dht::public_key &mPeer, uint64_t difficulty) : m_pid(mPid), m_short_chain_id(std::move(mShortChainId)),
-                                                                  m_timestamp(mTimestamp), m_hash(mHash), m_peer(mPeer),
-                                                                  m_value(static_cast<std::int64_t>(difficulty)) {}
+                     const dht::public_key &mPeer, uint64_t difficulty, const dht::public_key &mGossipPeer) :
+                     m_pid(mPid), m_short_chain_id(std::move(mShortChainId)), m_timestamp(mTimestamp), m_hash(mHash),
+                     m_peer(mPeer), m_value(static_cast<std::int64_t>(difficulty)), m_gossip_peer(mGossipPeer) {}
 
         uint64_t cumulative_difficulty() const { return static_cast<uint64_t>(m_value); }
 
@@ -115,7 +115,7 @@ namespace libTAU::common {
         sha1_hash m_hash;
 
         // gossip peer
-//        dht::public_key m_gossip_peer;
+        dht::public_key m_gossip_peer;
 
         // peer
         dht::public_key m_peer;

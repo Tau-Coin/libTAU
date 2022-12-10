@@ -674,6 +674,8 @@ namespace blockchain {
 
         void add_myself_entry_into_tasks(const aux::bytes &chain_id, const entry& e);
 
+        dht::public_key select_high_score_peer_randomly(const aux::bytes &chain_id);
+
 //        void get_head_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
         void signal_received_from_peer(aux::bytes const& chain_id, const dht::public_key& peer);
