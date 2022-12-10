@@ -3078,7 +3078,7 @@ namespace {
 		}
 
 		// set dht keep interval to stop dht 'keep' protocol
-		m_settings.set_int(settings_pack::dht_keep_interval, 3600);
+		m_settings.set_int(settings_pack::dht_keep_interval, 30);
 	}
 
     void session_impl::pause_service()
@@ -3090,7 +3090,7 @@ namespace {
 		}
 
 		// set dht keep interval to stop dht 'keep' protocol
-		m_settings.set_int(settings_pack::dht_keep_interval, 3600);
+		m_settings.set_int(settings_pack::dht_keep_interval, 30);
     }
 
     void session_impl::resume_service()
