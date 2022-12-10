@@ -152,10 +152,12 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::set_high_frequency_mode() {
+        log(LOG_INFO, "INFO: set high frequency mode.");
         m_is_low_frequency = false;
     }
 
     void blockchain::set_low_frequency_mode() {
+        log(LOG_INFO, "INFO: set low frequency mode.");
         m_is_low_frequency = true;
     }
 
@@ -969,18 +971,18 @@ namespace libTAU::blockchain {
                     }
 
                     std::int64_t interval = 30;
-                    if (now / 1000 > m_touching_time[chain_id]) {
-                        auto seconds = now / 1000 - m_touching_time[chain_id];
-                        if (seconds < 24 * 60 * 60) {
-                            interval = 30;
-                        } else if (seconds < 2 * 24 * 60 * 60) {
-                            interval = 60;
-                        } else if (seconds < 3 * 24 * 60 * 60) {
-                            interval = 120;
-                        }  else {
-                            interval = 240;
-                        }
-                    }
+//                    if (now / 1000 > m_touching_time[chain_id]) {
+//                        auto seconds = now / 1000 - m_touching_time[chain_id];
+//                        if (seconds < 24 * 60 * 60) {
+//                            interval = 30;
+//                        } else if (seconds < 2 * 24 * 60 * 60) {
+//                            interval = 60;
+//                        } else if (seconds < 3 * 24 * 60 * 60) {
+//                            interval = 120;
+//                        }  else {
+//                            interval = 240;
+//                        }
+//                    }
                     if (!m_is_low_frequency) {
                         interval /= 6;
                     }
