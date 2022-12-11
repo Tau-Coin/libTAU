@@ -1761,7 +1761,7 @@ namespace libTAU::blockchain {
                             try_to_rebranch(chain_id, peer_cache.second.m_head_block, false, peer);
                         }
                     }
-                } else if (peer_cache.second.m_genesis_block.version() == block_version_2) {
+                } else if (peer_cache.second.m_genesis_block.version() > block_version_1) {
                     auto it_level1_state_hash_array = peer_cache.second.m_state_hash_arrays.find(peer_cache.second.m_genesis_block.state_root());
                     if (it_level1_state_hash_array != peer_cache.second.m_state_hash_arrays.end()) {
                         std::vector<state_array> arrays;
@@ -3553,7 +3553,7 @@ namespace libTAU::blockchain {
                                                                 const block &genesis) {
         if (genesis.version() == block_version_1) {
             get_level_0_state_hash_array(chain_id, peer, genesis.state_root());
-        } else if (genesis.version() == block_version_2) {
+        } else {
             get_level_1_state_hash_array(chain_id, peer, genesis.state_root());
         }
     }
