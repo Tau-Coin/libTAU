@@ -4068,7 +4068,7 @@ namespace libTAU::blockchain {
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
 
                             if (!m_repository->save_tx(chain_id, tx)) {
-                                log(LOG_ERR, "INFO: chain:%s, save note tx[%s] fail.",
+                                log(LOG_ERR, "INFO: chain:%s, save tx[%s] fail.",
                                     aux::toHex(chain_id).c_str(), tx.to_string().c_str());
                             }
 
@@ -4095,6 +4095,11 @@ namespace libTAU::blockchain {
                             log(LOG_INFO, "INFO: Got transfer transaction[%s].", tx.to_string().c_str());
 
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
+
+                            if (!m_repository->save_tx(chain_id, tx)) {
+                                log(LOG_ERR, "INFO: chain:%s, save tx[%s] fail.",
+                                    aux::toHex(chain_id).c_str(), tx.to_string().c_str());
+                            }
 
                             auto &pool = m_tx_pools[chain_id];
 
@@ -4129,6 +4134,11 @@ namespace libTAU::blockchain {
                             log(LOG_INFO, "INFO: Got news transaction[%s].", tx.to_string().c_str());
 
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
+
+                            if (!m_repository->save_tx(chain_id, tx)) {
+                                log(LOG_ERR, "INFO: chain:%s, save tx[%s] fail.",
+                                    aux::toHex(chain_id).c_str(), tx.to_string().c_str());
+                            }
 
                             if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
                                 if (!m_repository->save_news_tx(chain_id, tx)) {
