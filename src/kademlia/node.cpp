@@ -591,7 +591,7 @@ void node::incoming(aux::listen_socket_handle const& s, msg const& m, node_id co
 				{
 					if (!m_settings.get_bool(settings_pack::dht_non_referrable))
 					{
-						// relay(to, to_ep, m, from);
+						relay(to, to_ep, m, from);
 					}
 				}
 			}
