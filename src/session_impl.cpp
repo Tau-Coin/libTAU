@@ -3067,7 +3067,7 @@ namespace {
 		}
 
 		// reset dht keep interval to start dht 'keep' protocol
-		m_settings.set_int(settings_pack::dht_keep_interval, 2);
+		m_settings.set_int(settings_pack::dht_keep_interval, 3);
 	}
 
 	void session_impl::set_low_frequency_mode()
@@ -3102,7 +3102,7 @@ namespace {
 		}
 
 		// reset dht keep interval to start dht 'keep' protocol
-		m_settings.set_int(settings_pack::dht_keep_interval, 2);
+		m_settings.set_int(settings_pack::dht_keep_interval, 3);
     }
 
 	void session_impl::start_communication()
