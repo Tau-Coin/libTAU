@@ -137,9 +137,7 @@ namespace libTAU::blockchain {
             m_miner = dht::public_key(lst[9].string().data());
             // signature
             m_signature = dht::signature(lst[10].string().data());
-        }
-
-        if (lst.size() == 12) {
+        } else if (lst.size() == 12) {
             // chain id
             auto chain_id = lst[0].string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
