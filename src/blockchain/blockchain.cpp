@@ -4535,31 +4535,26 @@ namespace libTAU::blockchain {
 
                 m_tx_pools[chain_id].add_tx(tx);
 
+                if (!m_repository->save_tx(chain_id, tx)) {
+                    log(LOG_ERR, "INFO: chain:%s, save tx[%s] fail.",
+                        aux::toHex(chain_id).c_str(), tx.to_string().c_str());
+                }
+
                 if (tx.type() == tx_type::type_transfer) {
                     if (tx.amount() == 0) {
                         put_news_transaction(chain_id, tx);
 
                         send_new_news_tx_signal(chain_id, tx.sha1(), tx.sender());
+
+                        if (!m_repository->save_news_tx(chain_id, tx)) {
+                            log(LOG_ERR, "INFO: chain:%s, save news tx[%s] fail.",
+                                aux::toHex(chain_id).c_str(), tx.to_string().c_str());
+                        }
                     } else {
                         put_transfer_transaction(chain_id, tx);
                     }
                 } else if (tx.type() == tx_type::type_note) {
-//                    put_note_transaction(chain_id, tx);
                     put_note_transaction(chain_id, tx);
-
-//                    if (!tx.previous_hash().is_all_zeros()) {
-//                        auto previous_tx = m_tx_pools[chain_id].get_transaction_by_txid(tx.previous_hash());
-//                        if (!previous_tx.empty()) {
-//                            put_transaction(chain_id, previous_tx);
-//
-//                            if (!previous_tx.previous_hash().is_all_zeros()) {
-//                                auto last_tx = m_tx_pools[chain_id].get_transaction_by_txid(previous_tx.previous_hash());
-//                                if (!last_tx.empty()) {
-//                                    put_transaction(chain_id, last_tx);
-//                                }
-//                            }
-//                        }
-//                    }
 
                     send_new_note_tx_signal(chain_id, tx.sha1(), tx.sender());
                 }
