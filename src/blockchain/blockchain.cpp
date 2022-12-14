@@ -3169,7 +3169,7 @@ namespace libTAU::blockchain {
                 put_head_block_hash(chain_id, m_head_blocks[chain_id].sha1());
             }
 
-            send_new_head_block_signal(chain_id, m_head_blocks[chain_id].sha1());
+            send_new_head_block_signal(chain_id);
         }
     }
 
@@ -3262,14 +3262,15 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::send_new_head_block_signal(const bytes &chain_id, const sha1_hash &hash) {
+    void blockchain::send_new_head_block_signal(const bytes &chain_id) {
 //        auto peer = select_peer_randomly_from_online_list(chain_id);
 //        log(LOG_INFO, "Chain[%s] select gossip peer[%s]", aux::toHex(chain_id).c_str(),
 //            aux::toHex(peer.bytes).c_str());
 
         auto recommended_peer = select_high_score_peer_randomly(chain_id);
         common::signal_entry signalEntry(common::BLOCKCHAIN_NEW_HEAD_BLOCK, chain_id,
-                                         get_total_milliseconds() / 1000, hash, m_head_blocks[chain_id].miner(),
+                                         get_total_milliseconds() / 1000, m_head_blocks[chain_id].sha1(),
+                                         m_head_blocks[chain_id].miner(),
                                          m_head_blocks[chain_id].cumulative_difficulty(), recommended_peer);
         auto e = signalEntry.get_entry();
 
@@ -5164,6 +5165,20 @@ namespace libTAU::blockchain {
                                 log(LOG_INFO, "INFO: Cannot get block hash[%s] in local", aux::toHex(head_block_hash).c_str());
                                 get_head_block(chain_id, signalEntry.m_peer, signalEntry.m_hash, peer);
                             } else {
+                                auto &acl = m_access_list[chain_id];
+                                auto it = acl.find(peer);
+                                if (it != acl.end()) {
+                                    // only peer in acl is allowed
+                                    it->second.m_head_block = blk;
+                                    if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                                        it->second.m_genesis_block = blk;
+                                    }
+                                }
+
+                                if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                                    get_all_state_with_genesis_block_from_peer(chain_id, peer, blk, peer);
+                                }
+
                                 block_reception_event(chain_id, peer, blk, peer);
                             }
                         }

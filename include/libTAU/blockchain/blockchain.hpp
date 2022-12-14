@@ -656,7 +656,7 @@ namespace blockchain {
 
 //        void send_online_signal(const aux::bytes &chain_id);
 
-        void send_new_head_block_signal(const aux::bytes &chain_id, const sha1_hash &hash);
+        void send_new_head_block_signal(const aux::bytes &chain_id);
 
         void send_new_transfer_tx_signal(const aux::bytes &chain_id, const transaction &tx);
 
