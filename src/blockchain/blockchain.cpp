@@ -3962,11 +3962,24 @@ namespace libTAU::blockchain {
                         log(LOG_INFO, "INFO: Got head block hash[%s]", aux::toHex(head_block_hash).c_str());
                         if (!head_block_hash.is_all_zeros()) {
                             auto blk = m_repository->get_block_by_hash(chain_id, head_block_hash);
-                            // TODO:set head block
                             if (blk.empty()) {
                                 log(LOG_INFO, "INFO: Cannot get block hash[%s] in local", aux::toHex(head_block_hash).c_str());
                                 get_head_block(chain_id, peer, head_block_hash, signalPeer);
                             } else {
+                                auto &acl = m_access_list[chain_id];
+                                auto it = acl.find(signalPeer);
+                                if (it != acl.end()) {
+                                    // only peer in acl is allowed
+                                    it->second.m_head_block = blk;
+                                    if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                                        it->second.m_genesis_block = blk;
+                                    }
+                                }
+
+                                if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
+                                    get_all_state_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
+                                }
+
                                 block_reception_event(chain_id, peer, blk, signalPeer);
                             }
                         }
