@@ -101,7 +101,7 @@ namespace libTAU::blockchain {
         // last seen time(s)
         std::int64_t m_last_seen = 0;
 
-//        std::int64_t m_last_sent = 0;
+        std::int64_t m_last_sent = 0;
 
 //        std::int64_t m_last_ping_time = 0;
 
