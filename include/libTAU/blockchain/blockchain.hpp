@@ -684,7 +684,7 @@ namespace blockchain {
 
 //        void get_pool_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, std::int64_t timestamp = 0);
 
-        void get_transfer_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, const dht::public_key &signalPeer);
+        void get_transfer_transaction(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, const dht::public_key &signalPeer, int times = 1);
 
         void put_transfer_transaction(const aux::bytes &chain_id, const transaction &tx);
 
