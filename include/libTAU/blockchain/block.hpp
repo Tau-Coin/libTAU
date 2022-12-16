@@ -28,7 +28,6 @@ namespace blockchain {
 
     enum block_version {
         block_version_1,
-        block_version_2,
         block_unknown_version,
     };
 
@@ -90,6 +89,8 @@ namespace blockchain {
         const sha1_hash &state_root() const { return m_multiplex_hash; }
 
         const sha1_hash &multiplex_hash() const { return m_multiplex_hash; }
+
+        const sha1_hash &news_root() const { return m_news_root; }
 
         const sha1_hash &genesis_block_hash() const;
 
@@ -158,7 +159,7 @@ namespace blockchain {
         aux::bytes m_chain_id{};
 
         // block version
-        block_version m_version = block_version_2;
+        block_version m_version = block_version_1;
 
         // timestamp
         std::int64_t m_timestamp{};
@@ -180,6 +181,9 @@ namespace blockchain {
 
         // state root/genesis block hash
         sha1_hash m_multiplex_hash;
+
+        // news root
+        sha1_hash m_news_root;
 
         // tx
         transaction m_tx;
