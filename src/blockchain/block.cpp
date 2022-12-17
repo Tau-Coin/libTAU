@@ -30,7 +30,6 @@ namespace libTAU::blockchain {
     entry block::get_entry() const {
         auto e = get_entry_without_signature();
         // signature
-        // signature
         e.list().push_back(std::string(m_signature.bytes.begin(), m_signature.bytes.end()));
 
         return e;
@@ -98,6 +97,8 @@ namespace libTAU::blockchain {
         lst.push_back(m_generation_signature.to_string());
         // multiplex hash
         lst.push_back(m_multiplex_hash.to_string());
+        // news root
+        lst.push_back(m_news_root.to_string());
         // miner
         lst.push_back(std::string(m_miner.bytes.begin(), m_miner.bytes.end()));
         if (!m_tx.empty()) {
@@ -112,7 +113,7 @@ namespace libTAU::blockchain {
     void block::populate(const entry &e) {
         auto const& lst = e.list();
 
-        if (lst.size() == 11) {
+        if (lst.size() == 12) {
             // chain id
             auto chain_id = lst[0].string();
             m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
@@ -133,37 +134,41 @@ namespace libTAU::blockchain {
             m_generation_signature = sha1_hash(lst[7].string().data());
             // multiplex hash
             m_multiplex_hash = sha1_hash(lst[8].string().data());
+            // news root
+            m_news_root = sha1_hash(lst[9].string().data());
             // miner
-            m_miner = dht::public_key(lst[9].string().data());
-            // signature
-            m_signature = dht::signature(lst[10].string().data());
-        } else if (lst.size() == 12) {
-            // chain id
-            auto chain_id = lst[0].string();
-            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
-            // version
-            int version = aux::intFromLittleEndianString(lst[1].string());
-            m_version = static_cast<block_version>(version);
-            // timestamp
-            m_timestamp = aux::int64FromLittleEndianString(lst[2].string());
-            // block number
-            m_block_number = aux::int64FromLittleEndianString(lst[3].string());
-            // previous block hash
-            m_previous_block_hash = sha1_hash(lst[4].string().data());
-            // base target
-            m_base_target = aux::uint64FromLittleEndianString(lst[5].string());
-            // cumulative difficulty
-            m_cumulative_difficulty = aux::uint64FromLittleEndianString(lst[6].string());
-            // generation signature
-            m_generation_signature = sha1_hash(lst[7].string().data());
-            // multiplex hash
-            m_multiplex_hash = sha1_hash(lst[8].string().data());
-            // miner
-            m_miner = dht::public_key(lst[9].string().data());
-            // tx
-            m_tx = transaction(lst[10]);
+            m_miner = dht::public_key(lst[10].string().data());
             // signature
             m_signature = dht::signature(lst[11].string().data());
+        } else if (lst.size() == 13) {
+            // chain id
+            auto chain_id = lst[0].string();
+            m_chain_id = aux::bytes(chain_id.begin(), chain_id.end());
+            // version
+            int version = aux::intFromLittleEndianString(lst[1].string());
+            m_version = static_cast<block_version>(version);
+            // timestamp
+            m_timestamp = aux::int64FromLittleEndianString(lst[2].string());
+            // block number
+            m_block_number = aux::int64FromLittleEndianString(lst[3].string());
+            // previous block hash
+            m_previous_block_hash = sha1_hash(lst[4].string().data());
+            // base target
+            m_base_target = aux::uint64FromLittleEndianString(lst[5].string());
+            // cumulative difficulty
+            m_cumulative_difficulty = aux::uint64FromLittleEndianString(lst[6].string());
+            // generation signature
+            m_generation_signature = sha1_hash(lst[7].string().data());
+            // multiplex hash
+            m_multiplex_hash = sha1_hash(lst[8].string().data());
+            // news root
+            m_news_root = sha1_hash(lst[9].string().data());
+            // miner
+            m_miner = dht::public_key(lst[10].string().data());
+            // tx
+            m_tx = transaction(lst[11]);
+            // signature
+            m_signature = dht::signature(lst[12].string().data());
         }
     }
 
@@ -195,8 +200,9 @@ namespace libTAU::blockchain {
            << aux::toHex(block.m_previous_block_hash.to_string()) << " m_base_target: " << block.m_base_target
            << " m_cumulative_difficulty: " << block.m_cumulative_difficulty << " m_generation_signature: "
            << aux::toHex(block.m_generation_signature.to_string()) << " multiplex hash: "
-           << aux::toHex(block.m_multiplex_hash.to_string()) << " m_tx: " << block.m_tx
-           << " m_miner: " << aux::toHex(block.m_miner.bytes);
+           << aux::toHex(block.m_multiplex_hash.to_string()) << " news root: "
+           << aux::toHex(block.m_news_root.to_string()) << " m_tx: " << block.m_tx << " m_miner: "
+           << aux::toHex(block.m_miner.bytes);
         return os;
     }
 }

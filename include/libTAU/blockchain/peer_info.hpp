@@ -14,7 +14,7 @@ see LICENSE file.
 
 #include "libTAU/blockchain/block.hpp"
 #include "libTAU/blockchain/state_array.hpp"
-#include "libTAU/blockchain/state_hash_array.hpp"
+#include "libTAU/blockchain/hash_array.hpp"
 #include "libTAU/blockchain/vote.hpp"
 #include "libTAU/common/entry_type.hpp"
 #include <libTAU/sha1_hash.hpp>
@@ -92,7 +92,7 @@ namespace libTAU::blockchain {
 
         block m_genesis_block;
 
-        std::map<sha1_hash, state_hash_array> m_state_hash_arrays;
+        std::map<sha1_hash, hash_array> m_state_hash_arrays;
 
         std::map<sha1_hash, state_array> m_state_arrays;
 

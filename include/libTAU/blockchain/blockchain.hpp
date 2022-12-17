@@ -26,7 +26,7 @@ see LICENSE file.
 #include "libTAU/kademlia/node_entry.hpp"
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/pool_hash_set.hpp"
-#include "libTAU/blockchain/state_hash_array.hpp"
+#include "libTAU/blockchain/hash_array.hpp"
 #include "libTAU/blockchain/peer_info.hpp"
 #include "libTAU/blockchain/repository.hpp"
 #include "libTAU/blockchain/repository_impl.hpp"
@@ -605,6 +605,8 @@ namespace blockchain {
 
         void generate_genesis_state(const aux::bytes &chain_id, sha1_hash &stateRoot, std::vector<state_array> &arrays);
 
+        void generate_news_data(const aux::bytes &chain_id, sha1_hash &newsRoot, std::vector<transaction> &newsArrays);
+
         // make a salt on mutable channel
 //        static std::string make_salt(const aux::bytes &chain_id, std::int64_t data_type_id);
 
@@ -717,7 +719,7 @@ namespace blockchain {
         void put_block(const aux::bytes &chain_id, const block &blk);
 
         void put_block_with_all_state(const aux::bytes &chain_id, const block &blk,
-                                      const std::vector<state_hash_array> &hashArrays,
+                                      const std::vector<hash_array> &hashArrays,
                                       const std::vector<state_array> &arrays);
 
 //        void get_transaction_wrapper(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
@@ -744,7 +746,7 @@ namespace blockchain {
 
         void get_level_1_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, const dht::public_key &signalPeer);
 
-        void put_state_hash_array(const aux::bytes &chain_id, const state_hash_array &hashArray);
+        void put_state_hash_array(const aux::bytes &chain_id, const hash_array &hashArray);
 
         // immutable data callback
 //        void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);

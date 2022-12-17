@@ -6,8 +6,8 @@ You may use, distribute and modify this code under the terms of the BSD license,
 see LICENSE file.
 */
 
-#ifndef LIBTAU_STATE_HASH_ARRAY_HPP
-#define LIBTAU_STATE_HASH_ARRAY_HPP
+#ifndef LIBTAU_HASH_ARRAY_HPP
+#define LIBTAU_HASH_ARRAY_HPP
 
 #include <utility>
 
@@ -21,17 +21,17 @@ see LICENSE file.
 
 namespace libTAU {
     namespace blockchain {
-        class state_hash_array {
+        class hash_array {
         public:
-            state_hash_array() = default;
+            hash_array() = default;
 
             // @param Construct with entry
-            explicit state_hash_array(const entry& e);
+            explicit hash_array(const entry& e);
 
             // @param Construct with bencode
-            explicit state_hash_array(std::string encode): state_hash_array(bdecode(encode)) {}
+            explicit hash_array(std::string encode): hash_array(bdecode(encode)) {}
 
-            explicit state_hash_array(std::vector<sha1_hash> mHashArray) : m_hash_array(std::move(mHashArray)) {
+            explicit hash_array(std::vector<sha1_hash> mHashArray) : m_hash_array(std::move(mHashArray)) {
                 auto encode = get_encode();
                 m_hash = hasher(encode).final();
             }
@@ -47,26 +47,26 @@ namespace libTAU {
 
             std::string get_encode() const;
 
-            bool operator<(const state_hash_array &rhs) const {
+            bool operator<(const hash_array &rhs) const {
                 return m_hash < rhs.m_hash;
             }
 
-            bool operator>(const state_hash_array &rhs) const {
+            bool operator>(const hash_array &rhs) const {
                 return rhs < *this;
             }
 
-            bool operator<=(const state_hash_array &rhs) const {
+            bool operator<=(const hash_array &rhs) const {
                 return !(rhs < *this);
             }
 
-            bool operator>=(const state_hash_array &rhs) const {
+            bool operator>=(const hash_array &rhs) const {
                 return !(*this < rhs);
             }
 
             // @returns a pretty-printed string representation of block structure
             std::string to_string() const;
 
-            friend std::ostream &operator<<(std::ostream &os, const state_hash_array &hashArray);
+            friend std::ostream &operator<<(std::ostream &os, const hash_array &hashArray);
 
         private:
             // populate hash array from entry
@@ -82,4 +82,4 @@ namespace libTAU {
 }
 
 
-#endif //LIBTAU_STATE_HASH_ARRAY_HPP
+#endif //LIBTAU_HASH_ARRAY_HPP

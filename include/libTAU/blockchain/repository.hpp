@@ -18,7 +18,7 @@ see LICENSE file.
 #include "libTAU/blockchain/block.hpp"
 #include "libTAU/blockchain/constants.hpp"
 #include "libTAU/blockchain/state_array.hpp"
-#include "libTAU/blockchain/state_hash_array.hpp"
+#include "libTAU/blockchain/hash_array.hpp"
 #include "libTAU/blockchain/state_linker.hpp"
 #include "libTAU/blockchain/account_block_pointer.hpp"
 
@@ -102,9 +102,9 @@ namespace libTAU::blockchain {
 
         virtual bool delete_state_tree_db(const aux::bytes &chain_id) = 0;
 
-        virtual bool save_state_hash_array(const aux::bytes &chain_id, const state_hash_array &stateHashArray) = 0;
+        virtual bool save_hash_array(const aux::bytes &chain_id, const hash_array &hashArray) = 0;
 
-        virtual state_hash_array get_state_hash_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+        virtual hash_array get_hash_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         virtual state_array get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
