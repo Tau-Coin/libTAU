@@ -103,6 +103,8 @@ namespace blockchain {
         NEWS_TX,
         LEVEL_0_STATE_HASH_ARRAY,
         LEVEL_1_STATE_HASH_ARRAY,
+        LEVEL_0_NEWS_HASH_ARRAY,
+        LEVEL_1_NEWS_HASH_ARRAY,
         STATE_ARRAY,
         UNKNOWN_GET_ITEM_TYPE,
     };
@@ -692,7 +694,7 @@ namespace blockchain {
 
 //        void put_note_transaction(const aux::bytes &chain_id, const transaction &tx);
 
-        void get_all_state_with_genesis_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const block &genesis, const dht::public_key &signalPeer);
+        void get_all_state_and_news_with_genesis_block_from_peer(const aux::bytes &chain_id, const dht::public_key& peer, const block &genesis, const dht::public_key &signalPeer);
 
 //        void put_all_state(const aux::bytes &chain_id);
 
@@ -746,7 +748,11 @@ namespace blockchain {
 
         void get_level_1_state_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, const dht::public_key &signalPeer);
 
-        void put_state_hash_array(const aux::bytes &chain_id, const hash_array &hashArray);
+        void get_level_0_news_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, const dht::public_key &signalPeer);
+
+        void get_level_1_news_hash_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, const dht::public_key &signalPeer);
+
+        void put_hash_array(const aux::bytes &chain_id, const hash_array &hashArray);
 
         // immutable data callback
 //        void get_immutable_block_callback(aux::bytes const& chain_id, sha256_hash target, dht::item const& i);

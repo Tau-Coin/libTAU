@@ -1724,7 +1724,7 @@ namespace libTAU::blockchain {
             } else {
                 if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
                     // if genesis block
-                    get_all_state_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
+                    get_all_state_and_news_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
                 } else {
                     get_block(chain_id, peer, blk.genesis_block_hash(), signalPeer);
                 }
@@ -2331,10 +2331,10 @@ namespace libTAU::blockchain {
                     if (blk.empty()) {
                         get_block(chain_id, peer, genesis_block_hash, signalPeer);
                     } else {
-                        get_all_state_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
+                        get_all_state_and_news_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
                     }
                 } else {
-                    get_all_state_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
+                    get_all_state_and_news_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
                 }
             }
         }
@@ -3613,9 +3613,10 @@ namespace libTAU::blockchain {
 //        }
 //    }
 
-    void blockchain::get_all_state_with_genesis_block_from_peer(const bytes &chain_id, const dht::public_key &peer,
-                                                                const block &genesis, const dht::public_key &signalPeer) {
+    void blockchain::get_all_state_and_news_with_genesis_block_from_peer(const bytes &chain_id, const dht::public_key &peer,
+                                                                         const block &genesis, const dht::public_key &signalPeer) {
         get_level_1_state_hash_array(chain_id, peer, genesis.state_root(), signalPeer);
+        get_level_1_news_hash_array(chain_id, peer, genesis.news_root(), signalPeer);
     }
 
 //    void blockchain::put_all_state(const bytes &chain_id) {
@@ -3751,7 +3752,7 @@ namespace libTAU::blockchain {
 
         for (auto const &hashArray: hashArrays) {
             // put state hash array
-            put_state_hash_array(chain_id, hashArray);
+            put_hash_array(chain_id, hashArray);
         }
 
         for (auto const &array: arrays) {
@@ -3893,12 +3894,32 @@ namespace libTAU::blockchain {
         subscribe(chain_id, peer, salt, GET_ITEM_TYPE::LEVEL_1_STATE_HASH_ARRAY, signalPeer);
     }
 
-    void blockchain::put_state_hash_array(const bytes &chain_id, const hash_array &hashArray) {
+    void blockchain::get_level_0_news_hash_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash,
+                                                 const dht::public_key &signalPeer) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Get level 0 news hash array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::LEVEL_0_NEWS_HASH_ARRAY, signalPeer);
+    }
+
+    void blockchain::get_level_1_news_hash_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash,
+                                                 const dht::public_key &signalPeer) {
+        // salt is x pubkey when request signal
+        auto salt = make_salt(hash);
+
+        log(LOG_INFO, "INFO: Get level 1 news hash array from chain[%s] peer[%s], salt:[%s]", aux::toHex(chain_id).c_str(),
+            aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
+        subscribe(chain_id, peer, salt, GET_ITEM_TYPE::LEVEL_1_NEWS_HASH_ARRAY, signalPeer);
+    }
+
+    void blockchain::put_hash_array(const bytes &chain_id, const hash_array &hashArray) {
         if (!hashArray.empty()) {
             // salt is y pubkey when publish signal
             auto salt = make_salt(hashArray.sha1());
 
-            log(LOG_INFO, "INFO: Chain id[%s] Put state hash array salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+            log(LOG_INFO, "INFO: Chain id[%s] Put hash array salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, hashArray.get_entry());
         }
     }
@@ -4011,7 +4032,7 @@ namespace libTAU::blockchain {
                             }
 
                             if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                                get_all_state_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
+                                get_all_state_and_news_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
                             }
 
                             if (!m_repository->save_block_if_not_exist(blk)) {
@@ -4057,7 +4078,7 @@ namespace libTAU::blockchain {
                             }
 
                             if (blk.block_number() % CHAIN_EPOCH_BLOCK_SIZE == 0) {
-                                get_all_state_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
+                                get_all_state_and_news_with_genesis_block_from_peer(chain_id, peer, blk, signalPeer);
                             }
 
                             if (!m_repository->save_block_if_not_exist(blk)) {
@@ -4302,6 +4323,38 @@ namespace libTAU::blockchain {
 
                         for (auto const& hash: hashArray.HashArray()) {
                             get_level_0_state_hash_array(chain_id, peer, hash, signalPeer);
+                        }
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::LEVEL_0_NEWS_HASH_ARRAY: {
+                        hash_array hashArray(i.value());
+                        log(LOG_INFO, "INFO: Got level 0 news hash array[%s].", hashArray.to_string().c_str());
+
+                        if (!m_repository->save_hash_array(chain_id, hashArray)) {
+                            log(LOG_ERR, "INFO: chain:%s, save level 0 news hash array[%s] fail.",
+                                aux::toHex(chain_id).c_str(), hashArray.to_string().c_str());
+                        }
+
+                        for (auto const& hash: hashArray.HashArray()) {
+                            if (!m_repository->is_tx_in_tx_db(chain_id, hash)) {
+                                get_news_transaction(chain_id, peer, hash, signalPeer);
+                            }
+                        }
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::LEVEL_1_NEWS_HASH_ARRAY: {
+                        hash_array hashArray(i.value());
+                        log(LOG_INFO, "INFO: Got level 1 news hash array[%s].", hashArray.to_string().c_str());
+
+                        if (!m_repository->save_hash_array(chain_id, hashArray)) {
+                            log(LOG_ERR, "INFO: chain:%s, save level 1 news hash array[%s] fail.",
+                                aux::toHex(chain_id).c_str(), hashArray.to_string().c_str());
+                        }
+
+                        for (auto const& hash: hashArray.HashArray()) {
+                            get_level_0_news_hash_array(chain_id, peer, hash, signalPeer);
                         }
 
                         break;
