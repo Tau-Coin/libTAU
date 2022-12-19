@@ -294,6 +294,10 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    transaction repository_track::get_news_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+        return transaction();
+    }
+
     std::vector<transaction> repository_track::get_latest_news_txs(const aux::bytes &chain_id) {
         return std::vector<transaction>();
     }

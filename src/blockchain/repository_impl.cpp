@@ -198,7 +198,7 @@ namespace libTAU::blockchain {
     }
 
     hash_array repository_impl::get_hash_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
-        hash_array stateHashArray;
+        hash_array hashArray;
 
         sqlite3_stmt * stmt;
         std::string sql = "SELECT DATA FROM ";
@@ -213,13 +213,13 @@ namespace libTAU::blockchain {
                 auto length = sqlite3_column_bytes(stmt, 0);
 
                 std::string encode(p, p + length);
-                stateHashArray = hash_array(encode);
+                hashArray = hash_array(encode);
             }
         }
 
         sqlite3_finalize(stmt);
 
-        return stateHashArray;
+        return hashArray;
     }
 
     state_array repository_impl::get_state_array_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
@@ -1511,6 +1511,31 @@ namespace libTAU::blockchain {
         sqlite3_finalize(stmt);
 
         return true;
+    }
+
+    transaction repository_impl::get_news_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+        transaction tx;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT DATA FROM ";
+        sql.append(news_txs_db_name(chain_id));
+        sql.append(" WHERE HASH=?");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                auto length = sqlite3_column_bytes(stmt, 0);
+
+                std::string encode(p, p + length);
+                tx = transaction(encode);
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return tx;
     }
 
     std::vector<transaction> repository_impl::get_latest_news_txs(const aux::bytes &chain_id) {

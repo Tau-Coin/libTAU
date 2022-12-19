@@ -3155,7 +3155,26 @@ namespace libTAU::blockchain {
                         }
                     }
 
-                    put_block_with_all_state(chain_id, blk, hashArrays, stateArrays);
+                    std::vector<transaction> txs;
+                    level1HashArray = m_repository->get_hash_array_by_hash(chain_id, blk.news_root());
+                    if (!level1HashArray.empty()) {
+                        hashArrays.push_back(level1HashArray);
+                        for (auto const& hash: level1HashArray.HashArray()) {
+                            auto level0HashArray = m_repository->get_hash_array_by_hash(chain_id, hash);
+                            if (!level0HashArray.empty()) {
+                                hashArrays.push_back(level0HashArray);
+
+                                for (auto const& txid: level0HashArray.HashArray()) {
+                                    auto tx = m_repository->get_news_tx_by_hash(chain_id, txid);
+                                    if (!tx.empty()) {
+                                        txs.push_back(tx);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    put_block_with_all_state(chain_id, blk, hashArrays, stateArrays, txs);
                 } else {
                     log(LOG_INFO, "Chain[%s] empty block", aux::toHex(chain_id).c_str());
                 }
@@ -3616,7 +3635,9 @@ namespace libTAU::blockchain {
     void blockchain::get_all_state_and_news_with_genesis_block_from_peer(const bytes &chain_id, const dht::public_key &peer,
                                                                          const block &genesis, const dht::public_key &signalPeer) {
         get_level_1_state_hash_array(chain_id, peer, genesis.state_root(), signalPeer);
-        get_level_1_news_hash_array(chain_id, peer, genesis.news_root(), signalPeer);
+        if (!genesis.news_root().is_all_zeros()) {
+            get_level_1_news_hash_array(chain_id, peer, genesis.news_root(), signalPeer);
+        }
     }
 
 //    void blockchain::put_all_state(const bytes &chain_id) {
@@ -3747,7 +3768,8 @@ namespace libTAU::blockchain {
 
     void blockchain::put_block_with_all_state(const bytes &chain_id, const block &blk,
                                               const std::vector<hash_array> &hashArrays,
-                                              const std::vector<state_array> &arrays) {
+                                              const std::vector<state_array> &arrays,
+                                              const std::vector<transaction> &txs) {
         put_block(chain_id, blk);
 
         for (auto const &hashArray: hashArrays) {
@@ -3758,6 +3780,11 @@ namespace libTAU::blockchain {
         for (auto const &array: arrays) {
             // put state array
             put_state_array(chain_id, array);
+        }
+
+        for (auto const &tx: txs) {
+            // put news tx
+            put_news_transaction(chain_id, tx);
         }
     }
 

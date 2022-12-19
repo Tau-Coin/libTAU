@@ -235,6 +235,8 @@ namespace libTAU::blockchain {
 
         virtual bool save_news_tx(const aux::bytes &chain_id, const transaction &tx) = 0;
 
+        virtual transaction get_news_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+
         virtual std::vector<transaction> get_latest_news_txs(const aux::bytes &chain_id) = 0;
 
 

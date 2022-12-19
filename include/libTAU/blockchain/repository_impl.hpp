@@ -163,6 +163,8 @@ namespace libTAU::blockchain {
 
         bool save_news_tx(const aux::bytes &chain_id, const transaction &tx) override;
 
+        transaction get_news_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
+
         std::vector<transaction> get_latest_news_txs(const aux::bytes &chain_id) override;
 
 
