@@ -166,6 +166,12 @@ namespace libTAU::blockchain {
         if (tx.fee() < get_min_allowed_fee())
             return false;
 
+        // check if in local
+        auto it = m_all_txs_by_fee.find(tx.sha1());
+        if (it != m_all_txs_by_fee.end()) {
+            return false;
+        }
+
         // validate tx state
         auto sender_account = m_repository->get_account(tx.chain_id(), tx.sender());
 //        if (tx.type() == tx_type::type_transfer) {
@@ -225,6 +231,12 @@ namespace libTAU::blockchain {
         if (tx.timestamp() <= get_time_pool_oldest_allowed_timestamp())
             return false;
 
+        // check if in local
+        auto it = m_all_txs_by_timestamp.find(tx.sha1());
+        if (it != m_all_txs_by_timestamp.end()) {
+            return false;
+        }
+
         auto it_account_txid_set = m_account_tx_by_timestamp.find(tx.sender());
         // find in local
         if (it_account_txid_set != m_account_tx_by_timestamp.end() &&
@@ -275,6 +287,12 @@ namespace libTAU::blockchain {
 
         if (tx.timestamp() <= get_news_pool_oldest_allowed_timestamp())
             return false;
+
+        // check if in local
+        auto it = m_all_news_txs.find(tx.sha1());
+        if (it != m_all_news_txs.end()) {
+            return false;
+        }
 
         auto it_account_txid_set = m_account_news_tx.find(tx.sender());
         // find in local

@@ -4186,8 +4186,6 @@ namespace libTAU::blockchain {
 
                         if (!tx.empty() && tx.verify_signature() && tx.type() == tx_type::type_note) {
 
-                            log(LOG_INFO, "INFO: Got note transaction[%s].", tx.to_string().c_str());
-
                             m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(tx);
 
                             if (!m_repository->save_tx(chain_id, tx)) {
@@ -4198,6 +4196,8 @@ namespace libTAU::blockchain {
                             auto &pool = m_tx_pools[chain_id];
 
                             if (pool.add_tx_to_time_pool(tx)) {
+                                log(LOG_ERR, "INFO: chain:%s, -------------- new tx[%s].",
+                                    aux::toHex(chain_id).c_str(), tx.to_string().c_str());
                                 send_new_note_tx_signal(chain_id, tx);
 //                                if (times == 1) {
 //                                    add_new_note_tx_signal_into_queue(chain_id, tx.sha1(), tx.sender());
