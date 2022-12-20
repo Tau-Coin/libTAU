@@ -4871,6 +4871,30 @@ namespace libTAU::blockchain {
         return -1;
     }
 
+    std::set<dht::public_key> blockchain::get_active_list(const aux::bytes &chain_id) {
+        if (m_chains.find(chain_id) == m_chains.end()) {
+            log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+            return std::set<dht::public_key>();
+        }
+
+        if (!m_chain_connected[chain_id]) {
+            log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+            return std::set<dht::public_key>();
+        }
+
+        std::set<dht::public_key> peers;
+        auto& access_list = m_access_list[chain_id];
+        for (auto const& item: access_list) {
+            if (item.second.m_score > 3) {
+                peers.insert(item.first);
+            }
+        }
+
+        log(LOG_ERR, "INFO: chain[%s] active list size:%" PRIu64, aux::toHex(chain_id).c_str(), peers.size());
+
+        return peers;
+    }
+
     std::set<dht::public_key> blockchain::get_access_list(const aux::bytes &chain_id) {
         if (m_chains.find(chain_id) == m_chains.end()) {
             log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());

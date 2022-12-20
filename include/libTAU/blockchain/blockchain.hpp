@@ -440,6 +440,9 @@ namespace blockchain {
         // return mining time: -1: cannot mine block
         std::int64_t getMiningTime(const aux::bytes &chain_id);
 
+        // return active list
+        std::set<dht::public_key> get_active_list(const aux::bytes &chain_id);
+
         // return access list
         std::set<dht::public_key> get_access_list(const aux::bytes &chain_id);
 
