@@ -29,11 +29,11 @@ namespace libTAU::blockchain {
         return "t" + aux::toHex(hash) + table_state;
     }
 
-    std::string repository::state_array_db_name(const aux::bytes &chain_id) {
+    std::string repository::kv_db_name(const aux::bytes &chain_id) {
         // prevent SQL injection
         sha1_hash hash = hasher(chain_id).final();
         // 't' + hex(sha1(chain id))
-        return "t" + aux::toHex(hash) + table_state_array;
+        return "t" + aux::toHex(hash) + table_kv;
     }
 
     std::string repository::peer_db_name(const aux::bytes &chain_id) {
@@ -61,12 +61,12 @@ namespace libTAU::blockchain {
         return "t" + table_community_info_list;
     }
 
-    std::string repository::txs_db_name(const aux::bytes &chain_id) {
-        // prevent SQL injection
-        sha1_hash hash = hasher(chain_id).final();
-        // 't' + hex(sha1(chain id))
-        return "t" + aux::toHex(hash) + table_txs;
-    }
+//    std::string repository::txs_db_name(const aux::bytes &chain_id) {
+//        // prevent SQL injection
+//        sha1_hash hash = hasher(chain_id).final();
+//        // 't' + hex(sha1(chain id))
+//        return "t" + aux::toHex(hash) + table_txs;
+//    }
 
     std::string repository::news_txs_db_name(const aux::bytes &chain_id) {
         // prevent SQL injection

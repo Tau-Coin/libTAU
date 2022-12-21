@@ -46,11 +46,11 @@ namespace libTAU::blockchain {
 //        return false;
 //    }
 
-    bool repository_track::create_state_tree_db(const aux::bytes &chain_id) {
+    bool repository_track::create_kv_db(const aux::bytes &chain_id) {
         return false;
     }
 
-    bool repository_track::delete_state_tree_db(const aux::bytes &chain_id) {
+    bool repository_track::delete_kv_db(const aux::bytes &chain_id) {
         return false;
     }
 
@@ -66,7 +66,15 @@ namespace libTAU::blockchain {
         return state_array(libTAU::entry());
     }
 
-    bool repository_track::is_data_in_state_tree_db(const aux::bytes &chain_id, const sha1_hash &hash) {
+    bool repository_track::save_tx(const aux::bytes &chain_id, const transaction &tx) {
+        return false;
+    }
+
+    transaction repository_track::get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+        return transaction();
+    }
+
+    bool repository_track::is_data_in_kv_db(const aux::bytes &chain_id, const sha1_hash &hash) {
         return false;
     }
 
@@ -74,7 +82,7 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool repository_track::delete_data_in_state_tree_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+    bool repository_track::delete_data_in_kv_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
         return false;
     }
 
@@ -262,25 +270,6 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool repository_track::create_tx_db(const aux::bytes &chain_id) {
-        return false;
-    }
-
-    bool repository_track::delete_tx_db(const aux::bytes &chain_id) {
-        return false;
-    }
-
-    bool repository_track::save_tx(const aux::bytes &chain_id, const transaction &tx) {
-        return false;
-    }
-
-    bool repository_track::is_tx_in_tx_db(const aux::bytes &chain_id, const sha1_hash &hash) {
-        return false;
-    }
-
-    transaction repository_track::get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
-        return transaction();
-    }
 
     bool repository_track::create_news_tx_db(const aux::bytes &chain_id) {
         return false;

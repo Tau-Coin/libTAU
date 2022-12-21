@@ -171,7 +171,7 @@ namespace libTAU::blockchain {
             log(LOG_ERR, "INFO: chain:%s, create state db fail.", aux::toHex(chain_id).c_str());
             return false;
         }
-        if (!m_repository->create_state_tree_db(chain_id)) {
+        if (!m_repository->create_kv_db(chain_id)) {
             log(LOG_ERR, "INFO: chain:%s, create state array db fail.", aux::toHex(chain_id).c_str());
             return false;
         }
@@ -279,7 +279,7 @@ namespace libTAU::blockchain {
                 return false;
             }
 
-            if (!m_repository->delete_state_tree_db(chain_id)) {
+            if (!m_repository->delete_kv_db(chain_id)) {
                 log(LOG_ERR, "INFO: chain:%s, delete state array db fail.", aux::toHex(chain_id).c_str());
                 return false;
             }
@@ -297,10 +297,6 @@ namespace libTAU::blockchain {
 //                log(LOG_ERR, "INFO: chain:%s, delete online list db fail.", aux::toHex(chain_id).c_str());
 //                return false;
 //            }
-            if (!m_repository->delete_tx_db(chain_id)) {
-                log(LOG_ERR, "INFO: chain:%s, delete tx db fail.", aux::toHex(chain_id).c_str());
-                return false;
-            }
             if (!m_repository->delete_news_tx_db(chain_id)) {
                 log(LOG_ERR, "INFO: chain:%s, delete news tx db fail.", aux::toHex(chain_id).c_str());
                 return false;
@@ -461,10 +457,6 @@ namespace libTAU::blockchain {
 //            log(LOG_ERR, "INFO: chain:[%s] create online peer db fail.", aux::toHex(chain_id).c_str());
 //            return false;
 //        }
-        if (!m_repository->create_tx_db(chain_id)) {
-            log(LOG_ERR, "INFO: chain:%s, create tx db fail.", aux::toHex(chain_id).c_str());
-            return false;
-        }
         if (!m_repository->create_news_tx_db(chain_id)) {
             log(LOG_ERR, "INFO: chain:%s, create news tx db fail.", aux::toHex(chain_id).c_str());
             return false;
@@ -4204,7 +4196,7 @@ namespace libTAU::blockchain {
 //                                }
                             }
 
-                            if (times < 10 && !tx.previous_hash().is_all_zeros() && !m_repository->is_tx_in_tx_db(chain_id, tx.previous_hash())) {
+                            if (times < 10 && !tx.previous_hash().is_all_zeros() && !m_repository->is_data_in_kv_db(chain_id, tx.previous_hash())) {
                                 get_note_transaction(chain_id, peer, tx.previous_hash(), signalPeer, times + 1);
                             }
                         }
@@ -4318,7 +4310,7 @@ namespace libTAU::blockchain {
                         }
 
                         for (auto const& hash: hashArray.HashArray()) {
-                            if (!m_repository->is_data_in_state_tree_db(chain_id, hash)) {
+                            if (!m_repository->is_data_in_kv_db(chain_id, hash)) {
                                 get_state_array(chain_id, peer, hash, signalPeer);
                             }
                         }
@@ -4364,7 +4356,7 @@ namespace libTAU::blockchain {
                         }
 
                         for (auto const& hash: hashArray.HashArray()) {
-                            if (!m_repository->is_tx_in_tx_db(chain_id, hash)) {
+                            if (!m_repository->is_data_in_kv_db(chain_id, hash)) {
                                 get_news_transaction(chain_id, peer, hash, signalPeer);
                             }
                         }

@@ -28,11 +28,11 @@ namespace libTAU::blockchain {
     const std::string table_blocks = "blocks";
     const std::string table_state = "state";
     const std::string table_peer = "peer";
-    const std::string table_state_array = "state_array";
+    const std::string table_kv = "kv";
     const std::string table_acl = "acl";
     const std::string table_online_list = "online_list";
     const std::string table_community_info_list = "community_info";
-    const std::string table_txs = "txs";
+//    const std::string table_txs = "txs";
     const std::string table_news_txs = "news_txs";
 
     // repository: 存储账户、区块、状态链接器以及相应高度的索引数据，每个账户的状态是一个通过状态链接器链接起来的一个链式结构。
@@ -53,7 +53,7 @@ namespace libTAU::blockchain {
 
         static std::string state_db_name(const aux::bytes &chain_id);
 
-        static std::string state_array_db_name(const aux::bytes &chain_id);
+        static std::string kv_db_name(const aux::bytes &chain_id);
 
         static std::string peer_db_name(const aux::bytes &chain_id);
 
@@ -63,7 +63,7 @@ namespace libTAU::blockchain {
 
         static std::string community_info_db_name();
 
-        static std::string txs_db_name(const aux::bytes &chain_id);
+//        static std::string txs_db_name(const aux::bytes &chain_id);
 
         static std::string news_txs_db_name(const aux::bytes &chain_id);
 
@@ -97,10 +97,10 @@ namespace libTAU::blockchain {
 //
 //        virtual bool delete_head_block_hash(const aux::bytes &chain_id) = 0;
 
-        // state tree db
-        virtual bool create_state_tree_db(const aux::bytes &chain_id) = 0;
+        // kv db
+        virtual bool create_kv_db(const aux::bytes &chain_id) = 0;
 
-        virtual bool delete_state_tree_db(const aux::bytes &chain_id) = 0;
+        virtual bool delete_kv_db(const aux::bytes &chain_id) = 0;
 
         virtual bool save_hash_array(const aux::bytes &chain_id, const hash_array &hashArray) = 0;
 
@@ -110,9 +110,13 @@ namespace libTAU::blockchain {
 
         virtual bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) = 0;
 
-        virtual bool is_data_in_state_tree_db(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+        virtual bool save_tx(const aux::bytes &chain_id, const transaction &tx) = 0;
 
-        virtual bool delete_data_in_state_tree_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+        virtual transaction get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+
+        virtual bool is_data_in_kv_db(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
+
+        virtual bool delete_data_in_kv_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         // state db api
         virtual bool create_state_db(const aux::bytes &chain_id) = 0;
@@ -216,17 +220,6 @@ namespace libTAU::blockchain {
         virtual std::int64_t get_touching_time(const aux::bytes &chain_id) = 0;
 
         virtual bool delete_touching_time(const aux::bytes &chain_id) = 0;
-
-        // txs db
-        virtual bool create_tx_db(const aux::bytes &chain_id) = 0;
-
-        virtual bool delete_tx_db(const aux::bytes &chain_id) = 0;
-
-        virtual bool save_tx(const aux::bytes &chain_id, const transaction &tx) = 0;
-
-        virtual bool is_tx_in_tx_db(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
-
-        virtual transaction get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         // news txs db
         virtual bool create_news_tx_db(const aux::bytes &chain_id) = 0;

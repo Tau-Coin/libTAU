@@ -145,10 +145,10 @@ namespace libTAU::blockchain {
 //        return false;
 //    }
 
-    bool repository_impl::create_state_tree_db(const aux::bytes &chain_id) {
+    bool repository_impl::create_kv_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
-        sql.append(state_array_db_name(chain_id));
-        sql.append("(HASH BLOB PRIMARY KEY NOT NULL, DATA BLOB);");
+        sql.append(kv_db_name(chain_id));
+        sql.append("(HASH BLOB PRIMARY KEY NOT NULL, VALUE BLOB);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -160,9 +160,9 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::delete_state_tree_db(const aux::bytes &chain_id) {
+    bool repository_impl::delete_kv_db(const aux::bytes &chain_id) {
         std::string sql = "DROP TABLE ";
-        sql.append(state_array_db_name(chain_id));
+        sql.append(kv_db_name(chain_id));
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -177,7 +177,7 @@ namespace libTAU::blockchain {
     bool repository_impl::save_hash_array(const aux::bytes &chain_id, const hash_array &hashArray) {
         sqlite3_stmt * stmt;
         std::string sql = "REPLACE INTO ";
-        sql.append(state_array_db_name(chain_id));
+        sql.append(kv_db_name(chain_id));
         sql.append(" VALUES(?,?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
@@ -201,8 +201,8 @@ namespace libTAU::blockchain {
         hash_array hashArray;
 
         sqlite3_stmt * stmt;
-        std::string sql = "SELECT DATA FROM ";
-        sql.append(state_array_db_name(chain_id));
+        std::string sql = "SELECT VALUE FROM ";
+        sql.append(kv_db_name(chain_id));
         sql.append(" WHERE HASH=?");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -226,8 +226,8 @@ namespace libTAU::blockchain {
         state_array stateArray;
 
         sqlite3_stmt * stmt;
-        std::string sql = "SELECT DATA FROM ";
-        sql.append(state_array_db_name(chain_id));
+        std::string sql = "SELECT VALUE FROM ";
+        sql.append(kv_db_name(chain_id));
         sql.append(" WHERE HASH=?");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -250,7 +250,7 @@ namespace libTAU::blockchain {
     bool repository_impl::save_state_array(const aux::bytes &chain_id, const state_array &stateArray) {
         sqlite3_stmt * stmt;
         std::string sql = "REPLACE INTO ";
-        sql.append(state_array_db_name(chain_id));
+        sql.append(kv_db_name(chain_id));
         sql.append(" VALUES(?,?)");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
@@ -270,12 +270,60 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::is_data_in_state_tree_db(const aux::bytes &chain_id, const sha1_hash &hash) {
+    bool repository_impl::save_tx(const aux::bytes &chain_id, const transaction &tx) {
+        sqlite3_stmt * stmt;
+        std::string sql = "REPLACE INTO ";
+        sql.append(kv_db_name(chain_id));
+        sql.append(" VALUES(?,?)");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+        sha1_hash hash = tx.sha1();
+        std::string e = tx.get_encode();
+        sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
+        sqlite3_bind_blob(stmt, 2, e.data(), e.size(), nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
+    }
+
+    transaction repository_impl::get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+        transaction tx;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT VALUE FROM ";
+        sql.append(kv_db_name(chain_id));
+        sql.append(" WHERE HASH=?");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                auto length = sqlite3_column_bytes(stmt, 0);
+
+                std::string encode(p, p + length);
+                tx = transaction(encode);
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return tx;
+    }
+
+    bool repository_impl::is_data_in_kv_db(const aux::bytes &chain_id, const sha1_hash &hash) {
         bool ret = false;
 
         sqlite3_stmt * stmt;
         std::string sql = "SELECT COUNT(*) FROM ";
-        sql.append(state_array_db_name(chain_id));
+        sql.append(kv_db_name(chain_id));
         sql.append(" WHERE HASH=?");
 
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
@@ -294,10 +342,10 @@ namespace libTAU::blockchain {
         return ret;
     }
 
-    bool repository_impl::delete_data_in_state_tree_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
+    bool repository_impl::delete_data_in_kv_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
         sqlite3_stmt * stmt;
         std::string sql = "DELETE FROM ";
-        sql.append(state_array_db_name(chain_id));
+        sql.append(kv_db_name(chain_id));
         sql.append(" WHERE HASH=?");
         int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
         if (ok != SQLITE_OK) {
@@ -1359,111 +1407,10 @@ namespace libTAU::blockchain {
         return true;
     }
 
-    bool repository_impl::create_tx_db(const aux::bytes &chain_id) {
-        std::string sql = "CREATE TABLE IF NOT EXISTS ";
-        sql.append(txs_db_name(chain_id));
-        sql.append("(HASH BLOB PRIMARY KEY NOT NULL, DATA BLOB);");
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
-        if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
-            return false;
-        }
-
-        return true;
-    }
-
-    bool repository_impl::delete_tx_db(const aux::bytes &chain_id) {
-        std::string sql = "DROP TABLE ";
-        sql.append(txs_db_name(chain_id));
-
-        char *zErrMsg = nullptr;
-        int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
-        if (ok != SQLITE_OK) {
-            sqlite3_free(zErrMsg);
-            return false;
-        }
-
-        return true;
-    }
-
-    bool repository_impl::save_tx(const aux::bytes &chain_id, const transaction &tx) {
-        sqlite3_stmt * stmt;
-        std::string sql = "REPLACE INTO ";
-        sql.append(txs_db_name(chain_id));
-        sql.append(" VALUES(?,?)");
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok != SQLITE_OK) {
-            return false;
-        }
-        sha1_hash hash = tx.sha1();
-        std::string e = tx.get_encode();
-        sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
-        sqlite3_bind_blob(stmt, 2, e.data(), e.size(), nullptr);
-
-        ok = sqlite3_step(stmt);
-        if (ok != SQLITE_DONE) {
-            return false;
-        }
-        sqlite3_finalize(stmt);
-
-        return true;
-    }
-
-    bool repository_impl::is_tx_in_tx_db(const aux::bytes &chain_id, const sha1_hash &hash) {
-        bool ret = false;
-
-        sqlite3_stmt * stmt;
-        std::string sql = "SELECT COUNT(*) FROM ";
-        sql.append(txs_db_name(chain_id));
-        sql.append(" WHERE HASH=?");
-
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok == SQLITE_OK) {
-            sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
-            if (sqlite3_step(stmt) == SQLITE_ROW) {
-                int num = sqlite3_column_int(stmt, 0);
-                if (num > 0) {
-                    ret = true;
-                }
-            }
-        }
-
-        sqlite3_finalize(stmt);
-
-        return ret;
-    }
-
-    transaction repository_impl::get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) {
-        transaction tx;
-
-        sqlite3_stmt * stmt;
-        std::string sql = "SELECT DATA FROM ";
-        sql.append(txs_db_name(chain_id));
-        sql.append(" WHERE HASH=?");
-
-        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
-        if (ok == SQLITE_OK) {
-            sqlite3_bind_blob(stmt, 1, hash.data(), libTAU::sha1_hash::size(), nullptr);
-            if (sqlite3_step(stmt) == SQLITE_ROW) {
-                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
-                auto length = sqlite3_column_bytes(stmt, 0);
-
-                std::string encode(p, p + length);
-                tx = transaction(encode);
-            }
-        }
-
-        sqlite3_finalize(stmt);
-
-        return tx;
-    }
-
     bool repository_impl::create_news_tx_db(const aux::bytes &chain_id) {
         std::string sql = "CREATE TABLE IF NOT EXISTS ";
         sql.append(news_txs_db_name(chain_id));
-        sql.append("(HASH BLOB PRIMARY KEY NOT NULL,TIMESTAMP INTEGER,DATA BLOB);");
+        sql.append("(HASH BLOB PRIMARY KEY NOT NULL,TIMESTAMP INTEGER,VALUE BLOB);");
 
         char *zErrMsg = nullptr;
         int ok = sqlite3_exec(m_sqlite, sql.c_str(), nullptr, nullptr, &zErrMsg);
@@ -1517,7 +1464,7 @@ namespace libTAU::blockchain {
         transaction tx;
 
         sqlite3_stmt * stmt;
-        std::string sql = "SELECT DATA FROM ";
+        std::string sql = "SELECT VALUE FROM ";
         sql.append(news_txs_db_name(chain_id));
         sql.append(" WHERE HASH=?");
 
@@ -1542,7 +1489,7 @@ namespace libTAU::blockchain {
         std::vector<transaction> txs;
 
         sqlite3_stmt * stmt;
-        std::string sql = "SELECT DATA FROM ";
+        std::string sql = "SELECT VALUE FROM ";
         sql.append(news_txs_db_name(chain_id));
         sql.append(" ORDER BY TIMESTAMP DESC LIMIT ?");
 

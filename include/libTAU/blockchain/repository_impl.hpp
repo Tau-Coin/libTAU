@@ -39,9 +39,9 @@ namespace libTAU::blockchain {
 //
 //        bool delete_head_block_hash(const aux::bytes &chain_id) override;
 
-        bool create_state_tree_db(const aux::bytes &chain_id) override;
+        bool create_kv_db(const aux::bytes &chain_id) override;
 
-        bool delete_state_tree_db(const aux::bytes &chain_id) override;
+        bool delete_kv_db(const aux::bytes &chain_id) override;
 
         bool save_hash_array(const aux::bytes &chain_id, const hash_array &hashArray) override;
 
@@ -51,9 +51,13 @@ namespace libTAU::blockchain {
 
         bool save_state_array(const aux::bytes &chain_id, const state_array &stateArray) override;
 
-        bool is_data_in_state_tree_db(const aux::bytes &chain_id, const sha1_hash &hash) override;
+        bool save_tx(const aux::bytes &chain_id, const transaction &tx) override;
 
-        bool delete_data_in_state_tree_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
+        transaction get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
+
+        bool is_data_in_kv_db(const aux::bytes &chain_id, const sha1_hash &hash) override;
+
+        bool delete_data_in_kv_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
         bool create_state_db(const aux::bytes &chain_id) override;
 
@@ -146,16 +150,6 @@ namespace libTAU::blockchain {
         int64_t get_touching_time(const aux::bytes &chain_id) override;
 
         bool delete_touching_time(const aux::bytes &chain_id) override;
-
-        bool create_tx_db(const aux::bytes &chain_id) override;
-
-        bool delete_tx_db(const aux::bytes &chain_id) override;
-
-        bool save_tx(const aux::bytes &chain_id, const transaction &tx) override;
-
-        bool is_tx_in_tx_db(const aux::bytes &chain_id, const sha1_hash &hash) override;
-
-        transaction get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
         bool create_news_tx_db(const aux::bytes &chain_id) override;
 
