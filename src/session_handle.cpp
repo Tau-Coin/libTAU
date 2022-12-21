@@ -405,6 +405,14 @@ namespace libTAU {
 		return keys;
 	}
 
+	// get active list
+    std::set<dht::public_key> session_handle::get_active_list(std::vector<char> chain_id)
+	{
+		std::set<dht::public_key> keys;
+		sync_call(&session_impl::get_active_list, chain_id, &keys);
+		return keys;
+	}
+
 	// get ban list
     std::set<dht::public_key> session_handle::get_ban_list(std::vector<char> chain_id)
 	{

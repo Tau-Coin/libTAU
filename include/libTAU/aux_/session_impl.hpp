@@ -704,6 +704,7 @@ namespace aux {
         	bool get_account_info(const aux::bytes &chain_id, dht::public_key publicKey, blockchain::account* act);
         	bool get_top_tip_block(const aux::bytes &chain_id, int topNum, std::vector<blockchain::block>* blks);
         	bool get_access_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys);
+        	bool get_active_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys);
         	bool get_ban_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys);
         	std::int64_t get_median_tx_free(const aux::bytes &chain_id);
         	std::int64_t get_mining_time(const aux::bytes &chain_id);

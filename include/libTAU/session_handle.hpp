@@ -384,6 +384,9 @@ namespace libTAU {
         // get access list
         std::set<dht::public_key> get_access_list(std::vector<char> chain_id);
 
+        // get active list
+        std::set<dht::public_key> get_active_list(std::vector<char> chain_id);
+
         // get ban list
         std::set<dht::public_key> get_ban_list(std::vector<char> chain_id);
 

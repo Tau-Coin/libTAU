@@ -3491,6 +3491,14 @@ namespace {
 		return false;
 	}
 
+	bool session_impl::get_active_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys) {
+		if(m_blockchain) {
+			*keys = m_blockchain->get_active_list(chain_id);
+			return true;
+		}
+		return false;
+	}
+
 	bool session_impl::get_ban_list(const aux::bytes &chain_id, std::set<dht::public_key>* keys) {
 		if(m_blockchain) {
 			*keys = m_blockchain->get_ban_list(chain_id);
