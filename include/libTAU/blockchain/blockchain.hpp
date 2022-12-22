@@ -872,7 +872,7 @@ namespace blockchain {
         std::map<aux::bytes, bool> m_chain_stop;
 
         // keep for now
-        std::map<aux::bytes, std::int64_t> m_touching_time;
+//        std::map<aux::bytes, std::int64_t> m_touching_time;
 
 //        std::map<aux::bytes, std::int64_t> m_last_discovery_time;
 

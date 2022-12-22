@@ -33,7 +33,9 @@ namespace libTAU::blockchain {
             return false;
         }
 
-        return create_community_info_db();
+        return true;
+
+//        return create_community_info_db();
     }
 
     bool repository_impl::begin_transaction() {
