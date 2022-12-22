@@ -1529,6 +1529,11 @@ namespace {
 			: blk(std::move(blk))
 	{}
 
+	blockchain_new_head_block_alert::blockchain_new_head_block_alert(aux::stack_allocator&
+			, blockchain::block blk, std::set<libTAU::blockchain::account> acts)
+			: blk(std::move(blk)), accounts(std::move(acts))
+	{}
+
 	std::string blockchain_new_head_block_alert::message() const
 	{
 #ifdef TORRENT_DISABLE_ALERT_MSG

@@ -1178,6 +1178,8 @@ namespace libTAU {
         // internal
         TORRENT_UNEXPORT blockchain_new_head_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk);
 
+        TORRENT_UNEXPORT blockchain_new_head_block_alert(aux::stack_allocator& alloc, libTAU::blockchain::block blk, std::set<libTAU::blockchain::account> acts);
+
         TORRENT_DEFINE_ALERT_PRIO(blockchain_new_head_block_alert, 39, alert_priority::critical)
 
         static constexpr alert_category_t static_category = alert_category::blockchain;
@@ -1186,6 +1188,8 @@ namespace libTAU {
 
         // message found from peers.
         libTAU::blockchain::block blk;
+
+        std::set<libTAU::blockchain::account> accounts;
     };
 
     // this alert is posted when new tail block is found from other peers.

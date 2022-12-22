@@ -1442,8 +1442,13 @@ namespace libTAU::blockchain {
 
                 m_repository->commit();
 
+                std::set<libTAU::blockchain::account> accounts;
                 for (auto const& stateArray: arrays) {
                     if (!stateArray.empty()) {
+                        for (auto const& act: stateArray.StateArray()) {
+                            accounts.insert(act);
+                        }
+
                         m_ses.alerts().emplace_alert<blockchain_state_array_alert>(chain_id, stateArray.StateArray());
                     }
                 }
@@ -1457,7 +1462,7 @@ namespace libTAU::blockchain {
                 m_tx_pools[chain_id].recheck_account_txs(peers);
                 m_tx_pools[chain_id].delete_tx_from_time_pool(blk.tx());
 
-                m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
+                m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk, accounts);
             }
         } else {
             std::set<dht::public_key> peers = blk.get_block_peers();
@@ -1529,8 +1534,12 @@ namespace libTAU::blockchain {
 
             m_repository->commit();
 
+            std::set<libTAU::blockchain::account> accounts;
             for (auto const& stateArray: arrays) {
                 if (!stateArray.empty()) {
+                    for (auto const& act: stateArray.StateArray()) {
+                        accounts.insert(act);
+                    }
                     m_ses.alerts().emplace_alert<blockchain_state_array_alert>(chain_id, stateArray.StateArray());
                 }
             }
@@ -1544,7 +1553,7 @@ namespace libTAU::blockchain {
             m_tx_pools[chain_id].recheck_account_txs(peers);
             m_tx_pools[chain_id].delete_tx_from_time_pool(blk.tx());
 
-            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk);
+            m_ses.alerts().emplace_alert<blockchain_new_head_block_alert>(blk, accounts);
         }
 
 //        m_tx_pools[chain_id].clear_fee_pool();
