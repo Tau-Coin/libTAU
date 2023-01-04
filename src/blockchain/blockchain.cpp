@@ -3490,7 +3490,7 @@ namespace libTAU::blockchain {
         // note: acl may be empty, if acl size == 0, maybe crush
         std::set<dht::public_key> peers;
         for (auto const& item: acl) {
-            if (item.second.m_score >= 3) {
+            if (item.second.m_score >= peer_info::initial_score) {
                 peers.insert(item.first);
             }
         }
@@ -3521,8 +3521,8 @@ namespace libTAU::blockchain {
             it->second.m_last_seen = now;
 
             it->second.m_score++;
-            if (it->second.m_score >= 5) {
-                it->second.m_score = 5;
+            if (it->second.m_score >= peer_info::max_score) {
+                it->second.m_score = peer_info::max_score;
             }
         } else {
             if (acl.size() < blockchain_acl_max_peers) {
@@ -3552,8 +3552,8 @@ namespace libTAU::blockchain {
 //            it->second.m_last_seen = now;
 //
 //            it->second.m_score++;
-//            if (it->second.m_score >= 5) {
-//                it->second.m_score = 5;
+//            if (it->second.m_score >= peer_info::max_score) {
+//                it->second.m_score = peer_info::max_score;
 //            }
 //        } else {
 //            acl[peer] = peer_info(now);
@@ -4887,7 +4887,7 @@ namespace libTAU::blockchain {
         std::set<dht::public_key> peers;
         auto& access_list = m_access_list[chain_id];
         for (auto const& item: access_list) {
-            if (item.second.m_score > 3) {
+            if (item.second.m_score > peer_info::initial_score) {
                 peers.insert(item.first);
             }
         }

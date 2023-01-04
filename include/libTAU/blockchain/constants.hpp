@@ -30,8 +30,6 @@ namespace libTAU::blockchain {
             dht::public_key(aux::fromHex("2a62868271f3d3455e4b1ea0c1f96263732d0347349f9daa3247107ce1b2b2f9").data()),
             dht::public_key(aux::fromHex("3e87c35d2079858d88dcb113edadaf1b339fcd4f74c539faa9a9bd59e787f124").data())};
 
-    constexpr int block_version2_time = 1667145600; // 2022-10-31
-
     constexpr int MAX_TX_ENCODE_SIZE = 700; // 950 - 243 ~= 700 bytes
 
     constexpr int MAX_OVERDRAFT = 100;
