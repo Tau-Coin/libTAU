@@ -420,7 +420,7 @@ namespace blockchain {
         bool submitTransaction(const transaction& tx);
 
         // send new transaction
-        bool submitNewsTransaction(const transaction& tx, const std::set<aux::bytes>& picSlices);
+        bool submitNewsTransaction(const transaction& tx, const std::vector<aux::bytes>& picSlices);
 
         // key length <= 20 bytes, value length < 1k
         void publish_data(const aux::bytes& key, const aux::bytes& value);

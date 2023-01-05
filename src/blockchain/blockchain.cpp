@@ -4740,8 +4740,55 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    bool blockchain::submitNewsTransaction(const transaction &tx, const std::set<aux::bytes> &picSlices) {
-        return true;
+    bool blockchain::submitNewsTransaction(const transaction &tx, const std::vector<aux::bytes> &picSlices) {
+        try {
+            log(LOG_INFO, "INFO: add news tx:%s", tx.to_string().c_str());
+            if (!tx.empty()) {
+                if (!tx.verify_signature()) {
+                    log(LOG_INFO, "INFO: Bad signature.");
+                    return false;
+                }
+
+                auto &chain_id = tx.chain_id();
+
+                if (m_chains.find(chain_id) == m_chains.end()) {
+                    log(LOG_INFO, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());
+                    return false;
+                }
+
+                if (!m_chain_connected[chain_id]) {
+                    log(LOG_ERR, "INFO: Unconnected chain[%s]", aux::toHex(chain_id).c_str());
+                    return false;
+                }
+
+                m_tx_pools[chain_id].add_tx(tx);
+
+                if (!m_repository->save_tx(chain_id, tx)) {
+                    log(LOG_ERR, "INFO: chain:%s, save tx[%s] fail.",
+                        aux::toHex(chain_id).c_str(), tx.to_string().c_str());
+                }
+
+                if (tx.type() == tx_type::type_transfer) {
+                    if (tx.amount() == 0) {
+                        put_news_transaction(chain_id, tx);
+
+                        send_new_news_tx_signal(chain_id, tx);
+
+                        if (!m_repository->save_news_tx(chain_id, tx)) {
+                            log(LOG_ERR, "INFO: chain:%s, save news tx[%s] fail.",
+                                aux::toHex(chain_id).c_str(), tx.to_string().c_str());
+                        }
+                    }
+                }
+
+                return true;
+            }
+        } catch (std::exception &e) {
+            log(LOG_ERR, "Exception add news tx [CHAIN] %s in file[%s], func[%s], line[%d]", e.what(), __FILE__, __FUNCTION__ , __LINE__);
+            return false;
+        }
+
+        return false;
     }
 
     void blockchain::publish_data(const bytes &key, const bytes &value) {
