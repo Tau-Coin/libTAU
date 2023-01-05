@@ -419,6 +419,15 @@ namespace blockchain {
         // send new transaction
         bool submitTransaction(const transaction& tx);
 
+        // send new transaction
+        bool submitNewsTransaction(const transaction& tx, const std::set<aux::bytes>& picSlices);
+
+        // key length <= 20 bytes, value length < 1k
+        void publish_data(const aux::bytes& key, const aux::bytes& value);
+
+        // key length <= 20 bytes
+        void subscribe_from_peer(const dht::public_key &peer, const aux::bytes& key);
+
         // check if tx is in pool
 //        bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid);
 

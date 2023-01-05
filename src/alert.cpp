@@ -1848,5 +1848,23 @@ namespace {
 #endif
     }
 
+    blockchain_pic_slice_alert::blockchain_pic_slice_alert(aux::stack_allocator&
+            , aux::bytes id, sha1_hash h, std::int64_t t, aux::bytes k, aux::bytes s)
+            : chain_id(std::move(id)), news_hash(h), key(std::move(k)), slice(std::move(s))
+    {}
+
+    std::string blockchain_pic_slice_alert::message() const
+    {
+#ifdef TORRENT_DISABLE_ALERT_MSG
+        return {};
+#else
+        char msg[256];
+        std::snprintf(msg, sizeof(msg), "chain[%s] news hash[%s] pic slice key[%s] ",
+                      aux::toHex(chain_id).c_str(), aux::toHex(news_hash.to_string()).c_str(), aux::toHex(key).c_str());
+
+        return msg;
+#endif
+    }
+
 
 } // namespace libTAU

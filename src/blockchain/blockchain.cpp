@@ -4740,6 +4740,18 @@ namespace libTAU::blockchain {
         return false;
     }
 
+    bool blockchain::submitNewsTransaction(const transaction &tx, const std::set<aux::bytes> &picSlices) {
+        return true;
+    }
+
+    void blockchain::publish_data(const bytes &key, const bytes &value) {
+
+    }
+
+    void blockchain::subscribe_from_peer(const dht::public_key &peer, const bytes &key) {
+
+    }
+
 //    bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid) {
 //        if (m_chains.find(chain_id) == m_chains.end()) {
 //            log(LOG_ERR, "INFO: Unfollowed chain[%s]", aux::toHex(chain_id).c_str());

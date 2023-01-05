@@ -66,7 +66,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 60;
+	constexpr int num_alert_types = 61;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1565,6 +1565,31 @@ namespace libTAU {
 
         // time
         std::int64_t time;
+    };
+
+    // this alert is posted when got pic slice.
+    struct TORRENT_EXPORT blockchain_pic_slice_alert final : alert
+    {
+        // internal
+        TORRENT_UNEXPORT blockchain_pic_slice_alert(aux::stack_allocator& alloc, aux::bytes id, sha1_hash h, std::int64_t t, aux::bytes k, aux::bytes s);
+
+        TORRENT_DEFINE_ALERT_PRIO(blockchain_pic_slice_alert, 60, alert_priority::critical)
+
+        static constexpr alert_category_t static_category = alert_category::blockchain;
+
+        std::string message() const override;
+
+        // chain id
+        aux::bytes chain_id;
+
+        // news hash
+        sha1_hash news_hash;
+
+        // slice key
+        aux::bytes key;
+
+        // pic slice
+        aux::bytes slice;
     };
 
 #undef TORRENT_DEFINE_ALERT_IMPL

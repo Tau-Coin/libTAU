@@ -106,10 +106,10 @@ namespace libTAU {
             // set main loop time interval (ms)
 //            void set_loop_time_interval(int milliseconds);
 
-            // key length < 20 bytes, value length < 1k
+            // key length <= 20 bytes, value length < 1k
             void publish_data(const aux::bytes& key, const aux::bytes& value);
 
-            // key length < 20 bytes
+            // key length <= 20 bytes
             void subscribe_from_peer(const dht::public_key &peer, const aux::bytes& key);
 
             // data length < 1k
