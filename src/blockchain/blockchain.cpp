@@ -3860,6 +3860,16 @@ namespace libTAU::blockchain {
         }
     }
 
+    void blockchain::put_pic_slice(const bytes &chain_id, const aux::bytes& key, const bytes &slice) {
+        if (!slice.empty()) {
+
+        }
+    }
+
+    void blockchain::get_pic_slice(const bytes &chain_id, const bytes &key, int times) {
+
+    }
+
     void blockchain::get_state_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, const dht::public_key &signalPeer) {
         // salt is x pubkey when request signal
         auto salt = make_salt(hash);

@@ -114,6 +114,10 @@ namespace libTAU::blockchain {
 
         virtual transaction get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
+        virtual bool save_pic_slice(const aux::bytes &chain_id, const aux::bytes &key, const aux::bytes &slice) = 0;
+
+        virtual aux::bytes get_pic_slice(const aux::bytes &chain_id, const aux::bytes &key) = 0;
+
         virtual bool is_data_in_kv_db(const aux::bytes &chain_id, const sha1_hash &hash) = 0;
 
         virtual bool delete_data_in_kv_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) = 0;

@@ -74,6 +74,14 @@ namespace libTAU::blockchain {
         return transaction();
     }
 
+    bool repository_track::save_pic_slice(const aux::bytes &chain_id, const aux::bytes &key, const aux::bytes &slice) {
+        return false;
+    }
+
+    aux::bytes repository_track::get_pic_slice(const aux::bytes &chain_id, const aux::bytes &key) {
+        return libTAU::aux::bytes();
+    }
+
     bool repository_track::is_data_in_kv_db(const aux::bytes &chain_id, const sha1_hash &hash) {
         return false;
     }

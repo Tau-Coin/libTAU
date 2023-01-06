@@ -749,6 +749,10 @@ namespace blockchain {
 
         void put_news_transaction(const aux::bytes &chain_id, const transaction &tx);
 
+        void put_pic_slice(const aux::bytes &chain_id, const aux::bytes& key, const aux::bytes &slice);
+
+        void get_pic_slice(const aux::bytes &chain_id, const aux::bytes& key, int times = 1);
+
         void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, const dht::public_key &signalPeer);
 
         void put_state_array(const aux::bytes &chain_id, const state_array &stateArray);

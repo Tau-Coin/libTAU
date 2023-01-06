@@ -55,6 +55,10 @@ namespace libTAU::blockchain {
 
         transaction get_tx_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
+        bool save_pic_slice(const aux::bytes &chain_id, const aux::bytes &key, const aux::bytes &slice) override;
+
+        aux::bytes get_pic_slice(const aux::bytes &chain_id, const aux::bytes &key) override;
+
         bool is_data_in_kv_db(const aux::bytes &chain_id, const sha1_hash &hash) override;
 
         bool delete_data_in_kv_db_by_hash(const aux::bytes &chain_id, const sha1_hash &hash) override;

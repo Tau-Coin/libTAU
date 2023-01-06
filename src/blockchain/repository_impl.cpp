@@ -320,6 +320,52 @@ namespace libTAU::blockchain {
         return tx;
     }
 
+    bool repository_impl::save_pic_slice(const aux::bytes &chain_id, const aux::bytes &key, const aux::bytes &slice) {
+        sqlite3_stmt * stmt;
+        std::string sql = "REPLACE INTO ";
+        sql.append(kv_db_name(chain_id));
+        sql.append(" VALUES(?,?)");
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok != SQLITE_OK) {
+            return false;
+        }
+
+        sqlite3_bind_blob(stmt, 1, key.data(), key.size(), nullptr);
+        sqlite3_bind_blob(stmt, 2, slice.data(), slice.size(), nullptr);
+
+        ok = sqlite3_step(stmt);
+        if (ok != SQLITE_DONE) {
+            return false;
+        }
+        sqlite3_finalize(stmt);
+
+        return true;
+    }
+
+    aux::bytes repository_impl::get_pic_slice(const aux::bytes &chain_id, const aux::bytes &key) {
+        libTAU::aux::bytes slice;
+
+        sqlite3_stmt * stmt;
+        std::string sql = "SELECT VALUE FROM ";
+        sql.append(kv_db_name(chain_id));
+        sql.append(" WHERE HASH=?");
+
+        int ok = sqlite3_prepare_v2(m_sqlite, sql.c_str(), -1, &stmt, nullptr);
+        if (ok == SQLITE_OK) {
+            sqlite3_bind_blob(stmt, 1, key.data(), key.size(), nullptr);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                const char *p = static_cast<const char *>(sqlite3_column_blob(stmt, 0));
+                auto length = sqlite3_column_bytes(stmt, 0);
+
+                slice = aux::bytes(p, p + length);
+            }
+        }
+
+        sqlite3_finalize(stmt);
+
+        return slice;
+    }
+
     bool repository_impl::is_data_in_kv_db(const aux::bytes &chain_id, const sha1_hash &hash) {
         bool ret = false;
 
