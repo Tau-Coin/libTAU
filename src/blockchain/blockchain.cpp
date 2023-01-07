@@ -3862,12 +3862,12 @@ namespace libTAU::blockchain {
 
     void blockchain::put_pic_slice(const bytes &chain_id, const aux::bytes& key, const bytes &slice) {
         if (!slice.empty()) {
-
+            publish(std::string(key.begin(), key.end()), std::string(slice.begin(), slice.end()));
         }
     }
 
-    void blockchain::get_pic_slice(const bytes &chain_id, const bytes &key, int times) {
-
+    void blockchain::get_pic_slice(const bytes &chain_id, const dht::public_key& peer, const bytes &key, const dht::public_key &signalPeer, int times) {
+        subscribe(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE, signalPeer, 0, times);
     }
 
     void blockchain::get_state_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, const dht::public_key &signalPeer) {
@@ -4780,6 +4780,22 @@ namespace libTAU::blockchain {
 
                 if (tx.type() == tx_type::type_transfer) {
                     if (tx.amount() == 0) {
+                        auto news_hash = tx.sha1();
+                        byte i = '0';
+                        for (auto const& slice: picSlices) {
+                            aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+                            key.insert(key.end(), i);
+
+                            if (!m_repository->save_pic_slice(chain_id, key, slice)) {
+                                log(LOG_ERR, "INFO: chain:%s, save pic slice[%s] fail.",
+                                    aux::toHex(chain_id).c_str(), aux::toHex(key).c_str());
+                            }
+
+                            put_pic_slice(chain_id, key, slice);
+
+                            i++;
+                        }
+
                         put_news_transaction(chain_id, tx);
 
                         send_new_news_tx_signal(chain_id, tx);
@@ -4801,12 +4817,13 @@ namespace libTAU::blockchain {
         return false;
     }
 
-    void blockchain::publish_data(const bytes &key, const bytes &value) {
-
+    void blockchain::publish_data(const aux::bytes &chain_id, const bytes &key, const bytes &value) {
+        m_repository->save_pic_slice(chain_id, key, value);
+        publish(std::string(key.begin(), key.end()), std::string(value.begin(), value.end()));
     }
 
-    void blockchain::subscribe_from_peer(const dht::public_key &peer, const bytes &key) {
-
+    void blockchain::subscribe_from_peer(const aux::bytes &chain_id, const dht::public_key &peer, const bytes &key) {
+        subscribe(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE);
     }
 
 //    bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid) {

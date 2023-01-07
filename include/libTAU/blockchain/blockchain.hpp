@@ -106,6 +106,7 @@ namespace blockchain {
         LEVEL_0_NEWS_HASH_ARRAY,
         LEVEL_1_NEWS_HASH_ARRAY,
         STATE_ARRAY,
+        PIC_SLICE,
         UNKNOWN_GET_ITEM_TYPE,
     };
 
@@ -423,10 +424,10 @@ namespace blockchain {
         bool submitNewsTransaction(const transaction& tx, const std::vector<aux::bytes>& picSlices);
 
         // key length <= 20 bytes, value length < 1k
-        void publish_data(const aux::bytes& key, const aux::bytes& value);
+        void publish_data(const aux::bytes &chain_id, const aux::bytes& key, const aux::bytes& value);
 
         // key length <= 20 bytes
-        void subscribe_from_peer(const dht::public_key &peer, const aux::bytes& key);
+        void subscribe_from_peer(const aux::bytes &chain_id, const dht::public_key &peer, const aux::bytes& key);
 
         // check if tx is in pool
 //        bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid);
@@ -751,7 +752,7 @@ namespace blockchain {
 
         void put_pic_slice(const aux::bytes &chain_id, const aux::bytes& key, const aux::bytes &slice);
 
-        void get_pic_slice(const aux::bytes &chain_id, const aux::bytes& key, int times = 1);
+        void get_pic_slice(const aux::bytes &chain_id, const dht::public_key& peer, const aux::bytes& key, const dht::public_key &signalPeer, int times = 1);
 
         void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, const dht::public_key &signalPeer);
 
