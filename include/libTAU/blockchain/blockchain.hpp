@@ -172,6 +172,14 @@ namespace blockchain {
             m_type = dht_item_type::DHT_GET;
         }
 
+        // get pic slice
+        dht_item(aux::bytes mChainId, const dht::public_key &mPeer, std::string mSalt, GET_ITEM_TYPE mGetItemType,
+                 const sha1_hash &mHash, const dht::public_key &mSignalPeer, int64_t mTimestamp, int mTimes) :
+                 m_chain_id(std::move(mChainId)), m_peer(mPeer), m_salt(std::move(mSalt)), m_get_item_type(mGetItemType),
+                 m_hash(mHash), m_signal_peer(mSignalPeer), m_timestamp(mTimestamp), m_times(mTimes) {
+            m_type = dht_item_type::DHT_GET;
+        }
+
         bool operator<(const dht_item &rhs) const {
             if (m_type < rhs.m_type)
                 return true;
@@ -427,7 +435,7 @@ namespace blockchain {
         void publish_data(const aux::bytes &chain_id, const aux::bytes& key, const aux::bytes& value);
 
         // key length <= 20 bytes
-        void subscribe_from_peer(const aux::bytes &chain_id, const dht::public_key &peer, const aux::bytes& key);
+        void subscribe_from_peer(const aux::bytes &chain_id, const dht::public_key &peer, const aux::bytes& key, sha1_hash news_hash);
 
         // check if tx is in pool
 //        bool is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid);
@@ -752,7 +760,7 @@ namespace blockchain {
 
         void put_pic_slice(const aux::bytes &chain_id, const aux::bytes& key, const aux::bytes &slice);
 
-        void get_pic_slice(const aux::bytes &chain_id, const dht::public_key& peer, const aux::bytes& key, const dht::public_key &signalPeer, int times = 1);
+        void get_pic_slice(const aux::bytes &chain_id, const dht::public_key& peer, const aux::bytes& key, sha1_hash news_hash, const dht::public_key &signalPeer, int times = 1);
 
         void get_state_array(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, const dht::public_key &signalPeer);
 
@@ -786,7 +794,7 @@ namespace blockchain {
 
         // mutable data callback
         void get_mutable_callback(aux::bytes chain_id, dht::item const& i, bool, GET_ITEM_TYPE type, const dht::public_key &signalPeer,
-                                  std::int64_t timestamp, int times = 1);
+                                  std::int64_t timestamp, int times = 1, sha1_hash hash = sha1_hash());
 
         // get mutable item from dht
 //        void dht_get_mutable_item(aux::bytes const& chain_id, std::array<char, 32> key, std::string salt);

@@ -762,7 +762,7 @@ namespace libTAU::blockchain {
                             m_ses.dht()->get_item(dhtItem.m_peer,
                                                   std::bind(&blockchain::get_mutable_callback, self(),
                                                             dhtItem.m_chain_id, _1, _2, dhtItem.m_get_item_type,
-                                                            dhtItem.m_signal_peer, dhtItem.m_timestamp, dhtItem.m_times),
+                                                            dhtItem.m_signal_peer, dhtItem.m_timestamp, dhtItem.m_times, dhtItem.m_hash),
                                                   1, 8, 16, dhtItem.m_salt, dhtItem.m_timestamp);
 
                             break;
@@ -3764,6 +3764,25 @@ namespace libTAU::blockchain {
 
             log(LOG_INFO, "INFO: Chain id[%s] Put block salt[%s]", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
             publish(salt, blk.get_entry());
+
+            // put pic slice
+            auto const& tx = blk.tx();
+            if (!tx.empty() && tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+                auto news_hash = tx.sha1();
+                byte k = '0';
+                for (int n = 0; n < 10; n++) {
+                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+                    key.insert(key.end(), k);
+
+                    auto pic_slice = m_repository->get_pic_slice(chain_id, key);
+
+                    if (!pic_slice.empty()) {
+                        put_pic_slice(chain_id, key, pic_slice);
+                    }
+
+                    k++;
+                }
+            }
         }
     }
 
@@ -3786,6 +3805,24 @@ namespace libTAU::blockchain {
         for (auto const &tx: txs) {
             // put news tx
             put_news_transaction(chain_id, tx);
+
+            // put pic slice if news tx
+            if (!tx.empty() && tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+                auto news_hash = tx.sha1();
+                byte k = '0';
+                for (int n = 0; n < 10; n++) {
+                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+                    key.insert(key.end(), k);
+
+                    auto pic_slice = m_repository->get_pic_slice(chain_id, key);
+
+                    if (!pic_slice.empty()) {
+                        put_pic_slice(chain_id, key, pic_slice);
+                    }
+
+                    k++;
+                }
+            }
         }
     }
 
@@ -3866,8 +3903,13 @@ namespace libTAU::blockchain {
         }
     }
 
-    void blockchain::get_pic_slice(const bytes &chain_id, const dht::public_key& peer, const bytes &key, const dht::public_key &signalPeer, int times) {
-        subscribe(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE, signalPeer, 0, times);
+    void blockchain::get_pic_slice(const bytes &chain_id, const dht::public_key& peer, const bytes &key, sha1_hash news_hash, const dht::public_key &signalPeer, int times) {
+//        subscribe(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE, signalPeer, 0, times);
+        if (!m_ses.dht()) return;
+
+//        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type, timestamp, times), 1, 8, 16, salt, timestamp);
+        dht_item dhtItem(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE, news_hash, signalPeer, 0, times);
+        add_into_dht_task_queue(dhtItem);
     }
 
     void blockchain::get_state_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, const dht::public_key &signalPeer) {
@@ -4014,7 +4056,7 @@ namespace libTAU::blockchain {
 
     // callback for dht_mutable_get
     void blockchain::get_mutable_callback(aux::bytes chain_id, dht::item const& i, bool const authoritative,
-                                          GET_ITEM_TYPE type, const dht::public_key &signalPeer, std::int64_t timestamp, int times)
+                                          GET_ITEM_TYPE type, const dht::public_key &signalPeer, std::int64_t timestamp, int times, sha1_hash hash)
     {
         TORRENT_ASSERT(i.is_mutable());
 
@@ -4293,6 +4335,36 @@ namespace libTAU::blockchain {
                             if (tx.type() == tx_type::type_transfer && pool.add_tx_to_fee_pool(tx)) {
                                 send_new_transfer_tx_signal(chain_id, tx);
                             }
+
+                            // get pic slice
+                            auto news_hash = tx.sha1();
+                            byte k = '0';
+                            for (int n = 0; n < 10; n++) {
+                                aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+                                key.insert(key.end(), k);
+
+                                get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
+
+                                k++;
+                            }
+                        }
+
+                        break;
+                    }
+                    case GET_ITEM_TYPE::PIC_SLICE: {
+                        aux::bytes pic_slice(i.value().string().begin(), i.value().string().end());
+
+                        if (!pic_slice.empty()) {
+
+                            log(LOG_INFO, "INFO: chain:%s, got pic slice key[%s].", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+
+                            auto key = aux::bytes(salt.begin(), salt.end());
+                            m_ses.alerts().emplace_alert<blockchain_pic_slice_alert>(chain_id, hash, key, pic_slice);
+
+                            if (!m_repository->save_pic_slice(chain_id, key, pic_slice)) {
+                                log(LOG_ERR, "INFO: chain:%s, save pic slice key[%s] fail.",
+                                    aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+                            }
                         }
 
                         break;
@@ -4456,6 +4528,12 @@ namespace libTAU::blockchain {
                     case GET_ITEM_TYPE::NEWS_TX: {
                         if (times == 1) {
                             get_news_transaction(chain_id, peer, sha1_hash(salt.data()), signalPeer, times + 1);
+                        }
+                        break;
+                    }
+                    case GET_ITEM_TYPE::PIC_SLICE: {
+                        if (times == 1) {
+                            get_pic_slice(chain_id, peer, aux::bytes(salt.begin(), salt.end()), hash, signalPeer, times + 1);
                         }
                         break;
                     }
@@ -4822,8 +4900,13 @@ namespace libTAU::blockchain {
         publish(std::string(key.begin(), key.end()), std::string(value.begin(), value.end()));
     }
 
-    void blockchain::subscribe_from_peer(const aux::bytes &chain_id, const dht::public_key &peer, const bytes &key) {
-        subscribe(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE);
+    void blockchain::subscribe_from_peer(const aux::bytes &chain_id, const dht::public_key &peer, const bytes &key, sha1_hash news_hash) {
+//        subscribe(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE);
+        if (!m_ses.dht()) return;
+
+//        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type, timestamp, times), 1, 8, 16, salt, timestamp);
+        dht_item dhtItem(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE, news_hash, dht::public_key(), 0, 1);
+        add_into_dht_task_queue(dhtItem);
     }
 
 //    bool blockchain::is_transaction_in_fee_pool(const aux::bytes &chain_id, const sha1_hash &txid) {

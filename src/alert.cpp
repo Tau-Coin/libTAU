@@ -1849,7 +1849,7 @@ namespace {
     }
 
     blockchain_pic_slice_alert::blockchain_pic_slice_alert(aux::stack_allocator&
-            , aux::bytes id, sha1_hash h, std::int64_t t, aux::bytes k, aux::bytes s)
+            , aux::bytes id, sha1_hash h, aux::bytes k, aux::bytes s)
             : chain_id(std::move(id)), news_hash(h), key(std::move(k)), slice(std::move(s))
     {}
 

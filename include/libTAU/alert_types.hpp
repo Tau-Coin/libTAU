@@ -1571,7 +1571,7 @@ namespace libTAU {
     struct TORRENT_EXPORT blockchain_pic_slice_alert final : alert
     {
         // internal
-        TORRENT_UNEXPORT blockchain_pic_slice_alert(aux::stack_allocator& alloc, aux::bytes id, sha1_hash h, std::int64_t t, aux::bytes k, aux::bytes s);
+        TORRENT_UNEXPORT blockchain_pic_slice_alert(aux::stack_allocator& alloc, aux::bytes id, sha1_hash h, aux::bytes k, aux::bytes s);
 
         TORRENT_DEFINE_ALERT_PRIO(blockchain_pic_slice_alert, 60, alert_priority::critical)
 
