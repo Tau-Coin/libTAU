@@ -3467,6 +3467,12 @@ namespace {
 		return false;
 	}
 
+	bool session_impl::submit_news_transaction(const blockchain::transaction & tx, const std::vector<std::vector<char>> & picSlices) {
+		if(m_blockchain)
+			return m_blockchain->submitNewsTransaction(tx, picSlices);
+		return false;
+	}
+
 	bool session_impl::get_account_info(const aux::bytes &chain_id, dht::public_key pub_key, blockchain::account * act) {
 		if(m_blockchain) {
 			*act =  m_blockchain->getAccountInfo(chain_id, pub_key);

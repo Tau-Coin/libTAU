@@ -381,6 +381,12 @@ namespace libTAU {
 		return sync_call_ret<bool>(&session_impl::submit_transaction, tx);
 	}
 
+	// submit news transaction
+    bool session_handle::submit_news_transaction(const blockchain::transaction & tx, const std::vector<std::vector<char>> & picSlices)
+	{
+		return sync_call_ret<bool>(&session_impl::submit_news_transaction, tx, picSlices);
+	}
+
 	// get account info
     blockchain::account session_handle::get_account_info(std::vector<char> chain_id, dht::public_key pub_key)
 	{

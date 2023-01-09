@@ -376,6 +376,10 @@ namespace libTAU {
 
 		// submit transaction
         bool submit_transaction(const blockchain::transaction & tx);
+
+		// submit news transaction
+        bool submit_news_transaction(const blockchain::transaction & tx, const std::vector<std::vector<char>> & pslice);
+
 		// get account info
         blockchain::account get_account_info(std::vector<char> chain_id, dht::public_key publicKey);
 		// get top and tip blocks
