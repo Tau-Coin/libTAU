@@ -3899,11 +3899,15 @@ namespace libTAU::blockchain {
 
     void blockchain::put_pic_slice(const bytes &chain_id, const aux::bytes& key, const bytes &slice) {
         if (!slice.empty()) {
+            log(LOG_INFO, "INFO: Chain id[%s] Put pic slice[%s]", aux::toHex(chain_id).c_str(), aux::toHex(key).c_str());
+
             publish(std::string(key.begin(), key.end()), std::string(slice.begin(), slice.end()));
         }
     }
 
     void blockchain::get_pic_slice(const bytes &chain_id, const dht::public_key& peer, const bytes &key, sha1_hash news_hash, const dht::public_key &signalPeer, int times) {
+        log(LOG_INFO, "INFO: Get pic slice from chain[%s] peer[%s], salt:[%s], times[%d], news hash:[%s]",
+            aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), aux::toHex(key).c_str(), times, aux::toHex(news_hash.to_string()).c_str());
         auto pic_slice = m_repository->get_pic_slice(chain_id, key);
         if (pic_slice.empty()) {
 //        subscribe(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE, signalPeer, 0, times);
@@ -4076,7 +4080,7 @@ namespace libTAU::blockchain {
             const auto& salt = i.salt();
 //            GET_ITEM getItem(chain_id, peer, salt, type);
 
-            log(LOG_INFO, "=====INFO: Got callback[%s], type[%d],salt[%s], timestamp:%" PRId64,
+            log(LOG_INFO, "=====INFO: Got callback[%s], type[%d], salt[%s], timestamp:%" PRId64,
                 i.value().to_string(true).c_str(), type, aux::toHex(i.salt()).c_str(), timestamp);
 
             if (!i.empty()) {
