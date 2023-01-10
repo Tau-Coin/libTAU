@@ -3904,12 +3904,19 @@ namespace libTAU::blockchain {
     }
 
     void blockchain::get_pic_slice(const bytes &chain_id, const dht::public_key& peer, const bytes &key, sha1_hash news_hash, const dht::public_key &signalPeer, int times) {
+        auto pic_slice = m_repository->get_pic_slice(chain_id, key);
+        if (pic_slice.empty()) {
 //        subscribe(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE, signalPeer, 0, times);
-        if (!m_ses.dht()) return;
+            if (!m_ses.dht()) return;
 
 //        m_ses.dht()->get_item(peer, std::bind(&blockchain::get_mutable_callback, self(), chain_id, _1, _2, type, timestamp, times), 1, 8, 16, salt, timestamp);
-        dht_item dhtItem(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE, news_hash, signalPeer, 0, times);
-        add_into_dht_task_queue(dhtItem);
+            dht_item dhtItem(chain_id, peer, std::string(key.begin(), key.end()), GET_ITEM_TYPE::PIC_SLICE, news_hash,
+                             signalPeer, 0, times);
+            add_into_dht_task_queue(dhtItem);
+        } else {
+            get_mutable_callback(chain_id, dht::item(std::string(pic_slice.begin(), pic_slice.end()), std::string(key.begin(), key.end()), dht::timestamp(), *m_ses.pubkey(), *m_ses.serkey()),
+                                 true, GET_ITEM_TYPE::PIC_SLICE, signalPeer, 0, times + 1, news_hash);
+        }
     }
 
     void blockchain::get_state_array(const bytes &chain_id, const dht::public_key &peer, const sha1_hash &hash, const dht::public_key &signalPeer) {
