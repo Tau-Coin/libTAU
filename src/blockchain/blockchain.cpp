@@ -908,7 +908,7 @@ namespace libTAU::blockchain {
 
                     // calc score: score-- if lost signal for 10s
                     for (auto& item: acl) {
-                        if (item.second.m_last_seen + 10 * 1000 < now && item.second.m_score > 0) {
+                        if (item.second.m_last_seen + 16 * 1000 < now && item.second.m_score > 0) {
                             item.second.m_score--;
                             if (item.second.m_score < 0) {
                                 item.second.m_score = 0;
@@ -2936,7 +2936,7 @@ namespace libTAU::blockchain {
 
             auto now = get_total_milliseconds();
             for (auto& item: acl) {
-                if (now >= item.second.m_last_sent + 5 * 1000) {
+                if (now >= item.second.m_last_sent + 8 * 1000) {
                     send_to(item.first, e);
 
                     item.second.m_last_sent = now;

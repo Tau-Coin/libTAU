@@ -62,10 +62,10 @@ namespace blockchain {
 //    constexpr std::size_t x2_size = 7;
 
     // blockchain min peers in acl
-    constexpr std::size_t blockchain_acl_min_peers = 4;
+    constexpr std::size_t blockchain_acl_min_peers = 3;
 
     // blockchain max peers in acl
-    constexpr std::size_t blockchain_acl_max_peers = 6;
+    constexpr std::size_t blockchain_acl_max_peers = 5;
 
     // blockchain max peers in online peer list
 //    constexpr std::size_t blockchain_online_list_max_peers = 64;
