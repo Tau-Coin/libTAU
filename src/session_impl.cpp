@@ -4358,11 +4358,24 @@ namespace {
 			{
 				stop_natpmp();
 				m_settings.set_bool(settings_pack::enable_natpmp, false);
+
+				if (m_alerts.should_post<portmap_closed_alert>())
+				{
+					m_alerts.emplace_alert<portmap_closed_alert>(
+						portmap_transport::natpmp, portmap_protocol::udp);
+				}
 			}
 			if (m_settings.get_bool(settings_pack::enable_upnp))
 			{
 				stop_upnp();
 				m_settings.set_bool(settings_pack::enable_upnp, false);
+
+				if (m_alerts.should_post<portmap_closed_alert>())
+				{
+					m_alerts.emplace_alert<portmap_closed_alert>(
+						portmap_transport::upnp, portmap_protocol::udp);
+				}
+
 			}
 		}
 	}
@@ -4440,11 +4453,23 @@ namespace {
 					{
 						stop_natpmp();
 						m_settings.set_bool(settings_pack::enable_natpmp, false);
+
+						if (m_alerts.should_post<portmap_closed_alert>())
+						{
+							m_alerts.emplace_alert<portmap_closed_alert>(
+								portmap_transport::natpmp, portmap_protocol::udp);
+						}
 					}
 					if (m_settings.get_bool(settings_pack::enable_upnp))
 					{
 						stop_upnp();
 						m_settings.set_bool(settings_pack::enable_upnp, false);
+
+						if (m_alerts.should_post<portmap_closed_alert>())
+						{
+							m_alerts.emplace_alert<portmap_closed_alert>(
+								portmap_transport::upnp, portmap_protocol::udp);
+						}
 					}
 				}
 			}

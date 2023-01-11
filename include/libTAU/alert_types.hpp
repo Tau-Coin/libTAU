@@ -66,7 +66,7 @@ namespace libTAU {
 	constexpr int user_alert_id = 10000;
 
 	// this constant represents "max_alert_index" + 1
-	constexpr int num_alert_types = 61;
+	constexpr int num_alert_types = 62;
 
 	// internal
 	constexpr int abi_alert_count = 128;
@@ -1591,6 +1591,23 @@ namespace libTAU {
         // pic slice
         aux::bytes slice;
     };
+
+    // This alert is generated when UPNP/NAT-PMP status changed from open into closed.
+	struct TORRENT_EXPORT portmap_closed_alert final : alert
+	{
+		// internal
+		TORRENT_UNEXPORT portmap_closed_alert(aux::stack_allocator& alloc, portmap_transport t
+			, portmap_protocol protocol);
+
+		TORRENT_DEFINE_ALERT(portmap_closed_alert, 61)
+
+		static inline constexpr alert_category_t static_category = alert_category::port_mapping;
+		std::string message() const override;
+
+		portmap_protocol const map_protocol;
+
+		portmap_transport const map_transport;
+	};
 
 #undef TORRENT_DEFINE_ALERT_IMPL
 #undef TORRENT_DEFINE_ALERT

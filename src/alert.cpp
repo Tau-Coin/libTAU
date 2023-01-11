@@ -365,6 +365,25 @@ namespace {
 #endif
 	}
 
+    portmap_closed_alert::portmap_closed_alert(aux::stack_allocator&, portmap_transport const t
+		, portmap_protocol const proto)
+		: map_protocol(proto)
+		, map_transport(t)
+	{}
+
+	std::string portmap_closed_alert::message() const
+	{
+#ifdef TORRENT_DISABLE_ALERT_MSG
+		return {};
+#else
+		char ret[150];
+		std::snprintf(ret, sizeof(ret), "%s/%s port mapping are all closed."
+			, protocol_str[static_cast<int>(map_protocol)]
+			, nat_type_str[static_cast<int>(map_transport)]);
+		return ret;
+#endif
+	}
+
 	portmap_log_alert::portmap_log_alert(aux::stack_allocator& alloc
 		, portmap_transport const t, const char* m, address const& local)
 		: map_transport(t)
