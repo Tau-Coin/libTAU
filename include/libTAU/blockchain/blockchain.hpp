@@ -41,7 +41,7 @@ namespace blockchain {
     using system_clock = std::chrono::system_clock;
 
     // default refresh time of main task(ms)
-    constexpr int blockchain_min_refresh_time = 10;
+    constexpr int blockchain_min_refresh_time = 50;
     constexpr int blockchain_max_refresh_time = 3000;
 
     constexpr int blockchain_default_acl_refresh_time = 3 * 1000;
