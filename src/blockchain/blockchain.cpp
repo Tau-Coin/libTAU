@@ -4338,12 +4338,14 @@ namespace libTAU::blockchain {
                             }
 
                             auto &pool = m_tx_pools[chain_id];
+                            bool send = false;
                             if (pool.add_tx_to_news_pool(tx)) {
+                                send = true;
                                 send_new_news_tx_signal(chain_id, tx);
 //                                add_new_news_tx_signal_into_queue(chain_id, tx.sha1(), tx.sender());
                             }
 
-                            if (tx.type() == tx_type::type_transfer && pool.add_tx_to_fee_pool(tx)) {
+                            if (tx.type() == tx_type::type_transfer && pool.add_tx_to_fee_pool(tx) && !send) {
                                 send_new_transfer_tx_signal(chain_id, tx);
                             }
 

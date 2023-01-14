@@ -252,7 +252,7 @@ namespace blockchain {
                     os << "dht get: " << " m_chain_id: " << aux::toHex(item.m_chain_id)
                        << " m_peer: " << aux::toHex(item.m_peer.bytes) << " m_salt: " << aux::toHex(item.m_salt)
                        << " m_get_item_type: " << item.m_get_item_type << " m_timestamp: " << item.m_timestamp
-                       << " m_times: " << item.m_times << item.m_times << " m_signal_peer: " << aux::toHex(item.m_signal_peer.bytes);
+                       << " m_times: " << item.m_times << " m_signal_peer: " << aux::toHex(item.m_signal_peer.bytes);
 
                     break;
                 }
