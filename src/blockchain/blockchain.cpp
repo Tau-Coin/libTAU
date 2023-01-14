@@ -4350,14 +4350,14 @@ namespace libTAU::blockchain {
                             // get pic slice
                             auto news_hash = tx.sha1();
                             byte k = '0';
-                            for (int n = 0; n < 10; n++) {
+//                            for (int n = 0; n < 10; n++) {
                                 aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
                                 key.insert(key.end(), k);
 
                                 get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
 
-                                k++;
-                            }
+//                                k++;
+//                            }
                         }
 
                         break;
@@ -4368,6 +4368,18 @@ namespace libTAU::blockchain {
                         if (!pic_slice.empty()) {
 
                             log(LOG_INFO, "INFO: chain:%s, got pic slice key[%s].", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+
+                            if (salt.size() == libTAU::sha1_hash::size() / 2 + 1) {
+                                byte k = *salt.rbegin();
+                                if (k < '9') {
+                                    k++;
+
+                                    aux::bytes key(hash.begin(), hash.begin() + libTAU::sha1_hash::size() / 2);
+                                    key.insert(key.end(), k);
+
+                                    get_pic_slice(chain_id, peer, key, hash, signalPeer);
+                                }
+                            }
 
                             auto key = aux::bytes(salt.begin(), salt.end());
                             m_ses.alerts().emplace_alert<blockchain_pic_slice_alert>(chain_id, hash, key, pic_slice);
