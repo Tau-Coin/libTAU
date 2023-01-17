@@ -4133,7 +4133,22 @@ namespace libTAU::blockchain {
 
                             // notify ui tx from block
                             if (!blk.tx().empty()) {
+                                auto const &tx = blk.tx();
                                 m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
+
+                                if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+                                    // get pic slice
+                                    auto news_hash = tx.sha1();
+                                    byte k = '0';
+//                            for (int n = 0; n < 10; n++) {
+                                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+                                    key.insert(key.end(), k);
+
+                                    get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
+
+//                                k++;
+//                            }
+                                }
                             }
 
                             if (blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
@@ -4179,7 +4194,22 @@ namespace libTAU::blockchain {
 
                             // notify ui tx from block
                             if (!blk.tx().empty()) {
+                                auto const &tx = blk.tx();
                                 m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
+
+                                if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+                                    // get pic slice
+                                    auto news_hash = tx.sha1();
+                                    byte k = '0';
+//                            for (int n = 0; n < 10; n++) {
+                                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+                                    key.insert(key.end(), k);
+
+                                    get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
+
+//                                k++;
+//                            }
+                                }
                             }
 
                             m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(peer, blk);
