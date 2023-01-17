@@ -3599,7 +3599,7 @@ namespace libTAU::blockchain {
                 aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str());
             subscribe(chain_id, peer, salt, GET_ITEM_TYPE::TRANSFER_TX, signalPeer, 0, times);
         } else {
-            get_mutable_callback(chain_id, dht::item(tx.get_entry(), salt, dht::timestamp(), *m_ses.pubkey(), *m_ses.serkey()),
+            get_mutable_callback(chain_id, dht::item(tx.get_entry(), salt, dht::timestamp(), peer, *m_ses.serkey()),
                                  true, GET_ITEM_TYPE::TRANSFER_TX, signalPeer, 0, times + 1);
         }
     }
@@ -3752,7 +3752,7 @@ namespace libTAU::blockchain {
                 aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
             subscribe(chain_id, peer, salt, GET_ITEM_TYPE::HEAD_BLOCK, signalPeer, 0, times);
         } else {
-            get_mutable_callback(chain_id, dht::item(blk.get_entry(), salt, dht::timestamp(), *m_ses.pubkey(), *m_ses.serkey()),
+            get_mutable_callback(chain_id, dht::item(blk.get_entry(), salt, dht::timestamp(), peer, *m_ses.serkey()),
                                  true, GET_ITEM_TYPE::HEAD_BLOCK, signalPeer, 0,times + 1);
         }
     }
@@ -3856,7 +3856,7 @@ namespace libTAU::blockchain {
                 aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
             subscribe(chain_id, peer, salt, GET_ITEM_TYPE::NOTE_TX, signalPeer, 0, times);
         } else {
-            get_mutable_callback(chain_id, dht::item(tx.get_entry(), salt, dht::timestamp(), *m_ses.pubkey(), *m_ses.serkey()),
+            get_mutable_callback(chain_id, dht::item(tx.get_entry(), salt, dht::timestamp(), peer, *m_ses.serkey()),
                                  true, GET_ITEM_TYPE::NOTE_TX, signalPeer, 0, times + 1);
         }
     }
@@ -3882,7 +3882,7 @@ namespace libTAU::blockchain {
                 aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), aux::toHex(salt).c_str(), times);
             subscribe(chain_id, peer, salt, GET_ITEM_TYPE::NEWS_TX, signalPeer, 0, times);
         } else {
-            get_mutable_callback(chain_id, dht::item(tx.get_entry(), salt, dht::timestamp(), *m_ses.pubkey(), *m_ses.serkey()),
+            get_mutable_callback(chain_id, dht::item(tx.get_entry(), salt, dht::timestamp(), peer, *m_ses.serkey()),
                                  true, GET_ITEM_TYPE::NEWS_TX, signalPeer, 0, times + 1);
         }
     }
@@ -3918,7 +3918,7 @@ namespace libTAU::blockchain {
                              signalPeer, 0, times);
             add_into_dht_task_queue(dhtItem);
         } else {
-            get_mutable_callback(chain_id, dht::item(std::string(pic_slice.begin(), pic_slice.end()), std::string(key.begin(), key.end()), dht::timestamp(), *m_ses.pubkey(), *m_ses.serkey()),
+            get_mutable_callback(chain_id, dht::item(std::string(pic_slice.begin(), pic_slice.end()), std::string(key.begin(), key.end()), dht::timestamp(), peer, *m_ses.serkey()),
                                  true, GET_ITEM_TYPE::PIC_SLICE, signalPeer, 0, times + 1, news_hash);
         }
     }
@@ -4321,6 +4321,8 @@ namespace libTAU::blockchain {
 
                             auto &pool = m_tx_pools[chain_id];
 
+                            bool send = false;
+
                             if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
                                 if (!m_repository->save_news_tx(chain_id, tx)) {
                                     log(LOG_ERR, "INFO: chain:%s, save news tx[%s] fail.",
@@ -4328,12 +4330,14 @@ namespace libTAU::blockchain {
                                 }
 
                                 if (pool.add_tx_to_news_pool(tx)) {
+                                    send = true;
                                     send_new_news_tx_signal(chain_id, tx);
 //                                    add_new_news_tx_signal_into_queue(chain_id, tx.sha1(), tx.sender());
                                 }
                             }
 
                             if (pool.add_tx_to_fee_pool(tx)) {
+                                send = true;
                                 send_new_transfer_tx_signal(chain_id, tx);
 //                                auto self_tx = pool.get_transaction_by_account(*m_ses.pubkey());
 //                                auto best_tx = pool.get_best_fee_transaction();
@@ -4341,6 +4345,20 @@ namespace libTAU::blockchain {
 //                                    // transfer tx only when self tx is not in pool and this tx is not the best
 //                                    put_transfer_transaction(chain_id, tx);
 //                                }
+                            }
+
+                            if (send && tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+                                // get pic slice
+                                auto news_hash = tx.sha1();
+                                byte k = '0';
+//                            for (int n = 0; n < 10; n++) {
+                                aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+                                key.insert(key.end(), k);
+
+                                get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
+
+//                                k++;
+//                            }
                             }
                         }
 
