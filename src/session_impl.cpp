@@ -3709,9 +3709,9 @@ namespace {
                 start_communication();
             if(b_enable)
                 start_blockchain();
+			m_alerts.emplace_alert<session_start_over_alert>(true);
 		}
 
-		m_alerts.emplace_alert<session_start_over_alert>(true);
 	}
 
 	// callback for dht_immutable_get
