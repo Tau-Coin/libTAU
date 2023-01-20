@@ -71,7 +71,7 @@ namespace blockchain {
 //    constexpr std::size_t blockchain_online_list_max_peers = 64;
 
     // blockchain max getting times
-    constexpr std::int64_t blockchain_max_getting_times = 10;
+    constexpr std::int64_t blockchain_max_getting_times = 20;
 
     // blockchain last put time(5min)
     constexpr std::int64_t blockchain_min_put_interval = 5 * 60 * 1000;

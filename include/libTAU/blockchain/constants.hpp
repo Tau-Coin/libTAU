@@ -51,7 +51,7 @@ namespace libTAU::blockchain {
 
     constexpr int MAX_ACCOUNT_SIZE_IN_ENTRY = 18;
 
-    constexpr int MAX_NEWS_SIZE_IN_GENESIS_BLOCK = 500;
+    constexpr int MAX_NEWS_SIZE_IN_GENESIS_BLOCK = 100;
 
     constexpr int short_chain_id_length = 4;
 
