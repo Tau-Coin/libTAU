@@ -4136,19 +4136,19 @@ namespace libTAU::blockchain {
                                 auto const &tx = blk.tx();
                                 m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
 
-                                if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
-                                    // get pic slice
-                                    auto news_hash = tx.sha1();
-                                    byte k = '0';
-//                            for (int n = 0; n < 10; n++) {
-                                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
-                                    key.insert(key.end(), k);
-
-                                    get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
-
-//                                k++;
-//                            }
-                                }
+//                                if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+//                                    // get pic slice
+//                                    auto news_hash = tx.sha1();
+//                                    byte k = '0';
+////                            for (int n = 0; n < 10; n++) {
+//                                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+//                                    key.insert(key.end(), k);
+//
+//                                    get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
+//
+////                                k++;
+////                            }
+//                                }
                             }
 
                             if (blk.cumulative_difficulty() > m_head_blocks[chain_id].cumulative_difficulty()) {
@@ -4197,19 +4197,19 @@ namespace libTAU::blockchain {
                                 auto const &tx = blk.tx();
                                 m_ses.alerts().emplace_alert<blockchain_new_transaction_alert>(blk.tx());
 
-                                if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
-                                    // get pic slice
-                                    auto news_hash = tx.sha1();
-                                    byte k = '0';
-//                            for (int n = 0; n < 10; n++) {
-                                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
-                                    key.insert(key.end(), k);
-
-                                    get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
-
-//                                k++;
-//                            }
-                                }
+//                                if (tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+//                                    // get pic slice
+//                                    auto news_hash = tx.sha1();
+//                                    byte k = '0';
+////                            for (int n = 0; n < 10; n++) {
+//                                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+//                                    key.insert(key.end(), k);
+//
+//                                    get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
+//
+////                                k++;
+////                            }
+//                                }
                             }
 
                             m_ses.alerts().emplace_alert<blockchain_syncing_block_alert>(peer, blk);
@@ -4347,19 +4347,19 @@ namespace libTAU::blockchain {
 //                                }
                             }
 
-                            if (send && tx.type() == tx_type::type_transfer && tx.amount() == 0) {
-                                // get pic slice
-                                auto news_hash = tx.sha1();
-                                byte k = '0';
-//                            for (int n = 0; n < 10; n++) {
-                                aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
-                                key.insert(key.end(), k);
-
-                                get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
-
-//                                k++;
+//                            if (send && tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+//                                // get pic slice
+//                                auto news_hash = tx.sha1();
+//                                byte k = '0';
+////                            for (int n = 0; n < 10; n++) {
+//                                aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+//                                key.insert(key.end(), k);
+//
+//                                get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
+//
+////                                k++;
+////                            }
 //                            }
-                            }
                         }
 
                         break;
@@ -4398,50 +4398,50 @@ namespace libTAU::blockchain {
                             }
 
                             // get pic slice
-                            auto news_hash = tx.sha1();
-                            byte k = '0';
-//                            for (int n = 0; n < 10; n++) {
-                                aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
-                                key.insert(key.end(), k);
+//                            auto news_hash = tx.sha1();
+//                            byte k = '0';
+////                            for (int n = 0; n < 10; n++) {
+//                                aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+//                                key.insert(key.end(), k);
+//
+//                                get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
+//
+////                                k++;
+////                            }
+                        }
 
-                                get_pic_slice(chain_id, peer, key, news_hash, signalPeer);
-
-//                                k++;
+                        break;
+                    }
+//                    case GET_ITEM_TYPE::PIC_SLICE: {
+//                        aux::bytes pic_slice(i.value().string().begin(), i.value().string().end());
+//
+//                        if (!pic_slice.empty()) {
+//
+//                            log(LOG_INFO, "INFO: chain:%s, got pic slice key[%s].", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+//
+//                            if (salt.size() == libTAU::sha1_hash::size() / 2 + 1) {
+//                                byte k = *salt.rbegin();
+//                                if (k < '9') {
+//                                    k++;
+//
+//                                    aux::bytes key(hash.begin(), hash.begin() + libTAU::sha1_hash::size() / 2);
+//                                    key.insert(key.end(), k);
+//
+//                                    get_pic_slice(chain_id, peer, key, hash, signalPeer);
+//                                }
 //                            }
-                        }
-
-                        break;
-                    }
-                    case GET_ITEM_TYPE::PIC_SLICE: {
-                        aux::bytes pic_slice(i.value().string().begin(), i.value().string().end());
-
-                        if (!pic_slice.empty()) {
-
-                            log(LOG_INFO, "INFO: chain:%s, got pic slice key[%s].", aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-
-                            if (salt.size() == libTAU::sha1_hash::size() / 2 + 1) {
-                                byte k = *salt.rbegin();
-                                if (k < '9') {
-                                    k++;
-
-                                    aux::bytes key(hash.begin(), hash.begin() + libTAU::sha1_hash::size() / 2);
-                                    key.insert(key.end(), k);
-
-                                    get_pic_slice(chain_id, peer, key, hash, signalPeer);
-                                }
-                            }
-
-                            auto key = aux::bytes(salt.begin(), salt.end());
-                            m_ses.alerts().emplace_alert<blockchain_pic_slice_alert>(chain_id, hash, key, pic_slice);
-
-                            if (!m_repository->save_pic_slice(chain_id, key, pic_slice)) {
-                                log(LOG_ERR, "INFO: chain:%s, save pic slice key[%s] fail.",
-                                    aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
-                            }
-                        }
-
-                        break;
-                    }
+//
+//                            auto key = aux::bytes(salt.begin(), salt.end());
+//                            m_ses.alerts().emplace_alert<blockchain_pic_slice_alert>(chain_id, hash, key, pic_slice);
+//
+//                            if (!m_repository->save_pic_slice(chain_id, key, pic_slice)) {
+//                                log(LOG_ERR, "INFO: chain:%s, save pic slice key[%s] fail.",
+//                                    aux::toHex(chain_id).c_str(), aux::toHex(salt).c_str());
+//                            }
+//                        }
+//
+//                        break;
+//                    }
 //                    case GET_ITEM_TYPE::NOTE_POOL_ROOT: {
 //                        sha1_hash note_pool_root(i.value().string().c_str());
 //                        log(LOG_INFO, "INFO: Got note pool root[%s]", aux::toHex(note_pool_root).c_str());
@@ -4604,12 +4604,12 @@ namespace libTAU::blockchain {
                         }
                         break;
                     }
-                    case GET_ITEM_TYPE::PIC_SLICE: {
-                        if (times == 1) {
-                            get_pic_slice(chain_id, peer, aux::bytes(salt.begin(), salt.end()), hash, signalPeer, times + 1);
-                        }
-                        break;
-                    }
+//                    case GET_ITEM_TYPE::PIC_SLICE: {
+//                        if (times == 1) {
+//                            get_pic_slice(chain_id, peer, aux::bytes(salt.begin(), salt.end()), hash, signalPeer, times + 1);
+//                        }
+//                        break;
+//                    }
 //                    case GET_ITEM_TYPE::TX_WRAPPER: {
 //                        if (times == 1) {
 //                            get_transaction_wrapper(chain_id, peer, sha1_hash(salt.data()), times + 1);
