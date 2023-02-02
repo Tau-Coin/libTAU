@@ -744,7 +744,7 @@ namespace blockchain {
         void put_block_with_all_state(const aux::bytes &chain_id, const block &blk,
                                       const std::vector<hash_array> &hashArrays,
                                       const std::vector<state_array> &arrays,
-                                      const std::vector<transaction> &txs);
+                                      const std::vector<transaction> &news_txs);
 
 //        void get_transaction_wrapper(const aux::bytes &chain_id, const dht::public_key& peer, const sha1_hash &hash, int times = 1);
 

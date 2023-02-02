@@ -3156,7 +3156,7 @@ namespace libTAU::blockchain {
                         }
                     }
 
-                    std::vector<transaction> txs;
+                    std::vector<transaction> news_txs;
                     level1HashArray = m_repository->get_hash_array_by_hash(chain_id, blk.news_root());
                     if (!level1HashArray.empty()) {
                         hashArrays.push_back(level1HashArray);
@@ -3168,14 +3168,14 @@ namespace libTAU::blockchain {
                                 for (auto const& txid: level0HashArray.HashArray()) {
                                     auto tx = m_repository->get_news_tx_by_hash(chain_id, txid);
                                     if (!tx.empty()) {
-                                        txs.push_back(tx);
+                                        news_txs.push_back(tx);
                                     }
                                 }
                             }
                         }
                     }
 
-                    put_block_with_all_state(chain_id, blk, hashArrays, stateArrays, txs);
+                    put_block_with_all_state(chain_id, blk, hashArrays, stateArrays, news_txs);
                 } else {
                     log(LOG_INFO, "Chain[%s] empty block", aux::toHex(chain_id).c_str());
                 }
@@ -3766,30 +3766,30 @@ namespace libTAU::blockchain {
             publish(salt, blk.get_entry());
 
             // put pic slice
-            auto const& tx = blk.tx();
-            if (!tx.empty() && tx.type() == tx_type::type_transfer && tx.amount() == 0) {
-                auto news_hash = tx.sha1();
-                byte k = '0';
-                for (int n = 0; n < 10; n++) {
-                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
-                    key.insert(key.end(), k);
-
-                    auto pic_slice = m_repository->get_pic_slice(chain_id, key);
-
-                    if (!pic_slice.empty()) {
-                        put_pic_slice(chain_id, key, pic_slice);
-                    }
-
-                    k++;
-                }
-            }
+//            auto const& tx = blk.tx();
+//            if (!tx.empty() && tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+//                auto news_hash = tx.sha1();
+//                byte k = '0';
+//                for (int n = 0; n < 10; n++) {
+//                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+//                    key.insert(key.end(), k);
+//
+//                    auto pic_slice = m_repository->get_pic_slice(chain_id, key);
+//
+//                    if (!pic_slice.empty()) {
+//                        put_pic_slice(chain_id, key, pic_slice);
+//                    }
+//
+//                    k++;
+//                }
+//            }
         }
     }
 
     void blockchain::put_block_with_all_state(const bytes &chain_id, const block &blk,
                                               const std::vector<hash_array> &hashArrays,
                                               const std::vector<state_array> &arrays,
-                                              const std::vector<transaction> &txs) {
+                                              const std::vector<transaction> &news_txs) {
         put_block(chain_id, blk);
 
         for (auto const &hashArray: hashArrays) {
@@ -3802,27 +3802,27 @@ namespace libTAU::blockchain {
             put_state_array(chain_id, array);
         }
 
-        for (auto const &tx: txs) {
+        for (auto const &tx: news_txs) {
             // put news tx
             put_news_transaction(chain_id, tx);
 
             // put pic slice if news tx
-            if (!tx.empty() && tx.type() == tx_type::type_transfer && tx.amount() == 0) {
-                auto news_hash = tx.sha1();
-                byte k = '0';
-                for (int n = 0; n < 10; n++) {
-                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
-                    key.insert(key.end(), k);
-
-                    auto pic_slice = m_repository->get_pic_slice(chain_id, key);
-
-                    if (!pic_slice.empty()) {
-                        put_pic_slice(chain_id, key, pic_slice);
-                    }
-
-                    k++;
-                }
-            }
+//            if (!tx.empty() && tx.type() == tx_type::type_transfer && tx.amount() == 0) {
+//                auto news_hash = tx.sha1();
+//                byte k = '0';
+//                for (int n = 0; n < 10; n++) {
+//                    aux::bytes key(news_hash.begin(), news_hash.begin() + libTAU::sha1_hash::size() / 2);
+//                    key.insert(key.end(), k);
+//
+//                    auto pic_slice = m_repository->get_pic_slice(chain_id, key);
+//
+//                    if (!pic_slice.empty()) {
+//                        put_pic_slice(chain_id, key, pic_slice);
+//                    }
+//
+//                    k++;
+//                }
+//            }
         }
     }
 
