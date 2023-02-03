@@ -67,7 +67,7 @@ namespace libTAU::blockchain {
     constexpr int MAX_RATIO = 335;
 
     // genesis block balance
-    constexpr int64_t GENESIS_BLOCK_BALANCE = 1000000;
+    constexpr int64_t GENESIS_BLOCK_BALANCE = 10000000;
     // miner bonus
     constexpr int64_t MINER_BONUS = 10;
 
