@@ -1392,7 +1392,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "device id %s"
+        std::snprintf(msg, sizeof(msg), "ALERT: device id %s"
                 , aux::toHex(device_id).c_str());
         return msg;
 #endif
@@ -1409,7 +1409,7 @@ namespace {
         return {};
 #else
         char buffer[256];
-        std::snprintf(buffer, sizeof(buffer), "new message hash: %s"
+        std::snprintf(buffer, sizeof(buffer), "ALERT: new message hash: %s"
                 , aux::toHex(msg.sha1().to_string()).c_str());
         return buffer;
 #endif
@@ -1426,7 +1426,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] confirmation root size %zu, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "ALERT: peer[%s] confirmation root size %zu, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
                 , confirmation_roots.size(), time);
         return msg;
 #endif
@@ -1443,7 +1443,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] sync message hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "ALERT: peer[%s] sync message hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
                 , aux::toHex(syncing_msg_hash.to_string()).c_str(), time);
 
         return msg;
@@ -1461,7 +1461,7 @@ namespace {
         return {};
 #else
         char msg[1050];
-        std::snprintf(msg, sizeof(msg), "peer[%s] friend info %s", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "ALERT: peer[%s] friend info %s", aux::toHex(peer.bytes).c_str()
                 , aux::toHex(friend_info).c_str());
         return msg;
 #endif
@@ -1508,7 +1508,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] last seen time %" PRId64 "", aux::toHex(peer.bytes).c_str(), last_seen);
+        std::snprintf(msg, sizeof(msg), "ALERT: peer[%s] last seen time %" PRId64 "", aux::toHex(peer.bytes).c_str(), last_seen);
         return msg;
 #endif
     }
@@ -1558,7 +1558,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-		return "new head block:" + blk.to_string();
+		return "ALERT: new head block:" + blk.to_string();
 #endif
 	}
 
@@ -1572,7 +1572,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-        return "new tail block:" + blk.to_string();
+        return "ALERT: new tail block:" + blk.to_string();
 #endif
 	}
 
@@ -1586,7 +1586,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "new consensus point block:" + blk.to_string();
+        return "ALERT: new consensus point block:" + blk.to_string();
 #endif
     }
 
@@ -1600,7 +1600,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-        return "rollback block:" + blk.to_string();
+        return "ALERT: rollback block:" + blk.to_string();
 #endif
 	}
 
@@ -1614,7 +1614,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
 		return {};
 #else
-        return "fork point block:" + blk.to_string();
+        return "ALERT: fork point block:" + blk.to_string();
 #endif
 	}
 
@@ -1629,7 +1629,7 @@ namespace {
 		return {};
 #else
 		char msg[256];
-		std::snprintf(msg, sizeof(msg), "chain[%s] votes size %zu", aux::toHex(chain_id).c_str(), votes.size());
+		std::snprintf(msg, sizeof(msg), "ALERT: chain[%s] votes size %zu", aux::toHex(chain_id).c_str(), votes.size());
 		return msg;
 #endif
 	}
@@ -1645,7 +1645,7 @@ namespace {
 		return {};
 #else
 		char buffer[256];
-		std::snprintf(buffer, sizeof(buffer), "new tx hash: %s"
+		std::snprintf(buffer, sizeof(buffer), "ALERT: new tx hash: %s"
 				, aux::toHex(tx.sha1().to_string()).c_str());
 		return buffer;
 #endif
@@ -1661,7 +1661,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: chain:" + aux::toHex(chain_id) + " post state:" + act.to_string();
+        return "ALERT: chain:" + aux::toHex(chain_id) + " post state:" + act.to_string();
 #endif
     }
 
@@ -1675,7 +1675,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: peer:" + aux::toHex(peer.bytes) + " syncing block:" + blk.to_string();
+        return "ALERT: peer:" + aux::toHex(peer.bytes) + " syncing block:" + blk.to_string();
 #endif
     }
 
@@ -1689,7 +1689,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: peer:" + aux::toHex(peer.bytes) + " syncing head block:" + blk.to_string();
+        return "ALERT: peer:" + aux::toHex(peer.bytes) + " syncing head block:" + blk.to_string();
 #endif
     }
 
@@ -1705,7 +1705,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: chain:" + aux::toHex(chain_id) + " peer:" + aux::toHex(peer.bytes) + " tx confirmation hash:" + aux::toHex(hash.to_string());
+        return "ALERT: chain:" + aux::toHex(chain_id) + " peer:" + aux::toHex(peer.bytes) + " tx confirmation hash:" + aux::toHex(hash.to_string());
 #endif
     }
 
@@ -1737,7 +1737,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] arrived message hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "ALERT: peer[%s] arrived message hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
                 , aux::toHex(msg_arrived_hash.to_string()).c_str(), time);
 
         return msg;
@@ -1755,7 +1755,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "peer[%s] sent tx hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
+        std::snprintf(msg, sizeof(msg), "ALERT: peer[%s] sent tx hash %s, time:%" PRId64 "", aux::toHex(peer.bytes).c_str()
                 , aux::toHex(tx_sent_hash.to_string()).c_str(), time);
 
         return msg;
@@ -1790,7 +1790,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: peer:" + aux::toHex(peer.bytes) + " key: " + aux::toHex(key) + " user info: " + aux::toHex(user_info);
+        return "ALERT: peer:" + aux::toHex(peer.bytes) + " key: " + aux::toHex(key) + " user info: " + aux::toHex(user_info);
 #endif
     }
 
@@ -1804,7 +1804,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: peer:" + aux::toHex(peer.bytes) + " user event: " + aux::toHex(user_event);
+        return "ALERT: peer:" + aux::toHex(peer.bytes) + " user event: " + aux::toHex(user_event);
 #endif
     }
 
@@ -1818,7 +1818,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: chain:" + aux::toHex(chain_id) + " post state array";
+        return "ALERT: chain:" + aux::toHex(chain_id) + " post state array";
 #endif
     }
 
@@ -1832,7 +1832,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: chain:" + aux::toHex(chain_id) + " fail to get chain data";
+        return "ALERT: chain:" + aux::toHex(chain_id) + " fail to get chain data";
 #endif
     }
 
@@ -1847,7 +1847,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "chain[%s] online peer[%s] time:%" PRId64 "",
+        std::snprintf(msg, sizeof(msg), "ALERT: chain[%s] online peer[%s] time:%" PRId64 "",
                       aux::toHex(chain_id).c_str(), aux::toHex(peer.bytes).c_str(), time);
 
         return msg;
@@ -1863,7 +1863,7 @@ namespace {
 #ifdef TORRENT_DISABLE_ALERT_MSG
         return {};
 #else
-        return "Alert: attention peer:" + aux::toHex(peer.bytes);
+        return "ALERT: attention peer:" + aux::toHex(peer.bytes);
 #endif
     }
 
@@ -1878,7 +1878,7 @@ namespace {
         return {};
 #else
         char msg[256];
-        std::snprintf(msg, sizeof(msg), "chain[%s] news hash[%s] pic slice key[%s] ",
+        std::snprintf(msg, sizeof(msg), "ALERT: chain[%s] news hash[%s] pic slice key[%s] ",
                       aux::toHex(chain_id).c_str(), aux::toHex(news_hash.to_string()).c_str(), aux::toHex(key).c_str());
 
         return msg;
