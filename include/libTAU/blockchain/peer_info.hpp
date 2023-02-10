@@ -107,6 +107,9 @@ namespace libTAU::blockchain {
 
         std::int64_t m_last_sent = 0;
 
+        // if history block got
+        bool m_get_history = false;
+
 //        std::int64_t m_last_ping_time = 0;
 
 //        bool m_fee_tx_pool_sync_done = false;

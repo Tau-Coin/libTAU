@@ -2936,6 +2936,12 @@ namespace libTAU::blockchain {
 
             auto now = get_total_milliseconds();
             for (auto& item: acl) {
+                if (!item.second.m_get_history) {
+                    item.second.m_get_history = true;
+
+                    get_head_block_hash(chain_id, item.first);
+                }
+
                 if (now >= item.second.m_last_sent + 8 * 1000) {
                     send_to(item.first, e);
 
