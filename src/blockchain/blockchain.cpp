@@ -1821,7 +1821,6 @@ namespace libTAU::blockchain {
 //    }
 
     bool blockchain::clear_all_chain_data_in_db(const bytes &chain_id) {
-        // TODO:commit
         m_repository->begin_transaction();
         if (!m_repository->clear_all_state(chain_id)) {
             log(LOG_ERR, "INFO: chain:%s, clear all state fail.", aux::toHex(chain_id).c_str());
