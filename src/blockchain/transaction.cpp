@@ -123,9 +123,7 @@ namespace libTAU::blockchain {
     }
 
     bool transaction::verify_signature() const {
-        // TODO
-        return true;
-//        return ed25519_verify(m_signature, get_encode_without_signature(), m_sender);
+        return ed25519_verify(m_signature, get_encode_without_signature(), m_sender);
     }
 
     void transaction::populate(const entry &e) {
