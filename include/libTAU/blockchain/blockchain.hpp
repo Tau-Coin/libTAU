@@ -374,6 +374,34 @@ namespace blockchain {
         int m_times = 1;
     };
 
+    struct immutable_item {
+
+        immutable_item(aux::bytes mChainId, std::string mSalt) : m_chain_id(std::move(mChainId)), m_salt(std::move(mSalt)) {}
+
+        bool operator<(const immutable_item &rhs) const {
+            if (m_chain_id < rhs.m_chain_id)
+                return true;
+            if (rhs.m_chain_id < m_chain_id)
+                return false;
+            return m_salt < rhs.m_salt;
+        }
+
+        bool operator>(const immutable_item &rhs) const {
+            return rhs < *this;
+        }
+
+        bool operator<=(const immutable_item &rhs) const {
+            return !(rhs < *this);
+        }
+
+        bool operator>=(const immutable_item &rhs) const {
+            return !(*this < rhs);
+        }
+
+        aux::bytes m_chain_id;
+        std::string m_salt;
+    };
+
     //#if !defined TORRENT_DISABLE_LOGGING || TORRENT_USE_ASSERTS
     // This is the basic logging and debug interface offered by the blockchain.
     // a release build with logging disabled (which is the default) will
