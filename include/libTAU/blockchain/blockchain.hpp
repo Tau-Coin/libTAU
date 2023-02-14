@@ -933,6 +933,8 @@ namespace blockchain {
 //        std::set<dht_item> m_tasks_set;
         std::int64_t m_last_dht_time{};
 
+        std::set<immutable_item> m_getting_immutable_items;
+
 //        std::map<aux::bytes, std::set<entry_time>> m_my_entry_tasks;
 //        std::map<aux::bytes, std::queue<entry>> m_entry_tasks;
 

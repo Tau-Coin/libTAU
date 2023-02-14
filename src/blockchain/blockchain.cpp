@@ -759,6 +759,15 @@ namespace libTAU::blockchain {
                     switch (dhtItem.m_type) {
                         case dht_item_type::DHT_GET: {
 
+                            if (dhtItem.m_timestamp == 0) {
+                                immutable_item immutableItem(dhtItem.m_chain_id, dhtItem.m_salt);
+                                if (m_getting_immutable_items.find(immutableItem) != m_getting_immutable_items.end()) {
+                                    break;
+                                } else {
+                                    m_getting_immutable_items.insert(immutableItem);
+                                }
+                            }
+
                             m_ses.dht()->get_item(dhtItem.m_peer,
                                                   std::bind(&blockchain::get_mutable_callback, self(),
                                                             dhtItem.m_chain_id, _1, _2, dhtItem.m_get_item_type,
@@ -4075,6 +4084,11 @@ namespace libTAU::blockchain {
                                           GET_ITEM_TYPE type, const dht::public_key &signalPeer, std::int64_t timestamp, int times, sha1_hash hash)
     {
         TORRENT_ASSERT(i.is_mutable());
+
+        if (timestamp == 0) {
+            immutable_item immutableItem(chain_id, i.salt());
+            m_getting_immutable_items.erase(immutableItem);
+        }
 
         if(!authoritative)
             return; 
