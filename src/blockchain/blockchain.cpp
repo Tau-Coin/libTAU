@@ -691,6 +691,7 @@ namespace libTAU::blockchain {
 //        m_online_list.clear();
 //        m_blocks.clear();
         m_head_blocks.clear();
+        m_getting_immutable_items.clear();
 //        m_gossip_peers.clear();
     }
 
@@ -707,6 +708,7 @@ namespace libTAU::blockchain {
 //        m_online_list.erase(chain_id);
 //        m_blocks[chain_id].clear();
         m_head_blocks.erase(chain_id);
+        m_getting_immutable_items.clear();
 //        m_gossip_peers[chain_id].clear();
     }
 

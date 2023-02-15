@@ -25,7 +25,7 @@ namespace libTAU::blockchain {
 
     constexpr int tx_pool_max_size_by_fee = 200;
 
-    // todo:comments
+    // 按照时间戳排序的交易池，容纳交易的最大数量
     constexpr int tx_pool_max_size_by_timestamp = 40;
 
     constexpr int time_pool_max_size_of_same_account = 3;
